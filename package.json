@@ -14,11 +14,10 @@
   },
   "dependencies": {
     "immer": "^10.0.3",
-    "jotai": "^2.4.3",
-    "jotai-immer": "^0.2.0",
     "nanoid": "^5.0.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.3",
