@@ -85,3 +85,5 @@ export const getDOMInfo = (el: HTMLElement) => {
     inFlow: el.parentElement && !!styleInFlow(el.parentElement)
   };
 };
+
+export type WebloomNodeDimensions = ReturnType<typeof getDOMInfo>;

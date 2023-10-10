@@ -1,3 +1,4 @@
+import { WebloomNodeDimensions, getDOMInfo } from 'lib/utils';
 import { create } from 'zustand';
 export type WebloomNode = {
   id: string;
@@ -25,54 +26,78 @@ interface WebloomActions {
   setDropTarget: (id: string | null) => void;
 }
 
-const store = create<WebloomState & WebloomActions>()((set) => ({
-  tree: {},
-  draggedNode: null,
-  setDom: (id: string, dom: HTMLElement) => {
-    set((state) => {
-      state.tree[id].dom = dom;
-      return state;
-    });
-  },
-  moveNode: (id: string, parentId: string, index = 1) => {
-    set((state) => {
-      const oldParentId = state.tree[id].parent;
-      if (parentId === oldParentId || id === parentId) return state;
-      const newTree = {
-        ...state.tree,
-        [id]: {
-          ...state.tree[id],
-          parent: parentId
-        },
-        [parentId]: {
-          ...state.tree[parentId],
-          nodes: [...state.tree[parentId].nodes, id]
-        }
-      };
-      if (oldParentId) {
-        newTree[oldParentId] = {
-          ...newTree[oldParentId],
-          nodes: newTree[oldParentId].nodes.filter((nodeId) => nodeId !== id)
+interface WebloomGetters {
+  getCanvas: (id: string) => WebloomNode | null;
+  getNode: (id: string) => WebloomNode | null;
+  getChildDimensions: (id: string) => WebloomNodeDimensions;
+}
+
+const store = create<WebloomState & WebloomActions & WebloomGetters>()(
+  (set, get) => ({
+    tree: {},
+    draggedNode: null,
+    setDom: (id: string, dom: HTMLElement) => {
+      set((state) => {
+        state.tree[id].dom = dom;
+        return state;
+      });
+    },
+    moveNode: (id: string, parentId: string, index = 1) => {
+      set((state) => {
+        const oldParentId = state.tree[id].parent;
+        if (parentId === oldParentId || id === parentId) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...state.tree[id],
+            parent: parentId
+          },
+          [parentId]: {
+            ...state.tree[parentId],
+            nodes: [...state.tree[parentId].nodes, id]
+          }
         };
+        if (oldParentId) {
+          newTree[oldParentId] = {
+            ...newTree[oldParentId],
+            nodes: newTree[oldParentId].nodes.filter((nodeId) => nodeId !== id)
+          };
+        }
+        console.log(newTree);
+        return { tree: newTree };
+      });
+    },
+    setDraggedNode: (id: string | null) => {
+      set((state) => {
+        state.draggedNode = id;
+        return state;
+      });
+    },
+    setDropTarget: (id: string | null) => {
+      set((state) => {
+        state.dropTarget = id;
+        return state;
+      });
+    },
+    dropTarget: null,
+    getNode: (id: string) => {
+      return get().tree[id] || null;
+    },
+    // return first canvas node starting from id and going up the tree until root
+    getCanvas: (id: string): WebloomNode | null => {
+      const node = get().getNode(id);
+      if (!node) return null;
+      if (node.isCanvas) return node;
+      if (node.parent) {
+        return get().getCanvas(node.parent);
       }
-      console.log(newTree);
-      return { tree: newTree };
-    });
-  },
-  setDraggedNode: (id: string | null) => {
-    set((state) => {
-      state.draggedNode = id;
-      return state;
-    });
-  },
-  setDropTarget: (id: string | null) => {
-    set((state) => {
-      state.dropTarget = id;
-      return state;
-    });
-  },
-  dropTarget: null
-}));
+      return null;
+    },
+    getChildDimensions: (id: string): WebloomNodeDimensions => {
+      return getDOMInfo(get().getNode(id)?.dom as HTMLElement);
+    }
+  })
+);
 
 //init store
 
