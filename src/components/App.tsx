@@ -195,7 +195,7 @@ const initTree: WebloomTree = {
     id: 'root',
     name: 'root',
     type: 'div',
-    nodes: ['counter', 'container'],
+    nodes: ['counter', 'container', 'text'],
     parent: null,
     isCanvas: true,
     dom: null,
@@ -224,7 +224,7 @@ const initTree: WebloomTree = {
     dom: null,
     isCanvas: true,
     props: {
-      className: 'bg-blue-500'
+      className: 'bg-blue-500 px-4 py-4'
     }
   },
   counter2: {
@@ -237,6 +237,17 @@ const initTree: WebloomTree = {
     props: {
       text: 'hello world',
       color: 'red'
+    }
+  },
+  text: {
+    id: 'text',
+    name: 'text',
+    type: Text,
+    nodes: [],
+    parent: 'root',
+    dom: null,
+    props: {
+      text: 'Hi mom'
     }
   }
 };

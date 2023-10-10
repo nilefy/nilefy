@@ -20,7 +20,7 @@ interface WebloomState {
 }
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
-  moveNode: (id: string, parentId: string) => void;
+  moveNode: (id: string, parentId: string, index?: number) => void;
   setDraggedNode: (id: string | null) => void;
   setDropTarget: (id: string | null) => void;
 }
@@ -34,9 +34,10 @@ const store = create<WebloomState & WebloomActions>()((set) => ({
       return state;
     });
   },
-  moveNode: (id: string, parentId: string) => {
+  moveNode: (id: string, parentId: string, index = 1) => {
     set((state) => {
       const oldParentId = state.tree[id].parent;
+      if (parentId === oldParentId || id === parentId) return state;
       const newTree = {
         ...state.tree,
         [id]: {
