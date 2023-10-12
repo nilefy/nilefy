@@ -183,9 +183,9 @@ function App() {
         console.log(wholeTree);
     }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
-        if (e.active.data.current?.isNew) {
-            const x = e.active.rect.current.translated?.top || 0;
-            const y = e.active.rect.current.translated?.left || 0;
+        if (e.active.data.current?.isNew && e.over?.id === 'root') {
+            const x = e.delta.x + -e.over.rect.left || 0;
+            const y = e.delta.y + e.over.rect.top || 0;
             const width = e.active.rect.current.initial?.width || 20;
             const height = e.active.rect.current.initial?.height || 10;
             const type = e.active.data.current

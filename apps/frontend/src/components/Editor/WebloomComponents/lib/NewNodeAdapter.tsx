@@ -1,6 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { nanoid } from 'nanoid';
 import { useEffect, useMemo, useRef } from 'react';
 
 type DraggableProps = {
