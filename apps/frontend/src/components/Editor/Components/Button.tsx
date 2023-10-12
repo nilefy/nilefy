@@ -6,7 +6,7 @@ const Button = forwardRef<
     {
         text: string;
         color: string;
-        onClick: () => void;
+        onClick?: () => void;
     }
 >(({ text, color, onClick, ...rest }, ref) => {
     return (

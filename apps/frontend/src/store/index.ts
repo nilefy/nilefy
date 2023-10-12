@@ -1,4 +1,4 @@
-import { WebloomNodeDimensions, getDOMInfo } from 'lib/utils';
+import { WebloomNodeDimensions, getDOMInfo } from '../lib/utils';
 import { create } from 'zustand';
 
 export type WebloomNode = {
@@ -22,14 +22,11 @@ export type WebloomTree = {
 };
 interface WebloomState {
     tree: WebloomTree;
-    draggedNode: string | null;
-    dropTarget: string | null;
 }
 interface WebloomActions {
     setDom: (id: string, dom: HTMLElement) => void;
     moveNode: (id: string, parentId: string, index?: number) => void;
-    setDraggedNode: (id: string | null) => void;
-    setDropTarget: (id: string | null) => void;
+    addNode: (node: WebloomNode, parentId: string) => void;
     setDimensions: (id: string, dimensions: WebloomNodeDimensions) => void;
 }
 
@@ -47,6 +44,19 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 if (!state.tree[id]) return state;
                 state.tree[id].dom = dom;
                 return state;
+            });
+        },
+        addNode: (node: WebloomNode, parentId: string) => {
+            set((state) => {
+                const newTree = {
+                    ...state.tree,
+                    [node.id]: node,
+                    [parentId]: {
+                        ...state.tree[parentId],
+                        nodes: [...state.tree[parentId].nodes, node.id]
+                    }
+                };
+                return { tree: newTree };
             });
         },
         moveNode: (id: string, parentId: string, index = 1) => {
@@ -75,19 +85,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 return { tree: newTree };
             });
         },
-        setDraggedNode: (id: string | null) => {
-            set((state) => {
-                state.draggedNode = id;
-                return state;
-            });
-        },
-        setDropTarget: (id: string | null) => {
-            set((state) => {
-                state.dropTarget = id;
-                return state;
-            });
-        },
-        dropTarget: null,
+
         getNode: (id: string) => {
             return get().tree[id] || null;
         },

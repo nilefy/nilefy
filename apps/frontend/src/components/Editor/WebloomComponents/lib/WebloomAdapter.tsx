@@ -1,9 +1,9 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Rnd } from 'react-rnd';
 import { useContext, useEffect, useRef } from 'react';
-import store from 'store';
+import store from '../../../../store';
 import { WebloomContext } from './WebloomContext';
-import { GRID_CELL_SIDE } from 'lib/constants';
+import { GRID_CELL_SIDE } from '../../../../lib/constants';
 
 type WebloomAdapterProps = {
     children: React.ReactNode;
@@ -21,7 +21,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     });
     const el = store().tree[id];
     const ref = useRef<HTMLDivElement>(null);
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef } = useDraggable({
         id,
         disabled: !props.draggable
     });
@@ -41,7 +41,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             <Rnd
                 position={{ x: el.x, y: el.y }}
                 size={{ width: el.width, height: el.height }}
-                onDragStop={(e, d) => {
+                onDragStop={(_, d) => {
                     setDimensions(id, {
                         x: d.x,
                         y: d.y,
@@ -51,7 +51,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 }}
                 onResize={
                     props.resizable
-                        ? (e, direction, ref, delta, position) => {
+                        ? (_, __, ref, ___, position) => {
                               setDimensions(id, {
                                   width: ref.offsetWidth,
                                   height: ref.offsetHeight,
