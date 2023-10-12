@@ -1,10 +1,11 @@
+import { nanoid } from 'nanoid';
 import React, {
     createElement,
     useMemo,
     useEffect,
     useLayoutEffect
 } from 'react';
-import store, { WebloomTree } from '@/store';
+import store, { WebloomTree } from 'store';
 import { WebloomButton } from './Editor/WebloomComponents/Button';
 import { WebloomContainer } from './Editor/WebloomComponents/Container';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
@@ -14,10 +15,9 @@ import {
     createSnapModifier,
     restrictToParentElement
 } from '@dnd-kit/modifiers';
-import { GRID_CELL_SIDE } from '@/lib/constants';
+import { GRID_CELL_SIDE } from 'lib/constants';
 import { WebloomContext } from './Editor/WebloomComponents/lib/WebloomContext';
 import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
-import { Button } from './ui/button';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -181,35 +181,29 @@ store.setState((state) => {
     return state;
 });
 
-const snapToGridModifier = createSnapModifier(GRID_CELL_SIDE);
 function App() {
     const wholeTree = store((state) => state.tree);
-    useEffect(() => {}, [wholeTree]);
+    useEffect(() => {
+        console.log(wholeTree);
+    }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
         //get id of element
-        const id = e.active.id;
-        console.log(id);
-
-        //get transalted distance
-        const x = e.delta.x;
-        const y = e.delta.y;
-        console.log(e.over?.id);
-        for (const collision of e.collisions || []) {
-            if (collision.id !== 'root' && collision.id !== e.active.id) return;
-        }
-        //update store
-        store.setState((state) => {
-            state.tree[id].x += x;
-            state.tree[id].y += y;
-            return state;
-        });
+        // const id = e.active.id;
+        // for (const collision of e.collisions || []) {
+        //     if (collision.id !== 'root' && collision.id !== e.active.id) return;
+        // }
+        // //update store
+        // store.setState((state) => {
+        //     state.tree[id].x += x;
+        //     state.tree[id].y += y;
+        //     return state;
+        // });
     };
     return (
         <div className="flex h-full w-full">
             <DndContext
                 onDragEnd={handleDragEnd}
                 //todo: may need to change this when we have nested containers and stuff
-                modifiers={[restrictToParentElement, snapToGridModifier]}
             >
                 {/*sidebar*/}
                 <div className="h-full w-1/5 bg-gray-200"></div>

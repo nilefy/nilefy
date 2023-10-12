@@ -1,4 +1,4 @@
-import { WebloomNodeDimensions, getDOMInfo } from '@/lib/utils';
+import { WebloomNodeDimensions, getDOMInfo } from 'lib/utils';
 import { create } from 'zustand';
 
 export type WebloomNode = {
@@ -106,11 +106,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         },
         setDimensions(id, dimensions) {
             set((state) => {
-                state.tree[id] = {
-                    ...state.tree[id],
-                    ...dimensions
+                const newState = {
+                    ...state,
+                    tree: {
+                        ...state.tree,
+                        [id]: {
+                            ...state.tree[id],
+                            ...dimensions
+                        }
+                    }
                 };
-                return state;
+
+                return newState;
             });
         }
     })
