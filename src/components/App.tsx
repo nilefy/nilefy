@@ -1,158 +1,103 @@
 import { nanoid } from 'nanoid';
 import React, {
-  createElement,
-  useState,
-  useMemo,
-  useEffect,
-  forwardRef
+    createElement,
+    useMemo,
+    useEffect,
+    useLayoutEffect
 } from 'react';
 import store, { WebloomTree } from 'store';
-const { setDom, moveNode, setDraggedNode } = store.getState();
-function dragStart(e: DragEvent, type: 'new' | 'move', id?: string) {
-  e.stopPropagation();
-  console.log('dragstart', id);
-  if (type === 'new') {
-  } else {
-    //set currentlyDraggingAtom
-    setDraggedNode(id as string);
-  }
-}
-function drop(e: DragEvent, id: string) {
-  //move currentlyDraggingAtom to id
-  console.log('drop', id);
-  e.stopPropagation();
-  e.preventDefault();
-  const currentlyDragging = store.getState().draggedNode;
-  if (!currentlyDragging) return;
-  console.log('here ', currentlyDragging, id);
+import { WebloomButton } from './Editor/WebloomComponents/Button';
+import { WebloomContainer } from './Editor/WebloomComponents/Container';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import WebloomDraggable from './Editor/WebloomComponents/lib/Draggable';
+import { WebloomDroppable } from './Editor/WebloomComponents/lib/Droppable';
+import {
+    createSnapModifier,
+    restrictToParentElement
+} from '@dnd-kit/modifiers';
+import { GRID_CELL_SIDE } from 'lib/constants';
+import { WebloomContext } from './Editor/WebloomComponents/lib/WebloomContext';
+const { setDimensions } = store.getState();
+const WebloomRoot = () => {
+    const wholeTree = store.getState().tree;
+    const tree = wholeTree['root'];
+    const ref = React.useRef<HTMLDivElement>(null);
+    const children = useMemo(() => {
+        let children = tree.props.children as React.ReactElement[];
+        if (tree.nodes.length > 0) {
+            children = tree.nodes.map((node) => {
+                return <WebloomElement id={node} key={node} />;
+            });
+        }
+        return children;
+    }, [tree.nodes, tree.props.children]);
+    useLayoutEffect(() => {
+        //get width and height of root
+        if (!ref.current) return;
+        const width = ref.current?.clientWidth;
+        const height = ref.current?.clientHeight;
+        //set width and height of root to store
+        setDimensions('root', { width, height, x: 0, y: 0 });
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+    const handleResize = () => {
+        if (!ref.current) return;
+        const width = ref.current?.clientWidth;
+        const height = ref.current?.clientHeight;
+        setDimensions('root', { width, height, x: 0, y: 0 });
+    };
 
-  moveNode(currentlyDragging, id);
-}
-function dragOver(e: DragEvent) {
-  e.preventDefault();
-}
-
-const WebloomRoot = React.forwardRef<HTMLDivElement>((props, ref) => {
-  const wholeTree = store.getState().tree;
-  const tree = wholeTree['root'];
-  const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
-        return <WebloomElement id={node} key={node} />;
-      });
-    }
-    return children;
-  }, [tree.nodes, tree.props.children]);
-  return (
-    <div ref={ref} id="webloom-root">
-      {children}
-    </div>
-  );
-});
+    return (
+        <div id="webloom-root" className="h-full w-full bg-white" ref={ref}>
+            <WebloomContext.Provider value={{ id: 'root' }}>
+                <WebloomDroppable>{children}</WebloomDroppable>
+            </WebloomContext.Provider>
+        </div>
+    );
+};
 WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
-  const wholeTree = store.getState().tree;
+    const wholeTree = store.getState().tree;
 
-  //get setter
+    //get setter
 
-  const ref = React.useRef<HTMLElement>(null);
-  const tree = wholeTree[id];
-  const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
-        return <WebloomElement id={node} key={node} />;
-      });
-    }
-    return children;
-  }, [tree.nodes, tree.props.children]);
-  const rendered = useMemo(
-    () => createElement(tree.type, { ...tree.props, ref }, children),
-    [tree.type, tree.props, children]
-  );
-  useEffect(() => {
-    if (ref.current) {
-      setDom(id, ref.current);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref.current, id]);
-  useEffect(() => {
-    function dragStartHandler(e: DragEvent) {
-      dragStart(e, 'move', id);
-    }
-    function dropHandler(e: DragEvent) {
-      drop(e, id);
-    }
+    const tree = wholeTree[id];
 
-    if (ref.current) {
-      const curRef = ref.current;
-      ref.current.draggable = true;
-      ref.current.addEventListener('dragstart', dragStartHandler);
-      if (tree.isCanvas) {
-        ref.current.addEventListener('drop', dropHandler);
-        ref.current.addEventListener('dragover', dragOver);
-      }
-      return () => {
-        console.log('unmount');
-        curRef.removeEventListener('dragstart', dragStartHandler);
-        if (tree.isCanvas) {
-          curRef.removeEventListener('drop', dropHandler);
-          curRef.removeEventListener('dragover', dragOver);
+    const children = useMemo(() => {
+        let children = tree.props.children as React.ReactElement[];
+        if (tree.nodes.length > 0) {
+            children = tree.nodes.map((node) => {
+                return <WebloomElement id={node} key={node} />;
+            });
         }
-      };
-    }
-  }, [tree.isCanvas]);
-  return rendered;
+        return children;
+    }, [tree.nodes, tree.props.children]);
+    const rendered = useMemo(
+        () =>
+            createElement(
+                tree.type,
+                { ...tree.props, webloomId: id },
+                children
+            ),
+        [tree.type, tree.props, children, id]
+    );
+    return (
+        <WebloomContext.Provider
+            value={{
+                id
+            }}
+        >
+            <WebloomDraggable>
+                <WebloomDroppable>{rendered}</WebloomDroppable>
+            </WebloomDraggable>
+        </WebloomContext.Provider>
+    );
 }
 
-const Text = React.forwardRef<HTMLParagraphElement, { text: string }>(
-  ({ text }, ref) => {
-    return <p ref={ref}>{text}</p>;
-  }
-);
-Text.displayName = 'Text';
-const Button = React.forwardRef<
-  HTMLButtonElement,
-  {
-    text: string;
-    color: string;
-    onClick: () => void;
-  }
->(({ text, color, onClick }, ref) => {
-  return (
-    <button
-      style={{
-        backgroundColor: color
-      }}
-      onClick={onClick}
-      ref={ref}
-    >
-      <Text text={text}></Text>
-    </button>
-  );
-});
-Button.displayName = 'Button';
-export const Counter = forwardRef<
-  HTMLDivElement,
-  { text: string; color: string }
->(({ text, color }, ref) => {
-  const [counter, setCounter] = useState(0);
-  return (
-    <div ref={ref}>
-      <Button
-        text={text}
-        color={color}
-        onClick={() => {
-          setCounter(counter + 1);
-        }}
-      ></Button>
-      <Text text={counter.toString()}></Text>
-    </div>
-  );
-});
-Counter.displayName = 'Counter';
 // function ResolveNewComponents(
 //   components: [el: React.ReactElement, name: string][]
 // ) {
@@ -179,96 +124,99 @@ Counter.displayName = 'Counter';
 //   })
 // }
 
-const Container = React.forwardRef<
-  HTMLDivElement,
-  { children: React.ReactNode; className: string }
->(({ children, className }, ref) => {
-  return (
-    <div ref={ref} className={className}>
-      {children}
-    </div>
-  );
-});
-Container.displayName = 'Container';
 const initTree: WebloomTree = {
-  root: {
-    id: 'root',
-    name: 'root',
-    type: 'div',
-    nodes: ['counter', 'container', 'text'],
-    parent: null,
-    isCanvas: true,
-    dom: null,
-    props: {
-      className: 'h-full w-full bg-red-500'
+    root: {
+        id: 'root',
+        name: 'root',
+        type: WebloomContainer,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        nodes: ['button', 'button2'],
+        parent: null,
+        isCanvas: true,
+        dom: null,
+        props: {
+            className: 'h-full w-full bg-red-500'
+        }
+    },
+
+    button: {
+        id: 'button',
+        name: 'button',
+        type: WebloomButton,
+        nodes: [],
+        parent: 'root',
+        dom: null,
+        props: {
+            text: 'Webloom',
+            color: 'red'
+        },
+        height: 40,
+        width: 100,
+        x: 0,
+        y: 0
+    },
+    button2: {
+        id: 'button2',
+        name: 'button2',
+        type: WebloomButton,
+        nodes: [],
+        parent: 'root',
+        dom: null,
+        props: {
+            text: 'Webloom',
+            color: 'green'
+        },
+        height: 40,
+        width: 100,
+        x: 0,
+        y: 0
     }
-  },
-  counter: {
-    id: 'counter',
-    name: 'counter',
-    type: Counter,
-    nodes: [],
-    parent: 'root',
-    dom: null,
-    props: {
-      text: 'hello world',
-      color: 'red'
-    }
-  },
-  container: {
-    id: 'container',
-    name: 'container',
-    type: Container,
-    nodes: ['counter2'],
-    parent: 'root',
-    dom: null,
-    isCanvas: true,
-    props: {
-      className: 'bg-blue-500 px-4 py-4'
-    }
-  },
-  counter2: {
-    id: 'counter2',
-    name: 'counter2',
-    type: Counter,
-    nodes: [],
-    parent: 'container',
-    dom: null,
-    props: {
-      text: 'hello world',
-      color: 'red'
-    }
-  },
-  text: {
-    id: 'text',
-    name: 'text',
-    type: Text,
-    nodes: [],
-    parent: 'root',
-    dom: null,
-    props: {
-      text: 'Hi mom'
-    }
-  }
 };
 store.setState((state) => {
-  state.tree = initTree;
-  return state;
+    state.tree = initTree;
+    return state;
 });
-function App() {
-  const wholeTree = store((state) => state.tree);
-  const rootRef = React.useRef<HTMLDivElement>(null);
 
-  return (
-    <div className="flex h-full w-full">
-      {/*sidebar*/}
-      <div className="h-full w-1/5 bg-gray-200"></div>
-      {/*main*/}
-      <div className="h-full w-4/5 bg-gray-900">
-        <WebloomElement id="root" />
-      </div>
-    </div>
-  );
+const snapToGridModifier = createSnapModifier(GRID_CELL_SIDE);
+function App() {
+    const wholeTree = store((state) => state.tree);
+    useEffect(() => {}, [wholeTree]);
+    const handleDragEnd = (e: DragEndEvent) => {
+        //get id of element
+        const id = e.active.id;
+        //get transalted distance
+        const x = e.delta.x;
+        const y = e.delta.y;
+        console.log(e.over?.id);
+        for (const collision of e.collisions || []) {
+            if (collision.id !== 'root' && collision.id !== e.active.id) return;
+        }
+        //update store
+        store.setState((state) => {
+            state.tree[id].x += x;
+            state.tree[id].y += y;
+            return state;
+        });
+    };
+    return (
+        <div className="flex h-full w-full">
+            {/*sidebar*/}
+            <div className="h-full w-1/5 bg-gray-200"></div>
+            {/*main*/}
+            <DndContext
+                onDragEnd={handleDragEnd}
+                //todo: may need to change this when we have nested containers and stuff
+                modifiers={[restrictToParentElement, snapToGridModifier]}
+            >
+                <div className="h-full w-4/5 bg-gray-900">
+                    <WebloomRoot />
+                </div>
+            </DndContext>
+        </div>
+    );
 }
 
 export default App;
