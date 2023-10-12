@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/modifiers';
 import { GRID_CELL_SIDE } from 'lib/constants';
 import { WebloomContext } from './Editor/WebloomComponents/lib/WebloomContext';
+import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -51,9 +52,13 @@ const WebloomRoot = () => {
     };
 
     return (
-        <div id="webloom-root" className="h-full w-full bg-white" ref={ref}>
+        <div
+            id="webloom-root"
+            className="relative h-full w-full bg-white"
+            ref={ref}
+        >
             <WebloomContext.Provider value={{ id: 'root' }}>
-                <WebloomDroppable>{children}</WebloomDroppable>
+                <WebloomAdapter droppable>{children}</WebloomAdapter>
             </WebloomContext.Provider>
         </div>
     );
@@ -77,23 +82,19 @@ function WebloomElement({ id }: { id: string }) {
         return children;
     }, [tree.nodes, tree.props.children]);
     const rendered = useMemo(
-        () =>
-            createElement(
-                tree.type,
-                { ...tree.props, webloomId: id },
-                children
-            ),
-        [tree.type, tree.props, children, id]
+        () => createElement(tree.type, tree.props, children),
+        [tree.type, tree.props, children]
     );
+
     return (
         <WebloomContext.Provider
             value={{
                 id
             }}
         >
-            <WebloomDraggable>
-                <WebloomDroppable>{rendered}</WebloomDroppable>
-            </WebloomDraggable>
+            <WebloomAdapter draggable droppable resizable key={id}>
+                {rendered}
+            </WebloomAdapter>
         </WebloomContext.Provider>
     );
 }
@@ -150,7 +151,7 @@ const initTree: WebloomTree = {
         parent: 'root',
         dom: null,
         props: {
-            text: 'Webloom',
+            text: 'button1',
             color: 'red'
         },
         height: 40,
@@ -166,13 +167,13 @@ const initTree: WebloomTree = {
         parent: 'root',
         dom: null,
         props: {
-            text: 'Webloom',
+            text: 'button2',
             color: 'green'
         },
         height: 40,
         width: 100,
         x: 0,
-        y: 0
+        y: 40
     }
 };
 store.setState((state) => {
@@ -187,6 +188,8 @@ function App() {
     const handleDragEnd = (e: DragEndEvent) => {
         //get id of element
         const id = e.active.id;
+        console.log(id);
+
         //get transalted distance
         const x = e.delta.x;
         const y = e.delta.y;
@@ -203,15 +206,15 @@ function App() {
     };
     return (
         <div className="flex h-full w-full">
-            {/*sidebar*/}
-            <div className="h-full w-1/5 bg-gray-200"></div>
-            {/*main*/}
             <DndContext
                 onDragEnd={handleDragEnd}
                 //todo: may need to change this when we have nested containers and stuff
                 modifiers={[restrictToParentElement, snapToGridModifier]}
             >
+                {/*sidebar*/}
+                <div className="h-full w-1/5 bg-gray-200"></div>
                 <div className="h-full w-4/5 bg-gray-900">
+                    {/*main*/}
                     <WebloomRoot />
                 </div>
             </DndContext>
