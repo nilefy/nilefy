@@ -1,7 +1,7 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import store from 'store';
+import store from '@/store';
 import { WebloomContext } from './WebloomContext';
 
 type WebloomAdapterProps = {

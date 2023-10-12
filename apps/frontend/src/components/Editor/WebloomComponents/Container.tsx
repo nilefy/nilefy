@@ -1,4 +1,4 @@
-import { useSetDom } from 'hooks/useSetDom';
+import { useSetDom } from '@/hooks/useSetDom';
 import { WebloomComponentProps } from '.';
 import { Container } from '../Components/Container';
 import { useRef } from 'react';

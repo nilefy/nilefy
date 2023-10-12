@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Button } from '../Components';
-import { useSetDom } from 'hooks/useSetDom';
+import { useSetDom } from '@/hooks/useSetDom';
 import { WebloomComponentProps } from '.';
 
 type WebloomButtonProps = WebloomComponentProps<typeof Button>;

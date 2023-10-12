@@ -1,11 +1,10 @@
-import { nanoid } from 'nanoid';
 import React, {
     createElement,
     useMemo,
     useEffect,
     useLayoutEffect
 } from 'react';
-import store, { WebloomTree } from 'store';
+import store, { WebloomTree } from '@/store';
 import { WebloomButton } from './Editor/WebloomComponents/Button';
 import { WebloomContainer } from './Editor/WebloomComponents/Container';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
@@ -15,9 +14,10 @@ import {
     createSnapModifier,
     restrictToParentElement
 } from '@dnd-kit/modifiers';
-import { GRID_CELL_SIDE } from 'lib/constants';
+import { GRID_CELL_SIDE } from '@/lib/constants';
 import { WebloomContext } from './Editor/WebloomComponents/lib/WebloomContext';
 import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
+import { Button } from './ui/button';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;

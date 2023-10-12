@@ -1,4 +1,4 @@
-import { WebloomNodeDimensions, getDOMInfo } from 'lib/utils';
+import { WebloomNodeDimensions, getDOMInfo } from '@/lib/utils';
 import { create } from 'zustand';
 
 export type WebloomNode = {

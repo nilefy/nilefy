@@ -1,5 +1,5 @@
 import { useEffect, RefObject } from 'react';
-import store from 'store';
+import store from '@/store';
 
 const setDom = store.getState().setDom;
 
