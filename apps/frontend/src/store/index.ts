@@ -42,8 +42,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         setDom: (id: string, dom: HTMLElement) => {
             set((state) => {
                 if (!state.tree[id]) return state;
-                state.tree[id].dom = dom;
-                return state;
+                const newTree = {
+                    ...state.tree,
+                    [id]: {
+                        ...state.tree[id],
+                        dom
+                    }
+                };
+                return { tree: newTree };
             });
         },
         addNode: (node: WebloomNode, parentId: string) => {

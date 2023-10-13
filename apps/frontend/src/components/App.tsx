@@ -4,6 +4,8 @@ import React, {
     useEffect,
     useLayoutEffect
 } from 'react';
+import { createSnapModifier } from '@dnd-kit/modifiers';
+
 import store, { WebloomNode, WebloomTree } from '../store';
 import { WebloomButton } from './Editor/WebloomComponents/Button';
 import { WebloomContainer } from './Editor/WebloomComponents/Container';
@@ -14,6 +16,9 @@ import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
 import { WebloomComponents } from './Editor/WebloomComponents';
 import NewNodeAdapter from './Editor/WebloomComponents/lib/NewNodeAdapter';
 import { nanoid } from 'nanoid';
+import { GRID_CELL_SIDE } from '@/lib/constants';
+import { useSetDom } from '@/hooks/useSetDom';
+import { restrictToParentElementUnlessNew, snapModifier } from '@/lib/utils';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -40,6 +45,7 @@ const WebloomRoot = () => {
             window.removeEventListener('resize', handleResize);
         };
     }, []);
+    useSetDom(ref, 'root');
     const handleResize = () => {
         if (!ref.current) return;
         const width = ref.current?.clientWidth;
@@ -176,14 +182,15 @@ store.setState((state) => {
     state.tree = initTree;
     return state;
 });
-
 function App() {
     const wholeTree = store((state) => state.tree);
+    const [draggedId, setDraggedId] = React.useState<string | null>(null);
     useEffect(() => {
         console.log(wholeTree);
     }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
         if (e.active.data.current?.isNew && e.over?.id === 'root') {
+            //normalize delta to GRID_CELL_SIDE
             const x = e.delta.x + -e.over.rect.left || 0;
             const y = e.delta.y + e.over.rect.top || 0;
             const width = e.active.rect.current.initial?.width || 20;
@@ -204,14 +211,33 @@ function App() {
                 height: height
             };
             store.getState().addNode(node, 'root');
+        } else {
+            const id = e.active.id;
+
+            //get transalted distance
+            const x = e.delta.x;
+            const y = e.delta.y;
+            for (const collision of e.collisions || []) {
+                if (collision.id !== 'root' && collision.id !== e.active.id)
+                    return;
+            }
+            //update store
+            store.setState((state) => {
+                state.tree[id].x += x;
+                state.tree[id].y += y;
+                return state;
+            });
         }
+        setDraggedId(null);
     };
     return (
         <div className="isolate flex h-full w-full">
             <DndContext
+                onDragStart={(e) => {
+                    setDraggedId(e.active.id as string);
+                }}
                 onDragEnd={handleDragEnd}
-
-                //todo: may need to change this when we have nested containers and stuff
+                modifiers={[restrictToParentElementUnlessNew, snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
                 {/*sidebar*/}
 
