@@ -65,6 +65,9 @@ importers:
       react-rnd:
         specifier: ^10.4.1
         version: 10.4.1(react-dom@18.2.0)(react@18.2.0)
+      react-router-dom:
+        specifier: ^6.16.0
+        version: 6.16.0(react-dom@18.2.0)(react@18.2.0)
       tailwind-merge:
         specifier: ^1.14.0
         version: 1.14.0
@@ -635,6 +638,11 @@ packages:
       '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.2.23)(react@18.2.0)
       '@types/react': 18.2.23
       react: 18.2.0
+    dev: false
+
+  /@remix-run/router@1.9.0:
+    resolution: {integrity: sha512-bV63itrKBC0zdT27qYm6SDZHlkXwFL1xMBuhkn+X7l0+IIhNaH5wuuvZKp6eKhCD4KFhujhfhCT1YxXW6esUIA==}
+    engines: {node: '>=14.0.0'}
     dev: false
 
   /@sinclair/typebox@0.27.8:
@@ -3086,6 +3094,29 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
       react-draggable: 4.4.5(react-dom@18.2.0)(react@18.2.0)
       tslib: 2.3.1
+    dev: false
+
+  /react-router-dom@6.16.0(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-aTfBLv3mk/gaKLxgRDUPbPw+s4Y/O+ma3rEN1u8EgEpLpPe6gNjIsWt9rxushMHHMb7mSwxRGdGlGdvmFsyPIg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
+    dependencies:
+      '@remix-run/router': 1.9.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      react-router: 6.16.0(react@18.2.0)
+    dev: false
+
+  /react-router@6.16.0(react@18.2.0):
+    resolution: {integrity: sha512-VT4Mmc4jj5YyjpOi5jOf0I+TYzGpvzERy4ckNSvSh2RArv8LLoCxlsZ2D+tc7zgjxcY34oTz2hZaeX5RVprKqA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      react: '>=16.8'
+    dependencies:
+      '@remix-run/router': 1.9.0
+      react: 18.2.0
     dev: false
 
   /react@18.2.0:
