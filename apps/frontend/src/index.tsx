@@ -7,6 +7,8 @@ import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { ThemeProvider } from './components/theme-provider';
+import { UsersManagement } from './pages/workspace/users';
+import { GroupManagement, GroupsManagement } from './pages/workspace/group';
 
 // router config
 const router = createBrowserRouter([
@@ -15,10 +17,16 @@ const router = createBrowserRouter([
     element: <Dashboard />,
     errorElement: <ErrorPage />,
     children: [
+      { path: '', element: <UsersManagement /> },
       {
-        // TODO: remove this any bitch
-        path: ':any',
-        element: <div></div>,
+        path: 'groups',
+        element: <GroupsManagement />,
+        children: [
+          {
+            path: ':groupId',
+            element: <GroupManagement />,
+          },
+        ],
       },
     ],
   },
