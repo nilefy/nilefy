@@ -50,6 +50,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     });
 
     const { id } = useContext(WebloomContext);
+    const selected = store((state) => state.selectedNode) === id;
+
     const { setNodeRef: setDropNodeRef } = useDroppable({
         id: id,
         disabled: !props.droppable
@@ -58,6 +60,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     //todo change to parent when nesting is implemented
     const root = store().tree['root'];
     const ref = useRef<HTMLDivElement>(null);
+
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
@@ -66,6 +69,23 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 isNew: false
             }
         });
+    const modListeners = useMemo(() => {
+        if (!listeners)
+            return {
+                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                    e.stopPropagation();
+                    store.getState().setSelectedNode(id);
+                }
+            };
+        return {
+            ...listeners,
+            onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                e.stopPropagation();
+                store.getState().setSelectedNode(id);
+                listeners.onMouseDown(e);
+            }
+        };
+    }, [listeners, id]);
     useEffect(() => {
         setNodeRef(ref.current);
         setDropNodeRef(ref.current);
@@ -93,7 +113,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         };
 
         return (
-            !isDragging && (
+            !isDragging &&
+            selected && (
                 <div
                     className="select-none"
                     style={{
@@ -152,7 +173,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 </div>
             )
         );
-    }, [props.resizable, style, el]);
+    }, [props.resizable, style, el, selected, isDragging]);
     useEffect(() => {
         const resizeHandler = (e: MouseEvent) => {
             if (resizingKey === null) return;
@@ -253,7 +274,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     return (
         <>
             <div
-                {...listeners}
+                {...modListeners}
                 {...attributes}
                 style={style}
                 ref={ref}

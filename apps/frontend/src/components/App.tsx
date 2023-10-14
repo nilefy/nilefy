@@ -201,7 +201,12 @@ function App() {
     const wholeTree = store((state) => state.tree);
     const [newNode, setNewNode] = React.useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    const mouseSensor = useSensor(MouseSensor, {});
+    const mouseSensor = useSensor(MouseSensor, {
+        activationConstraint: {
+            delay: 20,
+            tolerance: 5
+        }
+    });
     const touchSensor = useSensor(TouchSensor, {
         activationConstraint: {
             delay: 5,
@@ -270,8 +275,18 @@ function App() {
             <DndContext
                 collisionDetection={pointerWithin}
                 sensors={sensors}
+                onDragOver={(e) => {
+                    store
+                        .getState()
+                        .setOverNode((e.over?.id as string) ?? null);
+                }}
                 onDragEnd={handleDragEnd}
                 onDragMove={(e) => {
+                    const mouseStart = getEventCoordinates(e.activatorEvent)!;
+                    store.getState().setMousePos({
+                        x: mouseStart.x + e.delta.x,
+                        y: mouseStart.y + e.delta.y
+                    });
                     if (e.active.data.current?.isNew) {
                         const initial = e.active.rect.current.initial!;
                         const [iniX, iniY] = normalize([

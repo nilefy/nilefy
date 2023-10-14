@@ -32,29 +32,28 @@ export const WebloomElementShadow = () => {
     const mouseStart = getEventCoordinates(activatorEvent)!;
     const mousePos = { x: mouseStart.x + delta.x, y: mouseStart.y + delta.y };
     const threshold = 5;
-    if (mousePos.y >= overDim.top) {
-        if (
-            mousePos.y <=
-            overDim.top + (overDim.bottom - overDim.top) / 2 - threshold
-        ) {
-            return (
-                <ElementShadow
-                    width={el.width}
-                    height={10}
-                    top={overDim.top - 10}
-                    left={el.x + delta.x}
-                />
-            );
-        }
+    if (
+        mousePos.y <=
+        overDim.top + (overDim.bottom - overDim.top) / 2 - threshold
+    ) {
         return (
             <ElementShadow
                 width={el.width}
-                height={el.height}
-                top={overDim.bottom}
+                height={10}
+                top={overDim.top - 10}
                 left={el.x + delta.x}
             />
         );
     }
+    return (
+        <ElementShadow
+            width={el.width}
+            height={el.height}
+            top={overDim.bottom}
+            left={el.x + delta.x}
+        />
+    );
+
     const tree = store.getState().tree;
     const parent = tree[el.id];
     const siblings = parent.nodes;

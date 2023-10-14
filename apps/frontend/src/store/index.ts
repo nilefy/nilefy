@@ -24,9 +24,14 @@ export type WebloomTree = {
 };
 interface WebloomState {
     tree: WebloomTree;
+    overNode: string | null;
+    selectedNode: string | null;
+    mousePos: { x: number; y: number };
 }
 interface WebloomActions {
     setDom: (id: string, dom: HTMLElement) => void;
+    setSelectedNode: (id: string | null) => void;
+    setOverNode: (id: string | null) => void;
     moveNode: (id: string, parentId: string, index?: number) => void;
     moveNodeIntoGrid: (
         id: string,
@@ -38,6 +43,7 @@ interface WebloomActions {
         dimensions: Partial<WebloomNodeDimensions>
     ) => void;
     resizeNode: (id: string, dimensions: WebloomNodeDimensions) => void;
+    setMousePos: (pos: { x: number; y: number }) => void;
 }
 
 interface WebloomGetters {
@@ -49,6 +55,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     (set, get) => ({
         tree: {},
         draggedNode: null,
+        overNode: null,
+        selectedNode: null,
+        mousePos: { x: 0, y: 0 },
+        setSelectedNode: (id: string | null) => {
+            set({ selectedNode: id });
+        },
+        setMousePos: (pos: { x: number; y: number }) => {
+            set({ mousePos: pos });
+        },
+        setOverNode: (id: string | null) => {
+            set({ overNode: id });
+        },
         setDom: (id: string, dom: HTMLElement) => {
             set((state) => {
                 if (!state.tree[id]) return state;
@@ -190,12 +208,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             displacement: { x: number; y: number }
         ) => {
             const state = get();
+            const over = state.overNode;
             const node = state.tree[id];
+            const mousePos = state.mousePos;
             if (!node) return state;
             const parent = state.tree['root'];
             const nodeDimensions = get().getDimensions(id);
             const left = nodeDimensions.x + displacement.x;
-            const top = nodeDimensions.y + displacement.y;
+            let top = nodeDimensions.y + displacement.y;
             const right = left + nodeDimensions.width;
             const bottom = top + nodeDimensions.height;
             let newWidth = nodeDimensions.width;
@@ -212,6 +232,21 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     bottom: otherBottom,
                     height: otherHeight
                 } = getBoundingRect(otherNodeDimensions);
+                const isOver = over === nodeId;
+                if (isOver) {
+                    if (
+                        mousePos.y <=
+                        otherTop + (otherBottom - otherTop) / 2 - 5
+                    ) {
+                        get().moveNodeIntoGrid(nodeId, {
+                            x: 0,
+                            y: -otherTop + bottom
+                        });
+                    } else {
+                        top = otherBottom;
+                    }
+                    return true;
+                }
                 const xCollision =
                     (left >= otherLeft && left <= otherRight) ||
                     (right >= otherLeft && right <= otherRight);
