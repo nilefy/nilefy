@@ -5,6 +5,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
+import { Dashboard } from './pages/dashboard/dashboard';
+import { ThemeProvider } from './components/theme-provider';
 
 // router config
 const router = createBrowserRouter([
@@ -23,9 +25,18 @@ const router = createBrowserRouter([
     element: <SignIn />,
     errorElement: <ErrorPage />,
   },
+  {
+    path: '/dashboard',
+    element: <Dashboard />,
+    errorElement: <ErrorPage />,
+  },
 ]);
 
 const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
 
-root.render(<RouterProvider router={router} />);
+root.render(
+  <ThemeProvider>
+    <RouterProvider router={router} />
+  </ThemeProvider>,
+);
