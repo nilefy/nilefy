@@ -183,6 +183,7 @@ function App() {
         console.log(wholeTree);
     }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
+        console.log(e.over.rect.left);
         if (e.active.data.current?.isNew && e.over?.id === 'root') {
             const x = e.delta.x + -e.over.rect.left || 0;
             const y = e.delta.y + e.over.rect.top || 0;
