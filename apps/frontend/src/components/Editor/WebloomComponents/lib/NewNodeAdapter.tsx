@@ -1,19 +1,22 @@
+import store from '@/store';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { nanoid } from 'nanoid';
 import { useEffect, useMemo, useRef } from 'react';
 
 type DraggableProps = {
     children: React.ReactNode;
     type: string;
-    id: string;
 };
 export const NewNodeAdapter = (props: DraggableProps) => {
-    const { id } = props;
+    const id = useRef(nanoid());
+    const wholeTree = store.getState().tree;
+    const treeLen = Object.keys(wholeTree).length;
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: id,
+        id: id.current,
         data: {
             isNew: true,
-            id: id,
+            id: id.current,
             type: props.type
         }
     });
@@ -21,7 +24,9 @@ export const NewNodeAdapter = (props: DraggableProps) => {
     useEffect(() => {
         setNodeRef(ref.current);
     }, [setNodeRef]);
-
+    useEffect(() => {
+        id.current = nanoid();
+    }, [treeLen]);
     const style = useMemo(() => {
         return {
             transform: CSS.Translate.toString(transform),
@@ -31,7 +36,7 @@ export const NewNodeAdapter = (props: DraggableProps) => {
 
     return (
         <div
-            id={`drag-${id}`}
+            id={`drag-${nanoid()}`}
             ref={ref}
             {...attributes}
             {...listeners}

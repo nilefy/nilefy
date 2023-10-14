@@ -32,7 +32,7 @@ const cursors = {
     left: 'ew-resize',
     right: 'ew-resize'
 } as const;
-const { setDimensions } = store.getState();
+const { resizeNode } = store.getState();
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
     const [resizingKey, setResizingKey] = useState<null | keyof typeof cursors>(
         null
@@ -58,25 +58,26 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     //todo change to parent when nesting is implemented
     const root = store().tree['root'];
     const ref = useRef<HTMLDivElement>(null);
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id,
-        disabled: !props.draggable,
-        data: {
-            isNew: false
-        }
-    });
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useDraggable({
+            id,
+            disabled: !props.draggable && resizingKey === null,
+            data: {
+                isNew: false
+            }
+        });
     useEffect(() => {
         setNodeRef(ref.current);
         setDropNodeRef(ref.current);
     }, [setDropNodeRef, setNodeRef]);
     const style = useMemo(() => {
         return {
-            transform: CSS.Translate.toString(transform),
             top: el.y,
             left: el.x,
             position: 'absolute',
             width: el.width,
-            height: el.height
+            height: el.height,
+            visibility: isDragging ? 'hidden' : 'visible'
         } as React.CSSProperties;
     }, [transform, el.x, el.y, el.width, el.height]);
     const handles = useMemo(() => {
@@ -92,58 +93,64 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         };
 
         return (
-            <div
-                style={{
-                    position: 'absolute',
-                    top: style.top,
-                    left: style.left,
-                    transform: style.transform
-                }}
-            >
-                {Object.entries(handlePositions).map(([key, [y, x]]) => {
-                    let left = 0;
-                    const width = parseInt(style.width?.toString() || '0');
-                    const height = parseInt(style.height?.toString() || '0');
-                    if (x === 0) {
-                        left = -handleSize / 2;
-                    } else if (x === 1) {
-                        left = width - handleSize / 2;
-                    } else {
-                        left = width / 2 - handleSize / 2;
-                    }
-                    let top = 0;
-                    if (y === 0) {
-                        top = -handleSize / 2;
-                    } else if (y === 1) {
-                        top = height - handleSize / 2;
-                    } else {
-                        top = height / 2 - handleSize / 2;
-                    }
+            !isDragging && (
+                <div
+                    className="select-none"
+                    style={{
+                        position: 'absolute',
+                        top: style.top,
+                        left: style.left,
+                        transform: style.transform
+                    }}
+                >
+                    {Object.entries(handlePositions).map(([key, [y, x]]) => {
+                        let left = 0;
+                        const width = parseInt(style.width?.toString() || '0');
+                        const height = parseInt(
+                            style.height?.toString() || '0'
+                        );
+                        if (x === 0) {
+                            left = -handleSize / 2;
+                        } else if (x === 1) {
+                            left = width - handleSize / 2;
+                        } else {
+                            left = width / 2 - handleSize / 2;
+                        }
+                        let top = 0;
+                        if (y === 0) {
+                            top = -handleSize / 2;
+                        } else if (y === 1) {
+                            top = height - handleSize / 2;
+                        } else {
+                            top = height / 2 - handleSize / 2;
+                        }
 
-                    return (
-                        <div
-                            key={key}
-                            className={`absolute ${key}`}
-                            style={{
-                                ...handleStyle,
-                                top,
-                                left,
-                                cursor: cursors[key as keyof typeof cursors]
-                            }}
-                            onMouseDown={() => {
-                                setResizingKey(key as keyof typeof cursors);
-                                setInitialDimensions({
-                                    width: el.width,
-                                    height: el.height,
-                                    x: el.x,
-                                    y: el.y
-                                });
-                            }}
-                            onMouseUp={() => setResizingKey(null)}
-                        ></div>
-                    );
-                })}
-            </div>
+                        return (
+                            <div
+                                key={key}
+                                className={`absolute ${key}`}
+                                style={{
+                                    ...handleStyle,
+                                    top,
+                                    left,
+                                    cursor: cursors[key as keyof typeof cursors]
+                                }}
+                                onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    setResizingKey(key as keyof typeof cursors);
+                                    setInitialDimensions({
+                                        width: el.width,
+                                        height: el.height,
+                                        x: el.x,
+                                        y: el.y
+                                    });
+                                }}
+                                onMouseUp={() => setResizingKey(null)}
+                            ></div>
+                        );
+                    })}
+                </div>
+            )
         );
     }, [props.resizable, style, el]);
     useEffect(() => {
@@ -161,45 +168,58 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             let newHeight = initialHeight;
             let newLeft = initialLeft;
             let newTop = initialTop;
+            const minWidth = 100;
+            const minHeight = 50;
             let [x, y] = [e.clientX, e.clientY];
             const rect = root.dom.getBoundingClientRect();
             x -= rect.left;
             y -= rect.top;
-            console.log(direction);
             if (direction.includes('top')) {
                 const diff = initialTop - y;
                 const snappedDiff =
                     Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
                 newHeight += snappedDiff;
                 newTop -= snappedDiff;
+                if (newHeight < minHeight) {
+                    newHeight = minHeight;
+                    newTop = initialTop + initialHeight - minHeight;
+                }
             }
             if (direction.includes('bottom')) {
                 const diff = y - initialBottom;
                 const snappedDiff =
                     Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
                 newHeight += snappedDiff;
+                if (newHeight < minHeight) {
+                    newHeight = minHeight;
+                }
             }
             if (direction.includes('left')) {
                 const diff = initialLeft - x;
-
                 const snappedDiff =
                     Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
                 newWidth += snappedDiff;
                 newLeft -= snappedDiff;
+                if (newWidth < minWidth) {
+                    newWidth = minWidth;
+                    newLeft = initialLeft + initialWidth - minWidth;
+                }
             }
             if (direction.includes('right')) {
                 const diff = x - initialRight;
                 const snappedDiff =
                     Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
                 newWidth += snappedDiff;
+                if (newWidth < minWidth) {
+                    newWidth = minWidth;
+                }
             }
-            setDimensions(id, {
+            resizeNode(id, {
                 width: newWidth,
                 height: newHeight,
                 x: newLeft,
                 y: newTop
             });
-            return;
         };
         const resizeEndHandler = () => {
             setResizingKey(null);
@@ -232,7 +252,13 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     ]);
     return (
         <>
-            <div {...listeners} {...attributes} style={style} ref={ref}>
+            <div
+                {...listeners}
+                {...attributes}
+                style={style}
+                ref={ref}
+                className="touch-none"
+            >
                 {props.children}
             </div>
             {handles}

@@ -2,23 +2,38 @@ import React, {
     createElement,
     useMemo,
     useEffect,
-    useLayoutEffect
+    useLayoutEffect,
+    useRef,
+    useState
 } from 'react';
-import { createSnapModifier } from '@dnd-kit/modifiers';
 
 import store, { WebloomNode, WebloomTree } from '../store';
 import { WebloomButton } from './Editor/WebloomComponents/Button';
 import { WebloomContainer } from './Editor/WebloomComponents/Container';
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import {
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    MouseSensor,
+    TouchSensor,
+    pointerWithin,
+    useSensor,
+    useSensors
+} from '@dnd-kit/core';
 
 import { WebloomContext } from './Editor/WebloomComponents/lib/WebloomContext';
 import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
 import { WebloomComponents } from './Editor/WebloomComponents';
 import NewNodeAdapter from './Editor/WebloomComponents/lib/NewNodeAdapter';
-import { nanoid } from 'nanoid';
-import { GRID_CELL_SIDE } from '@/lib/constants';
+
 import { useSetDom } from '@/hooks/useSetDom';
-import { restrictToParentElementUnlessNew, snapModifier } from '@/lib/utils';
+import {
+    normalize,
+    restrictToParentElementUnlessNew,
+    snapModifier
+} from '@/lib/utils';
+import { WebloomElementShadow } from './Editor/WebloomComponents/lib/WebloomElementShadow';
+import { getEventCoordinates } from '@dnd-kit/utilities';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -184,17 +199,31 @@ store.setState((state) => {
 });
 function App() {
     const wholeTree = store((state) => state.tree);
-    const [draggedId, setDraggedId] = React.useState<string | null>(null);
+    const [newNode, setNewNode] = React.useState(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const mouseSensor = useSensor(MouseSensor, {});
+    const touchSensor = useSensor(TouchSensor, {
+        activationConstraint: {
+            delay: 5,
+            tolerance: 5
+        }
+    });
+    const sensors = useSensors(mouseSensor, touchSensor);
     useEffect(() => {
         console.log(wholeTree);
     }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
-        if (e.active.data.current?.isNew && e.over?.id === 'root') {
-            //normalize delta to GRID_CELL_SIDE
-            const x = e.delta.x + -e.over.rect.left || 0;
-            const y = e.delta.y + e.over.rect.top || 0;
-            const width = e.active.rect.current.initial?.width || 20;
-            const height = e.active.rect.current.initial?.height || 10;
+        if (e.active.data.current?.isNew) {
+            if (!e.over || e.over.id !== 'root') return;
+            const initial = e.active.rect.current.initial!;
+            const [iniX, iniY] = normalize([initial.left, initial.top]);
+            const boundingRect = e.over.rect;
+            //  container's displacement + distance dragged + dragged element's initial displacement
+
+            const x = boundingRect.left + e.delta.x + iniX;
+            const y = boundingRect.top + e.delta.y + iniY;
+            const width = 180;
+            const height = 60;
             const type = e.active.data.current
                 .type as keyof typeof WebloomComponents;
             const node: WebloomNode = {
@@ -210,46 +239,101 @@ function App() {
                 width: width,
                 height: height
             };
+            setNewNode(null);
             store.getState().addNode(node, 'root');
         } else {
             const id = e.active.id;
-
+            if (!wholeTree[id]) return;
             //get transalted distance
             const x = e.delta.x;
             const y = e.delta.y;
-            for (const collision of e.collisions || []) {
-                if (collision.id !== 'root' && collision.id !== e.active.id)
-                    return;
-            }
             //update store
-            store.setState((state) => {
-                state.tree[id].x += x;
-                state.tree[id].y += y;
-                return state;
-            });
+            store.getState().moveNodeIntoGrid(id as string, { x, y });
         }
-        setDraggedId(null);
     };
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const dom = wholeTree.root.dom;
+            if (!dom) return;
+            const boundingRect = dom.getBoundingClientRect();
+            const x = boundingRect.left;
+            const y = boundingRect.top;
+            setMousePos({ x: e.clientX - x, y: e.clientY - y });
+        };
+        window.addEventListener('pointermove', handleMouseMove);
+        return () => {
+            window.removeEventListener('pointermove', handleMouseMove);
+        };
+    }, [wholeTree.root.dom]);
     return (
         <div className="isolate flex h-full w-full">
             <DndContext
-                onDragStart={(e) => {
-                    setDraggedId(e.active.id as string);
-                }}
+                collisionDetection={pointerWithin}
+                sensors={sensors}
                 onDragEnd={handleDragEnd}
+                onDragMove={(e) => {
+                    if (e.active.data.current?.isNew) {
+                        const initial = e.active.rect.current.initial!;
+                        const [iniX, iniY] = normalize([
+                            initial.left,
+                            initial.top
+                        ]);
+
+                        //  container's displacement + distance dragged + dragged element's initial displacement
+                        const [x, y] = normalize([mousePos.x, mousePos.y]);
+                        const height = 60;
+                        const root = wholeTree.root;
+
+                        const width = Math.min(
+                            Math.max(root.width - x, 0),
+                            180
+                        );
+                        setNewNode((prev) => ({
+                            ...prev,
+                            x,
+                            y,
+                            width,
+                            height
+                        }));
+                    }
+                }}
+                onDragStart={(e) => {
+                    if (e.active.data.current?.isNew) {
+                        setNewNode({
+                            type: e.active.data.current.type,
+                            id: e.active.data.current.id,
+                            x: 0,
+                            y: 0,
+                            width: 0,
+                            height: 0,
+                            isNew: true
+                        });
+                    }
+                }}
                 modifiers={[restrictToParentElementUnlessNew, snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
+                <div className="h-full w-4/5 bg-gray-900 ">
+                    <WebloomElementShadow />
+                    {/*main*/}
+                    <WebloomRoot />
+                </div>
                 {/*sidebar*/}
-
+                <div
+                // style={{
+                //     top: newNode?.y,
+                //     left: newNode?.x,
+                //     position: 'absolute',
+                //     zIndex: 1000,
+                //     backgroundColor: 'black',
+                //     width: newNode?.width,
+                //     height: newNode?.height
+                // }}
+                ></div>
                 <div className="h-full w-1/5 bg-gray-200">
                     {Object.entries(WebloomComponents).map(
                         ([name, component]) => {
                             return (
-                                <NewNodeAdapter
-                                    type={name}
-                                    key={name}
-                                    id={nanoid()}
-                                >
+                                <NewNodeAdapter type={name} key={name}>
                                     {component.component(
                                         component.initialProps
                                     )}
@@ -257,10 +341,6 @@ function App() {
                             );
                         }
                     )}
-                </div>
-                <div className="h-full w-4/5 bg-gray-900">
-                    {/*main*/}
-                    <WebloomRoot />
                 </div>
             </DndContext>
         </div>

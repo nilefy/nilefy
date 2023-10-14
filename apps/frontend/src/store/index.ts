@@ -1,4 +1,4 @@
-import { WebloomNodeDimensions, getDOMInfo } from '../lib/utils';
+import { getBoundingRect } from '@/lib/utils';
 import { create } from 'zustand';
 
 export type WebloomNode = {
@@ -11,6 +11,8 @@ export type WebloomNode = {
     parent: string | null;
     props: Record<string, unknown>;
     isCanvas?: boolean;
+} & WebloomNodeDimensions;
+export type WebloomNodeDimensions = {
     x: number;
     y: number;
     width: number;
@@ -26,14 +28,22 @@ interface WebloomState {
 interface WebloomActions {
     setDom: (id: string, dom: HTMLElement) => void;
     moveNode: (id: string, parentId: string, index?: number) => void;
+    moveNodeIntoGrid: (
+        id: string,
+        displacement: { x: number; y: number }
+    ) => void;
     addNode: (node: WebloomNode, parentId: string) => void;
-    setDimensions: (id: string, dimensions: WebloomNodeDimensions) => void;
+    setDimensions: (
+        id: string,
+        dimensions: Partial<WebloomNodeDimensions>
+    ) => void;
+    resizeNode: (id: string, dimensions: WebloomNodeDimensions) => void;
 }
 
 interface WebloomGetters {
     getCanvas: (id: string) => WebloomNode | null;
     getNode: (id: string) => WebloomNode | null;
-    getChildDimensions: (id: string) => WebloomNodeDimensions;
+    getDimensions: (id: string) => WebloomNodeDimensions;
 }
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     (set, get) => ({
@@ -65,7 +75,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 return { tree: newTree };
             });
         },
-        moveNode: (id: string, parentId: string, index = 1) => {
+        moveNode: (id: string, parentId: string) => {
             set((state) => {
                 const oldParentId = state.tree[id].parent;
                 if (parentId === oldParentId || id === parentId) return state;
@@ -105,8 +115,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             }
             return null;
         },
-        getChildDimensions: (id: string): WebloomNodeDimensions => {
-            return getDOMInfo(get().getNode(id)?.dom as HTMLElement);
+        getDimensions: (id: string): WebloomNodeDimensions => {
+            const node = get().getNode(id)!;
+            return {
+                x: node.x,
+                y: node.y,
+                width: node.width,
+                height: node.height
+            };
         },
         setDimensions(id, dimensions) {
             set((state) => {
@@ -120,8 +136,112 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         }
                     }
                 };
-
                 return newState;
+            });
+        },
+        resizeNode(id, dimensions) {
+            const state = get();
+            const node = state.tree[id];
+            if (!node) return state;
+            const parent = state.tree['root'];
+            const {
+                left,
+                top,
+                right,
+                bottom,
+                width: newWidth,
+                height: newHeight
+            } = getBoundingRect(dimensions);
+            parent.nodes.forEach((nodeId) => {
+                const otherNode = state.tree[nodeId];
+                if (!otherNode) return false;
+                if (otherNode.id === id) return false;
+                const otherNodeDimensions = get().getDimensions(nodeId);
+                const {
+                    left: otherLeft,
+                    top: otherTop,
+                    right: otherRight,
+                    bottom: otherBottom
+                } = getBoundingRect(otherNodeDimensions);
+                const xCollision =
+                    (left >= otherLeft && left <= otherRight) ||
+                    (right >= otherLeft && right <= otherRight);
+                const yCollision =
+                    (top >= otherTop && top <= otherBottom) ||
+                    (bottom >= otherTop && bottom <= otherBottom);
+
+                if (xCollision && yCollision) {
+                    get().moveNodeIntoGrid(nodeId, {
+                        x: 0,
+                        y: -otherTop + bottom
+                    });
+                }
+            });
+
+            return get().setDimensions(id, {
+                x: left,
+                y: top,
+                width: newWidth,
+                height: newHeight
+            });
+        },
+        moveNodeIntoGrid: (
+            id: string,
+            displacement: { x: number; y: number }
+        ) => {
+            const state = get();
+            const node = state.tree[id];
+            if (!node) return state;
+            const parent = state.tree['root'];
+            const nodeDimensions = get().getDimensions(id);
+            const left = nodeDimensions.x + displacement.x;
+            const top = nodeDimensions.y + displacement.y;
+            const right = left + nodeDimensions.width;
+            const bottom = top + nodeDimensions.height;
+            let newWidth = nodeDimensions.width;
+            //check for collisions
+            parent.nodes.forEach((nodeId) => {
+                const otherNode = state.tree[nodeId];
+                if (!otherNode) return false;
+                if (otherNode.id === id) return false;
+                const otherNodeDimensions = get().getDimensions(nodeId);
+                const {
+                    left: otherLeft,
+                    top: otherTop,
+                    right: otherRight,
+                    bottom: otherBottom,
+                    height: otherHeight
+                } = getBoundingRect(otherNodeDimensions);
+                const xCollision =
+                    (left >= otherLeft && left <= otherRight) ||
+                    (right >= otherLeft && right <= otherRight);
+                const justAbove = bottom === otherTop;
+                const justBelow = top === otherBottom;
+                const justLeft = right === otherLeft;
+                const justRight = left === otherRight;
+                const yCollision =
+                    (top >= otherTop && top <= otherBottom) ||
+                    (bottom >= otherTop && bottom <= otherBottom);
+                if (xCollision && yCollision) {
+                    if (
+                        top <= otherTop &&
+                        !(justLeft || justRight) &&
+                        otherHeight >= nodeDimensions.height
+                    ) {
+                        get().moveNodeIntoGrid(nodeId, {
+                            x: 0,
+                            y: -otherTop + bottom
+                        });
+                    } else if (left < otherLeft && !(justAbove || justBelow)) {
+                        newWidth = otherLeft - left;
+                    }
+                }
+            });
+
+            return get().setDimensions(id, {
+                x: left,
+                y: top,
+                width: newWidth
             });
         }
     })
