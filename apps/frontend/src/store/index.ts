@@ -207,6 +207,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             id: string,
             displacement: { x: number; y: number }
         ) => {
+            if (displacement.x === 0 && displacement.y === 0) return;
             const state = get();
             const over = state.overNode;
             const node = state.tree[id];
@@ -214,16 +215,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             if (!node) return state;
             const parent = state.tree['root'];
             const nodeDimensions = get().getDimensions(id);
-            const left = nodeDimensions.x + displacement.x;
+            let left = nodeDimensions.x + displacement.x;
             let top = nodeDimensions.y + displacement.y;
+
             const right = left + nodeDimensions.width;
             const bottom = top + nodeDimensions.height;
             let newWidth = nodeDimensions.width;
             //check for collisions
             parent.nodes.forEach((nodeId) => {
+                if (nodeId === id) return false;
                 const otherNode = state.tree[nodeId];
                 if (!otherNode) return false;
-                if (otherNode.id === id) return false;
                 const otherNodeDimensions = get().getDimensions(nodeId);
                 const {
                     left: otherLeft,
@@ -250,25 +252,28 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 const xCollision =
                     (left >= otherLeft && left <= otherRight) ||
                     (right >= otherLeft && right <= otherRight);
-                const justAbove = bottom === otherTop;
-                const justBelow = top === otherBottom;
-                const justLeft = right === otherLeft;
-                const justRight = left === otherRight;
+
                 const yCollision =
                     (top >= otherTop && top <= otherBottom) ||
                     (bottom >= otherTop && bottom <= otherBottom);
+                if (top < otherBottom && top >= otherTop) {
+                    if (left < otherLeft && left + newWidth > otherLeft) {
+                        newWidth = Math.min(newWidth, otherLeft - left);
+                    } else if (left > otherLeft && left < otherRight) {
+                        const temp = left;
+                        left = otherRight;
+                        newWidth += temp - left;
+                    }
+                }
                 if (xCollision && yCollision) {
                     if (
-                        top <= otherTop &&
-                        !(justLeft || justRight) &&
+                        top < otherTop &&
                         otherHeight >= nodeDimensions.height
                     ) {
                         get().moveNodeIntoGrid(nodeId, {
                             x: 0,
                             y: -otherTop + bottom
                         });
-                    } else if (left < otherLeft && !(justAbove || justBelow)) {
-                        newWidth = otherLeft - left;
                     }
                 }
             });

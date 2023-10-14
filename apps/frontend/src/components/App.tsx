@@ -255,6 +255,7 @@ function App() {
             //update store
             store.getState().moveNodeIntoGrid(id as string, { x, y });
         }
+        store.getState().setOverNode(null);
     };
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -276,6 +277,7 @@ function App() {
                 collisionDetection={pointerWithin}
                 sensors={sensors}
                 onDragOver={(e) => {
+                    if (e.active.id === e.over?.id) return;
                     store
                         .getState()
                         .setOverNode((e.over?.id as string) ?? null);

@@ -16,53 +16,78 @@ export const WebloomElementShadow = () => {
         y: translated.top - initial.top
     };
 
-    if (over.id === 'root' || over.id === active.id) {
-        return (
-            <ElementShadow
-                width={el.width}
-                height={el.height}
-                top={el.y + delta.y}
-                left={el.x + delta.x}
-            />
-        );
-    }
     const overEl = store.getState().tree[over.id];
     const overDim = getBoundingRect(overEl);
     const activeDim = getBoundingRect(el);
     const mouseStart = getEventCoordinates(activatorEvent)!;
     const mousePos = { x: mouseStart.x + delta.x, y: mouseStart.y + delta.y };
     const threshold = 5;
-    if (
-        mousePos.y <=
-        overDim.top + (overDim.bottom - overDim.top) / 2 - threshold
-    ) {
+    const tree = store.getState().tree;
+    if (!el.parent) return null;
+    const parent = tree[el.parent];
+    const siblings = parent.nodes;
+    let newWidth = el.width;
+    console.log(siblings);
+    let newLeft = el.x + delta.x;
+    const newTop = el.y + delta.y;
+    const newBottom = newTop + el.height;
+    for (const sibling of siblings) {
+        if (sibling === el.id) {
+            continue;
+        }
+        const otherNode = tree[sibling];
+        const otherDim = getBoundingRect(otherNode);
+
+        if (newTop < otherDim.bottom && newTop >= otherDim.top) {
+            if (newLeft < otherDim.left && newLeft + newWidth > otherDim.left) {
+                newWidth = Math.min(newWidth, otherDim.left - newLeft);
+                continue;
+            }
+            if (newLeft > otherDim.left && newLeft < otherDim.right) {
+                const temp = newLeft;
+                newLeft = otherDim.right;
+                newWidth += temp - newLeft;
+            }
+        }
+    }
+    if (over.id === 'root' || over.id === active.id) {
+        return (
+            <ElementShadow
+                width={newWidth}
+                height={el.height}
+                top={newTop}
+                left={newLeft}
+            />
+        );
+    } else if (overEl) {
+        if (
+            mousePos.y <=
+            overDim.top + (overDim.bottom - overDim.top) / 2 - threshold
+        ) {
+            return (
+                <ElementShadow
+                    width={el.width}
+                    height={10}
+                    top={overDim.top - 10}
+                    left={newLeft}
+                />
+            );
+        }
         return (
             <ElementShadow
                 width={el.width}
-                height={10}
-                top={overDim.top - 10}
-                left={el.x + delta.x}
+                height={el.height}
+                top={overDim.bottom}
+                left={newLeft}
             />
         );
     }
     return (
         <ElementShadow
-            width={el.width}
+            width={newWidth}
             height={el.height}
-            top={overDim.bottom}
-            left={el.x + delta.x}
-        />
-    );
-
-    const tree = store.getState().tree;
-    const parent = tree[el.id];
-    const siblings = parent.nodes;
-    return (
-        <ElementShadow
-            width={el.width}
-            height={el.height}
-            top={el.y + delta.y}
-            left={el.x + delta.x}
+            top={newTop}
+            left={newLeft}
         />
     );
 };
