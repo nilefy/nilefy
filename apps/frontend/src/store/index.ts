@@ -22,11 +22,13 @@ export type WebloomTree = {
 };
 interface WebloomState {
     tree: WebloomTree;
+    selectedNodes:Record<string,boolean>;
 }
 interface WebloomActions {
     setDom: (id: string, dom: HTMLElement) => void;
     moveNode: (id: string, parentId: string, index?: number) => void;
     addNode: (node: WebloomNode, parentId: string) => void;
+    addSelectedNode: (id:string) => void;
     setDimensions: (id: string, dimensions: WebloomNodeDimensions) => void;
 }
 
@@ -38,6 +40,7 @@ interface WebloomGetters {
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     (set, get) => ({
         tree: {},
+        selectedNodes: {},
         draggedNode: null,
         setDom: (id: string, dom: HTMLElement) => {
             set((state) => {
@@ -57,6 +60,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     }
                 };
                 return { tree: newTree };
+            });
+        },
+        addSelectedNode: (id: string) => {
+            set((state) => {
+                const newTree = {
+                    
+                    [id]: true,
+                   
+                };
+                console.log(id)
+                return { selectedNodes: newTree };
             });
         },
         moveNode: (id: string, parentId: string, index = 1) => {

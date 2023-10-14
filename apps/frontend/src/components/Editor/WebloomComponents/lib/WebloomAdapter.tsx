@@ -10,6 +10,7 @@ type WebloomAdapterProps = {
     draggable?: boolean;
     droppable?: boolean;
     resizable?: boolean;
+    
 };
 
 const { setDimensions } = store.getState();
@@ -20,11 +21,15 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         disabled: !props.droppable
     });
     const el = store().tree[id];
+    const selectedTree = store.getState().selectedNodes;
     const ref = useRef<HTMLDivElement>(null);
     const { attributes, listeners, setNodeRef } = useDraggable({
         id,
         disabled: !props.draggable
     });
+    useEffect(() => {
+        ref.current?.addEventListener("mouseup",()=>{console.log(ref.current?.children[0]); store.getState().addSelectedNode(id);ref.current?.children[0].classList.add('red')},true)
+    }, []);
     useEffect(() => {
         setNodeRef(ref.current);
         setDropNodeRef(ref.current);
@@ -65,6 +70,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 disableDragging={!props.draggable}
                 dragGrid={[GRID_CELL_SIDE, GRID_CELL_SIDE]}
                 resizeGrid={[GRID_CELL_SIDE, GRID_CELL_SIDE]}
+                onClick={()=>{console.log("bla"); store.getState().addSelectedNode(id)}}
+                resizeHandleWrapperClass='p-10'
             >
                 {
                     <div
@@ -72,6 +79,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                         {...listeners}
                         {...attributes}
                         ref={ref}
+                       
                     >
                         {props.children}
                     </div>

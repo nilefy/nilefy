@@ -6,6 +6,7 @@ type DraggableProps = {
     children: React.ReactNode;
     type: string;
     id: string;
+   
 };
 export const NewNodeAdapter = (props: DraggableProps) => {
     const { id } = props;
@@ -36,7 +37,8 @@ export const NewNodeAdapter = (props: DraggableProps) => {
             {...attributes}
             {...listeners}
             style={style}
-            className="z-50"
+            className="z-50" 
+           
         >
             {props.children}
         </div>

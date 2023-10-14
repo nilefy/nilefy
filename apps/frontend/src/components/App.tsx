@@ -14,6 +14,7 @@ import { WebloomAdapter } from './Editor/WebloomComponents/lib/WebloomAdapter';
 import { WebloomComponents } from './Editor/WebloomComponents';
 import NewNodeAdapter from './Editor/WebloomComponents/lib/NewNodeAdapter';
 import { nanoid } from 'nanoid';
+import ElementEditorAdapter from './Editor/WebloomComponents/lib/ElementEditorAdapter';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -172,16 +173,40 @@ const initTree: WebloomTree = {
         y: 40
     }
 };
+const button3: WebloomTree = {
+    root: {
+        id: 'button3',
+        name: 'button3',
+        type: WebloomButton,
+        nodes: [],
+        parent: 'root',
+        dom: null,
+        props: {
+            text: 'button3',
+            color: 'green'
+        },
+        height: 40,
+        width: 100,
+        x: 0,
+        y: 40
+    }};
 store.setState((state) => {
-    state.tree = initTree;
+   state.tree = initTree;
     return state;
 });
+// store.setState((state) => {
+//     state.selectedNodes = button3;
+//     store.getState().addSelectedNode(button3.root, 'root');
+//      return state;
+//  });
 
 function App() {
     const wholeTree = store((state) => state.tree);
+    const selectedTree = store((state) => state.selectedNodes);
     useEffect(() => {
         console.log(wholeTree);
-    }, [wholeTree]);
+        console.log(selectedTree);
+    }, [wholeTree,selectedTree]);
     const handleDragEnd = (e: DragEndEvent) => {
         console.log(e.over.rect.left);
         if (e.active.data.current?.isNew && e.over?.id === 'root') {
@@ -205,8 +230,11 @@ function App() {
                 height: height
             };
             store.getState().addNode(node, 'root');
+           
         }
     };
+
+    
     return (
         <div className="isolate flex h-full w-full">
             <DndContext
@@ -214,7 +242,7 @@ function App() {
 
                 //todo: may need to change this when we have nested containers and stuff
             >
-                {/*sidebar*/}
+              
 
                 <div className="h-full w-1/5 bg-gray-200">
                     {Object.entries(WebloomComponents).map(
@@ -224,6 +252,7 @@ function App() {
                                     type={name}
                                     key={name}
                                     id={nanoid()}
+                                   
                                 >
                                     {component.component(
                                         component.initialProps
@@ -237,6 +266,9 @@ function App() {
                     {/*main*/}
                     <WebloomRoot />
                 </div>
+                <ElementEditorAdapter id={selectedTree}>
+                    {selectedTree}
+                </ElementEditorAdapter>
             </DndContext>
         </div>
     );
