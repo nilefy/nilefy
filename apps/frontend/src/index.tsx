@@ -11,7 +11,20 @@ import { ThemeProvider } from './components/theme-provider';
 // router config
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: '/:workspaceId',
+    element: <Dashboard />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        // TODO: remove this any bitch
+        path: ':any',
+        element: <div></div>,
+      },
+    ],
+  },
+  //TODO: move this into the dashbaord
+  {
+    path: '/edit',
     element: <App />,
     errorElement: <ErrorPage />,
   },
@@ -23,11 +36,6 @@ const router = createBrowserRouter([
   {
     path: '/signin',
     element: <SignIn />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/dashboard',
-    element: <Dashboard />,
     errorElement: <ErrorPage />,
   },
 ]);

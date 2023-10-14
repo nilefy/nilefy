@@ -1,5 +1,5 @@
 import { ModeToggle } from '@/components/mode-toggle';
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useParams } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,13 +8,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Edit, ChevronDown, Plus } from 'lucide-react';
+import { Edit, ChevronDown, Plus, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -25,13 +24,27 @@ import { useForm } from 'react-hook-form';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 /**
  * depends that the length of `str` is atleast 1
@@ -139,8 +152,14 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
  * detect current workspace from the url
  */
 function SelectWorkSpace(props: SelectWorkSpaceProps) {
-  // TODO: change to detect based on the url
-  const currentWorkspce = props.workspaces[0];
+  const { workspaceId } = useParams();
+  if (workspaceId === undefined) {
+    throw new Error('must have active workspace id');
+  }
+  const currentWorkspce = props.workspaces.find((i) => i.id === workspaceId);
+  if (currentWorkspce === undefined) {
+    throw new Error('Not Found');
+  }
 
   return (
     <DropdownMenu>
@@ -161,7 +180,7 @@ function SelectWorkSpace(props: SelectWorkSpaceProps) {
                 <AvatarImage src={workspace.imageUrl} />
                 <AvatarFallback>{getInitials(workspace.name)}</AvatarFallback>
               </Avatar>
-              <Link to={`${workspace.id}`}>{workspace.name}</Link>
+              <Link to={`/${workspace.id}`}>{workspace.name}</Link>
             </DropdownMenuItem>
           );
         })}
@@ -172,7 +191,127 @@ function SelectWorkSpace(props: SelectWorkSpaceProps) {
   );
 }
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  status: 'active' | 'invited' | 'archived';
+  imageUrl?: string;
+};
+
+export function UsersManagement() {
+  // TODO: convert to data fetching
+  const users = useMemo<User[]>(
+    () => [
+      { id: '1', name: 'nagy nabil 1', email: 'nagy@nagy', status: 'active' },
+      { id: '2', name: 'nagy nabil 2', email: 'nagy@nagy', status: 'active' },
+      { id: '3', name: 'nagy nabil 3', email: 'nagy@nagy', status: 'active' },
+    ],
+    [],
+  );
+
+  return (
+    <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
+      <div className="flex w-full justify-between">
+        <p>{users.length} users</p>
+        {/*TODO: remove the button and add ui to add users*/}
+        <Button>
+          <Users />
+          Add users
+        </Button>
+      </div>
+      <div className="bg-primary/5 flex w-full flex-col justify-between p-2">
+        <div className="flex gap-4">
+          <span>Showing</span>
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue defaultValue="all" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="invited">Invited</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input placeholder="search by name or email" />
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">Name</TableHead>
+              <TableHead>email</TableHead>
+              <TableHead>statue</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.status}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+// type BuiltinPermissions =
+// export type Group = {
+//   id: string;
+//   name: string;
+//   users: User[];
+//   // permissions:
+// };
+//
+// export function GroupManagement() {
+//   // TODO: convert to data fetching
+//   const groups = useMemo<Group[]>(
+//     () => [
+//       { id: '1', name: 'nagy nabil 1', users: [] },
+//       { id: '2', name: 'nagy nabil 2', users: [] },
+//       { id: '3', name: 'nagy nabil 3', users: [] },
+//     ],
+//     [],
+//   );
+//
+//   return (
+//     <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
+//       <div className="flex w-full justify-between">
+//         <p>{groups.length} groups</p>
+//         {/*TODO: remove the button and add ui to add users*/}
+//         <Button>
+//           <Users />
+//           Add new group
+//         </Button>
+//       </div>
+//       <div className="bg-primary/5 flex w-full justify-between p-2">
+//         <div className="flex flex-col gap-4">
+//           {groups.map((group) => (
+//             <NavLink key={group.id} to="">
+//               {group.name}
+//             </NavLink>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+const workspacePaths = [
+  {
+    name: 'Users',
+    path: '',
+  },
+  { name: 'Groups', path: 'groups' },
+];
+
 export function Dashboard() {
+  // TODO: convert to data fetching
   const workspaces: SelectWorkSpaceProps['workspaces'] = useMemo(() => {
     return [
       { id: 'nnnnn', name: 'nagy nabil' },
@@ -180,16 +319,30 @@ export function Dashboard() {
       { id: 'aaa', name: 'Ahmed Azzam' },
     ];
   }, []);
+
   return (
-    <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-3">
-      <h2>WorkSpace Settings</h2>
-      <nav className="flex flex-col gap-3">
-        <Link to="">Users</Link>
-        <Link to="">Groups</Link>
-      </nav>
-      <ModeToggle />
-      {/*always show workspace*/}
-      <SelectWorkSpace workspaces={workspaces} />
+    <div className="flex h-screen w-screen">
+      <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
+        <h2 className="text-3xl">WorkSpace Settings</h2>
+        <nav className="flex flex-col gap-3">
+          {workspacePaths.map((path) => (
+            <NavLink
+              key={path.path}
+              to={path.path}
+              className={({ isActive }) => {
+                return `p-3 ${isActive ? 'bg-primary/10' : ''}`;
+              }}
+              end
+            >
+              {path.name}
+            </NavLink>
+          ))}
+        </nav>
+        <ModeToggle />
+        {/*always show workspace*/}
+        <SelectWorkSpace workspaces={workspaces} />
+      </div>
+      <UsersManagement />
     </div>
   );
 }
