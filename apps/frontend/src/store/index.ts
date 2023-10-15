@@ -60,8 +60,8 @@ function checkOverlap(
     }
 ): boolean {
     return (
-        a.left <= b.right &&
-        b.left <= a.right &&
+        a.left < b.right &&
+        b.left < a.right &&
         a.top < b.bottom &&
         b.top < a.bottom
     );
@@ -278,19 +278,15 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     }
                     return true;
                 }
-                console.log({
-                    topIntersection:
-                        bottom >= otherTop && bottom <= otherBottom,
-                    bottomIntersection: top < otherBottom && top >= otherTop,
-                    leftIntersection: otherLeft >= left && otherLeft <= right,
-                    rightIntersection: left >= otherLeft && left <= otherRight
-                });
+
                 if (top < otherBottom && top >= otherTop) {
                     console.log('here');
                     if (left < otherLeft && left + newWidth > otherLeft) {
-                        //todo newWidth may be 0 in this case use minWidth instead
-                        newWidth = Math.min(newWidth, otherLeft - left);
+                        //todo use min width instead of 100
+                        console.log('here1');
+                        newWidth = Math.min(newWidth, otherLeft - left, 100);
                     } else if (left > otherLeft && left < otherRight) {
+                        console.log('here2');
                         const temp = left;
                         left = otherRight;
                         newWidth += temp - left;
