@@ -249,13 +249,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     }
                     return true;
                 }
-                const xCollision =
-                    (left >= otherLeft && left <= otherRight) ||
-                    (right >= otherLeft && right <= otherRight);
 
-                const yCollision =
-                    (top >= otherTop && top <= otherBottom) ||
-                    (bottom >= otherTop && bottom <= otherBottom);
                 if (top < otherBottom && top >= otherTop) {
                     if (left < otherLeft && left + newWidth > otherLeft) {
                         newWidth = Math.min(newWidth, otherLeft - left);
@@ -264,17 +258,16 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         left = otherRight;
                         newWidth += temp - left;
                     }
-                }
-                if (xCollision && yCollision) {
-                    if (
-                        top < otherTop &&
-                        otherHeight >= nodeDimensions.height
-                    ) {
-                        get().moveNodeIntoGrid(nodeId, {
-                            x: 0,
-                            y: -otherTop + bottom
-                        });
-                    }
+                } else if (
+                    bottom >= otherTop &&
+                    bottom <= otherBottom &&
+                    ((otherLeft >= left && otherLeft <= right) ||
+                        (left >= otherLeft && left <= otherRight))
+                ) {
+                    get().moveNodeIntoGrid(nodeId, {
+                        x: 0,
+                        y: -otherTop + bottom
+                    });
                 }
             });
 

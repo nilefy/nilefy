@@ -30,6 +30,7 @@ export const WebloomElementShadow = () => {
     console.log(siblings);
     let newLeft = el.x + delta.x;
     const newTop = el.y + delta.y;
+    const oldLeft = el.x + delta.x;
     const newBottom = newTop + el.height;
     for (const sibling of siblings) {
         if (sibling === el.id) {
@@ -69,7 +70,7 @@ export const WebloomElementShadow = () => {
                     width={el.width}
                     height={10}
                     top={overDim.top - 10}
-                    left={newLeft}
+                    left={oldLeft}
                 />
             );
         }
@@ -78,7 +79,7 @@ export const WebloomElementShadow = () => {
                 width={el.width}
                 height={el.height}
                 top={overDim.bottom}
-                left={newLeft}
+                left={oldLeft}
             />
         );
     }
