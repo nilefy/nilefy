@@ -259,8 +259,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         newWidth += temp - left;
                     }
                 } else if (
-                    bottom >= otherTop &&
-                    bottom <= otherBottom &&
+                    ((bottom >= otherTop && bottom <= otherBottom) ||
+                        (top <= otherTop && bottom >= otherBottom)) &&
                     ((otherLeft >= left && otherLeft <= right) ||
                         (left >= otherLeft && left <= otherRight))
                 ) {
