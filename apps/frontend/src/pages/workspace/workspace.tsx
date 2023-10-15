@@ -2,7 +2,6 @@ import {
   SelectWorkSpace,
   SelectWorkSpaceProps,
 } from '@/components/selectWorkspace';
-import { Cog, Layout } from 'lucide-react';
 import { useMemo } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 

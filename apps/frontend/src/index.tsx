@@ -10,6 +10,7 @@ import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
 import { GroupManagement, GroupsManagement } from './pages/workspace/group';
 import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
+import { ProfileSettings } from './pages/profile/settings';
 
 // router config
 const router = createBrowserRouter([
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '', element: <App /> },
+      { path: 'profile-settings', element: <ProfileSettings /> },
       {
         path: 'workspace-settings',
         element: <WorkspaceSettingsLayout />,

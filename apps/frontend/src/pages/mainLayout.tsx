@@ -1,6 +1,9 @@
 import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { Wind, Layout, Cog } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getInitials } from '@/utils/avatar';
+import { User } from './workspace/users';
 
 const dashboardPaths = [
   {
@@ -17,6 +20,13 @@ const dashboardPaths = [
 
 export function Dashboard() {
   const { workspaceId } = useParams();
+  // TODO: change to real authed user
+  const user: User = {
+    id: 'nagy',
+    name: 'nagy',
+    email: 'nagy@nagy',
+    status: 'active',
+  };
 
   return (
     <div className="flex h-screen w-screen">
@@ -34,8 +44,14 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
-        <div className="mt-auto flex flex-col">
+        <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
+          <NavLink to="profile-settings">
+            <Avatar className="mr-2">
+              <AvatarImage src={user.imageUrl} />
+              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            </Avatar>
+          </NavLink>
         </div>
       </div>
 
