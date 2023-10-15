@@ -1,3 +1,4 @@
+import { GRID_CELL_SIDE } from '@/lib/constants';
 import { getBoundingRect } from '@/lib/utils';
 import { create } from 'zustand';
 
@@ -282,14 +283,22 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 if (top < otherBottom && top >= otherTop) {
                     console.log('here');
                     if (left < otherLeft && left + newWidth > otherLeft) {
-                        //todo use min width instead of 100
                         console.log('here1');
-                        newWidth = Math.min(newWidth, otherLeft - left, 100);
+                        newWidth = Math.min(newWidth, otherLeft - left);
+                        //todo replace 100 with min width
+                        if (newWidth < 100) {
+                            left = otherLeft - 100;
+                            newWidth = 100;
+                        }
                     } else if (left > otherLeft && left < otherRight) {
                         console.log('here2');
                         const temp = left;
                         left = otherRight;
                         newWidth += temp - left;
+                        //todo replace 100 with min width
+                        if (newWidth < 100) {
+                            newWidth = 100;
+                        }
                     }
                 } else if (
                     checkOverlap(
