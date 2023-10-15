@@ -1,5 +1,4 @@
-import { ModeToggle } from '@/components/mode-toggle';
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +8,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Edit, ChevronDown, Plus } from 'lucide-react';
-import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -32,14 +30,16 @@ import {
 import { Input } from '@/components/ui/input';
 
 /**
- * depends that the length of `str` is atleast 1
+ * depends that the length of `str` is atleast 1 and split by spaces
+ *
+ * TODO: handle other spliters than space
  */
 function getInitials(str: string) {
   const splits = str.split(' ', 2);
   return `${splits[0][0]}${splits[1][0] ?? ''}`;
 }
 
-type SelectWorkSpaceProps = {
+export type SelectWorkSpaceProps = {
   /**
    * all workspaces available to the user
    */
@@ -136,7 +136,7 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
 /**
  * detect current workspace from the url
  */
-function SelectWorkSpace(props: SelectWorkSpaceProps) {
+export function SelectWorkSpace(props: SelectWorkSpaceProps) {
   const { workspaceId } = useParams();
   if (workspaceId === undefined) {
     throw new Error('must have active workspace id');
@@ -173,50 +173,5 @@ function SelectWorkSpace(props: SelectWorkSpaceProps) {
         <WorkspaceMetaDialog insert={true} />
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-const workspacePaths = [
-  {
-    name: 'Users',
-    path: '',
-  },
-  { name: 'Groups', path: 'groups' },
-];
-
-export function Dashboard() {
-  // TODO: convert to data fetching
-  const workspaces: SelectWorkSpaceProps['workspaces'] = useMemo(() => {
-    return [
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'aaa', name: 'Ahmed Azzam' },
-    ];
-  }, []);
-
-  return (
-    <div className="flex h-screen w-screen">
-      <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
-        <h2 className="text-3xl">WorkSpace Settings</h2>
-        <nav className="flex flex-col gap-3">
-          {workspacePaths.map((path) => (
-            <NavLink
-              key={path.path}
-              to={path.path}
-              className={({ isActive }) => {
-                return `p-3 ${isActive ? 'bg-primary/10' : ''}`;
-              }}
-            >
-              {path.name}
-            </NavLink>
-          ))}
-        </nav>
-        <ModeToggle />
-        {/*always show workspace*/}
-        <SelectWorkSpace workspaces={workspaces} />
-      </div>
-      {/*RENDER CHILD ROUTE*/}
-      <Outlet />
-    </div>
   );
 }

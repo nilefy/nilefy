@@ -5,10 +5,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
-import { Dashboard } from './pages/dashboard/dashboard';
+import { Dashboard } from './pages/mainLayout';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
 import { GroupManagement, GroupsManagement } from './pages/workspace/group';
+import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 
 // router config
 const router = createBrowserRouter([
@@ -17,24 +18,25 @@ const router = createBrowserRouter([
     element: <Dashboard />,
     errorElement: <ErrorPage />,
     children: [
-      { path: '', element: <UsersManagement /> },
+      { path: '', element: <App /> },
       {
-        path: 'groups',
-        element: <GroupsManagement />,
+        path: 'workspace-settings',
+        element: <WorkspaceSettingsLayout />,
         children: [
+          { path: '', element: <UsersManagement /> },
           {
-            path: ':groupId',
-            element: <GroupManagement />,
+            path: 'groups',
+            element: <GroupsManagement />,
+            children: [
+              {
+                path: ':groupId',
+                element: <GroupManagement />,
+              },
+            ],
           },
         ],
       },
     ],
-  },
-  //TODO: move this into the dashbaord
-  {
-    path: '/edit',
-    element: <App />,
-    errorElement: <ErrorPage />,
   },
   {
     path: '/signup',
