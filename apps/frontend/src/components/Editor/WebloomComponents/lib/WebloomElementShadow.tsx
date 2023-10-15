@@ -44,7 +44,7 @@ export const WebloomElementShadow = () => {
                 newWidth = Math.min(newWidth, otherDim.left - newLeft);
                 continue;
             }
-            if (newLeft > otherDim.left && newLeft < otherDim.right) {
+            if (newLeft >= otherDim.left && newLeft < otherDim.right) {
                 const temp = newLeft;
                 newLeft = otherDim.right;
                 newWidth += temp - newLeft;

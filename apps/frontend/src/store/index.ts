@@ -290,8 +290,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                             left = otherLeft - 100;
                             newWidth = 100;
                         }
-                    } else if (left > otherLeft && left < otherRight) {
-                        console.log('here2');
+                    } else if (left >= otherLeft && left < otherRight) {
                         const temp = left;
                         left = otherRight;
                         newWidth += temp - left;
