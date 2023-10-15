@@ -45,6 +45,27 @@ interface WebloomActions {
     resizeNode: (id: string, dimensions: WebloomNodeDimensions) => void;
     setMousePos: (pos: { x: number; y: number }) => void;
 }
+function checkOverlap(
+    a: {
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    },
+    b: {
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }
+): boolean {
+    return (
+        a.left <= b.right &&
+        b.left <= a.right &&
+        a.top < b.bottom &&
+        b.top < a.bottom
+    );
+}
 
 interface WebloomGetters {
     getCanvas: (id: string) => WebloomNode | null;
@@ -181,14 +202,23 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     right: otherRight,
                     bottom: otherBottom
                 } = getBoundingRect(otherNodeDimensions);
-                const xCollision =
-                    (left >= otherLeft && left <= otherRight) ||
-                    (right >= otherLeft && right <= otherRight);
-                const yCollision =
-                    (top >= otherTop && top <= otherBottom) ||
-                    (bottom >= otherTop && bottom <= otherBottom);
 
-                if (xCollision && yCollision) {
+                if (
+                    checkOverlap(
+                        {
+                            left,
+                            top,
+                            right,
+                            bottom
+                        },
+                        {
+                            left: otherLeft,
+                            top: otherTop,
+                            right: otherRight,
+                            bottom: otherBottom
+                        }
+                    )
+                ) {
                     get().moveNodeIntoGrid(nodeId, {
                         x: 0,
                         y: -otherTop + bottom
@@ -231,8 +261,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     left: otherLeft,
                     top: otherTop,
                     right: otherRight,
-                    bottom: otherBottom,
-                    height: otherHeight
+                    bottom: otherBottom
                 } = getBoundingRect(otherNodeDimensions);
                 const isOver = over === nodeId;
                 if (isOver) {
@@ -249,9 +278,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     }
                     return true;
                 }
-
+                console.log({
+                    topIntersection:
+                        bottom >= otherTop && bottom <= otherBottom,
+                    bottomIntersection: top < otherBottom && top >= otherTop,
+                    leftIntersection: otherLeft >= left && otherLeft <= right,
+                    rightIntersection: left >= otherLeft && left <= otherRight
+                });
                 if (top < otherBottom && top >= otherTop) {
+                    console.log('here');
                     if (left < otherLeft && left + newWidth > otherLeft) {
+                        //todo newWidth may be 0 in this case use minWidth instead
                         newWidth = Math.min(newWidth, otherLeft - left);
                     } else if (left > otherLeft && left < otherRight) {
                         const temp = left;
@@ -259,10 +296,20 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         newWidth += temp - left;
                     }
                 } else if (
-                    ((bottom >= otherTop && bottom <= otherBottom) ||
-                        (top <= otherTop && bottom >= otherBottom)) &&
-                    ((otherLeft >= left && otherLeft <= right) ||
-                        (left >= otherLeft && left <= otherRight))
+                    checkOverlap(
+                        {
+                            left,
+                            top,
+                            right,
+                            bottom
+                        },
+                        {
+                            left: otherLeft,
+                            top: otherTop,
+                            right: otherRight,
+                            bottom: otherBottom
+                        }
+                    )
                 ) {
                     get().moveNodeIntoGrid(nodeId, {
                         x: 0,
