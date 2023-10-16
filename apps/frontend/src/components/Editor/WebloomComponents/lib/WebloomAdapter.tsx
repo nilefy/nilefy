@@ -60,15 +60,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     //todo change to parent when nesting is implemented
     const root = store().tree['root'];
     const ref = useRef<HTMLDivElement>(null);
-
-    const { attributes, listeners, setNodeRef, transform, isDragging } =
-        useDraggable({
-            id,
-            disabled: !props.draggable && resizingKey === null,
-            data: {
-                isNew: false
-            }
-        });
+    const elDimensions = store.getState().getDimensions(id);
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id,
+        disabled: !props.draggable && resizingKey === null,
+        data: {
+            isNew: false
+        }
+    });
     const modListeners = useMemo(() => {
         if (!listeners)
             return {
@@ -92,14 +91,20 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     }, [setDropNodeRef, setNodeRef]);
     const style = useMemo(() => {
         return {
-            top: el.y,
-            left: el.x,
+            top: elDimensions.y,
+            left: elDimensions.x,
             position: 'absolute',
-            width: el.width,
-            height: el.height,
+            width: elDimensions.width,
+            height: elDimensions.height,
             visibility: isDragging ? 'hidden' : 'visible'
         } as React.CSSProperties;
-    }, [transform, el.x, el.y, el.width, el.height]);
+    }, [
+        elDimensions.x,
+        elDimensions.y,
+        elDimensions.width,
+        elDimensions.height,
+        isDragging
+    ]);
     const handles = useMemo(() => {
         if (!props.resizable) return null;
         const handleSize = 10;
@@ -111,7 +116,6 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             border: '1px solid black',
             borderRadius: '50%'
         };
-
         return (
             !isDragging &&
             selected && (
@@ -145,7 +149,6 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                         } else {
                             top = height / 2 - handleSize / 2;
                         }
-
                         return (
                             <div
                                 key={key}
@@ -160,10 +163,10 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                                     e.stopPropagation();
                                     setResizingKey(key as keyof typeof cursors);
                                     setInitialDimensions({
-                                        width: el.width,
-                                        height: el.height,
-                                        x: el.x,
-                                        y: el.y
+                                        width: elDimensions.width,
+                                        height: elDimensions.height,
+                                        x: elDimensions.x,
+                                        y: elDimensions.y
                                     });
                                 }}
                                 onMouseUp={() => setResizingKey(null)}
@@ -262,10 +265,10 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         };
     }, [
         resizingKey,
-        el.width,
-        el.height,
-        el.x,
-        el.y,
+        elDimensions.width,
+        elDimensions.height,
+        elDimensions.x,
+        elDimensions.y,
         id,
         el,
         initialDimensions,

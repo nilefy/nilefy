@@ -1,7 +1,14 @@
-import { GRID_CELL_SIDE } from '@/lib/constants';
+import { NUMBER_OF_COLUMNS, ROW_HEIGHT } from '@/lib/constants';
 import { getBoundingRect } from '@/lib/utils';
 import { create } from 'zustand';
-
+export type BoundingRect = {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+};
 export type WebloomNode = {
     id: string;
     name: string;
@@ -14,9 +21,15 @@ export type WebloomNode = {
     isCanvas?: boolean;
 } & WebloomNodeDimensions;
 export type WebloomNodeDimensions = {
+    //columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
     x: number;
+    //rowNumber from top to bottom starting from 0 to infinity
     y: number;
     width: number;
+    // number of columns this node takes
+    columnsCount: number;
+    // number of rows this node takes
+    rowsCount: number;
     height: number;
 };
 
@@ -72,6 +85,8 @@ interface WebloomGetters {
     getCanvas: (id: string) => WebloomNode | null;
     getNode: (id: string) => WebloomNode | null;
     getDimensions: (id: string) => WebloomNodeDimensions;
+    getBoundingRect: (id: string) => BoundingRect;
+    getGridSize: (id: string) => [GRID_ROW: number, GRID_COL: number];
 }
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     (set, get) => ({
@@ -155,14 +170,39 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             }
             return null;
         },
+        getGridSize: (id) => {
+            const canvasParent = get().getCanvas(id)!;
+            return [ROW_HEIGHT, canvasParent.width / NUMBER_OF_COLUMNS];
+        },
+        //gets actual x, y coordinates of a node
         getDimensions: (id: string): WebloomNodeDimensions => {
             const node = get().getNode(id)!;
+            const parent = get().getCanvas(id)!;
+            if (node === parent) {
+                // this is the root node
+                return {
+                    x: 0,
+                    y: 0,
+                    columnsCount: NUMBER_OF_COLUMNS,
+                    width: parent.width,
+                    height: parent.height,
+                    rowsCount: Infinity
+                };
+            }
+            const gridColSize = parent.width / NUMBER_OF_COLUMNS;
+            const gridRowSize = ROW_HEIGHT;
+
             return {
-                x: node.x,
-                y: node.y,
-                width: node.width,
-                height: node.height
+                x: node.x * gridColSize,
+                y: node.y * gridRowSize,
+                columnsCount: node.columnsCount,
+                rowsCount: node.rowsCount,
+                width: node.columnsCount * gridColSize,
+                height: node.rowsCount * gridRowSize
             };
+        },
+        getBoundingRect: (id: string): BoundingRect => {
+            return getBoundingRect(get().getDimensions(id));
         },
         setDimensions(id, dimensions) {
             set((state) => {
@@ -239,64 +279,67 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             displacement: { x: number; y: number }
         ) => {
             if (displacement.x === 0 && displacement.y === 0) return;
+            console.log(displacement);
             const state = get();
             const over = state.overNode;
             const node = state.tree[id];
             const mousePos = state.mousePos;
             if (!node) return state;
             const parent = state.tree['root'];
-            const nodeDimensions = get().getDimensions(id);
-            let left = nodeDimensions.x + displacement.x;
-            let top = nodeDimensions.y + displacement.y;
-
-            const right = left + nodeDimensions.width;
-            const bottom = top + nodeDimensions.height;
-            let newWidth = nodeDimensions.width;
+            const parentDimensions = get().getDimensions(node.parent!);
+            const x = node.x + displacement.x;
+            const y = node.y + displacement.y;
+            let colCount = node.columnsCount;
+            const rowCount = node.rowsCount;
+            let left = x;
+            let top = y;
+            const right = x + colCount;
+            const bottom = y + rowCount;
             //check for collisions
             parent.nodes.forEach((nodeId) => {
                 if (nodeId === id) return false;
                 const otherNode = state.tree[nodeId];
                 if (!otherNode) return false;
-                const otherNodeDimensions = get().getDimensions(nodeId);
-                const {
-                    left: otherLeft,
-                    top: otherTop,
-                    right: otherRight,
-                    bottom: otherBottom
-                } = getBoundingRect(otherNodeDimensions);
+                const otherNodeBoundingRect = get().getBoundingRect(nodeId);
+                const otherBottom = otherNode.y + otherNode.rowsCount;
+                const otherTop = otherNode.y;
+                const otherLeft = otherNode.x;
+                const otherRight = otherNode.x + otherNode.columnsCount;
                 const isOver = over === nodeId;
                 if (isOver) {
                     if (
                         mousePos.y <=
-                        otherTop + (otherBottom - otherTop) / 2 - 5
+                        otherNodeBoundingRect.top +
+                            (otherNodeBoundingRect.bottom -
+                                otherNodeBoundingRect.top) /
+                                2 -
+                            //todo: 5 is a threshold, replace with a proper value depending on the current gridsize
+                            5
                     ) {
                         get().moveNodeIntoGrid(nodeId, {
                             x: 0,
-                            y: -otherTop + bottom
+                            y: -otherNode.y + bottom
                         });
                     } else {
                         top = otherBottom;
                     }
                     return true;
                 }
-
                 if (top < otherBottom && top >= otherTop) {
-                    console.log('here');
-                    if (left < otherLeft && left + newWidth > otherLeft) {
-                        console.log('here1');
-                        newWidth = Math.min(newWidth, otherLeft - left);
+                    if (left < otherLeft && left + colCount > otherLeft) {
+                        colCount = Math.min(colCount, otherLeft - left);
                         //todo replace 100 with min width
-                        if (newWidth < 100) {
-                            left = otherLeft - 100;
-                            newWidth = 100;
+                        if (colCount < 2) {
+                            left = otherLeft - 2;
+                            colCount = 2;
                         }
                     } else if (left >= otherLeft && left < otherRight) {
                         const temp = left;
                         left = otherRight;
-                        newWidth += temp - left;
+                        colCount += temp - left;
                         //todo replace 100 with min width
-                        if (newWidth < 100) {
-                            newWidth = 100;
+                        if (colCount < 2) {
+                            colCount = 2;
                         }
                     }
                 } else if (
@@ -325,7 +368,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             return get().setDimensions(id, {
                 x: left,
                 y: top,
-                width: newWidth
+                columnsCount: colCount,
+                rowsCount: rowCount
             });
         }
     })

@@ -1,14 +1,15 @@
 import { getBoundingRect } from '@/lib/utils';
 import store from '@/store';
-import { DragOverlay, useDndContext, useDraggable } from '@dnd-kit/core';
+import { useDndContext } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
-
+//todo: refactor this entire file 🤮🤮🤮
 export const WebloomElementShadow = () => {
     const { active, over, activatorEvent } = useDndContext();
     if (!active || !over || !activatorEvent) {
         return null;
     }
-    const el = store.getState().tree[active.id];
+    const el = store.getState().getDimensions(active.id as string);
+    const parentId = store.getState().tree[active.id].parent;
     const translated = active.rect.current.translated!;
     const initial = active.rect.current.initial!;
     const delta = {
@@ -16,28 +17,27 @@ export const WebloomElementShadow = () => {
         y: translated.top - initial.top
     };
 
-    const overEl = store.getState().tree[over.id];
+    const overEl = store.getState().getDimensions(over.id as string);
     const overDim = getBoundingRect(overEl);
-    const activeDim = getBoundingRect(el);
     const mouseStart = getEventCoordinates(activatorEvent)!;
     const mousePos = { x: mouseStart.x + delta.x, y: mouseStart.y + delta.y };
+    //todo: make threshold relative to parent's grid size
     const threshold = 5;
     const tree = store.getState().tree;
-    if (!el.parent) return null;
-    const parent = tree[el.parent];
+    if (!parentId) return null;
+    const parent = tree[parentId];
     const siblings = parent.nodes;
     let newWidth = el.width;
-    console.log(siblings);
     let newLeft = el.x + delta.x;
     const newTop = el.y + delta.y;
     const oldLeft = el.x + delta.x;
-    const newBottom = newTop + el.height;
     for (const sibling of siblings) {
-        if (sibling === el.id) {
+        if (sibling === active.id) {
             continue;
         }
-        const otherNode = tree[sibling];
-        const otherDim = getBoundingRect(otherNode);
+        const otherDim = getBoundingRect(
+            store.getState().getDimensions(sibling)
+        );
 
         if (newTop < otherDim.bottom && newTop >= otherDim.top) {
             if (newLeft < otherDim.left && newLeft + newWidth > otherDim.left) {
@@ -110,8 +110,7 @@ function ElementShadow({
             style={{
                 width: width,
                 height: height,
-                top: top,
-                left: left
+                transform: `translate(${left}px, ${top}px)`
             }}
         ></div>
     );
