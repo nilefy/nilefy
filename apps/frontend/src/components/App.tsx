@@ -3,8 +3,7 @@ import React, {
     useMemo,
     useEffect,
     useLayoutEffect,
-    useRef,
-    useState
+    useRef
 } from 'react';
 
 import store, { WebloomNode, WebloomTree } from '../store';
@@ -13,7 +12,6 @@ import { WebloomContainer } from './Editor/WebloomComponents/Container';
 import {
     DndContext,
     DragEndEvent,
-    DragOverlay,
     MouseSensor,
     TouchSensor,
     pointerWithin,
@@ -27,15 +25,12 @@ import { WebloomComponents } from './Editor/WebloomComponents';
 import NewNodeAdapter from './Editor/WebloomComponents/lib/NewNodeAdapter';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import {
-    normalizePoint,
-    restrictToParentElementUnlessNew,
-    snapModifier
-} from '@/lib/utils';
+import { normalize, normalizePoint, snapModifier } from '@/lib/utils';
 import { WebloomElementShadow } from './Editor/WebloomComponents/lib/WebloomElementShadow';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { Grid } from './Editor/WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
+import { nanoid } from 'nanoid';
 const { setDimensions } = store.getState();
 const WebloomRoot = () => {
     const wholeTree = store.getState().tree;
@@ -154,51 +149,51 @@ const initTree: WebloomTree = {
         width: 1024,
         height: 768,
         columnsCount: NUMBER_OF_COLUMNS,
-        nodes: ['button', 'button2'],
+        nodes: [],
         parent: null,
         isCanvas: true,
         dom: null,
         props: {
             className: 'h-full w-full bg-red-500'
         }
-    },
-
-    button: {
-        id: 'button',
-        name: 'button',
-        type: WebloomButton,
-        nodes: [],
-        parent: 'root',
-        dom: null,
-        props: {
-            text: 'button1',
-            color: 'red'
-        },
-        height: 0,
-        width: 0,
-        columnsCount: 4,
-        rowsCount: 8,
-        x: 4,
-        y: 0
-    },
-    button2: {
-        id: 'button2',
-        name: 'button2',
-        type: WebloomButton,
-        nodes: [],
-        parent: 'root',
-        dom: null,
-        props: {
-            text: 'button2',
-            color: 'green'
-        },
-        height: 0,
-        width: 0,
-        x: 8,
-        y: 20,
-        columnsCount: 8,
-        rowsCount: 15
     }
+
+    // button: {
+    //     id: 'button',
+    //     name: 'button',
+    //     type: WebloomButton,
+    //     nodes: [],
+    //     parent: 'root',
+    //     dom: null,
+    //     props: {
+    //         text: 'button1',
+    //         color: 'red'
+    //     },
+    //     height: 0,
+    //     width: 0,
+    //     columnsCount: 4,
+    //     rowsCount: 8,
+    //     x: 4,
+    //     y: 0
+    // },
+    // button2: {
+    //     id: 'button2',
+    //     name: 'button2',
+    //     type: WebloomButton,
+    //     nodes: [],
+    //     parent: 'root',
+    //     dom: null,
+    //     props: {
+    //         text: 'button2',
+    //         color: 'green'
+    //     },
+    //     height: 0,
+    //     width: 0,
+    //     x: 8,
+    //     y: 20,
+    //     columnsCount: 8,
+    //     rowsCount: 15
+    // }
 };
 store.setState((state) => {
     state.tree = initTree;
@@ -206,8 +201,14 @@ store.setState((state) => {
 });
 function App() {
     const wholeTree = store((state) => state.tree);
-    const [newNode, setNewNode] = React.useState(null);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const mousePos = useRef({ x: 0, y: 0 });
+    const [newStart, setNewStart] = React.useState<{ x: number; y: number }>(
+        null
+    );
+    const [newTranslate, setNewTranslate] = React.useState<{
+        x: number;
+        y: number;
+    }>(null);
     const mouseSensor = useSensor(MouseSensor, {
         activationConstraint: {
             delay: 5,
@@ -221,60 +222,54 @@ function App() {
         }
     });
     const sensors = useSensors(mouseSensor, touchSensor);
-    useEffect(() => {}, [wholeTree]);
+    useEffect(() => {
+        wholeTree;
+    }, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
         if (e.active.data.current?.isNew) {
             if (!e.over || e.over.id !== 'root') return;
-            const initial = e.active.rect.current.initial!;
-            const [iniX, iniY] = normalizePoint([initial.left, initial.top]);
-            const boundingRect = e.over.rect;
-            //  container's displacement + distance dragged + dragged element's initial displacement
+            // const initial = e.active.rect.current.initial!;
+            // const [iniX, iniY] = normalizePoint([initial.left, initial.top]);
+            // const boundingRect = e.over.rect;
+            // //  container's displacement + distance dragged + dragged element's initial displacement
 
-            const x = boundingRect.left + e.delta.x + iniX;
-            const y = boundingRect.top + e.delta.y + iniY;
-            const width = 180;
-            const height = 60;
-            const type = e.active.data.current
-                .type as keyof typeof WebloomComponents;
-            const node: WebloomNode = {
-                type: WebloomComponents[type].component,
-                id: e.active.data.current.id,
-                name: type,
-                nodes: [],
-                parent: null,
-                dom: null,
-                props: WebloomComponents[type].initialProps,
-                x: x,
-                y: y,
-                width: width,
-                height: height
-            };
-            setNewNode(null);
-            store.getState().addNode(node, 'root');
+            // const x = boundingRect.left + e.delta.x + iniX;
+            // const y = boundingRect.top + e.delta.y + iniY;
+
+            // const type = e.active.data.current
+            //     .type as keyof typeof WebloomComponents;
+            const newNode = wholeTree['new'];
+            setNewStart(null);
+            setNewTranslate(null);
+            store.getState().removeNode('new');
+            newNode.id = nanoid();
+            store.getState().addNode(newNode, 'root');
         } else {
             const id = e.active.id;
             if (!wholeTree[id]) return;
             //get transalted distance
             const x = e.delta.x;
             const y = e.delta.y;
-            const parentId = wholeTree[id].parent!;
-            const parent = wholeTree[parentId];
-            const gridrow = parent.width / NUMBER_OF_COLUMNS;
-            //update store
-            store
+            const [gridrow, gridcol] = store
                 .getState()
-                .moveNodeIntoGrid(id as string, { x: x / gridrow, y: y / 5 });
+                .getGridSize(id as string);
+            //update store
+            store.getState().moveNodeIntoGrid(id as string, {
+                x: x / gridcol,
+                y: y / gridrow
+            });
         }
         store.getState().setOverNode(null);
     };
     useEffect(() => {
-        const handleMouseMove = () => {
-            // const dom = wholeTree.root.dom;
-            // if (!dom) return;
-            // const boundingRect = dom.getBoundingClientRect();
-            // const x = boundingRect.left;
-            // const y = boundingRect.top;
-            // setMousePos({ x: e.clientX - x, y: e.clientY - y });
+        const handleMouseMove = (e: PointerEvent) => {
+            const dom = wholeTree.root.dom;
+            if (!dom) return;
+            const boundingRect = dom.getBoundingClientRect();
+            const x = boundingRect.left;
+            const y = boundingRect.top;
+
+            mousePos.current = { x: e.clientX - x, y: e.clientY - y };
         };
         window.addEventListener('pointermove', handleMouseMove);
         return () => {
@@ -287,68 +282,89 @@ function App() {
                 collisionDetection={pointerWithin}
                 sensors={sensors}
                 onDragOver={(e) => {
+                    console.log(mousePos);
                     if (e.active.id === e.over?.id) return;
                     store
                         .getState()
                         .setOverNode((e.over?.id as string) ?? null);
+                    if (e.active.data.current?.isNew && newStart === null) {
+                        const [gridrow, gridcol] = store
+                            .getState()
+                            .getGridSize('new');
+                        const x = normalize(
+                            mousePos.current.x / gridcol,
+                            gridcol
+                        );
+                        const y = normalize(
+                            mousePos.current.y / gridrow,
+                            gridrow
+                        );
+                        setNewStart({
+                            x: mousePos.current.x,
+                            y: mousePos.current.y
+                        });
+                        store.getState().setDimensions('new', {
+                            x,
+                            y
+                        });
+                    }
                 }}
                 onDragEnd={handleDragEnd}
                 onDragMove={(e) => {
-                    const mouseStart = getEventCoordinates(e.activatorEvent)!;
-                    store.getState().setMousePos({
-                        x: mouseStart.x + e.delta.x,
-                        y: mouseStart.y + e.delta.y
-                    });
                     if (e.active.data.current?.isNew) {
-                        const initial = e.active.rect.current.initial!;
-                        const [iniX, iniY] = normalizePoint([
-                            initial.left,
-                            initial.top
-                        ]);
+                        if (!newStart) return;
 
-                        //  container's displacement + distance dragged + dragged element's initial displacement
-                        const [x, y] = normalizePoint([mousePos.x, mousePos.y]);
-                        const height = 60;
-                        const root = wholeTree.root;
-
-                        const width = Math.min(
-                            Math.max(root.width - x, 0),
-                            180
-                        );
-                        setNewNode((prev) => ({
-                            ...prev,
-                            x,
-                            y,
-                            width,
-                            height
-                        }));
+                        const { x, y } = mousePos.current;
+                        setNewTranslate({
+                            x: x - newStart.x,
+                            y: y - newStart.y
+                        });
+                    } else {
+                        const mouseStart = getEventCoordinates(
+                            e.activatorEvent
+                        )!;
+                        store.getState().setMousePos({
+                            x: mouseStart.x + e.delta.x,
+                            y: mouseStart.y + e.delta.y
+                        });
                     }
                 }}
                 onDragStart={(e) => {
                     if (e.active.data.current?.isNew) {
-                        setNewNode({
-                            type: e.active.data.current.type,
-                            id: e.active.data.current.id,
+                        const node: WebloomNode = {
+                            id: 'new',
+                            name: 'new',
+                            type: WebloomComponents[
+                                e.active.data.current!
+                                    .type as keyof typeof WebloomComponents
+                            ].component,
+                            nodes: [],
+                            //todo change this to be the parent
+                            parent: 'root',
+                            dom: null,
+                            props: {},
+                            height: 0,
+                            width: 0,
                             x: 0,
                             y: 0,
-                            width: 0,
-                            height: 0,
-                            isNew: true
-                        });
+                            columnsCount: 4,
+                            rowsCount: 8
+                        };
+                        store.getState().addNode(node, 'root');
                     }
                 }}
                 modifiers={[snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
                 <div className="h-full w-1/5 bg-gray-200"></div>
                 <div className="relative h-full w-4/5 bg-gray-900">
-                    <WebloomElementShadow />
+                    <WebloomElementShadow delta={newTranslate} />
                     {/*main*/}
                     <WebloomRoot />
                     <Grid gridSize={wholeTree['root'].width / 32} />
                 </div>
                 {/*sidebar*/}
-
                 <div className="h-full w-1/5 bg-gray-200">
+                    <div className="h-1/2 w-full bg-gray-300">sidebar</div>
                     {Object.entries(WebloomComponents).map(
                         ([name, component]) => {
                             return (

@@ -1,7 +1,8 @@
 import type { Modifier } from '@dnd-kit/core';
 import {
     restrictToParentElement,
-    restrictToWindowEdges
+    restrictToWindowEdges,
+    snapCenterToCursor
 } from '@dnd-kit/modifiers';
 import { GRID_CELL_SIDE, NUMBER_OF_COLUMNS, ROW_HEIGHT } from './constants';
 import store, { WebloomNodeDimensions } from '@/store';
@@ -35,8 +36,16 @@ export const snapModifier: Modifier = (args) => {
     let target = args.over?.id || 'root';
     if (!tree[target] || !tree[target].isCanvas) target = 'root';
     const gridSize = tree[target].width / NUMBER_OF_COLUMNS;
-    const x = normalize(args.transform.x, gridSize);
-    const y = normalize(args.transform.y, ROW_HEIGHT);
+    let x = normalize(args.transform.x, gridSize);
+    let y = normalize(args.transform.y, ROW_HEIGHT);
+    if (args.active?.data?.current?.isNew) {
+        const temp = snapCenterToCursor({
+            ...args,
+            transform: { ...args.transform, x, y }
+        });
+        x = temp.x;
+        y = temp.y;
+    }
     if (args.over?.id && tree[args.over.id]) {
         return {
             ...args.transform,

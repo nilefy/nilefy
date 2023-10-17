@@ -3,20 +3,22 @@ import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 //todo: refactor this entire file 🤮🤮🤮
-export const WebloomElementShadow = () => {
+export const WebloomElementShadow = ({ delta }) => {
     const { active, over, activatorEvent } = useDndContext();
     if (!active || !over || !activatorEvent) {
         return null;
     }
     const tree = store.getState().tree;
+    const id = active.data?.current?.isNew ? 'new' : active.id;
+    const el = tree[id];
+    const [gridrow, gridcol] = store.getState().getGridSize(el.id);
 
-    const el = tree[active.id];
     const parentId = el.parent!;
     const translated = active.rect.current.translated!;
     const initial = active.rect.current.initial!;
+
     const parent = tree[parentId];
-    const [gridrow, gridcol] = store.getState().getGridSize(el.id);
-    const delta = {
+    delta ||= {
         x: translated.left - initial.left,
         y: translated.top - initial.top
     };
@@ -38,11 +40,10 @@ export const WebloomElementShadow = () => {
     let colCount = el.columnsCount;
     const rowCount = el.rowsCount;
     const right = left + colCount;
-    const bottom = top + rowCount;
     const width = colCount * gridcol;
     const height = rowCount * gridrow;
     for (const sibling of siblings) {
-        if (sibling === active.id) {
+        if (sibling === id) {
             continue;
         }
         const otherNode = tree[sibling];
@@ -69,7 +70,7 @@ export const WebloomElementShadow = () => {
     }
     const parentLeft = parent.x;
     const parentRight = parent.x + parent.columnsCount;
-    if (right > parentRight) {
+    if (right >= parentRight) {
         colCount = Math.min(colCount, parentRight - left);
         if (colCount < 1) {
             colCount = 1;
@@ -85,7 +86,7 @@ export const WebloomElementShadow = () => {
     const newWidth = colCount * gridcol;
     top = Math.round(top * gridrow);
     left = Math.round(left * gridcol);
-    if (over.id === 'root' || over.id === active.id) {
+    if (over.id === 'root' || over.id === id) {
         return (
             <ElementShadow
                 width={newWidth}

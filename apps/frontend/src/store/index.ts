@@ -47,6 +47,7 @@ interface WebloomActions {
     setSelectedNode: (id: string | null) => void;
     setOverNode: (id: string | null) => void;
     moveNode: (id: string, parentId: string, index?: number) => void;
+    removeNode: (id: string) => void;
     moveNodeIntoGrid: (
         id: string,
         displacement: { x: number; y: number }
@@ -130,6 +131,23 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         nodes: [...state.tree[parentId].nodes, node.id]
                     }
                 };
+                return { tree: newTree };
+            });
+        },
+        removeNode(id) {
+            set((state) => {
+                const node = state.tree[id];
+                if (!node) return state;
+                const newTree = {
+                    ...state.tree,
+                    [node.parent!]: {
+                        ...state.tree[node.parent!],
+                        nodes: state.tree[node.parent!].nodes.filter(
+                            (nodeId) => nodeId !== id
+                        )
+                    }
+                };
+                delete newTree[id];
                 return { tree: newTree };
             });
         },

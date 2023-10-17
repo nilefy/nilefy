@@ -11,8 +11,7 @@ type DraggableProps = {
 export const NewNodeAdapter = (props: DraggableProps) => {
     const id = useRef(nanoid());
     const wholeTree = store.getState().tree;
-    const treeLen = Object.keys(wholeTree).length;
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef } = useDraggable({
         id: id.current,
         data: {
             isNew: true,
@@ -24,15 +23,12 @@ export const NewNodeAdapter = (props: DraggableProps) => {
     useEffect(() => {
         setNodeRef(ref.current);
     }, [setNodeRef]);
-    useEffect(() => {
-        id.current = nanoid();
-    }, [treeLen]);
+
     const style = useMemo(() => {
         return {
-            transform: CSS.Translate.toString(transform),
             position: 'relative'
         } as React.CSSProperties;
-    }, [transform]);
+    }, []);
 
     return (
         <div
