@@ -217,7 +217,7 @@ function App() {
     const touchSensor = useSensor(TouchSensor, {
         activationConstraint: {
             delay: 5,
-            tolerance: 5
+            tolerance: 0
         }
     });
     const sensors = useSensors(mouseSensor, touchSensor);

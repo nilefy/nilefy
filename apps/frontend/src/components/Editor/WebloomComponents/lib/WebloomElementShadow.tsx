@@ -35,10 +35,7 @@ export const WebloomElementShadow = () => {
         if (sibling === active.id) {
             continue;
         }
-        const otherDim = getBoundingRect(
-            store.getState().getDimensions(sibling)
-        );
-
+        const otherDim = store.getState().getBoundingRect(sibling);
         if (newTop < otherDim.bottom && newTop >= otherDim.top) {
             if (newLeft < otherDim.left && newLeft + newWidth > otherDim.left) {
                 newWidth = Math.min(newWidth, otherDim.left - newLeft);

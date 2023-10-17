@@ -32,7 +32,7 @@ export const Grid = ({ gridSize }: { gridSize: number }) => {
     return (
         <div
             ref={divRef}
-            className="pointer-events-none absolute left-0 top-0  h-full w-full select-none"
+            className="pointer-events-none absolute left-0 top-0 z-10 h-full w-full select-none"
         >
             {!!active && <canvas ref={ref}></canvas>}
         </div>

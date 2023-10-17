@@ -119,7 +119,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             !isDragging &&
             selected && (
                 <div
-                    className="select-none"
+                    className="touch-none select-none"
                     style={{
                         position: 'absolute',
                         top: style.top,
@@ -149,14 +149,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                         return (
                             <div
                                 key={key}
-                                className={`absolute ${key}`}
+                                className={`absolute touch-none ${key}`}
                                 style={{
                                     ...handleStyle,
                                     top,
                                     left,
                                     cursor: cursors[key as keyof typeof cursors]
                                 }}
-                                onMouseDown={(e) => {
+                                onPointerDown={(e) => {
                                     e.stopPropagation();
                                     setResizingKey(key as keyof typeof cursors);
                                     setInitialDimensions({
@@ -166,7 +166,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                                         y: elDimensions.y
                                     });
                                 }}
-                                onMouseUp={() => setResizingKey(null)}
+                                onPointerUp={() => setResizingKey(null)}
                             ></div>
                         );
                     })}
@@ -194,6 +194,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             const rect = root.dom.getBoundingClientRect();
             x -= rect.left;
             y -= rect.top; // -> so that we get the mousePos relative to the root element
+
             const [gridRow, gridCol] = store.getState().getGridSize(id);
             const minWidth = gridCol * 2;
             const minHeight = gridRow * 10;
@@ -252,16 +253,15 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         const el = ref.current;
         if (rootDom === null) return;
         if (el === null) return;
-        rootDom.addEventListener('mousemove', resizeHandler);
-        el.addEventListener('mousemove', resizeHandler);
-        rootDom.addEventListener('mouseup', resizeEndHandler);
-        el.addEventListener('mouseup', resizeEndHandler);
-
+        window.addEventListener('pointermove', resizeHandler);
+        el.addEventListener('pointermove', resizeHandler);
+        window.addEventListener('pointerup', resizeEndHandler);
+        el.addEventListener('pointerup', resizeEndHandler);
         return () => {
-            rootDom.removeEventListener('mousemove', resizeHandler);
-            el.removeEventListener('mousemove', resizeHandler);
-            rootDom.removeEventListener('mouseup', resizeEndHandler);
-            el.removeEventListener('mouseup', resizeEndHandler);
+            window.removeEventListener('pointermove', resizeHandler);
+            el.removeEventListener('pointermove', resizeHandler);
+            window.removeEventListener('pointerup', resizeEndHandler);
+            el.removeEventListener('pointerup', resizeEndHandler);
         };
     }, [
         resizingKey,
