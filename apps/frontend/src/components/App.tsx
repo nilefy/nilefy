@@ -25,7 +25,7 @@ import { WebloomComponents } from './Editor/WebloomComponents';
 import NewNodeAdapter from './Editor/WebloomComponents/lib/NewNodeAdapter';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import { normalize, normalizePoint, snapModifier } from '@/lib/utils';
+import { normalize, snapModifier } from '@/lib/utils';
 import { WebloomElementShadow } from './Editor/WebloomComponents/lib/WebloomElementShadow';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { Grid } from './Editor/WebloomComponents/lib/Grid';
@@ -99,6 +99,7 @@ function WebloomElement({ id }: { id: string }) {
         () => createElement(tree.type, tree.props, children),
         [tree.type, tree.props, children]
     );
+    if (id === 'new') return null;
 
     return (
         <WebloomContext.Provider
@@ -155,7 +156,8 @@ const initTree: WebloomTree = {
         dom: null,
         props: {
             className: 'h-full w-full bg-red-500'
-        }
+        },
+        rowsCount: Infinity
     },
     button: {
         id: 'button',
@@ -222,9 +224,7 @@ function App() {
         }
     });
     const sensors = useSensors(mouseSensor, touchSensor);
-    useEffect(() => {
-        console.log(wholeTree);
-    }, [wholeTree]);
+    useEffect(() => {}, [wholeTree]);
     const handleDragEnd = (e: DragEndEvent) => {
         if (e.active.data.current?.isNew) {
             if (!e.over || e.over.id !== 'root') return;
@@ -234,7 +234,6 @@ function App() {
             store.getState().removeNode('new');
             newNode.id = nanoid();
             store.getState().addNode(newNode, 'root');
-            console.log('translate', newTranslate);
             store.getState().moveNodeIntoGrid(newNode.id, {
                 x: newTranslate!.x / gridcol,
                 y: newTranslate!.y / gridrow
