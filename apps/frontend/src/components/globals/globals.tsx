@@ -1,6 +1,7 @@
 import { useCodeMirror } from '@uiw/react-codemirror';
 import { useEffect, useRef } from 'react';
-import { javascript } from '@codemirror/lang-javascript';
+import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
+import { CompletionContext } from '@codemirror/autocomplete';
 // import {
 //   MatchDecorator,
 //   Decoration,
@@ -12,13 +13,6 @@ import { javascript } from '@codemirror/lang-javascript';
 // import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 // import { syntaxTree } from '@codemirror/language';
 
-// Our list of completions (can be static, since the editor
-/// will do filtering based on context).
-// const completions = [
-//   { label: 'panic', type: 'keyword' },
-//   { label: 'park', type: 'constant', info: 'Test completion' },
-//   { label: 'password', type: 'variable' },
-// ];
 //
 // function myCompletions(context: CompletionContext) {
 //   const before = context.matchBefore(/\w+/);
@@ -102,9 +96,36 @@ import { javascript } from '@codemirror/lang-javascript';
 // const jsDocCompletions2 = javascriptLanguage.data.of({
 //   autocomplete: myCompletions,
 // });
+//
+
+// TODO: change this to real context we want to share the user
+// Our list of completions (can be static, since the editor
+/// will do filtering based on context).
+const completions = [
+  { label: 'panic', type: 'keyword' },
+  { label: 'park', type: 'constant', info: 'Test completion' },
+  { label: 'password', type: 'variable' },
+];
+
+function webloomCompletions(context: CompletionContext) {
+  const before = context.matchBefore(/\w+/);
+  // If completion wasn't explicitly started and there
+  // is no word before the cursor, don't open completions.
+  if (!context.explicit && !before) return null;
+  return {
+    from: before ? before.from : context.pos,
+    options: completions,
+    validFor: /^\w*$/,
+  };
+}
+
+const webLoomContext = javascriptLanguage.data.of({
+  autocomplete: webloomCompletions,
+});
 
 const extensions = [
   javascript(),
+  webLoomContext,
   // templateBaseTheme,
   // templateMatcher,
   // templates,
