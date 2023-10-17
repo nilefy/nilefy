@@ -288,6 +288,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             const right = x + colCount;
             const bottom = y + rowCount;
             //check for collisions
+            const toBeMoved: { id: string; x: number; y: number }[] = [];
             parent.nodes.forEach((nodeId) => {
                 if (nodeId === id) return false;
                 const otherNode = state.tree[nodeId];
@@ -308,10 +309,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                             //todo: 5 is a threshold, replace with a proper value depending on the current gridsize
                             5
                     ) {
-                        get().moveNodeIntoGrid(nodeId, {
-                            x: 0,
-                            y: -otherNode.y + bottom
-                        });
+                        top = otherTop;
+                        toBeMoved.push({ id: nodeId, x: 0, y: rowCount });
                     } else {
                         top = otherBottom;
                     }
@@ -348,18 +347,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         }
                     )
                 ) {
-                    get().moveNodeIntoGrid(nodeId, {
-                        x: 0,
-                        y: -otherTop + bottom
-                    });
+                    toBeMoved.push({ id: nodeId, x: 0, y: -otherTop + bottom });
                 }
             });
 
-            return get().setDimensions(id, {
+            get().setDimensions(id, {
                 x: left,
                 y: top,
                 columnsCount: colCount,
                 rowsCount: rowCount
+            });
+            toBeMoved.forEach((node) => {
+                get().moveNodeIntoGrid(node.id, { x: node.x, y: node.y });
             });
         }
     })

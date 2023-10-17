@@ -210,8 +210,8 @@ function App() {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const mouseSensor = useSensor(MouseSensor, {
         activationConstraint: {
-            delay: 20,
-            tolerance: 5
+            delay: 5,
+            tolerance: 0
         }
     });
     const touchSensor = useSensor(TouchSensor, {
