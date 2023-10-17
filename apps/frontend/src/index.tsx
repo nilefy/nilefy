@@ -11,6 +11,7 @@ import { UsersManagement } from './pages/workspace/users';
 import { GroupManagement, GroupsManagement } from './pages/workspace/group';
 import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 import { ProfileSettings } from './pages/profile/settings';
+import { Globals } from './components/globals/globals';
 
 // router config
 const router = createBrowserRouter([
@@ -48,6 +49,12 @@ const router = createBrowserRouter([
   {
     path: '/signin',
     element: <SignIn />,
+    errorElement: <ErrorPage />,
+  },
+  // TODO: delete this
+  {
+    path: '/globals',
+    element: <Globals />,
     errorElement: <ErrorPage />,
   },
 ]);
