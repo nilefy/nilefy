@@ -1,13 +1,19 @@
-import { getBoundingRect } from '@/lib/utils';
 import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 //todo: refactor this entire file 🤮🤮🤮
-export const WebloomElementShadow = ({ delta }) => {
+export const WebloomElementShadow = ({
+    delta,
+    isNew
+}: {
+    delta: { x: number; y: number } | null;
+    isNew: boolean;
+}) => {
     const { active, over, activatorEvent } = useDndContext();
     if (!active || !over || !activatorEvent) {
         return null;
     }
+    if (isNew && !delta) return null;
     const tree = store.getState().tree;
     const id = active.data?.current?.isNew ? 'new' : active.id;
     const el = tree[id];

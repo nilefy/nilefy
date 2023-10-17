@@ -208,7 +208,7 @@ function App() {
     const [newTranslate, setNewTranslate] = React.useState<{
         x: number;
         y: number;
-    }>(null);
+    } | null>(null);
     const mouseSensor = useSensor(MouseSensor, {
         activationConstraint: {
             delay: 5,
@@ -223,28 +223,24 @@ function App() {
     });
     const sensors = useSensors(mouseSensor, touchSensor);
     useEffect(() => {
-        wholeTree;
+        console.log(wholeTree);
     }, [wholeTree]);
-    console.log('root', store.getState().getBoundingRect('root'));
     const handleDragEnd = (e: DragEndEvent) => {
         if (e.active.data.current?.isNew) {
             if (!e.over || e.over.id !== 'root') return;
-            // const initial = e.active.rect.current.initial!;
-            // const [iniX, iniY] = normalizePoint([initial.left, initial.top]);
-            // const boundingRect = e.over.rect;
-            // //  container's displacement + distance dragged + dragged element's initial displacement
 
-            // const x = boundingRect.left + e.delta.x + iniX;
-            // const y = boundingRect.top + e.delta.y + iniY;
-
-            // const type = e.active.data.current
-            //     .type as keyof typeof WebloomComponents;
             const newNode = wholeTree['new'];
-            setNewStart(null);
-            setNewTranslate(null);
+            const [gridrow, gridcol] = store.getState().getGridSize('new');
             store.getState().removeNode('new');
             newNode.id = nanoid();
             store.getState().addNode(newNode, 'root');
+            console.log('translate', newTranslate);
+            store.getState().moveNodeIntoGrid(newNode.id, {
+                x: newTranslate!.x / gridcol,
+                y: newTranslate!.y / gridrow
+            });
+            setNewStart(null);
+            setNewTranslate(null);
         } else {
             const id = e.active.id;
             if (!wholeTree[id]) return;
@@ -283,21 +279,12 @@ function App() {
                 collisionDetection={pointerWithin}
                 sensors={sensors}
                 onDragOver={(e) => {
-                    console.log('mpusepos', [
-                        mousePos.current.x,
-                        mousePos.current.y
-                    ]);
                     if (e.active.id === e.over?.id) return;
                     store
                         .getState()
                         .setOverNode((e.over?.id as string) ?? null);
                     if (e.active.data.current?.isNew && newStart === null) {
-                        const [gridrow] = store.getState().getGridSize('new');
-                        console.log('mousepos', [
-                            mousePos.current.x,
-                            mousePos.current.y
-                        ]);
-
+                        const [gridrow] = store.getState().getGridSize('root');
                         setNewStart({
                             x: mousePos.current.x,
                             y: mousePos.current.y
@@ -313,18 +300,34 @@ function App() {
                             mousePos.current.y / gridrow,
                             gridrow
                         );
-
-                        store.getState().setDimensions('new', {
-                            x,
-                            y
-                        });
+                        const node: WebloomNode = {
+                            id: 'new',
+                            name: 'new',
+                            type: WebloomComponents[
+                                e.active.data.current!
+                                    .type as keyof typeof WebloomComponents
+                            ].component,
+                            nodes: [],
+                            //todo change this to be the parent
+                            parent: 'root',
+                            dom: null,
+                            props: {
+                                className: 'bg-red-500'
+                            },
+                            height: 0,
+                            width: 0,
+                            x: x,
+                            y: y,
+                            columnsCount: 4,
+                            rowsCount: 8
+                        };
+                        store.getState().addNode(node, 'root');
                     }
                 }}
                 onDragEnd={handleDragEnd}
                 onDragMove={(e) => {
                     if (e.active.data.current?.isNew) {
                         if (!newStart) return;
-
                         const { x, y } = mousePos.current;
                         const [gridrow, gridcol] = store
                             .getState()
@@ -343,43 +346,22 @@ function App() {
                         });
                     }
                 }}
-                onDragStart={(e) => {
-                    if (e.active.data.current?.isNew) {
-                        const node: WebloomNode = {
-                            id: 'new',
-                            name: 'new',
-                            type: WebloomComponents[
-                                e.active.data.current!
-                                    .type as keyof typeof WebloomComponents
-                            ].component,
-                            nodes: [],
-                            //todo change this to be the parent
-                            parent: 'root',
-                            dom: null,
-                            props: {},
-                            height: 0,
-                            width: 0,
-                            x: 0,
-                            y: 0,
-                            columnsCount: 4,
-                            rowsCount: 8
-                        };
-                        store.getState().addNode(node, 'root');
-                    }
-                }}
                 modifiers={[snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
                 {/*sidebar*/}
                 <div className="h-full w-1/5 bg-gray-200"></div>
 
                 <div className="relative h-full w-4/5 bg-gray-900">
-                    <WebloomElementShadow delta={newTranslate} />
+                    <WebloomElementShadow
+                        delta={newTranslate}
+                        isNew={!!newStart}
+                    />
                     {/*main*/}
                     <WebloomRoot />
                     <Grid gridSize={wholeTree['root'].width / 32} />
                 </div>
                 <div className="h-full w-1/5 bg-gray-200 p-4">
-                    <div className="h-1/2 w-full bg-gray-300 ">sidebar</div>
+                    <div className="h-1/4 w-full bg-gray-300 ">sidebar</div>
                     {Object.entries(WebloomComponents).map(
                         ([name, component]) => {
                             return (

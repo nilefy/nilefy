@@ -9,8 +9,7 @@ type DraggableProps = {
     type: string;
 };
 export const NewNodeAdapter = (props: DraggableProps) => {
-    const id = useRef(nanoid());
-    const wholeTree = store.getState().tree;
+    const id = useRef(props.type);
     const { attributes, listeners, setNodeRef } = useDraggable({
         id: id.current,
         data: {
@@ -29,10 +28,8 @@ export const NewNodeAdapter = (props: DraggableProps) => {
             position: 'relative'
         } as React.CSSProperties;
     }, []);
-
     return (
         <div
-            id={`drag-${nanoid()}`}
             ref={ref}
             {...attributes}
             {...listeners}
