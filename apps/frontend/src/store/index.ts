@@ -40,6 +40,12 @@ interface WebloomState {
     tree: WebloomTree;
     overNode: string | null;
     selectedNode: string | null;
+    newNode:
+        | ({
+              parentId: string;
+              delta: { x: number; y: number };
+          } & WebloomNode)
+        | null;
     mousePos: { x: number; y: number };
 }
 interface WebloomActions {
@@ -61,7 +67,8 @@ interface WebloomActions {
         id: string,
         dimensions: Partial<WebloomNodeDimensions>
     ) => void;
-    setMousePos: (pos: { x: number; y: number }) => void;
+    setMousePos: (pos: WebloomState['mousePos']) => void;
+    setNewNode: (newNode: WebloomState['newNode']) => void;
 }
 function checkOverlap(
     a: {
@@ -98,9 +105,13 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         draggedNode: null,
         overNode: null,
         selectedNode: null,
+        newNode: null,
         mousePos: { x: 0, y: 0 },
         setSelectedNode: (id: string | null) => {
             set({ selectedNode: id });
+        },
+        setNewNode(newNode) {
+            set({ newNode });
         },
         setMousePos: (pos: { x: number; y: number }) => {
             set({ mousePos: pos });

@@ -157,7 +157,6 @@ const initTree: WebloomTree = {
             className: 'h-full w-full bg-red-500'
         }
     }
-
     // button: {
     //     id: 'button',
     //     name: 'button',
@@ -202,9 +201,10 @@ store.setState((state) => {
 function App() {
     const wholeTree = store((state) => state.tree);
     const mousePos = useRef({ x: 0, y: 0 });
-    const [newStart, setNewStart] = React.useState<{ x: number; y: number }>(
-        null
-    );
+    const [newStart, setNewStart] = React.useState<{
+        x: number;
+        y: number;
+    } | null>(null);
     const [newTranslate, setNewTranslate] = React.useState<{
         x: number;
         y: number;
@@ -240,7 +240,6 @@ function App() {
             //     .type as keyof typeof WebloomComponents;
             const newNode = wholeTree['new'];
             setNewStart(null);
-            setNewTranslate(null);
             store.getState().removeNode('new');
             newNode.id = nanoid();
             store.getState().addNode(newNode, 'root');
@@ -291,9 +290,9 @@ function App() {
                         const [gridrow, gridcol] = store
                             .getState()
                             .getGridSize('new');
-                        const x = normalize(
-                            mousePos.current.x / gridcol,
-                            gridcol
+                        const x = Math.min(
+                            normalize(mousePos.current.x / gridcol, gridcol),
+                            NUMBER_OF_COLUMNS - 1
                         );
                         const y = normalize(
                             mousePos.current.y / gridrow,
@@ -303,6 +302,7 @@ function App() {
                             x: mousePos.current.x,
                             y: mousePos.current.y
                         });
+                        console.log([x, y]);
                         store.getState().setDimensions('new', {
                             x,
                             y
@@ -315,9 +315,12 @@ function App() {
                         if (!newStart) return;
 
                         const { x, y } = mousePos.current;
+                        const [gridrow, gridcol] = store
+                            .getState()
+                            .getGridSize('new');
                         setNewTranslate({
-                            x: x - newStart.x,
-                            y: y - newStart.y
+                            x: normalize(x - newStart.x, gridcol),
+                            y: normalize(y - newStart.y, gridrow)
                         });
                     } else {
                         const mouseStart = getEventCoordinates(
@@ -356,6 +359,7 @@ function App() {
                 modifiers={[snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
                 <div className="h-full w-1/5 bg-gray-200"></div>
+
                 <div className="relative h-full w-4/5 bg-gray-900">
                     <WebloomElementShadow delta={newTranslate} />
                     {/*main*/}
@@ -363,8 +367,8 @@ function App() {
                     <Grid gridSize={wholeTree['root'].width / 32} />
                 </div>
                 {/*sidebar*/}
-                <div className="h-full w-1/5 bg-gray-200">
-                    <div className="h-1/2 w-full bg-gray-300">sidebar</div>
+                <div className="h-full w-1/5 bg-gray-200 p-4">
+                    <div className="h-1/2 w-full bg-gray-300 ">sidebar</div>
                     {Object.entries(WebloomComponents).map(
                         ([name, component]) => {
                             return (
