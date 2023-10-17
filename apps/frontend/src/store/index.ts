@@ -278,7 +278,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             const mousePos = state.mousePos;
             if (!node) return state;
             const parent = state.tree['root'];
-            const parentDimensions = get().getDimensions(node.parent!);
+
             const x = node.x + displacement.x;
             const y = node.y + displacement.y;
             let colCount = node.columnsCount;
@@ -350,7 +350,21 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     toBeMoved.push({ id: nodeId, x: 0, y: -otherTop + bottom });
                 }
             });
-
+            const parentLeft = parent.x;
+            const parentRight = parent.x + parent.columnsCount;
+            if (right > parentRight) {
+                colCount = Math.min(colCount, parentRight - left);
+                if (colCount < 1) {
+                    colCount = 1;
+                }
+            }
+            if (left < parentLeft) {
+                colCount = right - parentLeft;
+                left = parentLeft;
+                if (colCount < 1) {
+                    colCount = 1;
+                }
+            }
             get().setDimensions(id, {
                 x: left,
                 y: top,

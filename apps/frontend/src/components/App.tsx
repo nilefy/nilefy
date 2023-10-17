@@ -337,8 +337,9 @@ function App() {
                         });
                     }
                 }}
-                modifiers={[restrictToParentElementUnlessNew, snapModifier]} //todo: may need to change this when we have nested containers and stuff
+                modifiers={[snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
+                <div className="h-full w-1/5 bg-gray-200"></div>
                 <div className="relative h-full w-4/5 bg-gray-900">
                     <WebloomElementShadow />
                     {/*main*/}
@@ -346,17 +347,7 @@ function App() {
                     <Grid gridSize={wholeTree['root'].width / 32} />
                 </div>
                 {/*sidebar*/}
-                <div
-                // style={{
-                //     top: newNode?.y,
-                //     left: newNode?.x,
-                //     position: 'absolute',
-                //     zIndex: 1000,
-                //     backgroundColor: 'black',
-                //     width: newNode?.width,
-                //     height: newNode?.height
-                // }}
-                ></div>
+
                 <div className="h-full w-1/5 bg-gray-200">
                     {Object.entries(WebloomComponents).map(
                         ([name, component]) => {
