@@ -40,12 +40,9 @@ interface WebloomState {
     tree: WebloomTree;
     overNode: string | null;
     selectedNode: string | null;
-    newNode:
-        | ({
-              parentId: string;
-              delta: { x: number; y: number };
-          } & WebloomNode)
-        | null;
+    newNode: {
+        delta: { x: number; y: number };
+    } | null;
     mousePos: { x: number; y: number };
 }
 interface WebloomActions {

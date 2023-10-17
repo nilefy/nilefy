@@ -149,50 +149,50 @@ const initTree: WebloomTree = {
         width: 1024,
         height: 768,
         columnsCount: NUMBER_OF_COLUMNS,
-        nodes: [],
+        nodes: ['button', 'button2'],
         parent: null,
         isCanvas: true,
         dom: null,
         props: {
             className: 'h-full w-full bg-red-500'
         }
+    },
+    button: {
+        id: 'button',
+        name: 'button',
+        type: WebloomButton,
+        nodes: [],
+        parent: 'root',
+        dom: null,
+        props: {
+            text: 'button1',
+            color: 'red'
+        },
+        height: 0,
+        width: 0,
+        columnsCount: 4,
+        rowsCount: 8,
+        x: 4,
+        y: 0
+    },
+    button2: {
+        id: 'button2',
+        name: 'button2',
+        type: WebloomButton,
+        nodes: [],
+        parent: 'root',
+        dom: null,
+        props: {
+            text: 'button2',
+            color: 'green'
+        },
+        height: 0,
+        width: 0,
+        x: 8,
+        y: 20,
+        columnsCount: 8,
+        rowsCount: 15
     }
-    // button: {
-    //     id: 'button',
-    //     name: 'button',
-    //     type: WebloomButton,
-    //     nodes: [],
-    //     parent: 'root',
-    //     dom: null,
-    //     props: {
-    //         text: 'button1',
-    //         color: 'red'
-    //     },
-    //     height: 0,
-    //     width: 0,
-    //     columnsCount: 4,
-    //     rowsCount: 8,
-    //     x: 4,
-    //     y: 0
-    // },
-    // button2: {
-    //     id: 'button2',
-    //     name: 'button2',
-    //     type: WebloomButton,
-    //     nodes: [],
-    //     parent: 'root',
-    //     dom: null,
-    //     props: {
-    //         text: 'button2',
-    //         color: 'green'
-    //     },
-    //     height: 0,
-    //     width: 0,
-    //     x: 8,
-    //     y: 20,
-    //     columnsCount: 8,
-    //     rowsCount: 15
-    // }
 };
 store.setState((state) => {
     state.tree = initTree;
@@ -225,6 +225,7 @@ function App() {
     useEffect(() => {
         wholeTree;
     }, [wholeTree]);
+    console.log('root', store.getState().getBoundingRect('root'));
     const handleDragEnd = (e: DragEndEvent) => {
         if (e.active.data.current?.isNew) {
             if (!e.over || e.over.id !== 'root') return;
@@ -240,6 +241,7 @@ function App() {
             //     .type as keyof typeof WebloomComponents;
             const newNode = wholeTree['new'];
             setNewStart(null);
+            setNewTranslate(null);
             store.getState().removeNode('new');
             newNode.id = nanoid();
             store.getState().addNode(newNode, 'root');
@@ -281,28 +283,37 @@ function App() {
                 collisionDetection={pointerWithin}
                 sensors={sensors}
                 onDragOver={(e) => {
-                    console.log(mousePos);
+                    console.log('mpusepos', [
+                        mousePos.current.x,
+                        mousePos.current.y
+                    ]);
                     if (e.active.id === e.over?.id) return;
                     store
                         .getState()
                         .setOverNode((e.over?.id as string) ?? null);
                     if (e.active.data.current?.isNew && newStart === null) {
-                        const [gridrow, gridcol] = store
-                            .getState()
-                            .getGridSize('new');
-                        const x = Math.min(
-                            normalize(mousePos.current.x / gridcol, gridcol),
-                            NUMBER_OF_COLUMNS - 1
-                        );
-                        const y = normalize(
-                            mousePos.current.y / gridrow,
-                            gridrow
-                        );
+                        const [gridrow] = store.getState().getGridSize('new');
+                        console.log('mousepos', [
+                            mousePos.current.x,
+                            mousePos.current.y
+                        ]);
+
                         setNewStart({
                             x: mousePos.current.x,
                             y: mousePos.current.y
                         });
-                        console.log([x, y]);
+                        let x = 0;
+                        const root = store.getState().tree['root'];
+                        const rootBoundingRect =
+                            root.dom!.getBoundingClientRect();
+                        if (mousePos.current.x > rootBoundingRect.width / 2) {
+                            x = NUMBER_OF_COLUMNS - 2;
+                        }
+                        const y = normalize(
+                            mousePos.current.y / gridrow,
+                            gridrow
+                        );
+
                         store.getState().setDimensions('new', {
                             x,
                             y
@@ -358,6 +369,7 @@ function App() {
                 }}
                 modifiers={[snapModifier]} //todo: may need to change this when we have nested containers and stuff
             >
+                {/*sidebar*/}
                 <div className="h-full w-1/5 bg-gray-200"></div>
 
                 <div className="relative h-full w-4/5 bg-gray-900">
@@ -366,7 +378,6 @@ function App() {
                     <WebloomRoot />
                     <Grid gridSize={wholeTree['root'].width / 32} />
                 </div>
-                {/*sidebar*/}
                 <div className="h-full w-1/5 bg-gray-200 p-4">
                     <div className="h-1/2 w-full bg-gray-300 ">sidebar</div>
                     {Object.entries(WebloomComponents).map(
