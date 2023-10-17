@@ -56,7 +56,10 @@ interface WebloomActions {
         id: string,
         dimensions: Partial<WebloomNodeDimensions>
     ) => void;
-    resizeNode: (id: string, dimensions: WebloomNodeDimensions) => void;
+    resizeNode: (
+        id: string,
+        dimensions: Partial<WebloomNodeDimensions>
+    ) => void;
     setMousePos: (pos: { x: number; y: number }) => void;
 }
 function checkOverlap(
@@ -191,7 +194,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             }
             const gridColSize = parent.width / NUMBER_OF_COLUMNS;
             const gridRowSize = ROW_HEIGHT;
-
             return {
                 x: node.x * gridColSize,
                 y: node.y * gridRowSize,
@@ -221,29 +223,24 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         },
         resizeNode(id, dimensions) {
             const state = get();
+
             const node = state.tree[id];
             if (!node) return state;
-            const parent = state.tree['root'];
-            const {
-                left,
-                top,
-                right,
-                bottom,
-                width: newWidth,
-                height: newHeight
-            } = getBoundingRect(dimensions);
+            const left = dimensions.x || node.x;
+            const top = dimensions.y || node.y;
+            const rowCount = dimensions.rowsCount || node.rowsCount;
+            const colCount = dimensions.columnsCount || node.columnsCount;
+            const right = left + colCount;
+            const bottom = top + rowCount;
+            const parent = state.tree[node.parent!];
             parent.nodes.forEach((nodeId) => {
+                if (nodeId === id) return false;
                 const otherNode = state.tree[nodeId];
                 if (!otherNode) return false;
-                if (otherNode.id === id) return false;
-                const otherNodeDimensions = get().getDimensions(nodeId);
-                const {
-                    left: otherLeft,
-                    top: otherTop,
-                    right: otherRight,
-                    bottom: otherBottom
-                } = getBoundingRect(otherNodeDimensions);
-
+                const otherBottom = otherNode.y + otherNode.rowsCount;
+                const otherTop = otherNode.y;
+                const otherLeft = otherNode.x;
+                const otherRight = otherNode.x + otherNode.columnsCount;
                 if (
                     checkOverlap(
                         {
@@ -266,12 +263,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                     });
                 }
             });
-
             return get().setDimensions(id, {
-                x: left,
-                y: top,
-                width: newWidth,
-                height: newHeight
+                ...dimensions
             });
         },
         moveNodeIntoGrid: (
@@ -279,7 +272,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             displacement: { x: number; y: number }
         ) => {
             if (displacement.x === 0 && displacement.y === 0) return;
-            console.log(displacement);
             const state = get();
             const over = state.overNode;
             const node = state.tree[id];
@@ -328,7 +320,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                 if (top < otherBottom && top >= otherTop) {
                     if (left < otherLeft && left + colCount > otherLeft) {
                         colCount = Math.min(colCount, otherLeft - left);
-                        //todo replace 100 with min width
                         if (colCount < 2) {
                             left = otherLeft - 2;
                             colCount = 2;
@@ -337,7 +328,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
                         const temp = left;
                         left = otherRight;
                         colCount += temp - left;
-                        //todo replace 100 with min width
                         if (colCount < 2) {
                             colCount = 2;
                         }

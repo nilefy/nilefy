@@ -1,9 +1,8 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import store from '../../../../store';
+import store from '@/store';
 import { WebloomContext } from './WebloomContext';
-import { GRID_CELL_SIDE } from '../../../../lib/constants';
-import { CSS } from '@dnd-kit/utilities';
+import { normalize } from '@/lib/utils';
 
 type WebloomAdapterProps = {
     children: React.ReactNode;
@@ -129,11 +128,9 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                     }}
                 >
                     {Object.entries(handlePositions).map(([key, [y, x]]) => {
+                        const width = elDimensions.width;
+                        const height = elDimensions.height;
                         let left = 0;
-                        const width = parseInt(style.width?.toString() || '0');
-                        const height = parseInt(
-                            style.height?.toString() || '0'
-                        );
                         if (x === 0) {
                             left = -handleSize / 2;
                         } else if (x === 1) {
@@ -176,7 +173,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 </div>
             )
         );
-    }, [props.resizable, style, el, selected, isDragging]);
+    }, [props.resizable, style, elDimensions, selected, isDragging]);
     useEffect(() => {
         const resizeHandler = (e: MouseEvent) => {
             if (resizingKey === null) return;
@@ -192,27 +189,26 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             let newHeight = initialHeight;
             let newLeft = initialLeft;
             let newTop = initialTop;
-            const minWidth = 100;
-            const minHeight = 50;
+
             let [x, y] = [e.clientX, e.clientY];
             const rect = root.dom.getBoundingClientRect();
             x -= rect.left;
-            y -= rect.top;
+            y -= rect.top; // -> so that we get the mousePos relative to the root element
+            const [gridRow, gridCol] = store.getState().getGridSize(id);
+            const minWidth = gridCol * 2;
+            const minHeight = gridRow * 10;
             if (direction.includes('top')) {
                 const diff = initialTop - y;
-                const snappedDiff =
-                    Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
+                const snappedDiff = normalize(diff, gridRow);
                 newHeight += snappedDiff;
                 newTop -= snappedDiff;
                 if (newHeight < minHeight) {
                     newHeight = minHeight;
                     newTop = initialTop + initialHeight - minHeight;
                 }
-            }
-            if (direction.includes('bottom')) {
+            } else if (direction.includes('bottom')) {
                 const diff = y - initialBottom;
-                const snappedDiff =
-                    Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
+                const snappedDiff = normalize(diff, gridRow);
                 newHeight += snappedDiff;
                 if (newHeight < minHeight) {
                     newHeight = minHeight;
@@ -220,29 +216,33 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             }
             if (direction.includes('left')) {
                 const diff = initialLeft - x;
-                const snappedDiff =
-                    Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
+                const snappedDiff = normalize(diff, gridCol);
                 newWidth += snappedDiff;
                 newLeft -= snappedDiff;
                 if (newWidth < minWidth) {
                     newWidth = minWidth;
                     newLeft = initialLeft + initialWidth - minWidth;
                 }
-            }
-            if (direction.includes('right')) {
+            } else if (direction.includes('right')) {
                 const diff = x - initialRight;
-                const snappedDiff =
-                    Math.round(diff / GRID_CELL_SIDE) * GRID_CELL_SIDE;
+                const snappedDiff = normalize(diff, gridCol);
                 newWidth += snappedDiff;
                 if (newWidth < minWidth) {
                     newWidth = minWidth;
                 }
             }
+
+            //width = rowsCount * rowSize -> rowsCount = width/rowSize
+            const colCount = newWidth / gridCol;
+            const rowCount = newHeight / gridRow;
+            const newX = newLeft / gridCol;
+            const newY = newTop / gridRow;
+
             resizeNode(id, {
-                width: newWidth,
-                height: newHeight,
-                x: newLeft,
-                y: newTop
+                rowsCount: rowCount,
+                columnsCount: colCount,
+                x: newX,
+                y: newY
             });
         };
         const resizeEndHandler = () => {
