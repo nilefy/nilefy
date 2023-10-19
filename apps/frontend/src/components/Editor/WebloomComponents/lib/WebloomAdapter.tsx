@@ -5,6 +5,9 @@ import { WebloomContext } from './WebloomContext';
 import { normalize } from '@/lib/utils';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
+import ResizeAction from '@/Actions/Editor/Resize';
+import { commandManager } from '@/Actions/CommandManager';
+
 type WebloomAdapterProps = {
   children: React.ReactNode;
   draggable?: boolean;
@@ -161,96 +164,37 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                 }}
                 onPointerDown={(e) => {
                   e.stopPropagation();
-                  setResizingKey(key as keyof typeof cursors);
-                  setInitialDimensions({
-                    width: elDimensions.width,
-                    height: elDimensions.height,
-                    x: elDimensions.x,
-                    y: elDimensions.y,
-                  });
+                  commandManager.executeCommand(
+                    ResizeAction.start(id, key as keyof typeof cursors, {
+                      width: elDimensions.width,
+                      height: elDimensions.height,
+                      x: elDimensions.x,
+                      y: elDimensions.y,
+                    }),
+                  );
                 }}
-                onPointerUp={() => setResizingKey(null)}
+                onPointerUp={() => ResizeAction._end()}
               ></div>
             );
           })}
         </div>
       )
     );
-  }, [props.resizable, style, elDimensions, selected, isDragging]);
+  }, [props.resizable, style, elDimensions, selected, isDragging, id]);
   useEffect(() => {
     const resizeHandler = (e: MouseEvent) => {
-      if (resizingKey === null) return;
-      if (!root.dom) return;
+      if (ResizeAction.resizingKey === null) return;
+      console.log('here');
       e.stopPropagation();
-      const direction = resizingKey.split('-');
-      const { width: initialWidth, height: initialHeight } = initialDimensions;
-      const { x: initialLeft, y: initialTop } = initialDimensions;
-      const initialRight = initialLeft + initialWidth;
-      const initialBottom = initialTop + initialHeight;
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newLeft = initialLeft;
-      let newTop = initialTop;
-
-      let [x, y] = [e.clientX, e.clientY];
-      const rect = root.dom.getBoundingClientRect();
-      x -= rect.left;
-      y -= rect.top; // -> so that we get the mousePos relative to the root element
-
-      const [gridRow, gridCol] = store.getState().getGridSize(id);
-      const minWidth = gridCol * 2;
-      const minHeight = gridRow * 10;
-      if (direction.includes('top')) {
-        const diff = initialTop - y;
-        const snappedDiff = normalize(diff, gridRow);
-        newHeight += snappedDiff;
-        newTop -= snappedDiff;
-        if (newHeight < minHeight) {
-          newHeight = minHeight;
-          newTop = initialTop + initialHeight - minHeight;
-        }
-      } else if (direction.includes('bottom')) {
-        const diff = y - initialBottom;
-        const snappedDiff = normalize(diff, gridRow);
-        newHeight += snappedDiff;
-        if (newHeight < minHeight) {
-          newHeight = minHeight;
-        }
-      }
-      if (direction.includes('left')) {
-        const diff = initialLeft - x;
-        const snappedDiff = normalize(diff, gridCol);
-        newWidth += snappedDiff;
-        newLeft -= snappedDiff;
-        if (newWidth < minWidth) {
-          newWidth = minWidth;
-          newLeft = initialLeft + initialWidth - minWidth;
-        }
-      } else if (direction.includes('right')) {
-        const diff = x - initialRight;
-        const snappedDiff = normalize(diff, gridCol);
-        newWidth += snappedDiff;
-        if (newWidth < minWidth) {
-          newWidth = minWidth;
-        }
-      }
-
-      //width = rowsCount * rowSize -> rowsCount = width/rowSize
-      const colCount = newWidth / gridCol;
-      const rowCount = newHeight / gridRow;
-      const newX = newLeft / gridCol;
-      const newY = newTop / gridRow;
-
-      const val = resizeNode(id, {
-        rowsCount: rowCount,
-        columnsCount: colCount,
-        x: newX,
-        y: newY,
-      });
-      console.log(val.changedNodesOriginalCoords);
+      commandManager.executeCommand(
+        ResizeAction.move({
+          x: e.clientX,
+          y: e.clientY,
+        }),
+      );
     };
     const resizeEndHandler = () => {
-      setResizingKey(null);
+      ResizeAction._end();
     };
     const rootDom = root.dom;
     const el = ref.current;

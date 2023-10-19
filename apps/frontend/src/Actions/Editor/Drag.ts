@@ -1,13 +1,11 @@
 import store, { WebloomNode } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID } from '@/lib/constants';
+import { NUMBER_OF_COLUMNS, ROOT_NODE_ID } from '@/lib/constants';
 import { nanoid } from 'nanoid';
 import { normalize } from '@/lib/utils';
 import { WebloomComponents } from '@/components/Editor/WebloomComponents';
-type Point = {
-  x: number;
-  y: number;
-};
+import { Point } from '@/types';
+
 const {
   moveNodeIntoGrid,
   getGridSize,
@@ -24,6 +22,7 @@ class DragAction {
   private static newType: string;
   private static id: string | null;
   private static overId: string;
+  private static touchedRoot = false;
   private static startGridPosition: Point;
   private static delta: Point;
   private static mouseStartPosition: Point;
@@ -81,6 +80,9 @@ class DragAction {
     overId: string | undefined,
   ) {
     if (!overId) return;
+    if (overId === ROOT_NODE_ID) {
+      this.touchedRoot = true;
+    }
     const [gridrow, gridcol] = getGridSize(this.id!);
     this.mouseCurrentPosition = mouseCurrentPosition;
     const delta = {
@@ -104,7 +106,7 @@ class DragAction {
     }
     if (!this.moved) return;
     const currentGridPosition = {
-      x: this.startGridPosition.x + delta.x,
+      x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startGridPosition.y + delta.y,
     };
     //Shadow element
@@ -129,7 +131,13 @@ class DragAction {
     if (!this.moved) return null;
     return this._end(...args);
   }
-  public static _end(overId: string): UndoableCommand {
+  public static _end(overId: string | null): UndoableCommand | null {
+    if (overId === null) {
+      if (this.touchedRoot) {
+        overId = ROOT_NODE_ID;
+      } else return null;
+    }
+    this.touchedRoot = false;
     setDraggedNode(null);
     setShadowElement(null);
     this.moved = false;
@@ -137,7 +145,7 @@ class DragAction {
     this.isNew = false;
     const delta = { ...this.delta };
     const endPosition = {
-      x: this.startGridPosition.x + delta.x,
+      x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startGridPosition.y + delta.y,
     };
     if (overId !== ROOT_NODE_ID && overId !== this.id) {

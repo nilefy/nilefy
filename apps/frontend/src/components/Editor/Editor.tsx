@@ -163,8 +163,8 @@ function Editor() {
   const sensors = useSensors(mouseSensor, touchSensor);
   const handleDragEnd = (e: DragEndEvent) => {
     if (!e.active.data.current) return;
-    if (!e.over) return;
-    commandManager.executeCommand(DragAction.end(e.over.id as string));
+    const over: string | null = e.over ? (e.over.id as string) : null;
+    commandManager.executeCommand(DragAction.end(over));
     store.getState().setOverNode(null);
   };
   const handleDragOver = (e: DragOverEvent) => {

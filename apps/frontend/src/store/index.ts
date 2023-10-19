@@ -1,5 +1,6 @@
 import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import { getBoundingRect } from '@/lib/utils';
+import { Point } from '@/types';
 import { create } from 'zustand';
 export type BoundingRect = {
   left: number;
@@ -50,8 +51,8 @@ interface WebloomState {
   draggedNode: string | null;
   resizedNode: string | null;
   newNode: WebloomNode | null;
-  newNodeTranslate: { x: number; y: number } | null;
-  mousePos: { x: number; y: number };
+  newNodeTranslate: Point | null;
+  mousePos: Point;
   shadowElement: ShadowElement | null;
 }
 
@@ -62,7 +63,7 @@ type MoveNodeReturnType = {
     columnsCount: number;
     rowsCount: number;
   };
-  changedNodesOriginalCoords: Record<string, { x: number; y: number }>;
+  changedNodesOriginalCoords: Record<string, Point>;
 };
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
@@ -73,7 +74,7 @@ interface WebloomActions {
   removeNode: (id: string) => void;
   moveNodeIntoGrid: (
     id: string,
-    newCoords: Partial<{ x: number; y: number }>,
+    newCoords: Partial<Point>,
     firstCall?: boolean,
   ) => MoveNodeReturnType;
   addNode: (node: WebloomNode, parentId: string) => void;
@@ -146,7 +147,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setNewNodeTranslate(translate) {
       set({ newNodeTranslate: translate });
     },
-    setMousePos: (pos: { x: number; y: number }) => {
+    setMousePos: (pos: Point) => {
       set({ mousePos: pos });
     },
     setOverNode: (id: string | null) => {
@@ -284,8 +285,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     resizeNode(id, dimensions) {
-      let changedNodesOriginalCoords: Record<string, { x: number; y: number }> =
-        {};
+      let changedNodesOriginalCoords: Record<string, Point> = {};
       const state = get();
       const node = state.tree[id];
       if (!node)
@@ -344,10 +344,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       };
     },
     moveNodeIntoGrid(id, newCoords, firstCall = true) {
-      const changedNodesOriginalCoords: Record<
-        string,
-        { x: number; y: number }
-      > = {};
+      const changedNodesOriginalCoords: Record<string, Point> = {};
       const node = get().tree[id];
       const firstNodeOriginalDimensions = {
         x: node.x,
@@ -357,7 +354,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       };
       function recurse(
         id: string,
-        newCoords: Partial<{ x: number; y: number }>,
+        newCoords: Partial<Point>,
         firstCall = true,
       ) {
         const state = get();
