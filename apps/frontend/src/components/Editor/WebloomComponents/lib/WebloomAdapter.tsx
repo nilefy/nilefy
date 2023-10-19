@@ -241,12 +241,13 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       const newX = newLeft / gridCol;
       const newY = newTop / gridRow;
 
-      resizeNode(id, {
+      const val = resizeNode(id, {
         rowsCount: rowCount,
         columnsCount: colCount,
         x: newX,
         y: newY,
       });
+      console.log(val.changedNodesOriginalCoords);
     };
     const resizeEndHandler = () => {
       setResizingKey(null);

@@ -172,12 +172,14 @@ class DragAction {
         },
         undo: () => {
           removeNode(id);
-          undoData.changedNodesOriginalCoords.forEach((node) => {
-            setDimensions(node.id, {
-              x: node.x,
-              y: node.y,
-            });
-          });
+          Object.entries(undoData.changedNodesOriginalCoords).forEach(
+            ([id, coords]) => {
+              setDimensions(id, {
+                x: coords.x,
+                y: coords.y,
+              });
+            },
+          );
         },
       };
     }
@@ -187,13 +189,17 @@ class DragAction {
         undoData = moveNodeIntoGrid(id, endPosition);
       },
       undo: () => {
-        undoData.changedNodesOriginalCoords.forEach((node) => {
-          setDimensions(node.id, {
-            x: node.x,
-            y: node.y,
-          });
-        });
-        setDimensions(id, undoData.firstNodeOriginalDimensions);
+        console.log(undoData.changedNodesOriginalCoords);
+        Object.entries(undoData.changedNodesOriginalCoords).forEach(
+          ([id, coords]) => {
+            setDimensions(id, {
+              x: coords.x,
+              y: coords.y,
+            });
+          },
+        );
+        console.log(undoData.firstNodeOriginalDimensions);
+        setDimensions(id, undoData.firstNodeOriginalDimensions!);
       },
     };
   }

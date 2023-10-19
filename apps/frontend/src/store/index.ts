@@ -54,6 +54,16 @@ interface WebloomState {
   mousePos: { x: number; y: number };
   shadowElement: ShadowElement | null;
 }
+
+type MoveNodeReturnType = {
+  firstNodeOriginalDimensions?: {
+    x: number;
+    y: number;
+    columnsCount: number;
+    rowsCount: number;
+  };
+  changedNodesOriginalCoords: Record<string, { x: number; y: number }>;
+};
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
   setSelectedNode: (id: string | null) => void;
@@ -65,20 +75,16 @@ interface WebloomActions {
     id: string,
     newCoords: Partial<{ x: number; y: number }>,
     firstCall?: boolean,
-  ) => {
-    firstNodeOriginalDimensions: WebloomNodeDimensions;
-    changedNodesOriginalCoords: {
-      id: string;
-      x: number;
-      y: number;
-    }[];
-  };
+  ) => MoveNodeReturnType;
   addNode: (node: WebloomNode, parentId: string) => void;
   setDimensions: (
     id: string,
     dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
-  resizeNode: (id: string, dimensions: Partial<WebloomNodeDimensions>) => void;
+  resizeNode: (
+    id: string,
+    dimensions: Partial<WebloomNodeDimensions>,
+  ) => MoveNodeReturnType;
   setMousePos: (pos: WebloomState['mousePos']) => void;
   setNewNode: (newNode: WebloomState['newNode']) => void;
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
@@ -173,6 +179,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     removeNode(id) {
+      // cannot delete a non existing node
+      if (!(id in get().tree)) return;
       set((state) => {
         const node = state.tree[id];
         if (!node) return state;
@@ -276,10 +284,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     resizeNode(id, dimensions) {
+      let changedNodesOriginalCoords: Record<string, { x: number; y: number }> =
+        {};
       const state = get();
-
       const node = state.tree[id];
-      if (!node) return state;
+      if (!node)
+        return {
+          changedNodesOriginalCoords,
+        };
       const left = dimensions.x || node.x;
       const top = dimensions.y || node.y;
       const rowCount = dimensions.rowsCount || node.rowsCount;
@@ -311,26 +323,38 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             },
           )
         ) {
-          get().moveNodeIntoGrid(
+          const returned = get().moveNodeIntoGrid(
             nodeId,
             {
               y: bottom,
             },
             false,
           );
+          changedNodesOriginalCoords = {
+            ...changedNodesOriginalCoords,
+            ...returned.changedNodesOriginalCoords,
+          };
         }
       });
-      return get().setDimensions(id, {
+      get().setDimensions(id, {
         ...dimensions,
       });
+      return {
+        changedNodesOriginalCoords,
+      };
     },
     moveNodeIntoGrid(id, newCoords, firstCall = true) {
-      const changedNodesOriginalCoords: {
-        id: string;
-        x: number;
-        y: number;
-      }[] = [];
-      const firstNodeOriginalDimensions = get().getDimensions(id);
+      const changedNodesOriginalCoords: Record<
+        string,
+        { x: number; y: number }
+      > = {};
+      const node = get().tree[id];
+      const firstNodeOriginalDimensions = {
+        x: node.x,
+        y: node.y,
+        columnsCount: node.columnsCount,
+        rowsCount: node.rowsCount,
+      };
       function recurse(
         id: string,
         newCoords: Partial<{ x: number; y: number }>,
@@ -419,18 +443,28 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           rowsCount: rowCount,
         });
         toBeMoved.forEach((node) => {
-          changedNodesOriginalCoords.push({
-            id: node.id,
+          changedNodesOriginalCoords[node.id] ??= {
             x: state.tree[node.id].x,
             y: state.tree[node.id].y,
-          });
+          };
           recurse(node.id, { x: node.x, y: node.y });
         });
       }
       recurse(id, newCoords, firstCall);
+      if (firstCall) {
+        return {
+          changedNodesOriginalCoords,
+          firstNodeOriginalDimensions,
+        };
+      }
       return {
-        changedNodesOriginalCoords,
-        firstNodeOriginalDimensions,
+        changedNodesOriginalCoords: {
+          ...changedNodesOriginalCoords,
+          [id]: {
+            x: firstNodeOriginalDimensions.x,
+            y: firstNodeOriginalDimensions.y,
+          },
+        },
       };
     },
   }),

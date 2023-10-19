@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
 import { WebloomContainer } from './WebloomComponents/Container';
@@ -141,6 +142,9 @@ store.setState((state) => {
 });
 function Editor() {
   const root = store((state) => state.tree[ROOT_NODE_ID]);
+  useHotkeys('ctrl+z', () => {
+    commandManager.undoCommand();
+  });
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
