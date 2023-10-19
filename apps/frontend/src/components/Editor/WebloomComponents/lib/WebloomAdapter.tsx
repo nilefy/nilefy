@@ -1,9 +1,10 @@
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import store from '@/store';
 import { WebloomContext } from './WebloomContext';
 import { normalize } from '@/lib/utils';
-
+import { ROOT_NODE_ID } from '@/lib/constants';
+import { useWebloomDraggable } from '@/hooks';
 type WebloomAdapterProps = {
   children: React.ReactNode;
   draggable?: boolean;
@@ -18,7 +19,7 @@ const handlePositions = {
   top: [0, 0.5],
   bottom: [1, 0.5],
   left: [0.5, 0],
-  right: [0.5, 1]
+  right: [0.5, 1],
 } as const;
 
 const cursors = {
@@ -29,12 +30,12 @@ const cursors = {
   top: 'ns-resize',
   bottom: 'ns-resize',
   left: 'ew-resize',
-  right: 'ew-resize'
+  right: 'ew-resize',
 } as const;
 const { resizeNode } = store.getState();
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const [resizingKey, setResizingKey] = useState<null | keyof typeof cursors>(
-    null
+    null,
   );
   const [initialDimensions, setInitialDimensions] = useState<{
     width: number;
@@ -45,7 +46,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     width: 0,
     height: 0,
     x: 0,
-    y: 0
+    y: 0,
   });
 
   const { id } = useContext(WebloomContext);
@@ -53,27 +54,29 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
 
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
-    disabled: !props.droppable
+    disabled: !props.droppable,
   });
   const el = store().tree[id];
   //todo change to parent when nesting is implemented
-  const root = store().tree['root'];
+  const root = store().tree[ROOT_NODE_ID];
   const ref = useRef<HTMLDivElement>(null);
   const elDimensions = store.getState().getDimensions(id);
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id,
-    disabled: !props.draggable && resizingKey === null,
-    data: {
-      isNew: false
-    }
-  });
+  const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
+    {
+      id,
+      disabled: !props.draggable && resizingKey === null,
+      data: {
+        isNew: false,
+      },
+    },
+  );
   const modListeners = useMemo(() => {
     if (!listeners)
       return {
         onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
           e.stopPropagation();
           store.getState().setSelectedNode(id);
-        }
+        },
       };
     return {
       ...listeners,
@@ -81,7 +84,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         e.stopPropagation();
         store.getState().setSelectedNode(id);
         listeners.onMouseDown(e);
-      }
+      },
     };
   }, [listeners, id]);
   useEffect(() => {
@@ -95,14 +98,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       position: 'absolute',
       width: elDimensions.width,
       height: elDimensions.height,
-      visibility: isDragging ? 'hidden' : 'visible'
+      visibility: isDragging ? 'hidden' : 'visible',
     } as React.CSSProperties;
   }, [
     elDimensions.x,
     elDimensions.y,
     elDimensions.width,
     elDimensions.height,
-    isDragging
+    isDragging,
   ]);
   const handles = useMemo(() => {
     if (!props.resizable) return null;
@@ -113,7 +116,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       height: handleSize,
       backgroundColor: 'white',
       border: '1px solid black',
-      borderRadius: '50%'
+      borderRadius: '50%',
     };
     return (
       !isDragging &&
@@ -124,7 +127,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             position: 'absolute',
             top: style.top,
             left: style.left,
-            transform: style.transform
+            transform: style.transform,
           }}
         >
           {Object.entries(handlePositions).map(([key, [y, x]]) => {
@@ -154,7 +157,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                   ...handleStyle,
                   top,
                   left,
-                  cursor: cursors[key as keyof typeof cursors]
+                  cursor: cursors[key as keyof typeof cursors],
                 }}
                 onPointerDown={(e) => {
                   e.stopPropagation();
@@ -163,7 +166,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                     width: elDimensions.width,
                     height: elDimensions.height,
                     x: elDimensions.x,
-                    y: elDimensions.y
+                    y: elDimensions.y,
                   });
                 }}
                 onPointerUp={() => setResizingKey(null)}
@@ -242,7 +245,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         rowsCount: rowCount,
         columnsCount: colCount,
         x: newX,
-        y: newY
+        y: newY,
       });
     };
     const resizeEndHandler = () => {
@@ -271,7 +274,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     id,
     el,
     initialDimensions,
-    root.dom
+    root.dom,
   ]);
   return (
     <>
