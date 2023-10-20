@@ -44,3 +44,22 @@ export function normalizePoint(
 export function normalize(x: number, grid: number) {
   return Math.round(x / grid) * grid;
 }
+
+export function checkOverlap(
+  a: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  },
+  b: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  },
+): boolean {
+  return (
+    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+  );
+}

@@ -1,5 +1,5 @@
 import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { getBoundingRect } from '@/lib/utils';
+import { checkOverlap, getBoundingRect } from '@/lib/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
 export type BoundingRect = {
@@ -91,24 +91,6 @@ interface WebloomActions {
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
-}
-function checkOverlap(
-  a: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  },
-  b: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  },
-): boolean {
-  return (
-    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
-  );
 }
 
 interface WebloomGetters {
@@ -444,7 +426,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             x: state.tree[node.id].x,
             y: state.tree[node.id].y,
           };
-          recurse(node.id, { x: node.x, y: node.y });
+          recurse(node.id, { x: node.x, y: node.y }, false);
         });
       }
       recurse(id, newCoords, firstCall);

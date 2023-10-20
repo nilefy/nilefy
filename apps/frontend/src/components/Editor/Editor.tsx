@@ -29,7 +29,7 @@ import NewNodeAdapter from './WebloomComponents/lib/NewNodeAdapter';
 import { useSetDom } from '@/hooks/useSetDom';
 import { normalize } from '@/lib/utils';
 import { WebloomElementShadow } from './WebloomComponents/lib/WebloomElementShadow';
-import { Grid } from './WebloomComponents/lib/Grid';
+import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
@@ -83,7 +83,6 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
-
   //get setter
 
   const tree = wholeTree[id];
@@ -141,10 +140,10 @@ store.setState((state) => {
   return state;
 });
 function Editor() {
-  const root = store((state) => state.tree[ROOT_NODE_ID]);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
+  const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {

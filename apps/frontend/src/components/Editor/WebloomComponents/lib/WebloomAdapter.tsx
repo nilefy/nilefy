@@ -1,8 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { WebloomContext } from './WebloomContext';
-import { normalize } from '@/lib/utils';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
@@ -35,23 +34,7 @@ const cursors = {
   left: 'ew-resize',
   right: 'ew-resize',
 } as const;
-const { resizeNode } = store.getState();
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
-  const [resizingKey, setResizingKey] = useState<null | keyof typeof cursors>(
-    null,
-  );
-  const [initialDimensions, setInitialDimensions] = useState<{
-    width: number;
-    height: number;
-    x: number;
-    y: number;
-  }>({
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-  });
-
   const { id } = useContext(WebloomContext);
   const selected = store((state) => state.selectedNode) === id;
 
@@ -67,7 +50,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
-      disabled: !props.draggable && resizingKey === null,
+      disabled: !props.draggable && ResizeAction.resizingKey === null,
       data: {
         isNew: false,
       },
@@ -184,7 +167,6 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   useEffect(() => {
     const resizeHandler = (e: MouseEvent) => {
       if (ResizeAction.resizingKey === null) return;
-      console.log('here');
       e.stopPropagation();
       commandManager.executeCommand(
         ResizeAction.move({
@@ -211,14 +193,12 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       el.removeEventListener('pointerup', resizeEndHandler);
     };
   }, [
-    resizingKey,
     elDimensions.width,
     elDimensions.height,
     elDimensions.x,
     elDimensions.y,
     id,
     el,
-    initialDimensions,
     root.dom,
   ]);
   return (

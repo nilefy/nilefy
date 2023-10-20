@@ -2,10 +2,9 @@ import { ROW_HEIGHT } from '@/lib/constants';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 
-export const Grid = ({ gridSize }: { gridSize: number }) => {
+const Grid = ({ gridSize }: { gridSize: number }) => {
   //grid line width is 1px
   const { active } = useDndContext();
-
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -39,3 +38,5 @@ export const Grid = ({ gridSize }: { gridSize: number }) => {
     </div>
   );
 };
+
+export default Grid;

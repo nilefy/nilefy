@@ -5,7 +5,14 @@ import { nanoid } from 'nanoid';
 import { normalize } from '@/lib/utils';
 import { WebloomComponents } from '@/components/Editor/WebloomComponents';
 import { Point } from '@/types';
-
+function getRandomColor() {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 const {
   moveNodeIntoGrid,
   getGridSize,
@@ -52,7 +59,7 @@ class DragAction {
         parent: args.new!.parent,
         dom: null,
         props: {
-          className: 'bg-red-500',
+          color: getRandomColor(),
         },
         height: 0,
         width: 0,
@@ -197,7 +204,6 @@ class DragAction {
         undoData = moveNodeIntoGrid(id, endPosition);
       },
       undo: () => {
-        console.log(undoData.changedNodesOriginalCoords);
         Object.entries(undoData.changedNodesOriginalCoords).forEach(
           ([id, coords]) => {
             setDimensions(id, {
@@ -206,7 +212,6 @@ class DragAction {
             });
           },
         );
-        console.log(undoData.firstNodeOriginalDimensions);
         setDimensions(id, undoData.firstNodeOriginalDimensions!);
       },
     };

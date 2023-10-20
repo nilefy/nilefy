@@ -1,7 +1,7 @@
 import store from '@/store';
 import { Command } from '../types';
 import { ROOT_NODE_ID } from '@/lib/constants';
-import { normalize } from '@/lib/utils';
+import { checkOverlap, normalize } from '@/lib/utils';
 import { Point } from '@/types';
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -10,7 +10,7 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const { resizeNode, getGridSize } = store.getState();
+const { resizeNode, getGridSize, setDimensions } = store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
@@ -109,7 +109,13 @@ class ResizeAction {
     const rowCount = newHeight / gridRow;
     const newX = newLeft / gridCol;
     const newY = newTop / gridRow;
-
+    Object.entries(this.orginalPositions).forEach(([id, pos]) => {
+      if (id === this.id) return;
+      setDimensions(id, {
+        x: pos.x,
+        y: pos.y,
+      });
+    });
     const orgpos = resizeNode(this.id, {
       rowsCount: rowCount,
       columnsCount: colCount,
@@ -142,6 +148,7 @@ class ResizeAction {
       x: 0,
       y: 0,
     };
+    this.orginalPositions = {};
   }
 }
 
