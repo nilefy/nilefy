@@ -1,69 +1,16 @@
-import { useCodeMirror } from '@uiw/react-codemirror';
-import { useEffect, useRef } from 'react';
+import { basicSetup } from 'codemirror';
+import {
+  EditorView,
+  MatchDecorator,
+  Decoration,
+  ViewPlugin,
+  DecorationSet,
+  ViewUpdate,
+} from '@codemirror/view';
+import { useEffect, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { CompletionContext } from '@codemirror/autocomplete';
-// import {
-//   MatchDecorator,
-//   Decoration,
-//   EditorView,
-//   ViewPlugin,
-//   DecorationSet,
-//   ViewUpdate,
-// } from '@codemirror/view';
-// import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
-// import { syntaxTree } from '@codemirror/language';
-
-//
-// function myCompletions(context: CompletionContext) {
-//   const before = context.matchBefore(/\w+/);
-//   // If completion wasn't explicitly started and there
-//   // is no word before the cursor, don't open completions.
-//   if (!context.explicit && !before) return null;
-//   return {
-//     from: before ? before.from : context.pos,
-//     options: completions,
-//     validFor: /^\w*$/,
-//   };
-// }
-
-// function myCompletions2(context: CompletionContext) {
-//   const before = context.matchBefore(/\w+/);
-//   // If completion wasn't explicitly started and there
-//   // is no word before the cursor, don't open completions.
-//   if (!context.explicit && !before) return null;
-//   return {
-//     from: before ? before.from : context.pos,
-//     options: javascriptLanguage,
-//     validFor: /^\w*$/,
-//   };
-// }
-// const templateMark = Decoration.mark({ class: 'loom-jstemplate' });
-// const templateBaseTheme = EditorView.baseTheme({
-//   'loom-jstemplate': { textDecoration: 'underline 3px red' },
-// });
-// const templateMatcher = new MatchDecorator({
-//   regexp: /\[\[(\w+)\]\]/g,
-//   decoration: templateMark,
-// });
-//
-// const templates = ViewPlugin.fromClass(
-//   class {
-//     placeholders: DecorationSet;
-//     constructor(view: EditorView) {
-//       this.placeholders = templateMatcher.createDeco(view);
-//     }
-//     update(update: ViewUpdate) {
-//       this.placeholders = templateMatcher.updateDeco(update, this.placeholders);
-//     }
-//   },
-//   {
-//     decorations: (instance) => instance.placeholders,
-//     provide: (plugin) =>
-//       EditorView.atomicRanges.of((view) => {
-//         return view.plugin(plugin)?.placeholders || Decoration.none;
-//       }),
-//   },
-// );
+import { EditorState } from '@codemirror/state';
 
 // const tagOptions = [
 //   'constructor',
@@ -119,42 +66,100 @@ function webloomCompletions(context: CompletionContext) {
   };
 }
 
+/**
+ * extension that add the custom completion source to the js lang
+ */
 const webLoomContext = javascriptLanguage.data.of({
   autocomplete: webloomCompletions,
 });
 
-const extensions = [
-  javascript(),
-  webLoomContext,
-  // templateBaseTheme,
-  // templateMatcher,
-  // templates,
-  // autocompletion({ override: [myCompletions2] }),
-  // jsDocCompletions,
-  // jsDocCompletions2,
-];
+// HIGHLIGHT JS TEMPLATEs
+const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
+/**
+ * extension that adds new class to use in the mark
+ */
+const templateBaseTheme = EditorView.baseTheme({
+  '.cm-jstemplate': { backgroundColor: '#d0edf5' },
+});
+
+const templateMatcher = new MatchDecorator({
+  regexp: /{{(.*?)}}/g,
+  decoration: templateMarkDeco,
+});
+
+const jsTemplatePlugin = ViewPlugin.fromClass(
+  class {
+    templates: DecorationSet;
+    constructor(view: EditorView) {
+      this.templates = templateMatcher.createDeco(view);
+    }
+    update(update: ViewUpdate) {
+      console.log('update happend');
+      this.templates = templateMatcher.updateDeco(update, this.templates);
+      console.log(this.templates.size);
+    }
+  },
+  {
+    decorations: (instance) => instance.templates,
+  },
+);
+
+/**
+ * produce the extension that highlights the js template with `cm-loom-jstemplate`
+ */
 
 export function Globals() {
   const editor = useRef<HTMLDivElement>(null);
-  const { setContainer } = useCodeMirror({
-    container: editor.current,
-    extensions: extensions,
-    basicSetup: {
-      closeBrackets: true,
-      autocompletion: true,
-      lineNumbers: true,
-    },
-    theme: 'dark',
-  });
+  /**
+   * to hold the editor state outside the editor
+   */
+  const [code, setCode] = useState('');
+  // add extenion to update the state "code" when the view changes
+  const onUpdate = EditorView.updateListener.of((update) =>
+    setCode(update.state.doc.toString()),
+  );
   useEffect(() => {
-    if (editor.current) {
-      setContainer(editor.current);
-    }
-  }, [setContainer]);
+    if (!editor.current) return;
+    console.log('inside the hook');
+    const editorState = EditorState.create({
+      doc: code,
+      extensions: [
+        basicSetup,
+        javascript(),
+        onUpdate,
+        webLoomContext,
+        templateBaseTheme,
+        jsTemplatePlugin,
+      ],
+    });
+    const view = new EditorView({
+      state: editorState,
+      parent: editor.current,
+    });
+
+    return () => view.destroy();
+  }, []);
+
+  console.log('code', code);
+  // const { setContainer } = useCodeMirror({
+  //   container: editor.current,
+  //   extensions: extensions,
+  //   basicSetup: {
+  //     closeBrackets: true,
+  //     autocompletion: true,
+  //     lineNumbers: true,
+  //   },
+  //   theme: 'dark',
+  // });
+  // useEffect(() => {
+  //   if (editor.current) {
+  //     setContainer(editor.current);
+  //   }
+  // }, [setContainer]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">
-      <div ref={editor} className="w-2/3" />
+      <div ref={editor} className="h-8 w-2/3 " />
     </div>
   );
 }
