@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { createUserDto } from '../dto/users.dto';
+import { CreateUserDto } from '../dto/users.dto';
 
 @Injectable()
 export class UsersService {
   // TODO: create user model + db communication
-  private readonly users: createUserDto[] = [
+  private readonly users: CreateUserDto[] = [
     {
       username: 'user1',
       password: '0000',
@@ -16,7 +16,7 @@ export class UsersService {
     return this.users.find((user) => user.email === email);
   }
 
-  create(user: createUserDto) {
+  create(user: CreateUserDto) {
     this.users.push(user);
     return this.users;
   }

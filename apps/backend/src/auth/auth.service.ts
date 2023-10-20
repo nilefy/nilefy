@@ -6,7 +6,7 @@ import {
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
-import { createUserDto, loginUserDto } from '../dto/users.dto';
+import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from 'src/evn.validation';
 
@@ -18,7 +18,7 @@ export class AuthService {
     private configService: ConfigService<EnvSchema>,
   ) {}
 
-  async signUp(user: createUserDto) {
+  async signUp(user: CreateUserDto) {
     const { username, password } = user;
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
@@ -29,7 +29,7 @@ export class AuthService {
     return { token: await this.jwtService.signAsync({ username }) };
   }
 
-  async signIn(user: loginUserDto) {
+  async signIn(user: LoginUserDto) {
     const { email, password } = user;
 
     const ret = this.userService.findOne(email);

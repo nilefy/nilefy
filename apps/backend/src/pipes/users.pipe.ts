@@ -1,11 +1,11 @@
 import { BadRequestException, PipeTransform } from '@nestjs/common';
 import { ZodObject } from 'zod';
-import { createUserDto, loginUserDto } from '../dto/users.dto';
+import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 
 export class ValidationPipe implements PipeTransform {
   constructor(private schema: ZodObject<any>) {}
 
-  transform(value: createUserDto | loginUserDto) {
+  transform(value: CreateUserDto | LoginUserDto) {
     const res = this.schema.safeParse(value);
 
     if (res.success) {

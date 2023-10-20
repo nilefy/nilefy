@@ -10,5 +10,5 @@ export const signInSchema = z.object({
   password: z.string().min(6),
 });
 
-export type createUserDto = z.infer<typeof signUpSchema>;
-export type loginUserDto = z.infer<typeof signInSchema>;
+export type CreateUserDto = z.infer<typeof signUpSchema>;
+export type LoginUserDto = z.infer<typeof signInSchema>;

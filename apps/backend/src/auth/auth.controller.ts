@@ -13,8 +13,8 @@ import { ValidationPipe } from '../pipes/users.pipe';
 import {
   signUpSchema,
   signInSchema,
-  createUserDto,
-  loginUserDto,
+  CreateUserDto,
+  LoginUserDto,
 } from '../dto/users.dto';
 
 @Controller('auth')
@@ -23,13 +23,13 @@ export class AuthController {
 
   @UsePipes(new ValidationPipe(signUpSchema))
   @Post('signup')
-  async signUp(@Body() userDto: createUserDto) {
+  async signUp(@Body() userDto: CreateUserDto) {
     return await this.authService.signUp(userDto);
   }
 
   @UsePipes(new ValidationPipe(signInSchema))
   @Post('login')
-  signIn(@Body() userDto: loginUserDto) {
+  signIn(@Body() userDto: LoginUserDto) {
     return this.authService.signIn(userDto);
   }
 
