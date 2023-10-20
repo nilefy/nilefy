@@ -6,18 +6,24 @@ import * as schema from './schema/schema';
 
 export type DatabaseI = NodePgDatabase<typeof schema>;
 
-export const drizzleProvider = [
-  {
-    provide: 'drizzle',
-    inject: [ConfigService],
-    useFactory: async (configService: TConfigService) => {
-      const client = new Client({
-        connectionString: configService.get('DB_URL'),
-      });
-      await client.connect();
-      const db: DatabaseI = drizzle(client, { schema });
-      return db;
-    },
-    exports: ['drizzle'],
+export const DrizzleAsyncProvider = 'drizzleProvider';
+
+export async function dbConnect(
+  connectionString: string,
+): Promise<[DatabaseI, Client]> {
+  const client = new Client({
+    connectionString: connectionString,
+  });
+  await client.connect();
+  const db: DatabaseI = drizzle(client, { schema });
+  return [db, client];
+}
+
+export const drizzleProvider = {
+  provide: DrizzleAsyncProvider,
+  inject: [ConfigService],
+  useFactory: async (configService: TConfigService) => {
+    return (await dbConnect(configService.get('DB_URL')))[0];
   },
-];
+  exports: [DrizzleAsyncProvider],
+};
