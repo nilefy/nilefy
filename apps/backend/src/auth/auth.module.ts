@@ -4,16 +4,17 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EnvSchema } from 'src/evn.validation';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     UsersModule,
     JwtModule.registerAsync({
       global: true,
-      useFactory() {
-        console.log((process.env as EnvSchema).JWT_SECRET);
+      inject: [ConfigService],
+      useFactory(configService: ConfigService<EnvSchema>) {
         return {
-          secret: process.env.JWT_SECRET,
+          secret: configService.get('JWT_SECRET'),
           signOptions: { expiresIn: '1d' },
         };
       },

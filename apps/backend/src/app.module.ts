@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
+import { DrizzleModule } from './drizzle/drizzle.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { validate } from './evn.validation';
       // custom validation function with zod
       validate,
     }),
+    DrizzleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

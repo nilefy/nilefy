@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from '../dto/users.dto';
+import { DatabaseI } from 'src/drizzle/drizzle.provider';
+import { eq } from 'drizzle-orm';
+import { users } from 'src/drizzle/schema/schema';
 
 @Injectable()
 export class UsersService {
+  constructor(@Inject('drizzle') private db: DatabaseI) {}
+
   // TODO: create user model + db communication
   private readonly users: CreateUserDto[] = [
     {
@@ -12,12 +17,15 @@ export class UsersService {
     },
   ];
 
-  findOne(email: string) {
-    return this.users.find((user) => user.email === email);
+  async findOne(email: string) {
+    const u = await this.db.query.users.findFirst({
+      where: eq(users.email, email),
+    });
+    return u;
   }
 
-  create(user: CreateUserDto) {
-    this.users.push(user);
-    return this.users;
+  async create(user: CreateUserDto) {
+    const u = await this.db.insert(users).values(user).returning();
+    return u;
   }
 }
