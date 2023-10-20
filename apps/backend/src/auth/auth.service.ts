@@ -7,12 +7,15 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { createUserDto, loginUserDto } from '../dto/users.dto';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from 'src/evn.validation';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService<EnvSchema>,
   ) {}
 
   async signUp(user: createUserDto) {
@@ -40,6 +43,7 @@ export class AuthService {
       throw new BadRequestException('incorrect password');
     }
     return {
+      // TODO: add userId as "sub" to the payload
       token: await this.jwtService.signAsync({ username: ret.username }),
     };
   }

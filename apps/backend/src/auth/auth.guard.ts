@@ -5,12 +5,23 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { constants } from './auth.module';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from 'src/evn.validation';
 
+export type ExpressAuthedRequest = Request & {
+  user: { username: string };
+};
+
+/**
+ * please notice after using this as a gurd the type of the request is changed to `ExpressAuthedRequest`
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private configService: ConfigService<EnvSchema>,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();
@@ -22,9 +33,9 @@ export class AuthGuard implements CanActivate {
 
     try {
       const { username } = await this.jwtService.verifyAsync(token, {
-        secret: constants.JWT_SECRET,
+        secret: this.configService.get('JWT_SECRET'),
       });
-      req['user'] = { username };
+      (req as ExpressAuthedRequest)['user'] = { username };
     } catch {
       throw new UnauthorizedException();
     }

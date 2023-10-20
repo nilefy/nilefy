@@ -3,19 +3,20 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-
-// TODO: use .env file
-export const constants = {
-  JWT_SECRET: 'somesecretkeytogenerate',
-};
+import { EnvSchema } from 'src/evn.validation';
 
 @Module({
   imports: [
     UsersModule,
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      secret: constants.JWT_SECRET,
-      signOptions: { expiresIn: '1d' },
+      useFactory() {
+        console.log((process.env as EnvSchema).JWT_SECRET);
+        return {
+          secret: process.env.JWT_SECRET,
+          signOptions: { expiresIn: '1d' },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

@@ -8,7 +8,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+import { AuthGuard, ExpressAuthedRequest } from './auth.guard';
 import { ValidationPipe } from '../pipes/users.pipe';
 import {
   signUpSchema,
@@ -35,7 +35,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get('main')
-  main(@Req() req) {
+  main(@Req() req: ExpressAuthedRequest) {
     return req.user;
   }
 }
