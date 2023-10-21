@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
 import { DrizzleModule } from './drizzle/drizzle.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { DrizzleModule } from './drizzle/drizzle.module';
       validate,
     }),
     DrizzleModule,
+    WorkspacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -14,7 +14,7 @@ import {
   GoogleAuthedRequest,
 } from './google.guard';
 import { JwtGuard, ExpressAuthedRequest } from './jwt.guard';
-import { ValidationPipe } from '../pipes/users.pipe';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   signUpSchema,
   signInSchema,
@@ -26,13 +26,13 @@ import {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UsePipes(new ValidationPipe(signUpSchema))
+  @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
   async signUp(@Body() userDto: CreateUserDto) {
     return await this.authService.signUp(userDto);
   }
 
-  @UsePipes(new ValidationPipe(signInSchema))
+  @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
   async signIn(@Body() userDto: LoginUserDto) {
     return await this.authService.signIn(userDto);
