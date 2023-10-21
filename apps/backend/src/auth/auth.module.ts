@@ -19,7 +19,7 @@ import { PassportModule } from '@nestjs/passport';
       useFactory(configService: ConfigService<EnvSchema>) {
         return {
           // secret: configService.get('JWT_SECRET'),
-          secret: 'hPgnwa4o0urVBgVAs/E0hEvGOPhCyQ4ipNXzB45pXhY=',
+          secret: '',
           signOptions: { expiresIn: '1d' },
         };
       },
