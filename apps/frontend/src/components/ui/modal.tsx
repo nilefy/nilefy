@@ -1,4 +1,3 @@
-
 import {
     Dialog,
     DialogContent,
@@ -10,12 +9,12 @@ import {
 interface ModalProps {
     title: string,
     description: string,
-    isOpen:boolean,
-    onClose:()=>void,
-    children?:React.ReactNode
+    isOpen: boolean,
+    onClose: () => void,
+    children?: React.ReactNode
 };
 
-export const  Modal: React.FC<ModalProps>= ({
+export const Modal: React.FC<ModalProps> = ({
     title,
     description,
     isOpen,
