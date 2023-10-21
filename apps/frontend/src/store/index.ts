@@ -351,9 +351,10 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         let colCount = node.columnsCount;
         const rowCount = node.rowsCount;
         let left = x;
-        const top = y;
+        let top = y;
         const right = x + colCount;
         const bottom = y + rowCount;
+        const mousePos=get().mousePos;
         //check for collisions
         const toBeMoved: { id: string; x?: number; y?: number }[] = [];
         parent.nodes.forEach((nodeId) => {
@@ -364,8 +365,13 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           const otherTop = otherNode.y;
           const otherLeft = otherNode.x;
           const otherRight = otherNode.x + otherNode.columnsCount;
+          const otherBoundingRect = get().getBoundingRect(nodeId);
           if (firstCall && top < otherBottom && top > otherTop) {
-            if (left < otherLeft && left + colCount > otherLeft) {
+            if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right){
+              top=otherBottom;
+              console.log()
+            }
+            else if (left < otherLeft && left + colCount > otherLeft) {
               colCount = Math.min(colCount, otherLeft - left);
               if (colCount < 2) {
                 left = otherLeft - 2;

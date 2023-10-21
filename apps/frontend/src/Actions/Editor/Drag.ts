@@ -16,6 +16,7 @@ function getRandomColor() {
 const {
   moveNodeIntoGrid,
   getGridSize,
+  getDimensions,
   getBoundingRect,
   setShadowElement,
   addNode,
@@ -216,6 +217,7 @@ class DragAction {
       },
     };
   }
+
   private static getElementShadow(
     position: Point,
     mousePos: Point,
@@ -225,29 +227,38 @@ class DragAction {
     const tree = store.getState().tree;
     const [gridrow, gridcol] = getGridSize(id);
     const el = tree[id];
+    
     const parent = tree[el.parent!];
     let top = position.y;
+    let bottom = position.y + el.rowsCount;
     let left = position.x;
     const oldLeft = left * gridcol;
     let colCount = el.columnsCount;
+    let rowCount = el.rowsCount;
     const right = left + el.columnsCount;
     const width = el.columnsCount * gridcol;
     const height = el.rowsCount * gridrow;
     for (const sibling of parent.nodes) {
       if (sibling === id) continue;
       const otherNode = tree[sibling];
+      const otherBoundingRect=getBoundingRect(sibling);
       const otherBottom = otherNode.y + otherNode.rowsCount;
       const otherTop = otherNode.y;
       const otherLeft = otherNode.x;
       const otherRight = otherNode.x + otherNode.columnsCount;
       if (top < otherBottom && top >= otherTop) {
-        if (left < otherLeft && left + colCount > otherLeft) {
+        if(mousePos.x>otherBoundingRect.left && mousePos.x < otherBoundingRect.right){
+          top=otherBottom;
+          console.log()
+        }
+        else if (left < otherLeft && left + colCount > otherLeft) {
           colCount = Math.min(colCount, otherLeft - left);
           if (colCount < 2) {
             left = otherLeft - 2;
             colCount = 2;
           }
-        } else if (left >= otherLeft && left < otherRight) {
+        }
+        else if (left >= otherLeft && left < otherRight) {
           const temp = left;
           left = otherRight;
           colCount += temp - left;
@@ -256,6 +267,9 @@ class DragAction {
           }
         }
       }
+      
+
+       
     }
     const parentLeft = parent.x;
     const parentRight = parent.x + parent.columnsCount;
@@ -286,6 +300,8 @@ class DragAction {
       shadowDimensions.width = newWidth;
     } else if (overEl) {
       const overBoundingRect = getBoundingRect(overId as string);
+      const otherpos=getDimensions(overId);
+      //console.log(otherpos.y,mousePos.y)
       shadowDimensions.x = oldLeft;
       if (
         mousePos.y <=
@@ -295,7 +311,8 @@ class DragAction {
       ) {
         shadowDimensions.y = overBoundingRect.top - 10;
         shadowDimensions.height = 10;
-      } else {
+      }
+       else {
         shadowDimensions.y = overBoundingRect.bottom;
       }
     }
