@@ -39,6 +39,3 @@ yarn-error.log*
 build/**
 dist/**
 .next/**
-
-# database
-./db_api/data/*

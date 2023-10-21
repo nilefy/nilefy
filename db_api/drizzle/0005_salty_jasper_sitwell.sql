@@ -1,1 +1,0 @@
-ALTER TABLE "tables" ADD COLUMN "columns" json NOT NULL;
