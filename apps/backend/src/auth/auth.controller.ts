@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard, ExpressAuthedRequest } from './auth.guard';
-import { ValidationPipe } from '../pipes/users.pipe';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   signUpSchema,
   signInSchema,
@@ -21,13 +21,13 @@ import {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UsePipes(new ValidationPipe(signUpSchema))
+  @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
   async signUp(@Body() userDto: CreateUserDto) {
     return await this.authService.signUp(userDto);
   }
 
-  @UsePipes(new ValidationPipe(signInSchema))
+  @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
   signIn(@Body() userDto: LoginUserDto) {
     return this.authService.signIn(userDto);
