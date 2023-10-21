@@ -1,33 +1,45 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
-
-// TODO: remove this type after creating zod schema
-export type Workspace = {
-  id: number;
-  name: string;
-  imageUrl?: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  deletedAt?: Date;
-};
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import {
+  WorkspaceDto,
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+  UpdateWorkspaceDto,
+  CreateWorkspaceDto,
+} from './workspace.dto';
 
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
 
   @Get()
-  async index(): Promise<Workspace[]> {}
+  async index(): Promise<WorkspaceDto[]> {
+    return await this.workspaceService.index(false);
+  }
 
-  //TODO: add validation
   @Post()
   async create(
-    @Body() createWorkspaceDto: CreateWorkspaceDto,
-  ): Promise<Workspace> {}
+    @Body(new ZodValidationPipe(createWorkspaceSchema))
+    createWorkspaceDto: CreateWorkspaceDto,
+  ): Promise<WorkspaceDto> {
+    return await this.workspaceService.create(createWorkspaceDto);
+  }
 
-  //TODO: add validation
   @Put(':id')
   async update(
-    @Param('id') id: string,
-    @Body() updateWorkspaceDto: UpdateWorkspaceDto,
-  ): Promise<Workspace> {}
+    @Body(new ZodValidationPipe(updateWorkspaceSchema))
+    updateWorkspaceDto: UpdateWorkspaceDto,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<WorkspaceDto> {
+    return await this.workspaceService.update(id, updateWorkspaceDto);
+  }
 }

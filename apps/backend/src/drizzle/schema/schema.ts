@@ -5,7 +5,9 @@ import { pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
  * spreading them to easy create createdAt and updatedAt fields
  */
 export const timeStamps = {
-  createdAt: timestamp('created_at').default(sql`now()`),
+  createdAt: timestamp('created_at')
+    .notNull()
+    .default(sql`now()`),
   updatedAt: timestamp('updated_at'),
 };
 
