@@ -1,6 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
+import { EnvSchema, TConfigService } from '../evn.validation';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -8,13 +9,16 @@ export class SignInGoogleStrategy extends PassportStrategy(
   Strategy,
   'google_login',
 ) {
-  constructor(private configService: ConfigService) {
+  private configService: TConfigService;
+
+  constructor(configService: ConfigService<EnvSchema, true>) {
     super({
-      clientID: '',
-      clientSecret: '',
+      clientID: configService.get('GOOGLE_CLIENT_ID'),
+      clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
       callbackURL: '/auth/login/google-redirect',
       scope: ['email', 'profile'],
     });
+    this.configService = configService;
   }
   async validate(
     accessToken: string,
@@ -36,13 +40,16 @@ export class SignUpGoogleStrategy extends PassportStrategy(
   Strategy,
   'google_signup',
 ) {
-  constructor(private configService: ConfigService) {
+  private configService: TConfigService;
+
+  constructor(configService: ConfigService<EnvSchema, true>) {
     super({
-      clientID: '',
-      clientSecret: '',
+      clientID: configService.get('GOOGLE_CLIENT_ID'),
+      clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
       callbackURL: '/auth/signup/google-redirect',
       scope: ['email', 'profile'],
     });
+    this.configService = configService;
   }
   async validate(
     accessToken: string,

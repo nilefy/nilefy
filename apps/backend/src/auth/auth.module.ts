@@ -3,11 +3,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { EnvSchema } from '../evn.validation';
 import { ConfigService } from '@nestjs/config';
 import { SignInGoogleStrategy, SignUpGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { TConfigService } from '../evn.validation';
 
 @Module({
   imports: [
@@ -16,10 +16,9 @@ import { PassportModule } from '@nestjs/passport';
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
-      useFactory(configService: ConfigService<EnvSchema>) {
+      useFactory(configService: TConfigService) {
         return {
-          // secret: configService.get('JWT_SECRET'),
-          secret: '',
+          secret: configService.get('JWT_SECRET'),
           signOptions: { expiresIn: '1d' },
         };
       },

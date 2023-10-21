@@ -15,6 +15,7 @@ export function validate(config: Record<string, unknown>) {
 }
 
 /**
+ * Typed configservice
  * just a wrapper around ConfigService to add the generic instead of writing it everywhere we need typed configService
  */
-export type TConfigService = ConfigService<EnvSchema, true>;
+export class TConfigService extends ConfigService<EnvSchema, true> {}
