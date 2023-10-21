@@ -15,33 +15,38 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // TODO: cannot have duplicate email
   async signUp(user: CreateUserDto) {
-    const { username, password } = user;
+    const { email, username, password } = user;
+
+    const ret = await this.userService.findOne(email);
+    if (ret) {
+      throw new BadRequestException();
+    }
+
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
+    const u = await this.userService.create({ ...user, password: hashed });
 
-    await this.userService.create({ ...user, password: hashed });
-
-    return { token: await this.jwtService.signAsync({ username }) };
+    return { token: await this.jwtService.signAsync({ sub: u.id, username }) };
   }
 
   async signIn(user: LoginUserDto) {
     const { email, password } = user;
 
     const ret = await this.userService.findOne(email);
-
     if (!ret) {
       throw new NotFoundException();
     }
 
     const match = await compare(password, ret.password);
     if (!match) {
-      throw new BadRequestException('incorrect password');
+      throw new BadRequestException();
     }
     return {
-      // TODO: add userId as "sub" to the payload
-      token: await this.jwtService.signAsync({ username: ret.username }),
+      token: await this.jwtService.signAsync({
+        sub: ret.id,
+        username: ret.username,
+      }),
     };
   }
 }
