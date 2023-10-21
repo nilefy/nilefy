@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1697842423305,
+      "tag": "0000_strong_big_bertha",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1697848897810,
+      "tag": "0001_nosy_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1697849081947,
+      "tag": "0002_aspiring_rocket_racer",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1697852747159,
+      "tag": "0003_careful_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1697852789784,
+      "tag": "0004_confused_sage",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1697856125512,
+      "tag": "0005_salty_jasper_sitwell",
+      "breakpoints": true
+    }
+  ]
+}
