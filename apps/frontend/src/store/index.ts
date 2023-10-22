@@ -82,10 +82,7 @@ interface WebloomActions {
     id: string,
     dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
-  resizeNode: (
-    id: string,
-    dimensions: Partial<WebloomNodeDimensions>,
-  ) => MoveNodeReturnType;
+
   setMousePos: (pos: WebloomState['mousePos']) => void;
   setNewNode: (newNode: WebloomState['newNode']) => void;
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
@@ -266,65 +263,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return newState;
       });
     },
-    resizeNode(id, dimensions) {
-      let changedNodesOriginalCoords: Record<string, Point> = {};
-      const state = get();
-      const node = state.tree[id];
-      if (!node)
-        return {
-          changedNodesOriginalCoords,
-        };
-      const left = dimensions.x || node.x;
-      const top = dimensions.y || node.y;
-      const rowCount = dimensions.rowsCount || node.rowsCount;
-      const colCount = dimensions.columnsCount || node.columnsCount;
-      const right = left + colCount;
-      const bottom = top + rowCount;
-      const parent = state.tree[node.parent!];
-      parent.nodes.forEach((nodeId) => {
-        if (nodeId === id) return false;
-        const otherNode = state.tree[nodeId];
-        if (!otherNode) return false;
-        const otherBottom = otherNode.y + otherNode.rowsCount;
-        const otherTop = otherNode.y;
-        const otherLeft = otherNode.x;
-        const otherRight = otherNode.x + otherNode.columnsCount;
-        if (
-          checkOverlap(
-            {
-              left,
-              top,
-              right,
-              bottom,
-            },
-            {
-              left: otherLeft,
-              top: otherTop,
-              right: otherRight,
-              bottom: otherBottom,
-            },
-          )
-        ) {
-          const returned = get().moveNodeIntoGrid(
-            nodeId,
-            {
-              y: bottom,
-            },
-            false,
-          );
-          changedNodesOriginalCoords = {
-            ...changedNodesOriginalCoords,
-            ...returned.changedNodesOriginalCoords,
-          };
-        }
-      });
-      get().setDimensions(id, {
-        ...dimensions,
-      });
-      return {
-        changedNodesOriginalCoords,
-      };
-    },
     moveNodeIntoGrid(id, newCoords, firstCall = true) {
       const changedNodesOriginalCoords: Record<string, Point> = {};
       const parent = get().tree[ROOT_NODE_ID];
@@ -341,6 +279,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+      const nodes = [...parent.nodes];
+      //sort the nodes by y position (ascending) (top to bottom)
+      nodes.sort((a, b) => -get().tree[a].y + get().tree[b].y);
       if (firstCall) {
         if (overId !== null && overId !== ROOT_NODE_ID && overId !== id) {
           const overNode = store.getState().tree[overId];
@@ -359,7 +300,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             newCoords.y = overNodeBottom;
           }
         }
-        parent.nodes.forEach((nodeId) => {
+        nodes.forEach((nodeId) => {
           if (nodeId === id) return false;
           const otherNode = get().tree[nodeId];
           if (!otherNode) return false;
@@ -396,34 +337,51 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const rowCount = node.rowsCount;
         let left = x;
         const top = y;
-        const right = x + colCount;
+        let right = x + colCount;
         const bottom = y + rowCount;
         const toBeMoved: { id: string; x?: number; y?: number }[] = [];
-
-        parent.nodes.forEach((nodeId) => {
-          if (nodeId === id) return false;
+        const checkForOverlap = firstCall
+          ? nodes.filter((nodeId) => {
+              if (nodeId === id) return false;
+              const otherNode = state.tree[nodeId];
+              if (!otherNode) return false;
+              // right is redeclared here because colCount might change
+              const otherBottom = otherNode.y + otherNode.rowsCount;
+              const otherTop = otherNode.y;
+              const otherLeft = otherNode.x;
+              const otherRight = otherNode.x + otherNode.columnsCount;
+              if (firstCall && top < otherBottom && top >= otherTop) {
+                if (left < otherLeft && left + colCount > otherLeft) {
+                  colCount = Math.min(colCount, otherLeft - left);
+                  if (colCount < 2) {
+                    left = otherLeft - 2;
+                    colCount = 2;
+                  }
+                } else if (left >= otherLeft && left < otherRight) {
+                  const temp = left;
+                  left = otherRight;
+                  colCount += temp - left;
+                  if (colCount < 2) {
+                    colCount = 2;
+                  }
+                }
+                return false;
+              }
+              return true;
+            })
+          : nodes.filter((nodeId) => {
+              return nodeId !== id;
+            });
+        // reassign right because colCount might have changed
+        right = left + colCount;
+        checkForOverlap.forEach((nodeId) => {
           const otherNode = state.tree[nodeId];
           if (!otherNode) return false;
           const otherBottom = otherNode.y + otherNode.rowsCount;
           const otherTop = otherNode.y;
           const otherLeft = otherNode.x;
           const otherRight = otherNode.x + otherNode.columnsCount;
-          if (firstCall && top < otherBottom && top >= otherTop) {
-            if (left < otherLeft && left + colCount > otherLeft) {
-              colCount = Math.min(colCount, otherLeft - left);
-              if (colCount < 2) {
-                left = otherLeft - 2;
-                colCount = 2;
-              }
-            } else if (left >= otherLeft && left < otherRight) {
-              const temp = left;
-              left = otherRight;
-              colCount += temp - left;
-              if (colCount < 2) {
-                colCount = 2;
-              }
-            }
-          } else if (
+          if (
             checkOverlap(
               {
                 left,
@@ -442,7 +400,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             toBeMoved.push({ id: nodeId, y: bottom });
           }
         });
-
         if (firstCall) {
           const parentLeft = parent.x;
           const parentRight = parent.x + parent.columnsCount;
@@ -472,7 +429,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             x: state.tree[node.id].x,
             y: state.tree[node.id].y,
           };
-          recurse(node.id, { x: node.x, y: node.y }, false);
+        });
+        toBeMoved.forEach((node) => {
+          recurse(node.id, { y: node.y }, false);
         });
       }
       recurse(id, newCoords, firstCall);

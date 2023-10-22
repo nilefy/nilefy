@@ -10,11 +10,12 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const { resizeNode, getGridSize, setDimensions } = store.getState();
+const { moveNodeIntoGrid, getGridSize, setDimensions } = store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
   private static orginalPositions: Record<string, Point> = {};
+  private static siblings: string[] = [];
   private static initialDimensions: {
     width: number;
     height: number;
@@ -35,6 +36,11 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
+    const parentId = store.getState().tree[id].parent;
+    this.siblings = store
+      .getState()
+      .tree[parentId!].nodes.filter((nodeId) => nodeId !== id)
+      .sort((a, b) => -store.getState().tree[a].y + store.getState().tree[b].y);
     this.initialDimensions = dimensions;
   }
   public static start(
@@ -116,7 +122,7 @@ class ResizeAction {
         y: pos.y,
       });
     });
-    const orgpos = resizeNode(this.id, {
+    const orgpos = this._resize({
       rowsCount: rowCount,
       columnsCount: colCount,
       x: newX,
@@ -126,6 +132,17 @@ class ResizeAction {
       ...orgpos.changedNodesOriginalCoords,
       ...this.orginalPositions,
     };
+    // filter elements that returned to their original position
+    this.orginalPositions = Object.entries(this.orginalPositions).reduce(
+      (acc, [id, pos]) => {
+        if (pos.y === store.getState().tree[id].y) return acc;
+        return {
+          ...acc,
+          [id]: pos,
+        };
+      },
+      {},
+    );
   }
   public static move(
     ...args: Parameters<typeof ResizeAction._move>
@@ -149,6 +166,85 @@ class ResizeAction {
       y: 0,
     };
     this.orginalPositions = {};
+  }
+
+  private static _resize(
+    dimensions: Partial<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      rowsCount: number;
+      columnsCount: number;
+    }>,
+  ) {
+    let changedNodesOriginalCoords: Record<string, Point> = {};
+    const tree = store.getState().tree;
+    const node = tree[this.id];
+    if (!node)
+      return {
+        changedNodesOriginalCoords,
+      };
+    const left = dimensions.x || node.x;
+    const top = dimensions.y || node.y;
+    const rowCount = dimensions.rowsCount || node.rowsCount;
+    const colCount = dimensions.columnsCount || node.columnsCount;
+    const right = left + colCount;
+    const bottom = top + rowCount;
+    const nodes = this.siblings;
+    const toBeMoved: { id: string; x?: number; y?: number }[] = [];
+    nodes.forEach((nodeId) => {
+      if (nodeId === this.id) return false;
+      const otherNode = tree[nodeId];
+      if (!otherNode) return false;
+      const otherBottom = otherNode.y + otherNode.rowsCount;
+      const otherTop = otherNode.y;
+      const otherLeft = otherNode.x;
+      const otherRight = otherNode.x + otherNode.columnsCount;
+      if (
+        checkOverlap(
+          {
+            left,
+            top,
+            right,
+            bottom,
+          },
+          {
+            left: otherLeft,
+            top: otherTop,
+            right: otherRight,
+            bottom: otherBottom,
+          },
+        )
+      ) {
+        toBeMoved.push({ id: nodeId, y: bottom });
+      }
+    });
+    setDimensions(this.id, {
+      ...dimensions,
+    });
+    for (const node of toBeMoved) {
+      changedNodesOriginalCoords[node.id] = {
+        x: tree[node.id].x,
+        y: tree[node.id].y,
+      };
+    }
+    for (const node of toBeMoved) {
+      const orgPos = moveNodeIntoGrid(
+        node.id,
+        {
+          ...node,
+        },
+        false,
+      );
+      changedNodesOriginalCoords = {
+        ...changedNodesOriginalCoords,
+        ...orgPos.changedNodesOriginalCoords,
+      };
+    }
+    return {
+      changedNodesOriginalCoords,
+    };
   }
 }
 

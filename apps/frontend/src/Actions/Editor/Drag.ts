@@ -35,6 +35,7 @@ class DragAction {
   private static mouseStartPosition: Point;
   private static mouseCurrentPosition: Point;
   private static moved = false;
+  private static counter = 0;
   private static _start(args: {
     new?: {
       type: string;
@@ -60,6 +61,7 @@ class DragAction {
         dom: null,
         props: {
           color: getRandomColor(),
+          text: this.counter++,
         },
         height: 0,
         width: 0,
