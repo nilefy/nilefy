@@ -281,6 +281,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       };
       const nodes = [...parent.nodes];
       //sort the nodes by y position (ascending) (top to bottom)
+      let allowResize = true;
       nodes.sort((a, b) => -get().tree[a].y + get().tree[b].y);
       if (firstCall) {
         if (overId !== null && overId !== ROOT_NODE_ID && overId !== id) {
@@ -299,6 +300,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           } else {
             newCoords.y = overNodeBottom;
           }
+          allowResize = false;
         }
         nodes.forEach((nodeId) => {
           if (nodeId === id) return false;
@@ -340,38 +342,39 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         let right = x + colCount;
         const bottom = y + rowCount;
         const toBeMoved: { id: string; x?: number; y?: number }[] = [];
-        const checkForOverlap = firstCall
-          ? nodes.filter((nodeId) => {
-              if (nodeId === id) return false;
-              const otherNode = state.tree[nodeId];
-              if (!otherNode) return false;
-              // right is redeclared here because colCount might change
-              const otherBottom = otherNode.y + otherNode.rowsCount;
-              const otherTop = otherNode.y;
-              const otherLeft = otherNode.x;
-              const otherRight = otherNode.x + otherNode.columnsCount;
-              if (firstCall && top < otherBottom && top >= otherTop) {
-                if (left < otherLeft && left + colCount > otherLeft) {
-                  colCount = Math.min(colCount, otherLeft - left);
-                  if (colCount < 2) {
-                    left = otherLeft - 2;
-                    colCount = 2;
+        const checkForOverlap =
+          firstCall && allowResize
+            ? nodes.filter((nodeId) => {
+                if (nodeId === id) return false;
+                const otherNode = state.tree[nodeId];
+                if (!otherNode) return false;
+                // right is redeclared here because colCount might change
+                const otherBottom = otherNode.y + otherNode.rowsCount;
+                const otherTop = otherNode.y;
+                const otherLeft = otherNode.x;
+                const otherRight = otherNode.x + otherNode.columnsCount;
+                if (firstCall && top < otherBottom && top >= otherTop) {
+                  if (left < otherLeft && left + colCount > otherLeft) {
+                    colCount = Math.min(colCount, otherLeft - left);
+                    if (colCount < 2) {
+                      left = otherLeft - 2;
+                      colCount = 2;
+                    }
+                  } else if (left >= otherLeft && left < otherRight) {
+                    const temp = left;
+                    left = otherRight;
+                    colCount += temp - left;
+                    if (colCount < 2) {
+                      colCount = 2;
+                    }
                   }
-                } else if (left >= otherLeft && left < otherRight) {
-                  const temp = left;
-                  left = otherRight;
-                  colCount += temp - left;
-                  if (colCount < 2) {
-                    colCount = 2;
-                  }
+                  return false;
                 }
-                return false;
-              }
-              return true;
-            })
-          : nodes.filter((nodeId) => {
-              return nodeId !== id;
-            });
+                return true;
+              })
+            : nodes.filter((nodeId) => {
+                return nodeId !== id;
+              });
         // reassign right because colCount might have changed
         right = left + colCount;
         checkForOverlap.forEach((nodeId) => {
