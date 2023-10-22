@@ -10,6 +10,8 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 
 - install deps `pnpm install`
 
+- create your .env `cp .env.example .env`
+
 - run all packages in dev mode `pnpm run dev`
 
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
