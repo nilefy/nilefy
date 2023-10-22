@@ -27,7 +27,7 @@ export type WebloomNode = {
   parent: string | null;
   props: Record<string, unknown>;
   isCanvas?: boolean;
-  adjusted?:boolean;
+  
 } & WebloomNodeDimensions;
 export type WebloomNodeDimensions = {
   //columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
@@ -328,13 +328,57 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     moveNodeIntoGrid(id, newCoords, firstCall = true) {
       const changedNodesOriginalCoords: Record<string, Point> = {};
+      const parent = get().tree[ROOT_NODE_ID];
       const node = get().tree[id];
+      const mousePos=get().mousePos; 
+      let overId=get().overNode;
+      newCoords.x ??= node.x;
+        newCoords.y ??= node.y;
+        const y = newCoords.y;
+        let top = y;
+     
       const firstNodeOriginalDimensions = {
         x: node.x,
         y: node.y,
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+      
+        
+      parent.nodes.forEach((nodeId) => {
+        if (nodeId === id) return false;
+         const otherNode = get().tree[nodeId];
+        if (!otherNode) return false;
+        const otherBottom = otherNode.y + otherNode.rowsCount;
+        const otherTop = otherNode.y;
+        const otherBoundingRect = get().getBoundingRect(nodeId);
+        if (firstCall && top < otherBottom && top > otherTop ) {
+          if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right && top<otherBottom){
+            newCoords.y=otherBottom;
+          }
+        }
+        if (overId === null) {
+          overId = ROOT_NODE_ID;
+      }
+      if (overId !== ROOT_NODE_ID && overId !== id) {
+        const overNode = store.getState().tree[overId];
+        const overNodeBoundingRect = get().getBoundingRect(overId);
+        const overNodeTop = overNode.y;
+        const overNodeBottom = overNode.y + overNode.rowsCount;
+        if (
+          mousePos.y <=
+          overNodeBoundingRect.top +
+            (overNodeBoundingRect.bottom - overNodeBoundingRect.top) / 2 - 5
+            //todo: replace threshold with a proper value depending on the current gridsize
+            
+        ) {
+          newCoords.y = overNodeTop - 1;
+        } else {
+          newCoords.y = overNodeBottom;
+        }
+      }
+      })
+
       function recurse(
         id: string,
         newCoords: Partial<Point>,
@@ -356,18 +400,15 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         let top = y;
         const right = x + colCount;
         const bottom = y + rowCount;
-        const mousePos=get().mousePos;
-        //check for collisions
-        // parent.nodes.forEach((nodeId) => {
-        //   state.tree[nodeId].adjusted = false;
-        // });
+       
+
         const toBeMoved: { id: string; x?: number; y?: number }[] = [];
         
         parent.nodes.forEach((nodeId) => {
           if (nodeId === id) return false;
-          if(state.tree[nodeId].adjusted)return false;
-          const otherNode = state.tree[nodeId];
-          otherNode.adjusted=false;
+          
+           const otherNode = state.tree[nodeId];
+          // otherNode.adjusted=false;
           if (!otherNode) return false;
           const otherBottom = otherNode.y + otherNode.rowsCount;
           const otherTop = otherNode.y;
@@ -375,21 +416,22 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           const otherRight = otherNode.x + otherNode.columnsCount;
           const otherBoundingRect = get().getBoundingRect(nodeId);
           if (firstCall && top < otherBottom && top > otherTop ) {
-            if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right && top<otherBottom){
+            // if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right && top<otherBottom){
              
-              top=otherBottom;
-              state.tree[nodeId].adjusted=true;
-              console.log()
-            }
-            else if (left < otherLeft && left + colCount > otherLeft) {
+            //   top=otherBottom;
+              
+            
+            //   console.log("bla")
+            // }
+             if (left < otherLeft && left + colCount > otherLeft) {
               colCount = Math.min(colCount, otherLeft - left);
-              state.tree[nodeId].adjusted=true;
+             
               if (colCount < 2) {
                 left = otherLeft - 2;
                 colCount = 2;
               }
             } else if (left >= otherLeft && left < otherRight) {
-              state.tree[nodeId].adjusted=true;
+             
               const temp = left;
               left = otherRight;
               colCount += temp - left;
@@ -440,7 +482,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           columnsCount: colCount,
           rowsCount: rowCount,
         });
-        state.tree[id].adjusted = false;
+       
         toBeMoved.forEach((node) => {
           changedNodesOriginalCoords[node.id] ??= {
             x: state.tree[node.id].x,

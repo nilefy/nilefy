@@ -156,23 +156,7 @@ class DragAction {
       x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startGridPosition.y + delta.y,
     };
-    if (overId !== ROOT_NODE_ID && overId !== this.id) {
-      const overNode = store.getState().tree[overId];
-      const overNodeBoundingRect = getBoundingRect(overId);
-      const overNodeTop = overNode.y;
-      const overNodeBottom = overNode.y + overNode.rowsCount;
-      if (
-        this.mouseCurrentPosition.y <=
-        overNodeBoundingRect.top +
-          (overNodeBoundingRect.bottom - overNodeBoundingRect.top) / 2 -
-          //todo: replace threshold with a proper value depending on the current gridsize
-          this.threshold
-      ) {
-        endPosition.y = overNodeTop - 1;
-      } else {
-        endPosition.y = overNodeBottom;
-      }
-    }
+   
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
 
