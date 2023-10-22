@@ -344,23 +344,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         rowsCount: node.rowsCount,
       };
       
-        
-      parent.nodes.forEach((nodeId) => {
-        if (nodeId === id) return false;
-         const otherNode = get().tree[nodeId];
-        if (!otherNode) return false;
-        const otherBottom = otherNode.y + otherNode.rowsCount;
-        const otherTop = otherNode.y;
-        const otherBoundingRect = get().getBoundingRect(nodeId);
-        if (firstCall && top < otherBottom && top > otherTop ) {
-          if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right && top<otherBottom){
-            newCoords.y=otherBottom;
-          }
-        }
-        if (overId === null) {
-          overId = ROOT_NODE_ID;
-      }
-      if (overId !== ROOT_NODE_ID && overId !== id) {
+      if (overId !== ROOT_NODE_ID && overId !== id && overId!==null) {
         const overNode = store.getState().tree[overId];
         const overNodeBoundingRect = get().getBoundingRect(overId);
         const overNodeTop = overNode.y;
@@ -377,7 +361,23 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           newCoords.y = overNodeBottom;
         }
       }
+        if(firstCall){
+      parent.nodes.forEach((nodeId) => {
+        if (nodeId === id) return false;
+         const otherNode = get().tree[nodeId];
+        if (!otherNode) return false;
+        const otherBottom = otherNode.y + otherNode.rowsCount;
+        const otherTop = otherNode.y;
+        const otherBoundingRect = get().getBoundingRect(nodeId);
+        if ( top < otherBottom && top > otherTop ) {
+          if(mousePos.x>otherBoundingRect.left && mousePos.x<otherBoundingRect.right && top<otherBottom){
+            newCoords.y=otherBottom;
+          }
+        }
+        
+     
       })
+    }
 
       function recurse(
         id: string,
