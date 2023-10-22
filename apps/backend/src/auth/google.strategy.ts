@@ -23,6 +23,7 @@ export class SignInGoogleStrategy extends PassportStrategy(
   async validate(
     accessToken: string,
     refreshToken: string,
+    // TODO: add type
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
@@ -54,6 +55,7 @@ export class SignUpGoogleStrategy extends PassportStrategy(
   async validate(
     accessToken: string,
     refreshToken: string,
+    // TODO: add type
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {

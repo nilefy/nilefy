@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
+import { PayloadUser } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +28,12 @@ export class AuthService {
     const hashed = await hash(password, salt);
     const u = await this.userService.create({ ...user, password: hashed });
 
-    return { token: await this.jwtService.signAsync({ sub: u.id, username }) };
+    return {
+      access_token: await this.jwtService.signAsync({
+        sub: u.id,
+        username,
+      } satisfies PayloadUser),
+    };
   }
 
   async signIn(user: LoginUserDto) {
@@ -43,10 +49,10 @@ export class AuthService {
       throw new BadRequestException();
     }
     return {
-      token: await this.jwtService.signAsync({
+      access_token: await this.jwtService.signAsync({
         sub: ret.id,
         username: ret.username,
-      }),
+      } satisfies PayloadUser),
     };
   }
 }

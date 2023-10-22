@@ -13,7 +13,7 @@ import {
   SignUpGoogleOAuthGuard,
   GoogleAuthedRequest,
 } from './google.guard';
-import { JwtGuard, ExpressAuthedRequest } from './jwt.guard';
+import { JwtGuard } from './jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   signUpSchema,
@@ -21,6 +21,7 @@ import {
   CreateUserDto,
   LoginUserDto,
 } from '../dto/users.dto';
+import { ExpressAuthedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
