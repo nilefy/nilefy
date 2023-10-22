@@ -156,7 +156,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
                     }),
                   );
                 }}
-                onPointerUp={() => ResizeAction._end()}
+                onPointerUp={(e) =>
+                  commandManager.executeCommand(
+                    ResizeAction.end({
+                      x: e.clientX,
+                      y: e.clientY,
+                    }),
+                  )
+                }
               ></div>
             );
           })}
@@ -175,8 +182,13 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         }),
       );
     };
-    const resizeEndHandler = () => {
-      ResizeAction._end();
+    const resizeEndHandler = (e: MouseEvent) => {
+      commandManager.executeCommand(
+        ResizeAction.end({
+          x: e.clientX,
+          y: e.clientY,
+        }),
+      );
     };
     const rootDom = root.dom;
     const el = ref.current;
