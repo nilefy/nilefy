@@ -15,6 +15,7 @@ class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
   private static orginalPositions: Record<string, Point> = {};
+  private static collidingNodes: Set<string> = new Set<string>();
   private static siblings: string[] = [];
   private static initialDimensions: {
     width: number;
@@ -37,6 +38,20 @@ class ResizeAction {
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
     const parentId = store.getState().tree[id].parent;
+    const positionsSnapshot = Object.entries(store.getState().tree).reduce(
+      (acc, node) => {
+        if (node[0] === ROOT_NODE_ID) return acc;
+        return {
+          ...acc,
+          [node[0]]: {
+            x: node[1].x,
+            y: node[1].y,
+          },
+        };
+      },
+      {},
+    );
+    this.orginalPositions = positionsSnapshot;
     this.siblings = store
       .getState()
       .tree[parentId!].nodes.filter((nodeId) => nodeId !== id)
@@ -122,27 +137,19 @@ class ResizeAction {
         y: pos.y,
       });
     });
-    const orgpos = this._resize({
+    this._resize({
       rowsCount: rowCount,
       columnsCount: colCount,
       x: newX,
       y: newY,
     });
-    this.orginalPositions = {
-      ...orgpos.changedNodesOriginalCoords,
-      ...this.orginalPositions,
-    };
-    // filter elements that returned to their original position
-    this.orginalPositions = Object.entries(this.orginalPositions).reduce(
-      (acc, [id, pos]) => {
-        if (pos.y === store.getState().tree[id].y) return acc;
-        return {
-          ...acc,
-          [id]: pos,
-        };
-      },
-      {},
-    );
+
+    //filter elements that returned to their original position
+    Object.entries(this.orginalPositions).forEach(([id, pos]) => {
+      if (pos.y === store.getState().tree[id].y) {
+        this.collidingNodes.delete(id);
+      }
+    });
   }
   public static move(
     ...args: Parameters<typeof ResizeAction._move>
@@ -178,7 +185,7 @@ class ResizeAction {
       columnsCount: number;
     }>,
   ) {
-    let changedNodesOriginalCoords: Record<string, Point> = {};
+    const changedNodesOriginalCoords: Record<string, Point> = {};
     const tree = store.getState().tree;
     const node = tree[this.id];
     if (!node)
@@ -224,27 +231,21 @@ class ResizeAction {
       ...dimensions,
     });
     for (const node of toBeMoved) {
-      changedNodesOriginalCoords[node.id] = {
-        x: tree[node.id].x,
-        y: tree[node.id].y,
-      };
+      this.collidingNodes.add(node.id);
     }
     for (const node of toBeMoved) {
-      const orgPos = moveNodeIntoGrid(
+      const collied = moveNodeIntoGrid(
         node.id,
         {
           ...node,
         },
         false,
       );
-      changedNodesOriginalCoords = {
-        ...changedNodesOriginalCoords,
-        ...orgPos.changedNodesOriginalCoords,
-      };
+      //todo find a better way to do this
+      Object.entries(collied.changedNodesOriginalCoords).forEach(([id]) => {
+        this.collidingNodes.add(id);
+      });
     }
-    return {
-      changedNodesOriginalCoords,
-    };
   }
 }
 
