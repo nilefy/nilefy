@@ -1,9 +1,15 @@
+import { SelectWorkSpace, WorkSpaces } from '@/components/selectWorkspace';
+import { fetchX } from '@/utils/fetch';
+import { QueryClient } from '@tanstack/react-query';
+import { Loader } from 'lucide-react';
+import { Suspense } from 'react';
 import {
-  SelectWorkSpace,
-  SelectWorkSpaceProps,
-} from '@/components/selectWorkspace';
-import { useMemo } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+  Await,
+  NavLink,
+  Outlet,
+  defer,
+  useRouteLoaderData,
+} from 'react-router-dom';
 
 const workspacePaths = [
   {
@@ -13,15 +19,31 @@ const workspacePaths = [
   { name: 'Groups', path: 'groups' },
 ];
 
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const allWorkspacesQuery = () => ({
+  queryKey: ['workspaces'],
+  queryFn: async () => {
+    await sleep(1000);
+    const res = await fetchX('/workspaces');
+    return (await res.json()) as WorkSpaces;
+  },
+});
+
+export const loader = (queryClient: QueryClient) => async () => {
+  const query = allWorkspacesQuery();
+  // ⬇️ return data or fetch it
+  return defer({
+    workspaces: queryClient.fetchQuery(query),
+  });
+};
+
 export function WorkspaceSettingsLayout() {
-  // TODO: convert to data fetching
-  const workspaces: SelectWorkSpaceProps['workspaces'] = useMemo(() => {
-    return [
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'aaa', name: 'Ahmed Azzam' },
-    ];
-  }, []);
+  // const { data: workspaces } = useQuery(allWorkspacesQuery());
+  // TODO: please ts hace some mercy
+  const { workspaces } = useRouteLoaderData('root');
 
   return (
     <>
@@ -41,8 +63,13 @@ export function WorkspaceSettingsLayout() {
             </NavLink>
           ))}
         </nav>
-        {/*always show workspace*/}
-        <SelectWorkSpace workspaces={workspaces} />
+        <div className="w-full">
+          <Suspense fallback={<Loader className="animate-spin" />}>
+            <Await resolve={workspaces} errorElement={<div>Oops!</div>}>
+              <SelectWorkSpace />
+            </Await>
+          </Suspense>
+        </div>
       </div>
       {/*RENDER CHILD ROUTE*/}
       <Outlet />
