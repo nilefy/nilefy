@@ -336,9 +336,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const x = newCoords.x;
         const y = newCoords.y;
         let colCount = node.columnsCount;
-        const rowCount = node.rowsCount;
+        let rowCount = node.rowsCount;
         let left = x;
-        const top = y;
+        let top = y;
         let right = x + colCount;
         const bottom = y + rowCount;
         const toBeMoved: { id: string; x?: number; y?: number }[] = [];
@@ -406,6 +406,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         if (firstCall) {
           const parentLeft = parent.x;
           const parentRight = parent.x + parent.columnsCount;
+          const parentTop = parent.y;
           if (right > parentRight) {
             colCount = Math.min(colCount, parentRight - left);
             if (colCount < 1) {
@@ -418,6 +419,10 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             if (colCount < 1) {
               colCount = 1;
             }
+          }
+          if (top < parentTop) {
+            top = parentTop;
+            rowCount = bottom - parentTop;
           }
         }
         get().setDimensions(id, {

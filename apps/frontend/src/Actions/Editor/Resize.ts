@@ -286,8 +286,8 @@ class ResizeAction {
     const node = tree[id];
     if (!node) return [];
     let left = dimensions.x || node.x;
-    const top = dimensions.y || node.y;
-    const rowCount = dimensions.rowsCount || node.rowsCount;
+    let top = dimensions.y || node.y;
+    let rowCount = dimensions.rowsCount || node.rowsCount;
     let colCount = dimensions.columnsCount || node.columnsCount;
     const right = left + colCount;
     const bottom = top + rowCount;
@@ -329,6 +329,7 @@ class ResizeAction {
     const parent = tree[node.parent!];
     const parentLeft = parent.x;
     const parentRight = parent.x + parent.columnsCount;
+    const parentTop = parent.y;
     if (right > parentRight) {
       colCount = Math.min(colCount, parentRight - left);
     }
@@ -336,7 +337,10 @@ class ResizeAction {
       colCount = right - parentLeft;
       left = parentLeft;
     }
-
+    if (top < parentTop) {
+      top = parentTop;
+      rowCount = bottom - parentTop;
+    }
     setDimensions(id, {
       x: left,
       y: top,
