@@ -102,7 +102,7 @@ class ResizeAction {
     const minHeight = gridRow * 10;
     if (direction.includes('top')) {
       const diff = initialTop - y;
-      const snappedDiff = normalize(diff, gridRow);
+      const snappedDiff = Math.round(normalize(diff, gridRow));
       newHeight += snappedDiff;
       newTop -= snappedDiff;
       if (newHeight < minHeight) {
@@ -111,7 +111,7 @@ class ResizeAction {
       }
     } else if (direction.includes('bottom')) {
       const diff = y - initialBottom;
-      const snappedDiff = normalize(diff, gridRow);
+      const snappedDiff = Math.round(normalize(diff, gridRow));
       newHeight += snappedDiff;
       if (newHeight < minHeight) {
         newHeight = minHeight;
@@ -119,7 +119,7 @@ class ResizeAction {
     }
     if (direction.includes('left')) {
       const diff = initialLeft - x;
-      const snappedDiff = normalize(diff, gridCol);
+      const snappedDiff = Math.round(normalize(diff, gridCol));
       newWidth += snappedDiff;
       newLeft -= snappedDiff;
       if (newWidth < minWidth) {
@@ -128,7 +128,7 @@ class ResizeAction {
       }
     } else if (direction.includes('right')) {
       const diff = x - initialRight;
-      const snappedDiff = normalize(diff, gridCol);
+      const snappedDiff = Math.round(normalize(diff, gridCol));
       newWidth += snappedDiff;
       if (newWidth < minWidth) {
         newWidth = minWidth;
@@ -285,12 +285,18 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    const left = dimensions.x || node.x;
+    let left = dimensions.x || node.x;
     const top = dimensions.y || node.y;
     const rowCount = dimensions.rowsCount || node.rowsCount;
-    const colCount = dimensions.columnsCount || node.columnsCount;
+    let colCount = dimensions.columnsCount || node.columnsCount;
     const right = left + colCount;
     const bottom = top + rowCount;
+    // console.log('before', {
+    //   left,
+    //   top,
+    //   right,
+    //   bottom,
+    // });
     const nodes = siblings;
     const toBeMoved: { id: string; x?: number; y?: number }[] = [];
     nodes.forEach((nodeId) => {
@@ -320,8 +326,22 @@ class ResizeAction {
         toBeMoved.push({ id: nodeId, y: bottom });
       }
     });
+    const parent = tree[node.parent!];
+    const parentLeft = parent.x;
+    const parentRight = parent.x + parent.columnsCount;
+    if (right > parentRight) {
+      colCount = Math.min(colCount, parentRight - left);
+    }
+    if (left < parentLeft) {
+      colCount = right - parentLeft;
+      left = parentLeft;
+    }
+
     setDimensions(id, {
-      ...dimensions,
+      x: left,
+      y: top,
+      columnsCount: colCount,
+      rowsCount: rowCount,
     });
     for (const node of toBeMoved) {
       collidedNodes.push(node.id);
