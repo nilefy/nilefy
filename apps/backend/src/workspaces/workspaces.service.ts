@@ -18,7 +18,6 @@ export class WorkspacesService {
         ? isNotNull(schema.workspaces.deletedAt)
         : undefined,
     });
-    console.log(ws);
     return ws;
   }
 
@@ -27,7 +26,6 @@ export class WorkspacesService {
       .insert(schema.workspaces)
       .values(ws)
       .returning();
-    console.log(workspace);
     return workspace[0];
   }
 
@@ -39,7 +37,6 @@ export class WorkspacesService {
         and(eq(schema.workspaces.id, id), isNull(schema.workspaces.deletedAt)),
       )
       .returning();
-    console.log(workspace);
     return workspace[0];
   }
 }
