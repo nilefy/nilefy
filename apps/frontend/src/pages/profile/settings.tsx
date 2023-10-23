@@ -163,7 +163,7 @@ function EditPassword() {
 
 export function ProfileSettings() {
   return (
-    <div className="bg-primary/5 flex h-full w-full flex-col items-center justify-center gap-5 overflow-y-auto">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-5 overflow-y-auto bg-primary/5">
       {/*edit profile [name/email/photo]*/}
       <EditProfile />
       {/*edit password*/}

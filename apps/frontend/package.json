@@ -36,6 +36,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.47.0",
+    "react-hotkeys-hook": "^4.4.1",
     "react-rnd": "^10.4.1",
     "react-router-dom": "^6.16.0",
     "tailwind-merge": "^1.14.0",

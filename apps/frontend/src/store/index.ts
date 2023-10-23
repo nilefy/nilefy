@@ -1,11 +1,19 @@
-import { NUMBER_OF_COLUMNS, ROW_HEIGHT } from '@/lib/constants';
-import { getBoundingRect } from '@/lib/utils';
+import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
+import { checkOverlap, getBoundingRect } from '@/lib/utils';
+import { Point } from '@/types';
 import { create } from 'zustand';
 export type BoundingRect = {
   left: number;
   top: number;
   right: number;
   bottom: number;
+  width: number;
+  height: number;
+};
+
+export type ShadowElement = {
+  x: number;
+  y: number;
   width: number;
   height: number;
 };
@@ -40,47 +48,46 @@ interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
   selectedNode: string | null;
+  draggedNode: string | null;
+  resizedNode: string | null;
   newNode: WebloomNode | null;
-  newNodeTranslate: { x: number; y: number } | null;
-  mousePos: { x: number; y: number };
+  newNodeTranslate: Point | null;
+  mousePos: Point;
+  shadowElement: ShadowElement | null;
 }
+
+type MoveNodeReturnType = {
+  firstNodeOriginalDimensions?: {
+    x: number;
+    y: number;
+    columnsCount: number;
+    rowsCount: number;
+  };
+  changedNodesOriginalCoords: Record<string, Point>;
+};
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
   setSelectedNode: (id: string | null) => void;
   setOverNode: (id: string | null) => void;
+  setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string, index?: number) => void;
   removeNode: (id: string) => void;
   moveNodeIntoGrid: (
     id: string,
-    displacement: { x: number; y: number }
-  ) => void;
+    newCoords: Partial<Point>,
+    firstCall?: boolean,
+  ) => MoveNodeReturnType;
   addNode: (node: WebloomNode, parentId: string) => void;
   setDimensions: (
     id: string,
-    dimensions: Partial<WebloomNodeDimensions>
+    dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
-  resizeNode: (id: string, dimensions: Partial<WebloomNodeDimensions>) => void;
+
   setMousePos: (pos: WebloomState['mousePos']) => void;
   setNewNode: (newNode: WebloomState['newNode']) => void;
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
-}
-function checkOverlap(
-  a: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  },
-  b: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  }
-): boolean {
-  return (
-    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
-  );
+  setDraggedNode: (id: string | null) => void;
+  setResizedNode: (id: string | null) => void;
 }
 
 interface WebloomGetters {
@@ -99,6 +106,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     newNode: null,
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
+    resizedNode: null,
+    setResizedNode(id) {
+      set({ resizedNode: id });
+    },
+    setDraggedNode(id) {
+      set({ draggedNode: id });
+    },
+    shadowElement: null,
+    setShadowElement(shadowElement) {
+      set({ shadowElement });
+    },
     setSelectedNode: (id: string | null) => {
       set({ selectedNode: id });
     },
@@ -108,7 +126,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setNewNodeTranslate(translate) {
       set({ newNodeTranslate: translate });
     },
-    setMousePos: (pos: { x: number; y: number }) => {
+    setMousePos: (pos: Point) => {
       set({ mousePos: pos });
     },
     setOverNode: (id: string | null) => {
@@ -121,8 +139,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           ...state.tree,
           [id]: {
             ...state.tree[id],
-            dom
-          }
+            dom,
+          },
         };
         return { tree: newTree };
       });
@@ -134,13 +152,15 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           [node.id]: node,
           [parentId]: {
             ...state.tree[parentId],
-            nodes: [...state.tree[parentId].nodes, node.id]
-          }
+            nodes: [...state.tree[parentId].nodes, node.id],
+          },
         };
         return { tree: newTree };
       });
     },
     removeNode(id) {
+      // cannot delete a non existing node
+      if (!(id in get().tree)) return;
       set((state) => {
         const node = state.tree[id];
         if (!node) return state;
@@ -149,9 +169,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           [node.parent!]: {
             ...state.tree[node.parent!],
             nodes: state.tree[node.parent!].nodes.filter(
-              (nodeId) => nodeId !== id
-            )
-          }
+              (nodeId) => nodeId !== id,
+            ),
+          },
         };
         delete newTree[id];
         return { tree: newTree };
@@ -165,17 +185,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           ...state.tree,
           [id]: {
             ...state.tree[id],
-            parent: parentId
+            parent: parentId,
           },
           [parentId]: {
             ...state.tree[parentId],
-            nodes: [...state.tree[parentId].nodes, id]
-          }
+            nodes: [...state.tree[parentId].nodes, id],
+          },
         };
         if (oldParentId) {
           newTree[oldParentId] = {
             ...newTree[oldParentId],
-            nodes: newTree[oldParentId].nodes.filter((nodeId) => nodeId !== id)
+            nodes: newTree[oldParentId].nodes.filter((nodeId) => nodeId !== id),
           };
         }
         return { tree: newTree };
@@ -211,7 +231,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           columnsCount: NUMBER_OF_COLUMNS,
           width: parent.width,
           height: parent.height,
-          rowsCount: Infinity
+          rowsCount: Infinity,
         };
       }
       const gridColSize = parent.width / NUMBER_OF_COLUMNS;
@@ -222,7 +242,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
         width: node.columnsCount * gridColSize,
-        height: node.rowsCount * gridRowSize
+        height: node.rowsCount * gridRowSize,
       };
     },
     getBoundingRect: (id: string): BoundingRect => {
@@ -236,163 +256,211 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             ...state.tree,
             [id]: {
               ...state.tree[id],
-              ...dimensions
-            }
-          }
+              ...dimensions,
+            },
+          },
         };
         return newState;
       });
     },
-    resizeNode(id, dimensions) {
-      const state = get();
-
-      const node = state.tree[id];
-      if (!node) return state;
-      const left = dimensions.x || node.x;
-      const top = dimensions.y || node.y;
-      const rowCount = dimensions.rowsCount || node.rowsCount;
-      const colCount = dimensions.columnsCount || node.columnsCount;
-      const right = left + colCount;
-      const bottom = top + rowCount;
-      const parent = state.tree[node.parent!];
-      parent.nodes.forEach((nodeId) => {
-        if (nodeId === id) return false;
-        const otherNode = state.tree[nodeId];
-        if (!otherNode) return false;
-        const otherBottom = otherNode.y + otherNode.rowsCount;
-        const otherTop = otherNode.y;
-        const otherLeft = otherNode.x;
-        const otherRight = otherNode.x + otherNode.columnsCount;
-        if (
-          checkOverlap(
-            {
-              left,
-              top,
-              right,
-              bottom
-            },
-            {
-              left: otherLeft,
-              top: otherTop,
-              right: otherRight,
-              bottom: otherBottom
-            }
-          )
-        ) {
-          get().moveNodeIntoGrid(nodeId, {
-            x: 0,
-            y: -otherTop + bottom
-          });
-        }
-      });
-      return get().setDimensions(id, {
-        ...dimensions
-      });
-    },
-    moveNodeIntoGrid: (id: string, displacement: { x: number; y: number }) => {
-      if (displacement.x === 0 && displacement.y === 0) return;
-      const state = get();
-      const over = state.overNode;
-      const node = state.tree[id];
-      const mousePos = state.mousePos;
-      if (!node) return state;
-      const parent = state.tree['root'];
-
-      const x = node.x + displacement.x;
-      const y = node.y + displacement.y;
-      let colCount = node.columnsCount;
-      const rowCount = node.rowsCount;
-      let left = x;
-      let top = y;
-      const right = x + colCount;
-      const bottom = y + rowCount;
-      //check for collisions
-      const toBeMoved: { id: string; x: number; y: number }[] = [];
-      parent.nodes.forEach((nodeId) => {
-        if (nodeId === id) return false;
-        const otherNode = state.tree[nodeId];
-        if (!otherNode) return false;
-        const otherNodeBoundingRect = get().getBoundingRect(nodeId);
-        const otherBottom = otherNode.y + otherNode.rowsCount;
-        const otherTop = otherNode.y;
-        const otherLeft = otherNode.x;
-        const otherRight = otherNode.x + otherNode.columnsCount;
-        const isOver = over === nodeId;
-        if (isOver) {
+    moveNodeIntoGrid(id, newCoords, firstCall = true) {
+      const changedNodesOriginalCoords: Record<string, Point> = {};
+      const parent = get().tree[ROOT_NODE_ID];
+      const node = get().tree[id];
+      const mousePos = get().mousePos;
+      const overId = get().overNode;
+      newCoords.x ??= node.x;
+      newCoords.y ??= node.y;
+      const y = newCoords.y;
+      const top = y;
+      const firstNodeOriginalDimensions = {
+        x: node.x,
+        y: node.y,
+        columnsCount: node.columnsCount,
+        rowsCount: node.rowsCount,
+      };
+      const nodes = [...parent.nodes];
+      //sort the nodes by y position (ascending) (top to bottom)
+      let allowResize = true;
+      nodes.sort((a, b) => -get().tree[a].y + get().tree[b].y);
+      if (firstCall) {
+        if (overId !== null && overId !== ROOT_NODE_ID && overId !== id) {
+          const overNode = store.getState().tree[overId];
+          const overNodeBoundingRect = get().getBoundingRect(overId);
+          const overNodeTop = overNode.y;
+          const overNodeBottom = overNode.y + overNode.rowsCount;
           if (
             mousePos.y <=
-            otherNodeBoundingRect.top +
-              (otherNodeBoundingRect.bottom - otherNodeBoundingRect.top) / 2 -
-              //todo: 5 is a threshold, replace with a proper value depending on the current gridsize
+            overNodeBoundingRect.top +
+              (overNodeBoundingRect.bottom - overNodeBoundingRect.top) / 2 -
+              //todo fix this magic number with a proper value that's relative to the grid size
               5
           ) {
-            top = otherTop;
-            toBeMoved.push({ id: nodeId, x: 0, y: rowCount });
+            newCoords.y = overNodeTop - 1;
           } else {
-            top = otherBottom;
+            newCoords.y = overNodeBottom;
           }
-          return true;
+          allowResize = false;
         }
-        if (top < otherBottom && top >= otherTop) {
-          if (left < otherLeft && left + colCount > otherLeft) {
-            colCount = Math.min(colCount, otherLeft - left);
-            if (colCount < 2) {
-              left = otherLeft - 2;
-              colCount = 2;
-            }
-          } else if (left >= otherLeft && left < otherRight) {
-            const temp = left;
-            left = otherRight;
-            colCount += temp - left;
-            if (colCount < 2) {
-              colCount = 2;
+        nodes.forEach((nodeId) => {
+          if (nodeId === id) return false;
+          const otherNode = get().tree[nodeId];
+          if (!otherNode) return false;
+          const otherBottom = otherNode.y + otherNode.rowsCount;
+          const otherTop = otherNode.y;
+          const otherBoundingRect = get().getBoundingRect(nodeId);
+          if (top < otherBottom && top > otherTop) {
+            if (
+              mousePos.x > otherBoundingRect.left &&
+              mousePos.x < otherBoundingRect.right &&
+              top < otherBottom
+            ) {
+              newCoords.y = otherBottom;
             }
           }
-        } else if (
-          checkOverlap(
-            {
-              left,
-              top,
-              right,
-              bottom
-            },
-            {
-              left: otherLeft,
-              top: otherTop,
-              right: otherRight,
-              bottom: otherBottom
+        });
+      }
+
+      function recurse(
+        id: string,
+        newCoords: Partial<Point>,
+        firstCall = true,
+      ) {
+        const state = get();
+        const node = state.tree[id];
+        newCoords.x ??= node.x;
+        newCoords.y ??= node.y;
+        if (newCoords.x === node.x && newCoords.y === node.y) return;
+        if (!node) return state;
+        const parent = state.tree[ROOT_NODE_ID];
+        const x = newCoords.x;
+        const y = newCoords.y;
+        let colCount = node.columnsCount;
+        let rowCount = node.rowsCount;
+        let left = x;
+        let top = y;
+        let right = x + colCount;
+        const bottom = y + rowCount;
+        const toBeMoved: { id: string; x?: number; y?: number }[] = [];
+        const checkForOverlap =
+          firstCall && allowResize
+            ? nodes.filter((nodeId) => {
+                if (nodeId === id) return false;
+                const otherNode = state.tree[nodeId];
+                if (!otherNode) return false;
+                // right is redeclared here because colCount might change
+                const otherBottom = otherNode.y + otherNode.rowsCount;
+                const otherTop = otherNode.y;
+                const otherLeft = otherNode.x;
+                const otherRight = otherNode.x + otherNode.columnsCount;
+                if (firstCall && top < otherBottom && top >= otherTop) {
+                  if (left < otherLeft && left + colCount > otherLeft) {
+                    colCount = Math.min(colCount, otherLeft - left);
+                    if (colCount < 2) {
+                      left = otherLeft - 2;
+                      colCount = 2;
+                    }
+                  } else if (left >= otherLeft && left < otherRight) {
+                    const temp = left;
+                    left = otherRight;
+                    colCount += temp - left;
+                    if (colCount < 2) {
+                      colCount = 2;
+                    }
+                  }
+                  return false;
+                }
+                return true;
+              })
+            : nodes.filter((nodeId) => {
+                return nodeId !== id;
+              });
+        // reassign right because colCount might have changed
+        right = left + colCount;
+        checkForOverlap.forEach((nodeId) => {
+          const otherNode = state.tree[nodeId];
+          if (!otherNode) return false;
+          const otherBottom = otherNode.y + otherNode.rowsCount;
+          const otherTop = otherNode.y;
+          const otherLeft = otherNode.x;
+          const otherRight = otherNode.x + otherNode.columnsCount;
+          if (
+            checkOverlap(
+              {
+                left,
+                top,
+                right,
+                bottom,
+              },
+              {
+                left: otherLeft,
+                top: otherTop,
+                right: otherRight,
+                bottom: otherBottom,
+              },
+            )
+          ) {
+            toBeMoved.push({ id: nodeId, y: bottom });
+          }
+        });
+        if (firstCall) {
+          const parentLeft = parent.x;
+          const parentRight = parent.x + parent.columnsCount;
+          const parentTop = parent.y;
+          if (right > parentRight) {
+            colCount = Math.min(colCount, parentRight - left);
+            if (colCount < 1) {
+              colCount = 1;
             }
-          )
-        ) {
-          toBeMoved.push({ id: nodeId, x: 0, y: -otherTop + bottom });
+          }
+          if (left < parentLeft) {
+            colCount = right - parentLeft;
+            left = parentLeft;
+            if (colCount < 1) {
+              colCount = 1;
+            }
+          }
+          if (top < parentTop) {
+            top = parentTop;
+            rowCount = bottom - parentTop;
+          }
         }
-      });
-      const parentLeft = parent.x;
-      const parentRight = parent.x + parent.columnsCount;
-      if (right > parentRight) {
-        colCount = Math.min(colCount, parentRight - left);
-        if (colCount < 1) {
-          colCount = 1;
-        }
+        get().setDimensions(id, {
+          x: left,
+          y: top,
+          columnsCount: colCount,
+          rowsCount: rowCount,
+        });
+
+        toBeMoved.forEach((node) => {
+          changedNodesOriginalCoords[node.id] ??= {
+            x: state.tree[node.id].x,
+            y: state.tree[node.id].y,
+          };
+        });
+        toBeMoved.forEach((node) => {
+          recurse(node.id, { y: node.y }, false);
+        });
       }
-      if (left < parentLeft) {
-        colCount = right - parentLeft;
-        left = parentLeft;
-        if (colCount < 1) {
-          colCount = 1;
-        }
+      recurse(id, newCoords, firstCall);
+
+      if (firstCall) {
+        return {
+          changedNodesOriginalCoords,
+          firstNodeOriginalDimensions,
+        };
       }
-      get().setDimensions(id, {
-        x: left,
-        y: top,
-        columnsCount: colCount,
-        rowsCount: rowCount
-      });
-      toBeMoved.forEach((node) => {
-        get().moveNodeIntoGrid(node.id, { x: node.x, y: node.y });
-      });
-    }
-  })
+      return {
+        changedNodesOriginalCoords: {
+          ...changedNodesOriginalCoords,
+          [id]: {
+            x: firstNodeOriginalDimensions.x,
+            y: firstNodeOriginalDimensions.y,
+          },
+        },
+      };
+    },
+  }),
 );
 
 export { store };
