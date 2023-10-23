@@ -4,6 +4,7 @@ import { Wind, Layout, Cog } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { User } from './workspace/users';
+import { Inspector } from '@/components/inspector';
 
 const dashboardPaths = [
   {
@@ -11,11 +12,13 @@ const dashboardPaths = [
     path: '',
     icon: <Layout size={30} />,
   },
+  
   {
     name: 'workspaceSettings',
     path: 'workspace-settings',
     icon: <Cog size={30} />,
   },
+  
 ];
 
 export function Dashboard() {
@@ -44,6 +47,7 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
+        <Inspector/>
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
@@ -52,7 +56,7 @@ export function Dashboard() {
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
           </NavLink>
-        </div>
+        I</div>
       </div>
 
       <Outlet />
