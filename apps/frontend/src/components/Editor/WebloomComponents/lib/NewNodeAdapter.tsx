@@ -12,8 +12,8 @@ export const NewNodeAdapter = (props: DraggableProps) => {
     data: {
       isNew: true,
       id: id.current,
-      type: props.type
-    }
+      type: props.type,
+    },
   });
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -22,7 +22,7 @@ export const NewNodeAdapter = (props: DraggableProps) => {
 
   const style = useMemo(() => {
     return {
-      position: 'relative'
+      position: 'relative',
     } as React.CSSProperties;
   }, []);
   return (
