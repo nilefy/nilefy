@@ -40,7 +40,12 @@ export function normalizePoint(
     x: normalize(point.x, grid),
   };
 }
-
+/*
+ * Normalize a value to the nearest multiple of a given grid size
+ * @param {number} x - The value to normalize
+ * @param {number} grid - The length to normalize to
+ * @returns {number} The normalized value
+ */
 export function normalize(x: number, grid: number) {
   return Math.round(x / grid) * grid;
 }

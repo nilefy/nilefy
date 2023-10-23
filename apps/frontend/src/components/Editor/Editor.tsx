@@ -21,7 +21,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 
-import { WebloomContext } from './WebloomComponents/lib/WebloomContext';
 import { WebloomAdapter } from './WebloomComponents/lib/WebloomAdapter';
 import { WebloomComponents } from './WebloomComponents';
 import NewNodeAdapter from './WebloomComponents/lib/NewNodeAdapter';
@@ -73,9 +72,9 @@ const WebloomRoot = () => {
       className="relative h-full w-full bg-white"
       ref={ref}
     >
-      <WebloomContext.Provider value={{ id: ROOT_NODE_ID }}>
-        <WebloomAdapter droppable>{children}</WebloomAdapter>
-      </WebloomContext.Provider>
+      <WebloomAdapter droppable id={ROOT_NODE_ID}>
+        {children}
+      </WebloomAdapter>
     </div>
   );
 };
@@ -83,10 +82,7 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
-  //get setter
-
   const tree = wholeTree[id];
-
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
     if (tree.nodes.length > 0) {
@@ -101,17 +97,10 @@ function WebloomElement({ id }: { id: string }) {
     [tree.type, tree.props, children],
   );
   if (id === 'new') return null;
-
   return (
-    <WebloomContext.Provider
-      value={{
-        id,
-      }}
-    >
-      <WebloomAdapter draggable droppable resizable key={id}>
-        {rendered}
-      </WebloomAdapter>
-    </WebloomContext.Provider>
+    <WebloomAdapter draggable droppable resizable key={id} id={id}>
+      {rendered}
+    </WebloomAdapter>
   );
 }
 

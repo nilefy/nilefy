@@ -1,13 +1,13 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useContext, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
-import { WebloomContext } from './WebloomContext';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
 
 type WebloomAdapterProps = {
+  id: string;
   children: React.ReactNode;
   draggable?: boolean;
   droppable?: boolean;
@@ -35,7 +35,7 @@ const cursors = {
   right: 'ew-resize',
 } as const;
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
-  const { id } = useContext(WebloomContext);
+  const { id } = props;
   const selected = store((state) => state.selectedNode) === id;
 
   const { setNodeRef: setDropNodeRef } = useDroppable({

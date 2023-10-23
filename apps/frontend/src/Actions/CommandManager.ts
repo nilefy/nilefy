@@ -1,6 +1,6 @@
 import { UndoableCommand, Command } from './types';
 function isUndoableCommand(cmd: Command): cmd is UndoableCommand {
-  //some duck typing
+  //some duck typing because I'm not actually instancing the classes in the actions but returning them as objects
   return (
     (cmd as UndoableCommand).undo &&
     typeof (cmd as UndoableCommand).undo === 'function'
@@ -9,8 +9,8 @@ function isUndoableCommand(cmd: Command): cmd is UndoableCommand {
 export class CommandManager {
   // history is just a stack
   private commandStack: UndoableCommand[];
-
-  constructor() {
+  private static instance: CommandManager;
+  private constructor() {
     // start with free history
     this.commandStack = [];
   }
@@ -35,7 +35,14 @@ export class CommandManager {
     }
     cmd.undo();
   }
+
+  public static getInstance() {
+    if (!CommandManager.instance) {
+      CommandManager.instance = new CommandManager();
+    }
+    return CommandManager.instance;
+  }
 }
 
 // export global command manager to the app => GUI supposed to use this object
-export const commandManager = new CommandManager();
+export const commandManager = CommandManager.getInstance();
