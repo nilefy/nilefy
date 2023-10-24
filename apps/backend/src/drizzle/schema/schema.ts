@@ -42,9 +42,7 @@ export const workspaces = pgTable('workspaces', {
 export const tablescx = pgTable('tables', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().default('**del**'),
-  created_at: timestamp('created_at', {
-    withTimezone: true,
-  }).defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
   columns: json('columns').notNull(),
 });
 
