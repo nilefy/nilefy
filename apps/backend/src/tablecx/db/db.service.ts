@@ -5,7 +5,6 @@ import {
 } from '../../drizzle/drizzle.provider';
 import { tablescx } from '../../drizzle/schema/schema';
 import {
-  ConsoleLogWriter,
   eq,
   sql,
   // sql,
@@ -60,22 +59,22 @@ export class DbService {
       throw new NotFoundException('Method not implemented.');
     }
     const tableDefinition = validateAndConvertToTableDefinition(tables['0']);
+    const { name } = tables[0];
     if (!tableDefinition) {
       throw new NotFoundException('Method not implemented.');
     }
 
-    const isDataValid = insertDataIntoTable(tableDefinition, [data]);
-    if (!isDataValid) {
+    const isValid = isDataValid(tableDefinition, [data]);
+    if (!isValid) {
       throw new NotFoundException('Method not implemented.');
     }
     console.log(tableDefinition.name);
     console.log(data);
-    // await this.db.execute(
-    //   sql.raw(`
-    // `),
-    // );
-
-    throw new Error('Method not implemented.');
+    name;
+    //todo : insert data into table
+    return await this.db.execute(sql.raw(``));
+    // return await this.db.execute(sql.raw(query));
+    // return new NotFoundException('Method not implemented.');
   }
 
   async _getTableNameById(id: number): Promise<string | null> {
@@ -122,13 +121,14 @@ interface DataRow {
   [key: string]: any;
 }
 
-function insertDataIntoTable(table: TableDefinition, data: DataRow[]): boolean {
+function isDataValid(table: TableDefinition, data: DataRow[]): boolean {
   const columnNames = table.columns.map((column) => column.name);
 
   for (const row of data) {
     for (const columnName of columnNames) {
       if (!(columnName in row)) {
-        console.error(`Missing field "${columnName}" in the inserted data.`);
+        console.log('h');
+        console.log(`Missing field "${columnName}" in the inserted data.`);
         return false;
       }
 
