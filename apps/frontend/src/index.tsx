@@ -6,14 +6,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
-import { Dashboard } from './pages/mainLayout';
+import { Dashboard, loader as workspacesLoader } from './pages/mainLayout';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
 import { GroupManagement, GroupsManagement } from './pages/workspace/group';
-import {
-  WorkspaceSettingsLayout,
-  loader as workspacesLoader,
-} from './pages/workspace/workspace';
+import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 import { ProfileSettings } from './pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -33,26 +30,32 @@ const queryClient = new QueryClient({
 // router config
 const router = createBrowserRouter([
   {
-    path: '/:workspaceId',
-    element: <Dashboard />,
+    path: '',
     errorElement: <ErrorPage />,
     id: 'root',
     loader: workspacesLoader(queryClient),
     children: [
-      { path: '', element: <App /> },
-      { path: 'profile-settings', element: <ProfileSettings /> },
       {
-        path: 'workspace-settings',
-        element: <WorkspaceSettingsLayout />,
+        path: '/:workspaceId',
+        element: <Dashboard />,
+        errorElement: <ErrorPage />,
         children: [
-          { path: '', element: <UsersManagement /> },
+          { path: '', element: <App /> },
+          { path: 'profile-settings', element: <ProfileSettings /> },
           {
-            path: 'groups',
-            element: <GroupsManagement />,
+            path: 'workspace-settings',
+            element: <WorkspaceSettingsLayout />,
             children: [
+              { path: '', element: <UsersManagement /> },
               {
-                path: ':groupId',
-                element: <GroupManagement />,
+                path: 'groups',
+                element: <GroupsManagement />,
+                children: [
+                  {
+                    path: ':groupId',
+                    element: <GroupManagement />,
+                  },
+                ],
               },
             ],
           },
