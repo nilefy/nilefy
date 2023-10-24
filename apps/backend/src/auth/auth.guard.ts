@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { EnvSchema } from 'src/evn.validation';
+import { EnvSchema } from '../evn.validation';
 
 export type ExpressAuthedRequest = Request & {
   user: { username: string };

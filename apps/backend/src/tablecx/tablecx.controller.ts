@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { TablecxService } from './tablecx.service';
-import { TablecxDto } from 'src/dto/tablecx.dto';
+import { TablecxDto } from '../dto/tablecx.dto';
 
 @Controller('tablecxs')
 export class TablecxController {

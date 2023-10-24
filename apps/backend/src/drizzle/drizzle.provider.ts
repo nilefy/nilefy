@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { TConfigService } from 'src/evn.validation';
+import { TConfigService } from '../evn.validation';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
 import * as schema from './schema/schema';

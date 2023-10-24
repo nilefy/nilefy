@@ -6,5 +6,6 @@ import { DbService } from './db/db.service';
 @Module({
   controllers: [TablecxController],
   providers: [TablecxService, DbService],
+  exports: [TablecxService],
 })
 export class TablecxModule {}
