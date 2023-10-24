@@ -72,6 +72,7 @@ export class DbService {
     console.log(data);
     name;
     //todo : insert data into table
+    //!!!!!! not done yet!!!!
     return await this.db.execute(sql.raw(``));
     // return await this.db.execute(sql.raw(query));
     // return new NotFoundException('Method not implemented.');
