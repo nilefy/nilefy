@@ -42,11 +42,11 @@ interface RowData {
 type ShowColumn = {
     name:string
 }
-interface Column {
+interface ColumnType {
   id: number;
   name: string;
   type: string;
-  default: string;
+  default: string|number|null;
 }
 // function createColumns<T extends Column>(columnDefinitions: T[]) {
 //   const columnHelper = createColumnHelper<Column>();
@@ -88,7 +88,7 @@ const defaultData:RowData[] = [
 
 
 
-export function DataShowTable({ defColumns }: { defColumns: Column[] }) {
+export function DataShowTable({ defColumns }: { defColumns: ColumnType[] }) {
   const [data, setData] = useState(() => [...defaultData]);
 
   const columns = generateColumns(defColumns);

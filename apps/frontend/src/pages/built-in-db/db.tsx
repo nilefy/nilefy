@@ -3,15 +3,9 @@ import { ButtonWithIcon } from '@/components/built-in-db/ButtonWithIcon';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useForm, useFieldArray, SubmitHandler, FieldValues } from 'react-hook-form';
-
 import { Input } from '@/components/ui/input';
-// import { useDbModal } from '@/hooks/useDbModal';
-// import { Dialog, DialogTitle, DialogContent, } from '@/components/ui/dialog';
-
-// import { useTableStore } from '@/hooks/useTableStore';
 import { ArrowDownAZ, Filter, Pencil, Plus, Upload, } from "lucide-react";
 import { useState } from 'react';
-// import DbModal from './create-table/DbModal';
 import { DataShowTable } from '@/components/built-in-db/data-show-table';
 import {
   Dialog,
@@ -21,12 +15,23 @@ import {
 import { Label } from '@/components/ui/label';
 import { X,Key } from 'lucide-react';
 import { Select, SelectItem, SelectValue, SelectTrigger, SelectContent } from '@/components/ui/select';
-import { table } from 'console';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
 interface Column  {
   id: number,
   name: string,
   type: string,
-  default: string,
+  default: string | number | null,
 }
 interface Table {
   id:number,
@@ -42,56 +47,66 @@ interface RowData {
   name: string,
 }
 
+const Types = ['varchar', 'int', 'bigint', 'serial', 'boolean'] as const;
+const formSchema = z.object({
+  tableName: z.string().min(2, {
+    message: 'TableName must be at least 2 characters.',
+  }),
+  columns: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string().min(2, {
+        message: 'Column name must be at least 2 characters.',
+      }),
+      type: z.enum(Types),
+      default: z.union([z.string(), z.number(), z.null()]),
+    }),
+  ),
+});
+
+
 
 export default function DatabaseTable() {
 
-  // const { tables, clickedTable, setClickedTable, resetClickedTable, removeTable, editTableName } = useTableStore();
   const [editTable, setEditTable] = useState<Table>({ id: 0, tableName: '', columns: [] });
   // TODO : Remove this 
   const [clickedTable, setClickedTable] = useState<Table>({ id: 0, tableName: '', columns: [] });
   const [tables, setTables] = useState<Table[]>([]);
   const [isCreateTableDialogOpen, setisCreateTableDialogOpen] = useState(false);
-  const { register, handleSubmit, control } = useForm();
-  const { fields, prepend,append,remove } = useFieldArray({
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  })
+  const control = form.control;
+  const { fields, prepend, append, remove } = useFieldArray({
     control,
     name: 'columns',
   });
   // Add a default row with ID, serial, NULL
-  useEffect(() => {
-    if (fields.length === 0) {
-      prepend({ name: 'id', type: 'serial', default: 'NULL' });
-    }
-  }, [fields, append]);
+useEffect(() => {
+  if (fields.length === 0) {
+    prepend({ id: 0, name: 'id', type: 'serial', default: 'NULL' });
+  }
+}, [fields, append]);
+
   
-const onSubmit: SubmitHandler<FieldValues> = (data) => {
-  // Handle form submission logic here
-  const tableWithId: Table = {
-    tableName: data.tableName,
-    columns: data.columns,
-    id: tables.length + 1,
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Handle form submission logic here
+    const tableWithId: Table = {
+      tableName: values.tableName,
+      columns: values.columns,
+      id: tables.length + 1,
+    };
+    setClickedTable(tableWithId);
+    console.log(tableWithId);
+
+    setTables([...tables, tableWithId]);
+    setisCreateTableDialogOpen(false);
   };
-  setClickedTable(tableWithId)
-  console.log(tableWithId);
-  
-  setTables([...tables, tableWithId]);  
-  setisCreateTableDialogOpen(false);
-};
 
   // handle new row dialog,data , 
   const [isAddRowDialogOpen, setIsAddRowDialogOpen] = useState(false);
   const [newRowData, setNewRowData] = useState({});
-
-  const [data, setData] = useState<RowData[]>([]);
-  // get  some def data for tabel
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const result = await getData();
-  //     setData(result);
-  //   };
-
-  //   fetchData();
-  // }, []);
-
 
   const handleOnClick = () => {
     setisCreateTableDialogOpen(true);
@@ -179,120 +194,190 @@ const onSubmit: SubmitHandler<FieldValues> = (data) => {
             <Dialog open={isCreateTableDialogOpen} onOpenChange={onChange}>
               <DialogContent>
                 <DialogTitle>Create Table Name</DialogTitle>
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="w-full max-w-lg mx-auto"
-                >
-                  <div className="mb-4">
-                    <label
-                      htmlFor="tableName"
-                      className="block text-gray-700 text-sm font-bold mb-2"
-                    >
-                      Table Name
-                    </label>
-                    <Input
-                      {...register('tableName')}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-lg font-bold mb-2">
-                      Columns
-                    </label>
-                    {fields.map((item, index) => (
-                      <div key={item.id} className="flex items-center mb-4">
-                        <div className="hidden">
-                          <Input
-                            {...register(`columns[${index}].id`)}
-                            value={index + 1}
-                            hidden
-                          />
-                        </div>
-                        <div className="flex-1 ">
-                          <Label
-                            htmlFor={`columns[${index}].name`}
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                          >
-                            Name
-                          </Label>
-                          <Input
-                            {...register(`columns[${index}].name`)}
-                            disabled={index == 0}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          />
-                        </div>
-                        <div className="flex-1 ml-4">
-                          <Label
-                            htmlFor={`columns[${index}].type`}
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                          >
-                            Type
-                          </Label>
-                          <Select {...register(`columns[${index}].type`)}>
-                            <SelectTrigger disabled={index == 0}>
-                              <SelectValue
-                                placeholder={index == 0 ? 'serial' : 'Select..'}
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="w-full max-w-lg mx-auto"
+                  >
+                    <div className="mb-4">
+                      <FormField
+                        control={form.control}
+                        name="tableName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Table Name</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter table name"
+                                {...field}
                               />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="varchar">varchar</SelectItem>
-                              <SelectItem value="int">int</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex-1 ml-4">
-                          <Label
-                            htmlFor={`columns[${index}].default`}
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                          >
-                            Default
-                          </Label>
-                          <Input
-                            {...register(`columns[${index}].default`)}
-                            disabled={index == 0}
-                            placeholder="NULL"
-                            className="shadow appearance-none border rounded w-fullpx-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          />
-                        </div>
-                        <div className="flex-0.5 ml-3 mt-7 items-center">
-                          {index > 0 ? (
-                            <ButtonWithIcon
-                              variant="destructive"
-                              icon={<X size={18} />}
-                              size="sm"
-                              onClick={() => remove(index)}
+                            </FormControl>
+                            {/* <FormDescription>
+                              This is a description for the table name.
+                            </FormDescription> */}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-lg font-bold mb-2">
+                        Columns
+                      </label>
+
+                      {fields.map((item, index) => (
+                        <div key={item.id} className="flex items-center mb-4">
+                          <div className="hidden">
+                            <Input
+                              {...form.register(
+                                `columns[${index}].id` as `columns.${number}.id`,
+                              )}
+                              value={index + 1}
+                              hidden
                             />
-                          ) : (
-                            <div className="bg-blue-400 h-9 rounded-md px-3 flex items-center">
-                              <span className="mr-2 text-white">
-                                <Key size={20} />
-                              </span>
-                            </div>
-                          )}
+                          </div>
+                          <div className="flex-1">
+                            <FormField
+                              control={form.control}
+                              name={
+                                `columns[${index}].name` as `columns.${number}.name`
+                              }
+                              render={({ field }) => (
+                                <div>
+                                  <FormLabel
+                                    htmlFor={`columns[${index}].name`}
+                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                  >
+                                    Name
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      disabled={index === 0}
+                                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </div>
+                              )}
+                            />
+                          </div>
+                          <div className="flex-1 ml-4">
+                            <FormField
+                              control={form.control}
+                              name={
+                                `columns[${index}].type` as `columns.${number}.type`
+                              }
+                              render={({ field }) => (
+                                <div>
+                                  <FormLabel
+                                    htmlFor={`columns[${index}].type`}
+                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                  >
+                                    Type
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Select {...field}>
+                                      <SelectTrigger disabled={index === 0}>
+                                        <SelectValue
+                                          placeholder={
+                                            index === 0 ? 'serial' : 'Select..'
+                                          }
+                                        />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="varchar">
+                                          varchar
+                                        </SelectItem>
+                                        <SelectItem value="int">int</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormControl>
+                                  <FormMessage />
+                                </div>
+                              )}
+                            />
+                          </div>
+                          <div className="flex-1 ml-4">
+                            <FormField
+                              control={form.control}
+                              name={
+                                `columns[${index}].default` as `columns.${number}.default`
+                              }
+                              render={({ field }) => (
+                                <div>
+                                  <FormLabel
+                                    htmlFor={`columns[${index}].default`}
+                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                  >
+                                    Default
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...form.register(
+                                        `columns[${index}].default` as `columns.${number}.default`,
+                                      )}
+                                      value={item.default ?? ''} // Provide a default value when the value is null
+                                      disabled={index === 0}
+                                      placeholder="NULL"
+                                      className="shadow appearance-none border rounded w-full px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    />
+                                  </FormControl>
+                                  <div>
+                                    {' '}
+                                    <FormMessage />
+                                  </div>
+                                </div>
+                              )}
+                            />
+                          </div>
+                          <div className="flex-0.5 ml-3 mt-7 items-center">
+                            {index > 0 ? (
+                              <ButtonWithIcon
+                                variant="destructive"
+                                icon={<X size={18} />}
+                                size="sm"
+                                onClick={() => remove(index)}
+                              />
+                            ) : (
+                              <div className="bg-blue-400 h-9 rounded-md px-3 flex items-center">
+                                <span className="mr-2 text-white">
+                                  <Key size={20} />
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      onClick={() => append({})}
-                      className="bg-blue-500 text-white px-2 py-1 rounded focus:outline-none focus:shadow-outline"
-                    >
-                      Add Column
-                    </Button>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button variant="outline" onClick={() => onChange}>
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                </form>
+                      ))}
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          append({
+                            type: 'varchar', // Provide the default type
+                            id: fields.length + 1, // Assuming 'fields' is your array of columns
+                            name: '', // Provide the default name
+                            default: '', // Provide the default default value
+                          })
+                        }
+                        className="bg-blue-500 text-white px-2 py-1 rounded focus:outline-none focus:shadow-outline"
+                      >
+                        Add Column
+                      </Button>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button variant="outline" onClick={() => onChange}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
           </div>
