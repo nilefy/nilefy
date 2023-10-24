@@ -7,11 +7,13 @@ import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { TablecxModule } from './tablecx/tablecx.module';
 
 @Module({
   imports: [
     AuthModule,
     UsersModule,
+    TablecxModule,
     ConfigModule.forRoot({
       isGlobal: true,
       // custom validation function with zod
