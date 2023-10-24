@@ -3,7 +3,7 @@ import { Button, ButtonProps } from "@/components/ui/button";
 
 interface ButtonWithIconProps extends ButtonProps {
   icon?: ReactNode;
-  text: string;
+  text?: string;
 }
 
 const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({ icon, text, ...props }) => {

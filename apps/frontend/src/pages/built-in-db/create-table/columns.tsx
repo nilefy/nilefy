@@ -1,50 +1,23 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { VarCell } from "@/components/built-in-db/var-cell";
-import { EditCell } from "@/components/built-in-db/edit-cell";
 
-export type Record = {
+export type Column = {
+  id: string;
   name: string;
   type: string;
   default: string;
 };
 
-const columnHelper = createColumnHelper<Record>();
 
-const getColumns: ColumnDef<Record, keyof Record>[] = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: VarCell,
-    meta: {
-      type: "text",
-    },
-  }),
-  columnHelper.accessor("type", {
-    header: "Type",
-    cell: VarCell,
-    meta: {
-      type: "select",
-      options: [
-        { value: "varchar", label: "varchar" },
-        { value: "int", label: "int" },
-        { value: "bigint", label: "bigint" },
-        { value: "float", label: "float" },
-        { value: "boolean", label: "boolean" },
-      ],
-    },
-  }),
-  columnHelper.accessor("default", {
-    header: "Default",
-    cell: VarCell,
-    meta: {
-      type: "text",
-    },
-  }),
-  columnHelper.display({
-    header: "",
-    id: "edit",
-    cell: EditCell,
-  }),
-];
+const columnHelper = createColumnHelper();
+    // const columns = getColumns([
+    //   { id: 1, name: 'id', type: 'serial', default: 'default' },
+    // ]);
 
-export default getColumns;
+// export const getColumns = (columnsData:Column[])=> {
+//   return columnsData.map((column:Column, index:number) => {
+//     return columnHelper.accessor(column.id, {
+//       header: column.name, // Use the column name as the header
+//     });
+//   });
+// };
