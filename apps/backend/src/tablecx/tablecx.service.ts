@@ -21,4 +21,14 @@ export class TablecxService {
 
     return await this.dbService.deleteTablecx(id);
   }
+  getAllDataByTableId(id: number): object | PromiseLike<object> {
+    if (id < 1) {
+      throw new Error('Method not implemented.');
+    }
+    return this.dbService.getAllDataByTableId(id);
+  }
+
+  insertDataByTableId(id: number, data: object): object | PromiseLike<object> {
+    return this.dbService.insertDataByTableId(id, data);
+  }
 }
