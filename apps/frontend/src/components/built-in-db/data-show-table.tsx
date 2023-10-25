@@ -1,27 +1,27 @@
-"use client"
+'use client';
 
 import {
-    ColumnDef,
-    createColumnHelper,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-} from "@tanstack/react-table"
+  ColumnDef,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { useEffect, useState } from "react"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useEffect, useState } from 'react';
 // import { getColumns } from "@/pages/built-in-db/create-table/columns"
 interface RowData {
-    id: number,
-    name: string,
-    age:number
+  id: number;
+  name: string;
+  age: number;
 }
 // interface Column {
 //     id: string,
@@ -35,18 +35,18 @@ interface RowData {
 // }
 
 // <TData, TValue>
-// : DataTableProps<TData, TValue>) 
+// : DataTableProps<TData, TValue>)
 
 // const columnHelper = createColumnHelper< Partial<Column>>();
 
 type ShowColumn = {
-    name:string
-}
+  name: string;
+};
 interface ColumnType {
   id: number;
   name: string;
   type: string;
-  default: string|number|null;
+  default: string | number | null;
 }
 // function createColumns<T extends Column>(columnDefinitions: T[]) {
 //   const columnHelper = createColumnHelper<Column>();
@@ -54,7 +54,7 @@ interface ColumnType {
 //   return columnDefinitions.map((columnDef) => {
 //     const {name } = columnDef;
 //     console.log("columnDef" + JSON.stringify(columnDef));
-    
+
 //       return columnHelper.accessor("name", {
 //         header:name
 //     })
@@ -78,15 +78,13 @@ function generateColumns(properties: ShowColumn[]): any[] {
   });
 }
 
-const defaultData:RowData[] = [
-    { id: 1, name: "John", age: 20 },
-    { id: 2, name: "Jane", age: 21 },
-    { id: 3, name: "Joe", age: 22 },
-    { id: 4, name: "Joanna", age: 23 },
-    { id: 5, name: "Jill", age: 24 }
-]
-
-
+const defaultData: RowData[] = [
+  { id: 1, name: 'John', age: 20 },
+  { id: 2, name: 'Jane', age: 21 },
+  { id: 3, name: 'Joe', age: 22 },
+  { id: 4, name: 'Joanna', age: 23 },
+  { id: 5, name: 'Jill', age: 24 },
+];
 
 export function DataShowTable({ defColumns }: { defColumns: ColumnType[] }) {
   const [data, setData] = useState(() => [...defaultData]);
@@ -99,7 +97,7 @@ export function DataShowTable({ defColumns }: { defColumns: ColumnType[] }) {
   });
 
   return (
-    <div className="rounded-md border mt-4">
+    <div className="mt-4 rounded-md border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

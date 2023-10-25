@@ -6,6 +6,8 @@ import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
 import DatabaseTable from './pages/built-in-db/db';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // router config
 const router = createBrowserRouter([
@@ -28,10 +30,16 @@ const router = createBrowserRouter([
     path: '/database',
     element: <DatabaseTable />,
     errorElement: <ErrorPage />,
-  }
+  },
 ]);
 
 const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
+const queryClient = new QueryClient();
 
-root.render(<RouterProvider router={router} />);
+root.render(
+  <QueryClientProvider client={queryClient}>
+    <RouterProvider router={router} />
+    <ReactQueryDevtools />
+  </QueryClientProvider>,
+);

@@ -1,55 +1,67 @@
-import { useEffect } from 'react';
 import { ButtonWithIcon } from '@/components/built-in-db/ButtonWithIcon';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useForm, useFieldArray, SubmitHandler, FieldValues } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
-import { ArrowDownAZ, Filter, Pencil, Plus, Upload, } from "lucide-react";
-import { useState } from 'react';
 import { DataShowTable } from '@/components/built-in-db/data-show-table';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { X,Key } from 'lucide-react';
-import { Select, SelectItem, SelectValue, SelectTrigger, SelectContent } from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ArrowDownAZ,
+  Filter,
+  Key,
+  Pencil,
+  Plus,
+  Upload,
+  X,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
+// for parametes in url
+import { useSearchParams } from 'react-router-dom';
+import { fetchTables, addTable, removeTable, renameTable } from './tables';
 
-interface Column  {
-  id: number,
-  name: string,
-  type: string,
-  default: string | number | null,
+// ts query
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+interface Column {
+  id: number;
+  name: string;
+  type: string;
+  default: string | number | null;
 }
 interface Table {
-  id:number,
-  tableName: string,
-  columns: Column[], 
+  id: number;
+  name: string;
+  columns: Column[];
 }
-
 
 // for  show table
 
-interface RowData {
-  id: number,
-  name: string,
-}
-
-const Types = ['varchar', 'int', 'bigint', 'serial', 'boolean'] as const;
+// initial validation
+const columnTypes = ['varchar', 'int', 'bigint', 'serial', 'boolean'] as const;
 const formSchema = z.object({
-  tableName: z.string().min(2, {
+  name: z.string().min(2, {
     message: 'TableName must be at least 2 characters.',
   }),
   columns: z.array(
@@ -58,53 +70,90 @@ const formSchema = z.object({
       name: z.string().min(2, {
         message: 'Column name must be at least 2 characters.',
       }),
-      type: z.enum(Types),
+      type: z.enum(columnTypes),
       default: z.union([z.string(), z.number(), z.null()]),
     }),
   ),
 });
 
-
-
 export default function DatabaseTable() {
+  const queryClient = useQueryClient();
+  const { data: tables, isLoading } = useQuery({
+    queryFn: () => fetchTables(),
+    queryKey: ['tables'],
+  });
+  const { mutateAsync: addTableMutation } = useMutation({
+    mutationFn: (newTable: Table) => addTable(newTable),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tables']);
+    },
+  });
 
-  const [editTable, setEditTable] = useState<Table>({ id: 0, tableName: '', columns: [] });
-  // TODO : Remove this 
-  const [clickedTable, setClickedTable] = useState<Table>({ id: 0, tableName: '', columns: [] });
-  const [tables, setTables] = useState<Table[]>([]);
+  const { mutateAsync: removeTableMutation } = useMutation({
+    mutationFn: (tableId: number) => removeTable(tableId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tables']);
+    },
+  });
+
+  const { mutateAsync: renameTableMutation } = useMutation({
+    mutationFn: ({ tableId, newName }: { tableId: number; newName: string }) =>
+      renameTable(tableId, newName),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tables']);
+    },
+  });
+  // to include tableId in url
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentTableId, setCurrentTableId] = useState(
+    Number(searchParams.get('id')),
+  );
+
+  // to highlight table when clicked
+  useEffect(() => {
+    setCurrentTableId(Number(searchParams.get('id')));
+  }, [searchParams]);
+  // to handle edit state
+  const [editTable, setEditTable] = useState<Table>({
+    id: 0,
+    name: '',
+    columns: [],
+  });
+  // TODO : Remove this
   const [isCreateTableDialogOpen, setisCreateTableDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-  })
+  });
   const control = form.control;
   const { fields, prepend, append, remove } = useFieldArray({
     control,
     name: 'columns',
   });
   // Add a default row with ID, serial, NULL
-useEffect(() => {
-  if (fields.length === 0) {
-    prepend({ id: 0, name: 'id', type: 'serial', default: 'NULL' });
-  }
-}, [fields, append]);
+  useEffect(() => {
+    if (fields.length === 0) {
+      prepend({ id: 0, name: 'id', type: 'serial', default: 'NULL' });
+    }
+  }, [fields, prepend]);
 
-  
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Handle form submission logic here
     const tableWithId: Table = {
-      tableName: values.tableName,
+      name: values.name,
       columns: values.columns,
       id: tables.length + 1,
     };
-    setClickedTable(tableWithId);
-    console.log(tableWithId);
-
-    setTables([...tables, tableWithId]);
+    // console.log(tableWithId);
+    setSearchParams({ ...searchParams, id: String(tableWithId.id) });
+    if (tables) {
+      addTableMutation(tableWithId);
+    }
+    // setTables([...tables, tableWithId]);
     setisCreateTableDialogOpen(false);
-  };
+  }
 
-  // handle new row dialog,data , 
+  // TODO: handle new row dialog,data ,
   const [isAddRowDialogOpen, setIsAddRowDialogOpen] = useState(false);
   const [newRowData, setNewRowData] = useState({});
 
@@ -112,53 +161,57 @@ useEffect(() => {
     setisCreateTableDialogOpen(true);
   };
 
-  const handleRemoveTable = (tableId:number) => {
-    const updatedTables = tables.filter((table) => table.id !== tableId);
-    setTables(updatedTables);
-    setClickedTable({ id: 0, tableName: '', columns: []});
-  };
-
-  const handleEdit = (table:Table) => {
-    setEditTable({ id: table.id, tableName: table.tableName,columns:[] });
-  };
-
-  const handleSaveEdit = () => {
-    if (editTable.id !== null && editTable.tableName.trim() !== '') {
-      const updatedTables = tables.map((table) =>
-        table.id === editTable.id ? { ...table, tableName: editTable.tableName } : table
-      );
-      setTables(updatedTables);
-      setEditTable({ id: 0, tableName: '' ,columns:[]});
+const handleSaveEdit = async () => {
+  if (editTable.id !== null && editTable.name.trim() !== '') {
+    try {
+      await renameTableMutation({
+        tableId: editTable.id,
+        newName: editTable.name,
+      });
+      // No need to manually update state, React Query will handle the cache update
+      setEditTable({ id: 0, name: '', columns: [] });
+    } catch (error) {
+      // Handle error if necessary
+      console.error('Error renaming table:', error);
     }
-  };
+  }
+};
 
   const handleCancelEdit = () => {
-       setEditTable({ id: 0, tableName: '', columns: [] });
+    setEditTable({ id: 0, name: '', columns: [] });
   };
 
-  const handleTableClick = (table:Table) => {
+  // Event handlers
+  const handleEdit = (table: Table) => {
+    setEditTable({ id: table.id, name: table.name, columns: [] });
+  };
+  const handleRemoveTable = async (tableId: number) => {
+    await removeTableMutation(tableId);
+  };
+
+  const handleRenameTable = async (tableId: number, newName: string) => {
+    await renameTableMutation({ tableId, newName });
+  };
 
 
+  const handleTableClick = (table: Table) => {
     // Reset the editTable state
-    setEditTable({ id: 0, tableName: '',columns:[] });
-
-    setClickedTable(table);
-    
+    setEditTable({ id: 0, name: '', columns: [] });
+    setSearchParams({ ...searchParams, id: String(table.id) });
 
     // // Reset the current table state (if needed)
     // // setCurrentTable(null);
   };
+
   const handleAddRow = () => {
     // Open the dialog
     setIsAddRowDialogOpen(true);
-  }
-
+  };
 
   const handleDialogSubmit = () => {
     // if (clickedTable) {
     //   // TODO: Add the new row to the table
     //   console.log("handling submit");
-
     //   // Close the dialog
     //   setIsAddRowDialogOpen(false);
     // }
@@ -171,22 +224,19 @@ useEffect(() => {
     // if (!open) {
     //   setIsAddRowDialogOpen(false);
     // }
-      setisCreateTableDialogOpen(false);
+    setisCreateTableDialogOpen(false);
   };
 
-
-
-
   return (
-    <div className="flex flex-row w-full h-full">
-      <div className="w-1/4 bg-gray-200 h-screen min-w-[30%]">
+    <div className="flex h-full w-full flex-row">
+      <div className="h-screen w-1/4 min-w-[30%] bg-gray-200">
         <div className="mx-auto w-5/6">
           <div className="flex flex-col items-center">
-            <h1 className="mt-4 inline-flex self-start font-bold text-lg">
+            <h1 className="mt-4 inline-flex self-start text-lg font-bold">
               Database
             </h1>
             <Button
-              className="mt-6 w-full bg-black py-3 rounded-md sm:w-5/6"
+              className="mt-6 w-full rounded-md bg-black py-3 sm:w-5/6"
               onClick={handleOnClick}
             >
               <span className="text-white">Create New Table</span>
@@ -197,12 +247,12 @@ useEffect(() => {
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className="w-full max-w-lg mx-auto"
+                    className="mx-auto w-full max-w-lg"
                   >
                     <div className="mb-4">
                       <FormField
                         control={form.control}
-                        name="tableName"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Table Name</FormLabel>
@@ -222,12 +272,12 @@ useEffect(() => {
                     </div>
 
                     <div className="mb-4">
-                      <label className="block text-gray-700 text-lg font-bold mb-2">
+                      <label className="mb-2 block text-lg font-bold text-gray-700">
                         Columns
                       </label>
 
                       {fields.map((item, index) => (
-                        <div key={item.id} className="flex items-center mb-4">
+                        <div key={item.id} className="mb-4 flex items-center">
                           <div className="hidden">
                             <Input
                               {...form.register(
@@ -247,7 +297,7 @@ useEffect(() => {
                                 <div>
                                   <FormLabel
                                     htmlFor={`columns[${index}].name`}
-                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                    className="mb-2 block text-sm font-bold text-gray-700"
                                   >
                                     Name
                                   </FormLabel>
@@ -255,7 +305,7 @@ useEffect(() => {
                                     <Input
                                       {...field}
                                       disabled={index === 0}
-                                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                      className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -263,7 +313,7 @@ useEffect(() => {
                               )}
                             />
                           </div>
-                          <div className="flex-1 ml-4">
+                          <div className="ml-4 flex-1">
                             <FormField
                               control={form.control}
                               name={
@@ -273,7 +323,7 @@ useEffect(() => {
                                 <div>
                                   <FormLabel
                                     htmlFor={`columns[${index}].type`}
-                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                    className="mb-2 block text-sm font-bold text-gray-700"
                                   >
                                     Type
                                   </FormLabel>
@@ -281,16 +331,26 @@ useEffect(() => {
                                     <Select {...field}>
                                       <SelectTrigger disabled={index === 0}>
                                         <SelectValue
-                                          placeholder={
-                                            index === 0 ? 'serial' : 'Select..'
+                                          placeholder="Select.."
+                                          defaultValue={
+                                            (index === 0
+                                              ? 'serial'
+                                              : field.value) || ''
                                           }
                                         />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="varchar">
-                                          varchar
-                                        </SelectItem>
-                                        <SelectItem value="int">int</SelectItem>
+                                        {columnTypes.map((type) => (
+                                          <SelectItem
+                                            key={type}
+                                            value={type}
+                                            disabled={
+                                              index === 0 && type === 'serial'
+                                            }
+                                          >
+                                            {type}
+                                          </SelectItem>
+                                        ))}
                                       </SelectContent>
                                     </Select>
                                   </FormControl>
@@ -299,7 +359,7 @@ useEffect(() => {
                               )}
                             />
                           </div>
-                          <div className="flex-1 ml-4">
+                          <div className="ml-4 flex-1">
                             <FormField
                               control={form.control}
                               name={
@@ -309,7 +369,7 @@ useEffect(() => {
                                 <div>
                                   <FormLabel
                                     htmlFor={`columns[${index}].default`}
-                                    className="block text-gray-700 text-sm font-bold mb-2"
+                                    className="mb-2 block text-sm font-bold text-gray-700"
                                   >
                                     Default
                                   </FormLabel>
@@ -321,7 +381,7 @@ useEffect(() => {
                                       value={item.default ?? ''} // Provide a default value when the value is null
                                       disabled={index === 0}
                                       placeholder="NULL"
-                                      className="shadow appearance-none border rounded w-full px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                      className="focus:shadow-outline w-full appearance-none rounded border px-3 leading-tight text-gray-700 shadow"
                                     />
                                   </FormControl>
                                   <div>
@@ -341,7 +401,7 @@ useEffect(() => {
                                 onClick={() => remove(index)}
                               />
                             ) : (
-                              <div className="bg-blue-400 h-9 rounded-md px-3 flex items-center">
+                              <div className="flex h-9 items-center rounded-md bg-blue-400 px-3">
                                 <span className="mr-2 text-white">
                                   <Key size={20} />
                                 </span>
@@ -360,7 +420,7 @@ useEffect(() => {
                             default: '', // Provide the default default value
                           })
                         }
-                        className="bg-blue-500 text-white px-2 py-1 rounded focus:outline-none focus:shadow-outline"
+                        className="focus:shadow-outline rounded bg-blue-500 px-2 py-1 text-white focus:outline-none"
                       >
                         Add Column
                       </Button>
@@ -371,7 +431,7 @@ useEffect(() => {
                       </Button>
                       <Button
                         type="submit"
-                        className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
+                        className="ml-2 rounded bg-blue-500 px-4 py-2 text-white "
                       >
                         Submit
                       </Button>
@@ -395,91 +455,101 @@ useEffect(() => {
               />
               <div className="mt-4">
                 <ul className="flex flex-col">
-                  {tables.map((table) => (
-                    <li
-                      key={String(table.id)}
-                      className={`flex flex-row items-center justify-between  hover:bg-gray-100  ${
-                        clickedTable && clickedTable.id === table.id
-                          ? 'bg-blue-100'
-                          : ''
-                      }`}
-                    >
-                      {table.id === editTable.id ? (
-                        <div className="flex items-center">
-                          <Input
-                            type="text"
-                            className="w-5/6 mr-2"
-                            value={editTable.tableName}
-                            onChange={(e) =>
-                              setEditTable({
-                                ...editTable,
-                                tableName: e.target.value,
-                              })
-                            }
-                          />
-                          <Button onClick={handleSaveEdit} variant="secondary">
-                            Save
-                          </Button>
-                          <Button
-                            onClick={handleCancelEdit}
-                            variant="default"
-                            className="mx-2"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div
-                            className={`text-black cursor-pointer p-2 mt-2 rounded-md border-gray-300 w-full`}
-                            onClick={() => handleTableClick(table)}
-                          >
-                            <span className="text-sm">{table.tableName}</span>
+                  {isLoading ? (
+                    <div>Loading </div>
+                  ) : (
+                    tables.map((table) => (
+                      <li
+                        key={String(table.id)}
+                        className={`flex flex-row items-center justify-between  hover:bg-gray-100  ${
+                          currentTableId === table.id
+                            ? 'bg-blue-100' // Highlight based on URL parameter
+                            : ''
+                        }`}
+                      >
+                        {table.id === editTable.id ? (
+                          <div className="flex items-center">
+                            <Input
+                              type="text"
+                              className="mr-2 w-5/6"
+                              value={editTable.name}
+                              onChange={(e) =>
+                                setEditTable({
+                                  ...editTable,
+                                  name: e.target.value,
+                                })
+                              }
+                            />
+                            <Button
+                              onClick={handleSaveEdit}
+                              variant="secondary"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              onClick={handleCancelEdit}
+                              variant="default"
+                              className="mx-2"
+                            >
+                              Cancel
+                            </Button>
                           </div>
-                          <div className="flex  items-center justify-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger>
-                                <span className="transform rotate-90 p-2 ">
-                                  ...
-                                </span>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="flex flex-col">
-                                <DropdownMenuItem
-                                  onClick={() => handleEdit(table)}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                {!editTable.id && (
+                        ) : (
+                          <>
+                            <div
+                              className={`mt-2 w-full cursor-pointer rounded-md border-gray-300 p-2 text-black`}
+                              onClick={() => handleTableClick(table)}
+                            >
+                              <span className="text-sm">{table.name}</span>
+                            </div>
+                            <div className="flex  items-center justify-center">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger>
+                                  <span className="rotate-90 p-2">...</span>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="flex flex-col">
                                   <DropdownMenuItem
-                                    onClick={() => handleRemoveTable(table.id)}
+                                    onClick={() => handleEdit(table)}
                                   >
-                                    Remove
+                                    Edit
                                   </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </>
-                      )}
-                    </li>
-                  ))}
+                                  {!editTable.id && (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleRemoveTable(table.id)
+                                      }
+                                    >
+                                      Remove
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </>
+                        )}
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="w-3/4 bg-gray-100 h-screen">
+      <div className="h-screen w-3/4 bg-gray-100">
         <header className="table-info">
           <h1 className="mt-6 pl-8 text-start ">
-            {clickedTable.id != 0
-              ? 'Tables > ' + clickedTable.tableName
+            {currentTableId !== 0
+              ? `Tables > ${
+                  tables.find((table) => table.id === currentTableId)?.name ||
+                  ''
+                }`
               : 'Tables'}
           </h1>
         </header>
-        {clickedTable.id != 0 && (
-          <div className="w-full flex justify-center m-0">
-            <div className=" w-11/12 mt-4 flex justify-between">
+        {currentTableId != 0 && (
+          <div className="m-0 flex w-full justify-center">
+            <div className=" mt-4 flex w-11/12 justify-between">
               <div>
                 {/* Add new column */}
                 <ButtonWithIcon
@@ -540,13 +610,18 @@ useEffect(() => {
         )}
         <div className="w-full">
           <main className="w-full ">
-            {clickedTable.id != 0 ? (
+            {currentTableId != 0 ? (
               <>
-                <DataShowTable defColumns={clickedTable.columns} />
+                <DataShowTable
+                  defColumns={
+                    tables.find((table) => table.id === currentTableId)?.columns ||
+                    []
+                  }
+                />
                 {/* {JSON.stringify(columns)} {JSON.stringify(clickedTable.rows)} */}
               </>
             ) : (
-              <div className="flex justify-center items-center h-full">
+              <div className="flex h-full items-center justify-center">
                 No data
               </div>
             )}

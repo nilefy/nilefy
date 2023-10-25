@@ -1,4 +1,3 @@
-
 // import {
 //   ColumnDef,
 //   RowData,
@@ -18,12 +17,10 @@
 //   TableRow
 // } from "@/components/ui/table";
 
-
 // import { useTableStore } from '@/hooks/useTableStore';
 
 // import { FooterCell } from './footer-cell';
 // // types
-
 
 // declare module '@tanstack/react-table' {
 //   interface TableMeta<TData extends RowData> {
@@ -31,12 +28,10 @@
 //   }
 // }
 
-
 // type Option = {
 //   label: string;
 //   value: string;
 // };
-
 
 // interface DataTableProps<TData, TValue> {
 //   columns: Column[];
@@ -155,7 +150,7 @@
 //     const newTable = { id: String(Date.now()), name, rows: data };
 //     tableStore.setCurrentTable(newTable);
 //     console.log(columns);
-    
+
 //   }, [data, name]);
 
 //   return (
@@ -212,4 +207,3 @@
 //     </div>
 //   )
 // }
-
