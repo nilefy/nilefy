@@ -1,7 +1,4 @@
-'use client';
-
 import {
-  ColumnDef,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
@@ -16,28 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 // import { getColumns } from "@/pages/built-in-db/create-table/columns"
 interface RowData {
   id: number;
   name: string;
   age: number;
 }
-// interface Column {
-//     id: string,
-//     header: string,
-//     type: string,
-//     default: string,
-// }
-// interface DataTableProps<TData, TValue> {
-//     columns: ColumnDef<TData,TValue>[],
-//     data: TData[]
-// }
-
-// <TData, TValue>
-// : DataTableProps<TData, TValue>)
-
-// const columnHelper = createColumnHelper< Partial<Column>>();
 
 type ShowColumn = {
   name: string;
@@ -61,6 +43,7 @@ interface ColumnType {
 
 //   });
 // }
+// TODO : fix typing here
 function generateColumns(properties: ShowColumn[]): any[] {
   const columnHelper = createColumnHelper();
 
