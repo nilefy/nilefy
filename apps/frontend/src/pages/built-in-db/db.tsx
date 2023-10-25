@@ -44,6 +44,7 @@ import { fetchTables, addTable, removeTable, renameTable } from './tables';
 // ts query
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+// types
 interface Column {
   id: number;
   name: string;
@@ -56,7 +57,6 @@ interface Table {
   columns: Column[];
 }
 
-// for  show table
 
 // initial validation
 const columnTypes = ['varchar', 'int', 'bigint', 'serial', 'boolean'] as const;
@@ -77,6 +77,7 @@ const formSchema = z.object({
 });
 
 export default function DatabaseTable() {
+// fetching / mutating  data / hooks
   const queryClient = useQueryClient();
   const { data: tables, isLoading } = useQuery({
     queryFn: () => fetchTables(),
@@ -108,7 +109,6 @@ export default function DatabaseTable() {
   const [currentTableId, setCurrentTableId] = useState(
     Number(searchParams.get('id')),
   );
-
   // to highlight table when clicked
   useEffect(() => {
     setCurrentTableId(Number(searchParams.get('id')));
@@ -119,9 +119,9 @@ export default function DatabaseTable() {
     name: '',
     columns: [],
   });
-  // TODO : Remove this
+  // state for controlling table dialog
   const [isCreateTableDialogOpen, setisCreateTableDialogOpen] = useState(false);
-
+  // form config. 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -130,7 +130,7 @@ export default function DatabaseTable() {
     control,
     name: 'columns',
   });
-  // Add a default row with ID, serial, NULL
+  // Add to the form a  default row to  with ID, serial, NULL
   useEffect(() => {
     if (fields.length === 0) {
       prepend({ id: 0, name: 'id', type: 'serial', default: 'NULL' });
@@ -189,9 +189,6 @@ const handleSaveEdit = async () => {
     await removeTableMutation(tableId);
   };
 
-  const handleRenameTable = async (tableId: number, newName: string) => {
-    await renameTableMutation({ tableId, newName });
-  };
 
 
   const handleTableClick = (table: Table) => {
@@ -305,7 +302,7 @@ const handleSaveEdit = async () => {
                                     <Input
                                       {...field}
                                       disabled={index === 0}
-                                      className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
+                                      className=" w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -365,7 +362,7 @@ const handleSaveEdit = async () => {
                               name={
                                 `columns[${index}].default` as `columns.${number}.default`
                               }
-                              render={({ field }) => (
+                              render={() => (
                                 <div>
                                   <FormLabel
                                     htmlFor={`columns[${index}].default`}
@@ -381,7 +378,7 @@ const handleSaveEdit = async () => {
                                       value={item.default ?? ''} // Provide a default value when the value is null
                                       disabled={index === 0}
                                       placeholder="NULL"
-                                      className="focus:shadow-outline w-full appearance-none rounded border px-3 leading-tight text-gray-700 shadow"
+                                      className="w-full appearance-none rounded border px-3 leading-tight text-gray-700 shadow"
                                     />
                                   </FormControl>
                                   <div>
@@ -392,7 +389,7 @@ const handleSaveEdit = async () => {
                               )}
                             />
                           </div>
-                          <div className="flex-0.5 ml-3 mt-7 items-center">
+                          <div className="ml-3 mt-7 flex-1 items-center ">
                             {index > 0 ? (
                               <ButtonWithIcon
                                 variant="destructive"
@@ -420,7 +417,7 @@ const handleSaveEdit = async () => {
                             default: '', // Provide the default default value
                           })
                         }
-                        className="focus:shadow-outline rounded bg-blue-500 px-2 py-1 text-white focus:outline-none"
+                        className="rounded bg-blue-500 px-2 py-1 text-white focus:outline-none"
                       >
                         Add Column
                       </Button>
@@ -614,8 +611,8 @@ const handleSaveEdit = async () => {
               <>
                 <DataShowTable
                   defColumns={
-                    tables.find((table) => table.id === currentTableId)?.columns ||
-                    []
+                    tables.find((table) => table.id === currentTableId)
+                      ?.columns || []
                   }
                 />
                 {/* {JSON.stringify(columns)} {JSON.stringify(clickedTable.rows)} */}
