@@ -47,7 +47,7 @@ export type WebloomTree = {
 interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
-  selectedNode: string | null;
+  selectedNodeIds: string[];
   draggedNode: string | null;
   resizedNode: string | null;
   newNode: WebloomNode | null;
@@ -67,7 +67,7 @@ type MoveNodeReturnType = {
 };
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
-  setSelectedNode: (id: string | null) => void;
+  setSelectedNodeIds: (callback: (prev: WebloomState["selectedNodeIds"]) => WebloomState["selectedNodeIds"]) => void;
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string, index?: number) => void;
@@ -102,7 +102,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     tree: {},
     draggedNode: null,
     overNode: null,
-    selectedNode: null,
+    selectedNodeIds: [],
     newNode: null,
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
@@ -117,8 +117,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setShadowElement(shadowElement) {
       set({ shadowElement });
     },
-    setSelectedNode: (id: string | null) => {
-      set({ selectedNode: id });
+    setSelectedNodeIds: (callback) => {
+      set((prev) => ({ selectedNodeIds: callback(prev.selectedNodeIds) }));
     },
     setNewNode(newNode) {
       set({ newNode });
