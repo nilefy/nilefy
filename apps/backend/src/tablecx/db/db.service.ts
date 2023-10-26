@@ -3,7 +3,7 @@ import {
   DatabaseI,
   DrizzleAsyncProvider,
 } from '../../drizzle/drizzle.provider';
-import { tablescx } from '../../drizzle/schema/schema';
+import { webloomTables } from '../../drizzle/schema/schema';
 import {
   eq,
   sql,
@@ -24,7 +24,10 @@ export class DbService {
   }
 
   async createTablecx(tablecx: TablecxDto): Promise<object> {
-    const result = await this.db.insert(tablescx).values(tablecx).returning();
+    const result = await this.db
+      .insert(webloomTables)
+      .values(tablecx)
+      .returning();
     if (!result) {
       throw new NotFoundException('Method not implemented.');
     }
@@ -35,8 +38,8 @@ export class DbService {
 
   async deleteTablecx(id: number): Promise<object> {
     const result = this.db
-      .delete(tablescx)
-      .where(eq(tablescx.id, id))
+      .delete(webloomTables)
+      .where(eq(webloomTables.id, id))
       .returning();
     if (!result) {
       throw new NotFoundException('Method not implemented.');
@@ -53,8 +56,8 @@ export class DbService {
   async insertDataByTableId(id: number, data: object): Promise<object> {
     const tables = await this.db
       .select()
-      .from(tablescx)
-      .where(eq(tablescx.id, id));
+      .from(webloomTables)
+      .where(eq(webloomTables.id, id));
     if (tables.length === 0) {
       throw new NotFoundException('Method not implemented.');
     }
@@ -81,8 +84,8 @@ export class DbService {
   async _getTableNameById(id: number): Promise<string | null> {
     const res = await this.db
       .select()
-      .from(tablescx)
-      .where(eq(tablescx.id, id));
+      .from(webloomTables)
+      .where(eq(webloomTables.id, id));
     // if res size is 0, throw not found exception
     if (res.length === 0) {
       throw new NotFoundException('this table id does not exist');
