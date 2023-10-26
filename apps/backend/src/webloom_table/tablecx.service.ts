@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DbService } from './db/db.service';
-import { TablecxDto } from '../dto/tablecx.dto';
+import { TablecxDto } from '../dto/webloom_table.dto';
 
 @Injectable()
 export class TablecxService {

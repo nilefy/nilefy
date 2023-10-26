@@ -9,7 +9,7 @@ import {
   sql,
   // sql,
 } from 'drizzle-orm';
-import { TablecxDto } from '../../dto/tablecx.dto';
+import { TablecxDto } from '../../dto/webloom_table.dto';
 
 @Injectable()
 export class DbService {

@@ -10,7 +10,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { TablecxService } from './tablecx.service';
-import { TablecxDto, tablecxSchema } from '../dto/tablecx.dto';
+import { TablecxDto, tablecxSchema } from '../dto/webloom_table.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 
 @Controller('tables')
