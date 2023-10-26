@@ -1,5 +1,6 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  integer,
   json,
   pgTable,
   serial,
@@ -39,19 +40,29 @@ export const workspaces = pgTable('workspaces', {
   ...softDelete,
 });
 
-export const tablescx = pgTable('tables', {
+export const webloomTables = pgTable('tables', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().default('**del**'),
-  created_at: timestamp('created_at').defaultNow(),
   columns: json('columns').notNull(),
+  ...timeStamps,
+  ...softDelete,
 });
 
-export const tableRelation = pgTable('table_relation', {});
+export const webloomTableRelations = relations(webloomTables, ({ many }) => ({
+  columns: many(webloomColumns),
+}));
 
-export const columncx = pgTable('column', {
+export const webloomColumns = pgTable('column', {
   id: serial('id').primaryKey(),
   name: text('name'),
-  // the following is a list of columns where column is another entity.
-
-  // tables: ,
+  tableId: integer('table_id')
+    .notNull()
+    .references(() => webloomTables.id),
 });
+
+export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
+  tableId: one(webloomTables, {
+    fields: [webloomColumns.tableId],
+    references: [webloomTables.id],
+  }),
+}));
