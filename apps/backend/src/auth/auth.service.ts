@@ -21,7 +21,7 @@ export class AuthService {
 
     const ret = await this.userService.findOne(email);
     if (ret) {
-      throw new BadRequestException();
+      throw new BadRequestException('Email already exists');
     }
 
     const salt = await genSalt(10);
