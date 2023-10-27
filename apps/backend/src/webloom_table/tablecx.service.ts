@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DbService } from './db/db.service';
-import { TablecxDto } from '../dto/webloom_table.dto';
+import { WebloomTableDto } from '../dto/webloom_table.dto';
 
 @Injectable()
 export class TablecxService {
@@ -9,7 +9,7 @@ export class TablecxService {
     // validation logic here!
     return this.dbService.getAllTablecxs();
   }
-  async createTablecx(tablecx: TablecxDto) {
+  async createTablecx(tablecx: WebloomTableDto) {
     // validation logic here!
     // a little dubious to have 2 services but ok for now
     return await this.dbService.createTablecx(tablecx);

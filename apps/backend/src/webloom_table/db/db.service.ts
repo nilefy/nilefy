@@ -9,21 +9,21 @@ import {
   sql,
   // sql,
 } from 'drizzle-orm';
-import { TablecxDto } from '../../dto/webloom_table.dto';
+import { WebloomTableDto } from '../../dto/webloom_table.dto';
 
 @Injectable()
 export class DbService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async getAllTablecxs(): Promise<object> {
-    const result = await this.db.query.tablescx.findMany();
+  async getAllTablecxs() {
+    const result = await this.db.query.webloomTables.findMany();
     if (!result) {
       throw new NotFoundException('Method not implemented.');
     }
-    return { ...result };
+    return result;
   }
 
-  async createTablecx(tablecx: TablecxDto): Promise<object> {
+  async createTablecx(tablecx: WebloomTableDto): Promise<WebloomTableDto> {
     const result = await this.db
       .insert(webloomTables)
       .values(tablecx)
@@ -33,18 +33,18 @@ export class DbService {
     }
     const query = this._generateCreateTableQuery(tablecx);
     await this.db.execute(sql.raw(`${query}`));
-    return { ...result['0'] };
+    return result['0'] as WebloomTableDto;
   }
 
-  async deleteTablecx(id: number): Promise<object> {
-    const result = this.db
+  async deleteTablecx(id: number): Promise<WebloomTableDto> {
+    const result = await this.db
       .delete(webloomTables)
       .where(eq(webloomTables.id, id))
       .returning();
     if (!result) {
       throw new NotFoundException('Method not implemented.');
     }
-    return { ...result };
+    return result['0'] as WebloomTableDto;
   }
 
   async getAllDataByTableId(id: number): Promise<object> {
@@ -99,7 +99,7 @@ export class DbService {
   }
 
   // helper method
-  _generateCreateTableQuery(tableDefinition: TablecxDto): string {
+  _generateCreateTableQuery(tableDefinition: WebloomTableDto): string {
     const { name, columns } = tableDefinition;
 
     if (!name || columns.length === 0) {

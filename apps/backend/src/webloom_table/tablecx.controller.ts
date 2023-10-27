@@ -10,7 +10,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { TablecxService } from './tablecx.service';
-import { TablecxDto, tablecxSchema } from '../dto/webloom_table.dto';
+import { WebloomTableDto, webloomTableSchema } from '../dto/webloom_table.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 
 @Controller('tables')
@@ -42,9 +42,9 @@ export class TablecxController {
     return await this.tablecxService.insertDataByTableId(id, data);
   }
 
-  @UsePipes(new ZodValidationPipe(tablecxSchema))
+  @UsePipes(new ZodValidationPipe(webloomTableSchema))
   @Post()
-  async createTablecx(@Body() tablecx: TablecxDto): Promise<object> {
+  async createTablecx(@Body() tablecx: WebloomTableDto): Promise<object> {
     return await this.tablecxService.createTablecx(tablecx);
   }
 
