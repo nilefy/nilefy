@@ -6,7 +6,7 @@ import { users } from '../drizzle/schema/schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(@Inject(DrizzleAsyncProvider) private readonly db: DatabaseI) {}
 
   async findOne(email: string) {
     const u = await this.db.query.users.findFirst({
