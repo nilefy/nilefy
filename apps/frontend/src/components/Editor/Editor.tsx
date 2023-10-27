@@ -32,10 +32,11 @@ import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
-const { setDimensions, resizeCanvas } = store.getState();
+const { resizeCanvas } = store.getState();
 const WebloomRoot = () => {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[ROOT_NODE_ID];
+  console.log(tree);
   const ref = React.useRef<HTMLDivElement>(null);
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
@@ -52,8 +53,11 @@ const WebloomRoot = () => {
     const width = ref.current?.clientWidth;
     const height = ref.current?.clientHeight;
     const columnWidth = width / NUMBER_OF_COLUMNS;
+    console.log(width, columnWidth);
     const rowsCount = Math.floor(height / ROW_HEIGHT);
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
+  }, []);
+  useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -72,10 +76,11 @@ const WebloomRoot = () => {
   return (
     <div
       id="webloom-root"
-      className="relative h-full min-h-full w-full bg-white"
+      className="relative h-full w-full bg-white"
       ref={ref}
     >
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
+        <Grid id={ROOT_NODE_ID} />
         {children}
       </WebloomAdapter>
     </div>
@@ -114,7 +119,7 @@ const initTree: WebloomTree = {
     type: WebloomContainer,
     x: 0,
     y: 0,
-    columnWidth: 40,
+    columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
     nodes: [],
     parent: null,
@@ -205,7 +210,7 @@ function Editor() {
   }, [root.dom]);
   if (!root) return null;
   return (
-    <div className="isolate flex h-full w-full">
+    <div className="isolate flex h-full max-h-full w-full bg-transparent">
       <DndContext
         autoScroll
         collisionDetection={pointerWithin}
@@ -217,11 +222,16 @@ function Editor() {
         {/*sidebar*/}
         <div className="h-full w-1/5 bg-gray-200"></div>
 
-        <div className="relative h-full w-4/5 bg-gray-900">
+        <div
+          className="relative h-full w-4/5 overflow-auto overflow-x-clip bg-white"
+          style={{
+            scrollbarGutter: 'stable',
+            scrollbarWidth: 'thin',
+          }}
+        >
           <WebloomElementShadow />
           {/*main*/}
           <WebloomRoot />
-          <Grid gridSize={root.columnWidth!} />
         </div>
         <div className="h-full w-1/5 bg-gray-200 p-4">
           <div className="h-1/4 w-full bg-gray-300 ">sidebar</div>

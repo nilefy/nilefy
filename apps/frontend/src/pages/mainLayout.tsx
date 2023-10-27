@@ -38,7 +38,13 @@ export const loader = (queryClient: QueryClient) => async () => {
   const query = allWorkspacesQuery();
   // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
   // why do i need this check? well i want to redirect the user to workspace the first time they visit the dashboard, not every time
-  const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
+  const t = queryClient.getQueryData<WorkSpaces>(['workspaces']) || [
+    {
+      id: '1',
+      name: 'test',
+      imageUrl: 'https://picsum.photos/200',
+    },
+  ];
   if (t === undefined) {
     const workspaces = await queryClient.fetchQuery(query);
     console.log(workspaces[0].id);

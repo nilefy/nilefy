@@ -234,7 +234,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           columnsCount: NUMBER_OF_COLUMNS,
           rowsCount: parent.rowsCount,
           columnWidth: parent.columnWidth,
-          width: parent.columnWidth! * NUMBER_OF_COLUMNS,
+          width: Math.round(parent.columnWidth! * NUMBER_OF_COLUMNS),
           height: parent.rowsCount * ROW_HEIGHT,
         };
       }

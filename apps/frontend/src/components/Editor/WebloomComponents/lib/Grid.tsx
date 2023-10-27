@@ -1,9 +1,12 @@
 import { ROW_HEIGHT } from '@/lib/constants';
+import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 
-const Grid = ({ gridSize }: { gridSize: number }) => {
-  //grid line width is 1px
+const Grid = ({ id }: { id: string }) => {
+  const el = store((state) => state.tree[id]);
+  const gridSize = el.columnWidth!;
+  const elDims = store.getState().getDimensions(id);
   const { active } = useDndContext();
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);

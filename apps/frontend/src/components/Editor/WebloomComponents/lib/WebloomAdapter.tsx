@@ -47,6 +47,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const root = store().tree[ROOT_NODE_ID];
   const ref = useRef<HTMLDivElement>(null);
   const elDimensions = store.getState().getDimensions(id);
+
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
@@ -91,6 +92,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     elDimensions.y,
     elDimensions.width,
     elDimensions.height,
+    el.isCanvas,
     isDragging,
   ]);
   const handles = useMemo(() => {

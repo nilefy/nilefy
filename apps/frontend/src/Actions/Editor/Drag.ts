@@ -22,6 +22,7 @@ const {
   removeNode,
   setDraggedNode,
   setDimensions,
+  getCanvas,
 } = store.getState();
 class DragAction {
   private static threshold = 5;
@@ -116,6 +117,13 @@ class DragAction {
       x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startGridPosition.y + delta.y,
     };
+    const parent = getCanvas(this.id!);
+    const node = store.getState().tree[this.id!];
+    const bottom = currentGridPosition.y + node.rowsCount;
+    const parentBottom = parent.y + parent.rowsCount;
+    if (bottom > parentBottom) {
+      this.expandNodeVertically(parent.id!, bottom - parentBottom);
+    }
     //Shadow element
     const newShadow = this.getElementShadow(
       currentGridPosition,
@@ -198,11 +206,11 @@ class DragAction {
       },
     };
   }
-  private static expandNodeVertically(id: string, amount = ROW_HEIGHT) {
-    // const node = store.getState().tree[id];
-    // setDimensions(id, {
-    //   height: node.height + amount,
-    // });
+  private static expandNodeVertically(id: string, amount = 1) {
+    const node = store.getState().tree[id];
+    setDimensions(id, {
+      rowsCount: node.rowsCount + amount,
+    });
   }
 
   private static getElementShadow(
