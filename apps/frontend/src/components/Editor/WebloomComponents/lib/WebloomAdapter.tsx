@@ -63,8 +63,12 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
           store.getState().setSelectedNodeIds((prev) => {
             if (id === ROOT_NODE_ID) {
               return new Set();
+            } else if (e.shiftKey && prev.has(id)) {
+              return new Set([...prev].filter((i) => i !== id));
+            } else if (e.shiftKey) {
+              return new Set([...prev, id]);
             } else {
-              return e.shiftKey ? new Set([...prev, id]) : new Set([id]);
+              return new Set([id]);
             }
           });
         },
@@ -76,8 +80,12 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         store.getState().setSelectedNodeIds((prev) => {
           if (id === ROOT_NODE_ID) {
             return new Set();
+          } else if (e.shiftKey && prev.has(id)) {
+            return new Set([...prev].filter((i) => i !== id));
+          } else if (e.shiftKey) {
+            return new Set([...prev, id]);
           } else {
-            return e.shiftKey ? new Set([...prev, id]) : new Set([id]);
+            return new Set([id]);
           }
         });
         listeners.onMouseDown(e);
