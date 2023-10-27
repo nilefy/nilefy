@@ -1,6 +1,6 @@
 import store, { WebloomNode } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { NUMBER_OF_COLUMNS, ROOT_NODE_ID } from '@/lib/constants';
+import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import { nanoid } from 'nanoid';
 import { normalize } from '@/lib/utils';
 import { WebloomComponents } from '@/components/Editor/WebloomComponents';
@@ -63,8 +63,6 @@ class DragAction {
           color: getRandomColor(),
           text: this.counter++,
         },
-        height: 0,
-        width: 0,
         x: this.startGridPosition.x,
         y: this.startGridPosition.y,
         columnsCount: 4,
@@ -199,6 +197,12 @@ class DragAction {
         setDimensions(id, undoData.firstNodeOriginalDimensions!);
       },
     };
+  }
+  private static expandNodeVertically(id: string, amount = ROW_HEIGHT) {
+    // const node = store.getState().tree[id];
+    // setDimensions(id, {
+    //   height: node.height + amount,
+    // });
   }
 
   private static getElementShadow(

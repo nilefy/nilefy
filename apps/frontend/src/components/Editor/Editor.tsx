@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { ROOT_NODE_ID } from '@/lib/constants';
+import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
 import { WebloomContainer } from './WebloomComponents/Container';
 import {
@@ -32,7 +32,7 @@ import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
-const { setDimensions } = store.getState();
+const { setDimensions, resizeCanvas } = store.getState();
 const WebloomRoot = () => {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[ROOT_NODE_ID];
@@ -51,8 +51,9 @@ const WebloomRoot = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
     const height = ref.current?.clientHeight;
-    //set width and height of root to store
-    setDimensions(ROOT_NODE_ID, { width, height, x: 0, y: 0 });
+    const columnWidth = width / NUMBER_OF_COLUMNS;
+    const rowsCount = Math.floor(height / ROW_HEIGHT);
+    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -63,13 +64,15 @@ const WebloomRoot = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
     const height = ref.current?.clientHeight;
-    setDimensions(ROOT_NODE_ID, { width, height, x: 0, y: 0 });
+    const columnWidth = width / NUMBER_OF_COLUMNS;
+    const rowsCount = Math.floor(height / ROW_HEIGHT);
+    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   };
 
   return (
     <div
       id="webloom-root"
-      className="relative h-full w-full bg-white"
+      className="relative h-full min-h-full w-full bg-white"
       ref={ref}
     >
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
@@ -111,8 +114,7 @@ const initTree: WebloomTree = {
     type: WebloomContainer,
     x: 0,
     y: 0,
-    width: 1024,
-    height: 768,
+    columnWidth: 40,
     columnsCount: NUMBER_OF_COLUMNS,
     nodes: [],
     parent: null,
@@ -121,7 +123,7 @@ const initTree: WebloomTree = {
     props: {
       className: 'h-full w-full bg-red-500',
     },
-    rowsCount: Infinity,
+    rowsCount: 100,
   },
 };
 store.setState((state) => {
@@ -135,18 +137,8 @@ function Editor() {
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      delay: 0,
-      tolerance: 0,
-    },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      delay: 0,
-      tolerance: 0,
-    },
-  });
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor);
 
   const sensors = useSensors(mouseSensor, touchSensor);
   const handleDragEnd = (e: DragEndEvent) => {
@@ -229,7 +221,7 @@ function Editor() {
           <WebloomElementShadow />
           {/*main*/}
           <WebloomRoot />
-          <Grid gridSize={root.width / NUMBER_OF_COLUMNS} />
+          <Grid gridSize={root.columnWidth!} />
         </div>
         <div className="h-full w-1/5 bg-gray-200 p-4">
           <div className="h-1/4 w-full bg-gray-300 ">sidebar</div>

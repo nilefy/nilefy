@@ -33,11 +33,16 @@ export type WebloomNodeDimensions = {
   x: number;
   //rowNumber from top to bottom starting from 0 to infinity
   y: number;
-  width: number;
+  // this propert is exclusive for canvas nodes
+  columnWidth?: number;
   // number of columns this node takes
   columnsCount: number;
   // number of rows this node takes
   rowsCount: number;
+};
+
+export type WebloomNodeCompleteDimensions = WebloomNodeDimensions & {
+  width: number;
   height: number;
 };
 
@@ -82,7 +87,10 @@ interface WebloomActions {
     id: string,
     dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
-
+  resizeCanvas: (
+    id: string,
+    dimensions: Partial<WebloomNodeDimensions>,
+  ) => void;
   setMousePos: (pos: WebloomState['mousePos']) => void;
   setNewNode: (newNode: WebloomState['newNode']) => void;
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
@@ -91,9 +99,9 @@ interface WebloomActions {
 }
 
 interface WebloomGetters {
-  getCanvas: (id: string) => WebloomNode | null;
+  getCanvas: (id: string) => WebloomNode;
   getNode: (id: string) => WebloomNode | null;
-  getDimensions: (id: string) => WebloomNodeDimensions;
+  getDimensions: (id: string) => WebloomNodeCompleteDimensions;
   getBoundingRect: (id: string) => BoundingRect;
   getGridSize: (id: string) => [GRID_ROW: number, GRID_COL: number];
 }
@@ -206,35 +214,31 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       return get().tree[id] || null;
     },
     // return first canvas node starting from id and going up the tree until root
-    getCanvas: (id: string): WebloomNode | null => {
+    getCanvas: (id: string): WebloomNode => {
       const node = get().getNode(id);
-      if (!node) return null;
-      if (node.isCanvas) return node;
-      if (node.parent) {
-        return get().getCanvas(node.parent);
-      }
-      return null;
+      if (node?.isCanvas) return node;
+      return get().getCanvas(node?.parent || ROOT_NODE_ID);
     },
     getGridSize: (id) => {
-      const canvasParent = get().getCanvas(id)!;
-      return [ROW_HEIGHT, canvasParent.width / NUMBER_OF_COLUMNS];
+      const canvasParent = get().getCanvas(id);
+      return [ROW_HEIGHT, canvasParent.columnWidth!];
     },
     //gets actual x, y coordinates of a node
-    getDimensions: (id: string): WebloomNodeDimensions => {
+    getDimensions: (id: string): WebloomNodeCompleteDimensions => {
       const node = get().getNode(id)!;
       const parent = get().getCanvas(id)!;
-      if (node === parent) {
-        // this is the root node
+      if (node.id === ROOT_NODE_ID) {
         return {
           x: 0,
           y: 0,
           columnsCount: NUMBER_OF_COLUMNS,
-          width: parent.width,
-          height: parent.height,
-          rowsCount: Infinity,
+          rowsCount: parent.rowsCount,
+          columnWidth: parent.columnWidth,
+          width: parent.columnWidth! * NUMBER_OF_COLUMNS,
+          height: parent.rowsCount * ROW_HEIGHT,
         };
       }
-      const gridColSize = parent.width / NUMBER_OF_COLUMNS;
+      const gridColSize = parent.columnWidth!;
       const gridRowSize = ROW_HEIGHT;
       return {
         x: node.x * gridColSize,
@@ -243,6 +247,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         rowsCount: node.rowsCount,
         width: node.columnsCount * gridColSize,
         height: node.rowsCount * gridRowSize,
+        columnWidth: gridColSize,
       };
     },
     getBoundingRect: (id: string): BoundingRect => {
@@ -262,6 +267,43 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         };
         return newState;
       });
+    },
+    resizeCanvas(id, dimensions) {
+      const node = get().tree[id];
+      const oldColumnWidth = node.columnWidth;
+      const oldColumnsCount = node.columnsCount;
+      if (
+        node.isCanvas &&
+        (dimensions.columnWidth !== oldColumnWidth ||
+          dimensions.columnsCount !== oldColumnsCount)
+      ) {
+        let newColumnWidth = dimensions.columnWidth || oldColumnWidth;
+        if (id !== ROOT_NODE_ID) {
+          const [, gridcol] = get().getGridSize(id);
+          const columnsCount = dimensions.columnsCount || node.columnsCount;
+          newColumnWidth = (columnsCount * gridcol) / NUMBER_OF_COLUMNS;
+        }
+        recurse(id, {
+          ...dimensions,
+          columnWidth: newColumnWidth,
+          columnsCount: dimensions.columnsCount || node.columnsCount,
+        });
+        //recurse to set the new columnWidth of all children
+      } else {
+        get().setDimensions(id, dimensions);
+      }
+      function recurse(id: string, dimensions: Partial<WebloomNodeDimensions>) {
+        const node = get().tree[id];
+        get().setDimensions(id, dimensions);
+        const children = node.nodes;
+        for (const child of children) {
+          const childNode = get().tree[child];
+          const newColumnWidth =
+            (childNode.columnsCount * dimensions.columnWidth!) /
+            NUMBER_OF_COLUMNS;
+          recurse(child, { columnWidth: newColumnWidth });
+        }
+      }
     },
     moveNodeIntoGrid(id, newCoords, firstCall = true) {
       const changedNodesOriginalCoords: Record<string, Point> = {};

@@ -10,7 +10,8 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const { moveNodeIntoGrid, getGridSize, setDimensions } = store.getState();
+const { moveNodeIntoGrid, getGridSize, setDimensions, resizeCanvas } =
+  store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
@@ -216,6 +217,16 @@ class ResizeAction {
     const rowCount = height / gridRow;
     const col = x / gridCol;
     const row = y / gridRow;
+    const node = store.getState().tree[this.id];
+    if (node.isCanvas) {
+      resizeCanvas(this.id, {
+        columnsCount: colCount,
+        rowsCount: rowCount,
+        x: col,
+        y: row,
+      });
+      return;
+    }
     setDimensions(this.id, {
       columnsCount: colCount,
       rowsCount: rowCount,
@@ -291,12 +302,6 @@ class ResizeAction {
     let colCount = dimensions.columnsCount || node.columnsCount;
     const right = left + colCount;
     const bottom = top + rowCount;
-    // console.log('before', {
-    //   left,
-    //   top,
-    //   right,
-    //   bottom,
-    // });
     const nodes = siblings;
     const toBeMoved: { id: string; x?: number; y?: number }[] = [];
     nodes.forEach((nodeId) => {
@@ -341,12 +346,21 @@ class ResizeAction {
       top = parentTop;
       rowCount = bottom - parentTop;
     }
-    setDimensions(id, {
-      x: left,
-      y: top,
-      columnsCount: colCount,
-      rowsCount: rowCount,
-    });
+    if (node.isCanvas) {
+      resizeCanvas(id, {
+        x: left,
+        y: top,
+        columnsCount: colCount,
+        rowsCount: rowCount,
+      });
+    } else {
+      setDimensions(id, {
+        x: left,
+        y: top,
+        columnsCount: colCount,
+        rowsCount: rowCount,
+      });
+    }
     for (const node of toBeMoved) {
       collidedNodes.push(node.id);
     }
