@@ -239,7 +239,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         {...attributes}
         style={style}
         ref={ref}
-        className="touch-none"
+        className="target touch-none"
+        data-id={id}
       >
         {props.children}
       </div>

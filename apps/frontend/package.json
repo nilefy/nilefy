@@ -39,6 +39,7 @@
     "react-hotkeys-hook": "^4.4.1",
     "react-rnd": "^10.4.1",
     "react-router-dom": "^6.17.0",
+    "react-selecto": "^1.26.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4",

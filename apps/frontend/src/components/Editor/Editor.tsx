@@ -1,3 +1,4 @@
+import Selecto from 'react-selecto';
 import React, {
   createElement,
   useMemo,
@@ -7,7 +8,7 @@ import React, {
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { ROOT_NODE_ID } from '@/lib/constants';
-import store, { WebloomNode, WebloomState, WebloomTree } from '../../store';
+import store, { WebloomTree } from '../../store';
 import { WebloomContainer } from './WebloomComponents/Container';
 import {
   DndContext,
@@ -132,6 +133,8 @@ store.setState((state) => {
 });
 
 function Editor() {
+  const editorRef = useRef<HTMLDivElement>(null);
+
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
@@ -226,12 +229,39 @@ function Editor() {
         onDragMove={handleDragMove}
       >
         {/*editor*/}
-        <div className="relative h-full w-4/5">
+        <div ref={editorRef} className="relative h-full w-4/5">
           <WebloomElementShadow />
           <MultiSelectBounding />
           {/*main*/}
           <WebloomRoot />
           <Grid gridSize={root.width / NUMBER_OF_COLUMNS} />
+          <Selecto
+            // The container to add a selection element
+            container={editorRef.current}
+            selectableTargets={['.target']}
+            selectFromInside={true}
+            selectByClick={false}
+            hitRate={100}
+            onSelect={(e) => {
+              e.added.forEach((el) => {
+                const data = el.getAttribute('data-id');
+                if (data) {
+                  store.getState().setSelectedNodeIds((prev) => {
+                    return new Set([...prev, data]);
+                  });
+                }
+              });
+              e.removed.forEach((el) => {
+                const data = el.getAttribute('data-id');
+                if (data) {
+                  store.getState().setSelectedNodeIds((prev) => {
+                    return new Set([...prev].filter((i) => i !== data));
+                  });
+                }
+              });
+              console.log('gonna select', e);
+            }}
+          />
         </div>
 
         {/*right sidebar*/}
