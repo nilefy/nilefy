@@ -5,7 +5,7 @@ import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
-
+import { Trash2 } from 'lucide-react';
 type WebloomAdapterProps = {
   id: string;
   children: React.ReactNode;
@@ -116,6 +116,15 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             transform: style.transform,
           }}
         >
+          <div   style={{
+            position: 'absolute',
+            top: "-25px",
+            right:"-85px"
+          
+          }}
+          >
+           <Trash2/>
+          </div>
           {Object.entries(handlePositions).map(([key, [y, x]]) => {
             const width = elDimensions.width;
             const height = elDimensions.height;
