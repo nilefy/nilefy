@@ -4,7 +4,7 @@ import {
   CreateWorkspaceDto,
   UpdateWorkspaceDto,
   WorkspaceDto,
-} from './workspace.dto';
+} from '../dto/workspace.dto';
 import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import * as schema from '../drizzle/schema/schema';
 

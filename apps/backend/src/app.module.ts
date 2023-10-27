@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { AppsModule } from './apps/apps.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     }),
     DrizzleModule,
     WorkspacesModule,
+    AppsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -15,7 +15,7 @@ import {
   updateWorkspaceSchema,
   UpdateWorkspaceDto,
   CreateWorkspaceDto,
-} from './workspace.dto';
+} from '../dto/workspace.dto';
 
 @Controller('workspaces')
 export class WorkspacesController {

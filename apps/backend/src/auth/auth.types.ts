@@ -1,3 +1,5 @@
+import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
+
 /**
  * JWT payload type
  */
@@ -19,4 +21,14 @@ export type RequestUser = {
 
 export type ExpressAuthedRequest = Request & {
   user: RequestUser;
+};
+
+export type JwtToken = { token: string };
+
+export type JwtRequest = Request & {
+  user: JwtToken;
+};
+
+export type GoogleAuthedRequest = Request & {
+  user: CreateUserDto | LoginUserDto | JwtToken;
 };

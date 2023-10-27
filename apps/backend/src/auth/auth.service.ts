@@ -29,7 +29,7 @@ export class AuthService {
     const u = await this.userService.create({ ...user, password: hashed });
 
     return {
-      access_token: await this.jwtService.signAsync({
+      token: await this.jwtService.signAsync({
         sub: u.id,
         username,
       } satisfies PayloadUser),
@@ -49,7 +49,7 @@ export class AuthService {
       throw new BadRequestException();
     }
     return {
-      access_token: await this.jwtService.signAsync({
+      token: await this.jwtService.signAsync({
         sub: ret.id,
         username: ret.username,
       } satisfies PayloadUser),

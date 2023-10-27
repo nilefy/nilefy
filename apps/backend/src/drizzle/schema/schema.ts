@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import {
+  integer,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 /**
  * spreading them to easy create createdAt and updatedAt fields
@@ -28,6 +35,17 @@ export const workspaces = pgTable('workspaces', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 256 }).notNull(),
   imageUrl: text('imageUrl'),
+  ...timeStamps,
+  ...softDelete,
+});
+
+export const apps = pgTable('apps', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).unique().notNull(),
+  icon: text('icon'),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
   ...timeStamps,
   ...softDelete,
 });
