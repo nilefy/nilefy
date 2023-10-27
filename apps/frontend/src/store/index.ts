@@ -29,14 +29,22 @@ export type WebloomNode = {
   isCanvas?: boolean;
 } & WebloomNodeDimensions;
 export type WebloomNodeDimensions = {
-  //columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
+  /**
+   * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
+   */
   x: number;
-  //rowNumber from top to bottom starting from 0 to infinity
+  /**
+   * rowNumber from top to bottom starting from 0 to infinity
+   */
   y: number;
   width: number;
-  // number of columns this node takes
+  /**
+   * number of columns this node takes
+   */
   columnsCount: number;
-  // number of rows this node takes
+  /**
+   * number of rows this node takes
+   */
   rowsCount: number;
   height: number;
 };
@@ -44,10 +52,10 @@ export type WebloomNodeDimensions = {
 export type WebloomTree = {
   [key: string]: WebloomNode;
 };
-interface WebloomState {
+export interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
-  selectedNodeIds: string[];
+  selectedNodeIds: Set<WebloomNode['id']>;
   draggedNode: string | null;
   resizedNode: string | null;
   newNode: WebloomNode | null;
@@ -67,7 +75,11 @@ type MoveNodeReturnType = {
 };
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
-  setSelectedNodeIds: (callback: (prev: WebloomState["selectedNodeIds"]) => WebloomState["selectedNodeIds"]) => void;
+  setSelectedNodeIds: (
+    callback: (
+      prev: WebloomState['selectedNodeIds'],
+    ) => WebloomState['selectedNodeIds'],
+  ) => void;
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string, index?: number) => void;
@@ -102,7 +114,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     tree: {},
     draggedNode: null,
     overNode: null,
-    selectedNodeIds: [],
+    selectedNodeIds: new Set(),
     newNode: null,
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
@@ -219,7 +231,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       const canvasParent = get().getCanvas(id)!;
       return [ROW_HEIGHT, canvasParent.width / NUMBER_OF_COLUMNS];
     },
-    //gets actual x, y coordinates of a node
+    /**
+     * gets actual x, y coordinates of a node
+     */
     getDimensions: (id: string): WebloomNodeDimensions => {
       const node = get().getNode(id)!;
       const parent = get().getCanvas(id)!;

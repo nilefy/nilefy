@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { ROOT_NODE_ID } from '@/lib/constants';
-import store, { WebloomTree } from '../../store';
+import store, { WebloomNode, WebloomState, WebloomTree } from '../../store';
 import { WebloomContainer } from './WebloomComponents/Container';
 import {
   DndContext,
@@ -32,8 +32,11 @@ import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
+import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
+
 const { setDimensions } = store.getState();
-const WebloomRoot = () => {
+
+function WebloomRoot() {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[ROOT_NODE_ID];
   const ref = React.useRef<HTMLDivElement>(null);
@@ -77,7 +80,7 @@ const WebloomRoot = () => {
       </WebloomAdapter>
     </div>
   );
-};
+}
 WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
@@ -128,6 +131,7 @@ store.setState((state) => {
   state.tree = initTree;
   return state;
 });
+
 function Editor() {
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -227,6 +231,7 @@ function Editor() {
 
         <div className="relative h-full w-4/5 bg-gray-900">
           <WebloomElementShadow />
+          <MultiSelectBounding />
           {/*main*/}
           <WebloomRoot />
           <Grid gridSize={root.width / NUMBER_OF_COLUMNS} />

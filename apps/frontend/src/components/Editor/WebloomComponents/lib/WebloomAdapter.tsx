@@ -36,8 +36,7 @@ const cursors = {
 } as const;
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
-  const selected = !!store((state) => state.selectedNodeIds).find((i) => i === id)
-
+  const selected = store((state) => state.selectedNodeIds).has(id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
@@ -61,14 +60,26 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       return {
         onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
           e.stopPropagation();
-          store.getState().setSelectedNodeIds((prev) => e.shiftKey ? [...prev, id] : [id]);
+          store.getState().setSelectedNodeIds((prev) => {
+            if (id === ROOT_NODE_ID) {
+              return new Set();
+            } else {
+              return e.shiftKey ? new Set([...prev, id]) : new Set([id]);
+            }
+          });
         },
       };
     return {
       ...listeners,
       onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        store.getState().setSelectedNodeIds((prev) => e.shiftKey ? [...prev, id] : [id]);
+        store.getState().setSelectedNodeIds((prev) => {
+          if (id === ROOT_NODE_ID) {
+            return new Set();
+          } else {
+            return e.shiftKey ? new Set([...prev, id]) : new Set([id]);
+          }
+        });
         listeners.onMouseDown(e);
       },
     };
