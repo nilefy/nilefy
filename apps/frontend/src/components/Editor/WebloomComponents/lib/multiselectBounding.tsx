@@ -24,8 +24,6 @@ export function MultiSelectBounding() {
   if (selectedIds.size < 2) return null;
   const boundingRect = calcBoundingRect(selectedIds);
 
-  console.log(boundingRect);
-
   return (
     <>
       {/*top*/}
