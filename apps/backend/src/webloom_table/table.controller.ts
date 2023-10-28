@@ -37,7 +37,7 @@ export class TablecxController {
   @Post('insert/:id')
   async insertDataByTableId(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: object,
+    @Body() data: object[],
   ) {
     return await this.tablecxService.insertDataByTableId(id, data);
   }

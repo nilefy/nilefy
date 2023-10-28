@@ -26,12 +26,10 @@ export class DbService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
   async getAllTables() {
-    // const result = await this.db.query.webloomTables.findMany();
-    // eq(webloomTables.id, webloomColumns.tableId)
     const result = await this.db
       .select()
       .from(webloomTables)
-      .leftJoin(webloomColumns, eq(webloomTables.id, webloomColumns.tableId));
+      .fullJoin(webloomColumns, eq(webloomTables.id, webloomColumns.tableId));
     return result;
   }
 
@@ -94,11 +92,16 @@ export class DbService {
 
   async getAllDataByTableId(id: number) {
     const name = await this._getTableNameById(id);
-    const { rows } = await this.db.execute(sql.raw(`SELECT * FROM ${name}`));
+    if (!name) {
+      return [];
+    }
+    const { rows } = await this.db.execute(
+      sql.raw(`SELECT * FROM ${name + id}`),
+    );
     return rows;
   }
 
-  async insertDataByTableId(id: number, data: object) {
+  async insertDataByTableId(id: number, data: DataObject[]) {
     const tables = await this.db
       .select()
       .from(webloomTables)
@@ -106,24 +109,59 @@ export class DbService {
     if (tables.length === 0) {
       throw new NotFoundException('Table doesn t exist');
     }
-    const tableDefinition = validateAndConvertToTableDefinition(tables['0']);
-    if (!tableDefinition) {
-      throw new BadRequestException('Invalid table definition.');
+    const table = tables[0];
+    table;
+    data;
+    const idArray = [];
+    const values = [];
+    const columns = await this.db
+      .select()
+      .from(webloomColumns)
+      .where(eq(webloomColumns.tableId, id));
+    if (columns.length === 0) {
+      throw new NotFoundException('No columns!');
     }
-    const { name } = tables[0];
+    for (const item of columns) {
+      idArray.push(item['name']);
+    }
+    for (const i of data) {
+      const vs = [];
+      for (const id of idArray) {
+        if (!i[id]) {
+          throw new BadRequestException('Invalid data.');
+        }
+        vs.push(i[id]);
+      }
+      values.push(vs);
+    }
 
-    const isValid = isDataValid(tableDefinition, [data]);
-    if (!isValid) {
-      throw new BadRequestException('Invalid data.');
-    }
-    console.log(tableDefinition.name);
-    console.log(data);
-    name;
-    //todo : insert data into table
-    //!!!!!! not done yet!!!!
-    return await this.db.execute(sql.raw(``));
-    // return await this.db.execute(sql.raw(query));
-    // return new NotFoundException('Method not implemented.');
+    const columnNames = idArray.join(', ');
+    const valueRow = values.map((v) => `(${v.join(', ')})`).join(', ');
+
+    const query = `INSERT INTO ${
+      table.name + id
+    } (${columnNames}) VALUES ${valueRow};`;
+
+    await this.db.execute(sql.raw(query));
+
+    // const tableDefinition = validateAndConvertToTableDefinition(tables['0']);
+    // if (!tableDefinition) {
+    //   throw new BadRequestException('Invalid table definition.');
+    // }
+    // const { name } = tables[0];
+
+    // const isValid = isDataValid(tableDefinition, [data]);
+    // if (!isValid) {
+    //   throw new BadRequestException('Invalid data.');
+    // }
+    // console.log(tableDefinition.name);
+    // console.log(data);
+    // name;
+    // //todo : insert data into table
+    // //!!!!!! not done yet!!!!
+    // return await this.db.execute(sql.raw(``));
+    // // return await this.db.execute(sql.raw(query));
+    // // return new NotFoundException('Method not implemented.');
   }
 
   async _getTableNameById(id: number): Promise<string | null> {
@@ -155,83 +193,87 @@ export class DbService {
   //   return createTableQuery;
   // }
 }
-interface TableDefinition {
-  id: number;
-  name: string;
-  created_at: string;
-  columns: Array<{ name: string; type: string }>;
-}
+// interface TableDefinition {
+//   id: number;
+//   name: string;
+//   created_at: string;
+//   columns: Array<{ name: string; type: string }>;
+// }
 
-interface DataRow {
+// interface DataRow {
+//   [key: string]: any;
+// }
+
+// function isDataValid(table: TableDefinition, data: DataRow[]): boolean {
+//   const columnNames = table.columns.map((column) => column.name);
+
+//   for (const row of data) {
+//     for (const columnName of columnNames) {
+//       if (!(columnName in row)) {
+//         console.log('h');
+//         console.log(`Missing field "${columnName}" in the inserted data.`);
+//         return false;
+//       }
+
+//       const expectedType = table.columns.find(
+//         (column) => column.name === columnName,
+//       )?.type;
+//       const actualValue = row[columnName];
+
+//       if (expectedType === 'boolean' && typeof actualValue !== 'boolean') {
+//         console.error(`Invalid value for "${columnName}": Expected boolean.`);
+//         return false;
+//       }
+
+//       if (
+//         expectedType === 'text' &&
+//         (typeof actualValue !== 'string' || actualValue === '')
+//       ) {
+//         console.error(
+//           `Invalid value for "${columnName}": Expected non-empty string.`,
+//         );
+//         return false;
+//       }
+//     }
+//   }
+
+//   // If all data passed validation, you can insert it into the database here
+//   // Replace this with your actual database insert code
+
+//   console.log('Data passed validation and can be inserted into the database.');
+//   return true;
+// }
+// function validateAndConvertToTableDefinition(
+//   data: any,
+// ): TableDefinition | null {
+//   if (data && typeof data === 'object' && 'name' in data && 'columns' in data) {
+//     const { name, columns } = data;
+
+//     if (typeof name === 'string' && Array.isArray(columns)) {
+//       const validColumns = columns.every((column: any) => {
+//         return (
+//           typeof column === 'object' &&
+//           'name' in column &&
+//           'type' in column &&
+//           typeof column.name === 'string' &&
+//           typeof column.type === 'string'
+//         );
+//       });
+
+//       if (validColumns) {
+//         return {
+//           id: data.id || 0,
+//           name,
+//           created_at: data.created_at || '',
+//           columns,
+//         };
+//       }
+//     }
+//   }
+
+//   return null;
+// }
+
+interface DataObject {
   [key: string]: any;
-}
-
-function isDataValid(table: TableDefinition, data: DataRow[]): boolean {
-  const columnNames = table.columns.map((column) => column.name);
-
-  for (const row of data) {
-    for (const columnName of columnNames) {
-      if (!(columnName in row)) {
-        console.log('h');
-        console.log(`Missing field "${columnName}" in the inserted data.`);
-        return false;
-      }
-
-      const expectedType = table.columns.find(
-        (column) => column.name === columnName,
-      )?.type;
-      const actualValue = row[columnName];
-
-      if (expectedType === 'boolean' && typeof actualValue !== 'boolean') {
-        console.error(`Invalid value for "${columnName}": Expected boolean.`);
-        return false;
-      }
-
-      if (
-        expectedType === 'text' &&
-        (typeof actualValue !== 'string' || actualValue === '')
-      ) {
-        console.error(
-          `Invalid value for "${columnName}": Expected non-empty string.`,
-        );
-        return false;
-      }
-    }
-  }
-
-  // If all data passed validation, you can insert it into the database here
-  // Replace this with your actual database insert code
-
-  console.log('Data passed validation and can be inserted into the database.');
-  return true;
-}
-function validateAndConvertToTableDefinition(
-  data: any,
-): TableDefinition | null {
-  if (data && typeof data === 'object' && 'name' in data && 'columns' in data) {
-    const { name, columns } = data;
-
-    if (typeof name === 'string' && Array.isArray(columns)) {
-      const validColumns = columns.every((column: any) => {
-        return (
-          typeof column === 'object' &&
-          'name' in column &&
-          'type' in column &&
-          typeof column.name === 'string' &&
-          typeof column.type === 'string'
-        );
-      });
-
-      if (validColumns) {
-        return {
-          id: data.id || 0,
-          name,
-          created_at: data.created_at || '',
-          columns,
-        };
-      }
-    }
-  }
-
-  return null;
 }

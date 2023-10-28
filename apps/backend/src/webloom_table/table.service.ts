@@ -5,7 +5,7 @@ import { WebloomTableDto } from '../dto/webloom_table.dto';
 @Injectable()
 export class TablecxService {
   constructor(private readonly dbService: DbService) {}
-  getAllTablecxs(): object {
+  getAllTablecxs() {
     // validation logic here!
     return this.dbService.getAllTables();
   }
@@ -28,7 +28,10 @@ export class TablecxService {
     return this.dbService.getAllDataByTableId(id);
   }
 
-  insertDataByTableId(id: number, data: object): object | PromiseLike<object> {
+  insertDataByTableId(
+    id: number,
+    data: object[],
+  ): object | PromiseLike<object> {
     return this.dbService.insertDataByTableId(id, data);
   }
 }
