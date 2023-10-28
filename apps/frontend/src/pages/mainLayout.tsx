@@ -15,13 +15,12 @@ const dashboardPaths = [
     path: '',
     icon: <Layout size={30} />,
   },
-  
+
   {
     name: 'workspaceSettings',
     path: 'workspace-settings',
     icon: <Cog size={30} />,
   },
-  
 ];
 
 const allWorkspacesQuery = () => ({
@@ -77,7 +76,8 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
-        <Inspector/>
+        {/**TODO: move to editor layout */}
+        <Inspector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
@@ -86,7 +86,7 @@ export function Dashboard() {
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
           </NavLink>
-        I</div>
+        </div>
       </div>
 
       <Outlet />
