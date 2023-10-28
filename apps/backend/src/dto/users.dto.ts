@@ -10,8 +10,8 @@ export const signInSchema = z.object({
   password: z.string().min(6),
 });
 export const updateUserSchema = z.object({
-  username: z.string().min(3).max(255),
-  password: z.string().min(6),
+  username: z.string().min(3).max(255).optional(),
+  password: z.string().min(6).optional(),
 });
 
 export type CreateUserDto = z.infer<typeof signUpSchema>;

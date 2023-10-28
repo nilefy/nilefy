@@ -6,18 +6,18 @@ import {
   Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { UpdateUserDto, updateUserSchema } from '../dto/users.dto';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //! why is using the pipe always result in an exception?
-  // @UsePipes(new ZodValidationPipe(updateUserSchema))
-  // data: UpdateUserDto
   @Put(':id')
   async updateProfile(
     @Param('id') id: number,
-    @Body() data: { username: string; password: string },
+    @Body(new ZodValidationPipe(updateUserSchema))
+    data: UpdateUserDto,
   ) {
     // Call the service method to update the profile
     // Return the updated user or an error response
