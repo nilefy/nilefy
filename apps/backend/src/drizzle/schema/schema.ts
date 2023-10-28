@@ -1,7 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   integer,
-  json,
   pgTable,
   serial,
   text,
@@ -42,8 +41,7 @@ export const workspaces = pgTable('workspaces', {
 
 export const webloomTables = pgTable('tables', {
   id: serial('id').primaryKey(),
-  name: text('name').notNull().default('**del**'),
-  columns: json('columns').notNull(),
+  name: text('name').notNull(),
   ...timeStamps,
   ...softDelete,
 });

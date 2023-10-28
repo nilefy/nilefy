@@ -43,10 +43,14 @@ export class DbService {
   }
 
   async deleteTablecx(id: number): Promise<WebloomTableDto> {
-    const result = await this.db
-      .delete(webloomTables)
-      .where(eq(webloomTables.id, id))
-      .returning();
+    let result;
+    await this.db.transaction(async (trx) => {
+      result = await trx
+        .delete(webloomTables)
+        .where(eq(webloomTables.id, id))
+        .returning();
+      await trx.execute(sql.raw(`DROP TABLE IF EXISTS ${result['0'].name}`));
+    });
     if (!result) {
       throw new InternalServerErrorException('Table wasn t deleted');
     }
@@ -97,9 +101,6 @@ export class DbService {
       throw new NotFoundException('this table id does not exist');
     }
     const { name } = res['0'];
-    if (!name) {
-      throw new NotFoundException('name not found');
-    }
     return name;
   }
 
