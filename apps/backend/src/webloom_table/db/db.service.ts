@@ -27,15 +27,18 @@ export class DbService {
   }
 
   async createTable(tablecx: WebloomTableDto): Promise<WebloomTableDto> {
-    const result = await this.db
-      .insert(webloomTables)
-      .values(tablecx)
-      .returning();
+    let result;
+    await this.db.transaction(async (trx) => {
+      result = await trx.insert(webloomTables).values(tablecx).returning();
+      if (!result) {
+        throw new InternalServerErrorException('Table wasn t created');
+      }
+      const query = this._generateCreateTableQuery(tablecx);
+      await trx.execute(sql.raw(`${query}`));
+    });
     if (!result) {
       throw new InternalServerErrorException('Table wasn t created');
     }
-    const query = this._generateCreateTableQuery(tablecx);
-    await this.db.execute(sql.raw(`${query}`));
     return result['0'] as WebloomTableDto;
   }
 
