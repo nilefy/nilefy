@@ -4,7 +4,9 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": "turbo dev"
+        "dev": "turbo dev",
+        "db:push": "turbo db:push",
+        "db:studio": "turbo db:studio"
     },
     "engines": {
         "node": ">=18.0.0",
