@@ -4,6 +4,12 @@
         "dev": {
             "cache": false,
             "persistent": true
+        },
+        "db:push": {
+            "cache": false
+        },
+        "db:studio": {
+            "cache": false
         }
     }
 }

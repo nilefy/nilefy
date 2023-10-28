@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Edit, ChevronDown, Plus } from 'lucide-react';
+import { Edit, ChevronDown, Plus, Loader } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -29,13 +29,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { getInitials } from '@/utils/avatar';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchX } from '@/utils/fetch';
+import { useState } from 'react';
 
-export type SelectWorkSpaceProps = {
-  /**
-   * all workspaces available to the user
-   */
-  workspaces: { id: string; name: string; imageUrl?: string }[];
-};
+export type Workspace = { id: number; name: string; imageUrl: string | null };
+export type WorkSpaces = Workspace[];
 
 type WorkspaceMetaDialogProps =
   | {
@@ -51,7 +50,7 @@ type WorkspaceMetaDialogProps =
        * false: will show the ui to update workspace
        */
       insert: false;
-      workspaceMeta: SelectWorkSpaceProps['workspaces'][number];
+      workspaceMeta: Workspace;
     };
 
 const workspaceSchema = z.object({
@@ -59,21 +58,84 @@ const workspaceSchema = z.object({
 });
 type WorkspaceSchema = z.infer<typeof workspaceSchema>;
 
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const createWorkspace = useMutation({
+    mutationFn: async (data: WorkspaceSchema) => {
+      const res = await fetchX('/workspaces', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      });
+      return (await res.json()) as Workspace;
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+      setModalOpen(false);
+    },
+    onError(error) {
+      console.log(
+        '🪵 [selectWorkspace.tsx:73] ~ token ~ \x1b[0;32merror\x1b[0m = ',
+        error,
+      );
+    },
+  });
+
+  const updateWorkspace = useMutation({
+    mutationFn: async (data: {
+      id: Workspace['id'];
+      workspace: WorkspaceSchema;
+    }) => {
+      await sleep(2000);
+      const res = await fetchX(`/workspaces/${data.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data.workspace),
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      });
+      return (await res.json()) as Workspace;
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+      setModalOpen(false);
+    },
+    onError(error) {
+      console.log(
+        '🪵 [selectWorkspace.tsx:73] ~ token ~ \x1b[0;32merror\x1b[0m = ',
+        error,
+      );
+    },
+  });
+
   const form = useForm<WorkspaceSchema>({
     resolver: zodResolver(workspaceSchema),
     defaultValues: {
       name: props.insert ? '' : props.workspaceMeta.name,
     },
   });
-
   function onSubmit(values: WorkspaceSchema) {
-    // TODO: call the server
-    console.log(values);
+    return props.insert
+      ? createWorkspace.mutate(values)
+      : updateWorkspace.mutate({
+          id: props.workspaceMeta.id,
+          workspace: values,
+        });
   }
+  /**
+   * indicate is the form is submitting
+   */
+  const isPending = createWorkspace.isPending || updateWorkspace.isPending;
 
   return (
-    <Dialog>
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
       <DialogTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           {props.insert ? (
@@ -84,7 +146,7 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
           ) : (
             <>
               <Avatar className="mr-2">
-                <AvatarImage src={props.workspaceMeta.imageUrl} />
+                <AvatarImage src={props.workspaceMeta.imageUrl ?? undefined} />
                 <AvatarFallback>
                   {getInitials(props.workspaceMeta.name)}
                 </AvatarFallback>
@@ -117,29 +179,44 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit">{props.insert ? 'create' : 'save'}</Button>
+            <Button disabled={isPending} type="submit">
+              {isPending ? (
+                <Loader className="animate-spin" />
+              ) : props.insert ? (
+                'create'
+              ) : (
+                'save'
+              )}
+            </Button>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
 }
+
 /**
  * detect current workspace from the url
+ *
+ * NOTE: it gets the workspaces data from react query store under the name "workspaces"
  */
-export function SelectWorkSpace(props: SelectWorkSpaceProps) {
+export function SelectWorkSpace() {
+  const { data: workspaces } = useQuery<WorkSpaces>({
+    queryKey: ['workspaces'],
+    initialData: [],
+  });
   const { workspaceId } = useParams();
   if (workspaceId === undefined) {
     throw new Error('must have active workspace id');
   }
-  const currentWorkspce = props.workspaces.find((i) => i.id === workspaceId);
+  const currentWorkspce = workspaces.find((i) => i.id === +workspaceId);
   if (currentWorkspce === undefined) {
     throw new Error('Not Found');
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="mt-auto" asChild>
+      <DropdownMenuTrigger asChild className="w-full">
         <Button>
           {currentWorkspce.name} <ChevronDown size={20} />
         </Button>
@@ -149,11 +226,11 @@ export function SelectWorkSpace(props: SelectWorkSpaceProps) {
         <WorkspaceMetaDialog insert={false} workspaceMeta={currentWorkspce} />
         <DropdownMenuSeparator />
         {/*all the workspaces links*/}
-        {props.workspaces.map((workspace) => {
+        {workspaces.map((workspace) => {
           return (
             <DropdownMenuItem key={workspace.id}>
               <Avatar className="mr-2">
-                <AvatarImage src={workspace.imageUrl} />
+                <AvatarImage src={workspace.imageUrl ?? undefined} />
                 <AvatarFallback>{getInitials(workspace.name)}</AvatarFallback>
               </Avatar>
               <Link to={`/${workspace.id}`}>{workspace.name}</Link>
