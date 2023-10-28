@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DbService } from './db/db.service';
+import { DbService } from './db/db.table.service';
 import { WebloomTableDto } from '../dto/webloom_table.dto';
 
 @Injectable()
