@@ -23,9 +23,6 @@ export class DbService {
 
   async getAllTables() {
     const result = await this.db.query.webloomTables.findMany();
-    if (!result) {
-      throw new NotFoundException('Method not implemented.');
-    }
     return result;
   }
 
