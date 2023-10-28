@@ -26,7 +26,7 @@ export class TablecxController {
 
   // @Get(':userId')
   @Get()
-  async getAllTablecxs(@Param('userId') userId: string): Promise<object> {
+  async getAllTables(@Param('userId') userId: string): Promise<object> {
     if (userId === '') {
       return new BadRequestException('userId is required');
     }
@@ -38,18 +38,20 @@ export class TablecxController {
   async insertDataByTableId(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: object,
-  ): Promise<object> {
+  ) {
     return await this.tablecxService.insertDataByTableId(id, data);
   }
 
   @UsePipes(new ZodValidationPipe(webloomTableSchema))
   @Post()
-  async createTablecx(@Body() tablecx: WebloomTableDto): Promise<object> {
+  async createTable(@Body() tablecx: WebloomTableDto) {
     return await this.tablecxService.createTablecx(tablecx);
   }
 
   @Delete(':id')
-  async deleteTablecx(@Param('id', ParseIntPipe) id: number): Promise<object> {
+  async deleteTable(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<WebloomTableDto> {
     return await this.tablecxService.deleteTablecx(id);
   }
 }
