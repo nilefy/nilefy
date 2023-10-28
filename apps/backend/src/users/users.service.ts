@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/users.dto';
+import { CreateUserDto, UpdateUserDto } from '../dto/users.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { eq } from 'drizzle-orm';
-import { timeStamps, users } from '../drizzle/schema/schema';
+import { users } from '../drizzle/schema/schema';
 import { genSalt, hash } from 'bcrypt';
 
 @Injectable()
@@ -20,36 +20,28 @@ export class UsersService {
     const u = await this.db.insert(users).values(user).returning();
     return u[0];
   }
-  async updateUsername(id: number, username: string) {
-    const updatedUser = await this.db
-      .update(users)
-      .set({ username, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    if (!updatedUser) {
-      return new NotFoundException('User not found');
+
+  async update(userId: number, updateDto: UpdateUserDto) {
+    if (updateDto.password) {
+      const salt = await genSalt(10);
+      updateDto.password = await hash(updateDto.password, salt);
     }
-
-    return updatedUser[0];
-  }
-  async updatePassword(id: number, password: string) {
-    // Update the user with the given id, username and password
-    // Return the updated user or throw an error if not found
-    const salt = await genSalt(10);
-    const hashed = await hash(password, salt);
-    password = hashed;
-    const { updatedAt } = timeStamps;
-    updatedAt;
-    const updatedUser = await this.db
-      .update(users)
-      .set({ password, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-
+    const updatedUser = (
+      await this.db
+        .update(users)
+        .set({ updatedAt: new Date(), ...updateDto })
+        .where(eq(users.id, userId))
+        .returning({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+    )[0];
     if (!updatedUser) {
-      return new NotFoundException('User not found');
+      throw new NotFoundException('User not found');
     }
-
-    return updatedUser[0];
+    return updatedUser;
   }
 }

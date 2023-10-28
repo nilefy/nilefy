@@ -2,40 +2,32 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Param,
   Put,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto, updateUserSchema } from '../dto/users.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { JwtGuard } from '../auth/jwt.guard';
+import { ExpressAuthedRequest } from '../auth/auth.types';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Put(':id')
+  @UseGuards(JwtGuard)
+  @Put()
   async updateProfile(
-    @Param('id') id: number,
+    @Request() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(updateUserSchema))
     data: UpdateUserDto,
   ) {
-    // Call the service method to update the profile
-    // Return the updated user or an error response
-    console.log('object');
-    let updatedUser;
-    if (data.username) {
-      updatedUser = await this.usersService.updateUsername(id, data.username);
-    }
-    if (data.password) {
-      updatedUser = await this.usersService.updatePassword(id, data.password);
-    }
     if (!data.password && !data.username) {
-      console.log('object');
-      return new BadRequestException(
-        `Please provide either "username"${data.username} or "password"${data.password}`,
+      throw new BadRequestException(
+        `Please provide either "username" or "password"`,
       );
     }
-
-    return updatedUser;
+    return await this.usersService.update(req.user.userId, data);
   }
 }
