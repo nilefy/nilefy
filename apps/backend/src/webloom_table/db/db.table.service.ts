@@ -55,6 +55,14 @@ export class DbService {
           tableId: number;
         }[],
       );
+      await trx.execute(
+        sql.raw(
+          `CREATE TABLE ${result[0].name + result[0].id} (${tableData.columns
+            .map((column) => `${column.name} ${column.type}`)
+            .join(',\n')});`,
+        ),
+      );
+
       if (!result) {
         throw new InternalServerErrorException('Table wasn t created');
       }
