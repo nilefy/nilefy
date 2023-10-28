@@ -9,37 +9,59 @@ import {
   DatabaseI,
   DrizzleAsyncProvider,
 } from '../../drizzle/drizzle.provider';
-import { webloomTables } from '../../drizzle/schema/schema';
+import { webloomColumns, webloomTables } from '../../drizzle/schema/schema';
 import {
   eq,
   sql,
   // sql,
 } from 'drizzle-orm';
-import { WebloomTableDto } from '../../dto/webloom_table.dto';
+import {
+  WebloomColumnDto,
+  WebloomColumnTypeDto,
+  WebloomTableDto,
+} from '../../dto/webloom_table.dto';
 
 @Injectable()
 export class DbService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
   async getAllTables() {
-    const result = await this.db.query.webloomTables.findMany();
+    // const result = await this.db.query.webloomTables.findMany();
+    // eq(webloomTables.id, webloomColumns.tableId)
+    const result = await this.db
+      .select()
+      .from(webloomTables)
+      .leftJoin(webloomColumns, eq(webloomTables.id, webloomColumns.tableId));
     return result;
   }
 
-  async createTable(tablecx: WebloomTableDto): Promise<WebloomTableDto> {
-    let result;
+  async createTable(tableData: WebloomTableDto): Promise<WebloomTableDto> {
+    let result: WebloomTableDto[] = [];
     await this.db.transaction(async (trx) => {
-      result = await trx.insert(webloomTables).values(tablecx).returning();
+      result = await trx.insert(webloomTables).values(tableData).returning();
+      tableData.columns = tableData.columns as WebloomColumnDto[];
+      const values: WebloomColumnDto[] = tableData.columns.map((column) => {
+        const v = {
+          name: column.name,
+          type: column.type as WebloomColumnTypeDto,
+          tableId: result[0].id,
+        };
+        return v;
+      });
+      await trx.insert(webloomColumns).values(
+        values as {
+          name: string;
+          type: WebloomColumnTypeDto;
+          tableId: number;
+        }[],
+      );
       if (!result) {
         throw new InternalServerErrorException('Table wasn t created');
       }
-      const query = this._generateCreateTableQuery(tablecx);
-      await trx.execute(sql.raw(`${query}`));
+      // const query = this._generateCreateTableQuery(tablecx);
+      // await trx.execute(sql.raw(`${query}`));
     });
-    if (!result) {
-      throw new InternalServerErrorException('Table wasn t created');
-    }
-    return result['0'] as WebloomTableDto;
+    return result[0] as WebloomTableDto;
   }
 
   async deleteTablecx(id: number): Promise<WebloomTableDto> {
@@ -105,20 +127,20 @@ export class DbService {
   }
 
   // helper method
-  _generateCreateTableQuery(tableDefinition: WebloomTableDto): string {
-    const { name, columns } = tableDefinition;
+  // _generateCreateTableQuery(tableDefinition: WebloomTableDto): string {
+  //   const { name, columns } = tableDefinition;
 
-    if (!name || columns.length === 0) {
-      throw new Error('Table name and columns must be provided.');
-    }
+  //   if (!name || columns.length === 0) {
+  //     throw new Error('Table name and columns must be provided.');
+  //   }
 
-    const createTableQuery = `CREATE TABLE IF NOT EXISTS ${name} (
-      id SERIAL PRIMARY KEY,
-      ${columns.map((column) => `${column.name} ${column.type}`).join(',\n')}
-    );`;
+  //   const createTableQuery = `CREATE TABLE IF NOT EXISTS ${name} (
+  //     id SERIAL PRIMARY KEY,
+  //     ${columns.map((column) => `${column.name} ${column.type}`).join(',\n')}
+  //   );`;
 
-    return createTableQuery;
-  }
+  //   return createTableQuery;
+  // }
 }
 interface TableDefinition {
   id: number;

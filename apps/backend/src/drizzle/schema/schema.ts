@@ -52,7 +52,8 @@ export const webloomTableRelations = relations(webloomTables, ({ many }) => ({
 
 export const webloomColumns = pgTable('column', {
   id: serial('id').primaryKey(),
-  name: text('name'),
+  name: text('name').notNull(),
+  type: text('type').notNull(),
   tableId: integer('table_id')
     .notNull()
     .references(() => webloomTables.id),
