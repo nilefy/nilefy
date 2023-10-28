@@ -50,7 +50,7 @@ export const webloomTableRelations = relations(webloomTables, ({ many }) => ({
   columns: many(webloomColumns),
 }));
 
-export const webloomColumns = pgTable('column', {
+export const webloomColumns = pgTable('columns', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   type: text('type').notNull(),
