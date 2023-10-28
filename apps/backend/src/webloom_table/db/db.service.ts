@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -67,14 +68,14 @@ export class DbService {
       throw new NotFoundException('Table doesn t exist');
     }
     const tableDefinition = validateAndConvertToTableDefinition(tables['0']);
-    const { name } = tables[0];
     if (!tableDefinition) {
-      throw new NotFoundException('Method not implemented.');
+      throw new BadRequestException('Invalid table definition.');
     }
+    const { name } = tables[0];
 
     const isValid = isDataValid(tableDefinition, [data]);
     if (!isValid) {
-      throw new NotFoundException('Method not implemented.');
+      throw new BadRequestException('Invalid data.');
     }
     console.log(tableDefinition.name);
     console.log(data);
@@ -98,7 +99,6 @@ export class DbService {
     const { name } = res['0'];
     if (!name) {
       throw new NotFoundException('name not found');
-      return null;
     }
     return name;
   }
