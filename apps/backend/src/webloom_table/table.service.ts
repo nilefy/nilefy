@@ -7,12 +7,12 @@ export class TablecxService {
   constructor(private readonly dbService: DbService) {}
   getAllTablecxs(): object {
     // validation logic here!
-    return this.dbService.getAllTablecxs();
+    return this.dbService.getAllTables();
   }
   async createTablecx(tablecx: WebloomTableDto) {
     // validation logic here!
     // a little dubious to have 2 services but ok for now
-    return await this.dbService.createTablecx(tablecx);
+    return await this.dbService.createTable(tablecx);
   }
   async deleteTablecx(id: number) {
     if (id < 1) {

@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
   UsePipes,
 } from '@nestjs/common';
-import { TablecxService } from './tablecx.service';
+import { TablecxService } from './table.service';
 import { WebloomTableDto, webloomTableSchema } from '../dto/webloom_table.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 

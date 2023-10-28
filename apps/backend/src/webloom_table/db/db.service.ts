@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   DatabaseI,
   DrizzleAsyncProvider,
@@ -15,7 +20,7 @@ import { WebloomTableDto } from '../../dto/webloom_table.dto';
 export class DbService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async getAllTablecxs() {
+  async getAllTables() {
     const result = await this.db.query.webloomTables.findMany();
     if (!result) {
       throw new NotFoundException('Method not implemented.');
@@ -23,13 +28,13 @@ export class DbService {
     return result;
   }
 
-  async createTablecx(tablecx: WebloomTableDto): Promise<WebloomTableDto> {
+  async createTable(tablecx: WebloomTableDto): Promise<WebloomTableDto> {
     const result = await this.db
       .insert(webloomTables)
       .values(tablecx)
       .returning();
     if (!result) {
-      throw new NotFoundException('Method not implemented.');
+      throw new InternalServerErrorException('Table wasn t created');
     }
     const query = this._generateCreateTableQuery(tablecx);
     await this.db.execute(sql.raw(`${query}`));
@@ -42,24 +47,24 @@ export class DbService {
       .where(eq(webloomTables.id, id))
       .returning();
     if (!result) {
-      throw new NotFoundException('Method not implemented.');
+      throw new InternalServerErrorException('Table wasn t deleted');
     }
     return result['0'] as WebloomTableDto;
   }
 
-  async getAllDataByTableId(id: number): Promise<object> {
+  async getAllDataByTableId(id: number) {
     const name = await this._getTableNameById(id);
     const { rows } = await this.db.execute(sql.raw(`SELECT * FROM ${name}`));
-    return [...rows];
+    return rows;
   }
 
-  async insertDataByTableId(id: number, data: object): Promise<object> {
+  async insertDataByTableId(id: number, data: object) {
     const tables = await this.db
       .select()
       .from(webloomTables)
       .where(eq(webloomTables.id, id));
     if (tables.length === 0) {
-      throw new NotFoundException('Method not implemented.');
+      throw new NotFoundException('Table doesn t exist');
     }
     const tableDefinition = validateAndConvertToTableDefinition(tables['0']);
     const { name } = tables[0];

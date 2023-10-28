@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TablecxController } from './tablecx.controller';
+import { TablecxController } from './table.controller';
 
 describe('TablecxController', () => {
   let controller: TablecxController;

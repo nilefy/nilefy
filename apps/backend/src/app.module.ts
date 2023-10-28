@@ -7,7 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
-import { WebloomTableModule } from './webloom_table/tablecx.module';
+import { WebloomTableModule } from './webloom_table/table.module';
 
 @Module({
   imports: [
