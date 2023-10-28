@@ -14,6 +14,7 @@ import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 import { ProfileSettings } from './pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import ResetPasswordForm from './pages/reset-password/reset-password';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,11 @@ const router = createBrowserRouter([
   {
     path: '/signin',
     element: <SignIn />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/password_reset',
+    element: <ResetPasswordForm />,
     errorElement: <ErrorPage />,
   },
 ]);
