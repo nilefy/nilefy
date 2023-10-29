@@ -140,6 +140,7 @@ function Editor() {
   });
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
+  const resizedNode = store((state) => state.resizedNode);
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -242,6 +243,11 @@ function Editor() {
             selectFromInside={true}
             selectByClick={false}
             hitRate={100}
+            dragCondition={(e) => {
+              const triggerTarget = e.inputEvent.target;
+              const isRoot = triggerTarget.getAttribute('data-id');
+              return isRoot === ROOT_NODE_ID;
+            }}
             onSelect={(e) => {
               e.added.forEach((el) => {
                 const data = el.getAttribute('data-id');
@@ -259,7 +265,6 @@ function Editor() {
                   });
                 }
               });
-              console.log('gonna select', e);
             }}
           />
         </div>
