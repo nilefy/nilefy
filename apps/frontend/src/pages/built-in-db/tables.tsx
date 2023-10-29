@@ -64,13 +64,10 @@ const tables: Table[] = [
 export const fetchTables = async (query = ''): Promise<Table[]> => {
   console.log('fetching tables');
   await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Assuming tables is a global variable or comes from somewhere
-  // You may need to adjust this part based on your actual data source
+  // TODO: fetch actual data from db
   const filteredTables = tables.filter((table) =>
     table.name.toLowerCase().includes(query.toLowerCase()),
   );
-
   return filteredTables;
 };
 
@@ -86,6 +83,7 @@ export const addTable = async (table: Table): Promise<Table> => {
   // Perform actual addition logic here
   tables.push(table); // Assuming you're adding to the existing tables array
   return table;
+  // throw new Error('error adding the table');
 };
 
 export const removeTable = async (tableId: number): Promise<void> => {
@@ -109,4 +107,5 @@ export const renameTable = async (
   if (table) {
     table.name = newName;
   }
+  // throw new Error('trying error');
 };

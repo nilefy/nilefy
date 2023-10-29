@@ -26,6 +26,7 @@ The creation of a new table involves utilizing the `DatabaseTable` component, wh
   - Manages state for creating and editing tables.
   - Integrates with the low-code platform's routing system for navigation.
 
+// TODO : PUT IMAGE HERE FOR TABLE CREATION 
 ## Table Interaction and Management
 
 The module facilitates user interaction and management of existing tables through the `All Tables` interface. Key features include:
@@ -42,6 +43,8 @@ The module facilitates user interaction and management of existing tables throug
   - Offers a dropdown menu with edit and remove options.
   - Ensures a seamless user experience with dynamic interactions.
 
+  // IMAGE FOR THE LIST OF TABLES AND THE FUNCTIONALITY OF REMOVING/RENAMING
+
 ## Additional Functionality
 
 The module extends its capabilities with additional functionality, including:
@@ -55,5 +58,5 @@ The module extends its capabilities with additional functionality, including:
 
 - **Bulk Data Operations:**
   - Supports bulk operations such as uploading data and applying filters.
-
+// TODO : WHEN DONE , ADD IMAGES FOR THESE FUNCTIONALITIES WORKING
 The documentation covers the essential aspects of the built-in database module, providing developers with a comprehensive understanding of its structure and functionality.

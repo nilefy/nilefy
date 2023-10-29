@@ -34,8 +34,8 @@ import { fetchTables, addTable, removeTable, renameTable } from './tables';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink } from 'react-router-dom';
 import { Label } from '@/components/ui/label';
-
 import { useParams } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 // types
 interface Column {
   id: number;
@@ -86,10 +86,6 @@ export default function DatabaseTable() {
     queryFn: () => fetchTables(searchParam),
     queryKey: ['tables', searchParam],
   });
-  // const { data: tables, isLoading } = useQuery({
-  //   queryFn: () => fetchTables(searchParams.get('search')),
-  //   queryKey: ['tables', searchParams.get('search')],
-  // });
 
   const { mutateAsync: addTableMutation } = useMutation({
     mutationFn: (newTable: Table) => addTable(newTable),
@@ -98,8 +94,28 @@ export default function DatabaseTable() {
     },
   });
 
-  const { mutateAsync: removeTableMutation } = useMutation({
+  const { mutate: removeTableMutation } = useMutation({
     mutationFn: (tableId: number) => removeTable(tableId),
+    onMutate: async (tableId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      console.log('mutating');
+
+      await queryClient.cancelQueries({ queryKey: ['tables'] });
+      const previousTables = queryClient.getQueryData(['tables']);
+      // Optimistically update to the new value
+      await queryClient.setQueryData(
+        ['tables'],
+        tables?.filter((table) => table.id !== tableId),
+      );
+      return { previousTables };
+    },
+    // If the mutation fails,
+    // use the context returned from onMutate to roll back
+    onError: (err, tableId, context) => {
+      console.log(`rolling back`);
+      queryClient.setQueryData(['tables'], context?.previousTables);
+    },
+    // Always refetch after error or success:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
     },
@@ -108,6 +124,23 @@ export default function DatabaseTable() {
   const { mutateAsync: renameTableMutation } = useMutation({
     mutationFn: ({ tableId, newName }: { tableId: number; newName: string }) =>
       renameTable(tableId, newName),
+    onMutate: async (variables: { tableId: number; newName: string }) => {
+      const { tableId, newName } = variables;
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['tables'] });
+      const previousTables = queryClient.getQueryData(['tables']);
+      // Optimistically update to the new value
+      await queryClient.setQueryData(
+        ['tables'],
+        tables?.map((table) =>
+          table.id === tableId ? { ...table, name: newName } : table,
+        ),
+      );
+      return { previousTables };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(['tables'], context?.previousTables);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
     },
@@ -127,34 +160,62 @@ export default function DatabaseTable() {
   });
   // state for controlling table dialog
   const [isCreateTableDialogOpen, setisCreateTableDialogOpen] = useState(false);
+
+  // error handling
+  const { toast } = useToast();
+  // TODO: show error in a toast
+  const displayErrorToast = (message: string) => {
+    toast({
+      title: 'Error',
+      description: message,
+    });
+  };
   // form config.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       columns: [{ id: 0, name: 'id', type: 'serial', default: 'NULL' }],
     },
+    shouldUnregister: false, // Do not unregister fields on removal
   });
-
+  useEffect(() => {
+    form.reset({
+      columns: [
+        {
+          id: 0,
+          name: 'id',
+          type: 'serial',
+          default: 'NULL',
+        },
+      ],
+    });
+  }, [form, form.reset, isCreateTableDialogOpen]);
+  const errors = form.formState.errors;
   const control = form.control;
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'columns',
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Handle form submission logic here
-    const tableWithId: Table = {
-      name: values.name,
-      columns: values.columns,
-      id: (tables?.length || 0) + 1,
-    };
-    // console.log(tableWithId);
-    // setSearchParams({ ...searchParams, id: String(tableWithId.id) });
-    if (tables) {
-      addTableMutation(tableWithId);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('submitting form', values);
+
+    try {
+      const tableWithId: Table = {
+        name: values.name,
+        columns: values.columns,
+        id: (tables?.length || 0) + 1,
+      };
+
+      if (tables) {
+        await addTableMutation(tableWithId);
+        // If the mutation is successful, set the dialog state
+        setisCreateTableDialogOpen(false);
+      }
+    } catch (error) {
+      console.log('Caught error:', error);
+      displayErrorToast('An error occurred during form submission');
     }
-    // setTables([...tables, tableWithId]);
-    setisCreateTableDialogOpen(false);
   }
 
   const handleOnClick = () => {
@@ -185,25 +246,9 @@ export default function DatabaseTable() {
   const handleEdit = (table: Table) => {
     setEditTable({ id: table.id, name: table.name, columns: [] });
   };
-  const handleRemoveTable = async (tableId: number) => {
-    // Remove the table from the UI optimistically
-    const updatedTables = tables
-      ? tables.filter((table) => table.id !== tableId)
-      : [];
-    queryClient.setQueryData(['tables'], updatedTables);
 
-    try {
-      // Attempt to remove the table from the server
-      await removeTableMutation(tableId);
-    } catch (error) {
-      // If an error occurs, add the table back to the UI and display an error message
-      // TODO : change this to using popover or alert dialog
-      console.error('Error removing table:', error);
-      if (tables !== undefined) {
-        queryClient.setQueryData(['tables'], tables); // Revert to the previous state
-      }
-      // You may want to display a user-friendly error message here
-    }
+  const handleRemoveTable = (tableId: number) => {
+    removeTableMutation(tableId);
   };
 
   const handleTableClick = (table: Table) => {
@@ -256,7 +301,6 @@ export default function DatabaseTable() {
                                 {...field}
                               />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -298,7 +342,6 @@ export default function DatabaseTable() {
                                       className=" w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none"
                                     />
                                   </FormControl>
-                                  <FormMessage />
                                 </div>
                               )}
                             />
@@ -344,7 +387,6 @@ export default function DatabaseTable() {
                                       </SelectContent>
                                     </Select>
                                   </FormControl>
-                                  <FormMessage />
                                 </div>
                               )}
                             />
@@ -434,6 +476,18 @@ export default function DatabaseTable() {
           </div>
           <div className="mt-6 flex flex-col items-center">
             <h4 className="inline-flex self-start ">All Tables</h4>
+            {/* <Button
+              variant="outline"
+              onClick={() => {
+                toast({
+                  variant: 'destructive',
+                  title: 'Uh oh! Something went wrong.',
+                  description: 'There was a problem with your request.',
+                });
+              }}
+            >
+              Show Toast
+            </Button> */}
             <div className="mt-4 w-full">
               <Input
                 type="text"
