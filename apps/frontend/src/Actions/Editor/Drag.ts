@@ -29,6 +29,7 @@ class DragAction {
   private static newType: string;
   private static id: string | null;
   private static overId: string | null;
+  private static expansion = 0;
   private static touchedRoot = false;
   private static startGridPosition: Point;
   private static delta: Point;
@@ -126,8 +127,12 @@ class DragAction {
     const bottom = currentGridPosition.y + node.rowsCount;
     const parentBottom = parent.y + parent.rowsCount;
 
-    if (bottom > parentBottom) {
+    if (bottom >= parentBottom) {
       this.expandNodeVertically(parent.id!, bottom - parentBottom);
+    } else {
+      if (this.canShrink()) {
+        this.shrinkNodeVertically(parent.id!, parentBottom - bottom);
+      }
     }
     //Shadow element
     const newShadow = this.getElementShadow(
@@ -217,8 +222,19 @@ class DragAction {
     setDimensions(id, {
       rowsCount: node.rowsCount + amount,
     });
+    this.expansion += amount;
   }
 
+  private static shrinkNodeVertically(id: string, amount = 1) {
+    const node = store.getState().tree[id];
+    setDimensions(id, {
+      rowsCount: node.rowsCount - amount,
+    });
+    this.expansion -= amount;
+  }
+  private static canShrink() {
+    return this.expansion > 0;
+  }
   private static getElementShadow(
     position: Point,
     mousePos: Point,
@@ -328,6 +344,7 @@ class DragAction {
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
     this.counter = 0;
+    this.expansion = 0;
     setDraggedNode(null);
     setShadowElement(null);
   }
