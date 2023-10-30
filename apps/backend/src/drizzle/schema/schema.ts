@@ -18,7 +18,7 @@ export const softDelete = {
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 256 }).notNull(),
-  email: varchar('email', { length: 256 }).notNull(),
+  email: varchar('email', { length: 256 }).unique().notNull(),
   password: varchar('password', { length: 256 }).notNull(),
   ...timeStamps,
   ...softDelete,
