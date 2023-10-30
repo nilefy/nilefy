@@ -14,6 +14,7 @@ import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 import { ProfileSettings } from './pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { ApplicationsLayout } from './pages/apps/apps';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +41,16 @@ const router = createBrowserRouter([
         element: <Dashboard />,
         errorElement: <ErrorPage />,
         children: [
-          { path: '', element: <App /> },
+          {
+            path: '',
+            element: <ApplicationsLayout />,
+            children: [
+              {
+                path: 'editor',
+                element: <App />,
+              },
+            ],
+          },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {
             path: 'workspace-settings',
