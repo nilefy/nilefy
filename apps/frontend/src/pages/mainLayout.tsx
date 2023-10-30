@@ -34,19 +34,21 @@ const allWorkspacesQuery = () => ({
  *
  * `const { workspaces } = useRouteLoaderData('root');`
  */
-export const loader = (queryClient: QueryClient) => async () => {
-  const query = allWorkspacesQuery();
-  // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
-  // why do i need this check? well i want to redirect the user to workspace the first time they visit the dashboard, not every time
-  const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
-  if (t === undefined) {
-    const workspaces = await queryClient.fetchQuery(query);
-    console.log(workspaces[0].id);
-    return redirect(`/${workspaces[0].id}`);
-  } else {
-    return t;
-  }
-};
+export const loader =
+  (queryClient: QueryClient) =>
+  async ({ request }: { request: Request }) => {
+    const query = allWorkspacesQuery();
+    // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
+    // why do i need this check? well i want to redirect the user to workspace the first time they visit the dashboard, not every time
+    const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
+    if (t === undefined) {
+      const workspaces = await queryClient.fetchQuery(query);
+      const urlPath = new URL(request.url).pathname;
+      return urlPath === '/' ? redirect(`/${workspaces[0].id}`) : null;
+    } else {
+      return t;
+    }
+  };
 
 export function Dashboard() {
   const { workspaceId } = useParams();
