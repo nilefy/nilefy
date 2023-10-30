@@ -28,10 +28,11 @@ class DragAction {
   private static isNew = false;
   private static newType: string;
   private static id: string | null;
-  private static overId: string;
+  private static overId: string | null;
   private static touchedRoot = false;
   private static startGridPosition: Point;
   private static delta: Point;
+  private static initialDelta: Point;
   private static mouseStartPosition: Point;
   private static mouseCurrentPosition: Point;
   private static moved = false;
@@ -41,6 +42,7 @@ class DragAction {
       type: string;
       parent: string;
       startPosition: Point;
+      initialDelta: Point;
     };
     id: string;
     mouseStartPosition: Point;
@@ -49,6 +51,7 @@ class DragAction {
     this.mouseStartPosition = args.mouseStartPosition;
     this.id = args.id;
     if (this.isNew) {
+      this.initialDelta = args.new!.initialDelta;
       this.startGridPosition = args.new!.startPosition;
       this.newType = args.new!.type;
       const node: WebloomNode = {
@@ -83,28 +86,29 @@ class DragAction {
       },
     };
   }
+
   private static _move(
     mouseCurrentPosition: Point,
+    delta: Point,
     overId: string | undefined,
   ) {
+    if (!this.id) return;
     if (!overId) return;
     if (overId === ROOT_NODE_ID) {
       this.touchedRoot = true;
     }
+    if (this.isNew) {
+      delta.x -= this.initialDelta.x;
+      delta.y -= this.initialDelta.y;
+    }
+    this.overId = overId;
     const [gridrow, gridcol] = getGridSize(this.id!);
     this.mouseCurrentPosition = mouseCurrentPosition;
-    const delta = {
-      x:
-        normalize(
-          this.mouseCurrentPosition.x - this.mouseStartPosition.x,
-          gridcol,
-        ) / gridcol,
-      y:
-        normalize(
-          this.mouseCurrentPosition.y - this.mouseStartPosition.y,
-          gridrow,
-        ) / gridrow,
+    delta = {
+      x: normalize(delta.x, gridcol) / gridcol,
+      y: normalize(delta.y, gridrow) / gridrow,
     };
+
     this.delta = delta;
     if (
       this.mouseStartPosition.x !== this.mouseCurrentPosition.x ||
@@ -151,14 +155,12 @@ class DragAction {
     if (overId === null) {
       if (this.touchedRoot) {
         overId = ROOT_NODE_ID;
-      } else return null;
+      } else {
+        this.cleanUp();
+        return null;
+      }
     }
-    this.touchedRoot = false;
-    setDraggedNode(null);
-    setShadowElement(null);
-    this.moved = false;
     const isNew = this.isNew;
-    this.isNew = false;
     const delta = { ...this.delta };
     const endPosition = {
       x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
@@ -166,12 +168,13 @@ class DragAction {
     };
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
+    let command: UndoableCommand;
     if (isNew) {
       const newNode = store.getState().tree['new'];
       const id = nanoid();
       newNode.id = id;
       removeNode('new');
-      return {
+      command = {
         execute: () => {
           addNode(newNode, newNode.parent!);
           undoData = moveNodeIntoGrid(id, endPosition);
@@ -188,24 +191,26 @@ class DragAction {
           );
         },
       };
+    } else {
+      command = {
+        execute: () => {
+          undoData = moveNodeIntoGrid(id, endPosition);
+        },
+        undo: () => {
+          Object.entries(undoData.changedNodesOriginalCoords).forEach(
+            ([id, coords]) => {
+              setDimensions(id, {
+                x: coords.x,
+                y: coords.y,
+              });
+            },
+          );
+          setDimensions(id, undoData.firstNodeOriginalDimensions!);
+        },
+      };
     }
-
-    return {
-      execute: () => {
-        undoData = moveNodeIntoGrid(id, endPosition);
-      },
-      undo: () => {
-        Object.entries(undoData.changedNodesOriginalCoords).forEach(
-          ([id, coords]) => {
-            setDimensions(id, {
-              x: coords.x,
-              y: coords.y,
-            });
-          },
-        );
-        setDimensions(id, undoData.firstNodeOriginalDimensions!);
-      },
-    };
+    this.cleanUp();
+    return command;
   }
   private static expandNodeVertically(id: string, amount = 1) {
     const node = store.getState().tree[id];
@@ -310,6 +315,21 @@ class DragAction {
       }
     }
     return shadowDimensions;
+  }
+  private static cleanUp() {
+    this.isNew = false;
+    this.initialDelta = { x: 0, y: 0 };
+    this.id = null;
+    this.overId = null;
+    this.touchedRoot = false;
+    this.startGridPosition = { x: 0, y: 0 };
+    this.delta = { x: 0, y: 0 };
+    this.mouseStartPosition = { x: 0, y: 0 };
+    this.mouseCurrentPosition = { x: 0, y: 0 };
+    this.moved = false;
+    this.counter = 0;
+    setDraggedNode(null);
+    setShadowElement(null);
   }
 }
 

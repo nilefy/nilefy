@@ -145,7 +145,6 @@ function Editor() {
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor);
   const touchSensor = useSensor(TouchSensor);
-
   const sensors = useSensors(mouseSensor, touchSensor);
   const handleDragEnd = (e: DragEndEvent) => {
     if (!e.active.data.current) return;
@@ -164,7 +163,11 @@ function Editor() {
       if (mousePos.current.x > rootBoundingRect.width / 2) {
         x = NUMBER_OF_COLUMNS - 2;
       }
-      const y = normalize(mousePos.current.y / gridrow, gridrow);
+      console.log(mousePos.current.y);
+      const y = normalize(
+        (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
+        gridrow,
+      );
       commandManager.executeCommand(
         DragAction.start({
           id: 'new',
@@ -173,6 +176,7 @@ function Editor() {
             parent: ROOT_NODE_ID,
             startPosition: { x, y },
             type: e.active.data.current.type,
+            initialDelta: e.delta,
           },
         }),
       );
@@ -181,7 +185,7 @@ function Editor() {
   const handleDragMove = (e: DragMoveEvent) => {
     if (draggedNode !== null) {
       commandManager.executeCommand(
-        DragAction.move(mousePos.current, e.over?.id as string),
+        DragAction.move(mousePos.current, e.delta, e.over?.id as string),
       );
     } else if (!e.active.data.current?.isNew) {
       commandManager.executeCommand(
@@ -204,30 +208,10 @@ function Editor() {
 
       mousePos.current = { x: e.pageX - x, y: e.pageY - y };
     };
-    const handleScroll = (e: WheelEvent) => {
-      e.preventDefault();
-      if (!editor || !root.dom) return;
-      const { left, top } = root.dom.getBoundingClientRect();
-      const { scrollTop: oldScrollTop } = editor;
-      editor.scrollBy({ top: e.deltaY });
-      const delta = editor.scrollTop - oldScrollTop;
-      mousePos.current = { x: e.pageX - left, y: e.pageY - top + delta };
-      if (draggedNode) {
-        commandManager.executeCommand(
-          DragAction.move(
-            mousePos.current,
-            store.getState().overNode || ROOT_NODE_ID,
-          ),
-        );
-      }
-    };
 
-    const editor = editorRef.current;
-    window!.addEventListener('wheel', handleScroll, { passive: false });
     window.addEventListener('pointermove', handleMouseMove);
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
-      window!.removeEventListener('wheel', handleScroll);
     };
   }, [root.dom, draggedNode]);
   if (!root) return null;
@@ -239,6 +223,7 @@ function Editor() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
+        autoScroll={true}
       >
         {/*sidebar*/}
         <div className="h-full w-1/5 bg-gray-200"></div>
