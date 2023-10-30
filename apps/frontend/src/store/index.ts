@@ -215,8 +215,10 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     // return first canvas node starting from id and going up the tree until root
     getCanvas: (id: string): WebloomNode => {
-      const node = get().getNode(id);
-      if (node?.isCanvas) return node;
+      if (id === ROOT_NODE_ID) return get().getNode(id)!;
+      const node = get().getNode(id)!;
+      const parent = get().getNode(node.parent!)!;
+      if (parent.isCanvas) return parent;
       return get().getCanvas(node?.parent || ROOT_NODE_ID);
     },
     getGridSize: (id) => {

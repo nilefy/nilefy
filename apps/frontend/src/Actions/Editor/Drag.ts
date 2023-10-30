@@ -22,7 +22,6 @@ const {
   removeNode,
   setDraggedNode,
   setDimensions,
-  getCanvas,
 } = store.getState();
 class DragAction {
   private static threshold = 5;
@@ -64,6 +63,7 @@ class DragAction {
           color: getRandomColor(),
           text: this.counter++,
         },
+        isCanvas: WebloomComponents[this.newType].isCanvas,
         x: this.startGridPosition.x,
         y: this.startGridPosition.y,
         columnsCount: 4,
@@ -117,10 +117,11 @@ class DragAction {
       x: Math.min(this.startGridPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startGridPosition.y + delta.y,
     };
-    const parent = getCanvas(this.id!);
     const node = store.getState().tree[this.id!];
+    const parent = store.getState().tree[node.parent!];
     const bottom = currentGridPosition.y + node.rowsCount;
     const parentBottom = parent.y + parent.rowsCount;
+
     if (bottom > parentBottom) {
       this.expandNodeVertically(parent.id!, bottom - parentBottom);
     }
@@ -129,7 +130,7 @@ class DragAction {
       currentGridPosition,
       mouseCurrentPosition,
       this.id!,
-      overId,
+      overId === this.id! ? ROOT_NODE_ID : overId,
     );
     setShadowElement(newShadow);
   }
@@ -220,7 +221,8 @@ class DragAction {
     overId: string,
   ) {
     const tree = store.getState().tree;
-    const [gridrow, gridcol] = getGridSize(id);
+    const [gridrow, gridcol] = getGridSize(ROOT_NODE_ID);
+    const overGridCol = tree[overId].columnWidth;
     const el = tree[id];
     const parent = tree[el.parent!];
     let top = position.y;
@@ -277,16 +279,19 @@ class DragAction {
         colCount = 1;
       }
     }
+    const overEl = tree[overId];
     const newWidth = colCount * gridcol;
     top = Math.round(top * gridrow);
     left = Math.round(left * gridcol);
+    if (overId !== ROOT_NODE_ID) {
+      //todo
+    }
     const shadowDimensions = {
       x: left,
       y: top,
       width,
       height,
     };
-    const overEl = tree[overId];
     if (overId === ROOT_NODE_ID || overId === id) {
       shadowDimensions.width = newWidth;
     } else if (overEl) {

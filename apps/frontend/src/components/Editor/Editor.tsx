@@ -36,7 +36,6 @@ const { resizeCanvas } = store.getState();
 const WebloomRoot = () => {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[ROOT_NODE_ID];
-  console.log(tree);
   const ref = React.useRef<HTMLDivElement>(null);
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
@@ -107,6 +106,7 @@ function WebloomElement({ id }: { id: string }) {
   if (id === 'new') return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
+      {tree.isCanvas && <Grid id={id} />}
       {rendered}
     </WebloomAdapter>
   );
@@ -139,6 +139,7 @@ function Editor() {
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
+  const editorRef = useRef<HTMLDivElement>(null);
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
@@ -201,18 +202,38 @@ function Editor() {
       const x = boundingRect.left;
       const y = boundingRect.top;
 
-      mousePos.current = { x: e.clientX - x, y: e.clientY - y };
+      mousePos.current = { x: e.pageX - x, y: e.pageY - y };
     };
+    const handleScroll = (e: WheelEvent) => {
+      e.preventDefault();
+      if (!editor || !root.dom) return;
+      const { left, top } = root.dom.getBoundingClientRect();
+      const { scrollTop: oldScrollTop } = editor;
+      editor.scrollBy({ top: e.deltaY });
+      const delta = editor.scrollTop - oldScrollTop;
+      mousePos.current = { x: e.pageX - left, y: e.pageY - top + delta };
+      if (draggedNode) {
+        commandManager.executeCommand(
+          DragAction.move(
+            mousePos.current,
+            store.getState().overNode || ROOT_NODE_ID,
+          ),
+        );
+      }
+    };
+
+    const editor = editorRef.current;
+    window!.addEventListener('wheel', handleScroll, { passive: false });
     window.addEventListener('pointermove', handleMouseMove);
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
+      window!.removeEventListener('wheel', handleScroll);
     };
-  }, [root.dom]);
+  }, [root.dom, draggedNode]);
   if (!root) return null;
   return (
-    <div className="isolate flex h-full max-h-full w-full bg-transparent">
+    <div className="isolate flex h-full max-h-full w-full  bg-transparent">
       <DndContext
-        autoScroll
         collisionDetection={pointerWithin}
         sensors={sensors}
         onDragOver={handleDragOver}
@@ -223,7 +244,8 @@ function Editor() {
         <div className="h-full w-1/5 bg-gray-200"></div>
 
         <div
-          className="relative h-full w-4/5 overflow-auto overflow-x-clip bg-white"
+          ref={editorRef}
+          className="relative h-full w-full touch-none overflow-x-clip overflow-y-scroll bg-white"
           style={{
             scrollbarGutter: 'stable',
             scrollbarWidth: 'thin',
@@ -234,15 +256,15 @@ function Editor() {
           <WebloomRoot />
         </div>
         <div className="h-full w-1/5 bg-gray-200 p-4">
-          <div className="h-1/4 w-full bg-gray-300 ">sidebar</div>
-          {Object.entries(WebloomComponents).map(([name, component]) => {
-            const Component = component.component;
-            return (
-              <NewNodeAdapter type={name} key={name}>
-                <Component {...component.initialProps} />
-              </NewNodeAdapter>
-            );
-          })}
+          <div className="h-1/4 w-full bg-gray-300 ">
+            {Object.entries(WebloomComponents).map(([name, component]) => {
+              return (
+                <NewNodeAdapter type={name} key={name}>
+                  <div className="h-5 w-full">{component.name}</div>
+                </NewNodeAdapter>
+              );
+            })}
+          </div>
         </div>
       </DndContext>
     </div>

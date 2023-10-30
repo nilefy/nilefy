@@ -6,7 +6,6 @@ import { useEffect, useRef } from 'react';
 const Grid = ({ id }: { id: string }) => {
   const el = store((state) => state.tree[id]);
   const gridSize = el.columnWidth!;
-  const elDims = store.getState().getDimensions(id);
   const { active } = useDndContext();
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
@@ -31,11 +30,11 @@ const Grid = ({ id }: { id: string }) => {
     }
 
     ctx.stroke();
-  }, [gridSize, active]);
+  }, [gridSize, active, el]);
   return (
     <div
       ref={divRef}
-      className="pointer-events-none absolute left-0 top-0 z-10 h-full w-full select-none"
+      className="pointer-events-none absolute left-0 top-0 h-full w-full select-none"
     >
       {!!active && <canvas ref={ref}></canvas>}
     </div>
