@@ -1,3 +1,4 @@
+import Selecto from 'react-selecto';
 import React, {
   createElement,
   useMemo,
@@ -22,8 +23,6 @@ import {
 } from '@dnd-kit/core';
 
 import { WebloomAdapter } from './WebloomComponents/lib/WebloomAdapter';
-import { WebloomComponents } from './WebloomComponents';
-import NewNodeAdapter from './WebloomComponents/lib/NewNodeAdapter';
 
 import { useSetDom } from '@/hooks/useSetDom';
 import { normalize } from '@/lib/utils';
@@ -32,8 +31,12 @@ import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
+import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
+import { RightSidebar } from './rightsidebar/rightsidebar';
+
 const { setDimensions } = store.getState();
-const WebloomRoot = () => {
+
+function WebloomRoot() {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[ROOT_NODE_ID];
   const ref = React.useRef<HTMLDivElement>(null);
@@ -69,7 +72,7 @@ const WebloomRoot = () => {
   return (
     <div
       id="webloom-root"
-      className="relative h-full w-full bg-white"
+      className="bg-primary/10 relative h-full w-full"
       ref={ref}
     >
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
@@ -77,7 +80,7 @@ const WebloomRoot = () => {
       </WebloomAdapter>
     </div>
   );
-};
+}
 WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
@@ -128,12 +131,16 @@ store.setState((state) => {
   state.tree = initTree;
   return state;
 });
+
 function Editor() {
+  const editorRef = useRef<HTMLDivElement>(null);
+
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
+  const resizedNode = store((state) => state.resizedNode);
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -213,7 +220,7 @@ function Editor() {
   }, [root.dom]);
   if (!root) return null;
   return (
-    <div className="isolate flex h-full w-full">
+    <div className="isolate flex h-full w-full gap-2">
       <DndContext
         autoScroll
         collisionDetection={pointerWithin}
@@ -222,26 +229,48 @@ function Editor() {
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
       >
-        {/*sidebar*/}
-        <div className="h-full w-1/5 bg-gray-200"></div>
-
-        <div className="relative h-full w-4/5 bg-gray-900">
+        {/*editor*/}
+        <div ref={editorRef} className="relative h-full w-4/5">
           <WebloomElementShadow />
+          <MultiSelectBounding />
           {/*main*/}
           <WebloomRoot />
           <Grid gridSize={root.width / NUMBER_OF_COLUMNS} />
+          <Selecto
+            // The container to add a selection element
+            container={editorRef.current}
+            selectableTargets={['.target']}
+            selectFromInside={true}
+            selectByClick={false}
+            hitRate={100}
+            dragCondition={(e) => {
+              const triggerTarget = e.inputEvent.target;
+              const isRoot = triggerTarget.getAttribute('data-id');
+              return isRoot === ROOT_NODE_ID;
+            }}
+            onSelect={(e) => {
+              e.added.forEach((el) => {
+                const data = el.getAttribute('data-id');
+                if (data) {
+                  store.getState().setSelectedNodeIds((prev) => {
+                    return new Set([...prev, data]);
+                  });
+                }
+              });
+              e.removed.forEach((el) => {
+                const data = el.getAttribute('data-id');
+                if (data) {
+                  store.getState().setSelectedNodeIds((prev) => {
+                    return new Set([...prev].filter((i) => i !== data));
+                  });
+                }
+              });
+            }}
+          />
         </div>
-        <div className="h-full w-1/5 bg-gray-200 p-4">
-          <div className="h-1/4 w-full bg-gray-300 ">sidebar</div>
-          {Object.entries(WebloomComponents).map(([name, component]) => {
-            const Component = component.component;
-            return (
-              <NewNodeAdapter type={name} key={name}>
-                <Component {...component.initialProps} />
-              </NewNodeAdapter>
-            );
-          })}
-        </div>
+
+        {/*right sidebar*/}
+        <RightSidebar />
       </DndContext>
     </div>
   );

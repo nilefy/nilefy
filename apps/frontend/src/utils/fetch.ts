@@ -7,7 +7,6 @@ export async function fetchX(...args: Parameters<typeof fetch>) {
   const [url, ...rest] = args;
   const res = await fetch(`${baseUrl}${url}`, ...rest);
   if (!res.ok) {
-    console.log(await res.text());
     throw new Error(`fetch failed with status ${res.status}`);
   } else {
     return res;

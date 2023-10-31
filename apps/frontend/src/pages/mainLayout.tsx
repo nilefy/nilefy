@@ -41,7 +41,6 @@ export const loader = (queryClient: QueryClient) => async () => {
   const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
   if (t === undefined) {
     const workspaces = await queryClient.fetchQuery(query);
-    console.log(workspaces[0].id);
     return redirect(`/${workspaces[0].id}`);
   } else {
     return t;
