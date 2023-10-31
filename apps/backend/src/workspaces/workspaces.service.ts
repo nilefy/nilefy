@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider, DatabaseI } from '../drizzle/drizzle.provider';
 import {
-  CreateWorkspaceDto,
-  UpdateWorkspaceDto,
+  CreateWorkspaceDb,
+  UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
 import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
@@ -21,7 +21,7 @@ export class WorkspacesService {
     return ws;
   }
 
-  async create(ws: CreateWorkspaceDto): Promise<WorkspaceDto> {
+  async create(ws: CreateWorkspaceDb): Promise<WorkspaceDto> {
     const workspace = await this.db
       .insert(schema.workspaces)
       .values(ws)
@@ -29,10 +29,10 @@ export class WorkspacesService {
     return workspace[0];
   }
 
-  async update(id: number, ws: UpdateWorkspaceDto): Promise<WorkspaceDto> {
+  async update(id: number, ws: UpdateWorkspaceDb): Promise<WorkspaceDto> {
     const workspace = await this.db
       .update(schema.workspaces)
-      .set({ ...ws, updatedAt: sql`now()` })
+      .set({ ...ws, updatedById: ws.updatedById, updatedAt: sql`now()` })
       .where(
         and(eq(schema.workspaces.id, id), isNull(schema.workspaces.deletedAt)),
       )

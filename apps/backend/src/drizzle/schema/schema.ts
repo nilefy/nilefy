@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   integer,
+  json,
   pgTable,
   serial,
   text,
@@ -54,6 +55,9 @@ export const apps = pgTable('apps', {
     .notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   description: varchar('description', { length: 255 }),
+  state: json('state')
+    .default(sql`'{}'::json`)
+    .notNull(),
   /**
    * workspace this app belongs to
    */
