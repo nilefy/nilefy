@@ -24,8 +24,10 @@ const dashboardPaths = [
 const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
-    const res = await fetchX('/workspaces');
-    return (await res.json()) as WorkSpaces;
+    // TODO: re-enable this when the frontend auth is ready
+    // const res = await fetchX('/workspaces');
+    // return (await res.json()) as WorkSpaces;
+    return [{ id: 1, imageUrl: null, name: 'work' }] satisfies WorkSpaces;
   },
 });
 

@@ -83,6 +83,12 @@ const router = createBrowserRouter([
     element: <SignIn />,
     errorElement: <ErrorPage />,
   },
+  // TODO: remove this route after frontend auth is done (currently used for testing)
+  {
+    path: '/editor',
+    element: <App />,
+    errorElement: <ErrorPage />,
+  },
 ]);
 
 const container = document.getElementById('root') as HTMLDivElement;
