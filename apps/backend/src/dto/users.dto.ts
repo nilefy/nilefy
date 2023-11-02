@@ -7,7 +7,8 @@ export const userSchema = createSelectSchema(usersDrizzle, {
   email: (schema) => schema.email.email(),
   password: (schema) => schema.password.min(6).max(255),
 });
-export const updateUserSchema = signUpSchema
+
+export const updateUserSchema = userSchema
   .pick({
     username: true,
     password: true,
