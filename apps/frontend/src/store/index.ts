@@ -189,10 +189,16 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       set((state) => {
         const oldParentId = state.tree[id].parent;
         if (parentId === oldParentId || id === parentId) return state;
+        const oldColCount = state.tree[id].columnsCount;
+        const colWidth = state.tree[oldParentId!].columnWidth!;
+        const newColWidth = state.tree[parentId].columnWidth!;
+        const newColCount = Math.round((oldColCount * colWidth) / newColWidth);
+        const node = state.tree[id];
+        node.columnsCount = newColCount;
         const newTree = {
           ...state.tree,
           [id]: {
-            ...state.tree[id],
+            ...node,
             parent: parentId,
           },
           [parentId]: {
@@ -242,9 +248,10 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       }
       const gridColSize = parent.columnWidth!;
       const gridRowSize = ROW_HEIGHT;
+      const parentDimensions = get().getDimensions(node.parent!);
       return {
-        x: node.x * gridColSize,
-        y: node.y * gridRowSize,
+        x: node.x * gridColSize + parentDimensions.x,
+        y: node.y * gridRowSize + parentDimensions.y,
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
         width: node.columnsCount * gridColSize,

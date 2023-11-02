@@ -52,7 +52,6 @@ const WebloomRoot = () => {
     const width = ref.current?.clientWidth;
     const height = ref.current?.clientHeight;
     const columnWidth = width / NUMBER_OF_COLUMNS;
-    console.log(width, columnWidth);
     const rowsCount = Math.floor(height / ROW_HEIGHT);
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   }, []);
@@ -121,7 +120,7 @@ const initTree: WebloomTree = {
     y: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: [],
+    nodes: ['container-1'],
     parent: null,
     isCanvas: true,
     dom: null,
@@ -129,6 +128,24 @@ const initTree: WebloomTree = {
       className: 'h-full w-full bg-red-500',
     },
     rowsCount: 100,
+  },
+  'container-1': {
+    id: 'container-1',
+    name: 'container-1',
+    type: WebloomContainer,
+    x: 5,
+    y: 50,
+    columnWidth: 15,
+    columnsCount: 5,
+    nodes: [],
+    parent: ROOT_NODE_ID,
+    isCanvas: true,
+    dom: null,
+    props: {
+      className: 'h-full w-full bg-blue-500',
+      color: 'red',
+    },
+    rowsCount: 50,
   },
 };
 store.setState((state) => {
