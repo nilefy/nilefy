@@ -5,53 +5,80 @@ import {
   Body,
   Param,
   Delete,
-  BadRequestException,
   ParseIntPipe,
   UsePipes,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
-import { TablecxService } from './table.service';
-import { WebloomTableDto, webloomTableSchema } from '../dto/webloom_table.dto';
+import { WebloomDbService } from './table.service';
+import {
+  InsertWebloomTableDto,
+  WebloomTableDto,
+  webloomTableInsertDto,
+} from '../dto/webloom_table.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { JwtGuard } from '../auth/jwt.guard';
+import { WorkspaceDto } from '../dto/workspace.dto';
+import { ExpressAuthedRequest } from '../auth/auth.types';
 
-@Controller('tables')
-export class TablecxController {
-  constructor(private readonly tablecxService: TablecxService) {}
+@UseGuards(JwtGuard)
+@Controller('workspaces/:workspaceId/database')
+export class WebloomDbController {
+  constructor(private readonly webloomDbService: WebloomDbService) {}
 
-  @Get(':id')
-  async getAllDataByTableId(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<object> {
-    return await this.tablecxService.getAllDataByTableId(id);
+  @Get()
+  async index(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WorkspaceDto['id'],
+  ) {
+    return await this.webloomDbService.index(workspaceId);
   }
 
-  // @Get(':userId')
-  @Get()
-  async getAllTables(@Param('userId') userId: string): Promise<object> {
-    if (userId === '') {
-      return new BadRequestException('userId is required');
-    }
-    //! verify userId has access
-    return await this.tablecxService.getAllTablecxs();
+  @Get(':id')
+  async findOne(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WorkspaceDto['id'],
+    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
+  ) {
+    return await this.webloomDbService.findOne(workspaceId, tableId);
+  }
+
+  @UsePipes()
+  @Post()
+  async createTable(
+    @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WorkspaceDto['id'],
+    @Body(new ZodValidationPipe(webloomTableInsertDto))
+    tableDto: InsertWebloomTableDto,
+  ) {
+    return await this.webloomDbService.create({
+      createdById: req.user.userId,
+      workspaceId,
+      ...tableDto,
+    });
   }
 
   @Post('insert/:id')
   async insertDataByTableId(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() data: object[],
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WorkspaceDto['id'],
+    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
+    @Body() data: Record<string, unknown>[],
   ) {
-    return await this.tablecxService.insertDataByTableId(id, data);
-  }
-
-  @UsePipes(new ZodValidationPipe(webloomTableSchema))
-  @Post()
-  async createTable(@Body() tablecx: WebloomTableDto) {
-    return await this.tablecxService.createTablecx(tablecx);
+    return await this.webloomDbService.insertDataByTableId(
+      workspaceId,
+      tableId,
+      data,
+    );
   }
 
   @Delete(':id')
   async deleteTable(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<WebloomTableDto> {
-    return await this.tablecxService.deleteTablecx(id);
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WorkspaceDto['id'],
+    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
+  ) {
+    return await this.webloomDbService.delete(workspaceId, tableId);
   }
 }

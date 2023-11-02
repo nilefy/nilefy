@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TablecxController as WebloomTableController } from './table.controller';
-import { TablecxService as WebloomTableService } from './table.service';
-import { DbService } from './db/db.table.service';
+import { WebloomDbController as WebloomTableController } from './table.controller';
+import { WebloomDbService as WebloomTableService } from './table.service';
 
 @Module({
   controllers: [WebloomTableController],
-  providers: [WebloomTableService, DbService],
+  providers: [WebloomTableService],
   exports: [WebloomTableService],
 })
 export class WebloomTableModule {}

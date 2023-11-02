@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TablecxService } from './table.service';
+import { WebloomDbService } from './table.service';
 
 describe('TablecxService', () => {
-  let service: TablecxService;
+  let service: WebloomDbService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TablecxService],
+      providers: [WebloomDbService],
     }).compile();
 
-    service = module.get<TablecxService>(TablecxService);
+    service = module.get<WebloomDbService>(WebloomDbService);
   });
 
   it('should be defined', () => {
