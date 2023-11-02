@@ -18,9 +18,10 @@ import {
   UpdateWorkspaceDto,
   CreateWorkspaceDto,
 } from '../dto/workspace.dto';
-import { JwtGuard } from 'src/auth/jwt.guard';
+import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 
+@UseGuards(JwtGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
@@ -30,7 +31,6 @@ export class WorkspacesController {
     return await this.workspaceService.index(false);
   }
 
-  @UseGuards(JwtGuard)
   @Post()
   async create(
     @Request() req: ExpressAuthedRequest,
@@ -43,7 +43,6 @@ export class WorkspacesController {
     });
   }
 
-  @UseGuards(JwtGuard)
   @Put(':id')
   async update(
     @Request() req: ExpressAuthedRequest,

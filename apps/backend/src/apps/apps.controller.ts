@@ -3,16 +3,16 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
-  UsePipes,
   ParseIntPipe,
   Req,
+  Put,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
+  AppDto,
   CreateAppDto,
   UpdateAppDto,
   createAppSchema,
@@ -22,51 +22,62 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 
-@Controller('apps')
+@UseGuards(JwtGuard)
+@Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
 
-  @UseGuards(JwtGuard)
-  @UsePipes(new ZodValidationPipe(createAppSchema))
   @Post()
   async create(
-    @Body() createAppDto: CreateAppDto,
     @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Body(new ZodValidationPipe(createAppSchema)) createAppDto: CreateAppDto,
   ) {
-    return await this.appsService.create(req.user, createAppDto);
+    return await this.appsService.create({
+      createdById: req.user.userId,
+      workspaceId,
+      ...createAppDto,
+    });
   }
 
-  @UseGuards(JwtGuard)
   @Get()
-  async findAll(@Req() req: ExpressAuthedRequest) {
-    return await this.appsService.findAll(req.user);
+  async findAll(
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+  ) {
+    return await this.appsService.findAll(workspaceId);
   }
 
-  @UseGuards(JwtGuard)
   @Get(':id')
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Param('id', ParseIntPipe) appId: AppDto['id'],
   ) {
-    return await this.appsService.findOne(req.user, id);
+    return await this.appsService.findOne(workspaceId, appId);
   }
 
-  @UseGuards(JwtGuard)
-  @Patch(':id')
+  @Put(':id')
   async update(
-    @Body(new ZodValidationPipe(updateAppSchema)) updateAppDto: UpdateAppDto,
-    @Param('id', ParseIntPipe) id: number,
     @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Body(new ZodValidationPipe(updateAppSchema)) updateAppDto: UpdateAppDto,
   ) {
-    return await this.appsService.update(req.user, id, updateAppDto);
+    return await this.appsService.update(workspaceId, appId, {
+      updatedById: req.user.userId,
+      ...updateAppDto,
+    });
   }
 
-  @UseGuards(JwtGuard)
   @Delete(':id')
   async delete(
-    @Param('id', ParseIntPipe) id: number,
     @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Param('id', ParseIntPipe) appId: AppDto['id'],
   ) {
-    return await this.appsService.delete(req.user, id);
+    return await this.appsService.delete({
+      workspaceId,
+      appId,
+      deletedById: req.user.userId,
+    });
   }
 }

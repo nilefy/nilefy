@@ -1,6 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CreateAppDto, UpdateAppDto, AppDto } from '../dto/apps.dto';
-import { RequestUser } from '../auth/auth.types';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
@@ -9,51 +8,77 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 export class AppsService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async create(user: RequestUser, createAppDto: CreateAppDto): Promise<AppDto> {
-    const values = { ...createAppDto, userId: user.userId };
-    const [app] = await this.db.insert(apps).values(values).returning();
-    return app;
+  async create(createAppDto: CreateAppDb): Promise<AppDto> {
+    const [app] = await this.db.insert(apps).values(createAppDto).returning();
+    // note i'm using as because "state" is not infered
+    return app as AppDto;
   }
 
-  async findAll(user: RequestUser): Promise<AppDto[]> {
-    const userApps = await this.db.query.apps.findMany({
-      where: eq(apps.userId, user.userId),
+  async findAll(workspaceId: AppDto['workspaceId']): Promise<AppDto[]> {
+    const workspaceApps = await this.db.query.apps.findMany({
+      where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
     });
-    return userApps;
+    return workspaceApps as AppDto[];
   }
 
-  async findOne(user: RequestUser, id: number): Promise<AppDto | undefined> {
+  async findOne(
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+  ): Promise<AppDto> {
     const app = await this.db.query.apps.findFirst({
-      where: and(eq(apps.id, id), eq(apps.userId, user.userId)),
+      where: and(
+        eq(apps.id, appId),
+        eq(apps.workspaceId, workspaceId),
+        isNull(apps.deletedAt),
+      ),
     });
-    return app;
+    if (!app) throw new NotFoundException('app not found in this workspace');
+    return app as AppDto;
   }
 
   async update(
-    user: RequestUser,
-    id: number,
-    updateAppDto: UpdateAppDto,
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+    updateAppDto: UpdateAppDb,
   ): Promise<AppDto> {
     const [app] = await this.db
       .update(apps)
-      .set({ ...updateAppDto, updatedAt: sql`now()` })
+      .set({ updatedAt: sql`now()`, ...updateAppDto })
       .where(
         and(
-          eq(apps.id, id),
-          eq(apps.userId, user.userId),
+          eq(apps.id, appId),
+          eq(apps.workspaceId, workspaceId),
           isNull(apps.deletedAt),
         ),
       )
       .returning();
-    return app;
+
+    if (!app) throw new NotFoundException('app not found in this workspace');
+    return app as AppDto;
   }
 
-  async delete(user: RequestUser, id: number): Promise<AppDto> {
+  async delete({
+    workspaceId,
+    appId,
+    deletedById,
+  }: {
+    deletedById: AppDto['deletedById'];
+    appId: AppDto['id'];
+    workspaceId: AppDto['workspaceId'];
+  }): Promise<AppDto> {
     const [app] = await this.db
       .update(apps)
-      .set({ deletedAt: sql`now()` })
-      .where(and(eq(apps.id, id), eq(apps.userId, user.userId)))
+      .set({ deletedAt: sql`now()`, deletedById })
+      .where(
+        and(
+          eq(apps.id, appId),
+          eq(apps.workspaceId, workspaceId),
+          isNull(apps.deletedAt),
+        ),
+      )
       .returning();
-    return app;
+
+    if (!app) throw new NotFoundException('app not found in this workspace');
+    return app as AppDto;
   }
 }
