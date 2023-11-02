@@ -12,7 +12,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,7 +34,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink } from 'react-router-dom';
 import { Label } from '@/components/ui/label';
 import { useParams } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import ErrorToast from './ErrorToast';
 // types
 interface Column {
   id: number;
@@ -83,8 +82,8 @@ export default function DatabaseTable() {
   // fetching / mutating  data / hooks
   const queryClient = useQueryClient();
   const { data: tables, isLoading } = useQuery({
-    queryFn: () => fetchTables(searchParam),
-    queryKey: ['tables', searchParam],
+    queryFn: () => fetchTables(),
+    queryKey: ['tables'],
   });
 
   const { mutateAsync: addTableMutation } = useMutation({
@@ -99,11 +98,10 @@ export default function DatabaseTable() {
     onMutate: async (tableId) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       console.log('mutating');
-
       await queryClient.cancelQueries({ queryKey: ['tables'] });
       const previousTables = queryClient.getQueryData(['tables']);
       // Optimistically update to the new value
-      await queryClient.setQueryData(
+      queryClient.setQueryData(
         ['tables'],
         tables?.filter((table) => table.id !== tableId),
       );
@@ -159,17 +157,7 @@ export default function DatabaseTable() {
     columns: [],
   });
   // state for controlling table dialog
-  const [isCreateTableDialogOpen, setisCreateTableDialogOpen] = useState(false);
-
-  // error handling
-  const { toast } = useToast();
-  // TODO: show error in a toast
-  const displayErrorToast = (message: string) => {
-    toast({
-      title: 'Error',
-      description: message,
-    });
-  };
+  const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   // form config.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -177,6 +165,7 @@ export default function DatabaseTable() {
       columns: [{ id: 0, name: 'id', type: 'serial', default: 'NULL' }],
     },
     shouldUnregister: false, // Do not unregister fields on removal
+    mode: 'onSubmit',
   });
   useEffect(() => {
     form.reset({
@@ -190,7 +179,7 @@ export default function DatabaseTable() {
       ],
     });
   }, [form, form.reset, isCreateTableDialogOpen]);
-  const errors = form.formState.errors;
+  // const errors = form.formState.errors;
   const control = form.control;
   const { fields, append, remove } = useFieldArray({
     control,
@@ -198,8 +187,6 @@ export default function DatabaseTable() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('submitting form', values);
-
     try {
       const tableWithId: Table = {
         name: values.name,
@@ -208,18 +195,19 @@ export default function DatabaseTable() {
       };
 
       if (tables) {
+        console.log('submitting form', values);
         await addTableMutation(tableWithId);
+        form.reset();
         // If the mutation is successful, set the dialog state
-        setisCreateTableDialogOpen(false);
+        setIsCreateTableDialogOpen(false);
       }
     } catch (error) {
       console.log('Caught error:', error);
-      displayErrorToast('An error occurred during form submission');
     }
   }
 
   const handleOnClick = () => {
-    setisCreateTableDialogOpen(true);
+    setIsCreateTableDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
@@ -263,7 +251,7 @@ export default function DatabaseTable() {
   // };
   const handleCancel = () => {
     form.reset(); // Reset the form to its default values
-    setisCreateTableDialogOpen(false); // Close the dialog
+    setIsCreateTableDialogOpen(false); // Close the dialog
   };
 
   return (
@@ -290,7 +278,6 @@ export default function DatabaseTable() {
                   >
                     <div className="mb-4">
                       <FormField
-                        control={form.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
@@ -299,13 +286,21 @@ export default function DatabaseTable() {
                               <Input
                                 placeholder="Enter table name"
                                 {...field}
+                                value={
+                                  field.value !== undefined ? field.value : ''
+                                }
+                                // defaultValue=""
                               />
                             </FormControl>
+                            {form.formState.submitCount > 0 && (
+                              <ErrorToast
+                                message={form.formState.errors.name?.message}
+                              />
+                            )}
                           </FormItem>
                         )}
                       />
                     </div>
-
                     <div className="mb-4">
                       <Label className="mb-2 block text-lg font-bold">
                         Columns
@@ -323,7 +318,6 @@ export default function DatabaseTable() {
                           </div>
                           <div className="flex-1">
                             <FormField
-                              control={form.control}
                               name={
                                 `columns[${index}].name` as `columns.${number}.name`
                               }
@@ -342,13 +336,20 @@ export default function DatabaseTable() {
                                       className=" w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none"
                                     />
                                   </FormControl>
+                                  {form.formState.submitCount > 0 && (
+                                    <ErrorToast
+                                      message={
+                                        form.formState.errors.columns?.[index]
+                                          ?.name?.message
+                                      }
+                                    />
+                                  )}
                                 </div>
                               )}
                             />
                           </div>
                           <div className="ml-4 flex-1">
                             <FormField
-                              control={form.control}
                               name={
                                 `columns[${index}].type` as `columns.${number}.type`
                               }
@@ -361,14 +362,15 @@ export default function DatabaseTable() {
                                     Type
                                   </FormLabel>
                                   <FormControl>
-                                    <Select {...field}>
+                                    <Select
+                                      {...field}
+                                      onValueChange={field.onChange}
+                                    >
                                       <SelectTrigger disabled={index === 0}>
                                         <SelectValue
                                           placeholder="Select.."
                                           defaultValue={
-                                            (index === 0
-                                              ? 'serial'
-                                              : field.value) || ''
+                                            index === 0 ? 'serial' : 'int'
                                           }
                                         />
                                       </SelectTrigger>
@@ -377,9 +379,9 @@ export default function DatabaseTable() {
                                           <SelectItem
                                             key={type}
                                             value={type}
-                                            disabled={
-                                              index === 0 && type === 'serial'
-                                            }
+                                            // disabled={
+                                            //   index === 0 && type === 'serial'
+                                            // }
                                           >
                                             {type}
                                           </SelectItem>
@@ -393,11 +395,11 @@ export default function DatabaseTable() {
                           </div>
                           <div className="ml-4 flex-1">
                             <FormField
-                              control={form.control}
+                              // control={form.control}
                               name={
                                 `columns[${index}].default` as `columns.${number}.default`
                               }
-                              render={() => (
+                              render={({ field }) => (
                                 <div>
                                   <FormLabel
                                     htmlFor={`columns[${index}].default`}
@@ -407,19 +409,24 @@ export default function DatabaseTable() {
                                   </FormLabel>
                                   <FormControl>
                                     <Input
+                                      {...field}
                                       {...form.register(
                                         `columns[${index}].default` as `columns.${number}.default`,
                                       )}
-                                      value={item.default ?? ''} // Provide a default value when the value is null
+                                      // value={index === 0 ? 'NULL' : ''}
                                       disabled={index === 0}
                                       placeholder="NULL"
                                       className="w-full appearance-none rounded border px-3 leading-tight shadow"
                                     />
                                   </FormControl>
-                                  <div>
-                                    {' '}
-                                    <FormMessage />
-                                  </div>
+                                  {form.formState.submitCount > 0 && (
+                                    <ErrorToast
+                                      message={
+                                        form.formState.errors.columns?.[index]
+                                          ?.default?.message
+                                      }
+                                    />
+                                  )}
                                 </div>
                               )}
                             />
@@ -476,18 +483,6 @@ export default function DatabaseTable() {
           </div>
           <div className="mt-6 flex flex-col items-center">
             <h4 className="inline-flex self-start ">All Tables</h4>
-            {/* <Button
-              variant="outline"
-              onClick={() => {
-                toast({
-                  variant: 'destructive',
-                  title: 'Uh oh! Something went wrong.',
-                  description: 'There was a problem with your request.',
-                });
-              }}
-            >
-              Show Toast
-            </Button> */}
             <div className="mt-4 w-full">
               <Input
                 type="text"
@@ -501,76 +496,84 @@ export default function DatabaseTable() {
                   {isLoading ? (
                     <div>Loading </div>
                   ) : (tables || []).length > 0 ? (
-                    (tables || []).map((table) => (
-                      <li
-                        key={String(table.id)}
-                        className={`flex flex-row items-center justify-between  hover:bg-primary/10  ${
-                          currentTableId === table.id ? 'bg-primary/20' : ''
-                        }`}
-                      >
-                        {table.id === editTable.id ? (
-                          <div className="flex items-center">
-                            <Input
-                              type="text"
-                              className="mr-2 w-5/6"
-                              value={editTable.name}
-                              onChange={(e) =>
-                                setEditTable({
-                                  ...editTable,
-                                  name: e.target.value,
-                                })
-                              }
-                            />
-                            <Button
-                              onClick={handleSaveEdit}
-                              variant="secondary"
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              onClick={handleCancelEdit}
-                              variant="default"
-                              className="mx-2"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <NavLink
-                              to={table.id.toString()}
-                              className={`mt-2 w-full cursor-pointer rounded-md border-gray-300 p-2`}
-                              onClick={() => handleTableClick(table)}
-                            >
-                              <span className="text-sm">{table.name}</span>
-                            </NavLink>
-                            <div className="flex  items-center justify-center">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger>
-                                  <span className="rotate-90 p-2">...</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="flex flex-col">
-                                  <DropdownMenuItem
-                                    onClick={() => handleEdit(table)}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  {!editTable.id && (
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleRemoveTable(table.id)
-                                      }
-                                    >
-                                      Remove
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                    (tables || [])
+                      .filter((table) =>
+                        searchParam
+                          ? table.name
+                              .toLowerCase()
+                              .includes(searchParam.toLowerCase())
+                          : true,
+                      )
+                      .map((table) => (
+                        <li
+                          key={String(table.id)}
+                          className={`flex flex-row items-center justify-between  hover:bg-primary/10  ${
+                            currentTableId === table.id ? 'bg-primary/20' : ''
+                          }`}
+                        >
+                          {table.id === editTable.id ? (
+                            <div className="flex items-center">
+                              <Input
+                                type="text"
+                                className="mr-2 w-5/6"
+                                value={editTable.name}
+                                onChange={(e) =>
+                                  setEditTable({
+                                    ...editTable,
+                                    name: e.target.value,
+                                  })
+                                }
+                              />
+                              <Button
+                                onClick={handleSaveEdit}
+                                variant="secondary"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                onClick={handleCancelEdit}
+                                variant="default"
+                                className="mx-2"
+                              >
+                                Cancel
+                              </Button>
                             </div>
-                          </>
-                        )}
-                      </li>
-                    ))
+                          ) : (
+                            <>
+                              <NavLink
+                                to={table.id.toString()}
+                                className={`mt-2 w-full cursor-pointer rounded-md border-gray-300 p-2`}
+                                onClick={() => handleTableClick(table)}
+                              >
+                                <span className="text-sm">{table.name}</span>
+                              </NavLink>
+                              <div className="flex  items-center justify-center">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger>
+                                    <span className="rotate-90 p-2">...</span>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="flex flex-col">
+                                    <DropdownMenuItem
+                                      onClick={() => handleEdit(table)}
+                                    >
+                                      Edit
+                                    </DropdownMenuItem>
+                                    {!editTable.id && (
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleRemoveTable(table.id)
+                                        }
+                                      >
+                                        Remove
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </>
+                          )}
+                        </li>
+                      ))
                   ) : (
                     <div>No matching tables found.</div>
                   )}

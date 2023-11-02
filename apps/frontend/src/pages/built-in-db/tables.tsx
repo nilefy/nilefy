@@ -80,8 +80,7 @@ export const fetchTable = async (tableId: number): Promise<Table> => {
 export const addTable = async (table: Table): Promise<Table> => {
   console.log('adding table');
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  // Perform actual addition logic here
-  tables.push(table); // Assuming you're adding to the existing tables array
+  tables.push(table);
   return table;
   // throw new Error('error adding the table');
 };
