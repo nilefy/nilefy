@@ -7,7 +7,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
-import { PayloadUser } from './auth.types';
+import { JwtToken, PayloadUser } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +28,7 @@ export class AuthService {
         sub: u.id,
         username: u.username,
       } satisfies PayloadUser),
-    };
+    } satisfies JwtToken;
   }
 
   async signIn(user: LoginUserDto) {
@@ -48,6 +48,6 @@ export class AuthService {
         sub: ret.id,
         username: ret.username,
       } satisfies PayloadUser),
-    };
+    } satisfies JwtToken;
   }
 }
