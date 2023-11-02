@@ -17,11 +17,7 @@ import {
   CreateUserDto,
   LoginUserDto,
 } from '../dto/users.dto';
-import {
-  ExpressAuthedRequest,
-  GoogleAuthedRequest,
-  JwtRequest,
-} from './auth.types';
+import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -29,16 +25,14 @@ export class AuthController {
 
   @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
-  async signUp(@Body() userDto: CreateUserDto, @Req() req: JwtRequest) {
-    req.user = await this.authService.signUp(userDto);
-    return;
+  async signUp(@Body() userDto: CreateUserDto) {
+    return await this.authService.signUp(userDto);
   }
 
   @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
-  async signIn(@Body() userDto: LoginUserDto, @Req() req: JwtRequest) {
-    req.user = await this.authService.signIn(userDto);
-    return;
+  async signIn(@Body() userDto: LoginUserDto) {
+    return await this.authService.signIn(userDto);
   }
 
   @UseGuards(SignInGoogleOAuthGuard)

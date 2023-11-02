@@ -12,7 +12,7 @@ export type PayloadUser = {
 };
 
 /**
- * type of user that will be on the `Request` object
+ * type of user that will be on the `Request` object after auth
  */
 export type RequestUser = {
   userId: number;
@@ -23,7 +23,7 @@ export type ExpressAuthedRequest = Request & {
   user: RequestUser;
 };
 
-export type JwtToken = { token: string };
+export type JwtToken = { access_token: string };
 
 export type JwtRequest = Request & {
   user: JwtToken;
