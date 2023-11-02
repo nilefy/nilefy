@@ -2,6 +2,7 @@ import { relations, sql } from 'drizzle-orm';
 import {
   integer,
   json,
+  pgEnum,
   pgTable,
   serial,
   text,
@@ -70,13 +71,48 @@ export const apps = pgTable('apps', {
   deletedById: integer('deleted_by_id').references(() => users.id),
 });
 
+export const webloomTables = pgTable('tables', {
+  id: serial('id').primaryKey(),
+  name: text('name').unique().notNull(),
+  ...timeStamps,
+  createdById: integer('created_by_id')
+    .references(() => users.id)
+    .notNull(),
+  /**
+   * workspace id this table belongs to
+   */
+  workspaceId: integer('workspace_id')
+    .references(() => workspaces.id)
+    .notNull(),
+});
+
+export const pgColumnTypsEnum = pgEnum('pg_columns_enum', [
+  'varchar',
+  'int',
+  'bigint',
+  'serial',
+  'boolean',
+]);
+
+export const webloomColumns = pgTable('columns', {
+  id: serial('id').primaryKey(),
+  name: text('name').unique().notNull(),
+  type: pgColumnTypsEnum('type').notNull(),
+  tableId: integer('table_id')
+    .notNull()
+    .references(() => webloomTables.id, { onDelete: 'cascade' }),
+});
+
 const userWorkspaceRelation = 'userWorkspaces';
 const userAppRelation = 'userApps';
+const userWebloomTablesRelation = 'userTables';
 const workspaceAppsRelation = 'workspaceApps';
+const workspaceWebloomTablesRelation = 'workspaceWebloomTables';
 const userUpdateWorkspaceRelation = 'lastUpdatedWorkspaces';
 const userDeleteWorkspaceRelation = 'lastDeletedWorkspaces';
 const userUpdateAppRelation = 'lastUpdatedApps';
 const userDeleteAppRelation = 'lastDeletedApps';
+const webloomTablesColumnsRelation = 'webloomTablesColumns';
 
 export const usersRelations = relations(users, ({ many }) => {
   return {
@@ -100,6 +136,12 @@ export const usersRelations = relations(users, ({ many }) => {
      * Apps user created/own
      */
     apps: many(apps, { relationName: userAppRelation }),
+    /**
+     * webloom tables user created/own
+     */
+    webloomTables: many(webloomTables, {
+      relationName: userWebloomTablesRelation,
+    }),
   };
 });
 
@@ -120,6 +162,9 @@ export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
     relationName: userDeleteWorkspaceRelation,
   }),
   apps: many(apps, { relationName: workspaceAppsRelation }),
+  webloomTables: many(webloomTables, {
+    relationName: workspaceWebloomTablesRelation,
+  }),
 }));
 
 export const appsRelations = relations(apps, ({ one }) => ({
@@ -145,29 +190,29 @@ export const appsRelations = relations(apps, ({ one }) => ({
   }),
 }));
 
-export const webloomTables = pgTable('tables', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  ...timeStamps,
-  ...softDelete,
-});
-
-export const webloomTableRelations = relations(webloomTables, ({ many }) => ({
-  columns: many(webloomColumns),
-}));
-
-export const webloomColumns = pgTable('columns', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  type: text('type').notNull(),
-  tableId: integer('table_id')
-    .notNull()
-    .references(() => webloomTables.id),
-});
+export const webloomTableRelations = relations(
+  webloomTables,
+  ({ one, many }) => ({
+    columns: many(webloomColumns, {
+      relationName: webloomTablesColumnsRelation,
+    }),
+    createdBy: one(users, {
+      fields: [webloomTables.createdById],
+      references: [users.id],
+      relationName: userWebloomTablesRelation,
+    }),
+    workspace: one(workspaces, {
+      fields: [webloomTables.workspaceId],
+      references: [workspaces.id],
+      relationName: workspaceWebloomTablesRelation,
+    }),
+  }),
+);
 
 export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
   tableId: one(webloomTables, {
     fields: [webloomColumns.tableId],
     references: [webloomTables.id],
+    relationName: webloomTablesColumnsRelation,
   }),
 }));

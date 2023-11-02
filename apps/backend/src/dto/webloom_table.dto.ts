@@ -1,26 +1,69 @@
 import { z } from 'zod';
+import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
+import {
+  webloomTables as webloomTablesDrizzle,
+  webloomColumns as webloomColumnsDrizzle,
+} from '../drizzle/schema/schema';
 
-const ColumnType = z.enum(['varchar', 'int', 'bigint', 'serial', 'boolean']);
-const Column = z.object({
-  tableId: z.number().optional(),
-  name: z.string(),
-  type: ColumnType,
+export const webloomTableColumn = createSelectSchema(webloomColumnsDrizzle, {
+  name: (schema) => schema.name.min(3).max(255),
 });
 
-export const webloomTableSchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(3).max(255),
-  columns: z.array(Column).optional(),
-  // createdAt: z.date().optional(),
-  // deletedAt: z.date().optional(),
-  // updatedAt: z.date().optional(),
+export const webloomTableSchema = createSelectSchema(webloomTablesDrizzle, {
+  name: (schema) => schema.name.min(3).max(255),
 });
 
-// export const webloomCreateTableSchema = z.object({
-//   name: z.string().min(3).max(255),
-// });
+/**
+ * insert column db interface
+ */
+export const webloomColumnInsertDb = createInsertSchema(webloomColumnsDrizzle, {
+  name: (schema) => schema.name.min(3).max(255),
+});
 
+/**
+ * insert column API interface
+ *
+ * note we don't expose `tableId` because this operation should be only done in the context of creating new table
+ */
+export const webloomColumnInsertDto = webloomColumnInsertDb.pick({
+  name: true,
+  type: true,
+});
+
+/**
+ * insert table db interface
+ */
+export const webloomTableInsertDb = createInsertSchema(webloomTablesDrizzle, {
+  name: (schema) => schema.name.min(3).max(255),
+});
+
+/**
+ * insert table API interface
+ */
+export const webloomTableInsertDto = webloomTableInsertDb
+  .pick({
+    name: true,
+  })
+  .extend({
+    columns: z.array(webloomColumnInsertDto),
+  });
+
+export type WebloomColumnDto = z.infer<typeof webloomTableColumn>;
 export type WebloomTableDto = z.infer<typeof webloomTableSchema>;
-export type WebloomColumnTypeDto = z.infer<typeof ColumnType>;
-export type WebloomColumnDto = z.infer<typeof Column>;
-// export type WebloomCreateTableDto = z.infer<typeof webloomCreateTableSchema>;
+/**
+ * insert column db interface
+ */
+export type InsertWebloomColumnDb = z.infer<typeof webloomColumnInsertDb>;
+/**
+ * insert column API interface
+ */
+export type InsertWebloomColumnDto = z.infer<typeof webloomColumnInsertDto>;
+
+/**
+ * insert table db interface
+ */
+export type InsertWebloomTableDb = z.infer<typeof webloomTableInsertDb>;
+/**
+ * insert table API interface
+ */
+export type InsertWebloomTableDto = z.infer<typeof webloomTableInsertDto>;
