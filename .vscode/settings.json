@@ -4,5 +4,7 @@
   },
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "prettier.tabWidth": 2,
+  "prettier.useTabs": false,
 }

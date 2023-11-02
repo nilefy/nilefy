@@ -1,10 +1,10 @@
+import { ROW_HEIGHT } from '@/lib/constants';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 
-export const Grid = ({ gridSize }: { gridSize: number }) => {
+const Grid = ({ gridSize }: { gridSize: number }) => {
   //grid line width is 1px
   const { active } = useDndContext();
-
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -18,8 +18,8 @@ export const Grid = ({ gridSize }: { gridSize: number }) => {
     const width = canvas.width;
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
-    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.setLineDash([ROW_HEIGHT, ROW_HEIGHT]);
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = 0; i < width; i += gridSize) {
@@ -38,3 +38,5 @@ export const Grid = ({ gridSize }: { gridSize: number }) => {
     </div>
   );
 };
+
+export default Grid;

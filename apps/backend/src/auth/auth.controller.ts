@@ -8,7 +8,8 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard, ExpressAuthedRequest } from './auth.guard';
+import { SignInGoogleOAuthGuard, SignUpGoogleOAuthGuard } from './google.guard';
+import { JwtGuard } from './jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   signUpSchema,
@@ -16,6 +17,7 @@ import {
   CreateUserDto,
   LoginUserDto,
 } from '../dto/users.dto';
+import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -29,11 +31,33 @@ export class AuthController {
 
   @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
-  signIn(@Body() userDto: LoginUserDto) {
-    return this.authService.signIn(userDto);
+  async signIn(@Body() userDto: LoginUserDto) {
+    return await this.authService.signIn(userDto);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(SignInGoogleOAuthGuard)
+  @Get('login/google')
+  signInGoogleAuth() {}
+
+  @UseGuards(SignUpGoogleOAuthGuard)
+  @Get('signup/google')
+  signUpGoogleAuth() {}
+
+  @UseGuards(SignInGoogleOAuthGuard)
+  @Get('login/google-redirect')
+  async signInGoogleRedirect(@Req() req: GoogleAuthedRequest) {
+    req.user = await this.authService.signIn(req.user as LoginUserDto);
+    return;
+  }
+
+  @UseGuards(SignUpGoogleOAuthGuard)
+  @Get('signup/google-redirect')
+  async signUpGoogleRedirect(@Req() req: GoogleAuthedRequest) {
+    req.user = await this.authService.signUp(req.user as CreateUserDto);
+    return;
+  }
+
+  @UseGuards(JwtGuard)
   @Get('main')
   main(@Req() req: ExpressAuthedRequest) {
     return req.user;

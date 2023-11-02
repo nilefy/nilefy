@@ -1,8 +1,4 @@
-import {
-  SelectWorkSpace,
-  SelectWorkSpaceProps,
-} from '@/components/selectWorkspace';
-import { useMemo } from 'react';
+import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const workspacePaths = [
@@ -14,15 +10,6 @@ const workspacePaths = [
 ];
 
 export function WorkspaceSettingsLayout() {
-  // TODO: convert to data fetching
-  const workspaces: SelectWorkSpaceProps['workspaces'] = useMemo(() => {
-    return [
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'nnnnn', name: 'nagy nabil' },
-      { id: 'aaa', name: 'Ahmed Azzam' },
-    ];
-  }, []);
-
   return (
     <>
       {/*workspace settings sidebar*/}
@@ -41,8 +28,9 @@ export function WorkspaceSettingsLayout() {
             </NavLink>
           ))}
         </nav>
-        {/*always show workspace*/}
-        <SelectWorkSpace workspaces={workspaces} />
+        <div className="w-full">
+          <SelectWorkSpace />
+        </div>
       </div>
       {/*RENDER CHILD ROUTE*/}
       <Outlet />
