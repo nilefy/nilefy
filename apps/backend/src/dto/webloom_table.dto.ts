@@ -45,7 +45,7 @@ export const webloomTableInsertDto = webloomTableInsertDb
     name: true,
   })
   .extend({
-    columns: z.array(webloomColumnInsertDto),
+    columns: z.array(webloomColumnInsertDto).min(1),
   });
 
 export type WebloomColumnDto = z.infer<typeof webloomTableColumn>;

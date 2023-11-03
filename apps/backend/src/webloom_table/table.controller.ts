@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  UsePipes,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -20,6 +19,7 @@ import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { JwtGuard } from '../auth/jwt.guard';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { ExpressAuthedRequest } from '../auth/auth.types';
+import { z } from 'zod';
 
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/database')
@@ -43,7 +43,6 @@ export class WebloomDbController {
     return await this.webloomDbService.findOne(workspaceId, tableId);
   }
 
-  @UsePipes()
   @Post()
   async createTable(
     @Req() req: ExpressAuthedRequest,
@@ -59,17 +58,24 @@ export class WebloomDbController {
     });
   }
 
-  @Post('insert/:id')
+  @Post(':id')
   async insertDataByTableId(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WorkspaceDto['id'],
     @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
-    @Body() data: Record<string, unknown>[],
+    @Body(
+      new ZodValidationPipe(
+        z.object({
+          data: z.array(z.object({}).catchall(z.any())),
+        }),
+      ),
+    )
+    data: { data: Record<string, unknown>[] },
   ) {
     return await this.webloomDbService.insertDataByTableId(
       workspaceId,
       tableId,
-      data,
+      data.data,
     );
   }
 

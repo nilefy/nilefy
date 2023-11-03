@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   varchar,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -94,14 +95,20 @@ export const pgColumnTypsEnum = pgEnum('pg_columns_enum', [
   'boolean',
 ]);
 
-export const webloomColumns = pgTable('columns', {
-  id: serial('id').primaryKey(),
-  name: text('name').unique().notNull(),
-  type: pgColumnTypsEnum('type').notNull(),
-  tableId: integer('table_id')
-    .notNull()
-    .references(() => webloomTables.id, { onDelete: 'cascade' }),
-});
+export const webloomColumns = pgTable(
+  'columns',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    type: pgColumnTypsEnum('type').notNull(),
+    tableId: integer('table_id')
+      .notNull()
+      .references(() => webloomTables.id, { onDelete: 'cascade' }),
+  },
+  (t) => ({
+    name: unique().on(t.tableId, t.name),
+  }),
+);
 
 const userWorkspaceRelation = 'userWorkspaces';
 const userAppRelation = 'userApps';
