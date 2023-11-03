@@ -33,6 +33,7 @@ class DragAction {
   private static movedToNewParent = false;
   private static touchedRoot = false;
   private static startPosition: Point;
+  private static gridStartPosition: Point;
   private static delta: Point;
   private static initialDelta: Point;
   private static mouseStartPosition: Point;
@@ -61,6 +62,7 @@ class DragAction {
         x: args.new!.startPosition.x * colWidth!,
         y: args.new!.startPosition.y * rowHeight,
       };
+      this.gridStartPosition = args.new!.startPosition;
       this.newType = args.new!.type;
       const node: WebloomNode = {
         id: 'new',
@@ -82,9 +84,15 @@ class DragAction {
       };
       addNode(node, args.new!.parent);
     } else {
-      const node = store.getState().getBoundingRect(this.id!);
+      const node = store.getState().tree[this.id!];
+      const nodeBoundingRect = getBoundingRect(this.id!);
+
       this.oldParent = store.getState().tree[this.id!].parent!;
-      this.startPosition = { x: node.left, y: node.top };
+      this.startPosition = {
+        x: nodeBoundingRect.left,
+        y: nodeBoundingRect.top,
+      };
+      this.gridStartPosition = { x: node.x, y: node.y };
     }
     this.oldParent ||= ROOT_NODE_ID;
     setDraggedNode(this.isNew ? 'new' : this.id!);
@@ -169,12 +177,30 @@ class DragAction {
       }
     }
     const isNew = this.isNew;
-    const delta = { ...this.delta };
-    const endPosition = {
-      x: Math.min(this.startPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
-      y: this.startPosition.y + delta.y,
+    const delta = this.delta;
+    const el = store.getState().tree[this.id!];
+    const [gridrow, gridcol] = getGridSize(this.id!);
+    const normalizedDelta = {
+      x: normalize(delta.x, gridcol),
+      y: normalize(delta.y, gridrow),
     };
-    const startPosition = this.startPosition;
+    const newPosition = {
+      x: this.startPosition.x + normalizedDelta.x,
+      y: this.startPosition.y + normalizedDelta.y,
+    }; // -> this is the absolute position in pixels (normalized to the grid)
+    const parentBoundingRect = getBoundingRect(el.parent!);
+    const position = {
+      x: newPosition.x - parentBoundingRect.left,
+      y: newPosition.y - parentBoundingRect.top,
+    }; // -> this is the position in pixels relative to the parent (normalized to the grid)
+    // Transform the postion to grid units (columns and rows)
+    const endPosition = {
+      x: Math.round(position.x / gridcol),
+      y: Math.round(position.y / gridrow),
+    }; // -> this is the position in grid units (columns and rows)
+    const oldParent = this.oldParent;
+    const startPosition = this.gridStartPosition;
+    const movedToNewParent = this.movedToNewParent;
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
@@ -203,9 +229,11 @@ class DragAction {
     } else {
       command = {
         execute: () => {
+          moveNode(id, overId!);
           undoData = moveNodeIntoGrid(id, endPosition);
         },
         undo: () => {
+          console.log('undo');
           Object.entries(undoData.changedNodesOriginalCoords).forEach(
             ([id, coords]) => {
               setDimensions(id, {
@@ -214,9 +242,11 @@ class DragAction {
               });
             },
           );
-          if (this.movedToNewParent) {
-            moveNode(id, this.oldParent);
+          if (movedToNewParent) {
+            console.log('moved to new parent');
+            moveNode(id, oldParent);
           }
+          console.log(startPosition);
           setDimensions(id, startPosition!);
         },
       };
@@ -370,6 +400,7 @@ class DragAction {
     this.mouseStartPosition = { x: 0, y: 0 };
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
+    this.movedToNewParent = false;
     this.counter = 0;
     setDraggedNode(null);
     setShadowElement(null);

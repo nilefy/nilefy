@@ -126,7 +126,7 @@ const initTree: WebloomTree = {
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
     nodes: ['container-1', 'container-3'],
-    parent: null,
+    parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
     props: {
