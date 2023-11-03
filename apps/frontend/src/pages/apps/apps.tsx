@@ -161,6 +161,66 @@ function AppDropDown() {
   );
 }
 
+function CreateAppDialog() {
+  const form = useForm<AppMetaT>({
+    resolver: zodResolver(appMetaSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      description: '',
+      name: '',
+    },
+  });
+
+  function onSubmit(values: AppMetaT) {
+    console.log(values);
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="w-full">create new app</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create App</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="App name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter app description" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">Create App</Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ApplicationsLayout() {
   return (
     <>
@@ -168,7 +228,7 @@ export function ApplicationsLayout() {
       <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
-          <Button className="w-full">create new app</Button>
+          <CreateAppDialog />
         </div>
         <div className="mt-auto">
           <SelectWorkSpace />
