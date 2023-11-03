@@ -165,7 +165,7 @@ export function ApplicationsLayout() {
   return (
     <>
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
+      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <Button className="w-full">create new app</Button>
@@ -174,7 +174,7 @@ export function ApplicationsLayout() {
           <SelectWorkSpace />
         </div>
       </div>
-      <div className="flex w-full flex-col gap-5 pl-6 pt-6">
+      <div className="flex w-full flex-col gap-5 p-6">
         <Input
           type="search"
           placeholder="search apps in this workspace"
