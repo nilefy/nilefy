@@ -75,7 +75,7 @@ interface WebloomActions {
   setSelectedNode: (id: string | null) => void;
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
-  moveNode: (id: string, parentId: string, index?: number) => void;
+  moveNode: (id: string, parentId: string, position?: Point) => void;
   removeNode: (id: string) => void;
   moveNodeIntoGrid: (
     id: string,
@@ -102,6 +102,7 @@ interface WebloomGetters {
   getCanvas: (id: string) => WebloomNode;
   getNode: (id: string) => WebloomNode | null;
   getDimensions: (id: string) => WebloomNodeCompleteDimensions;
+  getRelativeDimensions: (id: string) => WebloomNodeCompleteDimensions;
   getBoundingRect: (id: string) => BoundingRect;
   getGridSize: (id: string) => [GRID_ROW: number, GRID_COL: number];
 }
@@ -185,7 +186,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: newTree };
       });
     },
-    moveNode: (id: string, parentId: string) => {
+    moveNode(id, parentId, position) {
       set((state) => {
         const oldParentId = state.tree[id].parent;
         if (parentId === oldParentId || id === parentId) return state;
@@ -195,6 +196,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const newColCount = Math.round((oldColCount * colWidth) / newColWidth);
         const node = state.tree[id];
         node.columnsCount = newColCount;
+        position && this.setDimensions(id, position);
         const newTree = {
           ...state.tree,
           [id]: {
@@ -256,6 +258,32 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         rowsCount: node.rowsCount,
         width: node.columnsCount * gridColSize,
         height: node.rowsCount * gridRowSize,
+        columnWidth: gridColSize,
+      };
+    },
+    getRelativeDimensions(id) {
+      const node = get().getNode(id)!;
+      if (node.id === ROOT_NODE_ID) {
+        return {
+          x: 0,
+          y: 0,
+          columnsCount: NUMBER_OF_COLUMNS,
+          rowsCount: node.rowsCount,
+          columnWidth: node.columnWidth,
+          width: Math.round(node.columnWidth! * NUMBER_OF_COLUMNS),
+          height: node.rowsCount * ROW_HEIGHT,
+        };
+      }
+      const parent = get().getNode(node.parent!)!;
+      const gridColSize = parent.columnWidth!;
+      const gridRowSize = ROW_HEIGHT;
+      return {
+        x: node.x * gridColSize,
+        y: node.y * gridRowSize,
+        width: node.columnsCount * gridColSize,
+        height: node.rowsCount * gridRowSize,
+        columnsCount: node.columnsCount,
+        rowsCount: node.rowsCount,
         columnWidth: gridColSize,
       };
     },

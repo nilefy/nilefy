@@ -46,8 +46,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   //todo change to parent when nesting is implemented
   const root = store().tree[ROOT_NODE_ID];
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store.getState().getDimensions(id);
-
+  const elDimensions = store.getState().getRelativeDimensions(id);
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
@@ -75,9 +74,9 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     };
   }, [listeners, id]);
   useEffect(() => {
-    setNodeRef(ref.current);
-    setDropNodeRef(ref.current);
-  }, [setDropNodeRef, setNodeRef]);
+    props.draggable && setNodeRef(ref.current);
+    props.droppable && setDropNodeRef(ref.current);
+  }, [setDropNodeRef, setNodeRef, props.draggable, props.droppable]);
   const style = useMemo(() => {
     return {
       top: elDimensions.y,
@@ -92,7 +91,6 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     elDimensions.y,
     elDimensions.width,
     elDimensions.height,
-    el.isCanvas,
     isDragging,
   ]);
   const handles = useMemo(() => {

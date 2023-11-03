@@ -88,6 +88,7 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
+  const dragged = store.getState().draggedNode;
   const tree = wholeTree[id];
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
@@ -102,7 +103,7 @@ function WebloomElement({ id }: { id: string }) {
     () => createElement(tree.type, tree.props, children),
     [tree.type, tree.props, children],
   );
-  if (id === 'new') return null;
+  if (id === 'new' || id === dragged) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -120,7 +121,7 @@ const initTree: WebloomTree = {
     y: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: ['container-1'],
+    nodes: ['container-1', 'container-3'],
     parent: null,
     isCanvas: true,
     dom: null,
@@ -134,10 +135,10 @@ const initTree: WebloomTree = {
     name: 'container-1',
     type: WebloomContainer,
     x: 5,
-    y: 50,
+    y: 30,
     columnWidth: 15,
-    columnsCount: 5,
-    nodes: [],
+    columnsCount: 14,
+    nodes: ['container-2'],
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
@@ -146,6 +147,42 @@ const initTree: WebloomTree = {
       color: 'red',
     },
     rowsCount: 50,
+  },
+  'container-2': {
+    id: 'container-2',
+    name: 'container-2',
+    type: WebloomContainer,
+    x: 1,
+    y: 2,
+    columnWidth: 15,
+    columnsCount: 14,
+    nodes: [],
+    parent: 'container-1',
+    isCanvas: true,
+    dom: null,
+    props: {
+      className: 'h-full w-full bg-blue-500',
+      color: 'blue',
+    },
+    rowsCount: 30,
+  },
+  'container-3': {
+    id: 'container-3',
+    name: 'container-3',
+    type: WebloomContainer,
+    x: 15,
+    y: 100,
+    columnWidth: 15,
+    columnsCount: 5,
+    nodes: [],
+    parent: ROOT_NODE_ID,
+    isCanvas: true,
+    dom: null,
+    props: {
+      className: 'h-full w-full bg-blue-500',
+      color: 'blue',
+    },
+    rowsCount: 30,
   },
 };
 store.setState((state) => {
@@ -180,7 +217,6 @@ function Editor() {
       if (mousePos.current.x > rootBoundingRect.width / 2) {
         x = NUMBER_OF_COLUMNS - 2;
       }
-      console.log(mousePos.current.y);
       const y = normalize(
         (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
         gridrow,
@@ -214,7 +250,9 @@ function Editor() {
     }
     store.getState().setMousePos(mousePos.current);
   };
-
+  const handleCancel = () => {
+    commandManager.executeCommand(DragAction.cancel());
+  };
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
       const dom = root.dom;
@@ -240,6 +278,7 @@ function Editor() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
+        onDragCancel={handleCancel}
         autoScroll={true}
       >
         {/*sidebar*/}
