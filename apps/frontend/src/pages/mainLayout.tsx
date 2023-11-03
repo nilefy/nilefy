@@ -1,6 +1,6 @@
 import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog } from 'lucide-react';
+import { Wind, Layout, Cog, Table } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { User } from './workspace/users';
@@ -13,6 +13,11 @@ const dashboardPaths = [
     name: 'apps',
     path: '',
     icon: <Layout size={30} />,
+  },
+  {
+    name: 'builtin-db',
+    path: 'database',
+    icon: <Table size={30} />,
   },
   {
     name: 'workspaceSettings',
