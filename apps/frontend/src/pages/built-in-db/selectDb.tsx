@@ -1,12 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { DataShowTable } from '@/components/built-in-db/data-show-table';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Upload, Filter, ArrowDownAZ } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Upload,
+  Filter,
+  ArrowDownAZ,
+  Loader,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchTable } from './tables';
 import { useQuery } from '@tanstack/react-query';
-import { table } from 'console';
 
 export default function SelectDb() {
   const { tableId } = useParams();
@@ -28,7 +33,8 @@ export default function SelectDb() {
   if (isLoading) {
     return (
       <div className="mx-auto flex flex-col items-center justify-center">
-        <div className="h-32 w-32 animate-spin rounded-full border-y-2 border-primary"></div>
+        <div></div>
+        <Loader className="h-32 w-32 animate-spin " />
         <div className="mt-4">
           <h2>Loading...</h2>
         </div>
@@ -45,7 +51,7 @@ export default function SelectDb() {
     );
   }
   return (
-    <div className="h-screen w-3/4 bg-primary/5">
+    <div className="bg-primary/5 h-screen w-3/4">
       <header className="table-info">
         <h1 className="mt-6 pl-8 text-start ">
           {currentTableId !== 0

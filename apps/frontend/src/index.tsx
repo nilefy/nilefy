@@ -44,6 +44,17 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
         children: [
           { path: '', element: <App /> },
+          {
+            path: 'database',
+            element: <DatabaseTable />,
+            errorElement: <ErrorPage />,
+            children: [
+              {
+                path: ':tableId',
+                element: <SelectDb />,
+              },
+            ],
+          },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {
             path: 'workspace-settings',
@@ -75,17 +86,6 @@ const router = createBrowserRouter([
     path: '/signin',
     element: <SignIn />,
     errorElement: <ErrorPage />,
-  },
-  {
-    path: '/database',
-    element: <DatabaseTable />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        path: '/database/:tableId',
-        element: <SelectDb />,
-      },
-    ],
   },
 ]);
 
