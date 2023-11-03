@@ -28,7 +28,7 @@ export function WorkspaceSettingsLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="w-full">
+        <div className="mt-auto w-full">
           <SelectWorkSpace />
         </div>
       </div>

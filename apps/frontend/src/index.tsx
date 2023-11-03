@@ -14,6 +14,10 @@ import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
 import { ProfileSettings } from './pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { ApplicationsLayout } from './pages/apps/apps';
+import DatabaseTable from './pages/built-in-db/db';
+import SelectDb from './pages/built-in-db/selectDb';
+import { Toaster } from '@/components/ui/toaster';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +44,27 @@ const router = createBrowserRouter([
         element: <Dashboard />,
         errorElement: <ErrorPage />,
         children: [
-          { path: '', element: <App /> },
+          {
+            path: '',
+            element: <ApplicationsLayout />,
+            children: [
+              {
+                path: 'editor',
+                element: <App />,
+              },
+            ],
+          },
+          {
+            path: 'database',
+            element: <DatabaseTable />,
+            errorElement: <ErrorPage />,
+            children: [
+              {
+                path: ':tableId',
+                element: <SelectDb />,
+              },
+            ],
+          },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {
             path: 'workspace-settings',
@@ -73,6 +97,12 @@ const router = createBrowserRouter([
     element: <SignIn />,
     errorElement: <ErrorPage />,
   },
+  // TODO: remove this route after frontend auth is done (currently used for testing)
+  {
+    path: '/editor',
+    element: <App />,
+    errorElement: <ErrorPage />,
+  },
 ]);
 
 const container = document.getElementById('root') as HTMLDivElement;
@@ -82,6 +112,7 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <Toaster />
         <RouterProvider router={router} />
       </ThemeProvider>
       <ReactQueryDevtools buttonPosition="bottom-right" />
