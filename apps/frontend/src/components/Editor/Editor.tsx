@@ -56,6 +56,10 @@ const WebloomRoot = () => {
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   }, []);
   useEffect(() => {
+    const rowsCount = tree.rowsCount;
+    resizeCanvas(ROOT_NODE_ID, { rowsCount });
+  }, [tree.rowsCount]);
+  useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -88,7 +92,7 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
-  const dragged = store.getState().draggedNode;
+  const dragged = store((state) => state.draggedNode);
   const tree = wholeTree[id];
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
@@ -128,7 +132,7 @@ const initTree: WebloomTree = {
     props: {
       className: 'h-full w-full bg-red-500',
     },
-    rowsCount: 100,
+    rowsCount: 1000,
   },
   'container-1': {
     id: 'container-1',
@@ -171,7 +175,7 @@ const initTree: WebloomTree = {
     name: 'container-3',
     type: WebloomContainer,
     x: 15,
-    y: 100,
+    y: 600,
     columnWidth: 15,
     columnsCount: 5,
     nodes: [],

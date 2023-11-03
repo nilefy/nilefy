@@ -29,8 +29,8 @@ class DragAction {
   private static isNew = false;
   private static newType: string;
   private static id: string | null;
-  private static overId: string | null;
-  private static expansions: Record<string, number> = {};
+  private static oldParent: string;
+  private static movedToNewParent = false;
   private static touchedRoot = false;
   private static startPosition: Point;
   private static delta: Point;
@@ -83,8 +83,10 @@ class DragAction {
       addNode(node, args.new!.parent);
     } else {
       const node = store.getState().getBoundingRect(this.id!);
+      this.oldParent = store.getState().tree[this.id!].parent!;
       this.startPosition = { x: node.left, y: node.top };
     }
+    this.oldParent ||= ROOT_NODE_ID;
     setDraggedNode(this.isNew ? 'new' : this.id!);
   }
   public static start(...args: Parameters<typeof DragAction._start>): Command {
@@ -109,7 +111,6 @@ class DragAction {
       delta.x -= this.initialDelta.x;
       delta.y -= this.initialDelta.y;
     }
-    this.overId = overId;
     // The Grid col and row of the root is like the source of truth for the grid size
     this.mouseCurrentPosition = {
       x: this.mouseStartPosition.x + delta.x,
@@ -131,33 +132,11 @@ class DragAction {
 
     const node = store.getState().tree[this.id!];
     const over = store.getState().tree[overId];
-    let parent = node.parent || ROOT_NODE_ID;
     if (overId !== this.id && node.parent !== overId && over.isCanvas) {
+      this.movedToNewParent = true;
       moveNode(this.id, overId);
-      parent = overId;
     }
-    const parentBoundingRect = getBoundingRect(parent);
-    const [gridrow, gridcol] = getGridSize(this.id);
-    const normalizedDelta = {
-      x: normalize(delta.x, gridcol),
-      y: normalize(delta.y, gridrow),
-    };
-    const newPosition = {
-      x: this.startPosition.x + normalizedDelta.x,
-      y: this.startPosition.y + normalizedDelta.y,
-    }; // -> this is the absolute position in pixels (normalized to the grid)
-    const bottom = newPosition.y + node.rowsCount * gridrow;
-    if (bottom >= parentBoundingRect.bottom) {
-      this.expandNodeVertically(parent, 2);
-    } else if (this.canShrink()) {
-      Object.entries(this.expansions).forEach(([id, amount]) => {
-        if (id !== parent) {
-          this.shrinkNodeVertically(id, amount);
-        } else {
-          this.shrinkNodeVertically(id, 2);
-        }
-      });
-    }
+
     //Shadow element
     const newShadow = this.getElementShadow(
       delta,
@@ -195,6 +174,7 @@ class DragAction {
       x: Math.min(this.startPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
       y: this.startPosition.y + delta.y,
     };
+    const startPosition = this.startPosition;
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
@@ -234,36 +214,17 @@ class DragAction {
               });
             },
           );
-          setDimensions(id, undoData.firstNodeOriginalDimensions!);
+          if (this.movedToNewParent) {
+            moveNode(id, this.oldParent);
+          }
+          setDimensions(id, startPosition!);
         },
       };
     }
     this.cleanUp();
     return command;
   }
-  private static expandNodeVertically(id: string, amount = 1) {
-    const node = store.getState().tree[id];
-    setDimensions(id, {
-      rowsCount: node.rowsCount + amount,
-    });
-    this.expansions[id] ||= 0;
-    this.expansions[id] += amount;
-  }
 
-  private static shrinkNodeVertically(id: string, amount = 1) {
-    const node = store.getState().tree[id];
-    amount = Math.min(amount, this.expansions[id]);
-    setDimensions(id, {
-      rowsCount: node.rowsCount - amount,
-    });
-    this.expansions[id] -= amount;
-    if (this.expansions[id] === 0) {
-      delete this.expansions[id];
-    }
-  }
-  private static canShrink() {
-    return Object.keys(this.expansions).length > 0;
-  }
   private static getElementShadow(
     delta: Point,
     mousePos: Point,
@@ -331,6 +292,9 @@ class DragAction {
         }
       }
     }
+    newPosition.x = left * gridcol + parentBoundingRect.left;
+    newPosition.y = top * gridrow + parentBoundingRect.top;
+
     //right >= parentRight
     if (newPosition.x + width > parentBoundingRect.right) {
       // colCount = Math.min(colCount, parentRight - left);
@@ -353,6 +317,15 @@ class DragAction {
     if (newPosition.y < parentBoundingRect.top) {
       top = 0;
       rowCount = (newPosition.y + height - parentBoundingRect.top) / gridrow;
+    }
+    //bottom >= parentBottom
+    if (newPosition.y + height > parentBoundingRect.bottom) {
+      const diff = parentBoundingRect.bottom - newPosition.y;
+      const newRowCount = Math.floor(diff / gridrow);
+      rowCount = Math.min(rowCount, newRowCount);
+      if (rowCount < 1) {
+        rowCount = 1;
+      }
     }
     const overEl = tree[overId];
     const newWidth = colCount * gridcol;
@@ -391,7 +364,6 @@ class DragAction {
     this.isNew = false;
     this.initialDelta = { x: 0, y: 0 };
     this.id = null;
-    this.overId = null;
     this.touchedRoot = false;
     this.startPosition = { x: 0, y: 0 };
     this.delta = { x: 0, y: 0 };
@@ -399,10 +371,6 @@ class DragAction {
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
     this.counter = 0;
-    Object.keys(this.expansions).forEach((id) => {
-      this.shrinkNodeVertically(id, this.expansions[id]);
-    });
-    this.expansions = {};
     setDraggedNode(null);
     setShadowElement(null);
   }
