@@ -1,11 +1,5 @@
-import { UndoableCommand, Command } from './types';
-function isUndoableCommand(cmd: Command): cmd is UndoableCommand {
-  //some duck typing because I'm not actually instancing the classes in the actions but returning them as objects
-  return (
-    (cmd as UndoableCommand).undo &&
-    typeof (cmd as UndoableCommand).undo === 'function'
-  );
-}
+import { UndoableCommand, Command, isUndoableCommand } from './types';
+
 export class CommandManager {
   // history is just a stack
   private commandStack: UndoableCommand[];

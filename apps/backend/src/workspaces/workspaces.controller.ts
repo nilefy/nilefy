@@ -6,6 +6,8 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
@@ -15,8 +17,11 @@ import {
   updateWorkspaceSchema,
   UpdateWorkspaceDto,
   CreateWorkspaceDto,
-} from './workspace.dto';
+} from '../dto/workspace.dto';
+import { JwtGuard } from '../auth/jwt.guard';
+import { ExpressAuthedRequest } from '../auth/auth.types';
 
+@UseGuards(JwtGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
@@ -28,18 +33,26 @@ export class WorkspacesController {
 
   @Post()
   async create(
+    @Request() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(createWorkspaceSchema))
     createWorkspaceDto: CreateWorkspaceDto,
   ): Promise<WorkspaceDto> {
-    return await this.workspaceService.create(createWorkspaceDto);
+    return await this.workspaceService.create({
+      createdById: req.user.userId,
+      ...createWorkspaceDto,
+    });
   }
 
   @Put(':id')
   async update(
+    @Request() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(updateWorkspaceSchema))
     updateWorkspaceDto: UpdateWorkspaceDto,
     @Param('id', ParseIntPipe) id: number,
   ): Promise<WorkspaceDto> {
-    return await this.workspaceService.update(id, updateWorkspaceDto);
+    return await this.workspaceService.update(id, {
+      updatedById: req.user.userId,
+      ...updateWorkspaceDto,
+    });
   }
 }

@@ -8,11 +8,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  SignInGoogleOAuthGuard,
-  SignUpGoogleOAuthGuard,
-  GoogleAuthedRequest,
-} from './google.guard';
+import { SignInGoogleOAuthGuard, SignUpGoogleOAuthGuard } from './google.guard';
 import { JwtGuard } from './jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
@@ -21,7 +17,7 @@ import {
   CreateUserDto,
   LoginUserDto,
 } from '../dto/users.dto';
-import { ExpressAuthedRequest } from './auth.types';
+import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -50,13 +46,15 @@ export class AuthController {
   @UseGuards(SignInGoogleOAuthGuard)
   @Get('login/google-redirect')
   async signInGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    return await this.authService.signIn(req.user);
+    req.user = await this.authService.signIn(req.user as LoginUserDto);
+    return;
   }
 
   @UseGuards(SignUpGoogleOAuthGuard)
   @Get('signup/google-redirect')
   async signUpGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    return await this.authService.signUp(req.user);
+    req.user = await this.authService.signUp(req.user as CreateUserDto);
+    return;
   }
 
   @UseGuards(JwtGuard)

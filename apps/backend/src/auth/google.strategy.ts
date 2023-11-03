@@ -27,7 +27,6 @@ export class SignInGoogleStrategy extends PassportStrategy(
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    console.log(profile);
     const user = {
       email: profile.emails[0].value,
       password: profile.id,
@@ -59,7 +58,6 @@ export class SignUpGoogleStrategy extends PassportStrategy(
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    console.log(profile);
     const user = {
       email: profile.emails[0].value,
       username: profile.displayName,

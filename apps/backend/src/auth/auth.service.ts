@@ -7,7 +7,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
-import { PayloadUser } from './auth.types';
+import { JwtToken, PayloadUser } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -17,13 +17,8 @@ export class AuthService {
   ) {}
 
   async signUp(user: CreateUserDto) {
-    const { email, username, password } = user;
-
-    const ret = await this.userService.findOne(email);
-    if (ret) {
-      throw new BadRequestException();
-    }
-
+    const { password } = user;
+    // TODO: i removed the email check because i added the unique constraint on the db, so we need to add error handler here
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
     const u = await this.userService.create({ ...user, password: hashed });
@@ -31,9 +26,9 @@ export class AuthService {
     return {
       access_token: await this.jwtService.signAsync({
         sub: u.id,
-        username,
+        username: u.username,
       } satisfies PayloadUser),
-    };
+    } satisfies JwtToken;
   }
 
   async signIn(user: LoginUserDto) {
@@ -53,6 +48,6 @@ export class AuthService {
         sub: ret.id,
         username: ret.username,
       } satisfies PayloadUser),
-    };
+    } satisfies JwtToken;
   }
 }

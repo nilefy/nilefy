@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './evn.validation';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { WebloomTableModule } from './webloom_table/table.module';
+import { AppsModule } from './apps/apps.module';
 
 @Module({
   imports: [
     AuthModule,
     UsersModule,
+    WebloomTableModule,
     ConfigModule.forRoot({
       isGlobal: true,
       // custom validation function with zod
@@ -19,8 +20,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     }),
     DrizzleModule,
     WorkspacesModule,
+    AppsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
