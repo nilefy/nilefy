@@ -221,6 +221,7 @@ function Editor() {
         (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
         gridrow,
       );
+
       commandManager.executeCommand(
         DragAction.start({
           id: 'new',

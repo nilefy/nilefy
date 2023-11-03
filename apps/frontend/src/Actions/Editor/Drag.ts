@@ -111,7 +111,6 @@ class DragAction {
     }
     this.overId = overId;
     // The Grid col and row of the root is like the source of truth for the grid size
-
     this.mouseCurrentPosition = {
       x: this.mouseStartPosition.x + delta.x,
       y: this.mouseStartPosition.y + delta.y,
@@ -149,16 +148,13 @@ class DragAction {
     }; // -> this is the absolute position in pixels (normalized to the grid)
     const bottom = newPosition.y + node.rowsCount * gridrow;
     if (bottom >= parentBoundingRect.bottom) {
-      this.expandNodeVertically(parent, bottom - parentBoundingRect.bottom);
+      this.expandNodeVertically(parent, 2);
     } else if (this.canShrink()) {
       Object.entries(this.expansions).forEach(([id, amount]) => {
         if (id !== parent) {
           this.shrinkNodeVertically(id, amount);
         } else {
-          this.shrinkNodeVertically(
-            id,
-            Math.min(parentBoundingRect.bottom - bottom, amount),
-          );
+          this.shrinkNodeVertically(id, 2);
         }
       });
     }
@@ -248,7 +244,7 @@ class DragAction {
   private static expandNodeVertically(id: string, amount = 1) {
     const node = store.getState().tree[id];
     setDimensions(id, {
-      rowsCount: node.rowsCount + Math.floor(amount / ROW_HEIGHT),
+      rowsCount: node.rowsCount + amount,
     });
     this.expansions[id] ||= 0;
     this.expansions[id] += amount;
@@ -256,8 +252,9 @@ class DragAction {
 
   private static shrinkNodeVertically(id: string, amount = 1) {
     const node = store.getState().tree[id];
+    amount = Math.min(amount, this.expansions[id]);
     setDimensions(id, {
-      rowsCount: node.rowsCount - Math.floor(amount / ROW_HEIGHT),
+      rowsCount: node.rowsCount - amount,
     });
     this.expansions[id] -= amount;
     if (this.expansions[id] === 0) {
@@ -402,6 +399,9 @@ class DragAction {
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
     this.counter = 0;
+    Object.keys(this.expansions).forEach((id) => {
+      this.shrinkNodeVertically(id, this.expansions[id]);
+    });
     this.expansions = {};
     setDraggedNode(null);
     setShadowElement(null);
