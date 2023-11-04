@@ -1,5 +1,5 @@
 import { ModeToggle } from '@/components/mode-toggle';
-import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
+import { NavLink, Outlet, redirect, useParams,useRouteLoaderData } from 'react-router-dom';
 import { Wind, Layout, Cog } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
@@ -27,9 +27,10 @@ const dashboardPaths = [
 const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
-    const res = await fetchX('/workspaces');
-    return (await res.json()) as WorkSpaces;
-  },
+   // const res = await fetchX('/workspaces');
+    //return (await res.json()) as WorkSpaces;
+return [{id: 1, name: "workspace",imageUrl:""}] satisfies WorkSpaces;
+  },
 });
 
 /**

@@ -7,6 +7,13 @@ import ResizeAction from '@/Actions/Editor/Resize';
 import DeleteAction from '@/Actions/Editor/Delete';
 import { commandManager } from '@/Actions/CommandManager';
 import { Trash2 } from 'lucide-react';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+
 type WebloomAdapterProps = {
   id: string;
   children: React.ReactNode;
@@ -232,7 +239,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   ]);
   return (
     <>
-      <div
+    <ContextMenu>
+  <ContextMenuTrigger> <div
         {...modListeners}
         {...attributes}
         style={style}
@@ -240,7 +248,19 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         className="touch-none"
       >
         {props.children}
-      </div>
+      </div></ContextMenuTrigger>
+  <ContextMenuContent>
+  <ContextMenuItem  onPointerDown={(e) => {
+            e.stopPropagation();
+            commandManager.executeCommand(
+            DeleteAction.Delete(id,parentId,node)
+            );
+          }}>Delete</ContextMenuItem>
+     
+         
+  </ContextMenuContent>
+</ContextMenu>
+
       {handles}
     </>
   );
