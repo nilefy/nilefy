@@ -38,6 +38,7 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
+    console.log(store.getState().tree[id]);
     const parentId = store.getState().tree[id].parent;
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
@@ -97,10 +98,12 @@ class ResizeAction {
     const rect = root.dom.getBoundingClientRect();
     x -= rect.left;
     y -= rect.top; // -> so that we get the mousePos relative to the root element
+    const node = store.getState().tree[id];
 
     const [gridRow, gridCol] = getGridSize(id);
     const minWidth = gridCol * 2;
     const minHeight = gridRow * 10;
+    console.log(direction);
     if (direction.includes('top')) {
       const diff = initialTop - y;
       const snappedDiff = Math.round(normalize(diff, gridRow));
@@ -137,6 +140,9 @@ class ResizeAction {
     }
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
+    const parent = store.getState().getDimensions(node.parent);
+    newLeft -= parent.x;
+    newTop -= parent.y;
     const colCount = newWidth / gridCol;
     const rowCount = newHeight / gridRow;
     const newX = newLeft / gridCol;
@@ -296,10 +302,10 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    let left = dimensions.x || node.x;
-    let top = dimensions.y || node.y;
-    let rowCount = dimensions.rowsCount || node.rowsCount;
-    let colCount = dimensions.columnsCount || node.columnsCount;
+    const left = dimensions.x || node.x;
+    const top = dimensions.y || node.y;
+    const rowCount = dimensions.rowsCount || node.rowsCount;
+    const colCount = dimensions.columnsCount || node.columnsCount;
     const right = left + colCount;
     const bottom = top + rowCount;
     const nodes = siblings;
@@ -331,21 +337,22 @@ class ResizeAction {
         toBeMoved.push({ id: nodeId, y: bottom });
       }
     });
-    const parent = tree[node.parent!];
-    const parentLeft = parent.x;
-    const parentRight = parent.x + parent.columnsCount;
-    const parentTop = parent.y;
-    if (right > parentRight) {
-      colCount = Math.min(colCount, parentRight - left);
-    }
-    if (left < parentLeft) {
-      colCount = right - parentLeft;
-      left = parentLeft;
-    }
-    if (top < parentTop) {
-      top = parentTop;
-      rowCount = bottom - parentTop;
-    }
+    // const parent = tree[node.parent!];
+    // const parentLeft = parent.x;
+    // const parentRight = parent.x + parent.columnsCount;
+    // const parentTop = parent.y;
+    // if (right > parentRight) {
+    //   colCount = Math.min(colCount, parentRight - left);
+    // }
+    // if (left < parentLeft) {
+    //   colCount = right - parentLeft;
+    //   left = parentLeft;
+    // }
+    // if (top < parentTop) {
+    //   top = parentTop;
+    //   rowCount = bottom - parentTop;
+    // }
+
     if (node.isCanvas) {
       resizeCanvas(id, {
         x: left,
@@ -365,13 +372,7 @@ class ResizeAction {
       collidedNodes.push(node.id);
     }
     for (const node of toBeMoved) {
-      const collied = moveNodeIntoGrid(
-        node.id,
-        {
-          ...node,
-        },
-        false,
-      );
+      const collied = moveNodeIntoGrid(node.id, node, false);
       //todo find a better way to do this
       Object.entries(collied.changedNodesOriginalCoords).forEach(([id]) => {
         collidedNodes.push(id);

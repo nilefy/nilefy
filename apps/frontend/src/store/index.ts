@@ -245,7 +245,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     /**
      * gets actual x, y coordinates of a node
      */
-    getDimensions: (id: string): WebloomNodeDimensions => {
+    getDimensions(id) {
       const node = get().getNode(id)!;
       const parent = get().getCanvas(id)!;
       if (node.id === ROOT_NODE_ID) {
@@ -498,17 +498,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             toBeMoved.push({ id: nodeId, y: bottom });
           }
         });
+
+        const parentBoundingRect = get().getBoundingRect(parent.id);
+        const parentLeft = parentBoundingRect.left;
+        const parentRight = parentBoundingRect.right;
+        const parentTop = parentBoundingRect.top;
+        const gridcol = parent.columnWidth!;
+        const gridrow = ROW_HEIGHT;
+        const nodeLeft = left * gridcol + parentLeft;
+        const nodeRight = nodeLeft + colCount * gridcol;
+        const nodeTop = top * gridrow + parentTop;
+        const nodeBottom = nodeTop + rowCount * gridrow;
         if (firstCall) {
-          const parentBoundingRect = get().getBoundingRect(parent.id);
-          const parentLeft = parentBoundingRect.left;
-          const parentRight = parentBoundingRect.right;
-          const parentTop = parentBoundingRect.top;
-          const gridcol = parent.columnWidth!;
-          const gridrow = ROW_HEIGHT;
-          const nodeLeft = left * gridcol + parentLeft;
-          const nodeRight = nodeLeft + colCount * gridcol;
-          const nodeTop = top * gridrow + parentTop;
-          const nodeBottom = nodeTop + rowCount * gridrow;
           if (nodeRight > parentRight) {
             console.log('right');
             const diff = parentBoundingRect.right - nodeLeft;
@@ -530,19 +531,28 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             top = 0;
             rowCount = (nodeBottom - parentBoundingRect.top) / gridrow;
           }
-          if (nodeBottom > parentBoundingRect.bottom) {
-            get().resizeCanvas(parent.id, {
-              rowsCount: Math.ceil(nodeBottom / gridrow),
-            });
-          }
         }
-        get().setDimensions(id, {
-          x: left,
-          y: top,
-          columnsCount: colCount,
-          rowsCount: rowCount,
-        });
+        if (nodeBottom > parentBoundingRect.bottom) {
+          get().resizeCanvas(parent.id, {
+            rowsCount: Math.ceil(nodeBottom / gridrow),
+          });
+        }
 
+        if (node.isCanvas) {
+          get().resizeCanvas(id, {
+            columnsCount: colCount,
+            rowsCount: rowCount,
+            x: left,
+            y: top,
+          });
+        } else {
+          get().setDimensions(id, {
+            x: left,
+            y: top,
+            columnsCount: colCount,
+            rowsCount: rowCount,
+          });
+        }
         toBeMoved.forEach((node) => {
           changedNodesOriginalCoords[node.id] ??= {
             x: state.tree[node.id].x,

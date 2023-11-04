@@ -33,6 +33,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
 import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
 import { RightSidebar } from './rightsidebar/rightsidebar';
+import { ResizeHandlers } from './WebloomComponents/lib/ResizeHandlers';
 
 const { resizeCanvas } = store.getState();
 
@@ -282,7 +283,7 @@ function Editor() {
   }, [root.dom, draggedNode]);
   if (!root) return null;
   return (
-    <div className="isolate flex h-full max-h-full w-full  gap-2 bg-transparent">
+    <div className="isolate flex h-full max-h-full w-full bg-transparent">
       <DndContext
         collisionDetection={pointerWithin}
         sensors={sensors}
@@ -307,6 +308,8 @@ function Editor() {
           <MultiSelectBounding />
           {/*main*/}
           <WebloomRoot />
+          <ResizeHandlers />
+
           <Selecto
             // The container to add a selection element
             container={editorRef.current}

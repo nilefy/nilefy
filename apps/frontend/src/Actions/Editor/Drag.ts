@@ -23,6 +23,7 @@ const {
   removeNode,
   setDraggedNode,
   setDimensions,
+  getDimensions,
 } = store.getState();
 class DragAction {
   private static threshold = 5;
@@ -96,6 +97,13 @@ class DragAction {
     }
     this.oldParent ||= ROOT_NODE_ID;
     setDraggedNode(this.isNew ? 'new' : this.id!);
+    const dims = getDimensions(this.id!);
+    setShadowElement({
+      x: dims.x,
+      y: dims.y,
+      width: dims.width,
+      height: dims.height,
+    });
   }
   public static start(...args: Parameters<typeof DragAction._start>): Command {
     return {
@@ -164,7 +172,10 @@ class DragAction {
   public static end(
     ...args: Parameters<typeof DragAction._end>
   ): UndoableCommand | null {
-    if (!this.moved) return null;
+    if (!this.moved) {
+      this.cleanUp();
+      return null;
+    }
     return this._end(...args);
   }
   public static _end(overId: string | null): UndoableCommand | null {
