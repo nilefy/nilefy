@@ -4,7 +4,7 @@ import store from '@/store';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
-import DeleteAction from '@/Actions/Editor/Delete';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 import { commandManager } from '@/Actions/CommandManager';
 import { Trash2 } from 'lucide-react';
 import {
@@ -45,8 +45,6 @@ const cursors = {
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
   const selected = store((state) => state.selectedNode) === id;
-  const parentId = store.getState().tree[id].parent;
-  const node = store.getState().getNode(id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
@@ -125,20 +123,18 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             transform: style.transform,
           }}
         >
-          <div   style={{
-            position: 'absolute',
-            top: "-25px",
-            right:"-85px"
-          
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            commandManager.executeCommand(
-            DeleteAction.Delete(id,parentId,node)
-            );
-          }}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-25px',
+              right: '-85px',
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              commandManager.executeCommand(new DeleteAction(id));
+            }}
           >
-           <Trash2/>
+            <Trash2 />
           </div>
           {Object.entries(handlePositions).map(([key, [y, x]]) => {
             const width = elDimensions.width;
