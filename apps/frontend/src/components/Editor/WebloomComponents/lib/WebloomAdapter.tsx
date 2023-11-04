@@ -12,7 +12,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
+} from '@/components/ui/context-menu';
 
 type WebloomAdapterProps = {
   id: string;
@@ -123,19 +123,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             transform: style.transform,
           }}
         >
-          <div
-            style={{
-              position: 'absolute',
-              top: '-25px',
-              right: '-85px',
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
+          <button
+            className="absolute -right-20 -top-6"
+            onPointerDown={() => {
               commandManager.executeCommand(new DeleteAction(id));
             }}
           >
             <Trash2 />
-          </div>
+          </button>
           {Object.entries(handlePositions).map(([key, [y, x]]) => {
             const width = elDimensions.width;
             const height = elDimensions.height;
@@ -235,26 +230,29 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   ]);
   return (
     <>
-    <ContextMenu>
-  <ContextMenuTrigger> <div
-        {...modListeners}
-        {...attributes}
-        style={style}
-        ref={ref}
-        className="touch-none"
-      >
-        {props.children}
-      </div></ContextMenuTrigger>
-  <ContextMenuContent>
-  <ContextMenuItem  onPointerDown={(e) => {
-            e.stopPropagation();
-            commandManager.executeCommand(
-              new DeleteAction(id));
-          }}>Delete</ContextMenuItem>
-     
-         
-  </ContextMenuContent>
-</ContextMenu>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          {' '}
+          <div
+            {...modListeners}
+            {...attributes}
+            style={style}
+            ref={ref}
+            className="touch-none"
+          >
+            {props.children}
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onPointerDown={() => {
+              commandManager.executeCommand(new DeleteAction(id));
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       {handles}
     </>
