@@ -9,22 +9,63 @@ type Props = {
   [key: string]: any;
 };
 
-function recursiveProps(props: Props, collectedProps: any[] = []) {
+function recursiveProps(props: Props, openPropsStates: Record<string, boolean>, setOpenPropsStates: React.Dispatch<React.SetStateAction<Record<string, boolean>>>): JSX.Element[] {
+  const collectedProps: JSX.Element[] = [];
+  
+
   for (const key in props) {
     if (props.hasOwnProperty(key)) {
       const prop = props[key];
 
       if (typeof prop === 'object') {
-        recursiveProps(prop, collectedProps); // Recurse on the object
+        const isOpen = openPropsStates[key] || false;
+        collectedProps.push(
+          <Collapsible className={`  px-0 py-0 font-mono text-sm`} open={isOpen}
+          onOpenChange={(newOpenState) => {
+            setOpenPropsStates((prevState) => ({
+              ...prevState,
+              [key]: newOpenState, // Update the open state for this property
+            }));
+          }}>
+            <div className="flex items-center  justify-start">
+            <CollapsibleTrigger asChild>
+       
+            <Button variant="ghost" size="sm" className="w-9 p-0">
+         
+            {openPropsStates[key]? 
+             <ChevronsDown className="h-4 w-4" />
+             :<ChevronsRight className="h-4 w-4" />
+            }
+            
+           </Button>
+     </CollapsibleTrigger>
+     <h4 className="text-sm font-semibold">
+            {key}
+            </h4>
+            <p className="text-xs ml-2">{typeof(prop)}   {Object.keys(prop).length} entries</p>
+            </div>
+          <CollapsibleContent className="space-y-0 border-l-2 pl-4 ml-4">
+         { recursiveProps(prop,openPropsStates,setOpenPropsStates)}
+         
+          </CollapsibleContent>
+          </Collapsible>
+        );
+       
       } else {
-        // Add the non-object property to the collectedProps array
-        collectedProps.push({ key, value: prop });
+        // Display the non-object property
+        collectedProps.push(
+          <div key={key}>
+            <p className="text-xs inline">{key}</p>
+            <p className="text-xs inline text-orange-600"> "{prop}"</p>
+          </div>
+        );
       }
     }
   }
 
   return collectedProps;
 }
+
 const myProps = {
   prop1: 'value1',
   prop2: {
@@ -35,67 +76,25 @@ const myProps = {
   }
 };
 
-const collectedProps = recursiveProps(myProps);
-
-console.log(collectedProps,"props");
-
 export function CollapsibleMenu() {
   const [isOpen, setIsOpen] = React.useState(false);
   const root = store((state) => state.tree[ROOT_NODE_ID]);
-  
-  // const renderNodes = (node: WebloomNode): JSX.Element => {
-   
-  //  return(
-  //   <Collapsible key={node.id}  className={`  px-4 py-0 font-mono text-sm`}>
-  //     <div className="flex items-center space-x-4 px-4 justify-start">
-  //     <CollapsibleTrigger asChild>
-       
-  //      <Button variant="ghost" size="sm" className="w-9 p-0">
-  //        <ChevronsUpDown className="h-4 w-4" />
-  //        <span className="sr-only">Toggle</span>
-  //      </Button>
-  //    </CollapsibleTrigger>
-
-  //       <h4 className="text-sm font-semibold">
-  //         <button onClick={()=> store.getState().setSelectedNode(node.id)}>
-  //       {node.name}
-  //       </button>
-  //       </h4>
-  //      <p className="text-xs">{typeof(node)}   {collectedProps.length} entries</p>
-  //     </div>
-      
-  //     {node.nodes.length > 0 ?(
-  //       <CollapsibleContent className="space-y-1">
-  //         {node.nodes.map((childNodeId) => {
-  //           const childNode = store.getState().tree[childNodeId];
-  //           return renderNodes(childNode);
-  //         })}
-  //       </CollapsibleContent>
-  //     ):(
-        
-  //     <CollapsibleContent className="space-y-0 border-l-2 pl-8 ml-9">
-  //       {collectedProps.map((prop)=>(
-  //         <div>
-  //          <p className="text-xs inline">{prop.key} </p> 
-  //          <p className="text-xs inline text-orange-600"> "{prop.value}"</p>
-  //          </div>
-  //       ))}
-   
-  //     </CollapsibleContent>
-    
-  //     )}
-  //   </Collapsible>
-  // );
-  //       }
-  
-  console.log(root)
   const initialState = root.nodes.reduce((acc, nodeId) => {
     (acc as any)[nodeId] = false;
     return acc;
   }, {} as Record<string, boolean>);
+   const[open,setOpen] = React.useState(initialState);
+   
+   const initialPropsOpenStates: Record<string, boolean> = {};
+   for (const key in myProps) {
+     if (myProps.hasOwnProperty(key)) {
+       initialPropsOpenStates[key] = false;
+     }
+   }
+   const [openPropsStates, setOpenPropsStates] = React.useState(initialPropsOpenStates);
+   const collectedProps = recursiveProps(myProps,openPropsStates,setOpenPropsStates);
   
-  // Create a state variable to hold the open/closed state for each node
-  const[open,setOpen] = React.useState(initialState);
+ 
   return (
     <Collapsible
       open={isOpen}
@@ -148,12 +147,7 @@ export function CollapsibleMenu() {
           </div>
           
           <CollapsibleContent className="space-y-0 border-l-2 pl-8 ml-4">
-            {collectedProps.map((prop)=>(
-              <div>
-               <p className="text-xs inline">{prop.key} </p> 
-               <p className="text-xs inline text-orange-600"> "{prop.value}"</p>
-               </div>
-            ))}
+            {collectedProps}
        
           </CollapsibleContent>
         
