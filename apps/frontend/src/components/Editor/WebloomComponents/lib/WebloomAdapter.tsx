@@ -249,8 +249,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   <ContextMenuItem  onPointerDown={(e) => {
             e.stopPropagation();
             commandManager.executeCommand(
-            DeleteAction.Delete(id,parentId,node)
-            );
+              new DeleteAction(id));
           }}>Delete</ContextMenuItem>
      
          
