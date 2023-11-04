@@ -4,6 +4,7 @@ export class CommandManager {
   // history is just a stack
   private commandStack: UndoableCommand[];
   private static instance: CommandManager;
+  private lastAnimationFrame: number | null = null;
   private constructor() {
     // start with free history
     this.commandStack = [];
@@ -12,11 +13,20 @@ export class CommandManager {
   public executeCommand(cmd: Command | null) {
     //this is essentially a no-op
     if (cmd === null) return;
-    cmd.execute();
-    // if cmd is undoable push it to the stack
-
     if (cmd instanceof UndoableCommand || isUndoableCommand(cmd)) {
+      cmd.execute();
       this.commandStack.push(cmd as UndoableCommand);
+    } else {
+      // the last animation frame bit is for continuous commands like dragging
+      // if a command is unodable it won't go through this path so it's fine
+      if (this.lastAnimationFrame) {
+        cancelAnimationFrame(this.lastAnimationFrame);
+      }
+      this.lastAnimationFrame = requestAnimationFrame(() => {
+        cmd.execute();
+        this.lastAnimationFrame = null;
+        // if cmd is undoable push it to the stack
+      });
     }
   }
 

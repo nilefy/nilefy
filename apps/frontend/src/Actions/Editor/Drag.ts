@@ -335,7 +335,14 @@ class DragAction {
     }
     newPosition.x = left * gridcol + parentBoundingRect.left;
     newPosition.y = top * gridrow + parentBoundingRect.top;
-
+    //left < parentLeft
+    if (newPosition.x < parentBoundingRect.left) {
+      colCount = (newPosition.x + width - parentBoundingRect.left) / gridcol;
+      left = 0;
+      if (colCount < 1) {
+        colCount = 1;
+      }
+    }
     //right >= parentRight
     if (newPosition.x + width > parentBoundingRect.right) {
       // colCount = Math.min(colCount, parentRight - left);
@@ -346,14 +353,7 @@ class DragAction {
         colCount = 1;
       }
     }
-    //left < parentLeft
-    if (newPosition.x < parentBoundingRect.left) {
-      colCount = (newPosition.x + width - parentBoundingRect.left) / gridcol;
-      left = 0;
-      if (colCount < 1) {
-        colCount = 1;
-      }
-    }
+
     //top < parentTop
     if (newPosition.y < parentBoundingRect.top) {
       top = 0;
@@ -368,6 +368,8 @@ class DragAction {
         rowCount = 1;
       }
     }
+    colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
+    rowCount = Math.min(parent.rowsCount, rowCount);
     const overEl = tree[overId];
     const newWidth = colCount * gridcol;
     const newHeight = rowCount * gridrow;

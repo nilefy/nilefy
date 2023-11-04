@@ -533,11 +533,13 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           }
         }
         if (nodeBottom > parentBoundingRect.bottom) {
+          const diff = nodeBottom - parentBoundingRect.bottom;
+          const newRowCount = Math.floor(diff / gridrow);
           get().resizeCanvas(parent.id, {
-            rowsCount: Math.ceil(nodeBottom / gridrow),
+            rowsCount: parent.rowsCount + newRowCount,
           });
         }
-
+        colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
         if (node.isCanvas) {
           get().resizeCanvas(id, {
             columnsCount: colCount,
