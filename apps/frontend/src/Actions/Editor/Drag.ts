@@ -41,6 +41,7 @@ class DragAction {
   private static mouseCurrentPosition: Point;
   private static moved = false;
   private static counter = 0;
+
   private static _start(args: {
     new?: {
       type: string;
