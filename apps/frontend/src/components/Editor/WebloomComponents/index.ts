@@ -12,11 +12,14 @@ export type WebloomComponentProps<T extends React.ElementType> =
 export type WebloomComponent = {
   component: React.ElementType;
   initialProps: WebloomComponentProps<React.ElementType>;
+  isCanvas?: boolean;
+  name: string;
   rules?: WebloomComponentsRules;
 };
 export const WebloomComponents: Record<string, WebloomComponent> = {
   WebloomButton: {
     component: WebloomButton,
+    name: 'Button',
     initialProps: {
       text: 'Button',
       color: 'red',
@@ -30,9 +33,11 @@ export const WebloomComponents: Record<string, WebloomComponent> = {
   },
   WebloomContainer: {
     component: WebloomContainer,
+    name: 'Container',
     initialProps: {
-      className: 'bg-red-500',
+      color: 'gray',
     },
+    isCanvas: true,
     rules: {
       initialColumnCount: 4,
       initialRowCount: 2,

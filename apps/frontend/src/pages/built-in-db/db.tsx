@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Key, X } from 'lucide-react';
+import { Key, MoreHorizontal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -419,14 +419,14 @@ export default function DatabaseTable() {
   return (
     <div className="flex h-full w-full flex-row">
       {/**sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-9">
+      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-4">
         {/**header*/}
-        <div className="flex h-fit flex-col items-center gap-5 pl-3">
+        <div className="flex h-fit flex-col items-center">
           <h1 className="self-start text-lg font-bold">Database</h1>
           <CreateTableDialog />
         </div>
         {/*tables list*/}
-        <div className="flex max-h-full flex-col items-center gap-5 overflow-y-auto ">
+        <div className="flex max-h-full flex-col items-center gap-5 overflow-y-auto p-2">
           <h4 className="self-start ">All Tables</h4>
           <Input
             type="search"
@@ -435,7 +435,7 @@ export default function DatabaseTable() {
             value={searchParams.get('search') || ''}
             onChange={handleSearchChange}
           />
-          <ul className="flex h-full w-full flex-col overflow-y-auto">
+          <ul className="flex h-full w-full flex-col gap-3 overflow-y-auto">
             {isLoading ? (
               <div>Loading </div>
             ) : (tables || []).length > 0 ? (
@@ -481,34 +481,34 @@ export default function DatabaseTable() {
                         <NavLink
                           to={table.id.toString()}
                           className={({ isActive }) => {
-                            return `mt-2 w-full cursor-pointer rounded-md  p-2 ${
+                            return `w-full cursor-pointer rounded-md  p-2 flex items-center justify-between ${
                               isActive ? 'bg-primary/10' : ''
                             }`;
                           }}
                         >
                           {table.name}
-                        </NavLink>
-                        <div className="flex  items-center justify-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
-                              <span className="rotate-90 p-2">...</span>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="flex flex-col">
-                              <DropdownMenuItem
-                                onClick={() => handleEdit(table)}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              {!editTable.id && (
+                          <div className="flex  items-center justify-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <MoreHorizontal />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="flex flex-col">
                                 <DropdownMenuItem
-                                  onClick={() => handleRemoveTable(table.id)}
+                                  onClick={() => handleEdit(table)}
                                 >
-                                  Remove
+                                  Edit
                                 </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                                {!editTable.id && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleRemoveTable(table.id)}
+                                  >
+                                    Remove
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </NavLink>
                       </>
                     )}
                   </li>

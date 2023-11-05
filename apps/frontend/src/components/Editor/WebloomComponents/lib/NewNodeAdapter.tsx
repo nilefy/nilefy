@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 type DraggableProps = {
   children: React.ReactNode;
@@ -20,19 +20,8 @@ export const NewNodeAdapter = (props: DraggableProps) => {
     setNodeRef(ref.current);
   }, [setNodeRef]);
 
-  const style = useMemo(() => {
-    return {
-      position: 'relative',
-    } as React.CSSProperties;
-  }, []);
   return (
-    <div
-      ref={ref}
-      {...attributes}
-      {...listeners}
-      style={style}
-      className="z-50"
-    >
+    <div ref={ref} {...attributes} {...listeners} className="relative z-50">
       {props.children}
     </div>
   );

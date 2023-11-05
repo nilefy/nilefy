@@ -12,7 +12,7 @@ function InsertTab() {
         const Component = component.component;
         return (
           <NewNodeAdapter type={name} key={name}>
-            <Component {...component.initialProps} />
+            <div>{component.name}</div>
           </NewNodeAdapter>
         );
       })}
