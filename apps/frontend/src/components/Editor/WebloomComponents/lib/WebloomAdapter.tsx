@@ -5,6 +5,7 @@ import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
+import { SelectionAction } from '@/Actions/Editor/selection';
 
 type WebloomAdapterProps = {
   id: string;
@@ -36,34 +37,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       return {
         onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
           e.stopPropagation();
-          store.getState().setSelectedNodeIds((prev) => {
-            if (id === ROOT_NODE_ID) {
-              return new Set();
-            } else if (e.shiftKey && prev.has(id)) {
-              return new Set([...prev].filter((i) => i !== id));
-            } else if (e.shiftKey) {
-              return new Set([...prev, id]);
-            } else {
-              return new Set([id]);
-            }
-          });
+          commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
         },
       };
     return {
       ...listeners,
       onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        store.getState().setSelectedNodeIds((prev) => {
-          if (id === ROOT_NODE_ID) {
-            return new Set();
-          } else if (e.shiftKey && prev.has(id)) {
-            return new Set([...prev].filter((i) => i !== id));
-          } else if (e.shiftKey) {
-            return new Set([...prev, id]);
-          } else {
-            return new Set([id]);
-          }
-        });
+        commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
         listeners.onMouseDown(e);
       },
     };
