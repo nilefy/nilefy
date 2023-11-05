@@ -1,6 +1,6 @@
 import store from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID } from '@/lib/constants';
+import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import { checkOverlap, normalize } from '@/lib/utils';
 import { Point } from '@/types';
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
@@ -10,8 +10,13 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const { moveNodeIntoGrid, getGridSize, setDimensions, resizeCanvas } =
-  store.getState();
+const {
+  moveNodeIntoGrid,
+  getGridSize,
+  setDimensions,
+  resizeCanvas,
+  getBoundingRect,
+} = store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
@@ -302,10 +307,10 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    const left = dimensions.x || node.x;
-    const top = dimensions.y || node.y;
-    const rowCount = dimensions.rowsCount || node.rowsCount;
-    const colCount = dimensions.columnsCount || node.columnsCount;
+    let left = dimensions.x || node.x;
+    let top = dimensions.y || node.y;
+    let rowCount = dimensions.rowsCount || node.rowsCount;
+    let colCount = dimensions.columnsCount || node.columnsCount;
     const right = left + colCount;
     const bottom = top + rowCount;
     const nodes = siblings;
@@ -352,7 +357,44 @@ class ResizeAction {
     //   top = parentTop;
     //   rowCount = bottom - parentTop;
     // }
-
+    const parentBoundingRect = getBoundingRect(node.parent);
+    const [gridrow, gridcol] = getGridSize(node.id);
+    const parent = tree[node.parent!];
+    const parentLeft = parentBoundingRect.left;
+    const parentRight = parentBoundingRect.right;
+    const parentTop = parentBoundingRect.top;
+    const nodeLeft = left * gridcol + parentLeft;
+    const nodeRight = nodeLeft + colCount * gridcol;
+    const nodeTop = top * gridrow + parentTop;
+    const nodeBottom = nodeTop + rowCount * gridrow;
+    if (nodeRight > parentRight) {
+      console.log('right');
+      const diff = parentBoundingRect.right - nodeLeft;
+      const newColCount = Math.floor(diff / gridcol);
+      colCount = Math.min(colCount, newColCount);
+      if (colCount < 1) {
+        colCount = 1;
+      }
+    }
+    if (nodeLeft < parentLeft) {
+      console.log('left');
+      colCount = (nodeRight - parentBoundingRect.left) / gridcol;
+      left = 0;
+      if (colCount < 1) {
+        colCount = 1;
+      }
+    }
+    if (nodeTop < parentTop) {
+      top = 0;
+      rowCount = (nodeBottom - parentBoundingRect.top) / gridrow;
+    }
+    if (nodeBottom > parentBoundingRect.bottom) {
+      const diff = nodeBottom - parentBoundingRect.bottom;
+      const newRowCount = Math.floor(diff / gridrow);
+      resizeCanvas(parent.id, {
+        rowsCount: parent.rowsCount + newRowCount,
+      });
+    }
     if (node.isCanvas) {
       resizeCanvas(id, {
         x: left,

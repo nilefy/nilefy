@@ -97,10 +97,24 @@ interface WebloomActions {
     id: string,
     dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
+  /**
+   * @param id
+   * @param dimensions
+   * @description call this to resize a canvas node to have side effects on the columnWidth of all its canvas children
+   */
   resizeCanvas: (
     id: string,
     dimensions: Partial<WebloomNodeDimensions>,
   ) => void;
+  /**
+   *
+   * @param id
+   * @param dimensions
+   * @returns undo information
+   * @description call this to resize any node. if the new vertical size is bigger than the parent canvas node,
+   * the parent canvas node will be resized to fit the new size. this is done recursively.
+   */
+  resize: (id: string, dimensions: Partial<WebloomNodeDimensions>) => void;
   setMousePos: (pos: WebloomState['mousePos']) => void;
   setNewNode: (newNode: WebloomState['newNode']) => void;
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
@@ -316,6 +330,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return newState;
       });
     },
+    resize(id, dimensions) {},
+
     resizeCanvas(id, dimensions) {
       const node = get().tree[id];
       const oldColumnWidth = node.columnWidth;

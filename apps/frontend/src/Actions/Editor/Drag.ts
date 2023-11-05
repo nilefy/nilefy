@@ -313,7 +313,7 @@ class DragAction {
         if (
           mousePos.x > otherBoundingRect.left &&
           mousePos.x < otherBoundingRect.right &&
-          mousePos.y > otherBoundingRect.bottom
+          mousePos.y >= otherBoundingRect.bottom
         ) {
           // mouse under other element and between its left and right
           top = otherBottom;
