@@ -73,10 +73,8 @@ function WebloomRoot() {
   const handleResize = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
-    const height = ref.current?.clientHeight;
     const columnWidth = width / NUMBER_OF_COLUMNS;
-    const rowsCount = Math.floor(height / ROW_HEIGHT);
-    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
+    resizeCanvas(ROOT_NODE_ID, { columnWidth });
   };
 
   return (
