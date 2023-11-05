@@ -34,6 +34,7 @@ import DragAction from '@/Actions/Editor/Drag';
 import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
 import { RightSidebar } from './rightsidebar/rightsidebar';
 import { ResizeHandlers } from './WebloomComponents/lib/ResizeHandlers';
+import { SelectionAction } from '@/Actions/Editor/selection';
 
 const { resizeCanvas } = store.getState();
 
@@ -324,9 +325,9 @@ function Editor() {
               e.added.forEach((el) => {
                 const data = el.getAttribute('data-id');
                 if (data) {
-                  store.getState().setSelectedNodeIds((prev) => {
-                    return new Set([...prev, data]);
-                  });
+                  commandManager.executeCommand(
+                    new SelectionAction(data, true),
+                  );
                 }
               });
               e.removed.forEach((el) => {
