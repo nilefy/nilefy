@@ -548,7 +548,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           }
         }
         if (nodeBottom > parentBoundingRect.bottom) {
-          const diff = nodeBottom - parentBoundingRect.bottom;
+          // the voo-doo value is just to add pading under the expension resulted by the element
+          const diff = nodeBottom - parentBoundingRect.bottom + 100;
           const newRowCount = Math.floor(diff / gridrow);
           get().resizeCanvas(parent.id, {
             rowsCount: parent.rowsCount + newRowCount,
