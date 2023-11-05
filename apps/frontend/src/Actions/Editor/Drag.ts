@@ -29,7 +29,7 @@ class DragAction {
   private static threshold = 5;
   private static isNew = false;
   private static newType: string;
-  private static id: string | null;
+  private static id: string | null = null;
   private static oldParent: string;
   private static movedToNewParent = false;
   private static touchedRoot = false;
@@ -141,10 +141,6 @@ class DragAction {
       this.moved = true;
     }
     if (!this.moved) return;
-    // const currentGridPosition = {
-    //   x: Math.min(this.startPosition.x + delta.x, NUMBER_OF_COLUMNS - 1),
-    //   y: this.startPosition.y + delta.y,
-    // };
 
     const node = store.getState().tree[this.id!];
     const over = store.getState().tree[overId];
@@ -240,11 +236,12 @@ class DragAction {
     } else {
       command = {
         execute: () => {
-          moveNode(id, overId!);
+          if (movedToNewParent) {
+            moveNode(id, el.parent);
+          }
           undoData = moveNodeIntoGrid(id, endPosition);
         },
         undo: () => {
-          console.log('undo');
           Object.entries(undoData.changedNodesOriginalCoords).forEach(
             ([id, coords]) => {
               setDimensions(id, {
@@ -254,10 +251,8 @@ class DragAction {
             },
           );
           if (movedToNewParent) {
-            console.log('moved to new parent');
             moveNode(id, oldParent);
           }
-          console.log(startPosition);
           setDimensions(id, startPosition!);
         },
       };
@@ -303,6 +298,7 @@ class DragAction {
     const height = el.rowsCount * gridrow;
     for (const sibling of parent.nodes) {
       if (sibling === id) continue;
+      if (sibling === overId) continue;
       const otherNode = tree[sibling];
       const otherBoundingRect = getBoundingRect(sibling);
       const otherBottom = otherNode.y + otherNode.rowsCount;
@@ -375,9 +371,7 @@ class DragAction {
     const newHeight = rowCount * gridrow;
     top = Math.round(top * gridrow) + parentBoundingRect.top;
     left = Math.round(left * gridcol) + parentBoundingRect.left;
-    if (overId !== ROOT_NODE_ID) {
-      //todo
-    }
+
     const shadowDimensions = {
       x: left,
       y: top,

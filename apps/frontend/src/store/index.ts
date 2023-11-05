@@ -403,7 +403,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           if (
             mousePos.y <=
             overNodeBoundingRect.top +
-              (overNodeBoundingRect.bottom - overNodeBoundingRect.top) / 2 -
+              overNodeBoundingRect.height / 2 -
               //todo fix this magic number with a proper value that's relative to the grid size
               5
           ) {
@@ -413,23 +413,24 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           }
           allowResize = false;
         }
-        nodes.forEach((nodeId) => {
-          if (nodeId === id) return false;
-          const otherNode = get().tree[nodeId];
-          if (!otherNode) return false;
-          const otherBottom = otherNode.y + otherNode.rowsCount;
-          const otherTop = otherNode.y;
-          const otherBoundingRect = get().getBoundingRect(nodeId);
-          if (top < otherBottom && top > otherTop) {
-            if (
-              mousePos.x > otherBoundingRect.left &&
-              mousePos.x < otherBoundingRect.right &&
-              top < otherBottom
-            ) {
-              newCoords.y = otherBottom;
+        allowResize &&
+          nodes.forEach((nodeId) => {
+            if (nodeId === id) return false;
+            const otherNode = get().tree[nodeId];
+            if (!otherNode) return false;
+            const otherBottom = otherNode.y + otherNode.rowsCount;
+            const otherTop = otherNode.y;
+            const otherBoundingRect = get().getBoundingRect(nodeId);
+            if (top < otherBottom && top > otherTop) {
+              if (
+                mousePos.x > otherBoundingRect.left &&
+                mousePos.x < otherBoundingRect.right &&
+                top < otherBottom
+              ) {
+                newCoords.y = otherBottom;
+              }
             }
-          }
-        });
+          });
       }
 
       function recurse(
@@ -527,7 +528,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const nodeBottom = nodeTop + rowCount * gridrow;
         if (firstCall) {
           if (nodeRight > parentRight) {
-            console.log('right');
             const diff = parentBoundingRect.right - nodeLeft;
             const newColCount = Math.floor(diff / gridcol);
             colCount = Math.min(colCount, newColCount);
@@ -536,7 +536,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             }
           }
           if (nodeLeft < parentLeft) {
-            console.log('left');
             colCount = (nodeRight - parentBoundingRect.left) / gridcol;
             left = 0;
             if (colCount < 1) {
