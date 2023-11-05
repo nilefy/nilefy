@@ -43,7 +43,6 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
-    console.log(store.getState().tree[id]);
     const parentId = store.getState().tree[id].parent;
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
@@ -108,7 +107,6 @@ class ResizeAction {
     const [gridRow, gridCol] = getGridSize(id);
     const minWidth = gridCol * 2;
     const minHeight = gridRow * 10;
-    console.log(direction);
     if (direction.includes('top')) {
       const diff = initialTop - y;
       const snappedDiff = Math.round(normalize(diff, gridRow));
@@ -148,10 +146,10 @@ class ResizeAction {
     const parent = store.getState().getDimensions(node.parent);
     newLeft -= parent.x;
     newTop -= parent.y;
-    const colCount = newWidth / gridCol;
-    const rowCount = newHeight / gridRow;
-    const newX = newLeft / gridCol;
-    const newY = newTop / gridRow;
+    const colCount = Math.round(newWidth / gridCol);
+    const rowCount = Math.round(newHeight / gridRow);
+    const newX = Math.round(newLeft / gridCol);
+    const newY = Math.round(newTop / gridRow);
     return {
       rowsCount: rowCount,
       columnsCount: colCount,
@@ -311,6 +309,7 @@ class ResizeAction {
     let top = dimensions.y || node.y;
     let rowCount = dimensions.rowsCount || node.rowsCount;
     let colCount = dimensions.columnsCount || node.columnsCount;
+
     const right = left + colCount;
     const bottom = top + rowCount;
     const nodes = siblings;
@@ -368,7 +367,6 @@ class ResizeAction {
     const nodeTop = top * gridrow + parentTop;
     const nodeBottom = nodeTop + rowCount * gridrow;
     if (nodeRight > parentRight) {
-      console.log('right');
       const diff = parentBoundingRect.right - nodeLeft;
       const newColCount = Math.floor(diff / gridcol);
       colCount = Math.min(colCount, newColCount);
@@ -377,7 +375,6 @@ class ResizeAction {
       }
     }
     if (nodeLeft < parentLeft) {
-      console.log('left');
       colCount = (nodeRight - parentBoundingRect.left) / gridcol;
       left = 0;
       if (colCount < 1) {
