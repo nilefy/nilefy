@@ -145,11 +145,13 @@ class DragAction {
 
     const node = store.getState().tree[this.id!];
     const over = store.getState().tree[overId];
-    if (overId !== this.id && node.parent !== overId && over.isCanvas) {
+    if (!over.isCanvas) {
+      overId = over.parent;
+    }
+    if (overId !== this.id && node.parent !== overId) {
       this.movedToNewParent = true;
       moveNode(this.id, overId);
     }
-
     //Shadow element
     const newShadow = this.getElementShadow(
       delta,
