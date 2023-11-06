@@ -1,5 +1,5 @@
 import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { checkOverlap, getBoundingRect } from '@/lib/utils';
+import { checkOverlap, getBoundingRect, normalize } from '@/lib/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
 export type BoundingRect = {
@@ -10,7 +10,6 @@ export type BoundingRect = {
   width: number;
   height: number;
 };
-
 export type ShadowElement = {
   x: number;
   y: number;
@@ -129,6 +128,138 @@ interface WebloomGetters {
   getRelativeDimensions: (id: string) => WebloomNodeCompleteDimensions;
   getBoundingRect: (id: string) => BoundingRect;
   getGridSize: (id: string) => [GRID_ROW: number, GRID_COL: number];
+  getDropCoordinates: (
+    startPosition: Point,
+    delta: Point,
+    id: string,
+    overId: string,
+  ) => WebloomNodeDimensions;
+}
+/**
+ *
+ * @param id
+ * @param overId
+ * @param siblings
+ * @param newDimensions
+ * @param mousePos
+ * @description handles where the element should be dropped when collided with a node laterally
+ * @returns position the element should be in after move commit
+ */
+function handleLateralCollisions(
+  id: string,
+  overId: string,
+  siblings: string[],
+  newDimensions: WebloomNodeDimensions,
+  mousePos: Point,
+): WebloomNodeDimensions {
+  const { columnsCount, rowsCount, x, y } = newDimensions;
+  let left = x;
+  let top = y;
+  let colCount = columnsCount;
+  for (const sibling of siblings) {
+    if (sibling === id) continue;
+    if (sibling === overId) continue;
+    const otherNode = store.getState().tree[sibling];
+    const otherBoundingRect = store.getState().getBoundingRect(sibling);
+    const otherBottom = otherNode.y + otherNode.rowsCount;
+    const otherTop = otherNode.y;
+    const otherLeft = otherNode.x;
+    const otherRight = otherNode.x + otherNode.columnsCount;
+    if (top < otherBottom && top >= otherTop) {
+      if (
+        mousePos.x > otherBoundingRect.left &&
+        mousePos.x < otherBoundingRect.right &&
+        mousePos.y >= otherBoundingRect.bottom
+      ) {
+        // mouse under other element and between its left and right
+        top = otherBottom;
+      } else if (left < otherLeft && left + colCount > otherLeft) {
+        colCount = Math.min(colCount, otherLeft - left);
+        if (colCount < 2) {
+          left = otherLeft - 2;
+          colCount = 2;
+        }
+      } else if (left >= otherLeft && left < otherRight) {
+        const temp = left;
+        left = otherRight;
+        colCount += temp - left;
+        if (colCount < 2) {
+          colCount = 2;
+        }
+      }
+    }
+  }
+  return {
+    x: left,
+    y: top,
+    columnsCount: colCount,
+    rowsCount: rowsCount,
+  };
+}
+
+function convertGridToPixel(
+  dims: WebloomNodeDimensions,
+  grid: [number, number],
+  parentDims: Pick<WebloomNodeCompleteDimensions, 'x' | 'y'> = {
+    x: 0,
+    y: 0,
+  },
+): WebloomNodeCompleteDimensions {
+  return {
+    ...dims,
+    x: dims.x * grid[1] + parentDims.x,
+    y: dims.y * grid[0] + parentDims.y,
+    width: dims.columnsCount * grid[1],
+    height: dims.rowsCount * grid[0],
+  };
+}
+
+function handleParentCollisions(
+  parent: string,
+  id: string,
+  dimensions: WebloomNodeDimensions,
+) {
+  const [gridrow, gridcol] = store.getState().getGridSize(id);
+  const parentDims = store.getState().getDimensions(parent);
+  const parentBoundingRect = getBoundingRect(parentDims);
+  const newPosition = convertGridToPixel(
+    dimensions,
+    [gridrow, gridcol],
+    parentDims,
+  );
+  //left < parentLeft
+  if (newPosition.x < parentBoundingRect.left) {
+    colCount = (newPosition.x + width - parentBoundingRect.left) / gridcol;
+    left = 0;
+    if (colCount < 1) {
+      colCount = 1;
+    }
+  }
+  //right >= parentRight
+  if (newPosition.x + width > parentBoundingRect.right) {
+    // colCount = Math.min(colCount, parentRight - left);
+    const diff = parentBoundingRect.right - newPosition.x;
+    const newColCount = Math.floor(diff / gridcol);
+    colCount = Math.min(colCount, newColCount);
+    if (colCount < 1) {
+      colCount = 1;
+    }
+  }
+
+  //top < parentTop
+  if (newPosition.y < parentBoundingRect.top) {
+    top = 0;
+    rowCount = (newPosition.y + height - parentBoundingRect.top) / gridrow;
+  }
+  //bottom >= parentBottom
+  if (newPosition.y + height > parentBoundingRect.bottom) {
+    const diff = parentBoundingRect.bottom - newPosition.y;
+    const newRowCount = Math.floor(diff / gridrow);
+    rowCount = Math.min(rowCount, newRowCount);
+    if (rowCount < 1) {
+      rowCount = 1;
+    }
+  }
 }
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
   (set, get) => ({
@@ -142,6 +273,82 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     resizedNode: null,
     setResizedNode(id) {
       set({ resizedNode: id });
+    },
+    getDropCoordinates(startPosition, delta, id, overId) {
+      const tree = get().tree;
+      const el = tree[id];
+      const [gridrow, gridcol] = get().getGridSize(el.id);
+      const mousePos = get().mousePos;
+      const normalizedDelta = {
+        x: normalize(delta.x, gridcol),
+        y: normalize(delta.y, gridrow),
+      };
+      const newPosition = {
+        x: startPosition.x + normalizedDelta.x,
+        y: startPosition.y + normalizedDelta.y,
+      }; // -> this is the absolute position in pixels (normalized to the grid)
+      const parent = tree[el.parent!];
+      const parentBoundingRect = get().getBoundingRect(el.parent!);
+      const position = {
+        x: newPosition.x - parentBoundingRect.left,
+        y: newPosition.y - parentBoundingRect.top,
+      }; // -> this is the position in pixels relative to the parent (normalized to the grid)
+      // Transform the postion to grid units (columns and rows)
+      const gridPosition = {
+        x: Math.round(position.x / gridcol),
+        y: Math.round(position.y / gridrow),
+      }; // -> this is the position in grid units (columns and rows)
+      let top = gridPosition.y;
+      let left = gridPosition.x;
+      const oldLeft = left * gridcol;
+      let colCount = el.columnsCount;
+      let rowCount = el.rowsCount;
+      const width = el.columnsCount * gridcol;
+      const height = el.rowsCount * gridrow;
+      const { x, y, columnsCount, rowsCount } = handleLateralCollisions(
+        id,
+        overId,
+        parent.nodes,
+        {
+          x: left,
+          y: top,
+          columnsCount: colCount,
+          rowsCount: rowCount,
+        },
+        mousePos,
+      );
+      left = x;
+      top = y;
+      colCount = columnsCount;
+      rowCount = rowsCount;
+      newPosition.x = left * gridcol + parentBoundingRect.left;
+      newPosition.y = top * gridrow + parentBoundingRect.top;
+
+      colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
+      rowCount = Math.min(parent.rowsCount, rowCount);
+      const overEl = tree[overId];
+      const newWidth = colCount * gridcol;
+      const newHeight = rowCount * gridrow;
+      top = Math.round(top * gridrow) + parentBoundingRect.top;
+      left = Math.round(left * gridcol) + parentBoundingRect.left;
+
+      //todo change this when droppable areas have padding around them
+      if (overEl && !overEl.isCanvas) {
+        const overBoundingRect = get().getBoundingRect(overId);
+        left = oldLeft;
+        if (
+          mousePos.y <=
+          overBoundingRect.top +
+            (overBoundingRect.bottom - overBoundingRect.top) / 2 -
+            5
+        ) {
+          shadowDimensions.y = overBoundingRect.top - 10;
+          shadowDimensions.height = 10;
+        } else {
+          shadowDimensions.y = overBoundingRect.bottom;
+        }
+      }
+      return shadowDimensions;
     },
     setDraggedNode(id) {
       set({ draggedNode: id });
@@ -276,15 +483,11 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       const gridColSize = parent.columnWidth!;
       const gridRowSize = ROW_HEIGHT;
       const parentDimensions = get().getDimensions(node.parent);
-      return {
-        x: node.x * gridColSize + parentDimensions.x,
-        y: node.y * gridRowSize + parentDimensions.y,
-        columnsCount: node.columnsCount,
-        rowsCount: node.rowsCount,
-        width: node.columnsCount * gridColSize,
-        height: node.rowsCount * gridRowSize,
-        columnWidth: gridColSize,
-      };
+      return convertGridToPixel(
+        node,
+        [gridRowSize, gridColSize],
+        parentDimensions,
+      );
     },
     getRelativeDimensions(id) {
       const node = get().getNode(id)!;
@@ -387,51 +590,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       };
       const nodes = [...parent.nodes];
       //sort the nodes by y position (ascending) (top to bottom)
-      let allowResize = true;
       nodes.sort((a, b) => -get().tree[a].y + get().tree[b].y);
-      if (firstCall) {
-        if (
-          overId !== null &&
-          overId !== ROOT_NODE_ID &&
-          overId !== id &&
-          overId !== node.parent
-        ) {
-          const overNode = store.getState().tree[overId];
-          const overNodeBoundingRect = get().getBoundingRect(overId);
-          const overNodeTop = overNode.y;
-          const overNodeBottom = overNode.y + overNode.rowsCount;
-          if (
-            mousePos.y <=
-            overNodeBoundingRect.top +
-              overNodeBoundingRect.height / 2 -
-              //todo fix this magic number with a proper value that's relative to the grid size
-              5
-          ) {
-            newCoords.y = overNodeTop - 1;
-          } else {
-            newCoords.y = overNodeBottom;
-          }
-          allowResize = false;
-        }
-        allowResize &&
-          nodes.forEach((nodeId) => {
-            if (nodeId === id) return false;
-            const otherNode = get().tree[nodeId];
-            if (!otherNode) return false;
-            const otherBottom = otherNode.y + otherNode.rowsCount;
-            const otherTop = otherNode.y;
-            const otherBoundingRect = get().getBoundingRect(nodeId);
-            if (top < otherBottom && top > otherTop) {
-              if (
-                mousePos.x > otherBoundingRect.left &&
-                mousePos.x < otherBoundingRect.right &&
-                top < otherBottom
-              ) {
-                newCoords.y = otherBottom;
-              }
-            }
-          });
-      }
 
       function recurse(
         id: string,

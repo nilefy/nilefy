@@ -153,7 +153,7 @@ class DragAction {
       moveNode(this.id, overId);
     }
     //Shadow element
-    const newShadow = this.getElementShadow(
+    const newShadow = this.getDropCoordinates(
       delta,
       mouseCurrentPosition,
       this.id!,
@@ -264,7 +264,7 @@ class DragAction {
     return command;
   }
 
-  private static getElementShadow(
+  private static getDropCoordinates(
     delta: Point,
     mousePos: Point,
     id: string,
