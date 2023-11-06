@@ -7,6 +7,7 @@ import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
+import { DataSourcesModule } from './data_sources/data_sources.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AppsModule } from './apps/apps.module';
     DrizzleModule,
     WorkspacesModule,
     AppsModule,
+    DataSourcesModule,
   ],
 })
 export class AppModule {}
