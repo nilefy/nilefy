@@ -41,6 +41,7 @@ VALUES
     ${usersdb};
   `),
   );
+  await client.end();
 }
 
 main();
