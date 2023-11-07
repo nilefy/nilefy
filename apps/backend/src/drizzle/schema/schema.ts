@@ -42,7 +42,7 @@ export const users = pgTable('users', {
  */
 export const groups = pgTable('groups', {
   id: serial('id').primaryKey(),
-  name: varchar('username', { length: 256 }).notNull(),
+  name: varchar('name', { length: 256 }).notNull(),
   description: varchar('description', { length: 255 }),
   ...timeStamps,
   createdById: integer('created_by_id')
@@ -67,9 +67,19 @@ export const usersToGroups = pgTable(
   }),
 );
 
+export const pgPermissionsEnum = pgEnum('permissions_enum', [
+  'Workspaces-Read',
+  'Workspaces-Write',
+  'Workspaces-Delete',
+  // APPS
+  'Apps-Read',
+  'Apps-Write',
+  'Apps-Delete',
+]);
+
 export const permissions = pgTable('permissions', {
   id: serial('id').primaryKey(),
-  name: varchar('username', { length: 256 }).notNull(),
+  name: pgPermissionsEnum('name').notNull(),
   description: varchar('description', { length: 255 }),
   createdAt: timestamp('created_at')
     .notNull()
@@ -85,7 +95,7 @@ export const permissions = pgTable('permissions', {
  */
 export const roles = pgTable('roles', {
   id: serial('id').primaryKey(),
-  name: varchar('username', { length: 256 }).notNull(),
+  name: varchar('name', { length: 256 }).notNull(),
   description: varchar('description', { length: 255 }),
   ...timeStamps,
   ...softDelete,
@@ -232,18 +242,16 @@ const userUpdateAppRelation = 'lastUpdatedApps';
 const userDeleteAppRelation = 'DeletedApps';
 const webloomTablesColumnsRelation = 'webloomTablesColumns';
 // groups
-const userCreateGroupRelation = 'createdGroup';
-const userUpdateGroupRelation = 'lastUpdatedGroup';
-const userDeleteGroupRelation = 'DeletedGroup';
-const usersInGroupRelation = 'userInGroup';
-const groupRolesRelation = 'groupRoles';
+const userUsersInGroupRelation = 'useruserInGroup';
+const groupUsersInGroupRelation = 'groupuserInGroup';
+const groupGroupRolesRelation = 'groupgroupRoles';
+const roleGroupRolesRelation = 'rolegroupRoles';
 // roles
-const userCreateRoleRelation = 'createdRole';
-const userUpdateRoleRelation = 'lastUpdatedRole';
-const userDeleteRoleRelation = 'DeletedRole';
-const usersInRoleRelation = 'usersInRole';
+const userUsersInRoleRelation = 'userUsersInRole';
+const roleUsersInRoleRelation = 'roleUsersInRole';
 // permissions
-const permissionsInRoleRelation = 'permissionsInRole';
+const permissionPermissionsInRoleRelation = 'permissionpermissionsInRole';
+const rolePermissionsInRoleRelation = 'rolepermissionsInRole';
 
 export const usersRelations = relations(users, ({ many }) => {
   return {
@@ -273,50 +281,45 @@ export const usersRelations = relations(users, ({ many }) => {
     webloomTables: many(webloomTables, {
       relationName: userWebloomTablesRelation,
     }),
-    // groups relations
-    lastUpdatedGroups: many(groups, {
-      relationName: userUpdateGroupRelation,
+    usersToGroups: many(usersToGroups, {
+      relationName: userUsersInGroupRelation,
     }),
-    DeletedGroups: many(groups, {
-      relationName: userDeleteGroupRelation,
-    }),
-    /**
-     * groups user created/own
-     */
-    groups: many(groups, { relationName: userCreateGroupRelation }),
-    usersToGroups: many(usersToGroups, { relationName: usersInGroupRelation }),
     // roles
-    usersToRoles: many(usersToRoles, { relationName: usersInRoleRelation }),
+    usersToRoles: many(usersToRoles, { relationName: userUsersInRoleRelation }),
   };
 });
 
 export const permissionsRelations = relations(permissions, ({ many }) => ({
   permissionsToRoles: many(permissionsToRoles, {
-    relationName: permissionsInRoleRelation,
+    relationName: permissionPermissionsInRoleRelation,
   }),
 }));
 
 export const groupsRelations = relations(groups, ({ many }) => ({
-  usersToGroups: many(usersToGroups, { relationName: usersInGroupRelation }),
+  usersToGroups: many(usersToGroups, {
+    relationName: groupUsersInGroupRelation,
+  }),
+  rolesToGroups: many(rolesToGroups, { relationName: groupGroupRolesRelation }),
 }));
 
 export const rolesRelations = relations(roles, ({ many }) => ({
   permissionsToRoles: many(permissionsToRoles, {
-    relationName: permissionsInRoleRelation,
+    relationName: rolePermissionsInRoleRelation,
   }),
-  usersToRoles: many(usersToRoles, { relationName: usersInRoleRelation }),
+  usersToRoles: many(usersToRoles, { relationName: roleUsersInRoleRelation }),
+  rolesToGroups: many(rolesToGroups, { relationName: roleGroupRolesRelation }),
 }));
 
 export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
   group: one(groups, {
     fields: [usersToGroups.groupId],
     references: [groups.id],
-    relationName: usersInGroupRelation,
+    relationName: groupUsersInGroupRelation,
   }),
   user: one(users, {
     fields: [usersToGroups.userId],
     references: [users.id],
-    relationName: usersInGroupRelation,
+    relationName: userUsersInGroupRelation,
   }),
 }));
 
@@ -326,12 +329,12 @@ export const permissionsToRolesRelations = relations(
     permission: one(permissions, {
       fields: [permissionsToRoles.permissionId],
       references: [permissions.id],
-      relationName: permissionsInRoleRelation,
+      relationName: permissionPermissionsInRoleRelation,
     }),
     role: one(roles, {
       fields: [permissionsToRoles.roleId],
       references: [roles.id],
-      relationName: permissionsInRoleRelation,
+      relationName: rolePermissionsInRoleRelation,
     }),
   }),
 );
@@ -340,12 +343,12 @@ export const usersToRolesRelations = relations(usersToRoles, ({ one }) => ({
   role: one(roles, {
     fields: [usersToRoles.roleId],
     references: [roles.id],
-    relationName: usersInRoleRelation,
+    relationName: roleUsersInRoleRelation,
   }),
   user: one(users, {
     fields: [usersToRoles.userId],
     references: [users.id],
-    relationName: usersInRoleRelation,
+    relationName: userUsersInRoleRelation,
   }),
 }));
 
@@ -353,12 +356,12 @@ export const rolesToGroupsRelations = relations(rolesToGroups, ({ one }) => ({
   group: one(groups, {
     fields: [rolesToGroups.groupId],
     references: [groups.id],
-    relationName: groupRolesRelation,
+    relationName: groupGroupRolesRelation,
   }),
   role: one(roles, {
     fields: [rolesToGroups.roleId],
     references: [roles.id],
-    relationName: groupRolesRelation,
+    relationName: roleGroupRolesRelation,
   }),
 }));
 
