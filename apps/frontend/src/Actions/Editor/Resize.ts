@@ -50,8 +50,8 @@ class ResizeAction {
         return {
           ...acc,
           [node[0]]: {
-            x: node[1].x,
-            y: node[1].y,
+            x: node[1].col,
+            y: node[1].row,
           },
         };
       },
@@ -61,7 +61,9 @@ class ResizeAction {
     this.siblings = store
       .getState()
       .tree[parentId!].nodes.filter((nodeId) => nodeId !== id)
-      .sort((a, b) => -store.getState().tree[a].y + store.getState().tree[b].y);
+      .sort(
+        (a, b) => -store.getState().tree[a].row + store.getState().tree[b].row,
+      );
     this.initialDimensions = dimensions;
   }
   public static start(
@@ -143,9 +145,9 @@ class ResizeAction {
     }
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
-    const parent = store.getState().getDimensions(node.parent);
-    newLeft -= parent.x;
-    newTop -= parent.y;
+    const parent = store.getState().getPixelDimensions(node.parent);
+    newLeft -= parent.col;
+    newTop -= parent.row;
     const colCount = Math.round(newWidth / gridCol);
     const rowCount = Math.round(newHeight / gridRow);
     const newX = Math.round(newLeft / gridCol);
@@ -174,7 +176,7 @@ class ResizeAction {
     }
     //filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
-      if (pos.y === store.getState().tree[id].y) {
+      if (pos.y === store.getState().tree[id].row) {
         this.collidingNodes.delete(id);
       }
     });
@@ -211,8 +213,8 @@ class ResizeAction {
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
       if (id === this.id) return;
       setDimensions(id, {
-        x: pos.x,
-        y: pos.y,
+        col: pos.x,
+        row: pos.y,
       });
     });
   }
@@ -231,16 +233,16 @@ class ResizeAction {
       resizeCanvas(this.id, {
         columnsCount: colCount,
         rowsCount: rowCount,
-        x: col,
-        y: row,
+        col: col,
+        row: row,
       });
       return;
     }
     setDimensions(this.id, {
       columnsCount: colCount,
       rowsCount: rowCount,
-      x: col,
-      y: row,
+      col: col,
+      row: row,
     });
   }
 
@@ -273,8 +275,8 @@ class ResizeAction {
         this.returnToInitialDimensions(initialDimensions);
         undoData.forEach((data) => {
           setDimensions(data.id, {
-            x: data.x,
-            y: data.y,
+            col: data.x,
+            row: data.y,
           });
         });
       },
@@ -305,8 +307,8 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    let left = dimensions.x || node.x;
-    let top = dimensions.y || node.y;
+    let left = dimensions.x || node.col;
+    let top = dimensions.y || node.row;
     let rowCount = dimensions.rowsCount || node.rowsCount;
     let colCount = dimensions.columnsCount || node.columnsCount;
 
@@ -318,10 +320,10 @@ class ResizeAction {
       if (nodeId === id) return false;
       const otherNode = tree[nodeId];
       if (!otherNode) return false;
-      const otherBottom = otherNode.y + otherNode.rowsCount;
-      const otherTop = otherNode.y;
-      const otherLeft = otherNode.x;
-      const otherRight = otherNode.x + otherNode.columnsCount;
+      const otherBottom = otherNode.row + otherNode.rowsCount;
+      const otherTop = otherNode.row;
+      const otherLeft = otherNode.col;
+      const otherRight = otherNode.col + otherNode.columnsCount;
       if (
         checkOverlap(
           {
@@ -394,15 +396,15 @@ class ResizeAction {
     }
     if (node.isCanvas) {
       resizeCanvas(id, {
-        x: left,
-        y: top,
+        col: left,
+        row: top,
         columnsCount: colCount,
         rowsCount: rowCount,
       });
     } else {
       setDimensions(id, {
-        x: left,
-        y: top,
+        col: left,
+        row: top,
         columnsCount: colCount,
         rowsCount: rowCount,
       });

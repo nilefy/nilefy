@@ -35,6 +35,7 @@ import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding
 import { RightSidebar } from './rightsidebar/rightsidebar';
 import { ResizeHandlers } from './WebloomComponents/lib/ResizeHandlers';
 import { SelectionAction } from '@/Actions/Editor/selection';
+import { WebloomButton } from './WebloomComponents/Button';
 
 const { resizeCanvas } = store.getState();
 
@@ -124,11 +125,11 @@ const initTree: WebloomTree = {
     id: ROOT_NODE_ID,
     name: ROOT_NODE_ID,
     type: WebloomContainer,
-    x: 0,
-    y: 0,
+    col: 0,
+    row: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: ['container-1', 'container-3'],
+    nodes: ['container-1', 'container-3', 'button-1'],
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
@@ -141,8 +142,8 @@ const initTree: WebloomTree = {
     id: 'container-1',
     name: 'container-1',
     type: WebloomContainer,
-    x: 5,
-    y: 30,
+    col: 5,
+    row: 30,
     columnWidth: 15,
     columnsCount: 14,
     nodes: ['container-2'],
@@ -159,8 +160,8 @@ const initTree: WebloomTree = {
     id: 'container-2',
     name: 'container-2',
     type: WebloomContainer,
-    x: 1,
-    y: 2,
+    col: 1,
+    row: 2,
     columnWidth: 15,
     columnsCount: 14,
     nodes: [],
@@ -177,8 +178,8 @@ const initTree: WebloomTree = {
     id: 'container-3',
     name: 'container-3',
     type: WebloomContainer,
-    x: 15,
-    y: 600,
+    col: 15,
+    row: 600,
     columnWidth: 15,
     columnsCount: 5,
     nodes: [],
@@ -190,6 +191,23 @@ const initTree: WebloomTree = {
       color: 'blue',
     },
     rowsCount: 30,
+  },
+  'button-1': {
+    id: 'button-1',
+    name: 'button-1',
+    type: WebloomButton,
+    col: 20,
+    row: 9,
+    columnsCount: 4,
+    nodes: [],
+    parent: ROOT_NODE_ID,
+    isCanvas: false,
+    dom: null,
+    props: {
+      className: 'h-full w-full bg-blue-500',
+      color: 'blue',
+    },
+    rowsCount: 10,
   },
 };
 store.setState((state) => {

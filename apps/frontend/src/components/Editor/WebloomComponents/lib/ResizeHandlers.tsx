@@ -63,7 +63,7 @@ export function ResizeHandlers() {
 }
 
 function Handles({ id }: { id: string }) {
-  const dims = store((state) => state.getDimensions(id));
+  const dims = store((state) => state.getPixelDimensions(id));
   const isDragging = store((state) => state.draggedNode === id);
   const handleSize = 10;
   const handleStyle: React.CSSProperties = {
@@ -80,8 +80,8 @@ function Handles({ id }: { id: string }) {
         className="touch-none select-none"
         style={{
           position: 'absolute',
-          top: dims.y,
-          left: dims.x,
+          top: dims.row,
+          left: dims.col,
         }}
       >
         {Object.entries(handlePositions).map(([key, [y, x]]) => {
@@ -119,8 +119,8 @@ function Handles({ id }: { id: string }) {
                   ResizeAction.start(id, key as keyof typeof cursors, {
                     width: dims.width,
                     height: dims.height,
-                    x: dims.x,
-                    y: dims.y,
+                    x: dims.col,
+                    y: dims.row,
                   }),
                 );
               }}

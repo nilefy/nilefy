@@ -1,4 +1,8 @@
-import store, { WebloomNode } from '@/store';
+import store, {
+  WebloomNode,
+  convertGridToPixel,
+  convertPixelToGrid,
+} from '@/store';
 import { Command, UndoableCommand } from '../types';
 import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import { nanoid } from 'nanoid';
@@ -23,7 +27,8 @@ const {
   removeNode,
   setDraggedNode,
   setDimensions,
-  getDimensions,
+  getPixelDimensions,
+  getDropCoordinates,
 } = store.getState();
 class DragAction {
   private static threshold = 5;
@@ -79,8 +84,8 @@ class DragAction {
           text: this.counter++,
         },
         isCanvas: WebloomComponents[this.newType].isCanvas,
-        x: args.new!.startPosition.x,
-        y: args.new!.startPosition.y,
+        col: args.new!.startPosition.x,
+        row: args.new!.startPosition.y,
         columnsCount: 4,
         rowsCount: 8,
       };
@@ -94,17 +99,12 @@ class DragAction {
         x: nodeBoundingRect.left,
         y: nodeBoundingRect.top,
       };
-      this.gridStartPosition = { x: node.x, y: node.y };
+      this.gridStartPosition = { x: node.col, y: node.row };
     }
     this.oldParent ||= ROOT_NODE_ID;
     setDraggedNode(this.isNew ? 'new' : this.id!);
-    const dims = getDimensions(this.id!);
-    setShadowElement({
-      x: dims.x,
-      y: dims.y,
-      width: dims.width,
-      height: dims.height,
-    });
+    const dims = getPixelDimensions(this.id!);
+    setShadowElement(dims);
   }
   public static start(...args: Parameters<typeof DragAction._start>): Command {
     return {
@@ -145,17 +145,17 @@ class DragAction {
 
     const node = store.getState().tree[this.id!];
     const over = store.getState().tree[overId];
+    let newParent: string = overId;
     if (!over.isCanvas) {
-      overId = over.parent;
+      newParent = over.parent;
     }
-    if (overId !== this.id && node.parent !== overId) {
+    if (newParent !== this.id && node.parent !== newParent) {
       this.movedToNewParent = true;
-      moveNode(this.id, overId);
+      moveNode(this.id, newParent);
     }
     //Shadow element
     const newShadow = this.getDropCoordinates(
       delta,
-      mouseCurrentPosition,
       this.id!,
       overId === this.id! ? ROOT_NODE_ID : overId,
     );
@@ -194,20 +194,14 @@ class DragAction {
       x: normalize(delta.x, gridcol),
       y: normalize(delta.y, gridrow),
     };
-    const newPosition = {
-      x: this.startPosition.x + normalizedDelta.x,
-      y: this.startPosition.y + normalizedDelta.y,
-    }; // -> this is the absolute position in pixels (normalized to the grid)
-    const parentBoundingRect = getBoundingRect(el.parent!);
-    const position = {
-      x: newPosition.x - parentBoundingRect.left,
-      y: newPosition.y - parentBoundingRect.top,
-    }; // -> this is the position in pixels relative to the parent (normalized to the grid)
-    // Transform the postion to grid units (columns and rows)
-    const endPosition = {
-      x: Math.round(position.x / gridcol),
-      y: Math.round(position.y / gridrow),
-    }; // -> this is the position in grid units (columns and rows)
+
+    const endPosition = getDropCoordinates(
+      this.startPosition,
+      normalizedDelta,
+      this.id!,
+      overId,
+      false,
+    );
     const oldParent = this.oldParent;
     const startPosition = this.gridStartPosition;
     const movedToNewParent = this.movedToNewParent;
@@ -228,10 +222,7 @@ class DragAction {
           removeNode(id);
           Object.entries(undoData.changedNodesOriginalCoords).forEach(
             ([id, coords]) => {
-              setDimensions(id, {
-                x: coords.x,
-                y: coords.y,
-              });
+              setDimensions(id, coords);
             },
           );
         },
@@ -247,16 +238,19 @@ class DragAction {
         undo: () => {
           Object.entries(undoData.changedNodesOriginalCoords).forEach(
             ([id, coords]) => {
-              setDimensions(id, {
-                x: coords.x,
-                y: coords.y,
-              });
+              setDimensions(id, coords);
             },
           );
           if (movedToNewParent) {
             moveNode(id, oldParent);
           }
-          setDimensions(id, startPosition!);
+          setDimensions(
+            id,
+            {
+              col: startPosition.x,
+              row: startPosition.y,
+            }!,
+          );
         },
       };
     }
@@ -264,142 +258,17 @@ class DragAction {
     return command;
   }
 
-  private static getDropCoordinates(
-    delta: Point,
-    mousePos: Point,
-    id: string,
-    overId: string,
-  ) {
-    const tree = store.getState().tree;
-    const el = tree[id];
-    const [gridrow, gridcol] = getGridSize(el.id);
-    const normalizedDelta = {
-      x: normalize(delta.x, gridcol),
-      y: normalize(delta.y, gridrow),
-    };
-    const newPosition = {
-      x: this.startPosition.x + normalizedDelta.x,
-      y: this.startPosition.y + normalizedDelta.y,
-    }; // -> this is the absolute position in pixels (normalized to the grid)
-    const parent = tree[el.parent!];
-    const parentBoundingRect = getBoundingRect(el.parent!);
-    const position = {
-      x: newPosition.x - parentBoundingRect.left,
-      y: newPosition.y - parentBoundingRect.top,
-    }; // -> this is the position in pixels relative to the parent (normalized to the grid)
-    // Transform the postion to grid units (columns and rows)
-    const gridPosition = {
-      x: Math.round(position.x / gridcol),
-      y: Math.round(position.y / gridrow),
-    }; // -> this is the position in grid units (columns and rows)
-    let top = gridPosition.y;
-    let left = gridPosition.x;
-    const oldLeft = left * gridcol;
-    let colCount = el.columnsCount;
-    let rowCount = el.rowsCount;
-    const width = el.columnsCount * gridcol;
-    const height = el.rowsCount * gridrow;
-    for (const sibling of parent.nodes) {
-      if (sibling === id) continue;
-      if (sibling === overId) continue;
-      const otherNode = tree[sibling];
-      const otherBoundingRect = getBoundingRect(sibling);
-      const otherBottom = otherNode.y + otherNode.rowsCount;
-      const otherTop = otherNode.y;
-      const otherLeft = otherNode.x;
-      const otherRight = otherNode.x + otherNode.columnsCount;
-      if (top < otherBottom && top >= otherTop) {
-        if (
-          mousePos.x > otherBoundingRect.left &&
-          mousePos.x < otherBoundingRect.right &&
-          mousePos.y >= otherBoundingRect.bottom
-        ) {
-          // mouse under other element and between its left and right
-          top = otherBottom;
-        } else if (left < otherLeft && left + colCount > otherLeft) {
-          colCount = Math.min(colCount, otherLeft - left);
-          if (colCount < 2) {
-            left = otherLeft - 2;
-            colCount = 2;
-          }
-        } else if (left >= otherLeft && left < otherRight) {
-          const temp = left;
-          left = otherRight;
-          colCount += temp - left;
-          if (colCount < 2) {
-            colCount = 2;
-          }
-        }
-      }
-    }
-    newPosition.x = left * gridcol + parentBoundingRect.left;
-    newPosition.y = top * gridrow + parentBoundingRect.top;
-    //left < parentLeft
-    if (newPosition.x < parentBoundingRect.left) {
-      colCount = (newPosition.x + width - parentBoundingRect.left) / gridcol;
-      left = 0;
-      if (colCount < 1) {
-        colCount = 1;
-      }
-    }
-    //right >= parentRight
-    if (newPosition.x + width > parentBoundingRect.right) {
-      // colCount = Math.min(colCount, parentRight - left);
-      const diff = parentBoundingRect.right - newPosition.x;
-      const newColCount = Math.floor(diff / gridcol);
-      colCount = Math.min(colCount, newColCount);
-      if (colCount < 1) {
-        colCount = 1;
-      }
-    }
-
-    //top < parentTop
-    if (newPosition.y < parentBoundingRect.top) {
-      top = 0;
-      rowCount = (newPosition.y + height - parentBoundingRect.top) / gridrow;
-    }
-    //bottom >= parentBottom
-    if (newPosition.y + height > parentBoundingRect.bottom) {
-      const diff = parentBoundingRect.bottom - newPosition.y;
-      const newRowCount = Math.floor(diff / gridrow);
-      rowCount = Math.min(rowCount, newRowCount);
-      if (rowCount < 1) {
-        rowCount = 1;
-      }
-    }
-    colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
-    rowCount = Math.min(parent.rowsCount, rowCount);
-    const overEl = tree[overId];
-    const newWidth = colCount * gridcol;
-    const newHeight = rowCount * gridrow;
-    top = Math.round(top * gridrow) + parentBoundingRect.top;
-    left = Math.round(left * gridcol) + parentBoundingRect.left;
-
-    const shadowDimensions = {
-      x: left,
-      y: top,
-      width: newWidth,
-      height: newHeight,
-    };
-
-    //todo change this when droppable areas have padding around them
-    if (overEl && !overEl.isCanvas) {
-      const overBoundingRect = getBoundingRect(overId as string);
-      shadowDimensions.x = oldLeft;
-      if (
-        mousePos.y <=
-        overBoundingRect.top +
-          (overBoundingRect.bottom - overBoundingRect.top) / 2 -
-          this.threshold
-      ) {
-        shadowDimensions.y = overBoundingRect.top - 10;
-        shadowDimensions.height = 10;
-      } else {
-        shadowDimensions.y = overBoundingRect.bottom;
-      }
-    }
-    return shadowDimensions;
+  private static getDropCoordinates(delta: Point, id: string, overId: string) {
+    const node = store.getState().tree[id];
+    const grid = getGridSize(id);
+    const parentPixelDimensions = getPixelDimensions(node.parent);
+    return convertGridToPixel(
+      getDropCoordinates(this.startPosition, delta, id, overId, true),
+      grid,
+      parentPixelDimensions,
+    );
   }
+
   private static cleanUp() {
     this.isNew = false;
     this.initialDelta = { x: 0, y: 0 };

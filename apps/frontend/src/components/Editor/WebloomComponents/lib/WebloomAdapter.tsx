@@ -22,7 +22,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store((store) => store.getRelativeDimensions(id));
+  const elDimensions = store((store) => store.getRelativePixelDimensions(id));
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
