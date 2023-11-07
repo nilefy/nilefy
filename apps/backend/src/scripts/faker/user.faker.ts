@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 
 export interface User {
-  id: string;
+  // id: string;
   username: string;
   email: string;
   password: string;
@@ -12,7 +12,7 @@ export interface User {
 
 export function generateFakeUser(): User {
   return {
-    id: faker.string.uuid(),
+    // id: faker.string.uuid(),
     username: faker.internet.userName(),
     email: faker.internet.email(),
     password: faker.internet.password(),

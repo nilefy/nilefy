@@ -22,7 +22,8 @@
     "db:push": "dotenv drizzle-kit push:pg",
     "db:studio": "dotenv drizzle-kit studio --verbose",
     "db:generate": "dotenv drizzle-kit generate:pg",
-    "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate"
+    "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate",
+    "seed:user": "ts-node ./src/scripts/seed.db"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
