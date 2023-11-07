@@ -661,7 +661,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const node = state.tree[id];
         if (!node) return state;
         newCoords.row ??= node.row;
-        console.log(newCoords.row);
         newCoords.col ??= node.col;
         newCoords.columnsCount ??= node.columnsCount;
         newCoords.rowsCount ??= node.rowsCount;
