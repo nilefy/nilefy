@@ -68,21 +68,8 @@ export interface WebloomState {
   shadowElement: ShadowElement | null;
 }
 
-type MoveNodeReturnType = {
-  firstNodeOriginalDimensions?: {
-    x: number;
-    y: number;
-    columnsCount: number;
-    rowsCount: number;
-  };
-  changedNodesOriginalCoords: Record<
-    string,
-    {
-      col: number;
-      row: number;
-    }
-  >;
-};
+type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
+
 interface WebloomActions {
   setDom: (id: string, dom: HTMLElement) => void;
   setSelectedNodeIds: (
@@ -659,13 +646,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       }
     },
     moveNodeIntoGrid(id, newCoords) {
-      const changedNodesOriginalCoords: Record<
-        string,
-        {
-          row: number;
-          col: number;
-        }
-      > = {};
+      let changedNodesOriginalCoords: MoveNodeReturnType = {};
       const node = get().tree[id];
       const parent = get().tree[node.parent];
       const firstNodeOriginalDimensions = {
@@ -680,11 +661,17 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         const node = state.tree[id];
         if (!node) return state;
         newCoords.row ??= node.row;
+        console.log(newCoords.row);
         newCoords.col ??= node.col;
         newCoords.columnsCount ??= node.columnsCount;
         newCoords.rowsCount ??= node.rowsCount;
-        // if it hasn't moved, don't bother
-        if (newCoords.row === node.row && newCoords.col === node.col) return;
+        if (
+          newCoords.row === node.row &&
+          newCoords.col === node.col &&
+          newCoords.columnsCount === node.columnsCount &&
+          newCoords.rowsCount === node.rowsCount
+        )
+          return;
         const parent = state.tree[node.parent];
         let colCount = newCoords.columnsCount;
         const rowCount = newCoords.rowsCount;
@@ -729,9 +716,13 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           // the voo-doo value is just to add pading under the expension resulted by the element
           const diff = nodeBottom - parentBoundingRect.bottom + 100;
           const newRowCount = Math.floor(diff / gridrow);
-          get().resizeCanvas(parent.id, {
+          const orgCoords = get().moveNodeIntoGrid(parent.id, {
             rowsCount: parent.rowsCount + newRowCount,
           });
+          changedNodesOriginalCoords = {
+            ...changedNodesOriginalCoords,
+            ...orgCoords,
+          };
         }
         colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
         if (node.isCanvas) {
@@ -753,6 +744,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           changedNodesOriginalCoords[node.id] ??= {
             col: state.tree[node.id].col,
             row: state.tree[node.id].row,
+            columnsCount: state.tree[node.id].columnsCount,
+            rowsCount: state.tree[node.id].rowsCount,
           };
         });
         toBeMoved.forEach((node) => {
@@ -761,12 +754,12 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       }
       recurse(id, newCoords);
       return {
-        changedNodesOriginalCoords: {
-          ...changedNodesOriginalCoords,
-          [id]: {
-            row: firstNodeOriginalDimensions.row,
-            col: firstNodeOriginalDimensions.col,
-          },
+        ...changedNodesOriginalCoords,
+        [id]: {
+          row: firstNodeOriginalDimensions.row,
+          col: firstNodeOriginalDimensions.col,
+          columnsCount: firstNodeOriginalDimensions.columnsCount,
+          rowsCount: firstNodeOriginalDimensions.rowsCount,
         },
       };
     },

@@ -212,8 +212,9 @@ class ResizeAction {
   }
 
   private static returnToOriginalPosition() {
-    Object.entries(this.orginalPositions).forEach(([id, pos]) => {
+    this.collidingNodes.forEach((id) => {
       if (id === this.id) return;
+      const pos = this.orginalPositions[id];
       setDimensions(id, {
         col: pos.x,
         row: pos.y,
@@ -412,7 +413,7 @@ class ResizeAction {
         col: node.x!,
       });
       //todo find a better way to do this
-      Object.entries(collied.changedNodesOriginalCoords).forEach(([id]) => {
+      Object.entries(collied).forEach(([id]) => {
         collidedNodes.push(id);
       });
     }

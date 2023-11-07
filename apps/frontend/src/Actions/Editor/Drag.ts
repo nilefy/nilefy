@@ -231,11 +231,9 @@ class DragAction {
         },
         undo: () => {
           removeNode(id);
-          Object.entries(undoData.changedNodesOriginalCoords).forEach(
-            ([id, coords]) => {
-              setDimensions(id, coords);
-            },
-          );
+          Object.entries(undoData).forEach(([id, coords]) => {
+            setDimensions(id, coords);
+          });
         },
       };
     } else {
@@ -247,11 +245,9 @@ class DragAction {
           undoData = moveNodeIntoGrid(id, endPosition);
         },
         undo: () => {
-          Object.entries(undoData.changedNodesOriginalCoords).forEach(
-            ([id, coords]) => {
-              setDimensions(id, coords);
-            },
-          );
+          Object.entries(undoData).forEach(([id, coords]) => {
+            setDimensions(id, coords);
+          });
           if (movedToNewParent) {
             moveNode(id, oldParent);
           }
