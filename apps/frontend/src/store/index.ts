@@ -187,6 +187,7 @@ function handleHoverCollision(
 function handleLateralCollisions(
   id: string,
   overId: string,
+  draggedNode: string | null,
   siblings: string[],
   newDimensions: WebloomGridDimensions,
   mousePos: Point,
@@ -197,7 +198,7 @@ function handleLateralCollisions(
   let colCount = columnsCount;
   for (const sibling of siblings) {
     // we don't want to check collisions with the node itself
-    if (sibling === id) continue;
+    if (sibling === id || sibling === draggedNode) continue;
     // we don't want to check collisions with the node we are hovering over
     if (sibling === overId) continue;
     const otherNode = store.getState().tree[sibling];
@@ -380,9 +381,11 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: el.columnsCount,
         rowsCount: el.rowsCount,
       };
+      const draggedNode = get().draggedNode;
       dimensions = handleLateralCollisions(
         id,
         overId,
+        draggedNode,
         parent.nodes,
         dimensions,
         mousePos,
@@ -400,7 +403,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       );
       dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
       const overEl = tree[overId];
-      if (overId !== ROOT_NODE_ID) {
+      if (overId !== ROOT_NODE_ID && overId !== draggedNode) {
         dimensions = handleHoverCollision(
           dimensions,
           get().getPixelDimensions(parent.id),
@@ -460,6 +463,11 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         };
         return { tree: newTree };
       });
+      set((state) => {
+        const parent = state.tree[parentId];
+        parent.nodes.sort((a, b) => -state.tree[a].row + state.tree[b].row);
+        return { tree: { ...state.tree, [parentId]: parent } };
+      });
     },
     removeNode(id) {
       // cannot delete a non existing node
@@ -501,6 +509,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, id],
           },
         };
+        newTree[parentId].nodes.sort(
+          (a, b) => -get().tree[a].row + get().tree[b].row,
+        );
         if (oldParentId) {
           newTree[oldParentId] = {
             ...newTree[oldParentId],
@@ -661,8 +672,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         rowsCount: node.rowsCount,
       };
       const nodes = [...parent.nodes];
-      //sort the nodes by y position (ascending) (top to bottom) this is to ensure that moves when pushing down are stacked in the correct order
-      nodes.sort((a, b) => -get().tree[a].row + get().tree[b].row);
       function recurse(id: string, newCoords: Partial<WebloomGridDimensions>) {
         const state = get();
         const node = state.tree[id];

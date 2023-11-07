@@ -4,7 +4,12 @@ import store, {
   convertPixelToGrid,
 } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
+import {
+  NUMBER_OF_COLUMNS,
+  PREVIEW_NODE_ID,
+  ROOT_NODE_ID,
+  ROW_HEIGHT,
+} from '@/lib/constants';
 import { nanoid } from 'nanoid';
 import { normalize } from '@/lib/utils';
 import { WebloomComponents } from '@/components/Editor/WebloomComponents';
@@ -35,7 +40,9 @@ class DragAction {
   private static isNew = false;
   private static newType: string;
   private static id: string | null = null;
+  private static readonly previewId = PREVIEW_NODE_ID;
   private static oldParent: string;
+  private static currentParent: string;
   private static movedToNewParent = false;
   private static touchedRoot = false;
   private static startPosition: Point;
@@ -59,9 +66,9 @@ class DragAction {
   }) {
     this.isNew = !!args.new;
     this.mouseStartPosition = args.mouseStartPosition;
-    this.id = args.id;
     if (this.isNew) {
       this.initialDelta = args.new!.initialDelta;
+      this.id = nanoid();
       const parent = store.getState().tree[args.new!.parent];
       const colWidth = parent.columnWidth;
       const rowHeight = ROW_HEIGHT;
@@ -71,9 +78,9 @@ class DragAction {
       };
       this.gridStartPosition = args.new!.startPosition;
       this.newType = args.new!.type;
-      const node: WebloomNode = {
-        id: 'new',
-        name: 'new',
+      const node = {
+        id: this.previewId,
+        name: this.previewId,
         type: WebloomComponents[this.newType].component,
         nodes: [],
         //todo change this to be the parent
@@ -91,20 +98,22 @@ class DragAction {
       };
       addNode(node, args.new!.parent);
     } else {
-      const node = store.getState().tree[this.id!];
+      this.id = args.id;
+      const draggedNode = store.getState().tree[this.id!];
+      const node = { ...draggedNode, id: this.previewId, name: this.previewId };
+      addNode(node, draggedNode.parent);
       const nodeBoundingRect = getBoundingRect(this.id!);
-
-      this.oldParent = store.getState().tree[this.id!].parent!;
+      this.oldParent = draggedNode.parent;
       this.startPosition = {
         x: nodeBoundingRect.left,
         y: nodeBoundingRect.top,
       };
-      this.gridStartPosition = { x: node.col, y: node.row };
+      this.gridStartPosition = { x: draggedNode.col, y: draggedNode.row };
     }
     this.oldParent ||= ROOT_NODE_ID;
-    setDraggedNode(this.isNew ? 'new' : this.id!);
-    const dims = getPixelDimensions(this.id!);
+    const dims = getPixelDimensions(this.previewId);
     setShadowElement(dims);
+    setDraggedNode(this.id!);
   }
   public static start(...args: Parameters<typeof DragAction._start>): Command {
     return {
@@ -142,22 +151,25 @@ class DragAction {
       this.moved = true;
     }
     if (!this.moved) return;
-
-    const node = store.getState().tree[this.id!];
+    if (overId === this.id) {
+      overId = store.getState().tree[overId].parent!;
+    }
+    const node = store.getState().tree[this.previewId];
     const over = store.getState().tree[overId];
     let newParent: string = overId;
     if (!over.isCanvas) {
       newParent = over.parent;
     }
-    if (newParent !== this.id && node.parent !== newParent) {
+    if (newParent !== this.previewId && node.parent !== newParent) {
       this.movedToNewParent = true;
-      moveNode(this.id, newParent);
+      this.currentParent = newParent;
+      moveNode(this.previewId, newParent);
     }
     //Shadow element
     const newShadow = this.getDropCoordinates(
       delta,
-      this.id!,
-      overId === this.id! ? ROOT_NODE_ID : overId,
+      this.previewId!,
+      overId === this.previewId! ? ROOT_NODE_ID : overId,
     );
     setShadowElement(newShadow);
   }
@@ -188,8 +200,8 @@ class DragAction {
     }
     const isNew = this.isNew;
     const delta = this.delta;
-    const el = store.getState().tree[this.id!];
-    const [gridrow, gridcol] = getGridSize(this.id!);
+    const el = store.getState().tree[this.previewId!];
+    const [gridrow, gridcol] = getGridSize(this.previewId!);
     const normalizedDelta = {
       x: normalize(delta.x, gridcol),
       y: normalize(delta.y, gridrow),
@@ -198,7 +210,7 @@ class DragAction {
     const endPosition = getDropCoordinates(
       this.startPosition,
       normalizedDelta,
-      this.id!,
+      this.previewId!,
       overId,
       false,
     );
@@ -208,11 +220,10 @@ class DragAction {
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
+    const newNode = store.getState().tree[this.previewId];
+    removeNode(this.previewId);
     if (isNew) {
-      const newNode = store.getState().tree['new'];
-      const id = nanoid();
       newNode.id = id;
-      removeNode('new');
       command = {
         execute: () => {
           addNode(newNode, newNode.parent!);

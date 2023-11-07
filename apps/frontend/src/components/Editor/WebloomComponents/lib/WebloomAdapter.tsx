@@ -61,6 +61,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       width: elDimensions.width,
       height: elDimensions.height,
       visibility: isDragging ? 'hidden' : 'visible',
+      opacity: isDragging ? 0 : 1,
     } as React.CSSProperties;
   }, [
     elDimensions.x,
@@ -80,7 +81,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         className="target touch-none"
         data-id={id}
       >
-        {props.children}
+        {!isDragging && props.children}
       </div>
     </>
   );

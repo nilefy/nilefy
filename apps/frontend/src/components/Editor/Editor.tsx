@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
+import { PREVIEW_NODE_ID, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
 import { WebloomButton } from './WebloomComponents/Button';
 import { WebloomContainer } from './WebloomComponents/Container';
@@ -41,18 +41,17 @@ import {
 const { resizeCanvas } = store.getState();
 
 function WebloomRoot() {
-  const wholeTree = store.getState().tree;
-  const tree = wholeTree[ROOT_NODE_ID];
+  const root = store((state) => state.tree[ROOT_NODE_ID]);
   const ref = React.useRef<HTMLDivElement>(null);
   const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
+    let children = root.props.children as React.ReactElement[];
+    if (root.nodes.length > 0) {
+      children = root.nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [tree.nodes, tree.props.children]);
+  }, [root.nodes, root.props.children]);
   useLayoutEffect(() => {
     //get width and height of root
     if (!ref.current) return;
@@ -63,9 +62,9 @@ function WebloomRoot() {
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   }, []);
   useEffect(() => {
-    const rowsCount = tree.rowsCount;
+    const rowsCount = root.rowsCount;
     resizeCanvas(ROOT_NODE_ID, { rowsCount });
-  }, [tree.rowsCount]);
+  }, [root.rowsCount]);
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => {
@@ -97,22 +96,22 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
-  const dragged = store((state) => state.draggedNode);
   const tree = wholeTree[id];
+  const nodes = store((state) => state.tree[id].nodes);
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
+    if (nodes.length > 0) {
+      children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [tree.nodes, tree.props.children]);
+  }, [nodes, tree.props.children]);
   const rendered = useMemo(
     () => createElement(tree.type, tree.props, children),
     [tree.type, tree.props, children],
   );
-  if (id === 'new' || id === dragged) return null;
+  if (id === PREVIEW_NODE_ID) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -309,7 +308,7 @@ function Editor() {
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onDragCancel={handleCancel}
-        autoScroll={true}
+        autoScroll
       >
         {/*sidebar*/}
         <div className="h-full w-1/5 bg-gray-200"></div>
