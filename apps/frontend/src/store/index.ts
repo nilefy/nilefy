@@ -206,21 +206,31 @@ function handleLateralCollisions(
     const otherTop = otherNode.row;
     const otherLeft = otherNode.col;
     const otherRight = otherNode.col + otherNode.columnsCount;
+    const mouseLeftOfElement = mousePos.x < otherBoundingRect.left;
+    const mouseRightOfElement = mousePos.x > otherBoundingRect.right;
+    const mouseUnderElementOrExactlyOnBorder =
+      mousePos.y >= otherBoundingRect.bottom;
+    const mouseWithinElement =
+      mousePos.x > otherBoundingRect.left &&
+      mousePos.x < otherBoundingRect.right;
     if (top < otherBottom && top >= otherTop) {
-      if (
-        mousePos.x > otherBoundingRect.left &&
-        mousePos.x < otherBoundingRect.right &&
-        mousePos.y >= otherBoundingRect.bottom
-      ) {
+      if (mouseWithinElement && mouseUnderElementOrExactlyOnBorder) {
         // mouse under other element and between its left and right
         top = otherBottom;
-      } else if (left < otherLeft && left + colCount > otherLeft) {
+      } else if (
+        mouseLeftOfElement &&
+        left < otherLeft &&
+        left + colCount > otherLeft
+      ) {
         colCount = Math.min(colCount, otherLeft - left);
         if (colCount < 2) {
           left = otherLeft - 2;
           colCount = 2;
         }
-      } else if (left >= otherLeft && left < otherRight) {
+      } else if (
+        (left >= otherLeft && left < otherRight) ||
+        (mouseRightOfElement && left < otherLeft)
+      ) {
         const temp = left;
         left = otherRight;
         colCount += temp - left;

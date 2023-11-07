@@ -2,6 +2,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import ResizeAction from '@/Actions/Editor/Resize';
 import store from '@/store';
 import { useEffect } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
 const handlePositions = {
   'top-left': [0, 0],
   'top-right': [0, 1],
@@ -26,6 +27,9 @@ const cursors = {
 export function ResizeHandlers() {
   const selectedIds = store((state) => state.selectedNodeIds);
   const selectedIdsArray = Array.from(selectedIds);
+  useHotkeys('esc', () => {
+    commandManager.executeCommand(ResizeAction.cancel());
+  });
   useEffect(() => {
     const resizeHandler = (e: MouseEvent) => {
       if (ResizeAction.resizingKey === null) return;

@@ -29,7 +29,7 @@ class ResizeAction {
     x: number;
     y: number;
   };
-  private static id: string;
+  private static id: string | null = null;
   private static _start(
     id: string,
     key: ResizingKeys,
@@ -161,6 +161,7 @@ class ResizeAction {
   }
 
   private static _move(mousePosition: Point) {
+    if (!this.id) return;
     const dims = this.calculateNewDimensions(
       mousePosition,
       this.id,
@@ -197,6 +198,7 @@ class ResizeAction {
 
   private static cleanUp() {
     this.resizingKey = null;
+    this.id = null;
     this.direction = [];
     this.initialDimensions = {
       width: 0,
@@ -222,6 +224,7 @@ class ResizeAction {
   private static returnToInitialDimensions(
     initialDimensions = this.initialDimensions,
   ) {
+    if (!this.id) return;
     const [gridRow, gridCol] = getGridSize(this.id);
     const { width, height, x, y } = initialDimensions;
     const colCount = width / gridCol;
@@ -285,10 +288,15 @@ class ResizeAction {
     return command;
   }
 
-  private static _cancel() {
-    this.returnToOriginalPosition();
-    this.returnToInitialDimensions();
-    this.cleanUp();
+  static cancel(): Command | null {
+    if (!this.id) return null;
+    return {
+      execute: () => {
+        this.returnToOriginalPosition();
+        this.returnToInitialDimensions();
+        this.cleanUp();
+      },
+    };
   }
 
   private static _resize(
