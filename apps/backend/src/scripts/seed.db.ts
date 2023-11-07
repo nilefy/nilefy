@@ -1,49 +1,81 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
-import { TConfigService } from '../../src/evn.validation';
-import * as schema from '../../src/drizzle/schema/schema';
-import { faker } from '@faker-js/faker';
-import { generateFakeUser, user } from './faker/user.faker';
+import * as schema from '../drizzle/schema/schema';
 import { sql } from 'drizzle-orm';
+import { faker } from '@faker-js/faker';
+import { User, generateFakeUser } from './faker/user.faker';
 
-const configService = new TConfigService();
+const clientConfig = {
+  connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
+};
 
-const client = new Client(configService.get('DB_URL'));
+const client = new Client(clientConfig);
 
-async function connect() {
+function convertUsersToInsertString(users: User[]): string {
+  const values = users.map((user) => {
+    const { username, email, password, createdAt, updatedAt, deletedAt } = user;
+
+    return `('${username}', '${email}', '${password}', '${createdAt.toISOString()}', '${updatedAt.toISOString()}', ${
+      deletedAt ? `'${deletedAt.toISOString()}'` : 'NULL'
+    })`;
+  });
+
+  return values.join(',\n');
+}
+
+async function main() {
   await client.connect();
   const db = drizzle(client, { schema });
-  return db;
-}
+  db;
 
-export async function seed() {
-  const db = await connect();
-  const users = faker.helpers.multiple(generateFakeUser, { count: 100 });
-  const u = user;
+  const users = faker.helpers.multiple(generateFakeUser, { count: 10000 });
+
+  const usersdb = convertUsersToInsertString(users);
+
+  console.log(usersdb);
+
   await db.execute(
-    //     sql.raw(
-    //       ` INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
-    // VALUES ${users.map((u) => '(' + Object.values(u).join(',') + ')').join(',')};`,
-    //     ),
-    sql.raw(
-      `INSERT INTO users (username, email, password, created_at, updated_at, deleted_at) VALUES ();`,
-    ),
+    sql.raw(`
+    INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
+VALUES 
+    ${usersdb};
+  `),
   );
-
-  const insertValues = users.map((user) => {
-    return [
-      user.username,
-      user.email,
-      user.password,
-      new Date(),
-      new Date(),
-      null,
-    ];
-  });
-  insertValues;
-  u;
-  console.log(insertValues);
-  console.log(u);
 }
 
-seed();
+main();
+
+// const configService = new TConfigService();
+
+// export async function seed() {
+//   const client = new Client({ connectionString: configService.get('DB_URL') });
+//   const db = await connect();
+//   const users = faker.helpers.multiple(generateFakeUser, { count: 100 });
+//   const u = user;
+//   await db.execute(
+//     //     sql.raw(
+//     //       ` INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
+//     // VALUES ${users.map((u) => '(' + Object.values(u).join(',') + ')').join(',')};`,
+//     //     ),
+//     sql.raw(
+//       `INSERT INTO users (username, email, password, created_at, updated_at, deleted_at) VALUES ();`,
+//     ),
+//   );
+
+//   const insertValues = users.map((user) => {
+//     return [
+//       user.username,
+//       user.email,
+//       user.password,
+//       new Date(),
+//       new Date(),
+//       null,
+//     ];
+//   });
+//   insertValues;
+//   u;
+//   console.log(insertValues);
+//   console.log(u);
+// }
+
+// seed();

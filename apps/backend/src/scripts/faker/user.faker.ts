@@ -11,10 +11,12 @@ export interface User {
 }
 
 export function generateFakeUser(): User {
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
   return {
     // id: faker.string.uuid(),
-    username: faker.internet.userName(),
-    email: faker.internet.email(),
+    username: faker.internet.userName({ firstName, lastName }),
+    email: faker.internet.email({ firstName, lastName }),
     password: faker.internet.password(),
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
