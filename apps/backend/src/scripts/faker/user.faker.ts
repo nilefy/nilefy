@@ -1,20 +1,14 @@
 import { faker } from '@faker-js/faker';
+import { UserDto } from 'src/dto/users.dto';
 
-export interface User {
-  // id: string;
-  username: string;
-  email: string;
-  password: string;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | null;
-}
-
-export function generateFakeUser(): User {
+export function generateFakeUser(): UserDto {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
   return {
-    // id: faker.string.uuid(),
+    id: faker.number.int({
+      min: 0,
+      max: 10000,
+    }),
     username: faker.internet.userName({ firstName, lastName }),
     email: faker.internet.email({ firstName, lastName }),
     password: faker.internet.password(),

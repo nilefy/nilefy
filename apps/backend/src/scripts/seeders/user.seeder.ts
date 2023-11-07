@@ -1,57 +1,21 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Client } from 'pg';
-import * as schema from '../../drizzle/schema/schema';
-import { sql } from 'drizzle-orm';
 import { faker } from '@faker-js/faker';
-import { User, generateFakeUser } from '../faker/user.faker';
-
-const clientConfig = {
-  connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
-};
-
-const client = new Client(clientConfig);
-
-function convertUsersToInsertString(users: User[]): string {
-  const values = users.map((user) => {
-    const { username, email, password, createdAt, updatedAt, deletedAt } = user;
-
-    return `('${username}', '${email}', '${password}', '${createdAt.toISOString()}', '${updatedAt.toISOString()}', ${
-      deletedAt ? `'${deletedAt.toISOString()}'` : 'NULL'
-    })`;
-  });
-
-  return values.join(',\n');
-}
+import { generateFakeUser } from '../faker/user.faker';
+import { dbConnect } from '../../../src/drizzle/drizzle.provider';
+import { configDotenv } from 'dotenv';
+import { users } from '../../../src/drizzle/schema/schema';
+import { UserDto } from 'src/dto/users.dto';
 
 async function main() {
-  await client.connect();
-  const db = drizzle(client, { schema });
-  db;
+  configDotenv();
+  const [db, client] = await dbConnect(process.env.DB_URL as string);
 
-  const users = faker.helpers.multiple(generateFakeUser, { count: 10000 });
+  const madeUsers: UserDto[] = faker.helpers.multiple(generateFakeUser, {
+    count: 100,
+  });
 
-  const usersdb = convertUsersToInsertString(users);
+  await db.insert(users).values(madeUsers).onConflictDoNothing();
 
-  console.log(usersdb);
-
-  await db.execute(
-    sql.raw(`
-    INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
-VALUES ('admin', 'admin@admin.com', 'admin', NOW(), NOW(), NULL)   ON CONFLICT (email) DO NOTHING;
-
-  `),
-  );
-
-  await db.execute(
-    sql.raw(`
-    INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
-    VALUES 
-    ${usersdb}
-    ON CONFLICT (email) DO NOTHING;
-  `),
-  );
-
-  await client.end();
+  client.end();
 }
 
 main();
