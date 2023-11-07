@@ -146,8 +146,8 @@ class ResizeAction {
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
     const parent = store.getState().getPixelDimensions(node.parent);
-    newLeft -= parent.col;
-    newTop -= parent.row;
+    newLeft -= parent.x;
+    newTop -= parent.y;
     const colCount = Math.round(newWidth / gridCol);
     const rowCount = Math.round(newHeight / gridRow);
     const newX = Math.round(newLeft / gridCol);
@@ -343,21 +343,7 @@ class ResizeAction {
         toBeMoved.push({ id: nodeId, y: bottom });
       }
     });
-    // const parent = tree[node.parent!];
-    // const parentLeft = parent.x;
-    // const parentRight = parent.x + parent.columnsCount;
-    // const parentTop = parent.y;
-    // if (right > parentRight) {
-    //   colCount = Math.min(colCount, parentRight - left);
-    // }
-    // if (left < parentLeft) {
-    //   colCount = right - parentLeft;
-    //   left = parentLeft;
-    // }
-    // if (top < parentTop) {
-    //   top = parentTop;
-    //   rowCount = bottom - parentTop;
-    // }
+
     const parentBoundingRect = getBoundingRect(node.parent);
     const [gridrow, gridcol] = getGridSize(node.id);
     const parent = tree[node.parent!];
@@ -413,7 +399,10 @@ class ResizeAction {
       collidedNodes.push(node.id);
     }
     for (const node of toBeMoved) {
-      const collied = moveNodeIntoGrid(node.id, node, false);
+      const collied = moveNodeIntoGrid(node.id, {
+        row: node.y!,
+        col: node.x!,
+      });
       //todo find a better way to do this
       Object.entries(collied.changedNodesOriginalCoords).forEach(([id]) => {
         collidedNodes.push(id);

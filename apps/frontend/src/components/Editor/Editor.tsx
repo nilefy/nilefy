@@ -9,6 +9,7 @@ import React, {
 import { useHotkeys } from 'react-hotkeys-hook';
 import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
+import { WebloomButton } from './WebloomComponents/Button';
 import { WebloomContainer } from './WebloomComponents/Container';
 import {
   DndContext,
@@ -22,20 +23,20 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 
-import { WebloomAdapter } from './WebloomComponents/lib/WebloomAdapter';
-
 import { useSetDom } from '@/hooks/useSetDom';
 import { normalize } from '@/lib/utils';
-import { WebloomElementShadow } from './WebloomComponents/lib/WebloomElementShadow';
-import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
-import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
 import { RightSidebar } from './rightsidebar/rightsidebar';
-import { ResizeHandlers } from './WebloomComponents/lib/ResizeHandlers';
 import { SelectionAction } from '@/Actions/Editor/selection';
-import { WebloomButton } from './WebloomComponents/Button';
+import {
+  WebloomAdapter,
+  ResizeHandlers,
+  MultiSelectBounding,
+  Grid,
+  WebloomElementShadow,
+} from './WebloomComponents/lib';
 
 const { resizeCanvas } = store.getState();
 

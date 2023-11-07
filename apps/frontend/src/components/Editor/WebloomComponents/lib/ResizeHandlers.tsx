@@ -80,8 +80,8 @@ function Handles({ id }: { id: string }) {
         className="touch-none select-none"
         style={{
           position: 'absolute',
-          top: dims.row,
-          left: dims.col,
+          top: dims.y,
+          left: dims.x,
         }}
       >
         {Object.entries(handlePositions).map(([key, [y, x]]) => {
@@ -119,8 +119,8 @@ function Handles({ id }: { id: string }) {
                   ResizeAction.start(id, key as keyof typeof cursors, {
                     width: dims.width,
                     height: dims.height,
-                    x: dims.col,
-                    y: dims.row,
+                    x: dims.x,
+                    y: dims.y,
                   }),
                 );
               }}
