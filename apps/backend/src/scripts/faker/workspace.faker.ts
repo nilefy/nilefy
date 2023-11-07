@@ -14,8 +14,8 @@ export interface Workspace {
 
 export function generateFakeWorkspace(): Workspace {
   const range = {
-    min: 0,
-    max: 1000,
+    min: 3400,
+    max: 4000,
   };
   return {
     name: faker.company.name(),

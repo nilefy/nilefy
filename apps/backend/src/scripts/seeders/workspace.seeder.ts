@@ -38,20 +38,24 @@ async function main() {
   faker.seed(1);
 
   const workspaces = faker.helpers.multiple(generateFakeWorkspace, {
-    count: 1,
+    count: 40,
   });
 
   const workspacesInsertString = convertWorkspacesToInsertString(workspaces);
 
-  console.log(workspacesInsertString);
-
-  await db.execute(
-    sql.raw(`
-    INSERT INTO workspaces (name, "imageUrl", created_by_id, "updated_by_id", "deleted_by_id", "createdAt", "updatedAt", "deletedAt")
+  try {
+    await db.execute(
+      sql.raw(`
+    INSERT INTO workspaces (name, "imageUrl", created_by_id, "updated_by_id", "deleted_by_id", "created_at", "updated_at", "deleted_at")
     VALUES  
-    ${workspacesInsertString};
+    ${workspacesInsertString} ON CONFLICT DO NOTHING;
   `),
-  );
+    );
+
+    console.log('DATA WAS INSERTED');
+  } catch (e) {
+    console.log('error, DATA WASN"T INSERTED:  ' + e);
+  }
 
   await client.end();
 }
