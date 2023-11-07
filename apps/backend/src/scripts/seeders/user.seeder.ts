@@ -37,10 +37,20 @@ async function main() {
   await db.execute(
     sql.raw(`
     INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
-VALUES 
-    ${usersdb};
+VALUES ('admin', 'admin@admin.com', 'admin', NOW(), NOW(), NULL)   ON CONFLICT (email) DO NOTHING;
+
   `),
   );
+
+  await db.execute(
+    sql.raw(`
+    INSERT INTO users (username, email, password, created_at, updated_at, deleted_at)
+    VALUES 
+    ${usersdb}
+    ON CONFLICT (email) DO NOTHING;
+  `),
+  );
+
   await client.end();
 }
 
