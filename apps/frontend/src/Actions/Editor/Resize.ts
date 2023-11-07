@@ -1,4 +1,4 @@
-import store, { WebloomGridDimensions } from '@/store';
+import store, { WebloomGridDimensions, handleParentCollisions } from '@/store';
 import { Command, UndoableCommand } from '../types';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import { normalize } from '@/lib/utils';
@@ -10,12 +10,18 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const { moveNodeIntoGrid, getGridSize, setDimensions, resizeCanvas } =
-  store.getState();
+const {
+  moveNodeIntoGrid,
+  getGridSize,
+  setDimensions,
+  resizeCanvas,
+  getPixelDimensions,
+  getBoundingRect,
+} = store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
-  private static orginalPositions: Record<string, Point> = {};
+  private static orginalPositions: Record<string, WebloomGridDimensions> = {};
   private static collidingNodes: Set<string> = new Set<string>();
   private static initialDimensions: {
     width: number;
@@ -45,8 +51,10 @@ class ResizeAction {
         return {
           ...acc,
           [node[0]]: {
-            x: node[1].col,
-            y: node[1].row,
+            col: node[1].col,
+            row: node[1].row,
+            columnsCount: node[1].columnsCount,
+            rowsCount: node[1].rowsCount,
           },
         };
       },
@@ -168,7 +176,10 @@ class ResizeAction {
     }
     // filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
-      if (pos.y === store.getState().tree[id].row) {
+      if (
+        pos.row === store.getState().tree[id].row &&
+        pos.rowsCount === store.getState().tree[id].rowsCount
+      ) {
         this.collidingNodes.delete(id);
       }
     });
@@ -205,10 +216,7 @@ class ResizeAction {
     this.collidingNodes.forEach((id) => {
       if (id === this.id) return;
       const pos = this.orginalPositions[id];
-      setDimensions(id, {
-        col: pos.x,
-        row: pos.y,
-      });
+      setDimensions(id, pos);
     });
   }
 
@@ -234,8 +242,7 @@ class ResizeAction {
     const affectedNodes = Array.from(this.collidingNodes);
     const undoData = affectedNodes.map((id) => ({
       id,
-      x: this.orginalPositions[id].x,
-      y: this.orginalPositions[id].y,
+      ...this.orginalPositions[id],
     }));
     const id = this.id;
     const key = this.resizingKey;
@@ -255,10 +262,7 @@ class ResizeAction {
       undo: () => {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
-          setDimensions(data.id, {
-            col: data.x,
-            row: data.y,
-          });
+          setDimensions(data.id, data);
         });
       },
     };
@@ -292,12 +296,20 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    const orgCoords = moveNodeIntoGrid(id, {
+    let dims = {
       col: dimensions.x ?? node.col,
       row: dimensions.y ?? node.row,
       columnsCount: dimensions.columnsCount ?? node.columnsCount,
       rowsCount: dimensions.rowsCount ?? node.rowsCount,
-    });
+    };
+    dims = handleParentCollisions(
+      dims,
+      getPixelDimensions(node.parent),
+      getBoundingRect(node.parent),
+      getGridSize(id),
+      false,
+    );
+    const orgCoords = moveNodeIntoGrid(id, dims);
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }

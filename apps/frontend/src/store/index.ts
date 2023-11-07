@@ -265,7 +265,7 @@ export function convertPixelToGrid(
   };
 }
 
-function handleParentCollisions(
+export function handleParentCollisions(
   dimensions: WebloomGridDimensions,
   parentDims: WebloomPixelDimensions,
   parentBoundingRect: BoundingRect,
