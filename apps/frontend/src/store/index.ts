@@ -382,6 +382,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         rowsCount: el.rowsCount,
       };
       const draggedNode = get().draggedNode;
+      const overEl = tree[overId];
+      if (overId !== ROOT_NODE_ID && overId !== draggedNode) {
+        dimensions = handleHoverCollision(
+          dimensions,
+          get().getPixelDimensions(parent.id),
+          get().getBoundingRect(overId),
+          [gridrow, gridcol],
+          !!overEl.isCanvas!,
+          mousePos,
+          forShadow,
+        );
+      }
       dimensions = handleLateralCollisions(
         id,
         overId,
@@ -402,18 +414,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         dimensions.columnsCount,
       );
       dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
-      const overEl = tree[overId];
-      if (overId !== ROOT_NODE_ID && overId !== draggedNode) {
-        dimensions = handleHoverCollision(
-          dimensions,
-          get().getPixelDimensions(parent.id),
-          get().getBoundingRect(overId),
-          [gridrow, gridcol],
-          !!overEl.isCanvas!,
-          mousePos,
-          forShadow,
-        );
-      }
+
       return dimensions;
     },
     setDraggedNode(id) {
@@ -461,11 +462,18 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, node.id],
           },
         };
+
         return { tree: newTree };
       });
       set((state) => {
         const parent = state.tree[parentId];
         parent.nodes.sort((a, b) => -state.tree[a].row + state.tree[b].row);
+        if (node.isCanvas) {
+          get().resizeCanvas(node.id, {
+            columnsCount: node.columnsCount,
+            rowsCount: node.rowsCount,
+          });
+        }
         return { tree: { ...state.tree, [parentId]: parent } };
       });
     },
@@ -621,12 +629,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     resizeCanvas(id, dimensions) {
       const node = get().tree[id];
       const oldColumnWidth = node.columnWidth;
-      const oldColumnsCount = node.columnsCount;
-      if (
-        node.isCanvas &&
-        (dimensions.columnWidth !== oldColumnWidth ||
-          dimensions.columnsCount !== oldColumnsCount)
-      ) {
+      if (node.isCanvas) {
         let newColumnWidth = dimensions.columnWidth || oldColumnWidth;
         if (id !== ROOT_NODE_ID) {
           const [, gridcol] = get().getGridSize(id);
