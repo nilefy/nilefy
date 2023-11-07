@@ -715,13 +715,19 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           // the voo-doo value is just to add pading under the expension resulted by the element
           const diff = nodeBottom - parentBoundingRect.bottom + 100;
           const newRowCount = Math.floor(diff / gridrow);
-          const orgCoords = get().moveNodeIntoGrid(parent.id, {
-            rowsCount: parent.rowsCount + newRowCount,
-          });
-          changedNodesOriginalCoords = {
-            ...changedNodesOriginalCoords,
-            ...orgCoords,
-          };
+          if (parent.id === ROOT_NODE_ID) {
+            get().resizeCanvas(parent.id, {
+              rowsCount: parent.rowsCount + newRowCount,
+            });
+          } else {
+            const orgCoords = get().moveNodeIntoGrid(parent.id, {
+              rowsCount: parent.rowsCount + newRowCount,
+            });
+            changedNodesOriginalCoords = {
+              ...changedNodesOriginalCoords,
+              ...orgCoords,
+            };
+          }
         }
         colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
         if (node.isCanvas) {
