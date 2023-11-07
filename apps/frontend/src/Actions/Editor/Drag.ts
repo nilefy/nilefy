@@ -184,6 +184,7 @@ class DragAction {
     ...args: Parameters<typeof DragAction._end>
   ): UndoableCommand | null {
     if (!this.moved) {
+      removeNode(this.previewId!);
       this.cleanUp();
       return null;
     }
@@ -200,7 +201,7 @@ class DragAction {
     }
     const isNew = this.isNew;
     const delta = this.delta;
-    const el = store.getState().tree[this.previewId!];
+    const newNode = store.getState().tree[this.previewId!];
     const [gridrow, gridcol] = getGridSize(this.previewId!);
     const normalizedDelta = {
       x: normalize(delta.x, gridcol),
@@ -220,7 +221,6 @@ class DragAction {
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
-    const newNode = store.getState().tree[this.previewId];
     removeNode(this.previewId);
     if (isNew) {
       newNode.id = id;
@@ -240,7 +240,7 @@ class DragAction {
       command = {
         execute: () => {
           if (movedToNewParent) {
-            moveNode(id, el.parent);
+            moveNode(id, newNode.parent);
           }
           undoData = moveNodeIntoGrid(id, endPosition);
         },
