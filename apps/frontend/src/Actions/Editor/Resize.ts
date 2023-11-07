@@ -1,6 +1,10 @@
-import store, { WebloomGridDimensions, handleParentCollisions } from '@/store';
+import store, {
+  WebloomGridDimensions,
+  convertGridToPixel,
+  handleParentCollisions,
+} from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID } from '@/lib/constants';
+import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import { normalize } from '@/lib/utils';
 import { Point } from '@/types';
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
@@ -296,12 +300,33 @@ class ResizeAction {
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
+
     let dims = {
       col: dimensions.x ?? node.col,
       row: dimensions.y ?? node.row,
       columnsCount: dimensions.columnsCount ?? node.columnsCount,
       rowsCount: dimensions.rowsCount ?? node.rowsCount,
     };
+    // const children = node.nodes;
+    // const lowestChildId = children[children.length - 1];
+    // const lowestChild = tree[lowestChildId];
+    // if (lowestChild) {
+    //   const lowestChildBoundRect = getBoundingRect(lowestChildId);
+    //   const grid = getGridSize(id);
+    //   const nodeBoundingRect = convertGridToPixel(
+    //     dims,
+    //     grid,
+    //     getPixelDimensions(node.parent),
+    //   );
+    //   const bottom = nodeBoundingRect.y + nodeBoundingRect.height;
+
+    //   if (lowestChildBoundRect.bottom > bottom) {
+    //     dims.rowsCount = normalize(
+    //       (lowestChildBoundRect.bottom - nodeBoundingRect.y) / grid[0],
+    //       grid[0],
+    //     );
+    //   }
+    // }
     dims = handleParentCollisions(
       dims,
       getPixelDimensions(node.parent),
