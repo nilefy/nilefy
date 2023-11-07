@@ -13,6 +13,11 @@ async function main() {
     count: 100,
   });
 
+  await db
+    .insert(users)
+    .values({ email: 'admin@admin.com', username: 'admin', password: 'admin' })
+    .onConflictDoNothing();
+
   await db.insert(users).values(madeUsers).onConflictDoNothing();
 
   client.end();
