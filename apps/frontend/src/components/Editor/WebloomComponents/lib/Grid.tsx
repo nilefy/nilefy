@@ -41,5 +41,5 @@ const Grid = ({ id }: { id: string }) => {
     </div>
   );
 };
-
+export { Grid };
 export default Grid;
