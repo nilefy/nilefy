@@ -80,11 +80,7 @@ function WebloomRoot() {
   };
 
   return (
-    <div
-      id="webloom-root"
-      className="bg-primary/10 relative h-full w-full"
-      ref={ref}
-    >
+    <div id="webloom-root" className="relative h-full w-full" ref={ref}>
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
         <Grid id={ROOT_NODE_ID} />
         {children}
@@ -152,7 +148,7 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'red',
+      color: '#987bab',
     },
     rowsCount: 50,
   },
@@ -170,7 +166,7 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'blue',
+      color: '#7dab9b',
     },
     rowsCount: 30,
   },
@@ -188,7 +184,7 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'blue',
+      color: '#7bab9b',
     },
     rowsCount: 30,
   },
@@ -204,8 +200,8 @@ const initTree: WebloomTree = {
     isCanvas: false,
     dom: null,
     props: {
-      className: 'h-full w-full bg-blue-500',
-      color: 'blue',
+      className: 'h-full w-full bg-blue-400',
+      color: '#c29c99',
     },
     rowsCount: 10,
   },
@@ -311,11 +307,11 @@ function Editor() {
         autoScroll
       >
         {/*sidebar*/}
-        <div className="h-full w-1/5 bg-gray-200"></div>
+        <div className="h-full w-1/5 "></div>
 
         <div
           ref={editorRef}
-          className="relative h-full w-full touch-none overflow-x-clip overflow-y-scroll bg-white"
+          className="bg-primary/20 relative h-full w-full touch-none overflow-x-clip overflow-y-scroll "
           style={{
             scrollbarGutter: 'stable',
             scrollbarWidth: 'thin',
