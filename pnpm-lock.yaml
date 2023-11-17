@@ -11,6 +11,9 @@ importers:
       turbo:
         specifier: ^1.10.15
         version: 1.10.15
+      typescript:
+        specifier: ^5.2.2
+        version: 5.2.2
 
   apps/backend:
     dependencies:
@@ -35,6 +38,9 @@ importers:
       '@nestjs/platform-fastify':
         specifier: ^10.2.7
         version: 10.2.7(@nestjs/common@10.0.0)(@nestjs/core@10.0.0)
+      '@webloom/permissions':
+        specifier: workspace:*
+        version: link:../../packages/permissions
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -343,6 +349,12 @@ importers:
       vitest:
         specifier: ^0.34.6
         version: 0.34.6(@vitest/ui@0.34.6)(happy-dom@12.2.2)
+
+  packages/permissions:
+    dependencies:
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
 
 packages:
 

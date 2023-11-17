@@ -13,13 +13,37 @@ import { users } from '../drizzle/schema/schema';
 import { PermissionTypes } from '../dto/permissions.dto';
 import { UserDto } from '../dto/users.dto';
 
-const PERMISSIONS_KEY = 'permissions_key';
+const PERMISSIONS_KEY = 'permissions_key' as const;
+const ONLY_ADMIN_KEY = 'need_admin_key' as const;
+type RequiredPermissionsI = {
+  permissions: PermissionTypes[];
+  options: {
+    /**  should have the role admin whatever their permissions
+     */
+    admin: boolean;
+  };
+};
 
-export const RequiredPermissions = (...permissions: PermissionTypes[]) =>
-  SetMetadata(PERMISSIONS_KEY, permissions);
+export const RequiredPermissions = (
+  ...permissions: RequiredPermissionsI['permissions']
+) =>
+  SetMetadata<typeof PERMISSIONS_KEY, RequiredPermissionsI['permissions']>(
+    PERMISSIONS_KEY,
+    permissions,
+  );
+
+export const OnlyAdmin = (
+  onlyAdmin: RequiredPermissionsI['options']['admin'] = true,
+) =>
+  SetMetadata<typeof ONLY_ADMIN_KEY, RequiredPermissionsI['options']['admin']>(
+    ONLY_ADMIN_KEY,
+    onlyAdmin,
+  );
 
 /**
  * only works if used after `JwtGuard` or any middleware that override the `Request` to have `{user: RequestUser}`
+ *
+ * NOTE: if `onlyAdmin` is provided in the class or method we don't test for permissions only test whether they have role `admin` or not
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -93,7 +117,10 @@ export class PermissionsGuard implements CanActivate {
     //   ),
     // );
 
-    return [user, userPermissions] as const;
+    const userRoles = user.usersToRoles.map((role) => role.role.name);
+    const isAdmin = userRoles.includes('admin');
+
+    return [user, userPermissions, userRoles, isAdmin] as const;
   }
 
   private hasEnoughPermissions(
@@ -107,12 +134,20 @@ export class PermissionsGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext) {
-    const requiedPermissions = this.reflector.getAllAndMerge<PermissionTypes[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiedPermissions = this.reflector.getAllAndMerge<
+      RequiredPermissionsI['permissions']
+    >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
+
+    // one of them is true = true
+    const onlyAdminHandler = this.reflector.get<
+      RequiredPermissionsI['options']['admin'] | undefined
+    >(ONLY_ADMIN_KEY, context.getHandler());
+    const onlyAdminClass = this.reflector.get<
+      RequiredPermissionsI['options']['admin'] | undefined
+    >(ONLY_ADMIN_KEY, context.getClass());
+    const onlyAdmin = onlyAdminHandler || onlyAdminClass || false;
     // no required permissions exit early
-    if (requiedPermissions.length === 0) return true;
+    if (requiedPermissions.length === 0 && !onlyAdmin) return true;
     const { user: requestUser } = context
       .switchToHttp()
       .getRequest<ExpressAuthedRequest>();
@@ -125,6 +160,10 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
     const permissions = userWithPermissions[1];
+    const isAdmin = userWithPermissions[3];
+    if (isAdmin) return true;
+    // if only admin is required, we don't test permissions
+    if (onlyAdmin) return isAdmin;
     return this.hasEnoughPermissions(requiedPermissions, permissions);
   }
 }

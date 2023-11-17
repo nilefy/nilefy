@@ -22,10 +22,12 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import {
+  OnlyAdmin,
   PermissionsGuard,
   RequiredPermissions,
 } from '../auth/permissions.guard';
 
+@OnlyAdmin()
 @UseGuards(JwtGuard, PermissionsGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
@@ -45,7 +47,7 @@ export class AppsController {
     });
   }
 
-  @RequiredPermissions('Apps-Read')
+  @OnlyAdmin()
   @Get()
   async findAll(
     @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
