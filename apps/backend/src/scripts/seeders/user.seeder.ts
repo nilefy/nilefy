@@ -1,26 +1,31 @@
 import { faker } from '@faker-js/faker';
 import { generateFakeUser } from '../faker/user.faker';
-import { dbConnect } from '../../../src/drizzle/drizzle.provider';
-import { configDotenv } from 'dotenv';
-import { users } from '../../../src/drizzle/schema/schema';
-import { UserDto } from 'src/dto/users.dto';
+import { users as usersSchema } from '../../drizzle/schema/schema';
+import { SeederI } from './seeder.types';
+import { UserDto } from '../../dto/users.dto';
 
-async function main() {
-  configDotenv();
-  const [db, client] = await dbConnect(process.env.DB_URL as string);
-
-  const fakeUsers: UserDto[] = faker.helpers.multiple(generateFakeUser, {
+export const userSeeder: SeederI<UserDto[]> = async (db) => {
+  console.log('running USERS seeder');
+  const fakeUsers = faker.helpers.multiple(generateFakeUser, {
     count: 100,
   });
 
-  await db
-    .insert(users)
-    .values({ email: 'admin@admin.com', username: 'admin', password: 'admin' })
-    .onConflictDoNothing();
+  const admin = (
+    await db
+      .insert(usersSchema)
+      .values({
+        email: 'admin@admin.com',
+        username: 'admin',
+        password: 'admin',
+      })
+      .returning()
+      .onConflictDoNothing()
+  )[0];
 
-  await db.insert(users).values(fakeUsers).onConflictDoNothing();
-
-  client.end();
-}
-
-main();
+  const users = await db
+    .insert(usersSchema)
+    .values(fakeUsers)
+    .onConflictDoNothing()
+    .returning();
+  return [admin, ...users];
+};

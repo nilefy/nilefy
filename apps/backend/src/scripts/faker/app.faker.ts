@@ -1,20 +1,23 @@
 import { faker } from '@faker-js/faker';
-import { AppDto } from '../../../src/dto/apps.dto';
+import { AppDto } from '../../dto/apps.dto';
+import { UserDto } from '../../dto/users.dto';
+import { WorkspaceDto } from '../../dto/workspace.dto';
 
-export function generateFakeApp(): AppDto {
-  const range = {
-    min: 3388,
-    max: 4000,
-  };
+/**
+ * omited the id to let the db handle it
+ */
+export function generateFakeApp(
+  userIds: UserDto['id'][],
+  workspaceIds: WorkspaceDto['id'][],
+): Omit<AppDto, 'id'> {
   return {
-    id: faker.number.int(range),
-    createdById: faker.number.int(range),
-    updatedById: faker.helpers.arrayElement([faker.number.int(range), null]),
-    deletedById: faker.helpers.arrayElement([faker.number.int(range), null]),
+    createdById: faker.helpers.arrayElement(userIds),
+    updatedById: faker.helpers.arrayElement([...userIds, null]),
+    deletedById: faker.helpers.arrayElement([...userIds, null]),
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
     state: {},
-    workspaceId: faker.number.int(range),
+    workspaceId: faker.helpers.arrayElement(workspaceIds),
     createdAt: faker.date.past(),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),
     deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),

@@ -1,20 +1,25 @@
-import { configDotenv } from 'dotenv';
-import { dbConnect } from '../../../src/drizzle/drizzle.provider';
-import { AppDto } from '../../../src/dto/apps.dto';
 import { generateFakeApp } from '../faker/app.faker';
 import { faker } from '@faker-js/faker';
-import { apps } from '../../../src/drizzle/schema/schema';
+import { apps } from '../../drizzle/schema/schema';
+import { UserDto } from '../../dto/users.dto';
+import { WorkspaceDto } from '../../dto/workspace.dto';
+import { DatabaseI } from '../../drizzle/drizzle.provider';
 
-async function main() {
-  configDotenv();
-  const [db, client] = await dbConnect(process.env.DB_URL as string);
-
-  const fakeApps: AppDto[] = faker.helpers.multiple(generateFakeApp, {
-    count: 10,
-  });
-  await db.insert(apps).values(fakeApps).onConflictDoNothing();
-
-  client.end();
+export async function appSeeder(
+  db: DatabaseI,
+  userIds: UserDto['id'][],
+  workspaceIds: WorkspaceDto['id'][],
+) {
+  console.log('running APPS seeder');
+  const fakeApps = faker.helpers.multiple(
+    () => generateFakeApp(userIds, workspaceIds),
+    {
+      count: 10,
+    },
+  );
+  return await db
+    .insert(apps)
+    .values(fakeApps)
+    .returning()
+    .onConflictDoNothing();
 }
-
-main();

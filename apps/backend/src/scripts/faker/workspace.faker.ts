@@ -1,23 +1,21 @@
 import { faker } from '@faker-js/faker';
-import { WorkspaceDto } from 'src/dto/workspace.dto';
+import { UserDto } from '../../dto/users.dto';
+import { WorkspaceDto } from '../../dto/workspace.dto';
 
-export function generateFakeWorkspace(): WorkspaceDto {
-  const range = {
-    min: 3400, //change to `your` the user id range
-    max: 4000,
-  };
-  range;
+/**
+ * omited the id to let the db handle it
+ */
+export function generateFakeWorkspace(
+  ids: UserDto['id'][],
+): Omit<WorkspaceDto, 'id'> {
   return {
-    id: faker.number.int(range),
     name: faker.company.name(),
     imageUrl: faker.internet.avatar(),
-    createdById: faker.number.int(range),
-    updatedById: faker.helpers.arrayElement([faker.number.int(range), null]),
-    deletedById: faker.helpers.arrayElement([faker.number.int(range), null]),
+    createdById: faker.helpers.arrayElement(ids),
+    updatedById: faker.helpers.arrayElement([...ids, null]),
+    deletedById: faker.helpers.arrayElement([...ids, null]),
     createdAt: faker.date.past(),
     deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),
   };
 }
-
-export const workspace = generateFakeWorkspace();
