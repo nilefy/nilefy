@@ -2,7 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { CreateRoleDb, RolesDto, UpdateRoleDb } from '../dto/roles.dto';
 import { roles, usersToRoles } from '../drizzle/schema/schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 
 @Injectable()
 export class RolesService {
@@ -11,7 +11,49 @@ export class RolesService {
   async index(workspaceId: RolesDto['workspaceId']): Promise<RolesDto[]> {
     return await this.db.query.roles.findMany({
       where: and(eq(roles.workspaceId, workspaceId), isNull(roles.deletedAt)),
+      orderBy: [asc(roles.createdAt)],
     });
+  }
+
+  async one(workspaceId: RolesDto['workspaceId'], roleId: RolesDto['id']) {
+    const role = await this.db.query.roles.findFirst({
+      where: and(
+        eq(roles.workspaceId, workspaceId),
+        eq(roles.id, roleId),
+        isNull(roles.deletedAt),
+      ),
+      columns: {
+        id: true,
+        name: true,
+        description: true,
+      },
+      with: {
+        permissionsToRoles: {
+          columns: {},
+          with: {
+            permission: true,
+          },
+        },
+        usersToRoles: {
+          columns: {},
+          with: {
+            user: {
+              columns: {
+                password: false,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!role) throw new NotFoundException();
+    return {
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      permissions: role.permissionsToRoles.map((r) => r.permission),
+      users: role.usersToRoles.map((u) => u.user),
+    };
   }
 
   async create(roleDto: CreateRoleDb) {
@@ -23,6 +65,7 @@ export class RolesService {
     roleId: RolesDto['id'],
     roleDto: UpdateRoleDb,
   ) {
+    console.log(roleDto);
     await this.db
       .update(roles)
       .set({ updatedAt: sql`now()`, ...roleDto })
@@ -53,6 +96,8 @@ export class RolesService {
           and(
             eq(roles.id, roleId),
             eq(roles.workspaceId, workspaceId),
+            ne(roles.name, 'admin'),
+            ne(roles.name, 'everyone'),
             isNull(roles.deletedAt),
           ),
         )

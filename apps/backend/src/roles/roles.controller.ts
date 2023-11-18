@@ -36,6 +36,14 @@ export class RolesController {
     return await this.rolesService.index(workspaceId);
   }
 
+  @Get(':roleId')
+  async one(
+    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
+    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
+  ) {
+    return await this.rolesService.one(workspaceId, roleId);
+  }
+
   @Post()
   async create(
     @Req() req: ExpressAuthedRequest,
