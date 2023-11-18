@@ -4,10 +4,13 @@ import { users as usersSchema } from '../../drizzle/schema/schema';
 import { SeederI } from './seeder.types';
 import { UserDto } from '../../dto/users.dto';
 
+/**
+ * index `[0]` is the admin
+ */
 export const userSeeder: SeederI<UserDto[]> = async (db) => {
   console.log('running USERS seeder');
   const fakeUsers = faker.helpers.multiple(generateFakeUser, {
-    count: 100,
+    count: 10,
   });
 
   const admin = (

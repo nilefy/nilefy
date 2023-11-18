@@ -3,6 +3,8 @@ import { dbConnect } from '../drizzle/drizzle.provider';
 import { userSeeder } from './seeders/user.seeder';
 import { workspaceSeeder } from './seeders/workspace.seeder';
 import { appSeeder } from './seeders/app.seeder';
+import { permissionsSeeder } from './seeders/permissions.seeder';
+import { rolesSeeder } from './seeders/roles.seeder';
 
 async function main() {
   configDotenv();
@@ -13,11 +15,13 @@ async function main() {
   const users = await userSeeder(db);
   const userIds = users.map((u) => u.id);
   const workspaces = await workspaceSeeder(db, userIds);
-  await appSeeder(
-    db,
-    userIds,
-    workspaces.map((w) => w.id),
-  );
+
+  const workspaceIds = workspaces.map((w) => w.id);
+  const permissions = await permissionsSeeder(db);
+  const permissionIds = permissions.map((p) => p.id);
+  const [adminId, ...rest] = userIds;
+  await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);
+  await appSeeder(db, userIds, workspaceIds);
 
   client.end();
 }
