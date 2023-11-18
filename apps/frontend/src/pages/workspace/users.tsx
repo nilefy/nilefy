@@ -21,7 +21,7 @@ import {
 // TODO: move to common package
 export type User = {
   id: string;
-  name: string;
+  username: string;
   email: string;
   status: 'active' | 'invited' | 'archived';
   imageUrl?: string;
@@ -31,9 +31,24 @@ export function UsersManagement() {
   // TODO: convert to data fetching
   const users = useMemo<User[]>(
     () => [
-      { id: '1', name: 'nagy nabil 1', email: 'nagy@nagy', status: 'active' },
-      { id: '2', name: 'nagy nabil 2', email: 'nagy@nagy', status: 'active' },
-      { id: '3', name: 'nagy nabil 3', email: 'nagy@nagy', status: 'active' },
+      {
+        id: '1',
+        username: 'nagy nabil 1',
+        email: 'nagy@nagy',
+        status: 'active',
+      },
+      {
+        id: '2',
+        username: 'nagy nabil 2',
+        email: 'nagy@nagy',
+        status: 'active',
+      },
+      {
+        id: '3',
+        username: 'nagy nabil 3',
+        email: 'nagy@nagy',
+        status: 'active',
+      },
     ],
     [],
   );
@@ -48,7 +63,7 @@ export function UsersManagement() {
           Add users
         </Button>
       </div>
-      <div className="flex w-full flex-col justify-between bg-primary/5 p-2">
+      <div className="bg-primary/5 flex w-full flex-col justify-between p-2">
         <div className="flex gap-4">
           <span>Showing</span>
           <Select defaultValue="all">
@@ -76,7 +91,7 @@ export function UsersManagement() {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.status}</TableCell>
               </TableRow>
