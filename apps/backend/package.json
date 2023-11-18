@@ -22,7 +22,8 @@
     "db:push": "dotenv drizzle-kit push:pg",
     "db:studio": "dotenv drizzle-kit studio --verbose",
     "db:generate": "dotenv drizzle-kit generate:pg",
-    "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate"
+    "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate",
+    "db:seed": "ts-node ./src/scripts/seeder"
   },
   "dependencies": {
     "@webloom/permissions": "workspace:*",
@@ -48,6 +49,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.2.0",
     "@nestjs/cli": "^10.1.18",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

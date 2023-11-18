@@ -7,8 +7,9 @@ import React, {
   useRef,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
+import { PREVIEW_NODE_ID, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
+import { WebloomButton } from './WebloomComponents/Button';
 import { WebloomContainer } from './WebloomComponents/Container';
 import {
   DndContext,
@@ -22,35 +23,35 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 
-import { WebloomAdapter } from './WebloomComponents/lib/WebloomAdapter';
-
 import { useSetDom } from '@/hooks/useSetDom';
 import { normalize } from '@/lib/utils';
-import { WebloomElementShadow } from './WebloomComponents/lib/WebloomElementShadow';
-import Grid from './WebloomComponents/lib/Grid';
 import { NUMBER_OF_COLUMNS } from '@/lib/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
-import { MultiSelectBounding } from './WebloomComponents/lib/multiselectBounding';
 import { RightSidebar } from './rightsidebar/rightsidebar';
-import { ResizeHandlers } from './WebloomComponents/lib/ResizeHandlers';
 import { SelectionAction } from '@/Actions/Editor/selection';
+import {
+  WebloomAdapter,
+  ResizeHandlers,
+  MultiSelectBounding,
+  Grid,
+  WebloomElementShadow,
+} from './WebloomComponents/lib';
 
 const { resizeCanvas } = store.getState();
 
 function WebloomRoot() {
-  const wholeTree = store.getState().tree;
-  const tree = wholeTree[ROOT_NODE_ID];
+  const root = store((state) => state.tree[ROOT_NODE_ID]);
   const ref = React.useRef<HTMLDivElement>(null);
   const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
+    let children = root.props.children as React.ReactElement[];
+    if (root.nodes.length > 0) {
+      children = root.nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [tree.nodes, tree.props.children]);
+  }, [root.nodes, root.props.children]);
   useLayoutEffect(() => {
     //get width and height of root
     if (!ref.current) return;
@@ -61,9 +62,9 @@ function WebloomRoot() {
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   }, []);
   useEffect(() => {
-    const rowsCount = tree.rowsCount;
+    const rowsCount = root.rowsCount;
     resizeCanvas(ROOT_NODE_ID, { rowsCount });
-  }, [tree.rowsCount]);
+  }, [root.rowsCount]);
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => {
@@ -79,11 +80,7 @@ function WebloomRoot() {
   };
 
   return (
-    <div
-      id="webloom-root"
-      className="bg-primary/10 relative h-full w-full"
-      ref={ref}
-    >
+    <div id="webloom-root" className="relative h-full w-full" ref={ref}>
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
         <Grid id={ROOT_NODE_ID} />
         {children}
@@ -95,22 +92,22 @@ WebloomRoot.displayName = 'WebloomRoot';
 
 function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
-  const dragged = store((state) => state.draggedNode);
   const tree = wholeTree[id];
+  const nodes = store((state) => state.tree[id].nodes);
   const children = useMemo(() => {
     let children = tree.props.children as React.ReactElement[];
-    if (tree.nodes.length > 0) {
-      children = tree.nodes.map((node) => {
+    if (nodes.length > 0) {
+      children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [tree.nodes, tree.props.children]);
+  }, [nodes, tree.props.children]);
   const rendered = useMemo(
     () => createElement(tree.type, tree.props, children),
     [tree.type, tree.props, children],
   );
-  if (id === 'new' || id === dragged) return null;
+  if (id === PREVIEW_NODE_ID) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -124,11 +121,11 @@ const initTree: WebloomTree = {
     id: ROOT_NODE_ID,
     name: ROOT_NODE_ID,
     type: WebloomContainer,
-    x: 0,
-    y: 0,
+    col: 0,
+    row: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: ['container-1', 'container-3'],
+    nodes: ['container-1', 'container-3', 'button-1'],
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
@@ -141,8 +138,8 @@ const initTree: WebloomTree = {
     id: 'container-1',
     name: 'container-1',
     type: WebloomContainer,
-    x: 5,
-    y: 30,
+    col: 5,
+    row: 30,
     columnWidth: 15,
     columnsCount: 14,
     nodes: ['container-2'],
@@ -151,7 +148,7 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'red',
+      color: '#987bab',
     },
     rowsCount: 50,
   },
@@ -159,8 +156,8 @@ const initTree: WebloomTree = {
     id: 'container-2',
     name: 'container-2',
     type: WebloomContainer,
-    x: 1,
-    y: 2,
+    col: 1,
+    row: 2,
     columnWidth: 15,
     columnsCount: 14,
     nodes: [],
@@ -169,7 +166,7 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'blue',
+      color: '#7dab9b',
     },
     rowsCount: 30,
   },
@@ -177,8 +174,8 @@ const initTree: WebloomTree = {
     id: 'container-3',
     name: 'container-3',
     type: WebloomContainer,
-    x: 15,
-    y: 600,
+    col: 15,
+    row: 600,
     columnWidth: 15,
     columnsCount: 5,
     nodes: [],
@@ -187,9 +184,26 @@ const initTree: WebloomTree = {
     dom: null,
     props: {
       className: 'h-full w-full bg-blue-500',
-      color: 'blue',
+      color: '#7bab9b',
     },
     rowsCount: 30,
+  },
+  'button-1': {
+    id: 'button-1',
+    name: 'button-1',
+    type: WebloomButton,
+    col: 20,
+    row: 9,
+    columnsCount: 4,
+    nodes: [],
+    parent: ROOT_NODE_ID,
+    isCanvas: false,
+    dom: null,
+    props: {
+      className: 'h-full w-full bg-blue-400',
+      color: '#c29c99',
+    },
+    rowsCount: 10,
   },
 };
 store.setState((state) => {
@@ -290,14 +304,14 @@ function Editor() {
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onDragCancel={handleCancel}
-        autoScroll={true}
+        autoScroll
       >
         {/*sidebar*/}
-        <div className="h-full w-1/5 bg-gray-200"></div>
+        <div className="h-full w-1/5 "></div>
 
         <div
           ref={editorRef}
-          className="relative h-full w-full touch-none overflow-x-clip overflow-y-scroll bg-white"
+          className="bg-primary/20 relative h-full w-full touch-none overflow-x-clip overflow-y-scroll "
           style={{
             scrollbarGutter: 'stable',
             scrollbarWidth: 'thin',

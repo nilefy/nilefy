@@ -22,7 +22,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store((store) => store.getRelativeDimensions(id));
+  const elDimensions = store((store) => store.getRelativePixelDimensions(id));
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
@@ -61,6 +61,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       width: elDimensions.width,
       height: elDimensions.height,
       visibility: isDragging ? 'hidden' : 'visible',
+      opacity: isDragging ? 0 : 1,
     } as React.CSSProperties;
   }, [
     elDimensions.x,
@@ -80,7 +81,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         className="target touch-none"
         data-id={id}
       >
-        {props.children}
+        {!isDragging && props.children}
       </div>
     </>
   );

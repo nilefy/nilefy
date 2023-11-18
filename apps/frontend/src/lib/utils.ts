@@ -1,4 +1,4 @@
-import { WebloomNodeDimensions } from '@/store';
+import { WebloomPixelDimensions } from '@/store';
 
 export const getDOMInfo = (el: HTMLElement) => {
   const { top, left, width, height } = el.getBoundingClientRect();
@@ -9,7 +9,7 @@ export const getDOMInfo = (el: HTMLElement) => {
     height,
   };
 };
-export const getBoundingRect = (dim: WebloomNodeDimensions) => {
+export const getBoundingRect = (dim: WebloomPixelDimensions) => {
   return {
     top: dim.y,
     left: dim.x,
