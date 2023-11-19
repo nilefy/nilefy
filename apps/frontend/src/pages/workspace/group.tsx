@@ -47,6 +47,8 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 // type BuiltinPermissions =
 export type Group = {
@@ -379,59 +381,156 @@ export function GroupsManagement() {
   );
 }
 
-// const permissionTypes = z.enum([
-//   'Workspaces-Read',
-//   'Workspaces-Write',
-//   'Workspaces-Delete',
-//   // APPS
-//   'Apps-Read',
-//   'Apps-Write',
-//   'Apps-Delete',
-// ]);
-//
-// type P = {
-//   resource: string;
-//   permission: string;
-// };
-//
-// function PermissionsTab(permissions: string[]) {
-//   const converted: P[] = permissions.map(p => {
-//     const splited = p.split('-', 2);
-//     return {
-//       resource: splited[0],
-//       permission: splited[1]
-//     }
-//   })
-// return (<>{permissionTypes.options.map(per => (
-//
-// ))}</>)
-// }
+const permissionTypes = z.enum([
+  'Workspaces-Read',
+  'Workspaces-Write',
+  'Workspaces-Delete',
+  // APPS
+  'Apps-Read',
+  'Apps-Write',
+  'Apps-Delete',
+]);
+type PermissionTypes = z.infer<typeof permissionTypes>;
 
-function UsersTab({ users }: { users: User[] }) {
+type Permission = {
+  id: number;
+  name: PermissionTypes;
+};
+
+async function getAllPermissions() {
+  const res = await fetchX('permissions', {
+    method: 'GET',
+  });
+  return (await res.json()) as Permission[];
+}
+
+async function togglePermission({
+  workspaceId,
+  roleId,
+  permissionId,
+}: {
+  workspaceId: number;
+  roleId: number;
+  permissionId: Permission['id'];
+}) {
+  await fetchX(
+    `workspaces/${workspaceId}/roles/${roleId}/togglepermission/${permissionId}`,
+    {
+      method: 'PUT',
+    },
+  );
+}
+
+function useTogglePermission() {
+  const queryClient = useQueryClient();
+  const mutate = useMutation({
+    mutationFn: togglePermission,
+    async onSuccess(_, variables) {
+      await queryClient.invalidateQueries({
+        queryKey: ['groups', variables.workspaceId, variables.roleId],
+      });
+    },
+  });
+  return mutate;
+}
+
+function usePermissions() {
+  const permissions = useQuery({
+    queryKey: ['permissions'],
+    queryFn: getAllPermissions,
+  });
+  return permissions;
+}
+
+function PermissionsTab({
+  permissions,
+  isAdmin,
+}: {
+  permissions: Permission[];
+  isAdmin: boolean;
+}) {
+  const { workspaceId, groupId } = useParams();
+  const allPermissions = usePermissions();
+  const togglePermission = useTogglePermission();
+  // just for easy check
+  const persId = new Set(permissions.map((p) => p.id));
+
+  if (allPermissions.isPending) {
+    return <>loading</>;
+  } else if (allPermissions.isError) {
+    throw allPermissions.error;
+  }
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[100px]"></TableHead>
-          <TableHead>Username</TableHead>
-          <TableHead>Email</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((u) => (
-          <TableRow key={u.id}>
-            <TableCell className="font-medium">
-              <Avatar className="mr-2">
-                <AvatarImage src={u.imageUrl ?? undefined} />
-                <AvatarFallback>{getInitials(u.username)}</AvatarFallback>
-              </Avatar>
-            </TableCell>
-            <TableCell>{u.username}</TableCell>
-            <TableCell>{u.email}</TableCell>
+    <div className="ml-4 flex flex-col gap-3">
+      <div className="h-5">
+        {isAdmin ? <p>admin has all permissions</p> : null}
+      </div>
+      {allPermissions.data.map((per) => (
+        <Label key={per.id} className="flex gap-5">
+          <Checkbox
+            defaultChecked={persId.has(per.id)}
+            onCheckedChange={(c) => {
+              console.log('per: ', per.id, 'state: ', c);
+              if (!workspaceId || !groupId)
+                throw new Error(
+                  'this component only works under workspaceId and roleId',
+                );
+              togglePermission.mutate({
+                workspaceId: +workspaceId,
+                roleId: +groupId,
+                permissionId: per.id,
+              });
+            }}
+            value={per.id}
+            disabled={isAdmin || togglePermission.isPending}
+          />
+          {per.name}
+        </Label>
+      ))}
+    </div>
+  );
+}
+
+function UsersTab({
+  users,
+  isEveryone,
+}: {
+  users: User[];
+  isEveryone: boolean;
+}) {
+  return (
+    <div>
+      {isEveryone ? (
+        <p>
+          cannot add users manually all users are added automatically to this
+          group
+        </p>
+      ) : null}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[100px]"></TableHead>
+            <TableHead>Username</TableHead>
+            <TableHead>Email</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell className="font-medium">
+                <Avatar className="mr-2">
+                  <AvatarImage src={u.imageUrl ?? undefined} />
+                  <AvatarFallback>{getInitials(u.username)}</AvatarFallback>
+                </Avatar>
+              </TableCell>
+              <TableCell>{u.username}</TableCell>
+              <TableCell>{u.email}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -440,7 +539,7 @@ function UsersTab({ users }: { users: User[] }) {
  */
 export function GroupManagement() {
   const { workspaceId, groupId } = useParams();
-  const { isError, isPending, error, data } = useRole(
+  const { isError, isPending, data, error } = useRole(
     +(workspaceId as string),
     +(groupId as string),
   );
@@ -472,7 +571,7 @@ export function GroupManagement() {
           )}
         </div>
       </div>
-      <Tabs defaultValue="permissions" className="h-2/3 w-full">
+      <Tabs defaultValue="permissions" className="h-2/3 w-full" key={data.name}>
         <TabsList className="mt-4 w-full gap-6">
           <TabsTrigger value="apps">Apps</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
@@ -484,11 +583,13 @@ export function GroupManagement() {
           user will chose what apps this group can access here
         </TabsContent>
         <TabsContent value="users">
-          <UsersTab users={data.users} />
+          <UsersTab users={data.users} isEveryone={data.name === 'everyone'} />
         </TabsContent>
         <TabsContent value="permissions">
-          {/*TODO: */}
-          {JSON.stringify(data.permissions)}
+          <PermissionsTab
+            permissions={data.permissions}
+            isAdmin={data.name === 'admin'}
+          />
         </TabsContent>
         <TabsContent value="datasources">
           {/*TODO: */}
