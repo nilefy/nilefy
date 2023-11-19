@@ -1,7 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { CreateRoleDb, RolesDto, UpdateRoleDb } from '../dto/roles.dto';
-import { roles, usersToRoles } from '../drizzle/schema/schema';
+import {
+  permissionsToRoles,
+  roles,
+  usersToRoles,
+} from '../drizzle/schema/schema';
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 
 @Injectable()
@@ -109,5 +113,38 @@ export class RolesService {
       return role;
     });
     return role;
+  }
+
+  async togglePermission(
+    workspaceId: number,
+    roleId: number,
+    permissionId: number,
+  ) {
+    return await this.db.transaction(async (tx) => {
+      // there's pk on (roleId, permissionId) so if there would be something deleted would be in index 0
+      const r = (
+        await tx
+          .delete(permissionsToRoles)
+          .where(
+            and(
+              eq(permissionsToRoles.roleId, roleId),
+              eq(permissionsToRoles.permissionId, permissionId),
+            ),
+          )
+          .returning()
+      )[0] as { roleId: number; permissionId: number } | undefined;
+      // if there's returned value that means i indeed toggled the relation
+      if (r !== undefined) {
+        return r;
+        // if not add the relation
+      } else {
+        return (
+          await tx
+            .insert(permissionsToRoles)
+            .values({ roleId, permissionId })
+            .returning()
+        )[0];
+      }
+    });
   }
 }

@@ -22,6 +22,7 @@ import {
   updateRoleSchema,
 } from '../dto/roles.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { PermissionDto } from '../dto/permissions.dto';
 
 @UseGuards(JwtGuard, PermissionsGuard)
 @OnlyAdmin()
@@ -68,6 +69,19 @@ export class RolesController {
       updatedById: req.user.userId,
       ...updateRoleDto,
     });
+  }
+
+  @Put(':roleId/togglepermission/:permissionId')
+  async togglePermission(
+    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
+    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
+    @Param('permissionId', ParseIntPipe) permissionId: PermissionDto['id'],
+  ) {
+    return await this.rolesService.togglePermission(
+      workspaceId,
+      roleId,
+      permissionId,
+    );
   }
 
   @Delete(':roleId')
