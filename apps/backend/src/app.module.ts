@@ -8,6 +8,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
 import { RolesModule } from './roles/roles.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RolesModule } from './roles/roles.module';
     WorkspacesModule,
     AppsModule,
     RolesModule,
+    PermissionsModule,
   ],
 })
 export class AppModule {}
