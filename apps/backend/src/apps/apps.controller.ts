@@ -21,19 +21,12 @@ import {
 import { JwtGuard } from '../auth/jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import {
-  OnlyAdmin,
-  PermissionsGuard,
-  RequiredPermissions,
-} from '../auth/permissions.guard';
 
-@OnlyAdmin()
-@UseGuards(JwtGuard, PermissionsGuard)
+@UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
 
-  @RequiredPermissions('Apps-Write')
   @Post()
   async create(
     @Req() req: ExpressAuthedRequest,
@@ -47,7 +40,6 @@ export class AppsController {
     });
   }
 
-  @OnlyAdmin()
   @Get()
   async findAll(
     @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
@@ -55,7 +47,6 @@ export class AppsController {
     return await this.appsService.findAll(workspaceId);
   }
 
-  @RequiredPermissions('Apps-Read')
   @Get(':id')
   async findOne(
     @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
@@ -64,7 +55,6 @@ export class AppsController {
     return await this.appsService.findOne(workspaceId, appId);
   }
 
-  @RequiredPermissions('Apps-Write')
   @Put(':id')
   async update(
     @Req() req: ExpressAuthedRequest,
@@ -78,7 +68,6 @@ export class AppsController {
     });
   }
 
-  @RequiredPermissions('Apps-Delete')
   @Delete(':id')
   async delete(
     @Req() req: ExpressAuthedRequest,

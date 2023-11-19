@@ -3,15 +3,28 @@ import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { pages } from '../drizzle/schema/appsState.schema';
 
 @Injectable()
 export class AppsService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async create(createAppDto: CreateAppDb): Promise<AppDto> {
-    const [app] = await this.db.insert(apps).values(createAppDto).returning();
-    // note i'm using as because "state" is not infered
-    return app as AppDto;
+  async create(createAppDto: CreateAppDb) {
+    const app = await this.db.transaction(async (tx) => {
+      const [app] = await tx.insert(apps).values(createAppDto).returning();
+      // create default page for the app
+      const [page] = await tx
+        .insert(pages)
+        .values({
+          name: 'page 1',
+          appId: app.id,
+          createdById: createAppDto.createdById,
+        })
+        .returning();
+      return { ...app, pages: [page] };
+    });
+
+    return app;
   }
 
   async findAll(workspaceId: AppDto['workspaceId']): Promise<AppDto[]> {
@@ -31,6 +44,13 @@ export class AppsService {
         eq(apps.workspaceId, workspaceId),
         isNull(apps.deletedAt),
       ),
+      with: {
+        pages: {
+          with: {
+            components: true,
+          },
+        },
+      },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
     return app as AppDto;
