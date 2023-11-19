@@ -16,7 +16,6 @@ export function generateFakeApp(
     deletedById: faker.helpers.arrayElement([...userIds, null]),
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
-    state: {},
     workspaceId: faker.helpers.arrayElement(workspaceIds),
     createdAt: faker.date.past(),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),

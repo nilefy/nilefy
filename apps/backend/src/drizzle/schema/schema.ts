@@ -1,7 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   integer,
-  json,
   pgEnum,
   pgTable,
   serial,
@@ -21,6 +20,17 @@ export const timeStamps = {
     .notNull()
     .default(sql`now()`),
   updatedAt: timestamp('updated_at'),
+};
+
+/**
+ *  spread to create `created_by_id` `updated_by_id` `deleted_by_id`
+ */
+export const whoToBlame = {
+  createdById: integer('created_by_id')
+    .references(() => users.id)
+    .notNull(),
+  updatedById: integer('updated_by_id').references(() => users.id),
+  deletedById: integer('deleted_by_id').references(() => users.id),
 };
 
 export const softDelete = {
@@ -103,11 +113,7 @@ export const roles = pgTable(
       .notNull(),
     ...timeStamps,
     ...softDelete,
-    createdById: integer('created_by_id')
-      .references(() => users.id)
-      .notNull(),
-    updatedById: integer('updated_by_id').references(() => users.id),
-    deletedById: integer('deleted_by_id').references(() => users.id),
+    ...whoToBlame,
   },
   (t) => ({
     // role name must be unique by workspace
@@ -198,9 +204,6 @@ export const apps = pgTable('apps', {
     .notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   description: varchar('description', { length: 255 }),
-  state: json('state')
-    .default(sql`'{}'::json`)
-    .notNull(),
   /**
    * workspace this app belongs to
    */
@@ -446,29 +449,6 @@ export const usersToWorkspacesRelations = relations(
     }),
   }),
 );
-
-export const appsRelations = relations(apps, ({ one }) => ({
-  createdBy: one(users, {
-    fields: [apps.createdById],
-    references: [users.id],
-    relationName: userAppRelation,
-  }),
-  updatedBy: one(users, {
-    fields: [apps.updatedById],
-    references: [users.id],
-    relationName: userUpdateAppRelation,
-  }),
-  deletedBy: one(users, {
-    fields: [apps.deletedById],
-    references: [users.id],
-    relationName: userDeleteAppRelation,
-  }),
-  workspace: one(workspaces, {
-    fields: [apps.workspaceId],
-    references: [workspaces.id],
-    relationName: workspaceAppsRelation,
-  }),
-}));
 
 export const webloomTableRelations = relations(
   webloomTables,
