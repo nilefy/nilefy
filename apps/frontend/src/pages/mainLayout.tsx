@@ -30,7 +30,7 @@ const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
     // TODO: re-enable this when the frontend auth is ready
-    // const res = await fetchX('/workspaces');
+    // const res = await fetchX('workspaces');
     // return (await res.json()) as WorkSpaces;
     return [{ id: 1, imageUrl: null, name: 'work' }] satisfies WorkSpaces;
   },
@@ -62,7 +62,7 @@ export function Dashboard() {
   // TODO: change to real authed user
   const user: User = {
     id: 'nagy',
-    name: 'nagy',
+    username: 'nagy',
     email: 'nagy@nagy',
     status: 'active',
   };
@@ -88,7 +88,7 @@ export function Dashboard() {
           <NavLink to="profile-settings">
             <Avatar className="mr-2">
               <AvatarImage src={user.imageUrl} />
-              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              <AvatarFallback>{getInitials(user.username)}</AvatarFallback>
             </Avatar>
           </NavLink>
         </div>
