@@ -12,9 +12,9 @@ import { JwtGuard } from '../auth/jwt.guard';
 import {
   CreateDataSourceDto,
   DataSourceDto,
-  availableDataSourcesSchema,
   createDataSourceSchema,
-  dataSourceT,
+  availableDataSourcesInsert,
+  dataSourceDb,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
@@ -48,8 +48,8 @@ export class DataSourcesController {
   // TODO: another controller for global data sources
   @Post('')
   async add(
-    @Body(new ZodValidationPipe(availableDataSourcesSchema))
-    dataSource: dataSourceT,
+    @Body(new ZodValidationPipe(availableDataSourcesInsert))
+    dataSource: dataSourceDb,
   ) {
     return await this.dataSourceService.add(dataSource);
   }

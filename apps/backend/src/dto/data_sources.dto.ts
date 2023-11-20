@@ -1,14 +1,21 @@
 import { z } from 'zod';
 import { availableDataSources, dataSources } from '../drizzle/schema/schema';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
-export const dataSourceSchema = createInsertSchema(dataSources);
+export const dataSourceSelect = createSelectSchema(dataSources);
+export const dataSourceInsert = createInsertSchema(dataSources);
 export const createDataSourceSchema = z.object({
   config: z.record(z.string(), z.string()),
 });
-export const availableDataSourcesSchema =
+
+export const availableDataSourceSelect =
+  createSelectSchema(availableDataSources);
+export const availableDataSourcesInsert =
   createInsertSchema(availableDataSources);
 
-export type DataSourceDto = z.infer<typeof dataSourceSchema>;
+export type DataSourceDto = z.infer<typeof dataSourceSelect>;
+export type CreateDataSourceDb = z.infer<typeof dataSourceInsert>;
 export type CreateDataSourceDto = z.infer<typeof createDataSourceSchema>;
-export type dataSourceT = z.infer<typeof availableDataSourcesSchema>;
+
+export type dataSourceT = z.infer<typeof availableDataSourceSelect>;
+export type dataSourceDb = z.infer<typeof availableDataSourcesInsert>;

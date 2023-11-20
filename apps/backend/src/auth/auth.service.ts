@@ -18,17 +18,22 @@ export class AuthService {
 
   async signUp(user: CreateUserDto) {
     const { password } = user;
-    // TODO: i removed the email check because i added the unique constraint on the db, so we need to add error handler here
+
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
-    const u = await this.userService.create({ ...user, password: hashed });
 
-    return {
-      access_token: await this.jwtService.signAsync({
-        sub: u.id,
-        username: u.username,
-      } satisfies PayloadUser),
-    } satisfies JwtToken;
+    try {
+      const u = await this.userService.create({ ...user, password: hashed });
+
+      return {
+        access_token: await this.jwtService.signAsync({
+          sub: u.id,
+          username: u.username,
+        } satisfies PayloadUser),
+      } satisfies JwtToken;
+    } catch (err) {
+      throw new BadRequestException();
+    }
   }
 
   async signIn(user: LoginUserDto) {

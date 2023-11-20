@@ -1,5 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DataSourceDto, dataSourceT } from '../dto/data_sources.dto';
+import {
+  CreateDataSourceDb,
+  DataSourceDto,
+  dataSourceT,
+  dataSourceDb,
+} from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { availableDataSources, dataSources } from '../drizzle/schema/schema';
 
@@ -7,22 +12,20 @@ import { availableDataSources, dataSources } from '../drizzle/schema/schema';
 export class DataSourcesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  // TODO: fix json type stored in db
-
-  async create(dataSourceDto: DataSourceDto): Promise<DataSourceDto> {
+  async create(dataSourceDto: CreateDataSourceDb): Promise<DataSourceDto> {
     const [dataSource] = await this.db
       .insert(dataSources)
       .values(dataSourceDto)
       .returning();
-    return dataSource;
+    return dataSource as DataSourceDto;
   }
 
-  async add(dataSource: dataSourceT): Promise<dataSourceT> {
+  async add(dataSource: dataSourceDb): Promise<dataSourceT> {
     const [ds] = await this.db
       .insert(availableDataSources)
       .values(dataSource)
       .returning();
-    return ds;
+    return ds as dataSourceT;
   }
 }
 
