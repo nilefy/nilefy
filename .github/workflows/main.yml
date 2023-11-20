@@ -19,11 +19,10 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Set up Node.js and pnpm
+        uses: pnpm/action-setup@v2
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          version: 6 
 
       - name: Install dependencies
         run: pnpm install
@@ -31,7 +30,6 @@ jobs:
       - name: Lint with Prettier and ESLint
         run: |
           pnpm run lint
-
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
