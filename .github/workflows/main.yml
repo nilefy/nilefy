@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [15]
+        node-version: [16.14]
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -24,8 +24,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install required version of pnpm
-        run: npm install -g pnpm@8
+      - name: Install latest compatible version of pnpm
+        run: npm install -g pnpm@latest
 
       - name: Install dependencies
         run: pnpm install
