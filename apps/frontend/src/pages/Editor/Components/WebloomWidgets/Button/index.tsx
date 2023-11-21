@@ -1,4 +1,8 @@
-import { WidgetConfig, WidgetInspectorConfig } from '@/lib/Editor/interface';
+import {
+  Widget,
+  WidgetConfig,
+  WidgetInspectorConfig,
+} from '@/lib/Editor/interface';
 import { Button } from '../../_Components';
 import { MousePointerSquare } from 'lucide-react';
 import { ComponentProps } from 'react';
@@ -8,7 +12,7 @@ type WebloomButtonProps = ComponentProps<typeof Button>;
 const WebloomButton = (props: WebloomButtonProps) => {
   return <Button {...props} />;
 };
-export const WebloomButtonConfig: WidgetConfig = {
+const config: WidgetConfig = {
   name: 'Button',
   icon: <MousePointerSquare />,
   isCanvas: false,
@@ -19,46 +23,57 @@ export const WebloomButtonConfig: WidgetConfig = {
     minRows: 4,
   },
 };
+
+const defaultProps: WebloomButtonProps = {
+  text: 'Button',
+  color: 'red',
+};
 const widgetName = 'WebloomButton';
 
-export const WebloomButtonInspectorConfig: WidgetInspectorConfig<WebloomButtonProps> =
-  [
-    {
-      sectionName: 'General',
-      children: [
-        {
-          id: `${widgetName}-text`,
-          key: 'text',
-          label: 'Text',
-          type: 'input',
-          options: {
-            placeholder: 'Enter text',
-            type: 'text',
-          },
+const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        id: `${widgetName}-text`,
+        key: 'text',
+        label: 'Text',
+        type: 'input',
+        options: {
+          placeholder: 'Enter text',
+          type: 'text',
         },
-        {
-          id: `${widgetName}-color`,
-          key: 'color',
-          label: 'Color',
-          type: 'select',
-          options: {
-            options: [
-              {
-                label: 'Red',
-                value: 'red',
-              },
-              {
-                label: 'Blue',
-                value: 'blue',
-              },
-              {
-                label: 'Transparent',
-                value: 'transparent',
-              },
-            ],
-          },
+      },
+      {
+        id: `${widgetName}-color`,
+        key: 'color',
+        label: 'Color',
+        type: 'select',
+        options: {
+          options: [
+            {
+              label: 'Red',
+              value: 'red',
+            },
+            {
+              label: 'Blue',
+              value: 'blue',
+            },
+            {
+              label: 'Transparent',
+              value: 'transparent',
+            },
+          ],
         },
-      ],
-    },
-  ];
+      },
+    ],
+  },
+];
+export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
+  component: WebloomButton,
+  config,
+  defaultProps,
+  inspectorConfig,
+};
+
 export { WebloomButton };

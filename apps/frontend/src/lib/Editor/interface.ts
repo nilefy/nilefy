@@ -90,3 +90,9 @@ export type FormControlOptions = {
   select: InspectorSelectProps;
 };
 export type InspectorFormControls = keyof FormControlOptions;
+export type Widget<WidgetProps> = {
+  component: React.FC<WidgetProps>;
+  config: WidgetConfig;
+  defaultProps: WidgetProps;
+  inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+};

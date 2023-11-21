@@ -26,6 +26,7 @@ const InspectorSelect = (
         onValueChange={(newValue) => {
           props.onChange(newValue);
         }}
+        value={props.value as string}
       >
         <SelectTrigger>
           <SelectValue placeholder={props.placeholder || 'Select one option'} />

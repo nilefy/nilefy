@@ -1,13 +1,5 @@
-import {
-  WebloomButton,
-  WebloomButtonConfig,
-  WebloomButtonInspectorConfig,
-} from './WebloomWidgets/Button';
-import {
-  WebloomContainer,
-  WebloomContainerConfig,
-  WebloomContainerInspectorConfig,
-} from './WebloomWidgets/Container';
+import { WebloomButtonWidget } from './WebloomWidgets/Button';
+import { WebloomContainerWidget } from './WebloomWidgets/Container';
 
 export type WebloomComponentsRules = {
   minColumnCount: number;
@@ -17,17 +9,8 @@ export type WebloomComponentsRules = {
 };
 
 export const WebloomWidgets = {
-  WebloomButton: {
-    component: WebloomButton,
-    config: WebloomButtonConfig,
-    inspectorConfig: WebloomButtonInspectorConfig,
-  },
-  WebloomContainer: {
-    component: WebloomContainer,
-    config: WebloomContainerConfig,
-    inspectorConfig: WebloomContainerInspectorConfig,
-  },
+  WebloomButton: WebloomButtonWidget,
+  WebloomContainer: WebloomContainerWidget,
 } as const;
 
 export type WidgetTypes = keyof typeof WebloomWidgets;
-export const getWidgetType = (type: WidgetTypes) => WebloomWidgets[type];
