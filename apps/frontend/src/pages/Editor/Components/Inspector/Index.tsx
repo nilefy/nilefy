@@ -67,6 +67,8 @@ const InspectorSection = (props: {
             store.getState().setProp(selectedId, control.key, newValue);
           };
           return (
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             <Component {...options} onChange={onChange} key={control.id} />
           );
         })}
