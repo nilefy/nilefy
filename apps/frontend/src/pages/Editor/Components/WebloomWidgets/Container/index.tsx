@@ -25,7 +25,7 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
         label: 'Color',
         type: 'select',
         options: {
-          options: [
+          items: [
             {
               label: 'Red',
               value: 'red',

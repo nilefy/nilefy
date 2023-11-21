@@ -84,11 +84,11 @@ export type WebloomNode = {
     type: WidgetTypes;
   };
 } & WebloomGridDimensions;
-
 export type FormControlOptions = {
   input: InspectorInputProps;
   select: InspectorSelectProps;
 };
+
 export type InspectorFormControls = keyof FormControlOptions;
 export type Widget<WidgetProps> = {
   component: React.FC<WidgetProps>;

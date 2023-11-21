@@ -11,7 +11,7 @@ import { BaseControlProps } from '.';
 import { Label } from '@/components/ui/label';
 
 export type InspectorSelectProps = {
-  options: { label: string; value: string }[];
+  items: { label: string; value: string }[];
   placeholder?: string;
 };
 
@@ -34,7 +34,7 @@ const InspectorSelect = (
         <SelectContent>
           <SelectGroup>
             <SelectLabel>{props.placeholder}</SelectLabel>
-            {props.options.map((option) => (
+            {props.items.map((option) => (
               <SelectItem value={option.value} key={option.value}>
                 {option.label}
               </SelectItem>
