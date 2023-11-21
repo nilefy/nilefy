@@ -5,9 +5,9 @@ import {
 } from '@/lib/Editor/interface';
 import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
-import { ComponentProps } from 'react';
+import { ComponentProps, ComponentPropsWithoutRef } from 'react';
 
-type WebloomContainerProps = ComponentProps<typeof Container>;
+type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
 const WebloomContainer = (props: WebloomContainerProps) => {
   return <Container {...props} />;
 };

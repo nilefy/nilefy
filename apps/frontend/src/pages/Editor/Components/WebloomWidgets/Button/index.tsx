@@ -5,9 +5,9 @@ import {
 } from '@/lib/Editor/interface';
 import { Button } from '../../_Components';
 import { MousePointerSquare } from 'lucide-react';
-import { ComponentProps } from 'react';
+import { ComponentProps, ComponentPropsWithoutRef } from 'react';
 
-type WebloomButtonProps = ComponentProps<typeof Button>;
+type WebloomButtonProps = ComponentPropsWithoutRef<typeof Button>;
 
 const WebloomButton = (props: WebloomButtonProps) => {
   return <Button {...props} />;
