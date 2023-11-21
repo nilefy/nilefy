@@ -33,16 +33,25 @@ export class AuthService {
 
   async signIn(user: LoginUserDto) {
     const { email, password } = user;
+    console.log('email', email);
+    console.log('password', password);
+    // !! this is for testing purpose only (should be removed when integrating with db)
+    // const ret = await this.userService.findOne(email);
+    // if (!ret) {
+    //   throw new NotFoundException();
+    // }
 
-    const ret = await this.userService.findOne(email);
-    if (!ret) {
+    // const match = await compare(password, ret.password);
+    // if (!match) {
+    //   throw new BadRequestException();
+    // }
+    if (email !== 'gngn@gngn.com' || password !== '123456') {
       throw new NotFoundException();
     }
-
-    const match = await compare(password, ret.password);
-    if (!match) {
-      throw new BadRequestException();
-    }
+    const ret = {
+      id: 1,
+      username: 'gngn',
+    };
     return {
       access_token: await this.jwtService.signAsync({
         sub: ret.id,

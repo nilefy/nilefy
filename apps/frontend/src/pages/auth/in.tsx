@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSignIn } from '@/hooks/useSignIn';
 
 // TODO: move the schema to seprate package to make sharing between front/back easier
 export const signInSchema = z.object({
@@ -31,11 +32,20 @@ export function SignIn() {
       email: '',
     },
   });
-  function onSubmit(values: SignInSchema) {
-    console.log(values);
-    return navigate('/');
-  }
+  const signIn = useSignIn();
+  const handleSignIn = async ({ email, password }: SignInSchema) => {
+    try {
+      await signIn({ email, password });
+    } catch (error) {
+      // Handle errors
+      console.error('Sign-in failed:', error);
+      form.setError('email', { message: 'Invalid email or password' });
+    }
+  };
 
+  function onSubmit(values: SignInSchema) {
+    handleSignIn(values);
+  }
   return (
     <div className="flex h-screen w-screen  flex-col items-center justify-center gap-5">
       <h1 className="text-4xl">Create Account</h1>

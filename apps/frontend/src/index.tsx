@@ -18,7 +18,7 @@ import { ApplicationsLayout } from './pages/apps/apps';
 import DatabaseTable from './pages/built-in-db/db';
 import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
-
+import { ProtectedRoute } from './components/ProtectedRoute';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,7 +41,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/:workspaceId',
-        element: <Dashboard />,
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
         errorElement: <ErrorPage />,
         children: [
           {
@@ -56,7 +60,11 @@ const router = createBrowserRouter([
           },
           {
             path: 'database',
-            element: <DatabaseTable />,
+            element: (
+              <ProtectedRoute>
+                <DatabaseTable />
+              </ProtectedRoute>
+            ),
             errorElement: <ErrorPage />,
             children: [
               {
@@ -94,7 +102,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/signin',
-    element: <SignIn />,
+    element: (
+      <ProtectedRoute>
+        <SignIn />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorPage />,
   },
   // TODO: remove this route after frontend auth is done (currently used for testing)

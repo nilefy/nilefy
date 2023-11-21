@@ -1,5 +1,11 @@
 import { ModeToggle } from '@/components/mode-toggle';
-import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
+import {
+  NavLink,
+  Outlet,
+  redirect,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import { Wind, Layout, Cog, Table } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
@@ -7,7 +13,7 @@ import { User } from './workspace/users';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
-
+import { useAuthStore } from '@/hooks/useAuthStore';
 const dashboardPaths = [
   {
     name: 'apps',
@@ -60,12 +66,13 @@ export const loader =
 export function Dashboard() {
   const { workspaceId } = useParams();
   // TODO: change to real authed user
-  const user: User = {
-    id: 'nagy',
-    name: 'nagy',
-    email: 'nagy@nagy',
-    status: 'active',
-  };
+  // const user: User = {
+  //   id: 'nagy',
+  //   name: 'nagy',
+  //   email: 'nagy@nagy',
+  //   status: 'active',
+  // };
+  const user = useAuthStore((state) => state.user);
 
   return (
     <div className="flex h-screen w-screen">
@@ -87,8 +94,11 @@ export function Dashboard() {
           <ModeToggle />
           <NavLink to="profile-settings">
             <Avatar className="mr-2">
-              <AvatarImage src={user.imageUrl} />
-              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              {/* src={user.imageUrl} */}
+              <AvatarImage />
+              <AvatarFallback>
+                {getInitials(user?.username || '')}
+              </AvatarFallback>
             </Avatar>
           </NavLink>
         </div>
