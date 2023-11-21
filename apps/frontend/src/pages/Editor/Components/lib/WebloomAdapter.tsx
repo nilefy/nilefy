@@ -5,6 +5,7 @@ import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 
 type WebloomAdapterProps = {
   id: string;
@@ -31,6 +32,9 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       },
     },
   );
+  if (id === ROOT_NODE_ID) {
+    attributes.role = 'canvas';
+  }
   const modListeners = useMemo(() => {
     if (!listeners)
       return {
