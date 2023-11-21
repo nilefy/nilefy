@@ -13,15 +13,34 @@ type ElementProps = {
 };
 
 const myProps = {
-  prop1: 'value1',
+  prop1: 0,
+  prop: function bla() {},
   prop2: {
     nestedProp1: 'nestedValue1',
     nestedProp2: {
       deeplyNestedProp: 'deeplyNestedValue',
     },
   },
+  prop22: {
+    nestedProp1: 'nestedValue1',
+    nestedProp2: {
+      deeplyNestedProp: 'deeplyNestedValue',
+    },
+  },
+  prop23: {
+    nestedProp1: 'nestedValue1',
+    nestedProp2: {
+      deeplyNestedProp: 'deeplyNestedValue',
+    },
+  },
+  prop24: {
+    nestedProp1: 'nestedValue1',
+    nestedProp2: {
+      deeplyNestedProp: 'deeplyNestedValue',
+    },
+  },
   prop3: {
-    bla1: ['nestedValue1', 'dwwdkl'],
+    bla1: ['nestedValue1', 'dwwdkl', 0],
     bla2: false,
   },
 };
@@ -109,7 +128,7 @@ export function JsonViewer() {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="w-[350px] space-y-0 font-mono"
+      className="scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-300 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700 h-[620px] w-[350px] space-y-0 overflow-y-auto font-mono"
     >
       <div className="flex items-center">
         <CollapsibleTrigger asChild>
