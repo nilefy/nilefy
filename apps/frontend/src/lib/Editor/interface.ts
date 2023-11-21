@@ -65,12 +65,16 @@ export type WidgetInspectorConfig<TProps> = {
   sectionName: string;
   children: MappedTypeToArray<{
     [key in keyof TProps]: {
-      key: key;
-      type: InspectorFormControls;
-      options: FormControlOptions[InspectorFormControls];
-    } & BaseControlProps;
+      [key2 in InspectorFormControls]: {
+        type: key2;
+        key: key;
+        options: FormControlOptions[key2];
+        label: string;
+      } & BaseControlProps;
+    }[InspectorFormControls];
   }>;
 }[];
+
 export type WebloomNode = {
   id: string;
   name: string;
