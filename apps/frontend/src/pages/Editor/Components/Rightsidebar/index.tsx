@@ -34,7 +34,9 @@ function InspectTab() {
   } else if (selectedIds.size === 1) {
     return (
       <TabsContent value="inspect">
-        <Inspector />
+        <div className="p-2">
+          <Inspector />
+        </div>
       </TabsContent>
     );
   } else if (selectedIds.size > 1) {

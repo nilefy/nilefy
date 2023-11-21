@@ -1,6 +1,14 @@
 import store from '@/store';
-import { WebloomWidgets } from '..';
+import { WebloomWidgets, WidgetTypes } from '..';
 import { InspectorFormControls } from './FormControls';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 
 export const Inspector = () => {
   const selected = store((state) => state.selectedNodeIds);
@@ -14,8 +22,40 @@ export const Inspector = () => {
 
   return inspectorConfig.map((section) => {
     return (
-      <div key={section.sectionName}>
-        <div>{section.sectionName}</div>
+      <InspectorSection
+        key={section.sectionName}
+        section={section}
+        selectedId={selectedId}
+        selectedNodeProps={selectedNodeProps}
+      />
+    );
+  });
+};
+
+const InspectorSection = (props: {
+  section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
+  selectedId: string;
+  selectedNodeProps: Record<string, unknown>;
+}) => {
+  const { section, selectedId, selectedNodeProps } = props;
+  const [opened, setOpened] = useState(true);
+  return (
+    <Collapsible
+      open={opened}
+      onOpenChange={setOpened}
+      className="space-y-2"
+      key={section.sectionName}
+    >
+      <div className="flex items-center justify-between space-x-4">
+        <h4 className="text-sm font-semibold">{section.sectionName}</h4>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="w-9 p-0">
+            {opened ? <ChevronDown /> : <ChevronUp />}
+            <span className="sr-only">Toggle</span>
+          </Button>
+        </CollapsibleTrigger>
+      </div>
+      <CollapsibleContent className="space-y-5">
         {section.children.map((control) => {
           const Component = InspectorFormControls[control.type];
           const options = {
@@ -28,7 +68,7 @@ export const Inspector = () => {
           };
           return <Component {...options} onChange={onChange} />;
         })}
-      </div>
-    );
-  });
+      </CollapsibleContent>
+    </Collapsible>
+  );
 };

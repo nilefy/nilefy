@@ -11,7 +11,7 @@ const InspectorInput = (
     BaseControlProps & { onChange: (newValue: unknown) => void },
 ) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col space-y-3">
       <Label htmlFor={props.id}>{props.label}</Label>
       <Input
         {...props}

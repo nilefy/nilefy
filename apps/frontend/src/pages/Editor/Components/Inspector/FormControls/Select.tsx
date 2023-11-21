@@ -20,15 +20,15 @@ const InspectorSelect = (
     BaseControlProps & { onChange: (newValue: unknown) => void },
 ) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col space-y-3">
       <Label htmlFor={props.id}>{props.label}</Label>
       <Select
         onValueChange={(newValue) => {
           props.onChange(newValue);
         }}
       >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select a fruit" />
+        <SelectTrigger>
+          <SelectValue placeholder={props.placeholder || 'Select one option'} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

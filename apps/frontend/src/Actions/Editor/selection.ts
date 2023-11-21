@@ -1,6 +1,6 @@
-import { ROOT_NODE_ID } from '@/lib/constants';
 import store from '@/store';
 import { Command } from '../types';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 
 export class SelectionAction implements Command {
   constructor(

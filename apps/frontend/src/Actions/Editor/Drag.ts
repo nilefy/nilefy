@@ -9,8 +9,9 @@ import {
   ROOT_NODE_ID,
   ROW_HEIGHT,
 } from '@/lib/Editor/constants';
-import { WebloomComponents } from '@/pages/Editor/Components';
+import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
+import { WebloomNode } from '@/lib/Editor/interface';
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -75,23 +76,26 @@ class DragAction {
       };
       this.gridStartPosition = args.new!.startPosition;
       this.newType = args.new!.type;
-      const node = {
+      const node: WebloomNode = {
         id: this.previewId,
         name: this.previewId,
-        type: WebloomComponents[this.newType].component,
+
         nodes: [],
         //todo change this to be the parent
         parent: args.new!.parent,
         dom: null,
-        props: {
-          color: getRandomColor(),
-          text: this.counter++,
-        },
-        isCanvas: WebloomComponents[this.newType].isCanvas,
+        isCanvas: WebloomWidgets[this.newType as WidgetTypes].config.isCanvas,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
         columnsCount: 4,
         rowsCount: 8,
+        widget: {
+          props: {
+            color: getRandomColor(),
+            text: this.counter++,
+          },
+          type: this.newType as WidgetTypes,
+        },
       };
       addNode(node, args.new!.parent);
     } else {
