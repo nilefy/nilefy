@@ -36,13 +36,12 @@ import {
   WebloomAdapter,
   WebloomElementShadow,
 } from './Components/lib';
-import { WebloomContainer } from './Components/WebloomWidgets/Container/index.tsx';
 import { commandManager } from '@/actions/commandManager';
 import DragAction from '@/actions/Editor/Drag';
 import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/actions/Editor/selection';
-import { RightSidebar } from './Components/Rightsidebar/index.tsx';
-import { WebloomComponents, getWidgetType } from './Components';
+import { RightSidebar } from './Components/Rightsidebar/index';
+import { WebloomWidgets } from './Components';
 
 const { resizeCanvas } = store.getState();
 
@@ -100,24 +99,24 @@ function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
+  const props = store((state) => state.tree[id].widget.props);
   const children = useMemo(() => {
-    let children = tree.widget.props.children as React.ReactElement[];
+    let children = props.children as React.ReactElement[];
     if (nodes.length > 0) {
       children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [nodes, tree.widget.props.children]);
+  }, [nodes, props.children]);
   const rendered = useMemo(
     () =>
       createElement(
-        WebloomComponents[tree.widget.widgetConfig.type]
-          .component as ElementType,
-        tree.widget.props,
+        WebloomWidgets[tree.widget.type].component as ElementType,
+        props,
         children,
       ),
-    [tree.widget.widgetConfig.type, tree.widget.props, children],
+    [tree.widget.type, props, children],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -145,16 +144,7 @@ const initTree: WebloomTree = {
       props: {
         className: 'h-full w-full',
       },
-      widgetConfig: {
-        icon: '📄',
-        name: 'Page',
-        type: 'WebloomContainer',
-        isCanvas: true,
-        layoutConfig: {
-          colsCount: 0,
-          rowsCount: 0,
-        },
-      },
+      type: 'WebloomContainer',
     },
   },
 };

@@ -74,6 +74,11 @@ interface WebloomActions {
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
+  setProp: (id: string, key: string, value: unknown) => void;
+  setProps: (
+    id: string,
+    newProps: Partial<WebloomNode['widget']['props']>,
+  ) => void;
 }
 
 interface WebloomGetters {
@@ -298,6 +303,29 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+    },
+    setProps(id, newProps) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            widget: {
+              ...node.widget,
+              props: {
+                ...node.widget.props,
+                ...newProps,
+              },
+            },
+          },
+        };
+        return { tree: newTree };
+      });
+    },
+    setProp(id, key, value) {
+      get().setProps(id, { [key]: value });
     },
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;

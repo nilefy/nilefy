@@ -1,4 +1,9 @@
 import { WidgetTypes } from '@/pages/Editor/Components';
+import {
+  BaseControlProps,
+  InspectorInputProps,
+  InspectorSelectProps,
+} from '@/pages/Editor/Components/Inspector/FormControls';
 import { ReactNode } from 'react';
 
 export type BoundingRect = {
@@ -42,9 +47,6 @@ export type WebloomPixelDimensions = {
   height: number;
 };
 
-//----
-// Widget Definitions
-
 export interface LayoutConfig {
   minColumns?: number;
   minRows?: number;
@@ -52,16 +54,23 @@ export interface LayoutConfig {
   rowsCount: number;
 }
 
-export interface BaseWidgetConfig {
-  icon: ReactNode;
-  name: string;
-  layoutConfig: LayoutConfig;
+export interface WidgetConfig {
+  icon?: ReactNode;
+  name?: string;
+  layoutConfig?: LayoutConfig;
   isCanvas?: boolean;
-  type: WidgetTypes;
 }
-export type WidgetConfig<T extends Record<string, unknown>> = BaseWidgetConfig &
-  T;
-
+type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
+export type WidgetInspectorConfig<TProps> = {
+  sectionName: string;
+  children: MappedTypeToArray<{
+    [key in keyof TProps]: {
+      key: key;
+      type: InspectorFormControls;
+      options: FormControlOptions[InspectorFormControls];
+    } & BaseControlProps;
+  }>;
+}[];
 export type WebloomNode = {
   id: string;
   name: string;
@@ -71,16 +80,13 @@ export type WebloomNode = {
   parent: string;
   isCanvas?: boolean;
   widget: {
-    widgetConfig: WidgetConfig<Record<string, unknown>>;
     props: Record<string, unknown>;
+    type: WidgetTypes;
   };
 } & WebloomGridDimensions;
 
-//----
-//Inspector Form control definitions
-
-// export type FormControlOptions = {
-//     input: InspectorInputProps;
-//     select: InspectorSelectProps;
-//   };
-//   export type InspectorFormControls = keyof FormControlOptions;
+export type FormControlOptions = {
+  input: InspectorInputProps;
+  select: InspectorSelectProps;
+};
+export type InspectorFormControls = keyof FormControlOptions;
