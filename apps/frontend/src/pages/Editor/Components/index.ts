@@ -17,7 +17,7 @@ export type WebloomComponent = {
   name: string;
   rules?: WebloomComponentsRules;
 };
-export const WebloomComponents: Record<string, WebloomComponent> = {
+export const WebloomComponents = {
   WebloomButton: {
     component: WebloomButton,
     name: 'Button',
@@ -47,3 +47,6 @@ export const WebloomComponents: Record<string, WebloomComponent> = {
     },
   },
 } as const;
+
+export type WidgetTypes = keyof typeof WebloomComponents;
+const getWidgetType = (type: WidgetTypes) => WebloomComponents[type];
