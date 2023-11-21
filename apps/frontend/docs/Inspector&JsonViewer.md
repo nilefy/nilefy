@@ -1,6 +1,4 @@
-* recursiveprops function returns elements props can be used like this
-![recursiveprops](image-1.png)
-* it only takes the element props and returns the props in collapsiable shadcn component
+* The Jason Viewer will show the elements props 
 
 * When you click at ant element in the inspector it will be highlighted in the Editor
 

@@ -1,6 +1,7 @@
-# Delete Action Function is used to delete a compomnenet.
+# Delete Action is used to delete a compomnenet.
 
-* It can be used like this
+* you can delete any element by clicking on it and a trash can will appear on top of it or you can right click it and a delete option will appear.
 
-![delete usage](image.png)
-* it only takes the component id and it can be unDone using ctrl + Z
+![Alt text](image-6.png)
+
+* it can be unDone using ctrl + Z
