@@ -41,10 +41,9 @@ export function Inspector() {
               />
             </label>
           </div>
-          <SheetDescription></SheetDescription>
         </SheetHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="h-full w-full py-4">
           <JsonViewer />
         </div>
       </SheetContent>
