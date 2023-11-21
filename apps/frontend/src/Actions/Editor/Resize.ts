@@ -1,12 +1,9 @@
-import store, {
-  WebloomGridDimensions,
-  convertGridToPixel,
-  handleParentCollisions,
-} from '@/store';
+import store, { handleParentCollisions } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { normalize } from '@/lib/utils';
 import { Point } from '@/types';
+import { WebloomGridDimensions } from '@/lib/Editor/interface';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { normalize } from '@/lib/Editor/utils';
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
   | 'top-left'

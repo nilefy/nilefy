@@ -1,6 +1,7 @@
 import { ComponentProps } from 'react';
-import { WebloomButton } from './Button';
-import { WebloomContainer } from './Container';
+import { WebloomButton } from './WebloomWidgets/Button/index.tsx';
+import { WebloomContainer } from './WebloomWidgets/Container/index.tsx.js';
+
 export type WebloomComponentsRules = {
   minColumnCount: number;
   minRowCount: number;

@@ -1,19 +1,16 @@
-import store, {
-  WebloomNode,
-  convertGridToPixel,
-  convertPixelToGrid,
-} from '@/store';
+import store, { convertGridToPixel } from '@/store';
 import { Command, UndoableCommand } from '../types';
+
+import { nanoid } from 'nanoid';
+
+import { Point } from '@/types';
 import {
-  NUMBER_OF_COLUMNS,
   PREVIEW_NODE_ID,
   ROOT_NODE_ID,
   ROW_HEIGHT,
-} from '@/lib/constants';
-import { nanoid } from 'nanoid';
-import { normalize } from '@/lib/utils';
-import { WebloomComponents } from '@/components/Editor/WebloomComponents';
-import { Point } from '@/types';
+} from '@/lib/Editor/constants';
+import { WebloomComponents } from '@/pages/Editor/Components';
+import { normalize } from '@/lib/Editor/utils';
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';

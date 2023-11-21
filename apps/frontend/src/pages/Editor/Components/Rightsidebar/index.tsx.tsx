@@ -1,9 +1,10 @@
 import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WebloomComponents } from '../WebloomComponents';
-import NewNodeAdapter from '../WebloomComponents/lib/NewNodeAdapter';
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { WebloomComponents } from '..';
+import { NewNodeAdapter } from '../lib';
 
 function InsertTab() {
   return (

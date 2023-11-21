@@ -1,5 +1,5 @@
-import { Button } from './Components';
-import { WebloomComponentProps } from '.';
+import { WebloomComponentProps } from '../..';
+import { Button } from '../../_Components';
 
 type WebloomButtonProps = WebloomComponentProps<typeof Button>;
 

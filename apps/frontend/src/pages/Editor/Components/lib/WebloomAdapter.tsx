@@ -1,11 +1,10 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
-import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
-import ResizeAction from '@/Actions/Editor/Resize';
-import { commandManager } from '@/Actions/CommandManager';
-import { SelectionAction } from '@/Actions/Editor/selection';
+import ResizeAction from '@/actions/Editor/Resize';
+import { commandManager } from '@/actions/commandManager';
+import { SelectionAction } from '@/actions/Editor/selection';
 
 type WebloomAdapterProps = {
   id: string;
