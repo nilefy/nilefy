@@ -124,7 +124,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
           }}
         >
           <button
-            className="absolute -right-20 -top-6"
+            className="absolute -top-6"
             onPointerDown={() => {
               commandManager.executeCommand(new DeleteAction(id));
             }}
