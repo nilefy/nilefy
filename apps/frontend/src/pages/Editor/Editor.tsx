@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useRef,
+  ElementType,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import store, { WebloomTree } from '../../store';
@@ -41,6 +42,7 @@ import DragAction from '@/actions/Editor/Drag';
 import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index.tsx';
+import { WebloomComponents, getWidgetType } from './Components';
 
 const { resizeCanvas } = store.getState();
 
@@ -48,14 +50,14 @@ function WebloomRoot() {
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const ref = React.useRef<HTMLDivElement>(null);
   const children = useMemo(() => {
-    let children = root.props.children as React.ReactElement[];
+    let children = root.widget.props.children as React.ReactElement[];
     if (root.nodes.length > 0) {
       children = root.nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [root.nodes, root.props.children]);
+  }, [root.nodes, root.widget.props.children]);
   useLayoutEffect(() => {
     //get width and height of root
     if (!ref.current) return;
@@ -99,17 +101,23 @@ function WebloomElement({ id }: { id: string }) {
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
   const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
+    let children = tree.widget.props.children as React.ReactElement[];
     if (nodes.length > 0) {
       children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [nodes, tree.props.children]);
+  }, [nodes, tree.widget.props.children]);
   const rendered = useMemo(
-    () => createElement(tree.type, tree.props, children),
-    [tree.type, tree.props, children],
+    () =>
+      createElement(
+        WebloomComponents[tree.widget.widgetConfig.type]
+          .component as ElementType,
+        tree.widget.props,
+        children,
+      ),
+    [tree.widget.widgetConfig.type, tree.widget.props, children],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -124,7 +132,6 @@ const initTree: WebloomTree = {
   [ROOT_NODE_ID]: {
     id: ROOT_NODE_ID,
     name: ROOT_NODE_ID,
-    type: WebloomContainer,
     col: 0,
     row: 0,
     columnWidth: 0,
@@ -133,10 +140,22 @@ const initTree: WebloomTree = {
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
-    props: {
-      className: 'h-full w-full bg-red-500',
-    },
     rowsCount: 1000,
+    widget: {
+      props: {
+        className: 'h-full w-full',
+      },
+      widgetConfig: {
+        icon: '📄',
+        name: 'Page',
+        type: 'WebloomContainer',
+        isCanvas: true,
+        layoutConfig: {
+          colsCount: 0,
+          rowsCount: 0,
+        },
+      },
+    },
   },
 };
 store.setState((state) => {

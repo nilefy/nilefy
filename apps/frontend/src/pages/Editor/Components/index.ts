@@ -49,4 +49,4 @@ export const WebloomComponents = {
 } as const;
 
 export type WidgetTypes = keyof typeof WebloomComponents;
-const getWidgetType = (type: WidgetTypes) => WebloomComponents[type];
+export const getWidgetType = (type: WidgetTypes) => WebloomComponents[type];
