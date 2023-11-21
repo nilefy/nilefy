@@ -21,12 +21,15 @@ const myProps = {
     },
   },
   prop3: {
-    bla1: 'nestedValue1',
-    bla2: 'deeplyNestedValue',
+    bla1: ['nestedValue1', 'dwwdkl'],
+    bla2: false,
   },
 };
 
 export function JsonViewer() {
+  const trueTypeOf = (obj: unknown) =>
+    Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
+  console.log(typeof myProps.prop3.bla1);
   const [isOpen, setIsOpen] = React.useState(false);
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const initialState = root.nodes.reduce(
@@ -51,7 +54,7 @@ export function JsonViewer() {
     for (const key in props) {
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         const prop = props[key];
-        console.log(typeof props.prop2);
+        console.log(typeof props.prop3);
         if (typeof prop === 'object' && prop != null) {
           const isOpen = openPropsStates[key] || false;
           collectedProps.push(
@@ -65,11 +68,11 @@ export function JsonViewer() {
                 }));
               }}
             >
-              <div className="flex items-center  justify-start">
+              <div className="flex items-center">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-9 p-0">
+                  <Button variant="ghost" size="sm" className="-ml-9  w-9 p-0">
                     {openPropsStates[key] ? (
-                      <ChevronsDown className="h-4 w-4" />
+                      <ChevronsDown className=" h-4 w-4" />
                     ) : (
                       <ChevronsRight className="h-4 w-4" />
                     )}
@@ -77,10 +80,10 @@ export function JsonViewer() {
                 </CollapsibleTrigger>
                 <h4 className="text-sm font-semibold">{key}</h4>
                 <p className="ml-2 text-xs">
-                  {typeof prop} {Object.keys(prop!).length} entries
+                  {trueTypeOf(prop)} {Object.keys(prop!).length} entries
                 </p>
               </div>
-              <CollapsibleContent className="ml-4 space-y-0 border-l-2 pl-4">
+              <CollapsibleContent className="-ml-5 space-y-0 border-l-2 pl-10">
                 {recursiveProps(prop as ElementProps)}
               </CollapsibleContent>
             </Collapsible>,
@@ -93,6 +96,7 @@ export function JsonViewer() {
               <p className="inline text-xs text-orange-600">
                 &quot;{String(prop)}&quot;
               </p>
+              <p className="ml-2 inline text-xs">{trueTypeOf(prop)}</p>
             </div>,
           );
         }
