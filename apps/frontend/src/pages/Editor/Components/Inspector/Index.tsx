@@ -66,7 +66,9 @@ const InspectorSection = (props: {
           const onChange = (newValue: unknown) => {
             store.getState().setProp(selectedId, control.key, newValue);
           };
-          return <Component {...options} onChange={onChange} />;
+          return (
+            <Component {...options} onChange={onChange} key={control.id} />
+          );
         })}
       </CollapsibleContent>
     </Collapsible>
