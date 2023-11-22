@@ -63,16 +63,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       position: 'absolute',
       width: elDimensions.width,
       height: elDimensions.height,
-      visibility: isDragging ? 'hidden' : 'visible',
-      opacity: isDragging ? 0 : 1,
     } as React.CSSProperties;
-  }, [
-    elDimensions.x,
-    elDimensions.y,
-    elDimensions.width,
-    elDimensions.height,
-    isDragging,
-  ]);
+  }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
 
   return (
     <>

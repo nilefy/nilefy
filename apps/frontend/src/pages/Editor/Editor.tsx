@@ -15,6 +15,7 @@ import {
   DragEndEvent,
   DragMoveEvent,
   DragOverEvent,
+  DragOverlay,
   MouseSensor,
   TouchSensor,
   pointerWithin,
@@ -42,6 +43,7 @@ import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets } from './Components';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const { resizeCanvas } = store.getState();
 
@@ -155,7 +157,7 @@ store.setState((state) => {
 
 function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
-
+  console.log(editorRef.current);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
@@ -203,6 +205,8 @@ function Editor() {
   };
   const handleDragMove = (e: DragMoveEvent) => {
     if (draggedNode !== null) {
+      console.log(e.delta);
+
       commandManager.executeCommand(
         DragAction.move(mousePos.current, e.delta, e.over?.id as string),
       );
@@ -229,10 +233,14 @@ function Editor() {
 
       mousePos.current = { x: e.pageX - x, y: e.pageY - y };
     };
-
+    const d = () => {
+      console.log('hello');
+    };
     window.addEventListener('pointermove', handleMouseMove);
+    document.addEventListener('pointerleave', d);
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
+      document.removeEventListener('pointerout', d);
     };
   }, [root.dom, draggedNode]);
   if (!root) return null;
@@ -245,25 +253,15 @@ function Editor() {
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onDragCancel={handleCancel}
-        autoScroll
+        autoScroll={{ layoutShiftCompensation: false }}
       >
         {/*sidebar*/}
         <div className="h-full w-1/5 "></div>
-
-        <div
-          ref={editorRef}
-          className="bg-primary/20 relative h-full w-full touch-none overflow-x-clip overflow-y-scroll "
-          style={{
-            scrollbarGutter: 'stable',
-            scrollbarWidth: 'thin',
-          }}
-        >
+        <ScrollArea ref={editorRef} className=" h-full w-full">
           <WebloomElementShadow />
           <MultiSelectBounding />
-          {/*main*/}
           <WebloomRoot />
           <ResizeHandlers />
-
           <Selecto
             // The container to add a selection element
             container={editorRef.current}
@@ -295,8 +293,12 @@ function Editor() {
               });
             }}
           />
-        </div>
-
+          {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
+          <DragOverlay
+            style={{ display: 'none' }}
+            dropAnimation={{ duration: 0 }}
+          />
+        </ScrollArea>
         {/*right sidebar*/}
         <RightSidebar />
       </DndContext>
