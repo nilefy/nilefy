@@ -4,6 +4,8 @@ import { WebloomComponents } from '../WebloomComponents';
 import NewNodeAdapter from '../WebloomComponents/lib/NewNodeAdapter';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { commandManager } from '@/Actions/CommandManager';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 
 function InsertTab() {
   return (
@@ -39,8 +41,12 @@ function InspectTab() {
     return (
       <TabsContent value="inspect">
         <p> {selectedIds.size} components selected</p>
-        {/*TODO: call delete action*/}
-        <Button variant={'destructive'}>Delete</Button>
+        <Button
+          variant={'destructive'}
+          onClick={() => commandManager.executeCommand(new DeleteAction())}
+        >
+          Delete
+        </Button>
       </TabsContent>
     );
   }

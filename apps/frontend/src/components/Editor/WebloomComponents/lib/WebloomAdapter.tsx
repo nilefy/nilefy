@@ -97,7 +97,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         <ContextMenuContent>
           <ContextMenuItem
             onPointerDown={() => {
-              commandManager.executeCommand(new DeleteAction(id));
+              commandManager.executeCommand(new DeleteAction());
             }}
           >
             Delete

@@ -2,21 +2,36 @@ import store, { WebloomNode } from '@/store';
 import { UndoableCommand } from '../types';
 import { ROOT_NODE_ID } from '@/lib/constants';
 
-const { removeNode, addNode, getNode } = store.getState();
+const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
+  store.getState();
 
 export class DeleteAction implements UndoableCommand {
-  private node!: WebloomNode;
+  /**
+   * stack of nodes to be deleted,
+   * enter children then parents
+   */
+  private nodes: WebloomNode[];
 
-  constructor(private id: string) {}
+  constructor() {
+    this.nodes = [];
+  }
 
   execute(): void {
-    const temp = getNode(this.id);
-    if (!temp) return;
-    this.node = temp;
-    removeNode(this.id);
+    // those ids are in the same tree levels
+    const selectedIds = getSelectedNodeIds();
+    setSelectedNodeIds(() => new Set());
+    for (const id of selectedIds) {
+      removeNode(id, this.nodes);
+    }
   }
 
   undo(): void {
-    addNode(this.node, this.node.parent ?? ROOT_NODE_ID);
+    while (this.nodes.length > 0) {
+      const node = this.nodes.pop();
+      if (!node) {
+        break;
+      }
+      addNode(node, node.parent ?? ROOT_NODE_ID);
+    }
   }
 }
