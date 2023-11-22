@@ -233,14 +233,10 @@ function Editor() {
 
       mousePos.current = { x: e.pageX - x, y: e.pageY - y };
     };
-    const d = () => {
-      console.log('hello');
-    };
+
     window.addEventListener('pointermove', handleMouseMove);
-    document.addEventListener('pointerleave', d);
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
-      document.removeEventListener('pointerout', d);
     };
   }, [root.dom, draggedNode]);
   if (!root) return null;

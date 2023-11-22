@@ -26,7 +26,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
-      disabled: !props.draggable && ResizeAction.resizingKey === null,
+      disabled: !props.draggable || ResizeAction.resizingKey !== null,
       data: {
         isNew: false,
       },
