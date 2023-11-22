@@ -69,7 +69,6 @@ export class RolesService {
     roleId: RolesDto['id'],
     roleDto: UpdateRoleDb,
   ) {
-    console.log(roleDto);
     await this.db
       .update(roles)
       .set({ updatedAt: sql`now()`, ...roleDto })

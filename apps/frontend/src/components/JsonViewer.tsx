@@ -8,6 +8,8 @@ import {
 } from '@/components/ui/collapsible';
 import { ROOT_NODE_ID } from '@/lib/constants';
 import store from '@/store';
+import { commandManager } from '@/Actions/CommandManager';
+import { SelectionAction } from '@/Actions/Editor/selection';
 type ElementProps = {
   [key: string]: unknown;
 };
@@ -48,7 +50,6 @@ const myProps = {
 export function JsonViewer() {
   const trueTypeOf = (obj: unknown) =>
     Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
-  console.log(typeof myProps.prop3.bla1);
   const [isOpen, setIsOpen] = React.useState(false);
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const initialState = root.nodes.reduce(
@@ -73,7 +74,6 @@ export function JsonViewer() {
     for (const key in props) {
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         const prop = props[key];
-        console.log(typeof props.prop3);
         if (typeof prop === 'object' && prop != null) {
           const isOpen = openPropsStates[key] || false;
           collectedProps.push(
@@ -174,7 +174,11 @@ export function JsonViewer() {
 
                 <h4 className="text-sm font-semibold">
                   <button
-                    onClick={() => store.getState().setSelectedNode(node.id)}
+                    onClick={() =>
+                      commandManager.executeCommand(
+                        new SelectionAction(node.id),
+                      )
+                    }
                   >
                     {node.name}
                   </button>

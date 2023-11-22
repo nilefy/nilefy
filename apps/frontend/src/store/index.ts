@@ -486,10 +486,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
         // but we don't want this so just skip the recursive calls and go directly deleting the preview
         if (id === PREVIEW_NODE_ID) break;
-        console.log(
-          '🪵 [index.ts:472] ~ token ~ \x1b[0;32mchildId\x1b[0m = ',
-          childId,
-        );
         get().removeNode(childId, stack);
       } // base case is that element has no child
       set((state) => {
@@ -498,8 +494,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           stack.push(node);
         }
         if (!node) return state;
-        console.log('i will delete node: ', id);
-        console.log('tree before: ', state.tree);
         const newTree = {
           ...state.tree,
           [node.parent]: {
@@ -510,7 +504,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           },
         };
         delete newTree[id];
-        console.log('new tree: ', newTree);
         return { tree: newTree };
       });
     },
