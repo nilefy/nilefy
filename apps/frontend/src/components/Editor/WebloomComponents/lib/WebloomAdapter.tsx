@@ -6,6 +6,14 @@ import { useWebloomDraggable } from '@/hooks';
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
+import { DeleteAction } from '@/Actions/Editor/Delete';
+import { Trash2 } from 'lucide-react';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 type WebloomAdapterProps = {
   id: string;
@@ -73,16 +81,29 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
 
   return (
     <>
-      <div
-        {...modListeners}
-        {...attributes}
-        style={style}
-        ref={ref}
-        className="target touch-none"
-        data-id={id}
-      >
-        {!isDragging && props.children}
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <div
+            {...modListeners}
+            {...attributes}
+            style={style}
+            ref={ref}
+            className="target touch-none"
+            data-id={id}
+          >
+            {!isDragging && props.children}
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onPointerDown={() => {
+              commandManager.executeCommand(new DeleteAction(id));
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </>
   );
 };

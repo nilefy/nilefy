@@ -7,6 +7,7 @@ import { User } from './workspace/users';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
+import { Inspector } from '@/components/inspector';
 
 const dashboardPaths = [
   {
@@ -14,6 +15,7 @@ const dashboardPaths = [
     path: '',
     icon: <Layout size={30} />,
   },
+
   {
     name: 'builtin-db',
     path: 'database',
@@ -83,6 +85,8 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
+        {/**TODO: move to editor layout */}
+        <Inspector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
