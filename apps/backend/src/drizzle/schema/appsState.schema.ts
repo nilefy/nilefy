@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   integer,
   json,
@@ -7,6 +7,7 @@ import {
   varchar,
   unique,
   foreignKey,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import {
   apps,
@@ -30,7 +31,15 @@ export const pages = pgTable(
   'pages',
   {
     id: serial('id').primaryKey(),
+    handle: varchar('handle').notNull(),
     name: varchar('name').notNull(),
+    enabled: boolean('disabled')
+      .notNull()
+      .default(sql`true`),
+    visible: boolean('visible')
+      .notNull()
+      .default(sql`true`),
+    index: integer('index').notNull(),
     appId: integer('app_id')
       .notNull()
       .references(() => apps.id),
@@ -40,6 +49,7 @@ export const pages = pgTable(
   },
   (t) => ({
     pageName: unique().on(t.appId, t.name),
+    handleUnique: unique().on(t.appId, t.handle),
   }),
 );
 
