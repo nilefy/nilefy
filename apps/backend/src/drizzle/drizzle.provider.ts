@@ -4,8 +4,13 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
 import * as schema from './schema/schema';
 import * as appStateSchema from './schema/appsState.schema';
+import { PgTransaction, QueryResultHKT } from 'drizzle-orm/pg-core';
 
 export type DatabaseI = NodePgDatabase<typeof schema & typeof appStateSchema>;
+export type PgTrans = PgTransaction<
+  QueryResultHKT,
+  typeof schema & typeof appStateSchema
+>;
 
 export const DrizzleAsyncProvider = 'drizzleProvider';
 

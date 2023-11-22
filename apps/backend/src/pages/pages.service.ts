@@ -1,0 +1,184 @@
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  DatabaseI,
+  DrizzleAsyncProvider,
+  PgTrans,
+} from '../drizzle/drizzle.provider';
+import { CreatePageDb, PageDto, UpdatePageDb } from '../dto/pages.dto';
+import { pages } from '../drizzle/schema/appsState.schema';
+import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
+import { apps } from '../drizzle/schema/schema';
+import { AppDto } from '../dto/apps.dto';
+import { UserDto } from '../dto/users.dto';
+
+@Injectable()
+export class PagesService {
+  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+
+  private getMaxIndexInApp(appId: AppDto['id']) {
+    return sql`(select COALESCE(max(${pages.index}), 1) from pages where pages.app_id = ${appId})`;
+  }
+
+  async create(
+    pageDto: Omit<CreatePageDb, 'index' | 'handle' | 'index'> & {
+      handle?: PageDto['handle'];
+      index?: PageDto['index'];
+    },
+    options?: {
+      tx?: PgTrans;
+    },
+  ) {
+    // const t = await this.db
+    //   .select({ last: sql<number | null>`max(${pages.index})` })
+    //   .from(pages)
+    //   .where(eq(pages.appId, pageDto.appId));
+    return await (options?.tx ? options.tx : this.db)
+      .insert(pages)
+      .values({
+        ...pageDto,
+        handle: pageDto.handle ?? pageDto.name,
+        index: this.getMaxIndexInApp(pageDto.appId),
+      })
+      .returning();
+  }
+
+  async clone({
+    appId,
+    id: pageId,
+    createdById,
+  }: Pick<PageDto, 'id' | 'createdById' | 'appId'>) {
+    // TODO: clone the tree state as well
+    const origin = await this.db.query.pages.findFirst({
+      columns: {
+        id: true,
+        name: true,
+        handle: true,
+      },
+      where: and(eq(apps.id, appId), eq(pages.id, pageId)),
+    });
+    if (!origin) throw new NotFoundException('no app or page with those ids');
+    return await this.db
+      .insert(pages)
+      .values({
+        name: origin.name + '(copy)',
+        handle: origin.handle + '(copy)',
+        createdById,
+        appId,
+        index: this.getMaxIndexInApp(appId),
+      })
+      .returning();
+  }
+
+  async index(appId: number) {
+    return await this.db.query.pages.findMany({
+      where: and(eq(pages.appId, appId), isNull(pages.deletedAt)),
+      orderBy: asc(pages.index),
+    });
+  }
+
+  // TODO: return components state
+  async findOne(appId: number, pageId: number) {
+    const p = await this.db.query.pages.findFirst({
+      where: and(
+        eq(pages.appId, appId),
+        eq(pages.id, pageId),
+        isNull(pages.deletedAt),
+      ),
+    });
+    if (!p) throw new NotFoundException('no app or page with those ids');
+    return p;
+  }
+
+  async update(
+    appId: AppDto['id'],
+    pageId: PageDto['id'],
+    pageDto: UpdatePageDb,
+  ) {
+    // if the user updated page index, it has side effects of all pages of this app
+    if (pageDto.index !== undefined) {
+      const oldIndex = await this.db.query.pages.findFirst({
+        columns: { index: true },
+        where: and(
+          eq(pages.appId, appId),
+          eq(pages.id, pageId),
+          isNull(pages.deletedAt),
+        ),
+      });
+
+      if (!oldIndex)
+        throw new NotFoundException('no app or page with those ids');
+      // two cases for the new index
+      /**
+       * index went down
+       * inc index by 1 for [i - 1: j]
+       *
+       * index went up
+       * dec index by one for [i + 1: j]
+       */
+      if (pageDto.index > oldIndex.index) {
+        await this.db
+          .update(pages)
+          .set({ index: sql`${pages.index} - 1` })
+          .where(
+            and(
+              eq(pages.appId, appId),
+              isNull(pages.deletedAt),
+              gt(pages.index, oldIndex.index),
+              lte(pages.index, pageDto.index),
+            ),
+          );
+      } else {
+        await this.db
+          .update(pages)
+          .set({ index: sql`${pages.index} + 1` })
+          .where(
+            and(
+              eq(pages.appId, appId),
+              isNull(pages.deletedAt),
+              lt(pages.index, oldIndex.index),
+              gte(pages.index, pageDto.index),
+            ),
+          );
+      }
+    }
+    return await this.db
+      .update(pages)
+      .set({
+        ...pageDto,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(pages.appId, appId),
+          eq(pages.id, pageId),
+          isNull(pages.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
+  async delete({
+    appId,
+    pageId,
+    deletedById,
+  }: {
+    appId: AppDto['id'];
+    pageId: PageDto['id'];
+    deletedById: UserDto['id'];
+  }) {
+    return await this.db
+      .update(pages)
+      .set({
+        deletedById: deletedById,
+        deletedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(pages.appId, appId),
+          eq(pages.id, pageId),
+          isNull(pages.deletedAt),
+        ),
+      )
+      .returning();
+  }
+}

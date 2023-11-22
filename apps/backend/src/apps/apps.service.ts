@@ -3,24 +3,31 @@ import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { pages } from '../drizzle/schema/appsState.schema';
+import { PagesService } from '../pages/pages.service';
 
 @Injectable()
 export class AppsService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private pagesService: PagesService,
+  ) {}
 
   async create(createAppDto: CreateAppDb) {
     const app = await this.db.transaction(async (tx) => {
       const [app] = await tx.insert(apps).values(createAppDto).returning();
       // create default page for the app
-      const [page] = await tx
-        .insert(pages)
-        .values({
+      const page = await this.pagesService.create(
+        {
           name: 'page 1',
-          appId: app.id,
           createdById: createAppDto.createdById,
-        })
-        .returning();
+          appId: app.id,
+        },
+        {
+          // TODO: fix the type
+          // @ts-ignore
+          tx: tx,
+        },
+      );
       return { ...app, pages: [page] };
     });
 
@@ -45,11 +52,7 @@ export class AppsService {
         isNull(apps.deletedAt),
       ),
       with: {
-        pages: {
-          with: {
-            components: true,
-          },
-        },
+        pages: true,
       },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
