@@ -311,7 +311,7 @@ function Editor() {
 
         <div
           ref={editorRef}
-          className="bg-primary/20 relative h-full w-full touch-none overflow-x-clip overflow-y-scroll "
+          className="relative h-full w-full touch-none overflow-x-clip overflow-y-scroll bg-primary/20 "
           style={{
             scrollbarGutter: 'stable',
             scrollbarWidth: 'thin',

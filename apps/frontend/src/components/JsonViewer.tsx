@@ -128,7 +128,7 @@ export function JsonViewer() {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-300 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700 h-full w-full space-y-0 overflow-y-auto font-mono"
+      className="h-full w-full space-y-0 overflow-y-auto font-mono scrollbar-thin scrollbar-track-gray-300 scrollbar-thumb-gray-700 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700"
     >
       <div className="flex items-center">
         <CollapsibleTrigger asChild>
