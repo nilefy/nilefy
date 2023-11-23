@@ -1,30 +1,42 @@
-// // hooks/useAuthStore.ts
 import { create } from 'zustand';
-import { getToken, getUser, saveToken, saveUser } from './user.localstorage';
+import { JwtPayload, UserI } from '@/types/auth.types';
+import { getToken, saveToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
 
-type User = {
-  username: string;
-  id: number;
-};
 type Token = string;
 type AuthStore = {
-  user: User | null;
+  user: UserI | null;
   token: Token | null;
   isLoading: boolean;
   isAuth: boolean;
-  setUser: (user: User) => void;
+  setUser: (user: UserI) => void;
   setToken: (token: Token) => void;
 };
 
+function getUser(): AuthStore['user'] {
+  const token = getToken();
+  if (token) {
+    const decoded = jwtDecode(token) as JwtPayload;
+    console.log(
+      '🪵 [useAuthStore.ts:19] ~ token ~ \x1b[0;32mdecoded\x1b[0m = ',
+      decoded,
+    );
+    return {
+      id: decoded.sub,
+      username: decoded.username,
+    };
+  }
+  return null;
+}
+
 const useAuthStore = create<AuthStore>((set) => ({
-  user: getUser() || null,
-  token: getToken() || null,
+  user: getUser(),
+  token: getToken(),
   isLoading: false,
-  isAuth: !!getToken(),
-  setUser: (newUser: User) => {
+  isAuth: false,
+  setUser: (newUser: UserI) => {
     // save in local storage and store
     set({ user: newUser });
-    saveUser(newUser);
   },
   setToken: (newToken: Token) => {
     set({ token: newToken });

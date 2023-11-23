@@ -19,6 +19,7 @@ import DatabaseTable from './pages/built-in-db/db';
 import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from './components/ProtectedRoute';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -102,11 +103,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/signin',
-    element: (
-      <ProtectedRoute>
-        <SignIn />
-      </ProtectedRoute>
-    ),
+    element: <SignIn />,
     errorElement: <ErrorPage />,
   },
   // TODO: remove this route after frontend auth is done (currently used for testing)

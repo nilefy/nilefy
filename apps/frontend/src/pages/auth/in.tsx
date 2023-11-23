@@ -1,4 +1,3 @@
-import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -14,14 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSignIn } from '@/hooks/useSignIn';
-
-// TODO: move the schema to seprate package to make sharing between front/back easier
-export const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-type SignInSchema = z.infer<typeof signInSchema>;
+import { SignInSchema, signInSchema } from '@/types/auth.types';
 
 export function SignIn() {
   const navigate = useNavigate();

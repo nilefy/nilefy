@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/hooks/useAuthStore';
 import { Navigate, useLocation } from 'react-router-dom';
+
 type ProtectedRouteProps = {
   children: React.ReactNode;
   redirectPath?: string;
