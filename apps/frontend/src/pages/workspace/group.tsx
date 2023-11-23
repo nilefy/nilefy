@@ -185,7 +185,7 @@ export function GroupsManagement() {
         <p>{groups.length} groups</p>
         <GroupMetaDialog insert={true} />
       </div>
-      <div className="flex w-full justify-between bg-primary/5 p-2">
+      <div className="bg-primary/5 flex w-full justify-between p-2">
         <div className="flex flex-col gap-4 border-r pr-2">
           <Input placeholder="search by name" />
           {groups.map((group) => (

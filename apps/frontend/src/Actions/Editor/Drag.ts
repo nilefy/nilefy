@@ -114,7 +114,9 @@ class DragAction {
     setShadowElement(dims);
     setDraggedNode(this.id!);
   }
-  public static start(...args: Parameters<typeof DragAction._start>): Command {
+  public static start(
+    ...args: Parameters<typeof DragAction._start>
+  ): Command | null {
     return {
       execute: () => {
         this._start(...args);

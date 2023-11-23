@@ -7,9 +7,10 @@ import React, {
   useRef,
   ElementType,
 } from 'react';
+import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
 import store, { WebloomTree } from '../../store';
-
+import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DndContext,
   DragEndEvent,
@@ -46,10 +47,20 @@ import { WebloomWidgets } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const { resizeCanvas } = store.getState();
-
+const throttledResizeCanvas = throttle(
+  (width: number) => {
+    store.getState().setEditorDimensions({ width: Math.round(width) });
+  },
+  100,
+  {
+    leading: true,
+  },
+);
 function WebloomRoot() {
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const ref = React.useRef<HTMLDivElement>(null);
+  const width = store((state) => state.editorWidth);
+  const height = store((state) => state.editorHeight);
   const children = useMemo(() => {
     let children = root.widget.props.children as React.ReactElement[];
     if (root.nodes.length > 0) {
@@ -60,18 +71,17 @@ function WebloomRoot() {
     return children;
   }, [root.nodes, root.widget.props.children]);
   useLayoutEffect(() => {
-    //get width and height of root
-    if (!ref.current) return;
-    const width = ref.current?.clientWidth;
-    const height = ref.current?.clientHeight;
     const columnWidth = width / NUMBER_OF_COLUMNS;
-    const rowsCount = Math.floor(height / ROW_HEIGHT);
+    let rowsCount = root.rowsCount;
+    if (rowsCount === 0) {
+      store
+        .getState()
+        .setEditorDimensions({ height: ref.current?.clientHeight });
+      rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
+    }
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
-  }, []);
-  useEffect(() => {
-    const rowsCount = root.rowsCount;
-    resizeCanvas(ROOT_NODE_ID, { rowsCount });
-  }, [root.rowsCount]);
+  }, [height, width, root.rowsCount]);
+
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => {
@@ -82,12 +92,12 @@ function WebloomRoot() {
   const handleResize = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
-    const columnWidth = width / NUMBER_OF_COLUMNS;
-    resizeCanvas(ROOT_NODE_ID, { columnWidth });
+    const height = ref.current?.clientHeight;
+    store.getState().setEditorDimensions({ width, height });
   };
 
   return (
-    <div id="webloom-root" className="relative h-full w-full" ref={ref}>
+    <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
       <WebloomAdapter droppable id={ROOT_NODE_ID}>
         <Grid id={ROOT_NODE_ID} />
         {children}
@@ -141,7 +151,7 @@ const initTree: WebloomTree = {
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
-    rowsCount: 1000,
+    rowsCount: 0,
     widget: {
       props: {
         className: 'h-full w-full',
@@ -154,10 +164,27 @@ store.setState((state) => {
   state.tree = initTree;
   return state;
 });
-
+const CustomPanelResizeHandle = () => {
+  return (
+    <PanelResizeHandle className="group relative flex shrink-0 grow-0 basis-1 items-stretch justify-stretch overflow-visible outline-none">
+      <div
+        className="relative
+        flex-1
+        transition-colors
+        after:absolute
+        after:left-[calc(50%-0.5rem)]
+        after:top-[calc(50%-.5rem)]
+        after:flex after:h-1
+        after:w-1
+        after:items-center
+        after:justify-center
+      group-data-[resize-handle-active]:bg-sky-500"
+      ></div>
+    </PanelResizeHandle>
+  );
+};
 function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
-  console.log(editorRef.current);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
@@ -205,8 +232,6 @@ function Editor() {
   };
   const handleDragMove = (e: DragMoveEvent) => {
     if (draggedNode !== null) {
-      console.log(e.delta);
-
       commandManager.executeCommand(
         DragAction.move(mousePos.current, e.delta, e.over?.id as string),
       );
@@ -242,6 +267,7 @@ function Editor() {
   if (!root) return null;
   return (
     <div className="isolate flex h-full max-h-full w-full bg-transparent">
+      {/*sidebar*/}
       <DndContext
         collisionDetection={pointerWithin}
         sensors={sensors}
@@ -251,52 +277,78 @@ function Editor() {
         onDragCancel={handleCancel}
         autoScroll={{ layoutShiftCompensation: false }}
       >
-        {/*sidebar*/}
-        <div className="h-full w-1/5 "></div>
-        <ScrollArea ref={editorRef} className=" h-full w-full">
-          <WebloomElementShadow />
-          <MultiSelectBounding />
-          <WebloomRoot />
-          <ResizeHandlers />
-          <Selecto
-            // The container to add a selection element
-            container={editorRef.current}
-            selectableTargets={['.target']}
-            selectFromInside={true}
-            selectByClick={false}
-            hitRate={100}
-            dragCondition={(e) => {
-              const triggerTarget = e.inputEvent.target;
-              const isRoot = triggerTarget.getAttribute('data-id');
-              return isRoot === ROOT_NODE_ID;
+        <PanelGroup direction="horizontal">
+          <Panel maxSizePercentage={25} minSizePercentage={10}>
+            <div className="h-full w-full"></div>
+          </Panel>
+          <CustomPanelResizeHandle />
+          <Panel
+            defaultSizePercentage={70}
+            minSizePercentage={50}
+            onResize={(sizes) => {
+              throttledResizeCanvas(sizes.sizePixels);
             }}
-            onSelect={(e) => {
-              e.added.forEach((el) => {
-                const data = el.getAttribute('data-id');
-                if (data) {
-                  commandManager.executeCommand(
-                    new SelectionAction(data, true),
-                  );
-                }
-              });
-              e.removed.forEach((el) => {
-                const data = el.getAttribute('data-id');
-                if (data) {
-                  store.getState().setSelectedNodeIds((prev) => {
-                    return new Set([...prev].filter((i) => i !== data));
-                  });
-                }
-              });
-            }}
-          />
-          {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
-          <DragOverlay
-            style={{ display: 'none' }}
-            dropAnimation={{ duration: 0 }}
-          />
-        </ScrollArea>
-        {/*right sidebar*/}
-        <RightSidebar />
+          >
+            <PanelGroup direction="vertical">
+              <Panel defaultSizePercentage={90} minSizePercentage={25}>
+                <ScrollArea ref={editorRef} className="h-full w-full">
+                  <WebloomElementShadow />
+                  <MultiSelectBounding />
+                  <WebloomRoot />
+                  <ResizeHandlers />
+                  <Selecto
+                    // The container to add a selection element
+                    container={editorRef.current}
+                    selectableTargets={['.target']}
+                    selectFromInside={true}
+                    selectByClick={false}
+                    hitRate={100}
+                    dragCondition={(e) => {
+                      const triggerTarget = e.inputEvent.target;
+                      const isRoot = triggerTarget.getAttribute('data-id');
+                      return isRoot === ROOT_NODE_ID;
+                    }}
+                    onSelect={(e) => {
+                      e.added.forEach((el) => {
+                        const data = el.getAttribute('data-id');
+                        if (data) {
+                          commandManager.executeCommand(
+                            new SelectionAction(data, true),
+                          );
+                        }
+                      });
+                      e.removed.forEach((el) => {
+                        const data = el.getAttribute('data-id');
+                        if (data) {
+                          store.getState().setSelectedNodeIds((prev) => {
+                            return new Set([...prev].filter((i) => i !== data));
+                          });
+                        }
+                      });
+                    }}
+                  />
+                  {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
+                  <DragOverlay
+                    style={{ display: 'none' }}
+                    dropAnimation={{ duration: 0 }}
+                  />
+                </ScrollArea>
+              </Panel>
+              <CustomPanelResizeHandle />
+              <Panel
+                maxSizePercentage={75}
+                defaultSizePercentage={10}
+                collapsible
+              >
+                <div className="h-full w-full border-t-2 bg-red-100"></div>
+              </Panel>
+            </PanelGroup>
+          </Panel>
+          <CustomPanelResizeHandle />
+          <Panel maxSizePercentage={25} minSizePercentage={10}>
+            <RightSidebar />
+          </Panel>
+        </PanelGroup>
       </DndContext>
     </div>
   );

@@ -27,6 +27,8 @@ export interface WebloomState {
   newNodeTranslate: Point | null;
   mousePos: Point;
   shadowElement: ShadowElement | null;
+  editorWidth: number;
+  editorHeight: number;
 }
 
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -79,6 +81,7 @@ interface WebloomActions {
     id: string,
     newProps: Partial<WebloomNode['widget']['props']>,
   ) => void;
+  setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
 interface WebloomGetters {
@@ -292,6 +295,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
     resizedNode: null,
+    editorWidth: 0,
+    editorHeight: 0,
     setResizedNode(id) {
       set({ resizedNode: id });
     },
@@ -303,6 +308,15 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+    },
+    setEditorDimensions({ width, height }) {
+      set((state) => {
+        return {
+          ...state,
+          editorWidth: width || state.editorWidth,
+          editorHeight: height || state.editorHeight,
+        };
+      });
     },
     setProps(id, newProps) {
       set((state) => {
