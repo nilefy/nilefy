@@ -291,7 +291,11 @@ function Editor() {
           >
             <PanelGroup direction="vertical">
               <Panel defaultSizePercentage={90} minSizePercentage={25}>
-                <ScrollArea ref={editorRef} className="h-full w-full">
+                <ScrollArea
+                  ref={editorRef}
+                  className="h-full w-full"
+                  scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
+                >
                   <WebloomElementShadow />
                   <MultiSelectBounding />
                   <WebloomRoot />

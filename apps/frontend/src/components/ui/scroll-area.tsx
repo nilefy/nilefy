@@ -5,15 +5,20 @@ import { cn } from '@/lib/cn';
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
+    scrollAreaViewPortClassName?: string;
+  }
+>(({ className, scrollAreaViewPortClassName, children, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     className={cn('relative overflow-hidden', className)}
     {...props}
   >
     <ScrollAreaPrimitive.Viewport
       ref={ref}
-      className=" bg-primary/20 relative h-full w-full touch-none rounded-[inherit]"
+      className={cn(
+        'h-full w-full rounded-[inherit]',
+        scrollAreaViewPortClassName,
+      )}
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
