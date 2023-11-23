@@ -349,9 +349,6 @@ importers:
       vitest:
         specifier: ^0.34.6
         version: 0.34.6(@vitest/ui@0.34.6)(happy-dom@12.2.2)
-      zukeeper:
-        specifier: ^1.0.2
-        version: 1.0.2
 
   packages/permissions:
     dependencies:
@@ -11375,10 +11372,6 @@ packages:
 
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-
-  /zukeeper@1.0.2:
-    resolution: {integrity: sha512-mffz8JpzC96B3Gpoixklfl2/wY4KsYxZvgPRLFMIqAvEQeMPTjLYG8oUWXm9eoItU/nQ5Lt0G2b0GcZRDGzVgA==}
-    dev: true
 
   /zustand@4.4.4(@types/react@18.2.31)(immer@10.0.3)(react@18.2.0):
     resolution: {integrity: sha512-5UTUIAiHMNf5+mFp7/AnzJXS7+XxktULFN0+D1sCiZWyX7ZG+AQpqs2qpYrynRij4QvoDdCD+U+bmg/cG3Ucxw==}

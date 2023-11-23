@@ -7,7 +7,6 @@ import {
 import { CreatePageDb, PageDto, UpdatePageDb } from '../dto/pages.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
-import { apps } from '../drizzle/schema/schema';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 
@@ -15,8 +14,8 @@ import { UserDto } from '../dto/users.dto';
 export class PagesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  private getMaxIndexInApp(appId: AppDto['id']) {
-    return sql`(select COALESCE(max(${pages.index}), 1) from pages where pages.app_id = ${appId})`;
+  private getNewPageIndexInApp(appId: AppDto['id']) {
+    return sql`(select COALESCE(max(${pages.index}) + 1, 1) from pages where pages.app_id = ${appId})`;
   }
 
   async create(
@@ -28,16 +27,12 @@ export class PagesService {
       tx?: PgTrans;
     },
   ) {
-    // const t = await this.db
-    //   .select({ last: sql<number | null>`max(${pages.index})` })
-    //   .from(pages)
-    //   .where(eq(pages.appId, pageDto.appId));
     return await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values({
         ...pageDto,
         handle: pageDto.handle ?? pageDto.name,
-        index: this.getMaxIndexInApp(pageDto.appId),
+        index: this.getNewPageIndexInApp(pageDto.appId),
       })
       .returning();
   }
@@ -54,7 +49,7 @@ export class PagesService {
         name: true,
         handle: true,
       },
-      where: and(eq(apps.id, appId), eq(pages.id, pageId)),
+      where: and(eq(pages.appId, appId), eq(pages.id, pageId)),
     });
     if (!origin) throw new NotFoundException('no app or page with those ids');
     return await this.db
@@ -64,7 +59,7 @@ export class PagesService {
         handle: origin.handle + '(copy)',
         createdById,
         appId,
-        index: this.getMaxIndexInApp(appId),
+        index: this.getNewPageIndexInApp(appId),
       })
       .returning();
   }

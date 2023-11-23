@@ -41,6 +41,19 @@ export class PagesController {
     });
   }
 
+  @Post(':pageId/clone')
+  async clone(
+    @Req() req: ExpressAuthedRequest,
+    @Param('appId', ParseIntPipe) appId: AppDto['id'],
+    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+  ) {
+    return await this.pagesService.clone({
+      appId,
+      id: pageId,
+      createdById: req.user.userId,
+    });
+  }
+
   @Get()
   async index(@Param('appId', ParseIntPipe) appId: AppDto['id']) {
     return await this.pagesService.index(appId);
