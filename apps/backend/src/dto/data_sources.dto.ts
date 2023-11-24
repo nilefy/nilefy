@@ -1,10 +1,14 @@
 import { z } from 'zod';
-import { availableDataSources, dataSources } from '../drizzle/schema/schema';
+import {
+  availableDataSources,
+  dataSources,
+} from '../drizzle/schema/data_sources.schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 export const dataSourceSelect = createSelectSchema(dataSources);
 export const dataSourceInsert = createInsertSchema(dataSources);
 export const createDataSourceSchema = z.object({
+  name: z.string().min(1).max(100),
   config: z.record(z.string(), z.string()),
 });
 

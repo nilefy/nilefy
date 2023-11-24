@@ -34,10 +34,11 @@ export class DataSourcesController {
     createDataSourceDto: CreateDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ) {
-    const { config } = createDataSourceDto;
+    const { name, config } = createDataSourceDto;
     const jsonConfig: DataSourceDto['config'] = JSON.stringify(config);
 
     return await this.dataSourceService.create({
+      name,
       workspaceId,
       dataSourceId,
       config: jsonConfig,

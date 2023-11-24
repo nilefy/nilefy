@@ -6,7 +6,10 @@ import {
   dataSourceDb,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { availableDataSources, dataSources } from '../drizzle/schema/schema';
+import {
+  availableDataSources,
+  dataSources,
+} from '../drizzle/schema/data_sources.schema';
 
 @Injectable()
 export class DataSourcesService {
