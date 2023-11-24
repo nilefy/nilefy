@@ -9,8 +9,17 @@ import {
   timestamp,
   varchar,
   unique,
-  primaryKey,
 } from 'drizzle-orm/pg-core';
+import {
+  dataSources,
+  workspaceDataSourcesRelation,
+  userDataSourceRelation,
+  userUpdateDataSourceRelation,
+  userDeleteDataSourceRelation,
+  queries,
+  userQueriesRelation,
+  appQueriesRelation,
+} from './data_sources.schema';
 
 /**
  * spread them to easy create createdAt and updatedAt fields
@@ -111,66 +120,16 @@ export const webloomColumns = pgTable(
   }),
 );
 
-export const dataSourcesEnum = pgEnum('data_sources_enum', [
-  'database',
-  'api',
-  'cloud storage',
-  'plugin',
-]);
-
-export const availableDataSources = pgTable('available_data_sources', {
-  id: serial('id').primaryKey(),
-  type: dataSourcesEnum('type').notNull(),
-  name: varchar('name', { length: 100 }).notNull(),
-  description: varchar('description', { length: 255 }),
-  image: varchar('image_url'),
-  config: json('config')
-    .default(sql`'{}'::json`)
-    .notNull(),
-});
-
-export const dataSources = pgTable(
-  'workspace_data_sources',
-  {
-    workspaceId: integer('workspace_id')
-      .references(() => workspaces.id)
-      .notNull(),
-    dataSourceId: integer('data_source_id')
-      .references(() => availableDataSources.id)
-      .notNull(),
-    config: json('config')
-      .default(sql`'{}'::json`)
-      .notNull(),
-    ...timeStamps,
-    ...softDelete,
-    createdById: integer('created_by_id')
-      .references(() => users.id)
-      .notNull(),
-    updatedById: integer('updated_by_id').references(() => users.id),
-    deletedById: integer('deleted_by_id').references(() => users.id),
-  },
-  (t) => {
-    return {
-      pk: primaryKey(t.workspaceId, t.dataSourceId),
-    };
-  },
-);
-
-const userDataSourceRelation = 'userDataSource';
 const userWorkspaceRelation = 'userWorkspaces';
 const userAppRelation = 'userApps';
 const userWebloomTablesRelation = 'userTables';
 const workspaceAppsRelation = 'workspaceApps';
 const workspaceWebloomTablesRelation = 'workspaceWebloomTables';
-const workspaceDataSourcesRelation = 'workspaceDataSources';
-const userUpdateDataSourceRelation = 'lastUpdatedDataSource';
-const userDeleteDataSourceRelation = 'lastDeletedDataSource';
 const userUpdateWorkspaceRelation = 'lastUpdatedWorkspaces';
 const userDeleteWorkspaceRelation = 'lastDeletedWorkspaces';
 const userUpdateAppRelation = 'lastUpdatedApps';
 const userDeleteAppRelation = 'lastDeletedApps';
 const webloomTablesColumnsRelation = 'webloomTablesColumns';
-const availableDataSourcesRelation = 'dataSource';
 
 export const usersRelations = relations(users, ({ many }) => {
   return {
@@ -210,6 +169,10 @@ export const usersRelations = relations(users, ({ many }) => {
     dataSources: many(dataSources, {
       relationName: userDataSourceRelation,
     }),
+    // queries user created
+    queries: many(queries, {
+      relationName: userQueriesRelation,
+    }),
   };
 });
 
@@ -240,7 +203,7 @@ export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
   }),
 }));
 
-export const appsRelations = relations(apps, ({ one }) => ({
+export const appsRelations = relations(apps, ({ one, many }) => ({
   createdBy: one(users, {
     fields: [apps.createdById],
     references: [users.id],
@@ -260,6 +223,9 @@ export const appsRelations = relations(apps, ({ one }) => ({
     fields: [apps.workspaceId],
     references: [workspaces.id],
     relationName: workspaceAppsRelation,
+  }),
+  queries: many(queries, {
+    relationName: appQueriesRelation,
   }),
 }));
 
@@ -289,40 +255,3 @@ export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
     relationName: webloomTablesColumnsRelation,
   }),
 }));
-
-export const dataSourcesRelations = relations(dataSources, ({ one }) => ({
-  createdBy: one(users, {
-    fields: [dataSources.createdById],
-    references: [users.id],
-    relationName: userDataSourceRelation,
-  }),
-  updatedBy: one(users, {
-    fields: [dataSources.updatedById],
-    references: [users.id],
-    relationName: userUpdateDataSourceRelation,
-  }),
-  deletedBy: one(users, {
-    fields: [dataSources.deletedById],
-    references: [users.id],
-    relationName: userDeleteDataSourceRelation,
-  }),
-  workspace: one(workspaces, {
-    fields: [dataSources.workspaceId],
-    references: [workspaces.id],
-    relationName: workspaceDataSourcesRelation,
-  }),
-  dataSource: one(availableDataSources, {
-    fields: [dataSources.dataSourceId],
-    references: [availableDataSources.id],
-    relationName: availableDataSourcesRelation,
-  }),
-}));
-
-export const availableDataSourcesRelations = relations(
-  availableDataSources,
-  ({ many }) => ({
-    workspaceDataSource: many(dataSources, {
-      relationName: availableDataSourcesRelation,
-    }),
-  }),
-);
