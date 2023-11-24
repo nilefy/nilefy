@@ -5,7 +5,7 @@ import {
 } from '@/lib/Editor/interface';
 import { Button } from '../../_Components';
 import { MousePointerSquare } from 'lucide-react';
-import { ComponentProps, ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef } from 'react';
 
 type WebloomButtonProps = ComponentPropsWithoutRef<typeof Button>;
 
@@ -22,6 +22,7 @@ const config: WidgetConfig = {
     minColumns: 1,
     minRows: 4,
   },
+  resizingDirection: 'Horizontal',
 };
 
 const defaultProps: WebloomButtonProps = {

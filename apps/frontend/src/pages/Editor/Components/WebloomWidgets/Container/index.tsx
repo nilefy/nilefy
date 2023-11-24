@@ -55,6 +55,7 @@ export const config: WidgetConfig = {
     minColumns: 1,
     minRows: 4,
   },
+  resizingDirection: 'Both',
 };
 export const WebloomContainerWidget: Widget<WebloomContainerProps> = {
   component: WebloomContainer,

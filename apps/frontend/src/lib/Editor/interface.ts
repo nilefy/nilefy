@@ -53,12 +53,13 @@ export interface LayoutConfig {
   colsCount: number;
   rowsCount: number;
 }
-
+export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
-  icon?: ReactNode;
-  name?: string;
-  layoutConfig?: LayoutConfig;
+  icon: ReactNode;
+  name: string;
+  layoutConfig: LayoutConfig;
   isCanvas?: boolean;
+  resizingDirection: ResizeDirection;
 }
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
 export type WidgetInspectorConfig<TProps> = {

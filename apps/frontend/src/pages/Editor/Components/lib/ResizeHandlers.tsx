@@ -1,8 +1,9 @@
 import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import store from '@/store';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { WebloomWidgets } from '..';
 const handlePositions = {
   'top-left': [0, 0],
   'top-right': [0, 1],
@@ -68,6 +69,22 @@ export function ResizeHandlers() {
 
 function Handles({ id }: { id: string }) {
   const dims = store((state) => state.getPixelDimensions(id));
+  const node = store.getState().tree[id];
+  const direction = WebloomWidgets[node.widget.type].config.resizingDirection;
+  const componentHandles = useMemo(
+    () =>
+      Object.entries(handlePositions).filter(([key]) => {
+        if (direction === 'Both') return true;
+        if (direction === 'Horizontal') {
+          return key === 'left' || key === 'right';
+        }
+        if (direction === 'Vertical') {
+          return key === 'top' || key === 'bottom';
+        }
+        return false;
+      }),
+    [direction],
+  );
   const isDragging = store((state) => state.draggedNode === id);
   const handleSize = 10;
   const handleStyle: React.CSSProperties = {
@@ -88,7 +105,7 @@ function Handles({ id }: { id: string }) {
           left: dims.x,
         }}
       >
-        {Object.entries(handlePositions).map(([key, [y, x]]) => {
+        {componentHandles.map(([key, [y, x]]) => {
           const width = dims.width;
           const height = dims.height;
           let left = 0;
