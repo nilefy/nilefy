@@ -1,6 +1,7 @@
-import store, { WebloomNode } from '@/store';
+import store from '@/store';
 import { UndoableCommand } from '../types';
-import { ROOT_NODE_ID } from '@/lib/constants';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { WebloomNode } from '@/lib/Editor/interface';
 
 const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
   store.getState();

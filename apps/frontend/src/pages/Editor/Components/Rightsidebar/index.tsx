@@ -1,20 +1,21 @@
 import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WebloomComponents } from '../WebloomComponents';
-import NewNodeAdapter from '../WebloomComponents/lib/NewNodeAdapter';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { WebloomWidgets } from '..';
+import { NewNodeAdapter } from '../lib';
+import { ConfigPanel } from '../configPanel/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 
 function InsertTab() {
   return (
     <TabsContent value="insert">
-      {Object.entries(WebloomComponents).map(([name, component]) => {
-        const Component = component.component;
+      {Object.entries(WebloomWidgets).map(([name, component]) => {
+        // const Component = component.component;
         return (
           <NewNodeAdapter type={name} key={name}>
-            <div>{component.name}</div>
+            <div>{component.config.name}</div>
           </NewNodeAdapter>
         );
       })}
@@ -34,7 +35,9 @@ function InspectTab() {
   } else if (selectedIds.size === 1) {
     return (
       <TabsContent value="inspect">
-        <p>TODO: render form elements based on the component type</p>
+        <div className="p-2">
+          <ConfigPanel />
+        </div>
       </TabsContent>
     );
   } else if (selectedIds.size > 1) {

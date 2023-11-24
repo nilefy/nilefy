@@ -1,4 +1,4 @@
-import { ROW_HEIGHT } from '@/lib/constants';
+import { ROW_HEIGHT } from '@/lib/Editor/constants';
 import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';

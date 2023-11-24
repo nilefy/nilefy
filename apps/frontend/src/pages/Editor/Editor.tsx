@@ -5,12 +5,11 @@ import React, {
   useEffect,
   useLayoutEffect,
   useRef,
+  ElementType,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { PREVIEW_NODE_ID, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
 import store, { WebloomTree } from '../../store';
-import { WebloomButton } from './WebloomComponents/Button';
-import { WebloomContainer } from './WebloomComponents/Container';
+
 import {
   DndContext,
   DragEndEvent,
@@ -24,19 +23,25 @@ import {
 } from '@dnd-kit/core';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import { normalize } from '@/lib/utils';
-import { NUMBER_OF_COLUMNS } from '@/lib/constants';
-import { commandManager } from '@/Actions/CommandManager';
-import DragAction from '@/Actions/Editor/Drag';
-import { RightSidebar } from './rightsidebar/rightsidebar';
-import { SelectionAction } from '@/Actions/Editor/selection';
 import {
-  WebloomAdapter,
-  ResizeHandlers,
-  MultiSelectBounding,
+  NUMBER_OF_COLUMNS,
+  PREVIEW_NODE_ID,
+  ROOT_NODE_ID,
+  ROW_HEIGHT,
+} from '@/lib/Editor/constants';
+import {
   Grid,
+  MultiSelectBounding,
+  ResizeHandlers,
+  WebloomAdapter,
   WebloomElementShadow,
-} from './WebloomComponents/lib';
+} from './Components/lib';
+import { commandManager } from '@/actions/commandManager';
+import DragAction from '@/actions/Editor/Drag';
+import { normalize } from '@/lib/Editor/utils';
+import { SelectionAction } from '@/actions/Editor/selection';
+import { RightSidebar } from './Components/Rightsidebar/index';
+import { WebloomWidgets } from './Components';
 
 const { resizeCanvas } = store.getState();
 
@@ -94,18 +99,24 @@ function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
+  const props = store((state) => state.tree[id].props);
   const children = useMemo(() => {
-    let children = tree.props.children as React.ReactElement[];
+    let children = props.children as React.ReactElement[];
     if (nodes.length > 0) {
       children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [nodes, tree.props.children]);
+  }, [nodes, props.children]);
   const rendered = useMemo(
-    () => createElement(tree.type, tree.props, children),
-    [tree.type, tree.props, children],
+    () =>
+      createElement(
+        WebloomWidgets[tree.type].component as ElementType,
+        props,
+        children,
+      ),
+    [tree.type, props, children],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -120,90 +131,19 @@ const initTree: WebloomTree = {
   [ROOT_NODE_ID]: {
     id: ROOT_NODE_ID,
     name: ROOT_NODE_ID,
-    type: WebloomContainer,
     col: 0,
     row: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: ['container-1', 'container-3', 'button-1'],
+    nodes: [],
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
-    props: {
-      className: 'h-full w-full bg-red-500',
-    },
     rowsCount: 1000,
-  },
-  'container-1': {
-    id: 'container-1',
-    name: 'container-1',
-    type: WebloomContainer,
-    col: 5,
-    row: 30,
-    columnWidth: 15,
-    columnsCount: 14,
-    nodes: ['container-2'],
-    parent: ROOT_NODE_ID,
-    isCanvas: true,
-    dom: null,
     props: {
-      className: 'h-full w-full bg-blue-500',
-      color: '#987bab',
+      className: 'h-full w-full',
     },
-    rowsCount: 50,
-  },
-  'container-2': {
-    id: 'container-2',
-    name: 'container-2',
-    type: WebloomContainer,
-    col: 1,
-    row: 2,
-    columnWidth: 15,
-    columnsCount: 14,
-    nodes: [],
-    parent: 'container-1',
-    isCanvas: true,
-    dom: null,
-    props: {
-      className: 'h-full w-full bg-blue-500',
-      color: '#7dab9b',
-    },
-    rowsCount: 30,
-  },
-  'container-3': {
-    id: 'container-3',
-    name: 'container-3',
-    type: WebloomContainer,
-    col: 15,
-    row: 600,
-    columnWidth: 15,
-    columnsCount: 5,
-    nodes: [],
-    parent: ROOT_NODE_ID,
-    isCanvas: true,
-    dom: null,
-    props: {
-      className: 'h-full w-full bg-blue-500',
-      color: '#7bab9b',
-    },
-    rowsCount: 30,
-  },
-  'button-1': {
-    id: 'button-1',
-    name: 'button-1',
-    type: WebloomButton,
-    col: 20,
-    row: 9,
-    columnsCount: 4,
-    nodes: [],
-    parent: ROOT_NODE_ID,
-    isCanvas: false,
-    dom: null,
-    props: {
-      className: 'h-full w-full bg-blue-400',
-      color: '#c29c99',
-    },
-    rowsCount: 10,
+    type: 'WebloomContainer',
   },
 };
 store.setState((state) => {
@@ -219,9 +159,12 @@ function Editor() {
   });
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
-  const resizedNode = store((state) => state.resizedNode);
   const mousePos = useRef({ x: 0, y: 0 });
-  const mouseSensor = useSensor(MouseSensor);
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  });
   const touchSensor = useSensor(TouchSensor);
   const sensors = useSensors(mouseSensor, touchSensor);
   const handleDragEnd = (e: DragEndEvent) => {
