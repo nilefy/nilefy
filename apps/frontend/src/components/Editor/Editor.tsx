@@ -37,6 +37,9 @@ import {
   Grid,
   WebloomElementShadow,
 } from './WebloomComponents/lib';
+import { Inspector } from '../inspector';
+import { Dashboard } from '@/pages/mainLayout';
+import { QueryPanel } from '../queryPanel';
 
 const { resizeCanvas } = store.getState();
 
@@ -306,7 +309,7 @@ function Editor() {
         onDragCancel={handleCancel}
         autoScroll
       >
-        {/*sidebar*/}
+        <Dashboard />
         <div className="h-full w-1/5 "></div>
 
         <div
@@ -358,6 +361,7 @@ function Editor() {
 
         {/*right sidebar*/}
         <RightSidebar />
+        <QueryPanel />
       </DndContext>
     </div>
   );

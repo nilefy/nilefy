@@ -70,7 +70,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen w-screen">
+    <div className="flex h-screen ">
       {/*dashbaord nav*/}
       <div className="flex h-full w-max flex-col gap-5 p-3">
         {/*TODO: LOGO*/}
