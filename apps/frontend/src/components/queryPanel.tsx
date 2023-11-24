@@ -1,5 +1,10 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,7 +108,6 @@ export function QueryPanel() {
   const handleMouseUp = () => {
     setResizing(false);
   };
-
   const handleMouseMove = (event: MouseEvent) => {
     if (isResizing) {
       const resizableDiv = document.getElementById('myResizableDiv');
@@ -116,11 +120,24 @@ export function QueryPanel() {
         setStartY(event.clientY);
         if (height < 40) {
           setOpen(false);
+          setTimeout(() => {
+            setHeight(300);
+          }, 1000);
+
+          console.log(height);
         }
       }
     }
   };
+  useEffect(() => {
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
 
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isResizing, height, startY]);
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
@@ -182,16 +199,6 @@ export function QueryPanel() {
     );
   };
 
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isResizing]);
-
   const sortAndFilterData = useCallback(
     (
       sortingCriteria: string,
@@ -251,6 +258,9 @@ export function QueryPanel() {
         className="left-16  w-4/5 p-0"
         id="myResizableDiv"
         style={{ height: `${height}px` }}
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
       >
         <div
           className="h-1 w-full cursor-row-resize"
@@ -260,10 +270,12 @@ export function QueryPanel() {
           <div className="flex w-1/3 flex-col border-r-2 border-black">
             <div className="flex h-10 flex-row justify-between border-b-2 border-black px-2 pb-2">
               <div className="flex flex-row items-center gap-x-2">
-                <Minimize2
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setOpen(false)}
-                />
+                <SheetClose asChild>
+                  <Minimize2
+                    className="h-4 w-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  />
+                </SheetClose>
                 <Search
                   className="h-4 w-4 cursor-pointer"
                   onClick={() => setCloseSearsh(true)}
