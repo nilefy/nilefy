@@ -65,10 +65,8 @@ export type WebloomNode = {
   nodes: string[];
   parent: string;
   isCanvas?: boolean;
-  widget: {
-    props: Record<string, unknown>;
-    type: WidgetTypes;
-  };
+  props: Record<string, unknown>;
+  type: WidgetTypes;
 } & WebloomGridDimensions;
 
 export type Widget<WidgetProps> = {

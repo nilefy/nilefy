@@ -14,11 +14,8 @@ export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
   const selectedId = [...selected][0];
   const selectedNode = store.getState().tree[selectedId];
-  const selectedNodeProps = store(
-    (state) => state.tree[selectedId].widget.props,
-  );
-  const inspectorConfig =
-    WebloomWidgets[selectedNode.widget.type].inspectorConfig;
+  const selectedNodeProps = store((state) => state.tree[selectedId].props);
+  const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
   return inspectorConfig.map((section) => {
     return (

@@ -90,10 +90,8 @@ class DragAction {
         row: args.new!.startPosition.y,
         columnsCount: 4,
         rowsCount: 8,
-        widget: {
-          props: widget.defaultProps,
-          type: this.newType as WidgetTypes,
-        },
+        props: widget.defaultProps,
+        type: this.newType as WidgetTypes,
       };
       addNode(node, args.new!.parent);
     } else {

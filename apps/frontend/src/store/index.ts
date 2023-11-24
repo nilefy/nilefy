@@ -75,10 +75,7 @@ interface WebloomActions {
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
-  setProps: (
-    id: string,
-    newProps: Partial<WebloomNode['widget']['props']>,
-  ) => void;
+  setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
 }
 
 interface WebloomGetters {
@@ -312,12 +309,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           ...state.tree,
           [id]: {
             ...node,
-            widget: {
-              ...node.widget,
-              props: {
-                ...node.widget.props,
-                ...newProps,
-              },
+            props: {
+              ...node.props,
+              ...newProps,
             },
           },
         };
