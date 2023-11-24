@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
-import { Inspector } from '../Inspector/Index';
+import { ConfigPanel } from '../configPanel/index';
 
 function InsertTab() {
   return (
@@ -35,7 +35,7 @@ function InspectTab() {
     return (
       <TabsContent value="inspect">
         <div className="p-2">
-          <Inspector />
+          <ConfigPanel />
         </div>
       </TabsContent>
     );

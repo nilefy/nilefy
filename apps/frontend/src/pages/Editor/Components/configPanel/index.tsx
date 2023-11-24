@@ -1,6 +1,6 @@
 import store from '@/store';
 import { WebloomWidgets, WidgetTypes } from '..';
-import { InspectorFormControls } from './FormControls';
+import { InspectorFormControls } from './formControls';
 import {
   Collapsible,
   CollapsibleContent,
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
-export const Inspector = () => {
+export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
   const selectedId = [...selected][0];
   const selectedNode = store.getState().tree[selectedId];
