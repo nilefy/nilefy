@@ -26,28 +26,29 @@ import {
   Pencil,
   Copy,
 } from 'lucide-react';
+import { nanoid } from 'nanoid';
 const initialData = [
   {
-    id: Date.now(),
+    id: nanoid(),
     name: 'Item 1',
     source: 'Source A',
     dateModified: new Date('2023-01-01'),
   },
   {
-    id: Date.now(),
+    id: nanoid(),
     name: 'Item 2',
     source: 'Source B',
     dateModified: new Date('2023-01-02'),
   },
   {
-    id: Date.now(),
+    id: nanoid(),
     name: 'Item 3',
     source: 'Source A',
     dateModified: new Date('2023-01-03'),
   },
 ];
 type MyType = {
-  id: number;
+  id: string;
   name: string;
   source: string;
   dateModified: Date;
@@ -60,19 +61,19 @@ export function QueryPanel() {
   const [startY, setStartY] = useState<number>(0);
   const [initialData2, setInitialData2] = useState<Array<MyType>>([
     {
-      id: 1,
+      id: nanoid(),
       name: 'Item 1',
       source: 'Source A',
       dateModified: new Date('2023-01-01'),
     },
     {
-      id: 2,
+      id: nanoid(),
       name: 'Item 2',
       source: 'Source B',
       dateModified: new Date('2023-01-02'),
     },
     {
-      id: 3,
+      id: nanoid(),
       name: 'Item 4',
       source: 'Source A',
       dateModified: new Date('2023-01-03'),
@@ -81,9 +82,9 @@ export function QueryPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState(initialData);
   const [searchQuery2, setSearchQuery2] = useState('');
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [isHovered, setIsHovered] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState<string | undefined>(
     'all',
@@ -130,7 +131,7 @@ export function QueryPanel() {
   };
 
   const addItem = (newItem: {
-    id: number;
+    id: string;
     name: string;
     source: string;
     dateModified: Date;
@@ -138,14 +139,14 @@ export function QueryPanel() {
     setInitialData2((prevData) => [...prevData, newItem]);
   };
 
-  const deleteItem = (itemId: number) => {
+  const deleteItem = (itemId: string) => {
     setInitialData2((prevData) =>
       prevData.filter((item) => item.id !== itemId),
     );
   };
 
   const renameItem = (
-    item: { id: number; name: string; source: string; dateModified: Date },
+    item: { id: string; name: string; source: string; dateModified: Date },
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newName = e.target.value;
@@ -159,14 +160,14 @@ export function QueryPanel() {
   };
 
   const duplicateItem = (item: {
-    id: number;
+    id: string;
     name: string;
     source: string;
     dateModified: Date;
   }) => {
     if (item) {
       const newItem = {
-        id: Date.now(),
+        id: nanoid(),
         name: `Copy of ${item.name}`,
         source: item.source,
         dateModified: new Date(),
@@ -175,7 +176,7 @@ export function QueryPanel() {
     }
   };
 
-  const handleItemClick = (itemId: number) => {
+  const handleItemClick = (itemId: string) => {
     setSelectedItemId((prevSelectedItemId) =>
       prevSelectedItemId === itemId ? null : itemId,
     );
