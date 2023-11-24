@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -34,21 +34,22 @@ import {
   Copy,
   Ghost,
 } from 'lucide-react';
+import { date } from 'zod';
 const initialData = [
   {
-    id: 1,
+    id: Date.now(),
     name: 'Item 1',
     source: 'Source A',
     dateModified: new Date('2023-01-01'),
   },
   {
-    id: 2,
+    id: Date.now(),
     name: 'Item 2',
     source: 'Source B',
     dateModified: new Date('2023-01-02'),
   },
   {
-    id: 3,
+    id: Date.now(),
     name: 'Item 3',
     source: 'Source A',
     dateModified: new Date('2023-01-03'),
@@ -96,9 +97,15 @@ export function QueryPanel() {
   const [isHovered, setIsHovered] = useState<number | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState<string | undefined>(
-    undefined,
+    'all',
   );
-  const [sortedData, setSorteData] = useState([...initialData2]);
+  const [sortingCriteria, setSortingCriteria] = useState('');
+  const [sortingOrder, setSortingOrder] = useState('');
+
+  // const [sortedData, setSorteData] = useState([...initialData2]);
+  const sourceTypes = Array.from(
+    new Set(initialData2.map((item) => item.source)),
+  ).map((source: string) => source);
 
   const handleMouseDown = (event: React.MouseEvent) => {
     setResizing(true);
@@ -126,25 +133,13 @@ export function QueryPanel() {
     }
   };
 
-  const handleSearchChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    q: number,
-  ) => {
-    if (q == 1) {
-      const query = event.target.value.toLowerCase();
-      setSearchQuery(query);
-      const filtered = initialData.filter((item) =>
-        item.name.toLowerCase().includes(query),
-      );
-      setFilteredData(filtered);
-    } else {
-      const query2 = event.target.value.toLowerCase();
-      setSearchQuery2(query2);
-      const filtered2 = initialData2.filter((item) =>
-        item.name.toLowerCase().includes(query2),
-      );
-      setFilteredData2(filtered2);
-    }
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = initialData.filter((item) =>
+      item.name.toLowerCase().includes(query),
+    );
+    setFilteredData(filtered);
   };
 
   const addItem = (newItem: {
@@ -153,14 +148,14 @@ export function QueryPanel() {
     source: string;
     dateModified: Date;
   }) => {
-    setFilteredData2((prevData) => [...prevData, newItem]);
+    // setFilteredData2((prevData) => [...prevData, newItem]);
     setInitialData2((prevData) => [...prevData, newItem]);
   };
 
   const deleteItem = (itemId: number) => {
-    setFilteredData2((prevData) =>
-      prevData.filter((item) => item.id !== itemId),
-    );
+    // setFilteredData2((prevData) =>
+    //   prevData.filter((item) => item.id !== itemId),
+    // );
     setInitialData2((prevData) =>
       prevData.filter((item) => item.id !== itemId),
     );
@@ -171,13 +166,13 @@ export function QueryPanel() {
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newName = e.target.value;
-    setFilteredData2((prevData) =>
-      prevData.map((prevItem) =>
-        prevItem.id === item.id
-          ? { ...prevItem, name: newName, dateModified: new Date() }
-          : prevItem,
-      ),
-    );
+    // setFilteredData2((prevData) =>
+    //   prevData.map((prevItem) =>
+    //     prevItem.id === item.id
+    //       ? { ...prevItem, name: newName, dateModified: new Date() }
+    //       : prevItem,
+    //   ),
+    // );
     setInitialData2((prevData) =>
       prevData.map((prevItem) =>
         prevItem.id === item.id
@@ -200,7 +195,7 @@ export function QueryPanel() {
         source: item.source,
         dateModified: new Date(),
       };
-      setFilteredData2((prevData) => [...prevData, newItem]);
+      //setFilteredData2((prevData) => [...prevData, newItem]);
       setInitialData2((prevData) => [...prevData, newItem]);
     }
   };
@@ -221,41 +216,61 @@ export function QueryPanel() {
     };
   }, [isResizing]);
 
-  const sortAndFilterData = (
-    sortingCriteria: string,
-    sortingOrder: string,
-    selectedSource: string | undefined,
-  ) => {
-    if (sortingCriteria === 'name' || sortingCriteria === 'source') {
-      console.log('jjj');
-      sortedData.sort((a, b) => {
-        const aValue = a[sortingCriteria].toLowerCase();
-        const bValue = b[sortingCriteria].toLowerCase();
-        return sortingOrder === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      });
-    } else if (sortingCriteria === 'dateModified') {
-      console.log('kkk');
-      sortedData.sort((a, b) => {
-        const aValue = a.dateModified.getTime();
-        const bValue = b.dateModified.getTime();
-        return sortingOrder === 'asc' ? aValue - bValue : bValue - aValue;
-      });
-    }
+  const sortAndFilterData = useCallback(
+    (
+      sortingCriteria: string,
+      sortingOrder: string,
+      selectedSource: string | undefined,
+    ) => {
+      const sortedData = [...initialData2];
+      if (sortingCriteria === 'name' || sortingCriteria === 'source') {
+        console.log('jjj');
+        sortedData.sort((a, b) => {
+          const aValue = a[sortingCriteria].toLowerCase();
+          const bValue = b[sortingCriteria].toLowerCase();
+          return sortingOrder === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        });
+      } else if (sortingCriteria === 'dateModified') {
+        console.log('kkk');
+        sortedData.sort((a, b) => {
+          const aValue = a.dateModified.getTime();
+          const bValue = b.dateModified.getTime();
+          return sortingOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+      }
 
-    let filteredAndSortedData = sortedData;
-    console.log(selectedSource);
-    if (selectedSource !== undefined && selectedSource !== 'all') {
-      filteredAndSortedData = sortedData.filter(
-        (item) => item.source === selectedSource,
-      );
-    }
+      if (selectedSource !== undefined && selectedSource !== 'all') {
+        return sortedData.filter((item) => item.source === selectedSource);
+      }
+      console.log('sorted', sortedData);
+      return sortedData;
+      // setFilteredData2(filteredAndSortedData);
+      // setInitialData2(filteredAndSortedData);
+    },
+    [initialData2],
+  );
 
-    setFilteredData2(filteredAndSortedData);
-    setInitialData2(filteredAndSortedData);
-  };
-
+  const dataToBeShown = useMemo(() => {
+    console.log(initialData2, 'bla');
+    return sortAndFilterData(
+      sortingCriteria,
+      sortingOrder,
+      selectedSource,
+    ).filter((item) => item.name.toLowerCase().includes(searchQuery2));
+  }, [
+    selectedSource,
+    searchQuery2,
+    sortingOrder,
+    sortingCriteria,
+    sortAndFilterData,
+  ]);
+  // useEffect(() => {
+  //   // Whenever the memoized function changes, update the state
+  //   setFilteredData2(dataToBeShown);
+  // }, [dataToBeShown, initialData2]);
+  // console.log(dataToBeShown, 'show');
   return (
     <Sheet
       key={'buttom'}
@@ -300,7 +315,6 @@ export function QueryPanel() {
                         value={selectedSource}
                         onValueChange={(e) => {
                           setSelectedSource(e);
-                          sortAndFilterData('select', 'bla', e);
                         }}
                       >
                         <SelectTrigger className="w-[180px]">
@@ -308,9 +322,7 @@ export function QueryPanel() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Sources</SelectItem>
-                          {Array.from(
-                            new Set(initialData2.map((item) => item.source)),
-                          ).map((source) => (
+                          {sourceTypes.map((source) => (
                             <SelectItem key={source} value={source}>
                               {source}
                             </SelectItem>
@@ -322,50 +334,56 @@ export function QueryPanel() {
                     <DropdownMenuLabel>Sort By</DropdownMenuLabel>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('name', 'asc', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('name');
+                        setSortingOrder('asc');
+                      }}
                     >
                       Name : A-Z
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('name', 'des', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('name');
+                        setSortingOrder('des');
+                      }}
                     >
                       Name : Z-A
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('source', 'asc', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('source');
+                        setSortingOrder('asc');
+                      }}
                     >
                       Type : A-Z
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('source', 'des', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('source');
+                        setSortingOrder('des');
+                      }}
                     >
                       Type : Z-A
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('dateModified', 'asc', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('dateModified');
+                        setSortingOrder('asc');
+                      }}
                     >
                       Last Modified : Oldest First
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() =>
-                        sortAndFilterData('dateModified', 'des', selectedSource)
-                      }
+                      onClick={() => {
+                        setSortingCriteria('dateModified');
+                        setSortingOrder('des');
+                      }}
                     >
                       Last Modified : Newest First
                     </DropdownMenuItem>
@@ -385,7 +403,7 @@ export function QueryPanel() {
                       type="text"
                       placeholder="Search..."
                       value={searchQuery}
-                      onChange={(e) => handleSearchChange(e, 1)}
+                      onChange={(e) => handleSearchChange(e)}
                       className="mb-4 rounded-md border border-gray-300 p-2"
                     />
                   </DropdownMenuLabel>
@@ -403,7 +421,6 @@ export function QueryPanel() {
             </div>
 
             <div className="px-2">
-              {' '}
               <ul>
                 {closeSearsh && (
                   <div className="flex items-center justify-between border-b border-gray-300 py-1">
@@ -411,22 +428,24 @@ export function QueryPanel() {
                       type="text"
                       placeholder="Search..."
                       value={searchQuery2}
-                      onChange={(e) => handleSearchChange(e, 2)}
+                      onChange={(e) =>
+                        setSearchQuery2(e.target.value.toLowerCase())
+                      }
                       className="h-6 w-2/3 rounded-md border border-gray-300"
                     />
                     <Button
                       variant="ghost"
                       onClick={() => {
                         setCloseSearsh(false);
-                        setFilteredData2(filteredData2);
-                        setSelectedSource(selectedSource);
+                        // setFilteredData2(filteredData2);
+                        // setSelectedSource(selectedSource);
                       }}
                     >
                       close
                     </Button>
                   </div>
                 )}
-                {filteredData2.map((item) => (
+                {dataToBeShown.map((item) => (
                   <Button
                     key={item.id}
                     variant="outline"
