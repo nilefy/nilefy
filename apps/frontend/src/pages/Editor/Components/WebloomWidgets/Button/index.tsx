@@ -22,7 +22,7 @@ const config: WidgetConfig = {
     minColumns: 1,
     minRows: 4,
   },
-  resizingDirection: 'Horizontal',
+  resizingDirection: 'Both',
 };
 
 const defaultProps: WebloomButtonProps = {
