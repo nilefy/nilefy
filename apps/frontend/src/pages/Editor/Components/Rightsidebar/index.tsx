@@ -11,7 +11,7 @@ function InsertTab() {
   return (
     <TabsContent value="insert">
       {Object.entries(WebloomWidgets).map(([name, component]) => {
-        const Component = component.component;
+        // const Component = component.component;
         return (
           <NewNodeAdapter type={name} key={name}>
             <div>{component.config.name}</div>

@@ -7,13 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { BaseControlProps } from '.';
+import {
+  BaseControlProps,
+  InspectorSelectProps,
+} from '@webloom/configpaneltypes';
 import { Label } from '@/components/ui/label';
-
-export type InspectorSelectProps = {
-  items: { label: string; value: string }[];
-  placeholder?: string;
-};
 
 const InspectorSelect = (
   props: InspectorSelectProps &

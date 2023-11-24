@@ -1,10 +1,9 @@
-import { Input, InputProps } from '@/components/ui/input';
-import { BaseControlProps } from '.';
+import { Input } from '@/components/ui/input';
+import {
+  BaseControlProps,
+  InspectorInputProps,
+} from '@webloom/configpaneltypes';
 import { Label } from '@/components/ui/label';
-
-export type InspectorInputProps = Partial<
-  Pick<InputProps, 'type' | 'placeholder' | 'max' | 'min'>
->;
 
 const InspectorInput = (
   props: InspectorInputProps &

@@ -1,13 +1,7 @@
-import { InspectorInput, InspectorInputProps } from './Input';
-import { InspectorSelect, InspectorSelectProps } from './Select';
-export type BaseControlProps = {
-  id: string;
-  label: string;
-  defaultValue?: string | number;
-  value?: string | number;
-};
+import { InspectorInput } from './Input';
+import { InspectorSelect } from './Select';
+
 export const InspectorFormControls = {
   input: InspectorInput,
   select: InspectorSelect,
 } as const;
-export type { InspectorInputProps, InspectorSelectProps };
