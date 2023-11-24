@@ -1,12 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +25,7 @@ import {
   Trash,
   Pencil,
   Copy,
-  Ghost,
 } from 'lucide-react';
-import { date } from 'zod';
 const initialData = [
   {
     id: Date.now(),
@@ -64,7 +55,6 @@ type MyType = {
 
 export function QueryPanel() {
   const [open, setOpen] = useState(false);
-  const [check, setChceck] = useState(false);
   const [isResizing, setResizing] = useState(false);
   const [height, setHeight] = useState<number>(300);
   const [startY, setStartY] = useState<number>(0);
@@ -91,7 +81,6 @@ export function QueryPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState(initialData);
   const [searchQuery2, setSearchQuery2] = useState('');
-  const [filteredData2, setFilteredData2] = useState(initialData2);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState<number | null>(null);
@@ -101,8 +90,6 @@ export function QueryPanel() {
   );
   const [sortingCriteria, setSortingCriteria] = useState('');
   const [sortingOrder, setSortingOrder] = useState('');
-
-  // const [sortedData, setSorteData] = useState([...initialData2]);
   const sourceTypes = Array.from(
     new Set(initialData2.map((item) => item.source)),
   ).map((source: string) => source);
@@ -148,14 +135,10 @@ export function QueryPanel() {
     source: string;
     dateModified: Date;
   }) => {
-    // setFilteredData2((prevData) => [...prevData, newItem]);
     setInitialData2((prevData) => [...prevData, newItem]);
   };
 
   const deleteItem = (itemId: number) => {
-    // setFilteredData2((prevData) =>
-    //   prevData.filter((item) => item.id !== itemId),
-    // );
     setInitialData2((prevData) =>
       prevData.filter((item) => item.id !== itemId),
     );
@@ -166,13 +149,6 @@ export function QueryPanel() {
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newName = e.target.value;
-    // setFilteredData2((prevData) =>
-    //   prevData.map((prevItem) =>
-    //     prevItem.id === item.id
-    //       ? { ...prevItem, name: newName, dateModified: new Date() }
-    //       : prevItem,
-    //   ),
-    // );
     setInitialData2((prevData) =>
       prevData.map((prevItem) =>
         prevItem.id === item.id
@@ -195,7 +171,6 @@ export function QueryPanel() {
         source: item.source,
         dateModified: new Date(),
       };
-      //setFilteredData2((prevData) => [...prevData, newItem]);
       setInitialData2((prevData) => [...prevData, newItem]);
     }
   };
@@ -246,8 +221,6 @@ export function QueryPanel() {
       }
       console.log('sorted', sortedData);
       return sortedData;
-      // setFilteredData2(filteredAndSortedData);
-      // setInitialData2(filteredAndSortedData);
     },
     [initialData2],
   );
@@ -265,19 +238,10 @@ export function QueryPanel() {
     sortingOrder,
     sortingCriteria,
     sortAndFilterData,
+    initialData2,
   ]);
-  // useEffect(() => {
-  //   // Whenever the memoized function changes, update the state
-  //   setFilteredData2(dataToBeShown);
-  // }, [dataToBeShown, initialData2]);
-  // console.log(dataToBeShown, 'show');
   return (
-    <Sheet
-      key={'buttom'}
-      open={!check ? open : check}
-      onOpenChange={setOpen}
-      modal={false}
-    >
+    <Sheet key={'buttom'} open={open} onOpenChange={setOpen} modal={false}>
       <SheetTrigger className="absolute bottom-2 left-16">
         <Maximize2 className="relative h-4 w-4 rotate-0 scale-100 cursor-pointer transition-all" />
       </SheetTrigger>
@@ -437,8 +401,6 @@ export function QueryPanel() {
                       variant="ghost"
                       onClick={() => {
                         setCloseSearsh(false);
-                        // setFilteredData2(filteredData2);
-                        // setSelectedSource(selectedSource);
                       }}
                     >
                       close
