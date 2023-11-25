@@ -12,7 +12,7 @@ import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 type WebloomAdapterProps = {
   id: string;

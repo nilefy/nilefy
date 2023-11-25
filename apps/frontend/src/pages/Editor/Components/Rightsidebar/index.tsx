@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
 import { ConfigPanel } from '../configPanel/index';
-import { commandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+import { commandManager } from '@/actions/commandManager';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 function InsertTab() {
   return (
@@ -45,7 +45,7 @@ function InspectTab() {
   } else if (selectedIds.size === 1) {
     return (
       <TabsContent value="inspect">
-        <Inspector />
+        <ConfigPanel />
       </TabsContent>
     );
   } else if (selectedIds.size > 1) {

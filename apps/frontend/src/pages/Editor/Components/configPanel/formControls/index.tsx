@@ -1,5 +1,5 @@
-import { InspectorInput } from './Input';
-import { InspectorSelect } from './Select';
+import { InspectorInput } from './input';
+import { InspectorSelect } from './select';
 
 export const InspectorFormControls = {
   input: InspectorInput,
