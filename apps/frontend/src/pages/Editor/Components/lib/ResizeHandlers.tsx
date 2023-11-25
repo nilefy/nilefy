@@ -70,7 +70,7 @@ export function ResizeHandlers() {
 function Handles({ id }: { id: string }) {
   const dims = store((state) => state.getPixelDimensions(id));
   const node = store.getState().tree[id];
-  const direction = WebloomWidgets[node.widget.type].config.resizingDirection;
+  const direction = WebloomWidgets[node.type].config.resizingDirection;
   const componentHandles = useMemo(
     () =>
       Object.entries(handlePositions).filter(([key]) => {
