@@ -1,7 +1,8 @@
+import { RunQueryDto } from './data_queries.dto';
+
 export type QueryT = {
   operation: string;
-  query: string;
-  name: string;
+  query: RunQueryDto;
 };
 
 export type QueryRet = {

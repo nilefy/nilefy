@@ -67,12 +67,12 @@ export const queries = pgTable(
     appId: integer('app_id')
       .references(() => apps.id)
       .notNull(),
-    dataSourceId: integer('data_source_id').references(
-      () => availableDataSources.id,
-    ),
-    dataSourceName: varchar('data_source_name', { length: 100 }).references(
-      () => dataSources.name,
-    ),
+    dataSourceId: integer('data_source_id')
+      .references(() => availableDataSources.id)
+      .notNull(),
+    dataSourceName: varchar('data_source_name', { length: 100 })
+      .references(() => dataSources.name)
+      .notNull(),
     userId: integer('user_id')
       .references(() => users.id)
       .notNull(),
