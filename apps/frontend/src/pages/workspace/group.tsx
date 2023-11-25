@@ -32,7 +32,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { User } from './users';
 import { Delete, Edit, Loader, Plus } from 'lucide-react';
 import { fetchX } from '@/utils/fetch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -49,21 +48,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Group, GroupMetaSchema, groupMetaSchema } from '@/api/groups.api';
+import { User } from '@/api/users.api';
+import { api } from '@/api';
 
 // type BuiltinPermissions =
-export type Group = {
-  id: number;
-  name: string;
-  users: User[];
-  description: string | null;
-  permissions: string[];
-};
-
-const groupMetaSchema = z.object({
-  name: z.string().min(3).max(255),
-  description: z.string().optional(),
-});
-type GroupMetaSchema = z.infer<typeof groupMetaSchema>;
 
 type GroupMetaDialogProps = {
   form: UseFormReturn<GroupMetaSchema>;
@@ -81,54 +70,11 @@ type UpdateGroupMetaProps = {
   groupMeta: GroupMetaSchema & { id: Group['id'] };
 };
 
-async function getGroups(i: { workspaceId: number }) {
-  const res = await fetchX(`workspaces/${i.workspaceId}/roles`, {
-    method: 'GET',
-  });
-  return (await res.json()) as Omit<Group, 'users' | 'permissions'>[];
-}
-
-async function getGroup(i: { workspaceId: number; roleId: number }) {
-  const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.roleId}`, {
-    method: 'GET',
-  });
-  return (await res.json()) as Group;
-}
-
-async function insertGroup(i: { workspaceId: number; dto: GroupMetaSchema }) {
-  const res = await fetchX(`workspaces/${i.workspaceId}/roles`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8',
-    },
-    body: JSON.stringify(i.dto),
-  });
-  return (await res.json()) as GroupMetaSchema & { id: number };
-}
-
-async function updateGroup(i: {
-  workspaceId: number;
-  groupId: Group['id'];
-  dto: GroupMetaSchema;
-}) {
-  const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.groupId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8',
-    },
-    body: JSON.stringify(i.dto),
-  });
-  return (await res.json()) as GroupMetaSchema & { id: number };
-}
-
 function InsertGroupDialog() {
   const [open, setOpen] = useState<boolean>(false);
   const { workspaceId } = useParams();
   const queryClient = useQueryClient();
-  const insertMutation = useMutation({
-    mutationFn: async (...vars: Parameters<typeof insertGroup>) => {
-      return await insertGroup(...vars);
-    },
+  const insertMutation = api.groups.insert.useMutation({
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
       form.reset();
@@ -185,20 +131,12 @@ function UpdateGroupDialog({ groupMeta }: UpdateGroupMetaProps) {
       description: groupMeta.description,
     },
   });
-  const updateMutation = useMutation({
-    mutationFn: async (...vars: Parameters<typeof updateGroup>) => {
-      console.log('gonna update', vars);
-      return await updateGroup(...vars);
-    },
+  const updateMutation = api.groups.update.useMutation({
     onSuccess(data) {
       console.log(data);
       queryClient.invalidateQueries({ queryKey: ['groups'] });
       form.reset();
       setOpen(false);
-    },
-    onError(error) {
-      console.log(error);
-      throw error;
     },
   });
   function onSubmit(values: GroupMetaSchema) {
@@ -326,27 +264,12 @@ function DeleteGroupAlert(props: { id: number }) {
   );
 }
 
-function useRoles(workspaceId: number) {
-  return useQuery({
-    queryKey: ['groups', workspaceId],
-    queryFn: () => getGroups({ workspaceId }),
-    staleTime: 0,
-  });
-}
-
-function useRole(workspaceId: number, roleId: number) {
-  return useQuery({
-    queryKey: ['groups', workspaceId, roleId],
-    queryFn: () => getGroup({ workspaceId, roleId }),
-  });
-}
-
 /**
  * render table to show all grpups
  */
 export function GroupsManagement() {
   const { workspaceId } = useParams();
-  const groups = useRoles(+(workspaceId as string));
+  const groups = api.groups.index.useQuery(+(workspaceId as string));
 
   if (groups.isError) {
     throw groups.error;
@@ -539,7 +462,7 @@ function UsersTab({
  */
 export function GroupManagement() {
   const { workspaceId, groupId } = useParams();
-  const { isError, isPending, data, error } = useRole(
+  const { isError, isPending, data, error } = api.groups.one.useQuery(
     +(workspaceId as string),
     +(groupId as string),
   );
