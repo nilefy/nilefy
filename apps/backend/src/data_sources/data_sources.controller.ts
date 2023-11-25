@@ -37,6 +37,8 @@ export class DataSourcesController {
     const { name, config } = createDataSourceDto;
     const jsonConfig: DataSourceDto['config'] = JSON.stringify(config);
 
+    // TODO: check whether config matches the plugin requirements
+
     return await this.dataSourceService.create({
       name,
       workspaceId,

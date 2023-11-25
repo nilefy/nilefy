@@ -31,14 +31,3 @@ export class DataSourcesService {
     return ds as dataSourceT;
   }
 }
-
-/*
-Host
-Port
-SSL
-Database Name
-Username
-Password
-Connection Options
-SSL Certificate
-*/

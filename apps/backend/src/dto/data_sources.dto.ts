@@ -23,3 +23,5 @@ export type CreateDataSourceDto = z.infer<typeof createDataSourceSchema>;
 
 export type dataSourceT = z.infer<typeof availableDataSourceSelect>;
 export type dataSourceDb = z.infer<typeof availableDataSourcesInsert>;
+
+export type DataSourceConfigT = Record<string, any>;

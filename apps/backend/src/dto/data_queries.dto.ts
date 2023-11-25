@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { queries } from '../../drizzle/schema/data_sources.schema';
+import { queries } from '../drizzle/schema/data_sources.schema';
 import { z } from 'zod';
 
 export const querySchema = createSelectSchema(queries);

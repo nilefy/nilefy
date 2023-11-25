@@ -8,10 +8,10 @@ import {
   Req,
 } from '@nestjs/common';
 import { DataQueriesService } from './data_queries.service';
-import { JwtGuard } from 'src/auth/jwt.guard';
-import { ExpressAuthedRequest } from 'src/auth/auth.types';
-import { ZodValidationPipe } from 'src/pipes/zod.pipe';
-import { runQuerySchema, RunQueryDto } from './data_queries.dto';
+import { JwtGuard } from '../auth/jwt.guard';
+import { ExpressAuthedRequest } from '../auth/auth.types';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { runQuerySchema, RunQueryDto } from '../dto/data_queries.dto';
 
 @UseGuards(JwtGuard)
 @Controller('queries/:workspaceId/:appId/')

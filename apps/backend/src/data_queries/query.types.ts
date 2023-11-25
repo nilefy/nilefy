@@ -1,4 +1,4 @@
-import { RunQueryDto } from './data_queries.dto';
+import { RunQueryDto } from '../dto/data_queries.dto';
 
 export type QueryT = {
   operation: string;

@@ -8,6 +8,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
+import { DataQueriesModule } from './data_queries/data_queries.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { DataSourcesModule } from './data_sources/data_sources.module';
     WorkspacesModule,
     AppsModule,
     DataSourcesModule,
+    DataQueriesModule,
   ],
 })
 export class AppModule {}
