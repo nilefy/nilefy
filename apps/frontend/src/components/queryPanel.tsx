@@ -267,8 +267,8 @@ export function QueryPanel() {
           onMouseDown={handleMouseDown}
         ></div>
         <div className="flex h-full w-full flex-row pb-4 ">
-          <div className="flex w-1/3 flex-col border-r-2 border-black">
-            <div className="flex h-10 flex-row justify-between border-b-2 border-black px-2 pb-2">
+          <div className="flex w-1/3 flex-col border-r border-gray-300">
+            <div className="flex h-10 flex-row justify-between border-b border-gray-300 px-2 pb-2">
               <div className="flex flex-row items-center gap-x-2">
                 <SheetClose asChild>
                   <Minimize2
@@ -474,15 +474,10 @@ export function QueryPanel() {
               </ul>
             </div>
           </div>
-          <div className="flex w-full flex-col border-r-2 border-black">
-            <div className="flex h-10 flex-row justify-between border-b-2 border-black pb-2">
-              <div className="flex flex-row ">
-                <div>close</div>
-                <div>searsh</div>
-                <div>filter</div>
-              </div>
+          <div className="flex w-full flex-col border-r border-gray-300">
+            <div className="flex h-10 flex-row justify-between border-b border-gray-300 pb-2">
+              <div className="flex flex-row "></div>
             </div>
-            <div className=" ">bla</div>
           </div>
         </div>
       </SheetContent>
