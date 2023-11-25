@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   integer,
   json,
@@ -79,77 +79,5 @@ export const queries = pgTable(
   },
   (t) => ({
     pk: primaryKey(t.workspaceId, t.appId, t.dataSourceName),
-  }),
-);
-
-const availableDataSourcesRelation = 'dataSource';
-export const workspaceDataSourcesRelation = 'workspaceDataSources';
-export const userDataSourceRelation = 'userDataSource';
-export const userUpdateDataSourceRelation = 'lastUpdatedDataSource';
-export const userDeleteDataSourceRelation = 'lastDeletedDataSource';
-export const userQueriesRelation = 'userQueries';
-export const appQueriesRelation = 'appQueries';
-const dataSourceQueriesRelation = 'dataSourceQueriesRelation';
-
-/**
- * one app - many queries
- * one user - many queries
- * one data source - many queries
- */
-export const queriesRelations = relations(queries, ({ one }) => ({
-  createdBy: one(users, {
-    fields: [queries.userId],
-    references: [users.id],
-    relationName: userQueriesRelation,
-  }),
-  app: one(apps, {
-    fields: [queries.appId],
-    references: [apps.id],
-    relationName: appQueriesRelation,
-  }),
-  dataSource: one(availableDataSources, {
-    fields: [queries.dataSourceId],
-    references: [availableDataSources.id],
-    relationName: dataSourceQueriesRelation,
-  }),
-}));
-
-export const dataSourcesRelations = relations(dataSources, ({ one }) => ({
-  createdBy: one(users, {
-    fields: [dataSources.createdById],
-    references: [users.id],
-    relationName: userDataSourceRelation,
-  }),
-  updatedBy: one(users, {
-    fields: [dataSources.updatedById],
-    references: [users.id],
-    relationName: userUpdateDataSourceRelation,
-  }),
-  deletedBy: one(users, {
-    fields: [dataSources.deletedById],
-    references: [users.id],
-    relationName: userDeleteDataSourceRelation,
-  }),
-  workspace: one(workspaces, {
-    fields: [dataSources.workspaceId],
-    references: [workspaces.id],
-    relationName: workspaceDataSourcesRelation,
-  }),
-  dataSource: one(availableDataSources, {
-    fields: [dataSources.dataSourceId],
-    references: [availableDataSources.id],
-    relationName: availableDataSourcesRelation,
-  }),
-}));
-
-export const availableDataSourcesRelations = relations(
-  availableDataSources,
-  ({ many }) => ({
-    workspaceDataSource: many(dataSources, {
-      relationName: availableDataSourcesRelation,
-    }),
-    dataSourceQueries: many(queries, {
-      relationName: dataSourceQueriesRelation,
-    }),
   }),
 );
