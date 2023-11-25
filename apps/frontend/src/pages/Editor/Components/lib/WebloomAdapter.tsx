@@ -8,7 +8,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
@@ -33,7 +32,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
-      disabled: !props.draggable || ResizeAction.resizingKey !== null,
+      disabled: !props.draggable,
       data: {
         isNew: false,
       },
@@ -82,7 +81,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             {...attributes}
             style={style}
             ref={ref}
-            className="target touch-none overflow-hidden"
+            className="target touch-none overflow-hidden outline-none"
             data-id={id}
           >
             {!isDragging && props.children}

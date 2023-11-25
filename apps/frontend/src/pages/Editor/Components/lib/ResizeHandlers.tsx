@@ -86,7 +86,7 @@ function Handles({ id }: { id: string }) {
     [direction],
   );
   const isDragging = store((state) => state.draggedNode === id);
-  const handleSize = 10;
+  const handleSize = 8;
   const handleStyle: React.CSSProperties = {
     position: 'absolute',
     width: handleSize,
@@ -95,7 +95,7 @@ function Handles({ id }: { id: string }) {
     border: '1px solid black',
     borderRadius: '50%',
   };
-  const padding = 5;
+  const padding = 3;
   return (
     !isDragging && (
       <div

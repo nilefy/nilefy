@@ -8,7 +8,7 @@ export type WebloomButtonProps = {
 };
 const WebloomButton = (props: WebloomButtonProps) => {
   return (
-    <Button {...props} className="h-full w-full">
+    <Button {...props} className=" active:bg-primary/20 h-full w-full">
       {props.text}
     </Button>
   );
