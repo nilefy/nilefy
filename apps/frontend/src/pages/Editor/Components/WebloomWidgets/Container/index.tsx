@@ -1,11 +1,8 @@
-import {
-  Widget,
-  WidgetConfig,
-  WidgetInspectorConfig,
-} from '@/lib/Editor/interface';
+import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
 import { ComponentPropsWithoutRef } from 'react';
+import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 
 type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
 const WebloomContainer = (props: WebloomContainerProps) => {

@@ -1,18 +1,21 @@
 {
-    "$schema": "https://turbo.build/schema.json",
-    "pipeline": {
-        "dev": {
-            "cache": false,
-            "persistent": true
-        },
-        "db:push": {
-            "cache": false
-        },
-        "db:studio": {
-            "cache": false
-        },
-        "db:seed": {
-            "cache": false
-        }
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "lint": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false
+    },
+    "db:seed": {
+      "cache": false
     }
+  }
 }

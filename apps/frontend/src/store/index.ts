@@ -1,5 +1,6 @@
 import {
   NUMBER_OF_COLUMNS,
+  PREVIEW_NODE_ID,
   ROOT_NODE_ID,
   ROW_HEIGHT,
 } from '@/lib/Editor/constants';
@@ -43,7 +44,7 @@ interface WebloomActions {
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string) => void;
-  removeNode: (id: string) => void;
+  removeNode: (id: string, stack?: WebloomNode[]) => void;
   moveNodeIntoGrid: (
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
@@ -77,10 +78,7 @@ interface WebloomActions {
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
-  setProps: (
-    id: string,
-    newProps: Partial<WebloomNode['widget']['props']>,
-  ) => void;
+  setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
@@ -99,6 +97,7 @@ interface WebloomGetters {
     overId: string,
     forShadow?: boolean,
   ) => WebloomGridDimensions;
+  getSelectedNodeIds: () => WebloomState['selectedNodeIds'];
 }
 
 function handleHoverCollision(
@@ -297,6 +296,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     resizedNode: null,
     editorWidth: 0,
     editorHeight: 0,
+    getSelectedNodeIds() {
+      return get().selectedNodeIds;
+    },
     setResizedNode(id) {
       set({ resizedNode: id });
     },
@@ -326,12 +328,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           ...state.tree,
           [id]: {
             ...node,
-            widget: {
-              ...node.widget,
-              props: {
-                ...node.widget.props,
-                ...newProps,
-              },
+            props: {
+              ...node.props,
+              ...newProps,
             },
           },
         };
@@ -467,11 +466,26 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: { ...state.tree, [parentId]: parent } };
       });
     },
-    removeNode(id) {
+
+    /**
+     * @param stack if stack is supplied will push deleted node to it
+     */
+    removeNode(id, stack) {
       // cannot delete a non existing node
       if (!(id in get().tree)) return;
+      const node = get().tree[id];
+      // remove node children then remove it
+      for (const childId of node.nodes) {
+        // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
+        // but we don't want this so just skip the recursive calls and go directly deleting the preview
+        if (id === PREVIEW_NODE_ID) break;
+        get().removeNode(childId, stack);
+      } // base case is that element has no child
       set((state) => {
         const node = state.tree[id];
+        if (stack !== undefined) {
+          stack.push(node);
+        }
         if (!node) return state;
         const newTree = {
           ...state.tree,

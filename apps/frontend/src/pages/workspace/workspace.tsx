@@ -13,7 +13,7 @@ export function WorkspaceSettingsLayout() {
   return (
     <>
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
+      <div className="flex h-screen w-1/5 flex-col gap-5 bg-primary/5">
         <h2 className="ml-2 text-3xl">WorkSpace Settings</h2>
         <nav className="flex flex-col gap-3">
           {workspacePaths.map((path) => (

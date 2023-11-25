@@ -1,9 +1,5 @@
 import { WidgetTypes } from '@/pages/Editor/Components';
-import {
-  BaseControlProps,
-  InspectorInputProps,
-  InspectorSelectProps,
-} from '@/pages/Editor/Components/Inspector/FormControls';
+import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { ReactNode } from 'react';
 
 export type BoundingRect = {
@@ -61,20 +57,6 @@ export interface WidgetConfig {
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
 }
-type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-export type WidgetInspectorConfig<TProps> = {
-  sectionName: string;
-  children: MappedTypeToArray<{
-    [key in keyof TProps]: {
-      [key2 in InspectorFormControls]: {
-        type: key2;
-        key: key;
-        options: FormControlOptions[key2];
-        label: string;
-      } & BaseControlProps;
-    }[InspectorFormControls];
-  }>;
-}[];
 
 export type WebloomNode = {
   id: string;
@@ -84,17 +66,10 @@ export type WebloomNode = {
   nodes: string[];
   parent: string;
   isCanvas?: boolean;
-  widget: {
-    props: Record<string, unknown>;
-    type: WidgetTypes;
-  };
+  props: Record<string, unknown>;
+  type: WidgetTypes;
 } & WebloomGridDimensions;
-export type FormControlOptions = {
-  input: InspectorInputProps;
-  select: InspectorSelectProps;
-};
 
-export type InspectorFormControls = keyof FormControlOptions;
 export type Widget<WidgetProps> = {
   component: React.FC<WidgetProps>;
   config: WidgetConfig;

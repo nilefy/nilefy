@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useMemo } from 'react';
+import { ReactElement, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { UseFormReturn, useForm } from 'react-hook-form';
 import {
   Form,
   FormControl,
@@ -33,75 +33,223 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { User } from './users';
-import { Delete, Edit, Plus } from 'lucide-react';
+import { Delete, Edit, Loader, Plus } from 'lucide-react';
+import { fetchX } from '@/utils/fetch';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getInitials } from '@/utils/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 // type BuiltinPermissions =
 export type Group = {
-  id: string;
+  id: number;
   name: string;
   users: User[];
-  // permissions:
+  description: string | null;
+  permissions: string[];
 };
 
 const groupMetaSchema = z.object({
   name: z.string().min(3).max(255),
+  description: z.string().optional(),
 });
 type GroupMetaSchema = z.infer<typeof groupMetaSchema>;
 
-type GroupMetaDialogProps =
-  | {
-      /**
-       * true: will show the ui for adding new group
-       * false: will show the ui to update group
-       */
-      insert: true;
-    }
-  | {
-      /**
-       * true: will show the ui for adding new group
-       * false: will show the ui to update group
-       */
-      insert: false;
-      groupMeta: GroupMetaSchema & { id: Group['id'] };
-    };
+type GroupMetaDialogProps = {
+  form: UseFormReturn<GroupMetaSchema>;
+  dialogTitle: string;
+  dialogSubmitButtonTitle: string;
+  triggeChildren: ReactElement;
+  onSubmit: (values: GroupMetaSchema) => void;
+  dialogOpen: boolean;
+  setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isPending: boolean;
+};
 
-function GroupMetaDialog(props: GroupMetaDialogProps) {
+// type InsertGroupMetaProps = GroupMetaDialogProps;
+type UpdateGroupMetaProps = {
+  groupMeta: GroupMetaSchema & { id: Group['id'] };
+};
+
+async function getGroups(i: { workspaceId: number }) {
+  const res = await fetchX(`workspaces/${i.workspaceId}/roles`, {
+    method: 'GET',
+  });
+  return (await res.json()) as Omit<Group, 'users' | 'permissions'>[];
+}
+
+async function getGroup(i: { workspaceId: number; roleId: number }) {
+  const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.roleId}`, {
+    method: 'GET',
+  });
+  return (await res.json()) as Group;
+}
+
+async function insertGroup(i: { workspaceId: number; dto: GroupMetaSchema }) {
+  const res = await fetchX(`workspaces/${i.workspaceId}/roles`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+    body: JSON.stringify(i.dto),
+  });
+  return (await res.json()) as GroupMetaSchema & { id: number };
+}
+
+async function updateGroup(i: {
+  workspaceId: number;
+  groupId: Group['id'];
+  dto: GroupMetaSchema;
+}) {
+  const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.groupId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+    body: JSON.stringify(i.dto),
+  });
+  return (await res.json()) as GroupMetaSchema & { id: number };
+}
+
+function InsertGroupDialog() {
+  const [open, setOpen] = useState<boolean>(false);
+  const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
+  const insertMutation = useMutation({
+    mutationFn: async (...vars: Parameters<typeof insertGroup>) => {
+      return await insertGroup(...vars);
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      form.reset();
+      setOpen(false);
+    },
+    onError(error) {
+      console.log('error from mutation', error);
+      throw error;
+    },
+  });
   const form = useForm<GroupMetaSchema>({
     resolver: zodResolver(groupMetaSchema),
     defaultValues: {
-      name: props.insert ? '' : props.groupMeta.name,
+      name: '',
+      description: undefined,
     },
   });
-
   function onSubmit(values: GroupMetaSchema) {
-    // TODO: call the server
-    console.log(values);
+    if (!workspaceId)
+      throw new Error('group dialog can only works under workspaceId route');
+    insertMutation.mutate({
+      workspaceId: +workspaceId,
+      dto: values,
+    });
   }
 
   return (
-    <Dialog>
+    <GroupMetaDialog
+      form={form}
+      onSubmit={onSubmit}
+      dialogTitle="Create new Group"
+      triggeChildren={
+        <>
+          <Plus className="mr-2" />
+          <span>Add new group</span>
+        </>
+      }
+      dialogSubmitButtonTitle="create"
+      dialogOpen={open}
+      setDialogOpen={setOpen}
+      isPending={insertMutation.isPending}
+    />
+  );
+}
+
+function UpdateGroupDialog({ groupMeta }: UpdateGroupMetaProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
+  const form = useForm<GroupMetaSchema>({
+    resolver: zodResolver(groupMetaSchema),
+    defaultValues: {
+      name: groupMeta.name,
+      description: groupMeta.description,
+    },
+  });
+  const updateMutation = useMutation({
+    mutationFn: async (...vars: Parameters<typeof updateGroup>) => {
+      console.log('gonna update', vars);
+      return await updateGroup(...vars);
+    },
+    onSuccess(data) {
+      console.log(data);
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      form.reset();
+      setOpen(false);
+    },
+    onError(error) {
+      console.log(error);
+      throw error;
+    },
+  });
+  function onSubmit(values: GroupMetaSchema) {
+    console.log('group id', groupMeta);
+    if (!workspaceId)
+      throw new Error('group dialog can only works under workspaceId route');
+    updateMutation.mutate({
+      workspaceId: +workspaceId,
+      groupId: groupMeta.id,
+      dto: values,
+    });
+  }
+
+  return (
+    <GroupMetaDialog
+      form={form}
+      onSubmit={onSubmit}
+      dialogTitle="Update group"
+      triggeChildren={
+        <>
+          <Edit className="mr-2" />
+          <span>Edit name</span>
+        </>
+      }
+      dialogSubmitButtonTitle="save"
+      dialogOpen={open}
+      setDialogOpen={setOpen}
+      isPending={updateMutation.isPending}
+    />
+  );
+}
+
+function GroupMetaDialog({
+  form,
+  triggeChildren,
+  dialogTitle,
+  dialogSubmitButtonTitle,
+  onSubmit,
+  dialogOpen,
+  setDialogOpen,
+  isPending,
+}: GroupMetaDialogProps) {
+  return (
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary">
-          {' '}
-          {props.insert ? (
-            <>
-              <Plus className="mr-2" />
-              <span>Add new group</span>
-            </>
-          ) : (
-            <>
-              <Edit className="mr-2" />
-              <span>Edit name</span>
-            </>
-          )}
-        </Button>
+        <Button variant="secondary">{triggeChildren}</Button>
       </DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {props.insert ? <>Add new group</> : <>Update group</>}
-          </DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -118,7 +266,31 @@ function GroupMetaDialog(props: GroupMetaDialogProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit">{props.insert ? 'create' : 'save'}</Button>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter role description"
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <Loader className="animate-spin " />
+              ) : (
+                dialogSubmitButtonTitle
+              )}
+            </Button>
           </form>
         </Form>
       </DialogContent>
@@ -126,7 +298,7 @@ function GroupMetaDialog(props: GroupMetaDialogProps) {
   );
 }
 
-function DeleteGroupAlert(props: { id: string }) {
+function DeleteGroupAlert(props: { id: number }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -153,45 +325,48 @@ function DeleteGroupAlert(props: { id: string }) {
     </AlertDialog>
   );
 }
+
+function useRoles(workspaceId: number) {
+  return useQuery({
+    queryKey: ['groups', workspaceId],
+    queryFn: () => getGroups({ workspaceId }),
+    staleTime: 0,
+  });
+}
+
+function useRole(workspaceId: number, roleId: number) {
+  return useQuery({
+    queryKey: ['groups', workspaceId, roleId],
+    queryFn: () => getGroup({ workspaceId, roleId }),
+  });
+}
+
 /**
  * render table to show all grpups
  */
 export function GroupsManagement() {
-  // TODO: convert to data fetching
-  const groups = useMemo<Group[]>(
-    () => [
-      { id: '1', name: 'Group 1', users: [] },
-      { id: '2', name: 'Group 2', users: [] },
-      { id: '3', name: 'Group 3', users: [] },
-    ],
-    [],
-  );
+  const { workspaceId } = useParams();
+  const groups = useRoles(+(workspaceId as string));
 
-  const form = useForm<GroupMetaSchema>({
-    resolver: zodResolver(groupMetaSchema),
-    defaultValues: {
-      name: '',
-    },
-  });
-
-  function onSubmit(values: GroupMetaSchema) {
-    // TODO: call the server
-    console.log(values);
+  if (groups.isError) {
+    throw groups.error;
+  } else if (groups.isPending) {
+    return <>loading</>;
   }
 
   return (
     <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
       <div className="flex w-full justify-between">
-        <p>{groups.length} groups</p>
-        <GroupMetaDialog insert={true} />
+        <p>{groups.data.length} groups</p>
+        <InsertGroupDialog />
       </div>
-      <div className="bg-primary/5 flex w-full justify-between p-2">
-        <div className="flex flex-col gap-4 border-r pr-2">
+      <div className="flex h-2/3 w-full justify-between bg-primary/5 p-2">
+        <div className="flex w-[20%] max-w-[20%] flex-col gap-4 overflow-y-auto border-r pr-2">
           <Input placeholder="search by name" />
-          {groups.map((group) => (
+          {groups.data.map((group) => (
             <NavLink
               key={group.id}
-              to={group.id}
+              to={group.id.toString()}
               className={({ isActive }) => {
                 return `p-3 ${isActive ? 'bg-primary/10' : ''}`;
               }}
@@ -206,32 +381,197 @@ export function GroupsManagement() {
   );
 }
 
+const permissionTypes = z.enum([
+  'Workspaces-Read',
+  'Workspaces-Write',
+  'Workspaces-Delete',
+  // APPS
+  'Apps-Read',
+  'Apps-Write',
+  'Apps-Delete',
+]);
+type PermissionTypes = z.infer<typeof permissionTypes>;
+
+type Permission = {
+  id: number;
+  name: PermissionTypes;
+};
+
+async function getAllPermissions() {
+  const res = await fetchX('permissions', {
+    method: 'GET',
+  });
+  return (await res.json()) as Permission[];
+}
+
+async function togglePermission({
+  workspaceId,
+  roleId,
+  permissionId,
+}: {
+  workspaceId: number;
+  roleId: number;
+  permissionId: Permission['id'];
+}) {
+  await fetchX(
+    `workspaces/${workspaceId}/roles/${roleId}/togglepermission/${permissionId}`,
+    {
+      method: 'PUT',
+    },
+  );
+}
+
+function useTogglePermission() {
+  const queryClient = useQueryClient();
+  const mutate = useMutation({
+    mutationFn: togglePermission,
+    async onSuccess(_, variables) {
+      await queryClient.invalidateQueries({
+        queryKey: ['groups', variables.workspaceId, variables.roleId],
+      });
+    },
+  });
+  return mutate;
+}
+
+function usePermissions() {
+  const permissions = useQuery({
+    queryKey: ['permissions'],
+    queryFn: getAllPermissions,
+  });
+  return permissions;
+}
+
+function PermissionsTab({
+  permissions,
+  isAdmin,
+}: {
+  permissions: Permission[];
+  isAdmin: boolean;
+}) {
+  const { workspaceId, groupId } = useParams();
+  const allPermissions = usePermissions();
+  const togglePermission = useTogglePermission();
+  // just for easy check
+  const persId = new Set(permissions.map((p) => p.id));
+
+  if (allPermissions.isPending) {
+    return <>loading</>;
+  } else if (allPermissions.isError) {
+    throw allPermissions.error;
+  }
+
+  return (
+    <div className="ml-4 flex flex-col gap-3">
+      <div className="h-5">
+        {isAdmin ? <p>admin has all permissions</p> : null}
+      </div>
+      {allPermissions.data.map((per) => (
+        <Label key={per.id} className="flex gap-5">
+          <Checkbox
+            defaultChecked={persId.has(per.id)}
+            onCheckedChange={(c) => {
+              console.log('per: ', per.id, 'state: ', c);
+              if (!workspaceId || !groupId)
+                throw new Error(
+                  'this component only works under workspaceId and roleId',
+                );
+              togglePermission.mutate({
+                workspaceId: +workspaceId,
+                roleId: +groupId,
+                permissionId: per.id,
+              });
+            }}
+            value={per.id}
+            disabled={isAdmin || togglePermission.isPending}
+          />
+          {per.name}
+        </Label>
+      ))}
+    </div>
+  );
+}
+
+function UsersTab({
+  users,
+  isEveryone,
+}: {
+  users: User[];
+  isEveryone: boolean;
+}) {
+  return (
+    <div>
+      {isEveryone ? (
+        <p>
+          cannot add users manually all users are added automatically to this
+          group
+        </p>
+      ) : null}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[100px]"></TableHead>
+            <TableHead>Username</TableHead>
+            <TableHead>Email</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell className="font-medium">
+                <Avatar className="mr-2">
+                  <AvatarImage src={u.imageUrl ?? undefined} />
+                  <AvatarFallback>{getInitials(u.username)}</AvatarFallback>
+                </Avatar>
+              </TableCell>
+              <TableCell>{u.username}</TableCell>
+              <TableCell>{u.email}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 /*
  * render single group data as nested route
  */
 export function GroupManagement() {
-  //TODO: fetch single group data
-  const groups = useMemo<Group[]>(
-    () => [
-      { id: '1', name: 'Group 1', users: [] },
-      { id: '2', name: 'Group 2', users: [] },
-      { id: '3', name: 'Group 3', users: [] },
-    ],
-    [],
+  const { workspaceId, groupId } = useParams();
+  const { isError, isPending, data, error } = useRole(
+    +(workspaceId as string),
+    +(groupId as string),
   );
-  const { groupId } = useParams();
-  if (!groupId) throw new Error('must supply group id');
-  const group = groups.find((i) => i.id === groupId);
-  if (!group) throw new Error('404');
+
+  if (isError) {
+    throw error;
+  } else if (isPending) {
+    return <>loading</>;
+  }
 
   return (
     <div className="flex w-full flex-col">
-      <div className="flex">
-        <p>{group.name}</p>
-        <GroupMetaDialog insert={false} groupMeta={group} />
-        <DeleteGroupAlert id={group.id} />
+      <div className="flex justify-between">
+        <p>{data.name}</p>
+        <div className="flex h-10 gap-4">
+          {/*if default group don't render delete/edit*/}
+          {data.name === 'admin' || data.name === 'everyone' ? (
+            <p>default group</p>
+          ) : (
+            <>
+              <UpdateGroupDialog
+                groupMeta={{
+                  ...data,
+                  description: data.description ?? undefined,
+                }}
+              />
+              <DeleteGroupAlert id={data.id} />
+            </>
+          )}
+        </div>
       </div>
-      <Tabs defaultValue="account" className="h-full w-full">
+      <Tabs defaultValue="permissions" className="h-2/3 w-full" key={data.name}>
         <TabsList className="mt-4 w-full gap-6">
           <TabsTrigger value="apps">Apps</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
@@ -243,12 +583,13 @@ export function GroupManagement() {
           user will chose what apps this group can access here
         </TabsContent>
         <TabsContent value="users">
-          {/*TODO: */}
-          admin will chose what users in this group
+          <UsersTab users={data.users} isEveryone={data.name === 'everyone'} />
         </TabsContent>
         <TabsContent value="permissions">
-          {/*TODO: */}
-          admin chose what users in this group could do
+          <PermissionsTab
+            permissions={data.permissions}
+            isAdmin={data.name === 'admin'}
+          />
         </TabsContent>
         <TabsContent value="datasources">
           {/*TODO: */}

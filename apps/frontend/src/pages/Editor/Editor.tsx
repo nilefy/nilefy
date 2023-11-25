@@ -62,14 +62,14 @@ function WebloomRoot() {
   const width = store((state) => state.editorWidth);
   const height = store((state) => state.editorHeight);
   const children = useMemo(() => {
-    let children = root.widget.props.children as React.ReactElement[];
+    let children = root.props.children as React.ReactElement[];
     if (root.nodes.length > 0) {
       children = root.nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [root.nodes, root.widget.props.children]);
+  }, [root.nodes, root.props.children]);
   useLayoutEffect(() => {
     const columnWidth = width / NUMBER_OF_COLUMNS;
     let rowsCount = root.rowsCount;
@@ -111,7 +111,7 @@ function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
-  const props = store((state) => state.tree[id].widget.props);
+  const props = store((state) => state.tree[id].props);
   const children = useMemo(() => {
     let children = props.children as React.ReactElement[];
     if (nodes.length > 0) {
@@ -124,11 +124,11 @@ function WebloomElement({ id }: { id: string }) {
   const rendered = useMemo(
     () =>
       createElement(
-        WebloomWidgets[tree.widget.type].component as ElementType,
+        WebloomWidgets[tree.type].component as ElementType,
         props,
         children,
       ),
-    [tree.widget.type, props, children],
+    [tree.type, props, children],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -152,12 +152,10 @@ const initTree: WebloomTree = {
     isCanvas: true,
     dom: null,
     rowsCount: 0,
-    widget: {
-      props: {
-        className: 'h-full w-full',
-      },
-      type: 'WebloomContainer',
+    props: {
+      className: 'h-full w-full',
     },
+    type: 'WebloomContainer',
   },
 };
 store.setState((state) => {
