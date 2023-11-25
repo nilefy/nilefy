@@ -1,13 +1,17 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { Button } from '../../_Components';
 import { MousePointerSquare } from 'lucide-react';
-import { ComponentPropsWithoutRef } from 'react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
-
-type WebloomButtonProps = ComponentPropsWithoutRef<typeof Button>;
-
+import { Button } from '@/components/ui/button';
+export type WebloomButtonProps = {
+  text: string;
+  color: 'red' | 'blue' | 'transparent';
+};
 const WebloomButton = (props: WebloomButtonProps) => {
-  return <Button {...props} />;
+  return (
+    <Button {...props} className="h-full w-full">
+      {props.text}
+    </Button>
+  );
 };
 const config: WidgetConfig = {
   name: 'Button',

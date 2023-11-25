@@ -90,7 +90,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem
-            onPointerDown={() => {
+            onMouseDown={() => {
               commandManager.executeCommand(new DeleteAction());
             }}
           >

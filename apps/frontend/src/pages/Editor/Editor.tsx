@@ -45,6 +45,7 @@ import { SelectionAction } from '@/actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -185,6 +186,9 @@ function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
+  });
+  useHotkeys('delete', () => {
+    commandManager.executeCommand(new DeleteAction());
   });
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
