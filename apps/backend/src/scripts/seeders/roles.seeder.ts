@@ -44,10 +44,6 @@ export async function rolesSeeder(
       count: 10,
     },
   );
-  console.log(
-    '🪵 [roles.seeder.ts:41] ~ token ~ \x1b[0;32mfakeRoles\x1b[0m = ',
-    fakeRoles,
-  );
   const rolesSeed: CreateRoleDb[] = [];
 
   // generate default roles in each workspace
@@ -79,14 +75,6 @@ export async function rolesSeeder(
   const usersSeed: { roleId: number; userId: number }[] = [];
   // admin and every one are added for each workspace
   const skip = workspaceIds.length * 2;
-  console.log(
-    '🪵 [roles.seeder.ts:77] ~ token ~ \x1b[0;32mskip\x1b[0m = ',
-    skip,
-  );
-  console.log(
-    '🪵 [roles.seeder.ts:77] ~ token ~ \x1b[0;32mres.length\x1b[0m = ',
-    res.length,
-  );
   res.forEach((r, i) => {
     if (r.name === 'admin') {
       usersSeed.push({
@@ -107,12 +95,6 @@ export async function rolesSeeder(
         });
       });
     } else {
-      console.log('🪵 [roles.seeder.ts:86] ~ token ~ \x1b[0;32mi\x1b[0m = ', i);
-      console.log('🪵 [roles.seeder.ts:86] ~ token ~ \x1b[0;32mr\x1b[0m = ', r);
-      console.log(
-        '🪵 [roles.seeder.ts:100] ~ token ~ \x1b[0;32mi - skip\x1b[0m = ',
-        i - skip,
-      );
       fakeRoles[i - skip].permissions.forEach((p) =>
         permissionsSeed.push({
           roleId: r.id,

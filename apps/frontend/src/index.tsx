@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import App from '@/components/Editor/Editor';
+import App from '@/pages/Editor/Editor';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';

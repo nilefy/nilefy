@@ -1,57 +1,19 @@
-import { NUMBER_OF_COLUMNS, ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { checkOverlap, getBoundingRect, normalize } from '@/lib/utils';
+import {
+  NUMBER_OF_COLUMNS,
+  PREVIEW_NODE_ID,
+  ROOT_NODE_ID,
+  ROW_HEIGHT,
+} from '@/lib/Editor/constants';
+import {
+  BoundingRect,
+  ShadowElement,
+  WebloomGridDimensions,
+  WebloomNode,
+  WebloomPixelDimensions,
+} from '@/lib/Editor/interface';
+import { checkOverlap, getBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
-export type BoundingRect = {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-  width: number;
-  height: number;
-};
-export type ShadowElement = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-export type WebloomNode = {
-  id: string;
-  name: string;
-  //type can be a react component or a string
-  type: React.ElementType | string;
-  dom: HTMLElement | null;
-  nodes: string[];
-  parent: string;
-  props: Record<string, unknown>;
-  isCanvas?: boolean;
-} & WebloomGridDimensions;
-export type WebloomGridDimensions = {
-  /**
-   * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
-   */
-  col: number;
-  /**
-   * rowNumber from top to bottom starting from 0 to infinity
-   */
-  row: number;
-  // this propert is exclusive for canvas nodes
-  columnWidth?: number;
-  // number of columns this node takes
-  columnsCount: number;
-  /**
-   * number of rows this node takes
-   */
-  rowsCount: number;
-};
-
-export type WebloomPixelDimensions = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
 
 export type WebloomTree = {
   [key: string]: WebloomNode;
@@ -66,6 +28,8 @@ export interface WebloomState {
   newNodeTranslate: Point | null;
   mousePos: Point;
   shadowElement: ShadowElement | null;
+  editorWidth: number;
+  editorHeight: number;
 }
 
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -80,7 +44,7 @@ interface WebloomActions {
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string) => void;
-  removeNode: (id: string) => void;
+  removeNode: (id: string, stack?: WebloomNode[]) => void;
   moveNodeIntoGrid: (
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
@@ -113,6 +77,9 @@ interface WebloomActions {
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
+  setProp: (id: string, key: string, value: unknown) => void;
+  setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
 interface WebloomGetters {
@@ -130,6 +97,7 @@ interface WebloomGetters {
     overId: string,
     forShadow?: boolean,
   ) => WebloomGridDimensions;
+  getSelectedNodeIds: () => WebloomState['selectedNodeIds'];
 }
 
 function handleHoverCollision(
@@ -326,6 +294,11 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
     resizedNode: null,
+    editorWidth: 0,
+    editorHeight: 0,
+    getSelectedNodeIds() {
+      return get().selectedNodeIds;
+    },
     setResizedNode(id) {
       set({ resizedNode: id });
     },
@@ -337,6 +310,35 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+    },
+    setEditorDimensions({ width, height }) {
+      set((state) => {
+        return {
+          ...state,
+          editorWidth: width || state.editorWidth,
+          editorHeight: height || state.editorHeight,
+        };
+      });
+    },
+    setProps(id, newProps) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            props: {
+              ...node.props,
+              ...newProps,
+            },
+          },
+        };
+        return { tree: newTree };
+      });
+    },
+    setProp(id, key, value) {
+      get().setProps(id, { [key]: value });
     },
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
@@ -464,11 +466,26 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: { ...state.tree, [parentId]: parent } };
       });
     },
-    removeNode(id) {
+
+    /**
+     * @param stack if stack is supplied will push deleted node to it
+     */
+    removeNode(id, stack) {
       // cannot delete a non existing node
       if (!(id in get().tree)) return;
+      const node = get().tree[id];
+      // remove node children then remove it
+      for (const childId of node.nodes) {
+        // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
+        // but we don't want this so just skip the recursive calls and go directly deleting the preview
+        if (id === PREVIEW_NODE_ID) break;
+        get().removeNode(childId, stack);
+      } // base case is that element has no child
       set((state) => {
         const node = state.tree[id];
+        if (stack !== undefined) {
+          stack.push(node);
+        }
         if (!node) return state;
         const newTree = {
           ...state.tree,
