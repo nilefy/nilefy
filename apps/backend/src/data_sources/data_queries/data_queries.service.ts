@@ -14,8 +14,7 @@ export class DataQueriesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
   async runQuery(operation: string, query: QueryDb): Promise<QueryRet> {
-    //data source
-    const [dataSourceConfig] = await this.db.query.ds.findFirst({
+    const { config: dataSourceConfig } = await this.db.query.ds.findFirst({
       column: { config: true },
       where: eq(ds.id, query.dataSourceId),
     });
