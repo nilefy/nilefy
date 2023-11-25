@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 export const configSchema = z.object({
+  user: z.string(),
   host: z.string(),
   port: z.number(),
-  databaseName: z.string(),
-  username: z.string(),
+  database: z.string(),
   password: z.string(),
-  ssl: z.boolean(),
+  ssl: z.any(),
   sslCertificate: z.string(),
   connectionOptions: z.string(),
 });
