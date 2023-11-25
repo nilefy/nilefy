@@ -48,25 +48,61 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { api } from '@/api';
+import { useParams } from 'react-router-dom';
+import { getLastUpdatedInfo } from '@/utils/date';
+import { APPS_QUERY_KEY, AppI, AppMetaT, appMetaSchema } from '@/api/apps.api';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 
-const appMetaSchema = z.object({
-  name: z.string().min(4).max(255),
-  description: z.string().min(4).max(255).optional(),
-});
-type AppMetaT = z.infer<typeof appMetaSchema>;
-
-function AppDropDown() {
-  const form = useForm<AppMetaT>({
-    resolver: zodResolver(appMetaSchema),
-    defaultValues: {
-      // TODO: add default from the api
-      name: '',
-      description: '',
+function AppDropDown(props: { app: AppI }) {
+  const [open, setOpen] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { workspaceId } = useParams();
+  const { mutate: deleteMutate } = api.apps.delete.useMutation({
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+      toast({
+        title: 'deleted app successfully',
+        description: 'app deleted',
+      });
+    },
+  });
+  const { mutate: updateMutate } = api.apps.update.useMutation({
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+      setOpen(false);
     },
   });
 
-  function onSubmit(values: AppMetaT) {
-    console.log(values);
+  const { mutate: clone } = api.apps.clone.useMutation({
+    async onSuccess(data) {
+      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+      toast({
+        title: 'cloned app successfully',
+        description: 'new app name ' + data.name,
+      });
+    },
+  });
+
+  const form = useForm<AppMetaT>({
+    resolver: zodResolver(appMetaSchema.partial()),
+    defaultValues: {
+      name: props.app.name,
+      description: props.app.description ?? undefined,
+    },
+  });
+  if (!workspaceId) throw new Error();
+
+  function onSubmit(data: Partial<AppMetaT>) {
+    if (!workspaceId) throw new Error();
+    updateMutate({
+      workspaceId: +workspaceId,
+      appId: props.app.id,
+      data,
+    });
   }
 
   return (
@@ -75,7 +111,7 @@ function AppDropDown() {
         <MoreVertical />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
               <Wrench className="mr-2 h-4 w-4" />
@@ -126,7 +162,15 @@ function AppDropDown() {
             </Form>
           </DialogContent>
         </Dialog>
-        <DropdownMenuItem>
+
+        {/*
+          CLONE
+          */}
+        <DropdownMenuItem
+          onClick={() =>
+            clone({ workspaceId: +workspaceId, appId: props.app.id })
+          }
+        >
           <Copy className="mr-2 h-4 w-4" />
           <span>Duplicate</span>
         </DropdownMenuItem>
@@ -146,13 +190,21 @@ function AppDropDown() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
+                This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction>Continue</AlertDialogAction>
+              <AlertDialogAction
+                onClick={() => {
+                  deleteMutate({
+                    workspaceId: +workspaceId,
+                    appId: props.app.id,
+                  });
+                }}
+              >
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -162,21 +214,35 @@ function AppDropDown() {
 }
 
 function CreateAppDialog() {
+  const [open, setOpen] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const { workspaceId } = useParams();
+  const { mutate, isPending } = api.apps.insert.useMutation({
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+      setOpen(false);
+    },
+  });
+
   const form = useForm<AppMetaT>({
     resolver: zodResolver(appMetaSchema),
     mode: 'onSubmit',
     defaultValues: {
-      description: '',
+      description: undefined,
       name: '',
     },
   });
 
-  function onSubmit(values: AppMetaT) {
-    console.log(values);
+  function onSubmit(data: AppMetaT) {
+    if (!workspaceId) throw new Error('must have workspaceid');
+    mutate({
+      workspaceId: +workspaceId,
+      data,
+    });
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="w-full">create new app</Button>
       </DialogTrigger>
@@ -213,7 +279,9 @@ function CreateAppDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit">Create App</Button>
+            <Button type="submit" disabled={isPending}>
+              Create App
+            </Button>
           </form>
         </Form>
       </DialogContent>
@@ -221,9 +289,61 @@ function CreateAppDialog() {
   );
 }
 
+function ApplicationsView() {
+  const { workspaceId } = useParams();
+  const apps = api.apps.index.useQuery(+(workspaceId as string));
+
+  if (apps.isError) {
+    throw apps.error;
+  } else if (apps.isPending) {
+    return <>loading</>;
+  }
+  return (
+    <div className="flex h-full w-full flex-col gap-5 p-6">
+      <Input
+        type="search"
+        placeholder="search apps in this workspace"
+        className="w-full"
+      />
+      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto">
+        {apps.data.map((app) => (
+          <Card
+            key={app.id}
+            className="min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400"
+          >
+            <CardHeader className="flex flex-col">
+              <div className="flex w-full justify-between">
+                <CardTitle className="line-clamp-1 w-11/12">
+                  {app.name}
+                </CardTitle>
+                <AppDropDown app={app} />
+              </div>
+              <CardDescription className="line-clamp-1">
+                Edited{' '}
+                {getLastUpdatedInfo(
+                  new Date(app.updatedAt ?? app.createdAt),
+                  false,
+                )}{' '}
+                by {app.updatedBy?.username || app.createdBy.username}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="line-clamp-1">{app.description}</p>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-5">
+              <Button>Edit</Button>
+              <Button>Launch</Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ApplicationsLayout() {
   return (
-    <>
+    <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
       <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
@@ -234,61 +354,7 @@ export function ApplicationsLayout() {
           <SelectWorkSpace />
         </div>
       </div>
-      <div className="flex w-full flex-col gap-5 p-6">
-        <Input
-          type="search"
-          placeholder="search apps in this workspace"
-          className="w-full"
-        />
-        <div className="flex w-full flex-wrap gap-16">
-          {/*TODO: loop through apps from the backebd*/}
-          <Card className="min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400">
-            <CardHeader className="flex flex-col">
-              <div className="flex w-full justify-between">
-                <CardTitle>Untitled</CardTitle>
-                <AppDropDown />
-              </div>
-              <CardDescription>
-                Edited 38 mins ago by nagy-nabil
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>no description</p>
-            </CardContent>
-            <CardFooter className="flex justify-end gap-5">
-              <Button>Edit</Button>
-              <Button>Launch</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400">
-            <CardHeader className="flex flex-col">
-              <div className="flex w-full justify-between">
-                <CardTitle className="line-clamp-1 w-11/12">
-                  Untitled Untitled Untitled Untitled Untitled Untitled Untitled
-                  Untitled Untitled Untitled Untitled Untitled Untitled{' '}
-                </CardTitle>
-                <AppDropDown />
-              </div>
-              <CardDescription>
-                Edited 38 mins ago by nagy-nabil
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="line-clamp-1">
-                no description no descriptionno descriptionno descriptionno
-                descriptionno descriptionno descriptionno descriptionno
-                descriptionno descriptionno descriptionno descriptionno
-                descriptionno descriptionno description
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-end gap-5">
-              <Button>Edit</Button>
-              <Button>Launch</Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    </>
+      <ApplicationsView />
+    </div>
   );
 }

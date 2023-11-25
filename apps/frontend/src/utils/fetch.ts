@@ -8,7 +8,7 @@ export async function fetchX(...args: Parameters<typeof fetch>) {
   const res = await fetch(`${baseUrl}${url}`, {
     ...init,
     headers: {
-      Authorization: localStorage.getItem('token') ?? '',
+      Authorization: localStorage.getItem('access_token') ?? '',
       ...init?.headers,
     },
   });
