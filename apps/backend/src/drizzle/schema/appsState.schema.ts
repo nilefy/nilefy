@@ -56,12 +56,32 @@ export const pages = pgTable(
 export const components = pgTable(
   'components',
   {
+    // TODO: id is string in the frontend
     id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
     props: json('props').notNull(),
-    parentId: integer('parent_id'),
+    /**
+     * parent_id
+     */
+    parent: integer('parent_id'),
+
+    // LAYOUT
+    /**
+     * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
+     */
+    col: integer('col').notNull(),
+    /**
+     * rowNumber from top to bottom starting from 0 to infinity
+     */
+    row: integer('row').notNull(),
+    // number of columns this node takes
+    columnsCount: integer('columns_count').notNull(),
+    /**
+     * number of rows this node takes
+     */
+    rowsCount: integer('rows_count').notNull(),
     pageId: integer('page_id')
       .notNull()
       .references(() => pages.id),
@@ -70,7 +90,7 @@ export const components = pgTable(
   },
   (t) => ({
     parentFK: foreignKey({
-      columns: [t.parentId],
+      columns: [t.parent],
       foreignColumns: [t.id],
     }),
   }),
@@ -137,7 +157,7 @@ export const componentsRelations = relations(components, ({ one, many }) => ({
     relationName: componentsToPageRelation,
   }),
   parent: one(components, {
-    fields: [components.parentId],
+    fields: [components.parent],
     references: [components.id],
     relationName: componentParentRelation,
   }),
