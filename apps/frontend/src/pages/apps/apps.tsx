@@ -225,7 +225,7 @@ export function ApplicationsLayout() {
   return (
     <>
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />

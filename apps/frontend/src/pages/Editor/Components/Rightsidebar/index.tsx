@@ -1,11 +1,12 @@
 import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
-import { Inspector } from '../Inspector/Index';
+import { ConfigPanel } from '../configPanel/index';
+import { commandManager } from '@/Actions/CommandManager';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 
 function InsertTab() {
   return (
@@ -51,8 +52,12 @@ function InspectTab() {
     return (
       <TabsContent value="inspect">
         <p> {selectedIds.size} components selected</p>
-        {/*TODO: call delete action*/}
-        <Button variant={'destructive'}>Delete</Button>
+        <Button
+          variant={'destructive'}
+          onClick={() => commandManager.executeCommand(new DeleteAction())}
+        >
+          Delete
+        </Button>
       </TabsContent>
     );
   }

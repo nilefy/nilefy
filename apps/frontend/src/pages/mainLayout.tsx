@@ -7,6 +7,7 @@ import { User } from './workspace/users';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
+import { Inspector } from '@/components/inspector';
 
 const dashboardPaths = [
   {
@@ -14,6 +15,7 @@ const dashboardPaths = [
     path: '',
     icon: <Layout size={30} />,
   },
+
   {
     name: 'builtin-db',
     path: 'database',
@@ -30,7 +32,7 @@ const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
     // TODO: re-enable this when the frontend auth is ready
-    // const res = await fetchX('/workspaces');
+    // const res = await fetchX('workspaces');
     // return (await res.json()) as WorkSpaces;
     return [{ id: 1, imageUrl: null, name: 'work' }] satisfies WorkSpaces;
   },
@@ -62,7 +64,7 @@ export function Dashboard() {
   // TODO: change to real authed user
   const user: User = {
     id: 'nagy',
-    name: 'nagy',
+    username: 'nagy',
     email: 'nagy@nagy',
     status: 'active',
   };
@@ -83,12 +85,14 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
+        {/**TODO: move to editor layout */}
+        <Inspector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
             <Avatar className="mr-2">
               <AvatarImage src={user.imageUrl} />
-              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              <AvatarFallback>{getInitials(user.username)}</AvatarFallback>
             </Avatar>
           </NavLink>
         </div>

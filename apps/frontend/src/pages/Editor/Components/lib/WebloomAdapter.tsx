@@ -2,10 +2,17 @@ import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 
 type WebloomAdapterProps = {
   id: string;
@@ -68,16 +75,29 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
 
   return (
     <>
-      <div
-        {...modListeners}
-        {...attributes}
-        style={style}
-        ref={ref}
-        className="target touch-none"
-        data-id={id}
-      >
-        {!isDragging && props.children}
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <div
+            {...modListeners}
+            {...attributes}
+            style={style}
+            ref={ref}
+            className="target touch-none"
+            data-id={id}
+          >
+            {!isDragging && props.children}
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onPointerDown={() => {
+              commandManager.executeCommand(new DeleteAction());
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </>
   );
 };

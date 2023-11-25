@@ -51,7 +51,7 @@ export default function SelectDb() {
     );
   }
   return (
-    <div className="bg-primary/5 h-screen w-3/4">
+    <div className="h-screen w-3/4 bg-primary/5">
       <header className="table-info">
         <h1 className="mt-6 pl-8 text-start ">
           {currentTableId !== 0

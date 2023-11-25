@@ -151,10 +151,6 @@ export class WebloomDbService {
   ): Promise<{
     data: Record<string, unknown>[];
   }> {
-    console.log(
-      '🪵 [table.service.ts:152] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
-      data,
-    );
     const table = await this.db.query.webloomTables.findFirst({
       where: and(
         eq(schema.webloomTables.id, tableId),
@@ -178,10 +174,6 @@ export class WebloomDbService {
     for (const i of data) {
       const vs = [];
       for (const id of idArray) {
-        console.log(
-          '🪵 [table.service.ts:181] ~ token ~ \x1b[0;32mi[id]\x1b[0m = ',
-          i[id],
-        );
         if (!(id in i)) {
           throw new BadRequestException('Invalid data.');
         }
@@ -204,10 +196,6 @@ export class WebloomDbService {
       table.name,
       table.id,
     )} (${columnNames}) VALUES ${valueRow};`;
-    console.log(
-      '🪵 [table.service.ts:199] ~ token ~ \x1b[0;32mquery\x1b[0m = ',
-      query,
-    );
     await this.db.execute(sql.raw(query));
     return { data };
   }
