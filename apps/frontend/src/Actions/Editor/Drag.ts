@@ -112,7 +112,9 @@ class DragAction {
     setShadowElement(dims);
     setDraggedNode(this.id!);
   }
-  public static start(...args: Parameters<typeof DragAction._start>): Command {
+  public static start(
+    ...args: Parameters<typeof DragAction._start>
+  ): Command | null {
     return {
       execute: () => {
         this._start(...args);
@@ -162,12 +164,24 @@ class DragAction {
       this.currentParent = newParent;
       moveNode(this.previewId, newParent);
     }
+
     //Shadow element
     const newShadow = this.getDropCoordinates(
       delta,
       this.previewId!,
       overId === this.previewId! ? ROOT_NODE_ID : overId,
     );
+    if (newParent === ROOT_NODE_ID) {
+      const rootPixelDimensions = getPixelDimensions(ROOT_NODE_ID);
+      if (newShadow.y + newShadow.height >= rootPixelDimensions.height) {
+        newShadow.y = rootPixelDimensions.height - newShadow.height;
+      }
+      if (newShadow.y < 0) {
+        console.log('here 2');
+
+        newShadow.y = 0;
+      }
+    }
     setShadowElement(newShadow);
   }
   public static move(...args: Parameters<typeof DragAction._move>): Command {

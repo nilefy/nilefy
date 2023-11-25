@@ -12,7 +12,7 @@ import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 type WebloomAdapterProps = {
   id: string;
@@ -33,7 +33,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
-      disabled: !props.draggable && ResizeAction.resizingKey === null,
+      disabled: !props.draggable || ResizeAction.resizingKey !== null,
       data: {
         isNew: false,
       },
@@ -70,16 +70,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       position: 'absolute',
       width: elDimensions.width,
       height: elDimensions.height,
-      visibility: isDragging ? 'hidden' : 'visible',
-      opacity: isDragging ? 0 : 1,
     } as React.CSSProperties;
-  }, [
-    elDimensions.x,
-    elDimensions.y,
-    elDimensions.width,
-    elDimensions.height,
-    isDragging,
-  ]);
+  }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
 
   return (
     <>
