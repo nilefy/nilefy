@@ -55,6 +55,19 @@ export class AppsController {
     return await this.appsService.findOne(workspaceId, appId);
   }
 
+  @Post(':id/clone')
+  async clone(
+    @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Param('id', ParseIntPipe) appId: AppDto['id'],
+  ) {
+    return await this.appsService.clone({
+      workspaceId,
+      appId,
+      createdById: req.user.userId,
+    });
+  }
+
   @Put(':id')
   async update(
     @Req() req: ExpressAuthedRequest,

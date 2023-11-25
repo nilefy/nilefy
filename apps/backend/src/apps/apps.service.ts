@@ -2,8 +2,9 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
+import { UserDto } from '../dto/users.dto';
 
 @Injectable()
 export class AppsService {
@@ -11,6 +12,26 @@ export class AppsService {
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
   ) {}
+
+  // TODO: copy app state
+  async clone({
+    workspaceId,
+    appId,
+    createdById,
+  }: {
+    createdById: UserDto['id'];
+    workspaceId: AppDto['workspaceId'];
+    appId: AppDto['id'];
+  }) {
+    const app = await this.findOne(workspaceId, appId);
+    const newApp = await this.create({
+      name: app.name + '(copy)',
+      description: app.description,
+      workspaceId,
+      createdById: createdById,
+    });
+    return newApp;
+  }
 
   async create(createAppDto: CreateAppDb) {
     const app = await this.db.transaction(async (tx) => {
@@ -34,11 +55,26 @@ export class AppsService {
     return app;
   }
 
-  async findAll(workspaceId: AppDto['workspaceId']): Promise<AppDto[]> {
+  async findAll(workspaceId: AppDto['workspaceId']) {
     const workspaceApps = await this.db.query.apps.findMany({
       where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
+      orderBy: asc(apps.createdAt),
+      with: {
+        createdBy: {
+          columns: {
+            id: true,
+            username: true,
+          },
+        },
+        updatedBy: {
+          columns: {
+            id: true,
+            username: true,
+          },
+        },
+      },
     });
-    return workspaceApps as AppDto[];
+    return workspaceApps;
   }
 
   async findOne(
