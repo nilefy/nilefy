@@ -73,7 +73,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         {...attributes}
         style={style}
         ref={ref}
-        className="target touch-none"
+        className="target touch-none overflow-hidden"
         data-id={id}
       >
         {!isDragging && props.children}

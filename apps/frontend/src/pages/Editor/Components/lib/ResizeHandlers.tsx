@@ -95,6 +95,7 @@ function Handles({ id }: { id: string }) {
     border: '1px solid black',
     borderRadius: '50%',
   };
+  const padding = 5;
   return (
     !isDragging && (
       <div
@@ -110,17 +111,17 @@ function Handles({ id }: { id: string }) {
           const height = dims.height;
           let left = 0;
           if (x === 0) {
-            left = -handleSize / 2;
+            left = -handleSize / 2 - padding;
           } else if (x === 1) {
-            left = width - handleSize / 2;
+            left = width - handleSize / 2 + padding;
           } else {
             left = width / 2 - handleSize / 2;
           }
           let top = 0;
           if (y === 0) {
-            top = -handleSize / 2;
+            top = -handleSize / 2 - padding;
           } else if (y === 1) {
-            top = height - handleSize / 2;
+            top = height - handleSize / 2 + padding;
           } else {
             top = height / 2 - handleSize / 2;
           }

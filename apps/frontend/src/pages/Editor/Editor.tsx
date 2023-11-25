@@ -191,8 +191,16 @@ function Editor() {
   const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
-  const mouseSensor = useSensor(MouseSensor);
-  const touchSensor = useSensor(TouchSensor);
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: ROW_HEIGHT,
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      distance: ROW_HEIGHT,
+    },
+  });
   const sensors = useSensors(mouseSensor, touchSensor);
   const handleDragEnd = (e: DragEndEvent) => {
     if (!e.active.data.current) return;

@@ -4,7 +4,7 @@ import {
   WidgetInspectorConfig,
 } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -15,14 +15,20 @@ export type WebloomInputProps = Pick<
   label: string;
   type: 'text' | 'password';
 };
-
+export type WebloomInputInterface = {
+  setValue: (value: string) => void;
+  setDisabled: (value: boolean) => void;
+  setLoading: (value: boolean) => void;
+  clearValue: () => void;
+  focus: () => void;
+};
 const WebloomInput = (props: WebloomInputProps) => {
-  const { label } = props;
-
+  const { label, value } = props;
+  const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="flex items-center justify-center gap-2">
       <Label>{label}</Label>
-      <input className="h-full w-full" {...props} />
+      <Input {...props} />
     </div>
   );
 };
@@ -45,6 +51,7 @@ const defaultProps: WebloomInputProps = {
   label: 'Label',
   type: 'text',
 };
+
 const widgetName = 'WebloomInput';
 
 const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
