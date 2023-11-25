@@ -6,7 +6,7 @@ import {
   pgTable,
   serial,
   varchar,
-  primaryKey,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { workspaces, users, timeStamps, softDelete, apps } from './schema';
 
@@ -51,33 +51,26 @@ export const dataSources = pgTable(
   },
   (t) => {
     return {
-      pk: primaryKey(t.workspaceId, t.dataSourceId, t.name),
+      unq: unique().on(t.workspaceId, t.dataSourceId, t.name),
     };
   },
 );
 
-export const queries = pgTable(
-  'workspace_app_queries',
-  {
-    name: varchar('query_name', { length: 100 }).unique().notNull(),
-    query: varchar('query', { length: 255 }).notNull(),
-    workspaceId: integer('workspace_id')
-      .references(() => workspaces.id)
-      .notNull(),
-    appId: integer('app_id')
-      .references(() => apps.id)
-      .notNull(),
-    dataSourceId: integer('data_source_id')
-      .references(() => availableDataSources.id)
-      .notNull(),
-    dataSourceName: varchar('data_source_name', { length: 100 })
-      .references(() => dataSources.name)
-      .notNull(),
-    userId: integer('user_id')
-      .references(() => users.id)
-      .notNull(),
-  },
-  (t) => ({
-    pk: primaryKey(t.workspaceId, t.appId, t.dataSourceName),
-  }),
-);
+export const queries = pgTable('workspace_app_queries', {
+  id: serial('id').primaryKey(),
+  name: varchar('query_name', { length: 100 }).unique().notNull(),
+  query: varchar('query', { length: 255 }).notNull(),
+  workspaceId: integer('workspace_id')
+    .references(() => workspaces.id)
+    .notNull(),
+  appId: integer('app_id')
+    .references(() => apps.id)
+    .notNull(),
+  dataSourceId: integer('data_source_id')
+    .references(() => availableDataSources.id)
+    .notNull(),
+  dataSourceName: varchar('data_source_name', { length: 100 }).notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+});
