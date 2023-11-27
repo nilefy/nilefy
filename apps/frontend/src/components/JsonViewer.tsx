@@ -6,10 +6,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ROOT_NODE_ID } from '@/lib/constants';
 import store from '@/store';
-import { commandManager } from '@/Actions/CommandManager';
-import { SelectionAction } from '@/Actions/Editor/selection';
+import { commandManager } from '@/actions/commandManager';
+import { SelectionAction } from '@/actions/Editor/selection';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 type ElementProps = {
   [key: string]: unknown;
 };

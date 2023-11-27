@@ -3,60 +3,17 @@ import {
   PREVIEW_NODE_ID,
   ROOT_NODE_ID,
   ROW_HEIGHT,
-} from '@/lib/constants';
-import { checkOverlap, getBoundingRect, normalize } from '@/lib/utils';
+} from '@/lib/Editor/constants';
+import {
+  BoundingRect,
+  ShadowElement,
+  WebloomGridDimensions,
+  WebloomNode,
+  WebloomPixelDimensions,
+} from '@/lib/Editor/interface';
+import { checkOverlap, getBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
-export type BoundingRect = {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-  width: number;
-  height: number;
-};
-export type ShadowElement = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-export type WebloomNode = {
-  id: string;
-  name: string;
-  //type can be a react component or a string
-  type: React.ElementType | string;
-  dom: HTMLElement | null;
-  nodes: string[];
-  parent: string;
-  props: Record<string, unknown>;
-  isCanvas?: boolean;
-} & WebloomGridDimensions;
-export type WebloomGridDimensions = {
-  /**
-   * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
-   */
-  col: number;
-  /**
-   * rowNumber from top to bottom starting from 0 to infinity
-   */
-  row: number;
-  // this propert is exclusive for canvas nodes
-  columnWidth?: number;
-  // number of columns this node takes
-  columnsCount: number;
-  /**
-   * number of rows this node takes
-   */
-  rowsCount: number;
-};
-
-export type WebloomPixelDimensions = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
 
 export type WebloomTree = {
   [key: string]: WebloomNode;
@@ -71,6 +28,8 @@ export interface WebloomState {
   newNodeTranslate: Point | null;
   mousePos: Point;
   shadowElement: ShadowElement | null;
+  editorWidth: number;
+  editorHeight: number;
 }
 
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -118,6 +77,9 @@ interface WebloomActions {
   setNewNodeTranslate: (translate: WebloomState['newNodeTranslate']) => void;
   setDraggedNode: (id: string | null) => void;
   setResizedNode: (id: string | null) => void;
+  setProp: (id: string, key: string, value: unknown) => void;
+  setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
 interface WebloomGetters {
@@ -332,6 +294,8 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     newNodeTranslate: { x: 0, y: 0 },
     mousePos: { x: 0, y: 0 },
     resizedNode: null,
+    editorWidth: 0,
+    editorHeight: 0,
     getSelectedNodeIds() {
       return get().selectedNodeIds;
     },
@@ -346,6 +310,35 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         columnsCount: node.columnsCount,
         rowsCount: node.rowsCount,
       };
+    },
+    setEditorDimensions({ width, height }) {
+      set((state) => {
+        return {
+          ...state,
+          editorWidth: width || state.editorWidth,
+          editorHeight: height || state.editorHeight,
+        };
+      });
+    },
+    setProps(id, newProps) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            props: {
+              ...node.props,
+              ...newProps,
+            },
+          },
+        };
+        return { tree: newTree };
+      });
+    },
+    setProp(id, key, value) {
+      get().setProps(id, { [key]: value });
     },
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;

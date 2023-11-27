@@ -1,23 +1,34 @@
 import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WebloomComponents } from '../WebloomComponents';
-import NewNodeAdapter from '../WebloomComponents/lib/NewNodeAdapter';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { commandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+import { WebloomWidgets } from '..';
+import { NewNodeAdapter } from '../lib';
+import { ConfigPanel } from '../configPanel/index';
+import { commandManager } from '@/actions/commandManager';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 function InsertTab() {
   return (
     <TabsContent value="insert">
-      {Object.entries(WebloomComponents).map(([name, component]) => {
-        const Component = component.component;
-        return (
-          <NewNodeAdapter type={name} key={name}>
-            <div>{component.name}</div>
-          </NewNodeAdapter>
-        );
-      })}
+      <div className="grid w-full grid-cols-2">
+        {Object.entries(WebloomWidgets).map(([name, component]) => {
+          const config =
+            WebloomWidgets[name as keyof typeof WebloomWidgets].config;
+          return (
+            <NewNodeAdapter type={name} key={name}>
+              <div>
+                <div className="flex h-full w-full items-center justify-center">
+                  {config.icon}
+                </div>
+                <div className="flex h-full w-full items-center justify-center">
+                  {config.name}
+                </div>
+              </div>
+            </NewNodeAdapter>
+          );
+        })}
+      </div>
     </TabsContent>
   );
 }
@@ -34,7 +45,7 @@ function InspectTab() {
   } else if (selectedIds.size === 1) {
     return (
       <TabsContent value="inspect">
-        <p>TODO: render form elements based on the component type</p>
+        <ConfigPanel />
       </TabsContent>
     );
   } else if (selectedIds.size > 1) {
@@ -65,7 +76,7 @@ export function RightSidebar() {
   }, [size]);
 
   return (
-    <div className="h-full w-1/5 overflow-y-auto">
+    <div className="h-full w-full overflow-y-auto" key="right-sidebar">
       <Tabs
         value={openedTab}
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}
@@ -76,9 +87,11 @@ export function RightSidebar() {
           <TabsTrigger value="inspect">Inspect</TabsTrigger>
           <TabsTrigger value="insert">Insert</TabsTrigger>
         </TabsList>
-        <InsertTab />
-        <InspectTab />
-        <TabsContent value="page">show page meta data</TabsContent>
+        <div className="p-2">
+          <InsertTab />
+          <InspectTab />
+          <TabsContent value="page">show page meta data</TabsContent>
+        </div>
       </Tabs>
     </div>
   );

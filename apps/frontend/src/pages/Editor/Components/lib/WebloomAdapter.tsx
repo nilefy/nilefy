@@ -1,19 +1,18 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
-import { ROOT_NODE_ID } from '@/lib/constants';
 import { useWebloomDraggable } from '@/hooks';
-import ResizeAction from '@/Actions/Editor/Resize';
-import { commandManager } from '@/Actions/CommandManager';
-import { SelectionAction } from '@/Actions/Editor/selection';
-import { DeleteAction } from '@/Actions/Editor/Delete';
-import { Trash2 } from 'lucide-react';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import ResizeAction from '@/actions/Editor/Resize';
+import { commandManager } from '@/actions/commandManager';
+import { SelectionAction } from '@/actions/Editor/selection';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { DeleteAction } from '@/actions/Editor/Delete';
 
 type WebloomAdapterProps = {
   id: string;
@@ -34,12 +33,15 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
     {
       id,
-      disabled: !props.draggable && ResizeAction.resizingKey === null,
+      disabled: !props.draggable || ResizeAction.resizingKey !== null,
       data: {
         isNew: false,
       },
     },
   );
+  if (id === ROOT_NODE_ID) {
+    attributes.role = 'canvas';
+  }
   const modListeners = useMemo(() => {
     if (!listeners)
       return {
@@ -68,16 +70,8 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       position: 'absolute',
       width: elDimensions.width,
       height: elDimensions.height,
-      visibility: isDragging ? 'hidden' : 'visible',
-      opacity: isDragging ? 0 : 1,
     } as React.CSSProperties;
-  }, [
-    elDimensions.x,
-    elDimensions.y,
-    elDimensions.width,
-    elDimensions.height,
-    isDragging,
-  ]);
+  }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
 
   return (
     <>

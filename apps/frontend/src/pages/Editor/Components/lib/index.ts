@@ -1,5 +1,5 @@
 import { Grid } from './Grid';
-import { MultiSelectBounding } from './MultiselectBounding';
+import { MultiSelectBounding } from './multiselectBounding';
 import NewNodeAdapter from './NewNodeAdapter';
 import { ResizeHandlers } from './ResizeHandlers';
 import { WebloomAdapter } from './WebloomAdapter';
