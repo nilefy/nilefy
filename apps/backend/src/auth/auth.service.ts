@@ -35,7 +35,7 @@ export class AuthService {
 
     const ret = await this.userService.findOne(email);
     if (!ret) {
-      throw new NotFoundException();
+      throw new NotFoundException('Email Not Found');
     }
 
     const match = await compare(password, ret.password);
