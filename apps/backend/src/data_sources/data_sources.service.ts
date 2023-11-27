@@ -113,6 +113,7 @@ export class DataSourcesService {
           eq(workspaceDataSources.workspaceId, workspaceId),
           eq(workspaceDataSources.dataSourceId, dataSourceId),
           eq(workspaceDataSources.name, dataSourceName),
+          isNull(workspaceDataSources.deletedAt),
         ),
       )
       .returning();
