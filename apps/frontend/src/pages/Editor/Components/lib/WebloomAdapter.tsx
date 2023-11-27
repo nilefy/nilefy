@@ -24,6 +24,7 @@ type WebloomAdapterProps = {
 
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
+  const isResizing = store((state) => state.resizedNode === id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
@@ -88,10 +89,10 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             <div
               className={cn(
                 {
-                  hidden: isDragging,
+                  hidden: isDragging || isResizing,
                 },
                 {
-                  flex: !isDragging,
+                  flex: !isDragging && !isResizing,
                 },
                 'w-full h-full',
               )}
