@@ -17,7 +17,7 @@ import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { QueryRet } from './query.types';
 
 @UseGuards(JwtGuard)
-@Controller('queries/:worksapaceId/:appId/:dataSourceId/:dataSourceName')
+@Controller('queries/:workspaceId/:appId/:dataSourceId/:dataSourceName')
 export class DataQueriesController {
   constructor(
     private dataQueriesService: DataQueriesService,
