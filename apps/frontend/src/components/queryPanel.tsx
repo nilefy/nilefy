@@ -43,7 +43,6 @@ const _dataSources = [
 ] as const;
 type DataSourceTypes = (typeof _dataSources)[number]['type'];
 export function QueryPanel() {
-  const [open, setOpen] = useState(true);
   //todo: temp until backend is finished
   const [queries, setQueries] = useState<Array<Query>>(() => [
     {
@@ -70,7 +69,6 @@ export function QueryPanel() {
   const [dataSources] = useState(_dataSources);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState<DataSourceTypes | 'all'>(
     'all',
@@ -357,8 +355,6 @@ export function QueryPanel() {
                     },
                   )}
                   onClick={() => handleItemClick(item.id)}
-                  onMouseEnter={() => setIsHovered(item.id)}
-                  onMouseLeave={() => setIsHovered(null)}
                 >
                   <li className="w-full">
                     {editingItemId === item.id ? (
