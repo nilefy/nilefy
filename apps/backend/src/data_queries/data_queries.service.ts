@@ -1,33 +1,33 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { QueryDb } from '../dto/data_queries.dto';
+import { QueryDb, QueryDto } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
-import { dataSources as ds } from '../drizzle/schema/data_sources.schema';
-import { eq } from 'drizzle-orm';
+import { queries } from '../drizzle/schema/data_sources.schema';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 
 @Injectable()
 export class DataQueriesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async runQuery(operation: string, query: QueryDb): Promise<QueryRet> {
-    const dataSource = await this.db.query.workspaceDataSources.findFirst({
-      columns: { config: true },
-      where: eq(ds.id, query.dataSourceId),
+  async runQuery(config: DataSourceConfigT, query: QueryDb): Promise<QueryRet> {
+    const service = this.getService();
+    const ret = await service.run(config, {
+      query: query.query,
+      name: query.name,
     });
-    const service = this.getService(query.dataSourceId);
-    return service.run(dataSource?.config as DataSourceConfigT, {
-      operation,
-      query,
-    });
+
+    if (ret.status === 200) {
+      await this.addQuery(query);
+    }
+    return ret;
+  }
+
+  async addQuery(query: QueryDb): Promise<QueryDto> {
+    const [q] = await this.db.insert(queries).values(query).returning();
+    return q;
   }
 
   // TODO
-  async getService(dataSourceId: number): QueryRunnerI {
-    const dataSource = await this.db.query.dataSources.findFirst({
-      columns: { name: true },
-      where: eq(ds.id, dataSourceId),
-    });
-  }
+  async getService(): QueryRunnerI {}
 }

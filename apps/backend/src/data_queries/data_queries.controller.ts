@@ -11,26 +11,61 @@ import { DataQueriesService } from './data_queries.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
-import { runQuerySchema, RunQueryDto } from '../dto/data_queries.dto';
+import { addQuerySchema, AddQueryDto, QueryDto } from '../dto/data_queries.dto';
+import { DataSourcesService } from '../data_sources/data_sources.service';
+import { DataSourceConfigT } from '../dto/data_sources.dto';
+import { QueryRet } from './query.types';
 
 @UseGuards(JwtGuard)
-@Controller('queries/:workspaceId/:appId/')
+@Controller('queries/:worksapaceId/:appId/:dataSourceId/:dataSourceName')
 export class DataQueriesController {
-  constructor(private dataQueriesService: DataQueriesService) {}
+  constructor(
+    private dataQueriesService: DataQueriesService,
+    private dataSourcesService: DataSourcesService,
+  ) {}
 
-  @Post('run/:operation')
+  @Post('run')
   async runQuery(
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('operation') operation: string,
-    @Body(new ZodValidationPipe(runQuerySchema)) runQueryDto: RunQueryDto,
+    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Param('dataSourceName') name: string,
+    @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
-  ) {
-    this.dataQueriesService.runQuery(operation, {
-      ...runQueryDto,
-      workspaceId,
-      appId,
+  ): Promise<QueryRet> {
+    const ds = (
+      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
+    )[0];
+
+    return await this.dataQueriesService.runQuery(
+      ds.config as DataSourceConfigT,
+      {
+        ...query,
+        dataSourceId: ds.id,
+        userId: req.user.userId,
+        appId,
+      },
+    );
+  }
+
+  @Post('add')
+  async addQuery(
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Param('dataSourceName') name: string,
+    @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
+    @Req() req: ExpressAuthedRequest,
+  ): Promise<QueryDto> {
+    const ds = (
+      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
+    )[0];
+
+    return await this.dataQueriesService.addQuery({
+      ...query,
+      dataSourceId: ds.id,
       userId: req.user.userId,
+      appId,
     });
   }
 }

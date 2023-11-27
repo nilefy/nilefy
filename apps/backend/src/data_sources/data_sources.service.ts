@@ -4,12 +4,14 @@ import {
   WsDataSourceDto,
   DataSourceDto,
   DataSourceDb,
+  GetWsDataSourceDto,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   dataSources,
   workspaceDataSources,
 } from '../drizzle/schema/data_sources.schema';
+import { and, eq } from 'drizzle-orm';
 
 @Injectable()
 export class DataSourcesService {
@@ -23,6 +25,21 @@ export class DataSourcesService {
     return dataSource as WsDataSourceDto;
   }
 
+  async get(obj: GetWsDataSourceDto): Promise<WsDataSourceDto[]> {
+    let ds = await this.db.query.workspaceDataSources.findMany({
+      where: and(
+        eq(workspaceDataSources.workspaceId, obj.workspaceId),
+        eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
+      ),
+    });
+
+    if (obj.name) {
+      ds = ds.filter((ds) => ds?.name === obj.name);
+    }
+    return ds as WsDataSourceDto[];
+  }
+
+  // GLOBAL
   async add(dataSource: DataSourceDb): Promise<DataSourceDto> {
     const [ds] = await this.db
       .insert(dataSources)

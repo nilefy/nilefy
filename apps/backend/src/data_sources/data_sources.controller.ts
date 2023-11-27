@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
   Req,
+  Get,
 } from '@nestjs/common';
 import { DataSourcesService } from './data_sources.service';
 import { JwtGuard } from '../auth/jwt.guard';
@@ -15,6 +16,7 @@ import {
   createWsDataSourceSchema,
   dataSourcesInsert,
   DataSourceDb,
+  DataSourceDto,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
@@ -24,7 +26,7 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 export class DataSourcesController {
   constructor(private dataSourceService: DataSourcesService) {}
 
-  @Post('/:dataSourceId')
+  @Post(':dataSourceId')
   async create(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
@@ -33,7 +35,7 @@ export class DataSourcesController {
     @Body(new ZodValidationPipe(createWsDataSourceSchema))
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
-  ) {
+  ): Promise<WsDataSourceDto> {
     const { name, config } = createDataSourceDto;
     const jsonConfig: WsDataSourceDto['config'] = JSON.stringify(config);
 
@@ -48,12 +50,22 @@ export class DataSourcesController {
     });
   }
 
+  @Get(':dataSourceId')
+  async get(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WsDataSourceDto['workspaceId'],
+    @Param('dataSourceId', ParseIntPipe)
+    dataSourceId: WsDataSourceDto['dataSourceId'],
+  ): Promise<WsDataSourceDto[]> {
+    return await this.dataSourceService.get({ workspaceId, dataSourceId });
+  }
+
   // TODO: another controller for global data sources
   @Post('')
   async add(
     @Body(new ZodValidationPipe(dataSourcesInsert))
     dataSource: DataSourceDb,
-  ) {
+  ): Promise<DataSourceDto> {
     return await this.dataSourceService.add(dataSource);
   }
 }
