@@ -5,6 +5,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { matchSorter } from 'match-sorter';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,19 +54,29 @@ const initialData = [
     dateModified: new Date('2023-01-03'),
   },
 ];
-type MyType = {
+type Query = {
   id: string;
   name: string;
   source: string;
   dateModified: Date;
 };
-
+const _dataSources = [
+  {
+    name: 'Data Source 1',
+    icon: 'https://picsum.photos/200',
+    type: 'Source A',
+  },
+  {
+    name: 'Data Source 2',
+    icon: 'https://picsum.photos/200',
+    type: 'Source B',
+  },
+] as const;
+type DataSourceTypes = (typeof _dataSources)[number]['type'];
 export function QueryPanel() {
   const [open, setOpen] = useState(false);
-  const [isResizing, setResizing] = useState(false);
-  const [height, setHeight] = useState<number>(300);
-  const [startY, setStartY] = useState<number>(0);
-  const [initialData2, setInitialData2] = useState<Array<MyType>>([
+  //todo: temp until backend is finished
+  const [queries, setQueries] = useState<Array<Query>>(() => [
     {
       id: nanoid(),
       name: 'Item 1',
@@ -84,67 +96,24 @@ export function QueryPanel() {
       dateModified: new Date('2023-01-03'),
     },
   ]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState(initialData);
-  const [searchQuery2, setSearchQuery2] = useState('');
+  const [dataSourceSearch, setDataSourceSearch] = useState('');
+  const [querySearch, setQuerySearch] = useState('');
+  const [dataSources] = useState(_dataSources);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
-  const [selectedSource, setSelectedSource] = useState<string | undefined>(
+  const [selectedSource, setSelectedSource] = useState<DataSourceTypes | 'all'>(
     'all',
   );
   const [sortingCriteria, setSortingCriteria] = useState('');
-  const [sortingOrder, setSortingOrder] = useState('');
-  const sourceTypes = Array.from(
-    new Set(initialData2.map((item) => item.source)),
-  ).map((source: string) => source);
+  const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
 
-  const handleMouseDown = (event: React.MouseEvent) => {
-    setResizing(true);
-    setStartY(event.clientY);
-  };
-
-  const handleMouseUp = () => {
-    setResizing(false);
-  };
-  const handleMouseMove = (event: MouseEvent) => {
-    if (isResizing) {
-      const resizableDiv = document.getElementById('myResizableDiv');
-      if (resizableDiv) {
-        const newHeight = height + (startY - event.clientY);
-
-        resizableDiv.style.height = `${newHeight}px`;
-        setHeight(newHeight);
-
-        setStartY(event.clientY);
-        if (height < 40) {
-          setOpen(false);
-          setTimeout(() => {
-            setHeight(300);
-          }, 1000);
-
-          console.log(height);
-        }
-      }
-    }
-  };
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isResizing, height, startY]);
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDataSourceSearchChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const query = event.target.value.toLowerCase();
-    setSearchQuery(query);
-    const filtered = initialData.filter((item) =>
-      item.name.toLowerCase().includes(query),
-    );
-    setFilteredData(filtered);
+    setDataSourceSearch(query);
   };
 
   const addItem = (newItem: {
@@ -153,13 +122,11 @@ export function QueryPanel() {
     source: string;
     dateModified: Date;
   }) => {
-    setInitialData2((prevData) => [...prevData, newItem]);
+    setQueries((prevData) => [...prevData, newItem]);
   };
 
   const deleteItem = (itemId: string) => {
-    setInitialData2((prevData) =>
-      prevData.filter((item) => item.id !== itemId),
-    );
+    setQueries((prevData) => prevData.filter((item) => item.id !== itemId));
   };
 
   const renameItem = (
@@ -167,7 +134,7 @@ export function QueryPanel() {
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newName = e.target.value;
-    setInitialData2((prevData) =>
+    setQueries((prevData) =>
       prevData.map((prevItem) =>
         prevItem.id === item.id
           ? { ...prevItem, name: newName, dateModified: new Date() }
@@ -189,7 +156,7 @@ export function QueryPanel() {
         source: item.source,
         dateModified: new Date(),
       };
-      setInitialData2((prevData) => [...prevData, newItem]);
+      setQueries((prevData) => [...prevData, newItem]);
     }
   };
 
@@ -199,15 +166,14 @@ export function QueryPanel() {
     );
   };
 
-  const sortAndFilterData = useCallback(
+  const sortQueries = useCallback(
     (
+      queries: Query[],
       sortingCriteria: string,
-      sortingOrder: string,
-      selectedSource: string | undefined,
+      sortingOrder: 'asc' | 'desc' | null,
     ) => {
-      const sortedData = [...initialData2];
+      const sortedData = [...queries];
       if (sortingCriteria === 'name' || sortingCriteria === 'source') {
-        console.log('jjj');
         sortedData.sort((a, b) => {
           const aValue = a[sortingCriteria].toLowerCase();
           const bValue = b[sortingCriteria].toLowerCase();
@@ -216,38 +182,40 @@ export function QueryPanel() {
             : bValue.localeCompare(aValue);
         });
       } else if (sortingCriteria === 'dateModified') {
-        console.log('kkk');
         sortedData.sort((a, b) => {
           const aValue = a.dateModified.getTime();
           const bValue = b.dateModified.getTime();
           return sortingOrder === 'asc' ? aValue - bValue : bValue - aValue;
         });
       }
-
-      if (selectedSource !== undefined && selectedSource !== 'all') {
-        return sortedData.filter((item) => item.source === selectedSource);
-      }
-      console.log('sorted', sortedData);
       return sortedData;
     },
-    [initialData2],
+    [],
   );
 
-  const dataToBeShown = useMemo(() => {
-    console.log(initialData2, 'bla');
-    return sortAndFilterData(
-      sortingCriteria,
-      sortingOrder,
-      selectedSource,
-    ).filter((item) => item.name.toLowerCase().includes(searchQuery2));
+  const queriesToShow = useMemo(() => {
+    const sorted = sortQueries(queries, sortingCriteria, sortingOrder);
+    const filtered = matchSorter(sorted, querySearch, {
+      keys: ['name', 'source'],
+    }).filter((item) => {
+      if (selectedSource === 'all' || item.source === selectedSource) {
+        return item;
+      }
+    });
+    return filtered;
   }, [
+    queries,
     selectedSource,
-    searchQuery2,
+    querySearch,
     sortingOrder,
     sortingCriteria,
-    sortAndFilterData,
-    initialData2,
+    sortQueries,
   ]);
+  const dataSourcesToShow = useMemo(() => {
+    return matchSorter(dataSources, dataSourceSearch, {
+      keys: ['name', 'type'],
+    });
+  }, [dataSources, dataSourceSearch]);
   return (
     <Sheet key={'buttom'} open={open} onOpenChange={setOpen} modal={false}>
       <SheetTrigger className="absolute bottom-2 left-16">
@@ -257,15 +225,12 @@ export function QueryPanel() {
         side={'bottom'}
         className="left-16  w-4/5 p-0"
         id="myResizableDiv"
-        style={{ height: `${height}px` }}
+        style={{ height: `${400}px` }}
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
       >
-        <div
-          className="h-1 w-full cursor-row-resize"
-          onMouseDown={handleMouseDown}
-        ></div>
+        <div className="h-1 w-full "></div>
         <div className="flex h-full w-full flex-row pb-4 ">
           <div className="flex w-1/3 flex-col border-r border-gray-300">
             <div className="flex h-10 flex-row justify-between border-b border-gray-300 px-2 pb-2">
@@ -291,7 +256,7 @@ export function QueryPanel() {
                       <Select
                         value={selectedSource}
                         onValueChange={(e) => {
-                          setSelectedSource(e);
+                          setSelectedSource(e as DataSourceTypes | 'all');
                         }}
                       >
                         <SelectTrigger className="w-[180px]">
@@ -299,9 +264,12 @@ export function QueryPanel() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Sources</SelectItem>
-                          {sourceTypes.map((source) => (
-                            <SelectItem key={source} value={source}>
-                              {source}
+                          {dataSources.map((dataSource) => (
+                            <SelectItem
+                              key={dataSource.type}
+                              value={dataSource.type}
+                            >
+                              {dataSource.type}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -322,7 +290,7 @@ export function QueryPanel() {
                       className="cursor-pointer"
                       onClick={() => {
                         setSortingCriteria('name');
-                        setSortingOrder('des');
+                        setSortingOrder('desc');
                       }}
                     >
                       Name : Z-A
@@ -340,7 +308,7 @@ export function QueryPanel() {
                       className="cursor-pointer"
                       onClick={() => {
                         setSortingCriteria('source');
-                        setSortingOrder('des');
+                        setSortingOrder('desc');
                       }}
                     >
                       Type : Z-A
@@ -359,7 +327,7 @@ export function QueryPanel() {
                       className="cursor-pointer"
                       onClick={() => {
                         setSortingCriteria('dateModified');
-                        setSortingOrder('des');
+                        setSortingOrder('desc');
                       }}
                     >
                       Last Modified : Newest First
@@ -379,16 +347,25 @@ export function QueryPanel() {
                     <input
                       type="text"
                       placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e)}
-                      className="mb-4 rounded-md border border-gray-300 p-2"
+                      value={dataSourceSearch}
+                      onChange={(e) => handleDataSourceSearchChange(e)}
+                      className=" mb-4 rounded-md border border-gray-300 p-2"
                     />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {filteredData.map((item) => (
+                  {dataSourcesToShow.map((item) => (
                     <DropdownMenuItem
-                      key={item.id}
-                      onClick={() => addItem(item)}
+                      key={item.type}
+                      onClick={() => {
+                        const newItem = {
+                          id: nanoid(),
+                          //todo: handle name collisions (hadhoud)
+                          name: item.name,
+                          source: item.type,
+                          dateModified: new Date(),
+                        };
+                        addItem(newItem);
+                      }}
                     >
                       {item.name}
                     </DropdownMenuItem>
@@ -404,10 +381,10 @@ export function QueryPanel() {
                     <input
                       type="text"
                       placeholder="Search..."
-                      value={searchQuery2}
-                      onChange={(e) =>
-                        setSearchQuery2(e.target.value.toLowerCase())
-                      }
+                      value={querySearch}
+                      onChange={(e) => {
+                        setQuerySearch(e.target.value);
+                      }}
                       className="h-6 w-2/3 rounded-md border border-gray-300"
                     />
                     <Button
@@ -420,7 +397,7 @@ export function QueryPanel() {
                     </Button>
                   </div>
                 )}
-                {dataToBeShown.map((item) => (
+                {queriesToShow.map((item) => (
                   <Button
                     key={item.id}
                     variant="outline"
