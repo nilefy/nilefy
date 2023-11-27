@@ -1,6 +1,5 @@
-import { create } from 'zustand';
 import { JwtPayload, UserI } from '@/types/auth.types';
-import { getToken, saveToken } from '@/lib/token.localstorage';
+import { getToken, removeToken, saveToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -18,10 +17,6 @@ function getUser(): AuthStore['user'] {
   const token = getToken();
   if (token) {
     const decoded = jwtDecode(token) as JwtPayload;
-    console.log(
-      '🪵 [useAuthStore.ts:19] ~ token ~ \x1b[0;32mdecoded\x1b[0m = ',
-      decoded,
-    );
     return {
       id: decoded.sub,
       username: decoded.username,
@@ -33,12 +28,12 @@ function getUser(): AuthStore['user'] {
 export const useAuthStore = () => {
   const USER_QUERY_KEY = 'user';
   const TOKEN_QUERY_KEY = 'access_token';
-  const ISLOADING_QUERY_KEY = 'is_loading';
+  // const ISLOADING_QUERY_KEY = 'is_loading';
   const queryClient = useQueryClient();
-  const isLoading = useQuery({
-    queryKey: [ISLOADING_QUERY_KEY],
-    initialData: false,
-  });
+  // const isLoading = useQuery({
+  //   queryKey: [ISLOADING_QUERY_KEY],
+  //   initialData: false,
+  // });
   const user = useQuery({
     queryKey: [USER_QUERY_KEY],
     initialData: getUser(),
@@ -48,15 +43,15 @@ export const useAuthStore = () => {
     initialData: getToken(),
   });
   const isAuthed = !!token.data;
-  const setUser = (user: UserI) => {
+  const setUser = (user: UserI | null) => {
     queryClient.setQueryData([USER_QUERY_KEY], user);
   };
-  const setToken = (token: Token) => {
+  const setToken = (token: Token | null) => {
     queryClient.setQueryData([TOKEN_QUERY_KEY], token);
-    saveToken(token);
+    token ? saveToken(token) : removeToken();
   };
-  const setIsLoading = (isLoading: boolean) => {
-    queryClient.setQueryData([ISLOADING_QUERY_KEY], isLoading);
-  };
-  return { user, token, isLoading, isAuthed, setUser, setToken, setIsLoading };
+  // const setIsLoading = (isLoading: boolean) => {
+  //   queryClient.setQueryData([ISLOADING_QUERY_KEY], isLoading);
+  // };
+  return { user, token, isAuthed, setUser, setToken };
 };

@@ -11,12 +11,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useSignIn } from '@/hooks/useSignIn';
 import { SignInSchema, signInSchema } from '@/types/auth.types';
 
 export function SignIn() {
-  // const navigate = useNavigate();
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -24,19 +23,10 @@ export function SignIn() {
       email: '',
     },
   });
-  const signIn = useSignIn();
-  const handleSignIn = async ({ email, password }: SignInSchema) => {
-    try {
-      await signIn({ email, password });
-    } catch (error) {
-      // Handle errors
-      console.error('Sign-in failed:', error);
-      form.setError('email', { message: 'Invalid email or password' });
-    }
-  };
+  const { mutate, isError, error, isPending } = useSignIn();
 
   function onSubmit(values: SignInSchema) {
-    handleSignIn(values);
+    mutate(values);
   }
   return (
     <div className="flex h-screen w-screen  flex-col items-center justify-center gap-5">
@@ -76,7 +66,10 @@ export function SignIn() {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          {isError && <p className="text-red-900">{error?.message}</p>}
+          <Button type="submit" disabled={isPending}>
+            Submit
+          </Button>
         </form>
       </Form>
     </div>
