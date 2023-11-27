@@ -1,15 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
-import { signOut } from '@/api/auth';
 import { useAuthStore } from './useAuthStore';
-import { removeToken, removeUser } from './user.localstorage';
-
+import { useNavigate } from 'react-router-dom';
 export function useSignOut() {
-  const { mutate: signOutMutation } = useMutation({
-    mutationFn: () => signOut(),
+  const { setUser, setToken } = useAuthStore();
+  const navigate = useNavigate();
+  const signOutMutation = useMutation({
     onSuccess: () => {
-      useAuthStore.setState({ user: null, token: null });
-      removeToken();
-      removeUser();
+      setUser(null);
+      setToken(null);
+      navigate('/signin');
     },
     onError: (error) => {
       console.error('Sign-out failed:', error);

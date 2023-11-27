@@ -1,19 +1,14 @@
 import { ModeToggle } from '@/components/mode-toggle';
-import {
-  NavLink,
-  Outlet,
-  redirect,
-  useNavigate,
-  useParams,
-} from 'react-router-dom';
+import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
 import { Wind, Layout, Cog, Table } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
-import { User } from './workspace/users';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/hooks/useAuthStore';
+import { Button } from '@/components/ui/button';
+import { useSignOut } from '@/hooks/useSignOut';
 const dashboardPaths = [
   {
     name: 'apps',
@@ -35,10 +30,8 @@ const dashboardPaths = [
 const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
-    // TODO: re-enable this when the frontend auth is ready
-    // const res = await fetchX('/workspaces');
-    // return (await res.json()) as WorkSpaces;
-    return [{ id: 1, imageUrl: null, name: 'work' }] satisfies WorkSpaces;
+    const res = await fetchX('workspaces');
+    return (await res.json()) as WorkSpaces;
   },
 });
 
@@ -64,15 +57,9 @@ export const loader =
   };
 
 export function Dashboard() {
+  const { mutate } = useSignOut();
   const { workspaceId } = useParams();
-  // TODO: change to real authed user
-  // const user: User = {
-  //   id: 'nagy',
-  //   name: 'nagy',
-  //   email: 'nagy@nagy',
-  //   status: 'active',
-  // };
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAuthStore();
 
   return (
     <div className="flex h-screen w-screen">
@@ -97,11 +84,12 @@ export function Dashboard() {
               {/* src={user.imageUrl} */}
               <AvatarImage />
               <AvatarFallback>
-                {getInitials(user?.username || '')}
+                {getInitials(user?.data?.username || '')}
               </AvatarFallback>
             </Avatar>
           </NavLink>
         </div>
+        <Button onClick={() => mutate()}>Logout</Button>
       </div>
 
       <Outlet />
