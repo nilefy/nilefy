@@ -351,7 +351,7 @@ export function QueryPanel() {
                   key={item.id}
                   variant="outline"
                   className={cn(
-                    'cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-gray-200',
+                    'group cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-gray-200',
                     {
                       'bg-blue-100': selectedItemId === item.id,
                     },
@@ -372,20 +372,19 @@ export function QueryPanel() {
                     ) : (
                       <div className="flex items-center justify-between">
                         <span>{item.name}</span>
-                        {selectedItemId === item.id &&
-                          isHovered === item.id && (
-                            <div className="flex items-center justify-center gap-2">
-                              <button onClick={() => deleteItem(item.id)}>
-                                <Trash size={16} />
-                              </button>
-                              <button onClick={() => setEditingItemId(item.id)}>
-                                <Pencil size={16} />
-                              </button>
-                              <button onClick={() => duplicateItem(item)}>
-                                <Copy size={16} />
-                              </button>
-                            </div>
-                          )}
+                        {selectedItemId === item.id && (
+                          <div className="invisible flex items-center justify-center gap-2 group-hover:visible ">
+                            <button onClick={() => deleteItem(item.id)}>
+                              <Trash size={16} />
+                            </button>
+                            <button onClick={() => setEditingItemId(item.id)}>
+                              <Pencil size={16} />
+                            </button>
+                            <button onClick={() => duplicateItem(item)}>
+                              <Copy size={16} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </li>
