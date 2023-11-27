@@ -82,6 +82,7 @@ function WebloomRoot() {
         .setEditorDimensions({ height: ref.current?.clientHeight });
       rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
     }
+
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
   }, [height, width]);
 
@@ -140,7 +141,7 @@ function WebloomElement({ id }: { id: string }) {
         },
         children,
       ),
-    [tree.type, props, children],
+    [tree.type, props, children, onPropChange],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -159,7 +160,7 @@ const initTree: WebloomTree = {
     row: 0,
     columnWidth: 0,
     columnsCount: NUMBER_OF_COLUMNS,
-    nodes: ['input1', 'input2'],
+    nodes: [],
     parent: ROOT_NODE_ID,
     isCanvas: true,
     dom: null,

@@ -4,6 +4,8 @@ import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 import { normalize } from '@/lib/Editor/utils';
+import { throttle } from 'lodash';
+
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
   | 'top-left'
@@ -171,6 +173,7 @@ class ResizeAction {
     if (!dims) return;
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
+
     const newCollisions = this._resize(this.id, dims);
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
@@ -194,7 +197,7 @@ class ResizeAction {
     if (!this.initialDimensions) return null;
     return {
       execute: () => {
-        this._move(...args);
+        this.throttledMove(...args);
       },
     };
   }
@@ -335,6 +338,7 @@ class ResizeAction {
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }
+  private static throttledMove = throttle(ResizeAction._move, 10);
 }
 
 export default ResizeAction;
