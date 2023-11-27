@@ -1,4 +1,4 @@
-import { useLocation, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/hooks/useAuthStore';
 
 type NonAuthRouteProps = {
@@ -9,14 +9,11 @@ export const NonAuthRoute = ({
   children,
   redirectPath = '/',
 }: NonAuthRouteProps) => {
-  const location = useLocation();
-  const { isLoading, isAuthed } = useAuthStore();
+  const { isAuthed } = useAuthStore();
 
-  console.log(isAuthed, isLoading, location.pathname);
-  if (isLoading.data) {
-    return <></>;
-  }
-  // not authed and tries to access a protected route (redirect to signin)
+  // if (isLoading.data) {
+  //   return <></>;
+  // }
   // if the user is authenticated and tries to access a signin or signup etc..
   if (isAuthed) {
     return <Navigate to={redirectPath} replace />;
