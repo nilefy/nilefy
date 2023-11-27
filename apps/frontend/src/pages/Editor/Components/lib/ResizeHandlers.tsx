@@ -43,6 +43,7 @@ export function ResizeHandlers() {
       );
     };
     const resizeEndHandler = (e: MouseEvent) => {
+      e.stopPropagation();
       commandManager.executeCommand(
         ResizeAction.end({
           x: e.clientX,

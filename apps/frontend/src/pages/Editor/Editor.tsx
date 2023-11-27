@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useRef,
   ElementType,
+  useCallback,
 } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -58,30 +59,32 @@ const throttledResizeCanvas = throttle(
   },
 );
 function WebloomRoot() {
-  const root = store((state) => state.tree[ROOT_NODE_ID]);
+  const props = store((state) => state.tree[ROOT_NODE_ID].props);
+  const nodes = store((state) => state.tree[ROOT_NODE_ID].nodes);
   const ref = React.useRef<HTMLDivElement>(null);
   const width = store((state) => state.editorWidth);
   const height = store((state) => state.editorHeight);
   const children = useMemo(() => {
-    let children = root.props.children as React.ReactElement[];
-    if (root.nodes.length > 0) {
-      children = root.nodes.map((node) => {
+    let children = props.children as React.ReactElement[];
+    if (nodes.length > 0) {
+      children = nodes.map((node) => {
         return <WebloomElement id={node} key={node} />;
       });
     }
     return children;
-  }, [root.nodes, root.props.children]);
+  }, [nodes, props.children]);
   useLayoutEffect(() => {
     const columnWidth = width / NUMBER_OF_COLUMNS;
-    let rowsCount = root.rowsCount;
+    let rowsCount = store.getState().tree[ROOT_NODE_ID].rowsCount;
     if (rowsCount === 0) {
       store
         .getState()
         .setEditorDimensions({ height: ref.current?.clientHeight });
       rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
     }
+
     resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
-  }, [height, width, root.rowsCount]);
+  }, [height, width]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
@@ -113,6 +116,12 @@ function WebloomElement({ id }: { id: string }) {
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
   const props = store((state) => state.tree[id].props);
+  const onPropChange = useCallback(
+    ({ value, key }: { value: unknown; key: string }) => {
+      store.getState().setProp(id, key, value);
+    },
+    [id],
+  );
   const children = useMemo(() => {
     let children = props.children as React.ReactElement[];
     if (nodes.length > 0) {
@@ -126,10 +135,13 @@ function WebloomElement({ id }: { id: string }) {
     () =>
       createElement(
         WebloomWidgets[tree.type].component as ElementType,
-        props,
+        {
+          ...props,
+          onPropChange,
+        },
         children,
       ),
-    [tree.type, props, children],
+    [tree.type, props, children, onPropChange],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -190,7 +202,6 @@ function Editor() {
   useHotkeys('delete', () => {
     commandManager.executeCommand(new DeleteAction());
   });
-  const root = store((state) => state.tree[ROOT_NODE_ID]);
   const draggedNode = store((state) => state.draggedNode);
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
@@ -258,11 +269,12 @@ function Editor() {
   const handleCancel = () => {
     commandManager.executeCommand(DragAction.cancel());
   };
+
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const dom = root.dom;
-      if (!dom) return;
-      const boundingRect = dom.getBoundingClientRect();
+      const rootDom = store.getState().tree[ROOT_NODE_ID].dom;
+      if (!rootDom) return;
+      const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
       const y = boundingRect.top;
 
@@ -273,8 +285,8 @@ function Editor() {
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
-  }, [root.dom, draggedNode]);
-  if (!root) return null;
+  }, [draggedNode]);
+
   return (
     <div className="isolate flex h-full max-h-full w-full bg-transparent">
       {/*sidebar*/}

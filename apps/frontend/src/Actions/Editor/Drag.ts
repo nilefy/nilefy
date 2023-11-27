@@ -88,8 +88,8 @@ class DragAction {
         isCanvas: widget.config.isCanvas,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
-        columnsCount: 4,
-        rowsCount: 8,
+        columnsCount: widget.config.layoutConfig.colsCount,
+        rowsCount: widget.config.layoutConfig.rowsCount,
         props: widget.defaultProps,
         type: this.newType as WidgetTypes,
       };
@@ -241,6 +241,11 @@ class DragAction {
           undoData = moveNodeIntoGrid(id, endPosition);
         },
         undo: () => {
+          store.getState().setSelectedNodeIds((ids) => {
+            const newIds = new Set(ids);
+            newIds.delete(id);
+            return newIds;
+          });
           removeNode(id);
           Object.entries(undoData).forEach(([id, coords]) => {
             setDimensions(id, coords);

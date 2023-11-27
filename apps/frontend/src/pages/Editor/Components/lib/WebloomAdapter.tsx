@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 import {
@@ -12,6 +12,7 @@ import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 import { DeleteAction } from '@/actions/Editor/Delete';
+import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
   id: string;
@@ -23,6 +24,7 @@ type WebloomAdapterProps = {
 
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
+  const isResizing = store((state) => state.resizedNode === id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
@@ -84,7 +86,19 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             className="target touch-none overflow-hidden outline-none"
             data-id={id}
           >
-            {!isDragging && props.children}
+            <div
+              className={cn(
+                {
+                  hidden: isDragging || isResizing,
+                },
+                {
+                  flex: !isDragging && !isResizing,
+                },
+                'w-full h-full',
+              )}
+            >
+              {props.children}
+            </div>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
