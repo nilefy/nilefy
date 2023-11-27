@@ -56,7 +56,6 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
   const [editorValue, setEditorValue] = useState<string>(props.value as string);
   const initalRender = useRef(true);
   const editorRef = useRef<Editor>(null);
-  const editorWrapper = useRef<HTMLDivElement>(null);
   const handleEditorChange = useCallback<EditorOnChange>(
     (newValue, editor) => {
       // avoid updating value, when there is no actual change.
@@ -86,12 +85,11 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
   return (
     <div
       className="h-full w-full "
-      ref={editorWrapper}
       onPointerDown={() => {
         //if any opened menu is open, close it
         //dirty hack to close the context menu
         if (!menuRef.current) {
-          const menu = editorWrapper.current!.querySelector('.tox-tinymce-aux');
+          const menu = document.querySelector('.tox-tinymce-aux');
           menuRef.current = menu;
         }
         if (menuRef.current) {
