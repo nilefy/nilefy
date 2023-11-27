@@ -6,6 +6,8 @@ import {
   UseGuards,
   Body,
   Req,
+  Get,
+  Delete,
 } from '@nestjs/common';
 import { DataQueriesService } from './data_queries.service';
 import { JwtGuard } from '../auth/jwt.guard';
@@ -17,7 +19,9 @@ import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { QueryRet } from './query.types';
 
 @UseGuards(JwtGuard)
-@Controller('queries/:workspaceId/:appId/:dataSourceId/:dataSourceName')
+@Controller(
+  'workspaces/:workspaceId/apps/:appId/datasources/:dataSourceId/:dataSourceName/queries',
+)
 export class DataQueriesController {
   constructor(
     private dataQueriesService: DataQueriesService,
@@ -45,6 +49,7 @@ export class DataQueriesController {
         userId: req.user.userId,
         appId,
       },
+      dataSourceId,
     );
   }
 
@@ -67,5 +72,33 @@ export class DataQueriesController {
       userId: req.user.userId,
       appId,
     });
+  }
+
+  @Get()
+  async getAppQueries(
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Param('dataSourceName') name: string,
+  ): Promise<QueryDto[]> {
+    const ds = (
+      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
+    )[0]?.id;
+
+    return await this.dataQueriesService.getAppQueries(ds, appId);
+  }
+
+  @Get(':id')
+  async getQuery(
+    @Param('id', ParseIntPipe) queryId: number,
+  ): Promise<QueryDto | undefined> {
+    return await this.dataQueriesService.getQuery(queryId);
+  }
+
+  @Delete(':id')
+  async deleteQuery(
+    @Param('id', ParseIntPipe) queryId: number,
+  ): Promise<QueryDto | undefined> {
+    return await this.dataQueriesService.deleteQuery(queryId);
   }
 }

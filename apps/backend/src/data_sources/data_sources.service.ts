@@ -26,16 +26,18 @@ export class DataSourcesService {
   }
 
   async get(obj: GetWsDataSourceDto): Promise<WsDataSourceDto[]> {
-    let ds = await this.db.query.workspaceDataSources.findMany({
-      where: and(
-        eq(workspaceDataSources.workspaceId, obj.workspaceId),
-        eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-      ),
+    const ds = await this.db.query.workspaceDataSources.findMany({
+      where: obj.name
+        ? and(
+            eq(workspaceDataSources.workspaceId, obj.workspaceId),
+            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
+            eq(workspaceDataSources.name, obj.name),
+          )
+        : and(
+            eq(workspaceDataSources.workspaceId, obj.workspaceId),
+            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
+          ),
     });
-
-    if (obj.name) {
-      ds = ds.filter((ds) => ds?.name === obj.name);
-    }
     return ds as WsDataSourceDto[];
   }
 
