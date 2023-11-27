@@ -10,11 +10,11 @@ import {
 import { DataSourcesService } from './data_sources.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import {
-  CreateDataSourceDto,
-  DataSourceDto,
-  createDataSourceSchema,
-  availableDataSourcesInsert,
-  dataSourceDb,
+  CreateWsDataSourceDto,
+  WsDataSourceDto,
+  createWsDataSourceSchema,
+  dataSourcesInsert,
+  DataSourceDb,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
@@ -27,15 +27,15 @@ export class DataSourcesController {
   @Post('/:dataSourceId')
   async create(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: DataSourceDto['workspaceId'],
+    workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: DataSourceDto['dataSourceId'],
-    @Body(new ZodValidationPipe(createDataSourceSchema))
-    createDataSourceDto: CreateDataSourceDto,
+    dataSourceId: WsDataSourceDto['dataSourceId'],
+    @Body(new ZodValidationPipe(createWsDataSourceSchema))
+    createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ) {
     const { name, config } = createDataSourceDto;
-    const jsonConfig: DataSourceDto['config'] = JSON.stringify(config);
+    const jsonConfig: WsDataSourceDto['config'] = JSON.stringify(config);
 
     // TODO: check whether config matches the plugin requirements
 
@@ -51,8 +51,8 @@ export class DataSourcesController {
   // TODO: another controller for global data sources
   @Post('')
   async add(
-    @Body(new ZodValidationPipe(availableDataSourcesInsert))
-    dataSource: dataSourceDb,
+    @Body(new ZodValidationPipe(dataSourcesInsert))
+    dataSource: DataSourceDb,
   ) {
     return await this.dataSourceService.add(dataSource);
   }

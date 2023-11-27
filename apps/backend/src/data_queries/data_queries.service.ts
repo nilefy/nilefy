@@ -3,7 +3,7 @@ import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { QueryDb } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
-import { availableDataSources as ds } from '../drizzle/schema/data_sources.schema';
+import { dataSources as ds } from '../drizzle/schema/data_sources.schema';
 import { eq } from 'drizzle-orm';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 
@@ -12,7 +12,7 @@ export class DataQueriesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
   async runQuery(operation: string, query: QueryDb): Promise<QueryRet> {
-    const dataSource = await this.db.query.dataSources.findFirst({
+    const dataSource = await this.db.query.workspaceDataSources.findFirst({
       columns: { config: true },
       where: eq(ds.id, query.dataSourceId),
     });
@@ -25,7 +25,7 @@ export class DataQueriesService {
 
   // TODO
   async getService(dataSourceId: number): QueryRunnerI {
-    const dataSource = await this.db.query.availableDataSources.findFirst({
+    const dataSource = await this.db.query.dataSources.findFirst({
       columns: { name: true },
       where: eq(ds.id, dataSourceId),
     });

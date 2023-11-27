@@ -1,33 +1,33 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  CreateDataSourceDb,
+  CreateWsDataSourceDb,
+  WsDataSourceDto,
   DataSourceDto,
-  dataSourceT,
-  dataSourceDb,
+  DataSourceDb,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
-  availableDataSources,
   dataSources,
+  workspaceDataSources,
 } from '../drizzle/schema/data_sources.schema';
 
 @Injectable()
 export class DataSourcesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async create(dataSourceDto: CreateDataSourceDb): Promise<DataSourceDto> {
+  async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
     const [dataSource] = await this.db
-      .insert(dataSources)
+      .insert(workspaceDataSources)
       .values(dataSourceDto)
       .returning();
-    return dataSource as DataSourceDto;
+    return dataSource as WsDataSourceDto;
   }
 
-  async add(dataSource: dataSourceDb): Promise<dataSourceT> {
+  async add(dataSource: DataSourceDb): Promise<DataSourceDto> {
     const [ds] = await this.db
-      .insert(availableDataSources)
+      .insert(dataSources)
       .values(dataSource)
       .returning();
-    return ds as dataSourceT;
+    return ds as DataSourceDto;
   }
 }

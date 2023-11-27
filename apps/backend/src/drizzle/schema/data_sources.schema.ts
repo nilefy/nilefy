@@ -17,7 +17,7 @@ export const dataSourcesEnum = pgEnum('data_sources_enum', [
   'plugin',
 ]);
 
-export const availableDataSources = pgTable('available_data_sources', {
+export const dataSources = pgTable('data_sources', {
   id: serial('id').primaryKey(),
   type: dataSourcesEnum('type').notNull(),
   name: varchar('name', { length: 100 }).notNull(),
@@ -28,15 +28,16 @@ export const availableDataSources = pgTable('available_data_sources', {
     .notNull(),
 });
 
-export const dataSources = pgTable(
+export const workspaceDataSources = pgTable(
   'workspace_data_sources',
   {
+    id: serial('id').primaryKey(),
     name: varchar('name', { length: 100 }).notNull(),
     workspaceId: integer('workspace_id')
       .references(() => workspaces.id)
       .notNull(),
     dataSourceId: integer('data_source_id')
-      .references(() => availableDataSources.id)
+      .references(() => dataSources.id)
       .notNull(),
     config: json('config')
       .default(sql`'{}'::json`)
@@ -60,16 +61,12 @@ export const queries = pgTable('workspace_app_queries', {
   id: serial('id').primaryKey(),
   name: varchar('query_name', { length: 100 }).unique().notNull(),
   query: varchar('query', { length: 255 }).notNull(),
-  workspaceId: integer('workspace_id')
-    .references(() => workspaces.id)
-    .notNull(),
   appId: integer('app_id')
     .references(() => apps.id)
     .notNull(),
   dataSourceId: integer('data_source_id')
-    .references(() => availableDataSources.id)
+    .references(() => workspaceDataSources.id)
     .notNull(),
-  dataSourceName: varchar('data_source_name', { length: 100 }).notNull(),
   userId: integer('user_id')
     .references(() => users.id)
     .notNull(),
