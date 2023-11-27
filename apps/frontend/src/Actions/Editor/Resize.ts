@@ -47,7 +47,6 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
-
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
         if (node[0] === ROOT_NODE_ID) return acc;
@@ -66,6 +65,8 @@ class ResizeAction {
     this.orginalPositions = positionsSnapshot;
     this.initialGridPosition = store.getState().getGridDimensions(id);
     this.initialDimensions = dimensions;
+    store.getState().setResizedNode(id);
+    store.getState().setShadowElement(store.getState().getPixelDimensions(id));
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -153,6 +154,7 @@ class ResizeAction {
     const rowCount = Math.round(newHeight / gridRow);
     const newX = Math.round(newLeft / gridCol);
     const newY = Math.round(newTop / gridRow);
+
     return {
       rowsCount: rowCount,
       columnsCount: colCount,
@@ -171,10 +173,13 @@ class ResizeAction {
       this.resizingKey,
     );
     if (!dims) return;
+
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
-
     const newCollisions = this._resize(this.id, dims);
+    store
+      .getState()
+      .setShadowElement(store.getState().getPixelDimensions(this.id));
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
@@ -258,6 +263,8 @@ class ResizeAction {
       direction,
       key,
     );
+    store.getState().setResizedNode(null);
+    store.getState().setShadowElement(null);
     if (!dims) return null;
     const command = {
       execute: () => {
