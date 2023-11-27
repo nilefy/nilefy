@@ -2,7 +2,7 @@ import { forwardRef, ReactNode } from 'react';
 
 const Container = forwardRef<
   HTMLDivElement,
-  { children: ReactNode; color: string }
+  { children?: ReactNode; color: string }
 >(({ children, color }, ref) => {
   return (
     <div

@@ -1,4 +1,4 @@
-import { WebloomPixelDimensions } from '@/store';
+import { WebloomPixelDimensions } from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
   const { top, left, width, height } = el.getBoundingClientRect();
