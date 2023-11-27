@@ -38,6 +38,7 @@
     "clsx": "^2.0.0",
     "immer": "^10.0.3",
     "lodash": "^4.17.21",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.288.0",
     "nanoid": "^5.0.2",
     "re-resizable": "^6.9.11",

@@ -1,4 +1,3 @@
-import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -12,18 +11,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-
-// TODO: move the schema to seprate package to make sharing between front/back easier
-export const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-type SignInSchema = z.infer<typeof signInSchema>;
+import { Link } from 'react-router-dom';
+import { useSignIn } from '@/hooks/useSignIn';
+import { SignInSchema, signInSchema } from '@/types/auth.types';
 
 export function SignIn() {
-  const navigate = useNavigate();
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -31,11 +23,11 @@ export function SignIn() {
       email: '',
     },
   });
-  function onSubmit(values: SignInSchema) {
-    console.log(values);
-    return navigate('/');
-  }
+  const { mutate, isError, error, isPending } = useSignIn();
 
+  function onSubmit(values: SignInSchema) {
+    mutate(values);
+  }
   return (
     <div className="flex h-screen w-screen  flex-col items-center justify-center gap-5">
       <h1 className="text-4xl">Create Account</h1>
@@ -74,7 +66,10 @@ export function SignIn() {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          {isError && <p className="text-red-900">{error?.message}</p>}
+          <Button type="submit" disabled={isPending}>
+            Submit
+          </Button>
         </form>
       </Form>
     </div>

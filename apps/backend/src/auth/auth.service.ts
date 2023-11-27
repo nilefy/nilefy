@@ -18,7 +18,6 @@ export class AuthService {
 
   async signUp(user: CreateUserDto) {
     const { password } = user;
-    // TODO: i removed the email check because i added the unique constraint on the db, so we need to add error handler here
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
     const u = await this.userService.create({ ...user, password: hashed });
@@ -36,7 +35,7 @@ export class AuthService {
 
     const ret = await this.userService.findOne(email);
     if (!ret) {
-      throw new NotFoundException();
+      throw new NotFoundException('Email Not Found');
     }
 
     const match = await compare(password, ret.password);
