@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import App from '@/components/Editor/Editor';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
@@ -19,7 +19,7 @@ import DatabaseTable from './pages/built-in-db/db';
 import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from './components/ProtectedRoute';
-
+import { NonAuthRoute } from './components/non-auth-routes';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,6 +36,7 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
   {
     path: '',
+    element: <Outlet />,
     errorElement: <ErrorPage />,
     id: 'root',
     loader: workspacesLoader(queryClient),
@@ -61,11 +62,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'database',
-            element: (
-              <ProtectedRoute>
-                <DatabaseTable />
-              </ProtectedRoute>
-            ),
+            element: <DatabaseTable />,
             errorElement: <ErrorPage />,
             children: [
               {
@@ -98,12 +95,20 @@ const router = createBrowserRouter([
   },
   {
     path: '/signup',
-    element: <SignUp />,
+    element: (
+      <NonAuthRoute>
+        <SignUp />
+      </NonAuthRoute>
+    ),
     errorElement: <ErrorPage />,
   },
   {
     path: '/signin',
-    element: <SignIn />,
+    element: (
+      <NonAuthRoute>
+        <SignIn />
+      </NonAuthRoute>
+    ),
     errorElement: <ErrorPage />,
   },
   // TODO: remove this route after frontend auth is done (currently used for testing)

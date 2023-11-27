@@ -1,5 +1,5 @@
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/hooks/useAuthStore';
-import { Navigate, useLocation } from 'react-router-dom';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -17,21 +17,22 @@ export const ProtectedRoute = ({
   children,
   redirectPath = '/signin',
 }: ProtectedRouteProps) => {
-  // const token = useAuthStore((state) => state.token);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const isAuth = useAuthStore((state) => state.isAuth);
   const location = useLocation();
-  if (isLoading) {
+  const { isLoading, isAuthed } = useAuthStore();
+
+  console.log(isAuthed, isLoading, location.pathname);
+  if (isLoading.data) {
     return <></>;
   }
   // not authed and tries to access a protected route (redirect to signin)
-  if (!isAuth) {
+  // if the user is authenticated and tries to access a signin or signup etc..
+  if (!isAuthed) {
+    console.log('not Authed ');
     return <Navigate to={redirectPath} replace />;
   }
   // if the user is authenticated and tries to access a signin or signup etc..
-  if (isAuth && restrictedAuthedRoutes.includes(location.pathname)) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
+  // if (isAuthed && restrictedAuthedRoutes.includes(location.pathname)) {
+  //   return <Navigate to="/" replace />;
+  // }
+  return <>{children}</>;
 };

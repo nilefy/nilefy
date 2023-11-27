@@ -16,7 +16,7 @@ import { useSignIn } from '@/hooks/useSignIn';
 import { SignInSchema, signInSchema } from '@/types/auth.types';
 
 export function SignIn() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { JwtPayload, UserI } from '@/types/auth.types';
 import { getToken, saveToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 type Token = string;
 type AuthStore = {
@@ -29,20 +30,33 @@ function getUser(): AuthStore['user'] {
   return null;
 }
 
-const useAuthStore = create<AuthStore>((set) => ({
-  user: getUser(),
-  token: getToken(),
-  isLoading: false,
-  isAuth: false,
-  setUser: (newUser: UserI) => {
-    // save in local storage and store
-    set({ user: newUser });
-  },
-  setToken: (newToken: Token) => {
-    set({ token: newToken });
-    saveToken(newToken);
-  },
-  setIsLoading: (isLoading: boolean) => set({ isLoading }),
-}));
-
-export { useAuthStore };
+export const useAuthStore = () => {
+  const USER_QUERY_KEY = 'user';
+  const TOKEN_QUERY_KEY = 'access_token';
+  const ISLOADING_QUERY_KEY = 'is_loading';
+  const queryClient = useQueryClient();
+  const isLoading = useQuery({
+    queryKey: [ISLOADING_QUERY_KEY],
+    initialData: false,
+  });
+  const user = useQuery({
+    queryKey: [USER_QUERY_KEY],
+    initialData: getUser(),
+  });
+  const token = useQuery({
+    queryKey: [TOKEN_QUERY_KEY],
+    initialData: getToken(),
+  });
+  const isAuthed = !!token.data;
+  const setUser = (user: UserI) => {
+    queryClient.setQueryData([USER_QUERY_KEY], user);
+  };
+  const setToken = (token: Token) => {
+    queryClient.setQueryData([TOKEN_QUERY_KEY], token);
+    saveToken(token);
+  };
+  const setIsLoading = (isLoading: boolean) => {
+    queryClient.setQueryData([ISLOADING_QUERY_KEY], isLoading);
+  };
+  return { user, token, isLoading, isAuthed, setUser, setToken, setIsLoading };
+};

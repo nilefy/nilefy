@@ -14,16 +14,13 @@ export const QUERY_KEY = {
 };
 export function useSignIn() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const setToken = useAuthStore((state) => state.setToken);
-  const setUser = useAuthStore((state) => state.setUser);
+  const { setUser, setToken, setIsLoading } = useAuthStore();
   const { mutateAsync: signInMuation } = useMutation({
     mutationFn: (creds: SignInSchema) => signIn(creds),
     onMutate: async () => {
-      useAuthStore.setState({ isLoading: true });
+      setIsLoading(true);
     },
     onSuccess: async (data) => {
-      await queryClient.setQueryData(['access_token'], data.access_token);
       setToken(data.access_token);
       // Decode the token
       const decoded = jwtDecode<JwtPayload>(data.access_token);
@@ -37,8 +34,6 @@ export function useSignIn() {
         id: decoded.sub,
       };
       //Store user information in the React Query
-      await queryClient.setQueryData(['user'], userData);
-      //Save user information in local storage
       setUser(userData);
       navigate('/');
     },
@@ -46,8 +41,7 @@ export function useSignIn() {
       console.log(error);
     },
     onSettled: () => {
-      useAuthStore.setState({ isLoading: false });
-      console.log(useAuthStore.getState());
+      setIsLoading(false);
     },
   });
   return signInMuation;
