@@ -45,6 +45,7 @@ import { SelectionAction } from '@/actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { QueryPanel } from '@/components/queryPanel';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -268,7 +269,7 @@ function Editor() {
   }, [root.dom, draggedNode]);
   if (!root) return null;
   return (
-    <div className="isolate flex h-full max-h-full w-full bg-transparent">
+    <div className="isolate flex h-full max-h-full w-full  bg-transparent">
       {/*sidebar*/}
       <DndContext
         collisionDetection={pointerWithin}
@@ -346,7 +347,9 @@ function Editor() {
                 defaultSizePercentage={10}
                 collapsible
               >
-                <div className="h-full w-full border-t-2 bg-red-100"></div>
+                <div className="h-full w-full ">
+                  <QueryPanel />
+                </div>
               </Panel>
             </PanelGroup>
           </Panel>
