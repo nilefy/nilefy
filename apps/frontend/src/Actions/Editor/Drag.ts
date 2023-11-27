@@ -241,6 +241,11 @@ class DragAction {
           undoData = moveNodeIntoGrid(id, endPosition);
         },
         undo: () => {
+          store.getState().setSelectedNodeIds((ids) => {
+            const newIds = new Set(ids);
+            newIds.delete(id);
+            return newIds;
+          });
           removeNode(id);
           Object.entries(undoData).forEach(([id, coords]) => {
             setDimensions(id, coords);
