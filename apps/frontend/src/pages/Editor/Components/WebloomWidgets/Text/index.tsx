@@ -1,5 +1,5 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { MousePointerSquare, Type } from 'lucide-react';
+import { Type } from 'lucide-react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 export type WebloomTextProps = {
   text: string;

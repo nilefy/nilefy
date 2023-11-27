@@ -20,12 +20,21 @@ export type WebloomInputInterface = {
   focus: () => void;
 };
 const WebloomInput = (props: WebloomInputProps) => {
-  const { label, value } = props;
+  const { label, onPropChange, ...rest } = props;
   const ref = useRef<HTMLInputElement>(null);
+
   return (
     <div className="flex items-center justify-center gap-2">
       <Label>{label}</Label>
-      <Input {...props} />
+      <Input
+        {...rest}
+        onChange={(e) => {
+          props.onPropChange({
+            key: 'value',
+            value: e.target.value,
+          });
+        }}
+      />
     </div>
   );
 };
@@ -44,7 +53,7 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomInputProps = {
   placeholder: 'Enter text',
-
+  value: '',
   label: 'Label',
   type: 'text',
 };
