@@ -28,7 +28,7 @@ export class DataQueriesController {
   ) {
     this.dataQueriesService.runQuery(operation, {
       ...runQueryDto,
-      workspaceId,
+      //workspaceId, // quick fix for now.
       appId,
       userId: req.user.userId,
     });
