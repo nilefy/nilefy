@@ -12,6 +12,7 @@ import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 import { DeleteAction } from '@/actions/Editor/Delete';
+import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
   id: string;
@@ -84,7 +85,19 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             className="target touch-none overflow-hidden outline-none"
             data-id={id}
           >
-            {!isDragging && props.children}
+            <div
+              className={cn(
+                {
+                  hidden: isDragging,
+                },
+                {
+                  flex: !isDragging,
+                },
+                'w-full h-full',
+              )}
+            >
+              {props.children}
+            </div>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>

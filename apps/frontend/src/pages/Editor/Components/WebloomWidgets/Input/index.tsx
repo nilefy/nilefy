@@ -21,10 +21,9 @@ export type WebloomInputInterface = {
 };
 const WebloomInput = (props: WebloomInputProps) => {
   const { label, onPropChange, ...rest } = props;
-  const ref = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
       <Input
         {...rest}
@@ -43,8 +42,8 @@ const config: WidgetConfig = {
   icon: <TextCursorInput />,
   isCanvas: false,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 5,
+    rowsCount: 8,
     minColumns: 1,
     minRows: 4,
   },

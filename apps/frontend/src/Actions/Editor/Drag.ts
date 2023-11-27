@@ -88,8 +88,8 @@ class DragAction {
         isCanvas: widget.config.isCanvas,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
-        columnsCount: 4,
-        rowsCount: 8,
+        columnsCount: widget.config.layoutConfig.colsCount,
+        rowsCount: widget.config.layoutConfig.rowsCount,
         props: widget.defaultProps,
         type: this.newType as WidgetTypes,
       };
