@@ -31,15 +31,14 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   });
   const ref = useRef<HTMLDivElement>(null);
   const elDimensions = store((store) => store.getRelativePixelDimensions(id));
-  const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
-    {
+  const { attributes, listeners, setNodeRef, isDragging, active } =
+    useWebloomDraggable({
       id,
       disabled: !props.draggable,
       data: {
         isNew: false,
       },
-    },
-  );
+    });
   if (id === ROOT_NODE_ID) {
     attributes.role = 'canvas';
   }
@@ -83,9 +82,12 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             {...attributes}
             style={style}
             ref={ref}
-            className="target touch-none overflow-hidden outline-none"
+            className="target relative touch-none overflow-hidden outline-none"
             data-id={id}
           >
+            {!!active && (
+              <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+            )}
             <div
               className={cn(
                 {
