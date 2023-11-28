@@ -66,7 +66,7 @@ export const components = pgTable(
      * parent_id
      */
     parent: integer('parent_id'),
-
+    isCanvas: boolean('is_canvas'),
     // LAYOUT
     /**
      * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
