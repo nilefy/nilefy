@@ -1,8 +1,9 @@
-import store from '@/store';
+import store, { handleParentCollisions } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { checkOverlap, normalize } from '@/lib/utils';
 import { Point } from '@/types';
+import { WebloomGridDimensions } from '@/lib/Editor/interface';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { normalize } from '@/lib/Editor/utils';
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
   | 'top-left'
@@ -15,21 +16,22 @@ const {
   getGridSize,
   setDimensions,
   resizeCanvas,
+  getPixelDimensions,
   getBoundingRect,
 } = store.getState();
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
-  private static orginalPositions: Record<string, Point> = {};
+  private static orginalPositions: Record<string, WebloomGridDimensions> = {};
   private static collidingNodes: Set<string> = new Set<string>();
-  private static siblings: string[] = [];
   private static initialDimensions: {
     width: number;
     height: number;
     x: number;
     y: number;
   };
-  private static id: string;
+  private static initialGridPosition: WebloomGridDimensions;
+  private static id: string | null = null;
   private static _start(
     id: string,
     key: ResizingKeys,
@@ -43,25 +45,24 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
-    const parentId = store.getState().tree[id].parent;
+
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
         if (node[0] === ROOT_NODE_ID) return acc;
         return {
           ...acc,
           [node[0]]: {
-            x: node[1].x,
-            y: node[1].y,
+            col: node[1].col,
+            row: node[1].row,
+            columnsCount: node[1].columnsCount,
+            rowsCount: node[1].rowsCount,
           },
         };
       },
       {},
     );
     this.orginalPositions = positionsSnapshot;
-    this.siblings = store
-      .getState()
-      .tree[parentId!].nodes.filter((nodeId) => nodeId !== id)
-      .sort((a, b) => -store.getState().tree[a].y + store.getState().tree[b].y);
+    this.initialGridPosition = store.getState().getGridDimensions(id);
     this.initialDimensions = dimensions;
   }
   public static start(
@@ -143,7 +144,7 @@ class ResizeAction {
     }
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
-    const parent = store.getState().getDimensions(node.parent);
+    const parent = store.getState().getPixelDimensions(node.parent);
     newLeft -= parent.x;
     newTop -= parent.y;
     const colCount = Math.round(newWidth / gridCol);
@@ -159,6 +160,7 @@ class ResizeAction {
   }
 
   private static _move(mousePosition: Point) {
+    if (!this.id) return;
     const dims = this.calculateNewDimensions(
       mousePosition,
       this.id,
@@ -168,13 +170,17 @@ class ResizeAction {
     );
     if (!dims) return;
     this.returnToOriginalPosition();
-    const newCollisions = this._resize(this.id, dims, this.siblings);
+    this.returnToInitialDimensions();
+    const newCollisions = this._resize(this.id, dims);
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
-    //filter elements that returned to their original position
+    // filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
-      if (pos.y === store.getState().tree[id].y) {
+      if (
+        pos.row === store.getState().tree[id].row &&
+        pos.rowsCount === store.getState().tree[id].rowsCount
+      ) {
         this.collidingNodes.delete(id);
       }
     });
@@ -195,6 +201,7 @@ class ResizeAction {
 
   private static cleanUp() {
     this.resizingKey = null;
+    this.id = null;
     this.direction = [];
     this.initialDimensions = {
       width: 0,
@@ -204,59 +211,43 @@ class ResizeAction {
     };
     this.orginalPositions = {};
     this.collidingNodes = new Set<string>();
-    this.siblings = [];
   }
 
   private static returnToOriginalPosition() {
-    Object.entries(this.orginalPositions).forEach(([id, pos]) => {
+    this.collidingNodes.forEach((id) => {
       if (id === this.id) return;
-      setDimensions(id, {
-        x: pos.x,
-        y: pos.y,
-      });
+      const pos = this.orginalPositions[id];
+      setDimensions(id, pos);
     });
   }
 
   private static returnToInitialDimensions(
-    initialDimensions = this.initialDimensions,
+    initialGridPosition = this.initialGridPosition,
+    id = this.id,
   ) {
-    const [gridRow, gridCol] = getGridSize(this.id);
-    const { width, height, x, y } = initialDimensions;
-    const colCount = width / gridCol;
-    const rowCount = height / gridRow;
-    const col = x / gridCol;
-    const row = y / gridRow;
-    const node = store.getState().tree[this.id];
+    if (!id) return;
+
+    const node = store.getState().tree[id];
+    if (!node) return;
     if (node.isCanvas) {
-      resizeCanvas(this.id, {
-        columnsCount: colCount,
-        rowsCount: rowCount,
-        x: col,
-        y: row,
-      });
+      resizeCanvas(id, initialGridPosition);
       return;
     }
-    setDimensions(this.id, {
-      columnsCount: colCount,
-      rowsCount: rowCount,
-      x: col,
-      y: row,
-    });
+    setDimensions(id, initialGridPosition);
   }
 
   public static end(mousePos: Point): UndoableCommand | null {
     if (!this.id) return null;
     const initialDimensions = this.initialDimensions;
+    const initialGridPosition = this.initialGridPosition;
     const affectedNodes = Array.from(this.collidingNodes);
     const undoData = affectedNodes.map((id) => ({
       id,
-      x: this.orginalPositions[id].x,
-      y: this.orginalPositions[id].y,
+      ...this.orginalPositions[id],
     }));
     const id = this.id;
     const key = this.resizingKey;
     const direction = this.direction;
-    const siblings = this.siblings;
     const dims = this.calculateNewDimensions(
       mousePos,
       id,
@@ -267,15 +258,12 @@ class ResizeAction {
     if (!dims) return null;
     const command = {
       execute: () => {
-        this._resize(id, dims!, siblings);
+        this._resize(id, dims!);
       },
       undo: () => {
-        this.returnToInitialDimensions(initialDimensions);
+        this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
-          setDimensions(data.id, {
-            x: data.x,
-            y: data.y,
-          });
+          setDimensions(data.id, data);
         });
       },
     };
@@ -283,10 +271,15 @@ class ResizeAction {
     return command;
   }
 
-  private static _cancel() {
-    this.returnToOriginalPosition();
-    this.returnToInitialDimensions();
-    this.cleanUp();
+  static cancel(): Command | null {
+    if (!this.id) return null;
+    return {
+      execute: () => {
+        this.returnToOriginalPosition();
+        this.returnToInitialDimensions();
+        this.cleanUp();
+      },
+    };
   }
 
   private static _resize(
@@ -299,124 +292,47 @@ class ResizeAction {
       rowsCount: number;
       columnsCount: number;
     }>,
-    siblings: string[],
   ) {
     const collidedNodes = [];
     const tree = store.getState().tree;
     const node = tree[id];
     if (!node) return [];
-    let left = dimensions.x || node.x;
-    let top = dimensions.y || node.y;
-    let rowCount = dimensions.rowsCount || node.rowsCount;
-    let colCount = dimensions.columnsCount || node.columnsCount;
 
-    const right = left + colCount;
-    const bottom = top + rowCount;
-    const nodes = siblings;
-    const toBeMoved: { id: string; x?: number; y?: number }[] = [];
-    nodes.forEach((nodeId) => {
-      if (nodeId === id) return false;
-      const otherNode = tree[nodeId];
-      if (!otherNode) return false;
-      const otherBottom = otherNode.y + otherNode.rowsCount;
-      const otherTop = otherNode.y;
-      const otherLeft = otherNode.x;
-      const otherRight = otherNode.x + otherNode.columnsCount;
-      if (
-        checkOverlap(
-          {
-            left,
-            top,
-            right,
-            bottom,
-          },
-          {
-            left: otherLeft,
-            top: otherTop,
-            right: otherRight,
-            bottom: otherBottom,
-          },
-        )
-      ) {
-        toBeMoved.push({ id: nodeId, y: bottom });
-      }
-    });
-    // const parent = tree[node.parent!];
-    // const parentLeft = parent.x;
-    // const parentRight = parent.x + parent.columnsCount;
-    // const parentTop = parent.y;
-    // if (right > parentRight) {
-    //   colCount = Math.min(colCount, parentRight - left);
+    let dims = {
+      col: dimensions.x ?? node.col,
+      row: dimensions.y ?? node.row,
+      columnsCount: dimensions.columnsCount ?? node.columnsCount,
+      rowsCount: dimensions.rowsCount ?? node.rowsCount,
+    };
+    // const children = node.nodes;
+    // const lowestChildId = children[children.length - 1];
+    // const lowestChild = tree[lowestChildId];
+    // if (lowestChild) {
+    //   const lowestChildBoundRect = getBoundingRect(lowestChildId);
+    //   const grid = getGridSize(id);
+    //   const nodeBoundingRect = convertGridToPixel(
+    //     dims,
+    //     grid,
+    //     getPixelDimensions(node.parent),
+    //   );
+    //   const bottom = nodeBoundingRect.y + nodeBoundingRect.height;
+
+    //   if (lowestChildBoundRect.bottom > bottom) {
+    //     dims.rowsCount = normalize(
+    //       (lowestChildBoundRect.bottom - nodeBoundingRect.y) / grid[0],
+    //       grid[0],
+    //     );
+    //   }
     // }
-    // if (left < parentLeft) {
-    //   colCount = right - parentLeft;
-    //   left = parentLeft;
-    // }
-    // if (top < parentTop) {
-    //   top = parentTop;
-    //   rowCount = bottom - parentTop;
-    // }
-    const parentBoundingRect = getBoundingRect(node.parent);
-    const [gridrow, gridcol] = getGridSize(node.id);
-    const parent = tree[node.parent!];
-    const parentLeft = parentBoundingRect.left;
-    const parentRight = parentBoundingRect.right;
-    const parentTop = parentBoundingRect.top;
-    const nodeLeft = left * gridcol + parentLeft;
-    const nodeRight = nodeLeft + colCount * gridcol;
-    const nodeTop = top * gridrow + parentTop;
-    const nodeBottom = nodeTop + rowCount * gridrow;
-    if (nodeRight > parentRight) {
-      const diff = parentBoundingRect.right - nodeLeft;
-      const newColCount = Math.floor(diff / gridcol);
-      colCount = Math.min(colCount, newColCount);
-      if (colCount < 1) {
-        colCount = 1;
-      }
-    }
-    if (nodeLeft < parentLeft) {
-      colCount = (nodeRight - parentBoundingRect.left) / gridcol;
-      left = 0;
-      if (colCount < 1) {
-        colCount = 1;
-      }
-    }
-    if (nodeTop < parentTop) {
-      top = 0;
-      rowCount = (nodeBottom - parentBoundingRect.top) / gridrow;
-    }
-    if (nodeBottom > parentBoundingRect.bottom) {
-      const diff = nodeBottom - parentBoundingRect.bottom;
-      const newRowCount = Math.floor(diff / gridrow);
-      resizeCanvas(parent.id, {
-        rowsCount: parent.rowsCount + newRowCount,
-      });
-    }
-    if (node.isCanvas) {
-      resizeCanvas(id, {
-        x: left,
-        y: top,
-        columnsCount: colCount,
-        rowsCount: rowCount,
-      });
-    } else {
-      setDimensions(id, {
-        x: left,
-        y: top,
-        columnsCount: colCount,
-        rowsCount: rowCount,
-      });
-    }
-    for (const node of toBeMoved) {
-      collidedNodes.push(node.id);
-    }
-    for (const node of toBeMoved) {
-      const collied = moveNodeIntoGrid(node.id, node, false);
-      //todo find a better way to do this
-      Object.entries(collied.changedNodesOriginalCoords).forEach(([id]) => {
-        collidedNodes.push(id);
-      });
-    }
+    dims = handleParentCollisions(
+      dims,
+      getPixelDimensions(node.parent),
+      getBoundingRect(node.parent),
+      getGridSize(id),
+      false,
+    );
+    const orgCoords = moveNodeIntoGrid(id, dims);
+    collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }
 }

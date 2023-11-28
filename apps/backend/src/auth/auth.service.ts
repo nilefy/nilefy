@@ -18,7 +18,6 @@ export class AuthService {
 
   async signUp(user: CreateUserDto) {
     const { password } = user;
-
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
 
@@ -41,7 +40,7 @@ export class AuthService {
 
     const ret = await this.userService.findOne(email);
     if (!ret) {
-      throw new NotFoundException();
+      throw new NotFoundException('Email Not Found');
     }
 
     const match = await compare(password, ret.password);

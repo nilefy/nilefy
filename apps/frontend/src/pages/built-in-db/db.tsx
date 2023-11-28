@@ -419,7 +419,7 @@ export default function DatabaseTable() {
   return (
     <div className="flex h-full w-full flex-row">
       {/**sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-4">
+      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-4">
         {/**header*/}
         <div className="flex h-fit flex-col items-center">
           <h1 className="self-start text-lg font-bold">Database</h1>

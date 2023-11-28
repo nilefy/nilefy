@@ -7,6 +7,8 @@ import { DrizzleModule } from './drizzle/drizzle.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
+import { RolesModule } from './roles/roles.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
 
@@ -23,6 +25,8 @@ import { DataQueriesModule } from './data_queries/data_queries.module';
     DrizzleModule,
     WorkspacesModule,
     AppsModule,
+    RolesModule,
+    PermissionsModule,
     DataSourcesModule,
     DataQueriesModule,
   ],
