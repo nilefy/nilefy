@@ -9,6 +9,8 @@ import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
 import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { DataSourcesModule } from './data_sources/data_sources.module';
+import { DataQueriesModule } from './data_queries/data_queries.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { PermissionsModule } from './permissions/permissions.module';
     AppsModule,
     RolesModule,
     PermissionsModule,
+    DataSourcesModule,
+    DataQueriesModule,
   ],
 })
 export class AppModule {}

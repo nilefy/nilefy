@@ -20,14 +20,19 @@ export class AuthService {
     const { password } = user;
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
-    const u = await this.userService.create({ ...user, password: hashed });
 
-    return {
-      access_token: await this.jwtService.signAsync({
-        sub: u.id,
-        username: u.username,
-      } satisfies PayloadUser),
-    } satisfies JwtToken;
+    try {
+      const u = await this.userService.create({ ...user, password: hashed });
+
+      return {
+        access_token: await this.jwtService.signAsync({
+          sub: u.id,
+          username: u.username,
+        } satisfies PayloadUser),
+      } satisfies JwtToken;
+    } catch (err) {
+      throw new BadRequestException();
+    }
   }
 
   async signIn(user: LoginUserDto) {
