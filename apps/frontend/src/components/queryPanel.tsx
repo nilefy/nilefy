@@ -73,7 +73,9 @@ export function QueryPanel() {
   const [selectedSource, setSelectedSource] = useState<DataSourceTypes | 'all'>(
     'all',
   );
-  const [sortingCriteria, setSortingCriteria] = useState('');
+  const [sortingCriteria, setSortingCriteria] = useState<
+    'name' | 'source' | 'dateModified'
+  >('name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
 
   const handleDataSourceSearchChange = (
@@ -140,6 +142,7 @@ export function QueryPanel() {
       sortingOrder: 'asc' | 'desc' | null,
     ) => {
       const sortedData = [...queries];
+
       if (sortingCriteria === 'name' || sortingCriteria === 'source') {
         sortedData.sort((a, b) => {
           const aValue = a[sortingCriteria].toLowerCase();
@@ -161,15 +164,14 @@ export function QueryPanel() {
   );
 
   const queriesToShow = useMemo(() => {
-    const sorted = sortQueries(queries, sortingCriteria, sortingOrder);
-    const filtered = matchSorter(sorted, querySearch, {
+    const filtered = matchSorter(queries, querySearch, {
       keys: ['name', 'source'],
     }).filter((item) => {
       if (selectedSource === 'all' || item.source === selectedSource) {
         return item;
       }
     });
-    return filtered;
+    return sortQueries(filtered, sortingCriteria, sortingOrder);
   }, [
     queries,
     selectedSource,
