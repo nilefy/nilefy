@@ -7,15 +7,19 @@ import {
 import { CreatePageDb, PageDto, UpdatePageDb } from '../dto/pages.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
-import { AppDto } from '../dto/apps.dto';
+import { AppDto, WebloomNode, WebloomTree } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
+import { ComponentsService } from '../components/components.service';
 
 @Injectable()
 export class PagesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private componentsService: ComponentsService,
+  ) {}
 
   private getNewPageIndexInApp(appId: AppDto['id']) {
-    return sql`(select COALESCE(max(${pages.index}) + 1, 1) from pages where pages.app_id = ${appId})`;
+    return sql`(select (COALESCE(max(${pages.index}) , 0) + 1) from pages where pages.app_id = ${appId})`;
   }
 
   async create(
@@ -27,7 +31,7 @@ export class PagesService {
       tx?: PgTrans;
     },
   ) {
-    return await (options?.tx ? options.tx : this.db)
+    const [p] = await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values({
         ...pageDto,
@@ -35,6 +39,37 @@ export class PagesService {
         index: this.getNewPageIndexInApp(pageDto.appId),
       })
       .returning();
+    const rootComponent = await this.componentsService.create(
+      {
+        name: 'ROOT',
+        type: 'ROOT',
+        isCanvas: true,
+        pageId: p.id,
+        createdById: pageDto.createdById,
+        parent: null,
+        props: {},
+        col: 0,
+        row: 0,
+        columnsCount: 0,
+        rowsCount: 0,
+      },
+      {
+        tx: options?.tx,
+      },
+    );
+    return {
+      ...p,
+      tree: {
+        ROOT: {
+          ...rootComponent,
+          id: rootComponent.id.toString(),
+          parent: rootComponent.parent?.toString() ?? 'ROOT',
+          isCanvas: rootComponent.isCanvas ?? undefined,
+          props: rootComponent.props as WebloomNode['props'],
+          nodes: [],
+        },
+      } satisfies WebloomTree,
+    };
   }
 
   async clone({
@@ -71,7 +106,6 @@ export class PagesService {
     });
   }
 
-  // TODO: return components state
   async findOne(appId: number, pageId: number) {
     const p = await this.db.query.pages.findFirst({
       where: and(
@@ -81,7 +115,8 @@ export class PagesService {
       ),
     });
     if (!p) throw new NotFoundException('no app or page with those ids');
-    return p;
+    const tree = await this.componentsService.getTreeForPage(p.id);
+    return { ...p, tree };
   }
 
   async update(
