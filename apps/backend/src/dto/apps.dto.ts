@@ -65,3 +65,5 @@ export type WebloomNode = {
   props: Record<string, unknown>;
   type: string;
 } & WebloomGridDimensions;
+
+export type WebloomTree = Record<string, WebloomNode>;

@@ -5,6 +5,7 @@ import { apps } from '../drizzle/schema/schema';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
+import { pages } from '../drizzle/schema/appsState.schema';
 
 @Injectable()
 export class AppsService {
@@ -88,11 +89,30 @@ export class AppsService {
         isNull(apps.deletedAt),
       ),
       with: {
-        pages: true,
+        createdBy: {
+          columns: {
+            id: true,
+            username: true,
+          },
+        },
+        updatedBy: {
+          columns: {
+            id: true,
+            username: true,
+          },
+        },
+        pages: {
+          orderBy: asc(pages.index),
+          columns: {
+            id: true,
+            name: true,
+            handle: true,
+          },
+        },
       },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
-    return app as AppDto;
+    return app;
   }
 
   async update(
