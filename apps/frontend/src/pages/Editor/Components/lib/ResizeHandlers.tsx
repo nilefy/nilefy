@@ -1,8 +1,9 @@
 import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import store from '@/store';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { WebloomWidgets } from '..';
 const handlePositions = {
   'top-left': [0, 0],
   'top-right': [0, 1],
@@ -42,6 +43,7 @@ export function ResizeHandlers() {
       );
     };
     const resizeEndHandler = (e: MouseEvent) => {
+      e.stopPropagation();
       commandManager.executeCommand(
         ResizeAction.end({
           x: e.clientX,
@@ -68,8 +70,24 @@ export function ResizeHandlers() {
 
 function Handles({ id }: { id: string }) {
   const dims = store((state) => state.getPixelDimensions(id));
+  const node = store.getState().tree[id];
+  const direction = WebloomWidgets[node.type].config.resizingDirection;
+  const componentHandles = useMemo(
+    () =>
+      Object.entries(handlePositions).filter(([key]) => {
+        if (direction === 'Both') return true;
+        if (direction === 'Horizontal') {
+          return key === 'left' || key === 'right';
+        }
+        if (direction === 'Vertical') {
+          return key === 'top' || key === 'bottom';
+        }
+        return false;
+      }),
+    [direction],
+  );
   const isDragging = store((state) => state.draggedNode === id);
-  const handleSize = 10;
+  const handleSize = 8;
   const handleStyle: React.CSSProperties = {
     position: 'absolute',
     width: handleSize,
@@ -78,6 +96,7 @@ function Handles({ id }: { id: string }) {
     border: '1px solid black',
     borderRadius: '50%',
   };
+  const padding = 3;
   return (
     !isDragging && (
       <div
@@ -88,22 +107,22 @@ function Handles({ id }: { id: string }) {
           left: dims.x,
         }}
       >
-        {Object.entries(handlePositions).map(([key, [y, x]]) => {
+        {componentHandles.map(([key, [y, x]]) => {
           const width = dims.width;
           const height = dims.height;
           let left = 0;
           if (x === 0) {
-            left = -handleSize / 2;
+            left = -handleSize / 2 - padding;
           } else if (x === 1) {
-            left = width - handleSize / 2;
+            left = width - handleSize / 2 + padding;
           } else {
             left = width / 2 - handleSize / 2;
           }
           let top = 0;
           if (y === 0) {
-            top = -handleSize / 2;
+            top = -handleSize / 2 - padding;
           } else if (y === 1) {
-            top = height - handleSize / 2;
+            top = height - handleSize / 2 + padding;
           } else {
             top = height / 2 - handleSize / 2;
           }

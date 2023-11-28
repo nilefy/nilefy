@@ -11,7 +11,7 @@ import { DeleteAction } from '@/actions/Editor/Delete';
 function InsertTab() {
   return (
     <TabsContent value="insert">
-      <div className="grid w-full grid-cols-2">
+      <div className="grid w-full  grid-cols-2 gap-2">
         {Object.entries(WebloomWidgets).map(([name, component]) => {
           const config =
             WebloomWidgets[name as keyof typeof WebloomWidgets].config;
