@@ -16,11 +16,15 @@ type InspectorSelectProps = {
   items: { label: string; value: string }[];
   placeholder?: string;
 };
+type InspectorColorProps = {
+  color: string;
+};
 
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
   select: InspectorSelectProps;
+  color: InspectorColorProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -46,4 +50,5 @@ export type {
   InspectorSelectProps,
   WidgetInspectorConfig,
   InspectorFormControls,
+  InspectorColorProps,
 };

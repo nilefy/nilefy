@@ -20,23 +20,9 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
         id: `${widgetName}-color`,
         key: 'color',
         label: 'Color',
-        type: 'select',
+        type: 'color',
         options: {
-          placeholder: 'Select color',
-          items: [
-            {
-              label: 'Red',
-              value: 'red',
-            },
-            {
-              label: 'Blue',
-              value: 'blue',
-            },
-            {
-              label: 'Transparent',
-              value: 'transparent',
-            },
-          ],
+          color: '#fff',
         },
       },
     ],
