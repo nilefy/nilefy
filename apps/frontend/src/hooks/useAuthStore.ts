@@ -17,6 +17,9 @@ function getUser(): AuthStore['user'] {
   const token = getToken();
   if (token) {
     const decoded = jwtDecode(token) as JwtPayload;
+    if (decoded.exp * 1000 < Date.now()) {
+      return null;
+    }
     return {
       id: decoded.sub,
       username: decoded.username,
@@ -42,7 +45,7 @@ export const useAuthStore = () => {
     queryKey: [TOKEN_QUERY_KEY],
     initialData: getToken(),
   });
-  const isAuthed = !!token.data;
+  const isAuthed = user.data !== null && token.data !== null;
   const setUser = (user: UserI | null) => {
     queryClient.setQueryData([USER_QUERY_KEY], user);
   };

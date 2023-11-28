@@ -36,18 +36,18 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
   {
     path: '',
-    element: <Outlet />,
+    element: (
+      <ProtectedRoute>
+        <Outlet />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorPage />,
     id: 'root',
     loader: workspacesLoader(queryClient),
     children: [
       {
         path: '/:workspaceId',
-        element: (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        ),
+        element: <Dashboard />,
         errorElement: <ErrorPage />,
         children: [
           {
