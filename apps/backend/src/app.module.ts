@@ -10,6 +10,7 @@ import { AppsModule } from './apps/apps.module';
 import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { PagesModule } from './pages/pages.module';
+import { ComponentsModule } from './components/components.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PagesModule } from './pages/pages.module';
     RolesModule,
     PermissionsModule,
     PagesModule,
+    ComponentsModule,
   ],
 })
 export class AppModule {}
