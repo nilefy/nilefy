@@ -1,3 +1,5 @@
+import { getToken } from '@/lib/token.localstorage';
+
 const baseUrl = 'http://localhost:3000/';
 /**
  * takes the url as relative url then it concat it to the baseUrl of the API
@@ -8,13 +10,24 @@ export async function fetchX(...args: Parameters<typeof fetch>) {
   const res = await fetch(`${baseUrl}${url}`, {
     ...init,
     headers: {
-      Authorization: localStorage.getItem('token') ?? '',
+      Authorization: `Bearer ${getToken()}` ?? '',
       ...init?.headers,
     },
   });
+
   if (!res.ok) {
-    throw new Error(`fetch failed with status ${res.status}`);
+    const { message, error, statusCode } = await res.json();
+    throw new FetchXError(message, statusCode, error);
   } else {
     return res;
+  }
+}
+export class FetchXError extends Error {
+  constructor(
+    public message: string,
+    public statusCode: number,
+    public error?: string,
+  ) {
+    super(message);
   }
 }
