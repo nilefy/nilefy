@@ -13,7 +13,7 @@ const InspectorColor = (
   return (
     <SketchPicker
       color={color}
-      onChangeComplete={(e: unknown) => {
+      onChangeComplete={(e) => {
         props.onChange(e.hex);
         setColor(e.hex);
       }}
