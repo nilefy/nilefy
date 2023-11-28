@@ -1,20 +1,15 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { MousePointerSquare } from 'lucide-react';
+import { Type } from 'lucide-react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
-import { Button } from '@/components/ui/button';
-export type WebloomButtonProps = {
+export type WebloomTextProps = {
   text: string;
 };
-const WebloomButton = (props: WebloomButtonProps) => {
-  return (
-    <Button {...props} className="active:bg-primary/20 block h-full w-full">
-      {props.text}
-    </Button>
-  );
+const WebloomText = (props: WebloomTextProps) => {
+  return <span className="h-full w-full break-all">{props.text}</span>;
 };
 const config: WidgetConfig = {
-  name: 'Button',
-  icon: <MousePointerSquare />,
+  name: 'Text',
+  icon: <Type />,
   isCanvas: false,
   layoutConfig: {
     colsCount: 2,
@@ -25,12 +20,12 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomButtonProps = {
-  text: 'Button',
+const defaultProps: WebloomTextProps = {
+  text: 'Text',
 };
-const widgetName = 'WebloomButton';
+const widgetName = 'WebloomText';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
+const inspectorConfig: WidgetInspectorConfig<WebloomTextProps> = [
   {
     sectionName: 'General',
     children: [
@@ -47,11 +42,11 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
     ],
   },
 ];
-export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
-  component: WebloomButton,
+export const WebloomTextWidget: Widget<WebloomTextProps> = {
+  component: WebloomText,
   config,
   defaultProps,
   inspectorConfig,
 };
 
-export { WebloomButton };
+export { WebloomText };

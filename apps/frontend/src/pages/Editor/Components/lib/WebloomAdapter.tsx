@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 import {
@@ -8,11 +8,11 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 import { DeleteAction } from '@/actions/Editor/Delete';
+import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
   id: string;
@@ -24,21 +24,21 @@ type WebloomAdapterProps = {
 
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
+  const isResizing = store((state) => state.resizedNode === id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
   const elDimensions = store((store) => store.getRelativePixelDimensions(id));
-  const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
-    {
+  const { attributes, listeners, setNodeRef, isDragging, active } =
+    useWebloomDraggable({
       id,
-      disabled: !props.draggable || ResizeAction.resizingKey !== null,
+      disabled: !props.draggable,
       data: {
         isNew: false,
       },
-    },
-  );
+    });
   if (id === ROOT_NODE_ID) {
     attributes.role = 'canvas';
   }
@@ -82,15 +82,30 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
             {...attributes}
             style={style}
             ref={ref}
-            className="target touch-none"
+            className="target relative touch-none overflow-hidden outline-none"
             data-id={id}
           >
-            {!isDragging && props.children}
+            {!!active && (
+              <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+            )}
+            <div
+              className={cn(
+                {
+                  hidden: isDragging || isResizing,
+                },
+                {
+                  flex: !isDragging && !isResizing,
+                },
+                'w-full h-full',
+              )}
+            >
+              {props.children}
+            </div>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem
-            onPointerDown={() => {
+            onMouseDown={() => {
               commandManager.executeCommand(new DeleteAction());
             }}
           >

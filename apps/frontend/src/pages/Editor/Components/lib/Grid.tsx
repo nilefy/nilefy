@@ -4,9 +4,11 @@ import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 
 const Grid = ({ id }: { id: string }) => {
-  const el = store((state) => state.tree[id]);
-  const gridSize = el.columnWidth!;
+  const columnWidth = store((state) => state.tree[id].columnWidth);
+  const gridSize = columnWidth!;
   const { active } = useDndContext();
+  const resized = store((state) => state.resizedNode);
+  const shown = !!active || !!resized;
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,15 +31,14 @@ const Grid = ({ id }: { id: string }) => {
       ctx.moveTo(i, 0);
       ctx.lineTo(i, height);
     }
-
     ctx.stroke();
-  }, [gridSize, active, el]);
+  }, [gridSize, shown]);
   return (
     <div
       ref={divRef}
       className="pointer-events-none absolute left-0 top-0 h-full w-full select-none"
     >
-      {!!active && <canvas ref={ref}></canvas>}
+      {shown && <canvas ref={ref}></canvas>}
     </div>
   );
 };
