@@ -1,3 +1,4 @@
+import { WebloomTree } from '@/store';
 import { fetchX } from '@/utils/fetch';
 import {
   UseMutationOptions,
@@ -18,6 +19,11 @@ export type AppI = {
   updatedById: number | null;
   deletedById: number | null;
   workspaceId: number;
+};
+export type PageI = {
+  id: number;
+  name: string;
+  handle: string;
 };
 
 type UserMetaI = { id: number; username: string };
@@ -103,6 +109,11 @@ async function index({ workspaceId }: { workspaceId: number }) {
   })[];
 }
 
+type AppCompleteT = AppI & {
+  pages: PageI[];
+  defaultPage: PageI & { tree: WebloomTree };
+};
+
 async function one({
   workspaceId,
   appId,
@@ -113,7 +124,7 @@ async function one({
   const res = await fetchX(`workspaces/${workspaceId}/apps/${appId}`, {
     method: 'GET',
   });
-  return (await res.json()) as AppI;
+  return (await res.json()) as AppCompleteT;
 }
 
 function useApps(workspaceId: number) {

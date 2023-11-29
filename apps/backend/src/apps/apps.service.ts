@@ -78,10 +78,7 @@ export class AppsService {
     return workspaceApps;
   }
 
-  async findOne(
-    workspaceId: AppDto['workspaceId'],
-    appId: AppDto['id'],
-  ): Promise<AppDto> {
+  async findOne(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
     const app = await this.db.query.apps.findFirst({
       where: and(
         eq(apps.id, appId),
@@ -112,7 +109,12 @@ export class AppsService {
       },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
-    return app;
+    // TODO: for now i get the first page as the default but needs to add default page concept to the database
+    const defaultPage = await this.pagesService.findOne(
+      app.id,
+      app.pages[0].id,
+    );
+    return { ...app, defaultPage };
   }
 
   async update(

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import {
   DatabaseI,
   DrizzleAsyncProvider,
@@ -6,9 +6,13 @@ import {
 } from '../drizzle/drizzle.provider';
 import { PageDto } from '../dto/pages.dto';
 import { WebloomNode, WebloomTree } from '../dto/apps.dto';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql, ne } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
-import { ComponentDto, CreateComponentDb } from '../dto/components.dto';
+import {
+  ComponentDto,
+  CreateComponentDb,
+  UpdateComponentDb,
+} from '../dto/components.dto';
 
 @Injectable()
 export class ComponentsService {
@@ -32,9 +36,32 @@ export class ComponentsService {
     )[0];
   }
 
-  // TODO: throw if user tried to delete root node
-  async delete() {
-    throw new Error('implement');
+  /**
+   * unlike normal tree or graph when node get deleted the sub-tree under it gets deleted(on delete cascade)
+   */
+  async delete(pageId: PageDto['id'], componentId: ComponentDto['id']) {
+    const [c] = await this.db
+      .delete(components)
+      .where(
+        and(
+          eq(components.pageId, pageId),
+          eq(components.id, componentId),
+          ne(components.name, 'ROOT'),
+        ),
+      )
+      .returning({ id: components.id });
+    // either component doesn't exist or tried to delete root of page
+    if (c === undefined) {
+      throw new BadRequestException();
+    }
+    return c;
+  }
+
+  /**
+   * for now if user wants to update on field on the props the props object should be sent not only this field
+   */
+  async update(dto: UpdateComponentDb) {
+    await this.db.update(components).set(dto);
   }
 
   async getTreeForPage(pageId: PageDto['id']): Promise<WebloomTree> {

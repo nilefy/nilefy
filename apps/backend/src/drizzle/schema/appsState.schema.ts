@@ -92,7 +92,7 @@ export const components = pgTable(
     parentFK: foreignKey({
       columns: [t.parent],
       foreignColumns: [t.id],
-    }),
+    }).onDelete('cascade'),
   }),
 );
 
