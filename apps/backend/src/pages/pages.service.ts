@@ -187,6 +187,7 @@ export class PagesService {
       .returning();
   }
 
+  // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
   async delete({
     appId,
     pageId,
