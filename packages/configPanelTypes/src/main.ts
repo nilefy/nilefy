@@ -21,6 +21,10 @@ type InspectorSelectProps = {
 type FormControlOptions = {
   input: InspectorInputProps;
   select: InspectorSelectProps;
+  sqlEditor: {
+    value?: string;
+    placeholder?: string;
+  };
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
