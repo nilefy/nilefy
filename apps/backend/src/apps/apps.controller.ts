@@ -64,6 +64,7 @@ export class AppsController {
   ) {
     return await this.appsService.update(workspaceId, appId, {
       updatedById: req.user.userId,
+      homepageId: updateAppDto.homepageId,
       ...updateAppDto,
     });
   }

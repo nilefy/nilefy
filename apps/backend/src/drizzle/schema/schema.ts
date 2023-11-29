@@ -204,6 +204,7 @@ export const apps = pgTable('apps', {
     .notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   description: varchar('description', { length: 255 }),
+  homepageId: integer('homepage_id').default(0),
   /**
    * workspace this app belongs to
    */

@@ -22,7 +22,6 @@ import {
   createPageSchema,
   updatePageSchema,
 } from '../dto/pages.dto';
-
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/pages')
 export class PagesController {
@@ -74,6 +73,8 @@ export class PagesController {
     @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
     @Body(new ZodValidationPipe(updatePageSchema)) pageDto: UpdatePageDto,
   ) {
+    console.log('update page', pageDto);
+
     return await this.pagesService.update(appId, pageId, {
       updatedById: req.user.userId,
       ...pageDto,

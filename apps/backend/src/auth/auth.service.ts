@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -35,12 +36,12 @@ export class AuthService {
 
     const ret = await this.userService.findOne(email);
     if (!ret) {
-      throw new NotFoundException('Email Not Found');
+      throw new UnauthorizedException('Email or Password is incorrect');
     }
 
     const match = await compare(password, ret.password);
     if (!match) {
-      throw new BadRequestException();
+      throw new UnauthorizedException('Email or Password is incorrect');
     }
     return {
       access_token: await this.jwtService.signAsync({

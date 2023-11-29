@@ -43,6 +43,7 @@ export class PagesService {
     createdById,
   }: Pick<PageDto, 'id' | 'createdById' | 'appId'>) {
     // TODO: clone the tree state as well
+
     const origin = await this.db.query.pages.findFirst({
       columns: {
         id: true,
@@ -81,6 +82,22 @@ export class PagesService {
       ),
     });
     if (!p) throw new NotFoundException('no app or page with those ids');
+    const compo = await this.db.execute(sql`
+    WITH RECURSIVE rectree AS (
+      SELECT * 
+        FROM components
+       WHERE parent_id is null and page_id = ${pageId}
+    UNION ALL 
+      SELECT t.* 
+        FROM components t 
+        JOIN rectree
+          ON t.parent_id = rectree.id
+    ) SELECT * FROM rectree;
+    `);
+    console.log(
+      '🪵 [pages.service.ts:84] ~ token ~ \x1b[0;32mcompo\x1b[0m = ',
+      compo.rows,
+    );
     return p;
   }
 

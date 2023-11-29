@@ -5,7 +5,7 @@ import { workspaceSeeder } from './seeders/workspace.seeder';
 import { appSeeder } from './seeders/app.seeder';
 import { permissionsSeeder } from './seeders/permissions.seeder';
 import { rolesSeeder } from './seeders/roles.seeder';
-
+import { pageSeeder } from './seeders/page.seeder';
 async function main() {
   configDotenv();
   const dbUrl = process.env.DB_URL;
@@ -22,7 +22,11 @@ async function main() {
   const [adminId, ...rest] = userIds;
   await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);
   await appSeeder(db, userIds, workspaceIds);
+  const apps = await appSeeder(db, userIds, workspaceIds);
 
+  const appIds = apps.map((a) => a.id);
+
+  await pageSeeder(db, appIds, userIds);
   client.end();
 }
 

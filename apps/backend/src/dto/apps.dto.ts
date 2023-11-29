@@ -12,6 +12,7 @@ export const createAppSchema = createAppDb.pick({
   name: true,
   description: true,
   state: true,
+  homepageId: true,
 });
 
 export const updateAppDb = createAppDb
