@@ -9,6 +9,7 @@ import {
 } from '@codemirror/view';
 import { useEffect, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
+import { sql, PostgreSQL } from '@codemirror/lang-sql';
 import { CompletionContext } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 
@@ -156,6 +157,46 @@ export function Globals() {
   //     setContainer(editor.current);
   //   }
   // }, [setContainer]);
+
+  return (
+    <div className="flex h-screen w-screen items-center justify-center">
+      <div ref={editor} className="h-8 w-2/3 " />
+    </div>
+  );
+}
+
+export function SQLEditor() {
+  const editor = useRef<HTMLDivElement>(null);
+  /**
+   * to hold the editor state outside the editor
+   */
+  const [code, setCode] = useState('');
+  // add extenion to update the state "code" when the view changes
+  const onUpdate = EditorView.updateListener.of((update) =>
+    setCode(update.state.doc.toString()),
+  );
+  useEffect(() => {
+    if (!editor.current) return;
+    console.log('inside the hook');
+    const editorState = EditorState.create({
+      doc: code,
+      extensions: [
+        basicSetup,
+        sql({
+          dialect: PostgreSQL,
+        }),
+        onUpdate,
+      ],
+    });
+    const view = new EditorView({
+      state: editorState,
+      parent: editor.current,
+    });
+
+    return () => view.destroy();
+  }, []);
+
+  console.log('code', code);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">
