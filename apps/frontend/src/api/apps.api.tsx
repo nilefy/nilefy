@@ -109,7 +109,7 @@ async function index({ workspaceId }: { workspaceId: number }) {
   })[];
 }
 
-type AppCompleteT = AppI & {
+export type AppCompleteT = AppI & {
   pages: PageI[];
   defaultPage: PageI & { tree: WebloomTree };
 };
@@ -135,11 +135,20 @@ function useApps(workspaceId: number) {
   return apps;
 }
 
-function useApp(workspaceId: number, appId: number) {
-  const app = useQuery({
-    queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
-    queryFn: async () => await one({ workspaceId, appId }),
-  });
+export const useAppQuery = ({
+  workspaceId,
+  appId,
+}: {
+  workspaceId: number;
+  appId: number;
+}) => ({
+  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
+  queryFn: async () => await one({ workspaceId, appId }),
+  staleTime: 0,
+});
+
+function useApp(...rest: Parameters<typeof useAppQuery>) {
+  const app = useQuery(useAppQuery(...rest));
   return app;
 }
 

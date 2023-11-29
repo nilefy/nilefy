@@ -109,6 +109,8 @@ export class AppsService {
       },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
+    if (app.pages.length < 1)
+      throw new Error("app must has at least one page what's going on");
     // TODO: for now i get the first page as the default but needs to add default page concept to the database
     const defaultPage = await this.pagesService.findOne(
       app.id,

@@ -83,23 +83,43 @@ export class ComponentsService {
     `);
     const rows = comps.rows as (ComponentDto & { level: number })[];
     const tree: WebloomTree = {};
+    let rootId: string;
     rows.forEach((row) => {
-      tree[row.id] = {
-        id: row.id.toString(),
-        name: row.name,
-        nodes: [],
-        parent: row.parent?.toString() ?? 'ROOT',
-        isCanvas: row.isCanvas ?? undefined,
-        props: row.props as WebloomNode['props'],
-        type: row.type,
-        col: row.col,
-        row: row.row,
-        columnsCount: row.columnsCount,
-        rowsCount: row.rowsCount,
-      };
-      // add children ids to parent
-      if (row.level > 1) {
-        tree[row.parent!.toString()]['nodes'].push(row.id.toString());
+      if (row.level === 1) {
+        rootId = row.id.toString();
+        tree['ROOT'] = {
+          id: 'ROOT',
+          name: row.name,
+          nodes: [],
+          parent: 'ROOT',
+          isCanvas: true,
+          props: row.props as WebloomNode['props'],
+          type: row.type,
+          col: row.col,
+          row: row.row,
+          columnsCount: row.columnsCount,
+          rowsCount: row.rowsCount,
+          columnWidth: 0,
+        };
+      } else {
+        tree[row.id] = {
+          id: row.level === 1 ? 'ROOT' : row.id.toString(),
+          name: row.name,
+          nodes: [],
+          parent: row.parent?.toString() ?? 'ROOT',
+          isCanvas: row.isCanvas ?? undefined,
+          props: row.props as WebloomNode['props'],
+          type: row.type,
+          col: row.col,
+          row: row.row,
+          columnsCount: row.columnsCount,
+          rowsCount: row.rowsCount,
+        };
+        // add children ids to parent
+        const parentId = row.parent!.toString();
+        tree[parentId === rootId ? 'ROOT' : parentId]['nodes'].push(
+          row.id.toString(),
+        );
       }
     });
     return tree;

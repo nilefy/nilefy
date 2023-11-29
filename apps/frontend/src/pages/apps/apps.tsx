@@ -1,5 +1,5 @@
 import { SelectWorkSpace } from '@/components/selectWorkspace';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Card,
@@ -23,8 +23,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -49,7 +47,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api } from '@/api';
-import { useParams } from 'react-router-dom';
+import { Link, NavLink, useParams } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import { APPS_QUERY_KEY, AppI, AppMetaT, appMetaSchema } from '@/api/apps.api';
 import { useState } from 'react';
@@ -309,7 +307,7 @@ function ApplicationsView() {
         {apps.data.map((app) => (
           <Card
             key={app.id}
-            className="min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400"
+            className="h-fit min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400"
           >
             <CardHeader className="flex flex-col">
               <div className="flex w-full justify-between">
@@ -331,7 +329,12 @@ function ApplicationsView() {
               <p className="line-clamp-1">{app.description}</p>
             </CardContent>
             <CardFooter className="flex justify-end gap-5">
-              <Button>Edit</Button>
+              <Link
+                to={`apps/${app.id}`}
+                className={buttonVariants({ variant: 'default' })}
+              >
+                Edit
+              </Link>
               <Button>Launch</Button>
             </CardFooter>
           </Card>
@@ -345,7 +348,7 @@ export function ApplicationsLayout() {
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />
