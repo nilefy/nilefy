@@ -1,12 +1,11 @@
-import store, {
-  WebloomGridDimensions,
-  convertGridToPixel,
-  handleParentCollisions,
-} from '@/store';
+import store, { handleParentCollisions } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { ROOT_NODE_ID, ROW_HEIGHT } from '@/lib/constants';
-import { normalize } from '@/lib/utils';
 import { Point } from '@/types';
+import { WebloomGridDimensions } from '@/lib/Editor/interface';
+import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { normalize } from '@/lib/Editor/utils';
+import { throttle } from 'lodash';
+
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
   | 'top-left'
@@ -48,7 +47,6 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
-
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
         if (node[0] === ROOT_NODE_ID) return acc;
@@ -67,6 +65,8 @@ class ResizeAction {
     this.orginalPositions = positionsSnapshot;
     this.initialGridPosition = store.getState().getGridDimensions(id);
     this.initialDimensions = dimensions;
+    store.getState().setResizedNode(id);
+    store.getState().setShadowElement(store.getState().getPixelDimensions(id));
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -154,6 +154,7 @@ class ResizeAction {
     const rowCount = Math.round(newHeight / gridRow);
     const newX = Math.round(newLeft / gridCol);
     const newY = Math.round(newTop / gridRow);
+
     return {
       rowsCount: rowCount,
       columnsCount: colCount,
@@ -172,9 +173,13 @@ class ResizeAction {
       this.resizingKey,
     );
     if (!dims) return;
+
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
     const newCollisions = this._resize(this.id, dims);
+    store
+      .getState()
+      .setShadowElement(store.getState().getPixelDimensions(this.id));
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
@@ -197,7 +202,7 @@ class ResizeAction {
     if (!this.initialDimensions) return null;
     return {
       execute: () => {
-        this._move(...args);
+        this.throttledMove(...args);
       },
     };
   }
@@ -258,6 +263,8 @@ class ResizeAction {
       direction,
       key,
     );
+    store.getState().setResizedNode(null);
+    store.getState().setShadowElement(null);
     if (!dims) return null;
     const command = {
       execute: () => {
@@ -338,6 +345,7 @@ class ResizeAction {
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }
+  private static throttledMove = throttle(ResizeAction._move, 10);
 }
 
 export default ResizeAction;

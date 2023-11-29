@@ -57,7 +57,7 @@ export function UsersManagement() {
           Add users
         </Button>
       </div>
-      <div className="bg-primary/5 flex w-full flex-col justify-between p-2">
+      <div className="flex w-full flex-col justify-between bg-primary/5 p-2">
         <div className="flex gap-4">
           <span>Showing</span>
           <Select defaultValue="all">

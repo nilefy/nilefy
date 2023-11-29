@@ -283,7 +283,7 @@ export function GroupsManagement() {
         <p>{groups.data.length} groups</p>
         <InsertGroupDialog />
       </div>
-      <div className="bg-primary/5 flex h-2/3 w-full justify-between p-2">
+      <div className="flex h-2/3 w-full justify-between bg-primary/5 p-2">
         <div className="flex w-[20%] max-w-[20%] flex-col gap-4 overflow-y-auto border-r pr-2">
           <Input placeholder="search by name" />
           {groups.data.map((group) => (
