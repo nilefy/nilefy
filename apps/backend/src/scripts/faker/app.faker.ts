@@ -13,7 +13,7 @@ export function generateFakeApp(
   return {
     createdById: faker.helpers.arrayElement(userIds),
     updatedById: faker.helpers.arrayElement([...userIds, null]),
-    deletedById: faker.helpers.arrayElement([...userIds, null]),
+    deletedById: null,
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
     workspaceId: faker.helpers.arrayElement(workspaceIds),
