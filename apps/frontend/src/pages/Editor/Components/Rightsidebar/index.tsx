@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
 import { ConfigPanel } from '../configPanel/index';
-import { commandManager } from '@/actions/commandManager';
-import { DeleteAction } from '@/actions/Editor/Delete';
-
+import { commandManager } from '@/Actions/CommandManager';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 function InsertTab() {
   return (
     <TabsContent value="insert">

@@ -1,15 +1,17 @@
+import { PageSelector } from '@/components/pageSelector';
+import { Inspector } from '@/components/inspector';
 import { ModeToggle } from '@/components/mode-toggle';
-import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog, Table } from 'lucide-react';
+import { WorkSpaces } from '@/components/selectWorkspace';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/hooks/useAuthStore';
+import { useSignOut } from '@/hooks/useSignOut';
 import { getInitials } from '@/utils/avatar';
 import { fetchX } from '@/utils/fetch';
-import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
-import { Inspector } from '@/components/inspector';
-import { useAuthStore } from '@/hooks/useAuthStore';
-import { Button } from '@/components/ui/button';
-import { useSignOut } from '@/hooks/useSignOut';
+import { Cog, Layout, Table, Wind } from 'lucide-react';
+import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
+
 const dashboardPaths = [
   {
     name: 'apps',
@@ -81,6 +83,7 @@ export function Dashboard() {
         </div>
         {/**TODO: move to editor layout */}
         <Inspector />
+        <PageSelector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
@@ -95,8 +98,7 @@ export function Dashboard() {
         </div>
         <Button onClick={() => mutate()}>Logout</Button>
       </div>
-
-      <Outlet />
+      <Outlet />u
     </div>
   );
 }

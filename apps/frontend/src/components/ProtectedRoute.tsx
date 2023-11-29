@@ -11,7 +11,6 @@ export const ProtectedRoute = ({
   redirectPath = '/signin',
 }: ProtectedRouteProps) => {
   const { isAuthed } = useAuthStore();
-  // if the user is authenticated and tries to access a signin or signup etc..
   if (!isAuthed) {
     return <Navigate to={redirectPath} replace />;
   }
