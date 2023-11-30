@@ -632,7 +632,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
 
     resizeCanvas(id, dimensions) {
       const node = get().tree[id];
-      const oldColumnWidth = node.columnWidth;
+      const oldColumnWidth = node.columnWidth ?? 0;
       if (node.isCanvas) {
         let newColumnWidth = dimensions.columnWidth || oldColumnWidth;
         if (id !== ROOT_NODE_ID) {

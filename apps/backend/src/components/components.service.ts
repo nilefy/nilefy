@@ -103,10 +103,13 @@ export class ComponentsService {
         };
       } else {
         tree[row.id] = {
-          id: row.level === 1 ? 'ROOT' : row.id.toString(),
+          id: row.id.toString(),
           name: row.name,
           nodes: [],
-          parent: row.parent?.toString() ?? 'ROOT',
+          parent:
+            row.parent?.toString() ?? 'ROOT' === rootId
+              ? 'ROOT'
+              : row.parent?.toString(),
           isCanvas: row.isCanvas ?? undefined,
           props: row.props as WebloomNode['props'],
           type: row.type,

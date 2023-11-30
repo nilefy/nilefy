@@ -23,7 +23,7 @@ export async function dbConnect(
   await client.connect();
   const db: DatabaseI = drizzle(client, {
     schema: { ...schema, ...appStateSchema },
-    logger: true,
+    logger: false,
   });
   return [db, client];
 }

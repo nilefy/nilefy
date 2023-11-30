@@ -40,15 +40,17 @@ export async function appSeeder(
     res2.map((p) =>
       db.insert(components).values({
         name: 'ROOT',
-        type: 'ROOT',
+        type: 'WebloomContainer',
         isCanvas: true,
         pageId: p[0].id,
         createdById: userIds[0],
         parent: null,
-        props: {},
+        props: {
+          className: 'h-full w-full',
+        },
         col: 0,
         row: 0,
-        columnsCount: 0,
+        columnsCount: 32,
         rowsCount: 0,
       }),
     ),

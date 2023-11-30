@@ -132,7 +132,7 @@ export const permissionsToRoles = pgTable(
       .references(() => roles.id),
   },
   (t) => ({
-    pk: primaryKey(t.roleId, t.permissionId),
+    pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
   }),
 );
 
@@ -147,7 +147,7 @@ export const usersToRoles = pgTable(
       .references(() => roles.id),
   },
   (t) => ({
-    pk: primaryKey(t.roleId, t.userId),
+    pk: primaryKey({ columns: [t.roleId, t.userId] }),
   }),
 );
 
@@ -193,7 +193,7 @@ export const usersToWorkspaces = pgTable(
       .references(() => workspaces.id),
   },
   (t) => ({
-    pk: primaryKey(t.userId, t.workspaceId),
+    pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
   }),
 );
 

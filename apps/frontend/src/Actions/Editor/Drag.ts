@@ -12,7 +12,7 @@ import {
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
-import { RefAttributes } from 'react';
+
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -239,6 +239,11 @@ class DragAction {
         execute: () => {
           addNode(newNode, newNode.parent!);
           undoData = moveNodeIntoGrid(id, endPosition);
+          return {
+            event: 'insert',
+            data: newNode,
+            type: 1,
+          };
         },
         undo: () => {
           store.getState().setSelectedNodeIds((ids) => {

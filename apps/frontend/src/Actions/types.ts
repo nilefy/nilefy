@@ -1,5 +1,11 @@
+import { WebloomNode } from '@/lib/Editor/interface';
+
+type InsertTemp = {
+  event: 'insert';
+  data: WebloomNode;
+};
 export abstract class Command {
-  abstract execute(): void;
+  abstract execute(): void | InsertTemp;
 }
 
 export abstract class UndoableCommand extends Command {

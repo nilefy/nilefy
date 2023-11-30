@@ -11,6 +11,7 @@ import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { PagesModule } from './pages/pages.module';
 import { ComponentsModule } from './components/components.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ComponentsModule } from './components/components.module';
     PermissionsModule,
     PagesModule,
     ComponentsModule,
+    EventsModule,
   ],
 })
 export class AppModule {}

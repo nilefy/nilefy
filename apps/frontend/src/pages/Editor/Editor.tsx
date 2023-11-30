@@ -237,6 +237,7 @@ function EditorLoader() {
 }
 
 export function Editor() {
+  console.log(store.getState().tree);
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -428,6 +429,7 @@ export function App() {
     <Suspense fallback={<EditorLoader />}>
       <Await resolve={app} errorElement={<p>Error loading app</p>}>
         {(app) => {
+          console.log((app as AppCompleteT).defaultPage.tree);
           store.setState((state) => {
             state.tree = (app as AppCompleteT).defaultPage.tree;
             return state;
