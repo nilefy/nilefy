@@ -72,47 +72,63 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       height: elDimensions.height,
     } as React.CSSProperties;
   }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
-
+  if (id === ROOT_NODE_ID) {
+    return (
+      <div
+        {...modListeners}
+        {...attributes}
+        style={style}
+        ref={ref}
+        className="target relative touch-none overflow-hidden outline-none"
+        data-id={id}
+      >
+        {props.children}
+      </div>
+    );
+  }
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <div
-            {...modListeners}
-            {...attributes}
-            style={style}
-            ref={ref}
-            className="target relative touch-none overflow-hidden outline-none"
-            data-id={id}
-          >
-            {!!active && (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          key={'adapter' + id}
+          {...modListeners}
+          {...attributes}
+          style={style}
+          ref={ref}
+          className="target relative touch-none overflow-hidden outline-none"
+          data-id={id}
+        >
+          {
+            //this is to prevent widgets from capturing focus when drag is happening
+            !!active && (
               <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+            )
+          }
+          <div
+            key={id}
+            className={cn(
+              {
+                hidden: isDragging || isResizing,
+              },
+              {
+                flex: !isDragging && !isResizing,
+              },
+              'w-full h-full',
             )}
-            <div
-              className={cn(
-                {
-                  hidden: isDragging || isResizing,
-                },
-                {
-                  flex: !isDragging && !isResizing,
-                },
-                'w-full h-full',
-              )}
-            >
-              {props.children}
-            </div>
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onMouseDown={() => {
-              commandManager.executeCommand(new DeleteAction());
-            }}
           >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-    </>
+            {props.children}
+          </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onMouseDown={() => {
+            commandManager.executeCommand(new DeleteAction());
+          }}
+        >
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };

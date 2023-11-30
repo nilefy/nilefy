@@ -7,6 +7,7 @@ import React, {
   useRef,
   ElementType,
   useCallback,
+  createContext,
 } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -44,7 +45,7 @@ import DragAction from '@/actions/Editor/Drag';
 import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
-import { WebloomWidgets } from './Components';
+import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteAction } from '@/actions/Editor/Delete';
 
@@ -131,17 +132,23 @@ function WebloomElement({ id }: { id: string }) {
     }
     return children;
   }, [nodes, props.children]);
+  const contextValue = useMemo(() => {
+    return {
+      onPropChange,
+      id,
+    };
+  }, [onPropChange, id]);
   const rendered = useMemo(
-    () =>
-      createElement(
-        WebloomWidgets[tree.type].component as ElementType,
-        {
-          ...props,
-          onPropChange,
-        },
-        children,
-      ),
-    [tree.type, props, children, onPropChange],
+    () => (
+      <WidgetContext.Provider value={contextValue}>
+        {createElement(
+          WebloomWidgets[tree.type].component as ElementType,
+          props,
+          children,
+        )}
+      </WidgetContext.Provider>
+    ),
+    [tree.type, props, children, contextValue],
   );
   if (id === PREVIEW_NODE_ID) return null;
   return (
@@ -355,6 +362,7 @@ function Editor() {
                   />
                   {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
                   <DragOverlay
+                    key={'drag-overlay'}
                     style={{ display: 'none' }}
                     dropAnimation={{ duration: 0 }}
                   />
