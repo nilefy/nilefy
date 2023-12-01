@@ -5,6 +5,7 @@ import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
 import { DatabaseI } from '../../drizzle/drizzle.provider';
 import { components, pages } from '../../drizzle/schema/appsState.schema';
+import { nanoid } from 'nanoid';
 
 export async function appSeeder(
   db: DatabaseI,
@@ -39,6 +40,7 @@ export async function appSeeder(
   await Promise.all(
     res2.map((p) =>
       db.insert(components).values({
+        id: nanoid(),
         name: 'ROOT',
         type: 'WebloomContainer',
         isCanvas: true,

@@ -65,6 +65,9 @@ importers:
       morgan:
         specifier: ^1.10.0
         version: 1.10.0
+      nanoid:
+        specifier: '3'
+        version: 3.3.6
       passport:
         specifier: ^0.6.0
         version: 0.6.0

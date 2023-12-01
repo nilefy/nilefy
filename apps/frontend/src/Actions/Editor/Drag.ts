@@ -236,12 +236,16 @@ class DragAction {
         execute: () => {
           addNode(newNode, newNode.parent!);
           undoData = moveNodeIntoGrid(id, endPosition);
-          // TODO: for now i ignore the case where new node could cause updates in existing nodes dims, handle it
-          console.log('add new node undo data', undoData);
           // return data means this data should be sent to the server
+          const affectedNodes = Object.keys(undoData)
+            .filter((test) => test !== id)
+            .map((k) => store.getState().tree[k]);
           return {
             event: 'insert' as const,
-            data: newNode,
+            data: {
+              node: store.getState().tree[id],
+              sideEffects: affectedNodes,
+            },
           };
         },
         undo: () => {
@@ -263,11 +267,13 @@ class DragAction {
             moveNode(id, newNode.parent);
           }
           undoData = moveNodeIntoGrid(id, endPosition);
-          // const remoteData = Object.keys(undoData).map((k) => ({
-          //   id: k,
-          //   ...undoData[k],
-          // }));
-          const remoteData = [{ id, parent: newNode.parent, ...endPosition }];
+          const tree = store.getState().tree;
+          const remoteData = [
+            tree[id],
+            ...Object.keys(undoData)
+              .filter((test) => test !== id)
+              .map((k) => tree[k]),
+          ];
           return {
             event: 'update',
             data: remoteData,

@@ -8,6 +8,8 @@ import {
   unique,
   foreignKey,
   boolean,
+  text,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import {
   apps,
@@ -57,8 +59,7 @@ export const pages = pgTable(
 export const components = pgTable(
   'components',
   {
-    // TODO: id is string in the frontend
-    id: serial('id').primaryKey(),
+    id: text('id').notNull(),
     name: varchar('name').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
@@ -66,7 +67,7 @@ export const components = pgTable(
     /**
      * parent_id
      */
-    parent: integer('parent_id'),
+    parent: text('parent_id'),
     isCanvas: boolean('is_canvas'),
     // LAYOUT
     /**
@@ -90,6 +91,7 @@ export const components = pgTable(
     ...whoToBlame,
   },
   (t) => ({
+    pk: primaryKey({ columns: [t.id, t.pageId] }),
     parentFK: foreignKey({
       columns: [t.parent],
       foreignColumns: [t.id],

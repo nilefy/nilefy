@@ -176,7 +176,7 @@ class ResizeAction {
 
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
-    const newCollisions = this._resize(this.id, dims)[0];
+    const newCollisions = this._resize(this.id, dims);
     store
       .getState()
       .setShadowElement(store.getState().getPixelDimensions(this.id));
@@ -268,13 +268,17 @@ class ResizeAction {
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
-        const newDims = this._resize(id, dims!)[1];
-        console.log('resize', newDims);
-
-        // TODO: i'm ignoring the side effects on purpose
+        this._resize(id, dims!);
+        // return means data will be send to the server
+        const updates = [
+          store.getState().tree[id],
+          ...undoData
+            .filter((test) => test.id !== id)
+            .map((k) => store.getState().tree[k.id]),
+        ];
         return {
           event: 'update' as const,
-          data: [{ id, ...newDims }],
+          data: updates,
         };
       },
       undo: () => {
@@ -350,8 +354,7 @@ class ResizeAction {
     );
     const orgCoords = moveNodeIntoGrid(id, dims);
     collidedNodes.push(...Object.keys(orgCoords));
-    // TODO: why i return dims? i'm trying to get the data needed to sync db, refactor this
-    return [collidedNodes, dims] as const;
+    return collidedNodes;
   }
   private static throttledMove = throttle(ResizeAction._move, 10);
 }

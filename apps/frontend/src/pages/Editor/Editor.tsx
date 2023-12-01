@@ -432,7 +432,10 @@ export function App() {
     <Suspense fallback={<EditorLoader />}>
       <Await resolve={app} errorElement={<p>Error loading app</p>}>
         {(app) => {
-          const tree = (app as AppCompleteT).defaultPage.tree;
+          const a = app as AppCompleteT;
+          const tree = a.defaultPage.tree;
+          // connect to ws
+          commandManager.connectToEditor(a.id, a.defaultPage.id);
           console.log(tree);
           // depends on root be with the name 'ROOT'
           EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
