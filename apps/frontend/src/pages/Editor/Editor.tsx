@@ -27,12 +27,7 @@ import {
 } from '@dnd-kit/core';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import {
-  NUMBER_OF_COLUMNS,
-  PREVIEW_NODE_ID,
-  ROOT_NODE_ID,
-  ROW_HEIGHT,
-} from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import {
   Grid,
   MultiSelectBounding,
@@ -67,8 +62,12 @@ const throttledResizeCanvas = throttle(
   },
 );
 function WebloomRoot() {
-  const props = store((state) => state.tree[ROOT_NODE_ID].props);
-  const nodes = store((state) => state.tree[ROOT_NODE_ID].nodes);
+  const props = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].props,
+  );
+  const nodes = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].nodes,
+  );
   const ref = React.useRef<HTMLDivElement>(null);
   const width = store((state) => state.editorWidth);
   const height = store((state) => state.editorHeight);
@@ -82,16 +81,19 @@ function WebloomRoot() {
     return children;
   }, [nodes, props.children]);
   useLayoutEffect(() => {
-    const columnWidth = width / NUMBER_OF_COLUMNS;
-    let rowsCount = store.getState().tree[ROOT_NODE_ID].rowsCount;
+    const columnWidth = width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+    let rowsCount =
+      store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
     if (rowsCount === 0) {
       store
         .getState()
         .setEditorDimensions({ height: ref.current?.clientHeight });
-      rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
+      rowsCount = Math.round(
+        ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
+      );
     }
 
-    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
+    resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, { columnWidth, rowsCount });
   }, [height, width]);
 
   useEffect(() => {
@@ -100,7 +102,7 @@ function WebloomRoot() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  useSetDom(ref, ROOT_NODE_ID);
+  useSetDom(ref, EDITOR_CONSTANTS.ROOT_NODE_ID);
   const handleResize = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
@@ -110,8 +112,8 @@ function WebloomRoot() {
 
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter droppable id={ROOT_NODE_ID}>
-        <Grid id={ROOT_NODE_ID} />
+      <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
+        <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
         {children}
       </WebloomAdapter>
     </div>
@@ -151,7 +153,7 @@ function WebloomElement({ id }: { id: string }) {
       ),
     [tree.type, props, children, onPropChange],
   );
-  if (id === PREVIEW_NODE_ID) return null;
+  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -161,15 +163,15 @@ function WebloomElement({ id }: { id: string }) {
 }
 
 const initTree: WebloomTree = {
-  [ROOT_NODE_ID]: {
-    id: ROOT_NODE_ID,
-    name: ROOT_NODE_ID,
+  [EDITOR_CONSTANTS.ROOT_NODE_ID]: {
+    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    name: EDITOR_CONSTANTS.ROOT_NODE_ID,
     col: 0,
     row: 0,
     columnWidth: 0,
-    columnsCount: NUMBER_OF_COLUMNS,
+    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
     nodes: [],
-    parent: ROOT_NODE_ID,
+    parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
     rowsCount: 0,
@@ -237,7 +239,6 @@ function EditorLoader() {
 }
 
 export function Editor() {
-  console.log(store.getState().tree);
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -249,12 +250,12 @@ export function Editor() {
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
@@ -268,12 +269,14 @@ export function Editor() {
     if (e.active.id === e.over?.id) return;
     store.getState().setOverNode((e.over?.id as string) ?? null);
     if (e.active.data.current?.isNew && draggedNode === null) {
-      const [gridrow] = store.getState().getGridSize(ROOT_NODE_ID);
+      const [gridrow] = store
+        .getState()
+        .getGridSize(EDITOR_CONSTANTS.ROOT_NODE_ID);
       let x = 0;
-      const root = store.getState().tree[ROOT_NODE_ID];
+      const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
       const rootBoundingRect = root.dom!.getBoundingClientRect();
       if (mousePos.current.x > rootBoundingRect.width / 2) {
-        x = NUMBER_OF_COLUMNS - 2;
+        x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
       }
       const y = normalize(
         (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
@@ -285,7 +288,7 @@ export function Editor() {
           id: 'new',
           mouseStartPosition: mousePos.current,
           new: {
-            parent: ROOT_NODE_ID,
+            parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
             startPosition: { x, y },
             type: e.active.data.current.type,
             initialDelta: e.delta,
@@ -315,7 +318,7 @@ export function Editor() {
 
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const rootDom = store.getState().tree[ROOT_NODE_ID].dom;
+      const rootDom = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].dom;
       if (!rootDom) return;
       const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
@@ -375,7 +378,7 @@ export function Editor() {
                     dragCondition={(e) => {
                       const triggerTarget = e.inputEvent.target;
                       const isRoot = triggerTarget.getAttribute('data-id');
-                      return isRoot === ROOT_NODE_ID;
+                      return isRoot === EDITOR_CONSTANTS.ROOT_NODE_ID;
                     }}
                     onSelect={(e) => {
                       e.added.forEach((el) => {
@@ -429,9 +432,14 @@ export function App() {
     <Suspense fallback={<EditorLoader />}>
       <Await resolve={app} errorElement={<p>Error loading app</p>}>
         {(app) => {
-          console.log((app as AppCompleteT).defaultPage.tree);
+          const tree = (app as AppCompleteT).defaultPage.tree;
+          console.log(tree);
+          // depends on root be with the name 'ROOT'
+          EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
+            (c) => c.name === 'ROOT',
+          )!.id;
           store.setState((state) => {
-            state.tree = (app as AppCompleteT).defaultPage.tree;
+            state.tree = tree;
             return state;
           });
           return <Editor />;

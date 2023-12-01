@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 import {
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/context-menu';
 import { commandManager } from '@/actions/commandManager';
 import { SelectionAction } from '@/actions/Editor/selection';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { DeleteAction } from '@/actions/Editor/Delete';
 import { cn } from '@/lib/cn';
 
@@ -39,7 +39,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         isNew: false,
       },
     });
-  if (id === ROOT_NODE_ID) {
+  if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
     attributes.role = 'canvas';
   }
   const modListeners = useMemo(() => {

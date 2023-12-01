@@ -1,10 +1,10 @@
 import store, { handleParentCollisions } from '@/store';
-import { Command, UndoableCommand } from '../types';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
+import { Command, UndoableCommand } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -49,7 +49,7 @@ class ResizeAction {
     this.direction = key.split('-') as MainResizingKeys[];
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
-        if (node[0] === ROOT_NODE_ID) return acc;
+        if (node[0] === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
         return {
           ...acc,
           [node[0]]: {
@@ -90,7 +90,7 @@ class ResizeAction {
     resizingKey: ResizingKeys | null,
   ) {
     if (resizingKey === null) return;
-    const root = store.getState().tree[ROOT_NODE_ID];
+    const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
     if (!root.dom) return;
 
     const { width: initialWidth, height: initialHeight } = initialDimensions;
@@ -176,7 +176,7 @@ class ResizeAction {
 
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
-    const newCollisions = this._resize(this.id, dims);
+    const newCollisions = this._resize(this.id, dims)[0];
     store
       .getState()
       .setShadowElement(store.getState().getPixelDimensions(this.id));
@@ -266,9 +266,16 @@ class ResizeAction {
     store.getState().setResizedNode(null);
     store.getState().setShadowElement(null);
     if (!dims) return null;
-    const command = {
+    const command: UndoableCommand = {
       execute: () => {
-        this._resize(id, dims!);
+        const newDims = this._resize(id, dims!)[1];
+        console.log('resize', newDims);
+
+        // TODO: i'm ignoring the side effects on purpose
+        return {
+          event: 'update' as const,
+          data: [{ id, ...newDims }],
+        };
       },
       undo: () => {
         this.returnToInitialDimensions(initialGridPosition, id);
@@ -343,7 +350,8 @@ class ResizeAction {
     );
     const orgCoords = moveNodeIntoGrid(id, dims);
     collidedNodes.push(...Object.keys(orgCoords));
-    return collidedNodes;
+    // TODO: why i return dims? i'm trying to get the data needed to sync db, refactor this
+    return [collidedNodes, dims] as const;
   }
   private static throttledMove = throttle(ResizeAction._move, 10);
 }

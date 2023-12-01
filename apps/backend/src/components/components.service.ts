@@ -5,8 +5,8 @@ import {
   PgTrans,
 } from '../drizzle/drizzle.provider';
 import { PageDto } from '../dto/pages.dto';
-import { WebloomNode, WebloomTree } from '../dto/apps.dto';
-import { and, eq, isNull, sql, ne } from 'drizzle-orm';
+import { WebloomTree } from '../dto/apps.dto';
+import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
@@ -39,13 +39,13 @@ export class ComponentsService {
   /**
    * unlike normal tree or graph when node get deleted the sub-tree under it gets deleted(on delete cascade)
    */
-  async delete(pageId: PageDto['id'], componentId: ComponentDto['id']) {
+  async delete(pageId: PageDto['id'], componentIds: ComponentDto['id'][]) {
     const [c] = await this.db
       .delete(components)
       .where(
         and(
           eq(components.pageId, pageId),
-          eq(components.id, componentId),
+          inArray(components.id, componentIds),
           ne(components.name, 'ROOT'),
         ),
       )
@@ -60,8 +60,19 @@ export class ComponentsService {
   /**
    * for now if user wants to update on field on the props the props object should be sent not only this field
    */
-  async update(dto: UpdateComponentDb) {
-    await this.db.update(components).set(dto);
+  async update(
+    pageId: PageDto['id'],
+    componentId: ComponentDto['id'],
+    dto: UpdateComponentDb,
+    options?: {
+      tx?: PgTrans;
+    },
+  ) {
+    return await (options?.tx ? options.tx : this.db)
+      .update(components)
+      .set(dto)
+      .where(and(eq(components.pageId, pageId), eq(components.id, componentId)))
+      .returning();
   }
 
   async getTreeForPage(pageId: PageDto['id']): Promise<WebloomTree> {
@@ -83,46 +94,23 @@ export class ComponentsService {
     `);
     const rows = comps.rows as (ComponentDto & { level: number })[];
     const tree: WebloomTree = {};
-    let rootId: string;
     rows.forEach((row) => {
-      if (row.level === 1) {
-        rootId = row.id.toString();
-        tree['ROOT'] = {
-          id: 'ROOT',
-          name: row.name,
-          nodes: [],
-          parent: 'ROOT',
-          isCanvas: true,
-          props: row.props as WebloomNode['props'],
-          type: row.type,
-          col: row.col,
-          row: row.row,
-          columnsCount: row.columnsCount,
-          rowsCount: row.rowsCount,
-          columnWidth: 0,
-        };
-      } else {
-        tree[row.id] = {
-          id: row.id.toString(),
-          name: row.name,
-          nodes: [],
-          parent:
-            row.parent?.toString() ?? 'ROOT' === rootId
-              ? 'ROOT'
-              : row.parent?.toString(),
-          isCanvas: row.isCanvas ?? undefined,
-          props: row.props as WebloomNode['props'],
-          type: row.type,
-          col: row.col,
-          row: row.row,
-          columnsCount: row.columnsCount,
-          rowsCount: row.rowsCount,
-        };
-        // add children ids to parent
-        const parentId = row.parent!.toString();
-        tree[parentId === rootId ? 'ROOT' : parentId]['nodes'].push(
-          row.id.toString(),
-        );
+      tree[row.id] = {
+        id: row.id.toString(),
+        name: row.name,
+        nodes: [],
+        parent: row.parent?.toString() ?? row.id.toString(),
+        isCanvas: row.isCanvas ?? undefined,
+        props: row.props,
+        type: row.type,
+        col: row.col,
+        row: row.row,
+        columnsCount: row.columnsCount,
+        rowsCount: row.rowsCount,
+        columnWidth: 0,
+      };
+      if (row.level > 1) {
+        tree[row.parent!.toString()]['nodes'].push(row.id.toString());
       }
     });
     return tree;

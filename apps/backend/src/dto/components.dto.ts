@@ -2,10 +2,14 @@ import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
 import { components as componentsDrizzle } from '../drizzle/schema/appsState.schema';
 
-export const componentSchema = createSelectSchema(componentsDrizzle);
+export const componentSchema = createSelectSchema(componentsDrizzle).extend({
+  props: z.record(z.string(), z.unknown()),
+});
 
 export const createComponentDb = createInsertSchema(componentsDrizzle, {
   name: (schema) => schema.name.min(1).max(255),
+}).extend({
+  props: z.record(z.string(), z.unknown()),
 });
 
 export const updateComponentDb = createComponentDb

@@ -1,6 +1,6 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { ComponentPropsWithoutRef, useRef } from 'react';
+import { ComponentPropsWithoutRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';

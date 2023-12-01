@@ -1,6 +1,5 @@
 import { getToken } from '@/lib/token.localstorage';
 import { UndoableCommand, Command, isUndoableCommand } from './types';
-import { Socket } from 'dgram';
 
 export class CommandManager {
   // history is just a stack
@@ -42,8 +41,7 @@ export class CommandManager {
     if (cmd === null) return;
     const ret = cmd.execute();
     if (ret) {
-      console.log('method returned value i will send to remote');
-      console.dir(ret);
+      console.log('method returned value i will send to remote', ret);
       CommandManager.socket.send(JSON.stringify(ret));
     }
     if (cmd instanceof UndoableCommand || isUndoableCommand(cmd)) {

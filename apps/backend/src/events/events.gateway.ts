@@ -13,9 +13,9 @@ import { WebloomNode } from '../dto/apps.dto';
 import { Server, WebSocket } from 'ws';
 import { ComponentsService } from '../components/components.service';
 import { PayloadUser, RequestUser } from 'src/auth/auth.types';
-import { ConfigService } from '@nestjs/config';
-import { EnvSchema } from '../evn.validation';
 import { JwtService } from '@nestjs/jwt';
+import { Inject } from '@nestjs/common';
+import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -23,6 +23,8 @@ class LoomSocket extends WebSocket {
 
 type LoomServer = Server<typeof LoomSocket>;
 
+// TODO: make page id dynamic
+// TODO: make app id dynamic
 @WebSocketGateway({
   WebSocket: LoomSocket,
 })
@@ -32,6 +34,7 @@ export class EventsGateway
   constructor(
     private componentsService: ComponentsService,
     private jwtService: JwtService,
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
   ) {}
 
   @WebSocketServer()
@@ -72,7 +75,7 @@ export class EventsGateway
   }
 
   @SubscribeMessage('insert')
-  async handleMessage(
+  async handleInsert(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody() payload: WebloomNode,
   ) {
@@ -84,17 +87,80 @@ export class EventsGateway
 
     const { id, ...rest } = payload;
     try {
+      console.log('parent', payload.parent);
       await this.componentsService.create({
         ...rest,
-        // @ts-ignore
-        props: rest.props,
         pageId: 1,
-        name: payload.name,
         createdById: 1,
-        parent: 1,
+        parent: +payload.parent,
       });
       console.log('ADDED COMPONENT');
       return `done ${payload.id}`;
+    } catch (e) {
+      console.log(e);
+      throw new WsException(e.message);
+    }
+  }
+
+  @SubscribeMessage('update')
+  async handleUpdate(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody()
+    payload: (Partial<WebloomNode> & { id: WebloomNode['id'] })[],
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send('bitch send auth first');
+      socket.close();
+      return;
+    }
+
+    try {
+      await this.db.transaction(async (tx) => {
+        return await Promise.all(
+          payload.map((c) =>
+            this.componentsService.update(
+              1,
+              +c.id,
+              {
+                ...c,
+                updatedById: user.userId,
+                parent: c.parent ? +c.parent : undefined,
+              },
+              {
+                // @ts-ignore
+                tx,
+              },
+            ),
+          ),
+        );
+      });
+      console.log('UPDATED COMPONENT/s');
+      return `done`;
+    } catch (e) {
+      console.log(e);
+      throw new WsException(e.message);
+    }
+  }
+
+  @SubscribeMessage('delete')
+  async handleDelete(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody() payload: WebloomNode['id'][],
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send('bitch send auth first');
+      socket.close();
+      return;
+    }
+    try {
+      await this.componentsService.delete(
+        1,
+        payload.map((c) => +c),
+      );
+      console.log('DELETED COMPONENT/s');
+      return `done`;
     } catch (e) {
       console.log(e);
       throw new WsException(e.message);

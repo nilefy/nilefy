@@ -1,11 +1,20 @@
 import { WebloomNode } from '@/lib/Editor/interface';
 
-type InsertTemp = {
-  event: 'insert';
-  data: WebloomNode;
-};
+type RemoteTypes =
+  | {
+      event: 'insert';
+      data: WebloomNode;
+    }
+  | {
+      event: 'update';
+      data: (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+    }
+  | {
+      event: 'delete';
+      data: WebloomNode['id'][];
+    };
 export abstract class Command {
-  abstract execute(): void | InsertTemp;
+  abstract execute(): void | RemoteTypes;
 }
 
 export abstract class UndoableCommand extends Command {

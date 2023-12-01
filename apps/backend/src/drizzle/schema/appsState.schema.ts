@@ -17,6 +17,7 @@ import {
   users,
   workspaces,
 } from './schema';
+import { WebloomNode } from '../../dto/apps.dto';
 
 /**
  * any app contains multiple pages, each page have a seprate `tree`/`state`
@@ -61,7 +62,7 @@ export const components = pgTable(
     name: varchar('name').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
-    props: json('props').notNull(),
+    props: json('props').$type<WebloomNode['props']>().notNull(),
     /**
      * parent_id
      */
