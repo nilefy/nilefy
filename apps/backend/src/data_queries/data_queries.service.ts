@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { QueryDb, QueryDto } from '../dto/data_queries.dto';
+import { AddQueryDto, QueryDb, QueryDto } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
 import { dataSources, queries } from '../drizzle/schema/data_sources.schema';
@@ -14,19 +14,16 @@ export class DataQueriesService {
 
   async runQuery(
     config: DataSourceConfigT,
-    query: QueryDb,
+    query: AddQueryDto,
     dataSourceId: QueryDto['dataSourceId'],
   ): Promise<QueryRet> {
     const service = await this.getService(dataSourceId);
-    return await service.run(config, {
-      query: query.query,
-      name: query.name,
-    });
+    return await service.run(config, query);
   }
 
   async addQuery(query: QueryDb): Promise<QueryDto> {
     const [q] = await this.db.insert(queries).values(query).returning();
-    return q;
+    return q as QueryDto;
   }
 
   async getAppQueries(
@@ -39,22 +36,22 @@ export class DataQueriesService {
         eq(queries.appId, appId),
       ),
     });
-    return q;
+    return q as QueryDto[];
   }
 
-  async getQuery(queryId: QueryDto['id']): Promise<QueryDto | undefined> {
+  async getQuery(queryId: QueryDto['id']): Promise<QueryDto> {
     const q = await this.db.query.queries.findFirst({
       where: and(eq(queries.id, queryId)),
     });
-    return q;
+    return q as QueryDto;
   }
 
-  async deleteQuery(queryId: QueryDto['id']): Promise<QueryDto | undefined> {
+  async deleteQuery(queryId: QueryDto['id']): Promise<QueryDto> {
     const [q] = await this.db
       .delete(queries)
       .where(and(eq(queries.id, queryId)))
       .returning();
-    return q;
+    return q as QueryDto;
   }
 
   async getService(dataSourceId: number): Promise<QueryRunnerI> {

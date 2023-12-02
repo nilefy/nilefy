@@ -1,15 +1,17 @@
-import { QueryRet } from '../../../data_queries/query.types';
+import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
-import { ConfigT } from './types';
+import { ConfigT, QueryT } from './types';
 import { Pool, PoolConfig } from 'pg';
-import { AddQueryDto } from '../../../dto/data_queries.dto';
 
 export default class PostgresqlQueryService implements QueryRunnerI {
-  async run(dataSourceConfig: ConfigT, query: AddQueryDto): Promise<QueryRet> {
+  async run(
+    dataSourceConfig: ConfigT,
+    query: QueryConfig<QueryT>,
+  ): Promise<QueryRet> {
     const pool = this.connect(dataSourceConfig);
 
     try {
-      const res = await pool.query(query.query);
+      const res = await pool.query(query.query.query);
       return {
         status: 200,
         data: res,

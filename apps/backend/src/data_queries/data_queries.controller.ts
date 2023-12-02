@@ -31,11 +31,9 @@ export class DataQueriesController {
   @Post('run')
   async runQuery(
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
-    @Param('appId', ParseIntPipe) appId: number,
     @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
     @Param('dataSourceName') name: string,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
-    @Req() req: ExpressAuthedRequest,
   ): Promise<QueryRet> {
     const ds = (
       await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
@@ -43,12 +41,7 @@ export class DataQueriesController {
 
     return await this.dataQueriesService.runQuery(
       ds.config as DataSourceConfigT,
-      {
-        ...query,
-        dataSourceId: ds.id,
-        userId: req.user.userId,
-        appId,
-      },
+      query,
       dataSourceId,
     );
   }
@@ -62,14 +55,16 @@ export class DataQueriesController {
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<QueryDto> {
+    const jsonQuery: QueryDto['query'] = JSON.stringify(query.query);
     const ds = (
       await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
     )[0];
 
     return await this.dataQueriesService.addQuery({
-      ...query,
+      name: query.name,
+      query: jsonQuery,
       dataSourceId: ds.id,
-      userId: req.user.userId,
+      createdById: req.user.userId,
       appId,
     });
   }

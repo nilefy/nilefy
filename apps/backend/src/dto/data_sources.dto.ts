@@ -11,7 +11,7 @@ export const workspaceDataSourcesInsert =
   createInsertSchema(workspaceDataSources);
 export const createWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100),
-  config: z.record(z.string(), z.string()),
+  config: z.record(z.string(), z.any()),
 });
 export const getWsDataSourceSchema = z.object({
   workspaceId: z.number(),
@@ -20,7 +20,7 @@ export const getWsDataSourceSchema = z.object({
 });
 export const updateWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  config: z.record(z.string(), z.string()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
 });
 
 export const dataSourceSelect = createSelectSchema(dataSources);
@@ -35,4 +35,4 @@ export type UpdateWsDataSourceDto = z.infer<typeof updateWsDataSourceSchema>;
 export type DataSourceDto = z.infer<typeof dataSourceSelect>;
 export type DataSourceDb = z.infer<typeof dataSourcesInsert>;
 
-export type DataSourceConfigT<T = unknown> = Record<string, T>;
+export type DataSourceConfigT = Record<string, any>;

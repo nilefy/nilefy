@@ -12,3 +12,6 @@ export const configSchema = z.object({
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
+export type QueryT = {
+  query: string;
+};
