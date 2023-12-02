@@ -7,6 +7,9 @@ export const configSchema = z.object({
   bearer_token: z.string(),
   auth_type: z.string(), // bearer | basic | oauth2
   method: z.string(),
+  scope: z.string(),
+  username: z.string(),
+  password: z.string(),
   grant_type: z.string(),
   add_token_to: z.string(),
   header_prefix: z.string(),

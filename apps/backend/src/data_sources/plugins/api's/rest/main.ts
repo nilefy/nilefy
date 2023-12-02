@@ -11,11 +11,26 @@ export default class RESTQueryService implements QueryRunnerI {
     let status = 200;
     switch (dataSourceConfig.auth_type) {
       case 'oauth2':
-        return {
-          status: 501,
-          data: data,
-          error: 'Oauth2 is not implemented yet!',
-        };
+        try {
+          const tokenResponse = await this.getOAuth2Token(dataSourceConfig);
+          const token = tokenResponse.data.access_token;
+
+          const response = await axios({
+            method: query.operation,
+            url: `${dataSourceConfig.url}/${query.query}`,
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          status = response.status;
+          data = response.data;
+        } catch (error) {
+          status = error.response ? error.response.status : 500;
+          eMessage = error.message;
+        }
+        break;
       case 'basic':
         fetch(dataSourceConfig.url + '/' + query.query, {
           method: query.operation,
@@ -66,6 +81,27 @@ export default class RESTQueryService implements QueryRunnerI {
       data: data,
       error: eMessage,
     };
+  }
+  async getOAuth2Token(dataSourceConfig: ConfigT): Promise<any> {
+    const { client_id, client_secret, grant_type, scope, username, password } =
+      dataSourceConfig;
+
+    const requestBody = {
+      client_id: client_id,
+      client_secret: client_secret,
+      grant_type: grant_type || 'password',
+      scope: scope || '',
+      username: username || '',
+      password: password || '',
+    };
+
+    const response = await axios.post(dataSourceConfig.auth_url, requestBody, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    return response.data;
   }
 
   // irrelevent
