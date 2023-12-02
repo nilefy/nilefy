@@ -98,6 +98,7 @@ interface WebloomGetters {
     forShadow?: boolean,
   ) => WebloomGridDimensions;
   getSelectedNodeIds: () => WebloomState['selectedNodeIds'];
+  getProps: (id: string) => WebloomNode['props'];
 }
 
 function handleHoverCollision(
@@ -339,6 +340,9 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
+    },
+    getProps(id) {
+      return get().tree[id].props;
     },
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;

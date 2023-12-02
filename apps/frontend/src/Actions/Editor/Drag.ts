@@ -52,7 +52,7 @@ class DragAction {
   private static mouseCurrentPosition: Point;
   private static moved = false;
   private static counter = 0;
-
+  private static number = 1;
   private static _start(args: {
     new?: {
       type: string;
@@ -78,9 +78,10 @@ class DragAction {
       this.gridStartPosition = args.new!.startPosition;
       this.newType = args.new!.type;
       const widget = WebloomWidgets[this.newType as WidgetTypes];
+      console.log(widget.config.name, 'hehe');
       const node: WebloomNode = {
         id: this.previewId,
-        name: this.previewId,
+        name: `${widget.config.name} ${this.number}`,
         nodes: [],
         //todo change this to be the parent
         parent: args.new!.parent,
@@ -97,7 +98,12 @@ class DragAction {
     } else {
       this.id = args.id;
       const draggedNode = store.getState().tree[this.id!];
-      const node = { ...draggedNode, id: this.previewId, name: this.previewId };
+      const widget = WebloomWidgets[this.newType as WidgetTypes];
+      const node = {
+        ...draggedNode,
+        id: this.previewId,
+        name: `${widget.config.name} ${this.number}`,
+      };
       addNode(node, draggedNode.parent);
       const nodeBoundingRect = getBoundingRect(this.id!);
       this.oldParent = draggedNode.parent;
@@ -111,6 +117,7 @@ class DragAction {
     const dims = getPixelDimensions(this.previewId);
     setShadowElement(dims);
     setDraggedNode(this.id!);
+    this.number += 1;
   }
   public static start(
     ...args: Parameters<typeof DragAction._start>
