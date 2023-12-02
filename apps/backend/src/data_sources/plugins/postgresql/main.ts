@@ -3,7 +3,9 @@ import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { ConfigT, QueryT } from './types';
 import { Pool, PoolConfig } from 'pg';
 
-export default class PostgresqlQueryService implements QueryRunnerI {
+export default class PostgresqlQueryService
+  implements QueryRunnerI<ConfigT, QueryT>
+{
   async run(
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
