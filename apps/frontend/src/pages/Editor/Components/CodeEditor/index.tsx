@@ -103,20 +103,22 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   const [view, setView] = useState<EditorView>();
   const [state, setState] = useState<EditorState>();
 
-  const updateListener = EditorView.updateListener.of((vu: ViewUpdate) => {
-    if (
-      vu.docChanged &&
-      typeof onChange === 'function' &&
-      // Fix echoing of the remote changes:
-      // If transaction is market as remote we don't have to call `onChange` handler again
-      !vu.transactions.some((tr) => tr.annotation(External))
-    ) {
-      const doc = vu.state.doc;
-      const value = doc.toString();
-      onChange(value, vu);
-    }
-    // onStatistics && onStatistics(getStatistics(vu));
-  });
+  const updateListener = EditorView.updateListener.of(
+    (viewUpdate: ViewUpdate) => {
+      if (
+        viewUpdate.docChanged &&
+        typeof onChange === 'function' &&
+        // Fix echoing of the remote changes:
+        // If transaction is market as remote we don't have to call `onChange` handler again
+        !viewUpdate.transactions.some((tr) => tr.annotation(External))
+      ) {
+        const doc = viewUpdate.state.doc;
+        const value = doc.toString();
+        onChange(value, viewUpdate);
+      }
+      // onStatistics && onStatistics(getStatistics(vu));
+    },
+  );
 
   const extension = useMemo(
     () => [

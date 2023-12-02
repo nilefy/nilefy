@@ -203,6 +203,8 @@ const CustomPanelResizeHandle = () => {
   );
 };
 function Editor() {
+  const [code, setCode] = React.useState('');
+
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -376,7 +378,12 @@ function Editor() {
                 collapsible
               >
                 <div className="h-full w-full">
-                  <WebloomCodeEditor />
+                  <WebloomCodeEditor
+                    value={code}
+                    onChange={(a) => {
+                      setCode(a);
+                    }}
+                  />
                 </div>
               </Panel>
             </PanelGroup>

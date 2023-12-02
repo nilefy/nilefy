@@ -1,6 +1,5 @@
 import {
   NUMBER_OF_COLUMNS,
-  PREVIEW_NODE_ID,
   ROOT_NODE_ID,
   ROW_HEIGHT,
 } from '@/lib/Editor/constants';
@@ -18,6 +17,11 @@ import { create } from 'zustand';
 export type WebloomTree = {
   [key: string]: WebloomNode;
 };
+
+export type AutoCompleteItem = {
+  name: string;
+  id: string;
+};
 export interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
@@ -30,6 +34,10 @@ export interface WebloomState {
   shadowElement: ShadowElement | null;
   editorWidth: number;
   editorHeight: number;
+  autoCompleteKeys: {
+    widgets: AutoCompleteItem[];
+    actions: AutoCompleteItem[];
+  };
 }
 
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -44,7 +52,7 @@ interface WebloomActions {
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string) => void;
-  removeNode: (id: string, stack?: WebloomNode[]) => void;
+  removeNode: (id: string, recursive?: boolean) => WebloomNode[];
   moveNodeIntoGrid: (
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
@@ -80,6 +88,12 @@ interface WebloomActions {
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
+  setAutoCompleteItems: (
+    cb: (
+      keys: WebloomState['autoCompleteKeys'],
+    ) => WebloomState['autoCompleteKeys'],
+  ) => void;
+  setAutoCompleteKeysFromWidgets: (widgets: WebloomState['tree']) => void;
 }
 
 interface WebloomGetters {
@@ -287,6 +301,10 @@ export function handleParentCollisions(
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
   (set, get) => ({
     tree: {},
+    autoCompleteKeys: {
+      widgets: [],
+      actions: [],
+    },
     draggedNode: null,
     overNode: null,
     selectedNodeIds: new Set(),
@@ -339,6 +357,30 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
+    },
+    setAutoCompleteItems(cb) {
+      set((state) => {
+        return {
+          ...state,
+          autoCompleteKeys: cb(state.autoCompleteKeys),
+        };
+      });
+    },
+    setAutoCompleteKeysFromWidgets(widgets) {
+      const widgetAutoCompleteItems: AutoCompleteItem[] = [];
+      for (const widgetId in widgets) {
+        const widget = widgets[widgetId];
+        widgetAutoCompleteItems.push({
+          name: widget.name,
+          id: widget.id,
+        });
+      }
+      get().setAutoCompleteItems((state) => {
+        return {
+          ...state,
+          widgets: widgetAutoCompleteItems,
+        };
+      });
     },
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
@@ -451,7 +493,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, node.id],
           },
         };
-
+        get().setAutoCompleteKeysFromWidgets(newTree);
         return { tree: newTree };
       });
       set((state) => {
@@ -468,37 +510,38 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
 
     /**
-     * @param stack if stack is supplied will push deleted node to it
+     * @returns stack of deleted nodes
      */
-    removeNode(id, stack) {
+    removeNode(id, recursive = false) {
       // cannot delete a non existing node
-      if (!(id in get().tree)) return;
+      if (!(id in get().tree)) return [];
+      const stack: WebloomNode[] = [];
       const node = get().tree[id];
-      // remove node children then remove it
-      for (const childId of node.nodes) {
-        // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
-        // but we don't want this so just skip the recursive calls and go directly deleting the preview
-        if (id === PREVIEW_NODE_ID) break;
-        get().removeNode(childId, stack);
-      } // base case is that element has no child
-      set((state) => {
-        const node = state.tree[id];
-        if (stack !== undefined) {
-          stack.push(node);
+      const toBeDeletedNodes = [node.id];
+      function recurse(id: string) {
+        const node = get().tree[id];
+        if (!node) return;
+        toBeDeletedNodes.push(node.id);
+        for (const child of node.nodes) {
+          recurse(child);
         }
-        if (!node) return state;
-        const newTree = {
-          ...state.tree,
-          [node.parent]: {
-            ...state.tree[node.parent],
-            nodes: state.tree[node.parent].nodes.filter(
-              (nodeId) => nodeId !== id,
-            ),
-          },
-        };
-        delete newTree[id];
-        return { tree: newTree };
-      });
+      }
+      if (recursive) recurse(id);
+      const newTree = { ...get().tree };
+      for (const nodeId of toBeDeletedNodes) {
+        const node = newTree[nodeId];
+        if (!node) continue;
+        stack.push(node);
+        const parent = newTree[node.parent];
+        if (parent) {
+          parent.nodes = parent.nodes.filter((nodeId) => nodeId !== id);
+          newTree[node.parent] = parent;
+        }
+        delete newTree[nodeId];
+      }
+      get().setAutoCompleteKeysFromWidgets(newTree);
+      set({ tree: newTree });
+      return stack;
     },
     moveNode(id, parentId) {
       set((state) => {
