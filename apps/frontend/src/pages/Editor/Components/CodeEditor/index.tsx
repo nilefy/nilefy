@@ -166,7 +166,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, initialState, extension]);
+  }, [state, editor]);
 
   useEffect(() => {
     if (autoFocus && view) {
@@ -186,6 +186,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       return;
     }
     const currentValue = view ? view.state.doc.toString() : '';
+    //in case value passed from outside changed
     if (view && value !== currentValue) {
       view.dispatch({
         changes: { from: 0, to: currentValue.length, insert: value || '' },
