@@ -5,7 +5,7 @@ export const configSchema = z.object({
     message: 'Invalid URL. Please enter a valid URL.',
   }),
   bearer_token: z.string(),
-  auth_type: z.string(), // get | post | put
+  auth_type: z.string(), // bearer | basic | oauth2
   method: z.string(),
   grant_type: z.string(),
   add_token_to: z.string(),

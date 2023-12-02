@@ -17,7 +17,9 @@ export default class RESTQueryService implements QueryRunnerI {
           error: 'Oauth2 is not implemented yet!',
         };
       case 'basic':
-        fetch(dataSourceConfig.url)
+        fetch(dataSourceConfig.url, {
+          method: query.operation,
+        })
           .then((v) => {
             status = 200;
             return (data = v);
@@ -40,7 +42,7 @@ export default class RESTQueryService implements QueryRunnerI {
         myHeaders.append('Authorization', `Bearer ${token}`);
 
         fetch(dataSourceConfig.url, {
-          method: dataSourceConfig.method,
+          method: query.operation,
           headers: myHeaders,
         })
           .then((v) => {
