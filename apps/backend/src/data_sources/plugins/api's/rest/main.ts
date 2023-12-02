@@ -8,6 +8,20 @@ export default class RESTQueryService implements QueryRunnerI {
     query;
     let data = {};
     let eMessage;
+    switch (dataSourceConfig.auth_type) {
+      case 'oauth2':
+        return {
+          status: 501,
+          data: data,
+          error: 'Oauth2 is not implemented yet!',
+        };
+      case 'basic':
+        return {
+          status: 501,
+          data: data,
+          error: 'Not Implemented',
+        };
+    }
     fetch(dataSourceConfig.url)
       .then((v) => (data = v))
       .catch((e) => (eMessage = e)); //options are to be defined
