@@ -48,6 +48,7 @@ import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteAction } from '@/actions/Editor/Delete';
+import { WebloomCodeEditor } from './Components/CodeEditor';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -374,7 +375,9 @@ function Editor() {
                 defaultSizePercentage={10}
                 collapsible
               >
-                <div className="h-full w-full border-t-2 bg-red-100"></div>
+                <div className="h-full w-full">
+                  <WebloomCodeEditor />
+                </div>
               </Panel>
             </PanelGroup>
           </Panel>
