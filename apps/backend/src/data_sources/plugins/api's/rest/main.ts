@@ -8,6 +8,7 @@ export default class RESTQueryService implements QueryRunnerI {
     query;
     let data = {};
     let eMessage;
+    let status = 200;
     switch (dataSourceConfig.auth_type) {
       case 'oauth2':
         return {
@@ -16,15 +17,48 @@ export default class RESTQueryService implements QueryRunnerI {
           error: 'Oauth2 is not implemented yet!',
         };
       case 'basic':
+        fetch(dataSourceConfig.url)
+          .then((v) => {
+            status = 200;
+            return (data = v);
+          })
+          .catch((e) => {
+            status = 500;
+            eMessage = e.message;
+            return (eMessage = e);
+          }); //options are to be defined
         return {
-          status: 501,
+          status: status,
           data: data,
-          error: 'Not Implemented',
+          error: eMessage,
+        };
+      case 'bearer':
+        const myHeaders = new Headers();
+        const token = dataSourceConfig.bearer_token;
+
+        myHeaders.append('Content-Type', 'application/json');
+        myHeaders.append('Authorization', `Bearer ${token}`);
+
+        // return fetch('http://localhost:8080/clients/');
+        fetch(dataSourceConfig.url, {
+          method: dataSourceConfig.method,
+          headers: myHeaders,
+        })
+          .then((v) => {
+            status = 200;
+            return (data = v);
+          })
+          .catch((e) => {
+            status = 500;
+            eMessage = e.message;
+            return (eMessage = e);
+          }); //options are to be defined
+        return {
+          status: status,
+          data: data,
+          error: eMessage,
         };
     }
-    fetch(dataSourceConfig.url)
-      .then((v) => (data = v))
-      .catch((e) => (eMessage = e)); //options are to be defined
 
     return {
       status: 200,
