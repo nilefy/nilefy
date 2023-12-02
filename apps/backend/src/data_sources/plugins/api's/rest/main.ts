@@ -39,7 +39,6 @@ export default class RESTQueryService implements QueryRunnerI {
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append('Authorization', `Bearer ${token}`);
 
-        // return fetch('http://localhost:8080/clients/');
         fetch(dataSourceConfig.url, {
           method: dataSourceConfig.method,
           headers: myHeaders,
