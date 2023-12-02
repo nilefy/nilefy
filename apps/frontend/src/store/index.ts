@@ -34,10 +34,6 @@ export interface WebloomState {
   shadowElement: ShadowElement | null;
   editorWidth: number;
   editorHeight: number;
-  autoCompleteKeys: {
-    widgets: AutoCompleteItem[];
-    actions: AutoCompleteItem[];
-  };
 }
 
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -88,12 +84,6 @@ interface WebloomActions {
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
-  setAutoCompleteItems: (
-    cb: (
-      keys: WebloomState['autoCompleteKeys'],
-    ) => WebloomState['autoCompleteKeys'],
-  ) => void;
-  setAutoCompleteKeysFromWidgets: (widgets: WebloomState['tree']) => void;
 }
 
 interface WebloomGetters {
@@ -358,30 +348,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
     },
-    setAutoCompleteItems(cb) {
-      set((state) => {
-        return {
-          ...state,
-          autoCompleteKeys: cb(state.autoCompleteKeys),
-        };
-      });
-    },
-    setAutoCompleteKeysFromWidgets(widgets) {
-      const widgetAutoCompleteItems: AutoCompleteItem[] = [];
-      for (const widgetId in widgets) {
-        const widget = widgets[widgetId];
-        widgetAutoCompleteItems.push({
-          name: widget.name,
-          id: widget.id,
-        });
-      }
-      get().setAutoCompleteItems((state) => {
-        return {
-          ...state,
-          widgets: widgetAutoCompleteItems,
-        };
-      });
-    },
+
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
       const el = tree[id];
@@ -493,7 +460,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, node.id],
           },
         };
-        get().setAutoCompleteKeysFromWidgets(newTree);
         return { tree: newTree };
       });
       set((state) => {
@@ -539,7 +505,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         }
         delete newTree[nodeId];
       }
-      get().setAutoCompleteKeysFromWidgets(newTree);
       set({ tree: newTree });
       return stack;
     },

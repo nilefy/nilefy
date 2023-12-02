@@ -8,7 +8,12 @@ import {
   ViewUpdate,
 } from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
+import {
+  completionPath,
+  javascript,
+  javascriptLanguage,
+  scopeCompletionSource,
+} from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
 import { CompletionContext } from '@codemirror/autocomplete';
 import {
@@ -17,26 +22,30 @@ import {
   StateEffect,
   StateField,
 } from '@codemirror/state';
+import store from '@/store';
 
 const External = Annotation.define<boolean>();
-// TODO: change this to real context we want to share the user
-
-const completions = [
-  { label: 'panic', type: 'keyword' },
-  { label: 'park', type: 'constant', info: 'Test completion' },
-  { label: 'password', type: 'variable' },
-];
 
 function webloomCompletions(context: CompletionContext) {
   const before = context.matchBefore(/\w+/);
   // If completion wasn't explicitly started and there
   // is no word before the cursor, don't open completions.
   if (!context.explicit && !before) return null;
-  return {
-    from: before ? before.from : context.pos,
-    options: completions,
-    validFor: /^\w*$/,
+  const tree = store.getState().tree;
+  // very naive implementation of the completion till we implement the real one
+  const autoCompleteObject = {
+    widgets: Object.keys(tree).reduce((acc, key) => {
+      return {
+        ...acc,
+        [key]: {
+          ...tree[key].props,
+        },
+      };
+    }, {}),
   };
+
+  const result = scopeCompletionSource(autoCompleteObject)(context);
+  return result;
 }
 
 /**
