@@ -23,6 +23,9 @@ type InspectorColorProps = {
 type InspectorEvents = {
   
 };
+type EventManagerButton = {
+  
+};
 
 // config panel types
 type FormControlOptions = {
@@ -30,6 +33,7 @@ type FormControlOptions = {
   select: InspectorSelectProps;
   color: InspectorColorProps;
   event: InspectorEvents;
+  EventManagerButton: EventManagerButton;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -57,4 +61,5 @@ export type {
   InspectorFormControls,
   InspectorColorProps,
   InspectorEvents,
+  EventManagerButton,
 };

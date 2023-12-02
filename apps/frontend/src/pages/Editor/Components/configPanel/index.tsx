@@ -36,6 +36,7 @@ const InspectorSection = (props: {
 }) => {
   const { section, selectedId, selectedNodeProps } = props;
   const [opened, setOpened] = useState(true);
+  const events = store.getState().getProps(selectedId).events;
   return (
     <Collapsible
       open={opened}
@@ -52,6 +53,40 @@ const InspectorSection = (props: {
           </Button>
         </CollapsibleTrigger>
       </div>
+      {events &&
+      Array.isArray(events) &&
+      section.sectionName == 'Interactions' ? (
+        <CollapsibleContent className="space-y-5">
+          {events.map((event, index) => {
+            const Component = InspectorFormControls['event'];
+            const options = {
+              value: selectedNodeProps['events'],
+            };
+            const onChange = (newValue: unknown) => {
+              const updatedEvents = [...events];
+              updatedEvents[index] = newValue;
+              store.getState().setProp(selectedId, 'events', updatedEvents);
+              console.log(event);
+            };
+            const onDelete = () => {
+              const updatedEvents = [...events];
+              updatedEvents.splice(index, 1);
+              store.getState().setProp(selectedId, 'events', updatedEvents);
+              console.log(event);
+            };
+            return (
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              //@ts-ignore
+              <Component
+                {...options}
+                onChange={onChange}
+                onDelete={onDelete}
+                key={index}
+              />
+            );
+          })}
+        </CollapsibleContent>
+      ) : null}
       <CollapsibleContent className="space-y-5">
         {section.children.map((control) => {
           const Component = InspectorFormControls[control.type];
