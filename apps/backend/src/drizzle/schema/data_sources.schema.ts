@@ -8,7 +8,14 @@ import {
   varchar,
   unique,
 } from 'drizzle-orm/pg-core';
-import { workspaces, users, timeStamps, softDelete, apps } from './schema';
+import {
+  workspaces,
+  users,
+  timeStamps,
+  softDelete,
+  apps,
+  whoToBlame,
+} from './schema';
 
 export const dataSourcesEnum = pgEnum('data_sources_enum', [
   'database',
@@ -67,7 +74,5 @@ export const queries = pgTable('workspace_app_queries', {
   dataSourceId: integer('data_source_id')
     .references(() => workspaceDataSources.id)
     .notNull(),
-  createdById: integer('created_by_id')
-    .references(() => users.id)
-    .notNull(),
+  ...whoToBlame,
 });

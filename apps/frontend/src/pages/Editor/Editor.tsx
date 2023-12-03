@@ -7,7 +7,7 @@ import React, {
   useRef,
   ElementType,
   useCallback,
-  createContext,
+  Suspense,
 } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -27,12 +27,7 @@ import {
 } from '@dnd-kit/core';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import {
-  NUMBER_OF_COLUMNS,
-  PREVIEW_NODE_ID,
-  ROOT_NODE_ID,
-  ROW_HEIGHT,
-} from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import {
   Grid,
   MultiSelectBounding,
@@ -41,13 +36,20 @@ import {
   WebloomElementShadow,
 } from './Components/lib';
 import { commandManager } from '@/actions/commandManager';
-import DragAction from '@/actions/Editor/Drag';
-import { normalize } from '@/lib/Editor/utils';
-import { SelectionAction } from '@/actions/Editor/selection';
+import DragAction from '@/actions/editor/Drag';
+import { normalize } from '@/lib/editor/utils';
+import { SelectionAction } from '@/actions/editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { DeleteAction } from '@/actions/editor/Delete';
+import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
+import { QueryClient } from '@tanstack/react-query';
+import { getToken, removeToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from '@/types/auth.types';
+import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { Loader } from 'lucide-react';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -60,8 +62,12 @@ const throttledResizeCanvas = throttle(
   },
 );
 function WebloomRoot() {
-  const props = store((state) => state.tree[ROOT_NODE_ID].props);
-  const nodes = store((state) => state.tree[ROOT_NODE_ID].nodes);
+  const props = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].props,
+  );
+  const nodes = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].nodes,
+  );
   const ref = React.useRef<HTMLDivElement>(null);
   const width = store((state) => state.editorWidth);
   const height = store((state) => state.editorHeight);
@@ -75,16 +81,19 @@ function WebloomRoot() {
     return children;
   }, [nodes, props.children]);
   useLayoutEffect(() => {
-    const columnWidth = width / NUMBER_OF_COLUMNS;
-    let rowsCount = store.getState().tree[ROOT_NODE_ID].rowsCount;
+    const columnWidth = width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+    let rowsCount =
+      store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
     if (rowsCount === 0) {
       store
         .getState()
         .setEditorDimensions({ height: ref.current?.clientHeight });
-      rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
+      rowsCount = Math.round(
+        ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
+      );
     }
 
-    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
+    resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, { columnWidth, rowsCount });
   }, [height, width]);
 
   useEffect(() => {
@@ -93,7 +102,7 @@ function WebloomRoot() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  useSetDom(ref, ROOT_NODE_ID);
+  useSetDom(ref, EDITOR_CONSTANTS.ROOT_NODE_ID);
   const handleResize = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
@@ -103,8 +112,8 @@ function WebloomRoot() {
 
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter droppable id={ROOT_NODE_ID}>
-        <Grid id={ROOT_NODE_ID} />
+      <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
+        <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
         {children}
       </WebloomAdapter>
     </div>
@@ -150,7 +159,7 @@ function WebloomElement({ id }: { id: string }) {
     ),
     [tree.type, props, children, contextValue],
   );
-  if (id === PREVIEW_NODE_ID) return null;
+  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -160,15 +169,15 @@ function WebloomElement({ id }: { id: string }) {
 }
 
 const initTree: WebloomTree = {
-  [ROOT_NODE_ID]: {
-    id: ROOT_NODE_ID,
-    name: ROOT_NODE_ID,
+  [EDITOR_CONSTANTS.ROOT_NODE_ID]: {
+    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    name: EDITOR_CONSTANTS.ROOT_NODE_ID,
     col: 0,
     row: 0,
     columnWidth: 0,
-    columnsCount: NUMBER_OF_COLUMNS,
+    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
     nodes: [],
-    parent: ROOT_NODE_ID,
+    parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
     rowsCount: 0,
@@ -178,10 +187,11 @@ const initTree: WebloomTree = {
     type: 'WebloomContainer',
   },
 };
-store.setState((state) => {
-  state.tree = initTree;
-  return state;
-});
+// store.setState((state) => {
+//   state.tree = initTree;
+//   return state;
+// });
+
 const CustomPanelResizeHandle = () => {
   return (
     <PanelResizeHandle className="group relative flex shrink-0 grow-0 basis-1 items-stretch justify-stretch overflow-visible outline-none">
@@ -201,7 +211,41 @@ const CustomPanelResizeHandle = () => {
     </PanelResizeHandle>
   );
 };
-function Editor() {
+
+export const appLoader =
+  (queryClient: QueryClient) =>
+  async ({ params }: { params: Record<string, string | undefined> }) => {
+    // as this loader runs before react renders we need to check for token first
+    const token = getToken();
+    if (!token) {
+      return redirect('/signin');
+    } else {
+      // check is the token still valid
+      // Decode the token
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        removeToken();
+        return redirect('/signin');
+      }
+      const query = useAppQuery({
+        workspaceId: +(params.workspaceId as string),
+        appId: +(params.appId as string),
+      });
+      return defer({
+        app: queryClient.fetchQuery(query),
+      });
+    }
+  };
+
+function EditorLoader() {
+  return (
+    <div className="flex h-full w-full  items-center justify-center ">
+      <Loader className="animate-spin " size={30} />
+    </div>
+  );
+}
+
+export function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -213,12 +257,12 @@ function Editor() {
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
@@ -232,12 +276,14 @@ function Editor() {
     if (e.active.id === e.over?.id) return;
     store.getState().setOverNode((e.over?.id as string) ?? null);
     if (e.active.data.current?.isNew && draggedNode === null) {
-      const [gridrow] = store.getState().getGridSize(ROOT_NODE_ID);
+      const [gridrow] = store
+        .getState()
+        .getGridSize(EDITOR_CONSTANTS.ROOT_NODE_ID);
       let x = 0;
-      const root = store.getState().tree[ROOT_NODE_ID];
+      const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
       const rootBoundingRect = root.dom!.getBoundingClientRect();
       if (mousePos.current.x > rootBoundingRect.width / 2) {
-        x = NUMBER_OF_COLUMNS - 2;
+        x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
       }
       const y = normalize(
         (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
@@ -249,7 +295,7 @@ function Editor() {
           id: 'new',
           mouseStartPosition: mousePos.current,
           new: {
-            parent: ROOT_NODE_ID,
+            parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
             startPosition: { x, y },
             type: e.active.data.current.type,
             initialDelta: e.delta,
@@ -279,7 +325,7 @@ function Editor() {
 
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const rootDom = store.getState().tree[ROOT_NODE_ID].dom;
+      const rootDom = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].dom;
       if (!rootDom) return;
       const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
@@ -339,7 +385,7 @@ function Editor() {
                     dragCondition={(e) => {
                       const triggerTarget = e.inputEvent.target;
                       const isRoot = triggerTarget.getAttribute('data-id');
-                      return isRoot === ROOT_NODE_ID;
+                      return isRoot === EDITOR_CONSTANTS.ROOT_NODE_ID;
                     }}
                     onSelect={(e) => {
                       e.added.forEach((el) => {
@@ -388,4 +434,28 @@ function Editor() {
   );
 }
 
-export default Editor;
+export function App() {
+  const { app } = useLoaderData();
+  return (
+    <Suspense fallback={<EditorLoader />}>
+      <Await resolve={app} errorElement={<p>Error loading app</p>}>
+        {(app) => {
+          const a = app as AppCompleteT;
+          const tree = a.defaultPage.tree;
+          // connect to ws
+          commandManager.connectToEditor(a.id, a.defaultPage.id);
+          console.log(tree);
+          // depends on root be with the name 'ROOT'
+          EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
+            (c) => c.name === 'ROOT',
+          )!.id;
+          store.setState((state) => {
+            state.tree = tree;
+            return state;
+          });
+          return <Editor />;
+        }}
+      </Await>
+    </Suspense>
+  );
+}

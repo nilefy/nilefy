@@ -17,15 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { User } from '@/api/users.api';
 
 // TODO: move to common package
-export type User = {
-  id: string;
-  username: string;
-  email: string;
-  status: 'active' | 'invited' | 'archived';
-  imageUrl?: string;
-};
 
 export function UsersManagement() {
   // TODO: convert to data fetching

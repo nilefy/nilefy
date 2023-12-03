@@ -13,10 +13,9 @@ export function generateFakeApp(
   return {
     createdById: faker.helpers.arrayElement(userIds),
     updatedById: faker.helpers.arrayElement([...userIds, null]),
-    deletedById: faker.helpers.arrayElement([...userIds, null]),
+    deletedById: null,
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
-    state: {},
     workspaceId: faker.helpers.arrayElement(workspaceIds),
     createdAt: faker.date.past(),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),

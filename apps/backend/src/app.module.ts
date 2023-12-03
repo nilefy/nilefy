@@ -9,6 +9,9 @@ import { WebloomTableModule } from './webloom_table/table.module';
 import { AppsModule } from './apps/apps.module';
 import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { PagesModule } from './pages/pages.module';
+import { ComponentsModule } from './components/components.module';
+import { EventsModule } from './events/events.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
 
@@ -27,6 +30,9 @@ import { DataQueriesModule } from './data_queries/data_queries.module';
     AppsModule,
     RolesModule,
     PermissionsModule,
+    PagesModule,
+    ComponentsModule,
+    EventsModule,
     DataSourcesModule,
     DataQueriesModule,
   ],

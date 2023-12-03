@@ -1,6 +1,6 @@
 import store from '@/store';
 import { UndoableCommand } from '../types';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { WebloomNode } from '@/lib/Editor/interface';
 
 const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
@@ -17,13 +17,17 @@ export class DeleteAction implements UndoableCommand {
     this.nodes = [];
   }
 
-  execute(): void {
+  execute() {
     // those ids are in the same tree levels
     const selectedIds = getSelectedNodeIds();
     setSelectedNodeIds(() => new Set());
     for (const id of selectedIds) {
       removeNode(id, this.nodes);
     }
+    return {
+      event: 'delete' as const,
+      data: [...selectedIds],
+    };
   }
 
   undo(): void {
@@ -32,7 +36,7 @@ export class DeleteAction implements UndoableCommand {
       if (!node) {
         break;
       }
-      addNode(node, node.parent ?? ROOT_NODE_ID);
+      addNode(node, node.parent ?? EDITOR_CONSTANTS.ROOT_NODE_ID);
     }
   }
 }

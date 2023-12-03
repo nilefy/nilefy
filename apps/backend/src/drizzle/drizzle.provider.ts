@@ -3,11 +3,15 @@ import { TConfigService } from '../evn.validation';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
 import * as schema from './schema/schema';
+import * as appStateSchema from './schema/appsState.schema';
 import * as ds_schema from './schema/data_sources.schema';
 import * as relations from './schema/relations';
 import { PgTransaction, QueryResultHKT } from 'drizzle-orm/pg-core';
 
-type schemaT = typeof schema & typeof ds_schema & typeof relations;
+type schemaT = typeof schema &
+  typeof ds_schema &
+  typeof appStateSchema &
+  typeof relations;
 export type DatabaseI = NodePgDatabase<schemaT>;
 export type PgTrans = PgTransaction<QueryResultHKT, schemaT>;
 
@@ -21,7 +25,8 @@ export async function dbConnect(
   });
   await client.connect();
   const db: DatabaseI = drizzle(client, {
-    schema: { ...schema, ...ds_schema, ...relations },
+    schema: { ...schema, ...appStateSchema, ...ds_schema, ...relations },
+    logger: false,
   });
   return [db, client];
 }

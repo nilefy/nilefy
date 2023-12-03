@@ -9,6 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { commandManager } from '@/actions/commandManager';
+import { ChangePropAction } from '@/Actions/Editor/changeProps';
 
 export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
@@ -61,7 +63,10 @@ const InspectorSection = (props: {
             value: selectedNodeProps[control.key],
           };
           const onChange = (newValue: unknown) => {
-            store.getState().setProp(selectedId, control.key, newValue);
+            // store.getState().setProp(selectedId, control.key, newValue);
+            commandManager.executeCommand(
+              new ChangePropAction(selectedId, control.key, newValue),
+            );
           };
           return (
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

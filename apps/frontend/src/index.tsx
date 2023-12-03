@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import App from '@/pages/Editor/Editor';
+import { App, appLoader } from '@/pages/Editor/Editor';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
@@ -111,11 +111,11 @@ const router = createBrowserRouter([
     ),
     errorElement: <ErrorPage />,
   },
-  // TODO: remove this route after frontend auth is done (currently used for testing)
   {
-    path: '/editor',
+    path: '/:workspaceId/apps/:appId',
     element: <App />,
     errorElement: <ErrorPage />,
+    loader: appLoader(queryClient),
   },
 ]);
 

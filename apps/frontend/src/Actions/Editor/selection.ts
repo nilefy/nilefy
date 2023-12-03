@@ -1,6 +1,6 @@
 import store from '@/store';
 import { Command } from '../types';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 
 export class SelectionAction implements Command {
   constructor(
@@ -11,7 +11,7 @@ export class SelectionAction implements Command {
   execute(): void {
     store.getState().setSelectedNodeIds((prev) => {
       // remove selection
-      if (this.id === ROOT_NODE_ID) {
+      if (this.id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
         return new Set();
         // toggle element
       } else if (this.shiftKey && prev.has(this.id)) {
