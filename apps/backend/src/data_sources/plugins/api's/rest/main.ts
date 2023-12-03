@@ -9,6 +9,9 @@ export default class RESTQueryService implements QueryRunnerI {
     let data = {};
     let eMessage;
     let status = 200;
+    //todo 1. custom headers
+    //todo 2.
+    //todo 3.  Documentation
     switch (dataSourceConfig.auth_type) {
       case 'none':
         fetch(dataSourceConfig.url + '/' + query.query, {
