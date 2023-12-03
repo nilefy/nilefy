@@ -8,10 +8,10 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { commandManager } from '@/actions/commandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
+import { commandManager } from '@/Actions/CommandManager';
 import { ROOT_NODE_ID } from '@/lib/Editor/constants';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { SelectionAction } from '@/Actions/Editor/selection';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
