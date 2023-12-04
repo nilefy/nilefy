@@ -20,6 +20,8 @@ import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NonAuthRoute } from './components/non-auth-routes';
+import { DataSourcesLayout } from './pages/dataSources/dataSources';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -70,6 +72,10 @@ const router = createBrowserRouter([
                 element: <SelectDb />,
               },
             ],
+          },
+          {
+            path: 'datasources',
+            element: <DataSourcesLayout />,
           },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {

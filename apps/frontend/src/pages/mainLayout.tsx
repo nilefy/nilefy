@@ -1,6 +1,6 @@
 import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog, Table } from 'lucide-react';
+import { Wind, Layout, Cog, Table, Braces, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { fetchX } from '@/utils/fetch';
@@ -18,6 +18,11 @@ const dashboardPaths = [
     name: 'apps',
     path: '',
     icon: <Layout size={30} />,
+  },
+  {
+    name: 'dataSources',
+    path: 'datasources',
+    icon: <Braces size={30} />,
   },
 
   {
@@ -105,7 +110,9 @@ export function Dashboard() {
             </Avatar>
           </NavLink>
         </div>
-        <Button onClick={() => mutate()}>Logout</Button>
+        <Button variant={'ghost'} size={'icon'} onClick={() => mutate()}>
+          <LogOut />
+        </Button>
       </div>
 
       <Outlet />
