@@ -4,7 +4,7 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
     children: [
       {
         id: `restapi-url`,
-        key: 'type',
+        key: 'types',
         label: 'Type',
         type: 'select',
         options: {
