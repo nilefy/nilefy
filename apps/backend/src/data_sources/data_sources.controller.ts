@@ -16,9 +16,6 @@ import {
   CreateWsDataSourceDto,
   WsDataSourceDto,
   createWsDataSourceSchema,
-  dataSourcesInsert,
-  DataSourceDb,
-  DataSourceDto,
   updateWsDataSourceSchema,
   UpdateWsDataSourceDto,
 } from '../dto/data_sources.dto';
@@ -42,8 +39,6 @@ export class DataSourcesController {
   ): Promise<WsDataSourceDto> {
     const { name, config } = createDataSourceDto;
     const jsonConfig: WsDataSourceDto['config'] = JSON.stringify(config);
-
-    // TODO: check whether config matches the plugin requirements
 
     return await this.dataSourceService.create({
       name,
@@ -124,14 +119,5 @@ export class DataSourcesController {
       },
       data,
     );
-  }
-
-  // TODO: another controller for global data sources
-  @Post('')
-  async add(
-    @Body(new ZodValidationPipe(dataSourcesInsert))
-    dataSource: DataSourceDb,
-  ): Promise<DataSourceDto> {
-    return await this.dataSourceService.add(dataSource);
   }
 }

@@ -2,16 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
-  DataSourceDto,
-  DataSourceDb,
   GetWsDataSourceDto,
   UpdateWsDataSourceDto,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import {
-  dataSources,
-  workspaceDataSources,
-} from '../drizzle/schema/data_sources.schema';
+import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 
 @Injectable()
@@ -118,14 +113,5 @@ export class DataSourcesService {
       )
       .returning();
     return ds as WsDataSourceDto;
-  }
-
-  // GLOBAL
-  async add(dataSource: DataSourceDb): Promise<DataSourceDto> {
-    const [ds] = await this.db
-      .insert(dataSources)
-      .values(dataSource)
-      .returning();
-    return ds as DataSourceDto;
   }
 }
