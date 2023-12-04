@@ -34,5 +34,6 @@ export type UpdateWsDataSourceDto = z.infer<typeof updateWsDataSourceSchema>;
 
 export type DataSourceDto = z.infer<typeof dataSourceSelect>;
 export type DataSourceDb = z.infer<typeof dataSourcesInsert>;
+export type DataSourceP = Partial<DataSourceDto>;
 
 export type DataSourceConfigT = Record<string, unknown>;
