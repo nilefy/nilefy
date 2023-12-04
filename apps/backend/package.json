@@ -34,6 +34,7 @@
     "@nestjs/platform-express": "^10.2.9",
     "@nestjs/platform-fastify": "^10.2.9",
     "@nestjs/platform-ws": "^10.2.10",
+    "@nestjs/swagger": "^7.1.16",
     "@nestjs/websockets": "^10.2.10",
     "@webloom/permissions": "workspace:*",
     "bcrypt": "^5.1.1",
