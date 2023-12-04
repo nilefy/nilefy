@@ -22,6 +22,7 @@ function Page({
     return <RenameInput page={page} updateEditMode={setIsEditingPageName} />;
   }
   //TODO : use the defined booleans (isHidden,isEnabled ,etc... ) to render the suitable icon or not render the page at all
+
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}

@@ -17,6 +17,7 @@ import { useToast } from './ui/use-toast';
 import { api } from '@/api';
 import { PageDto } from './pageMenu';
 import Page from './page';
+import { SortableList } from './SortableList';
 export type Page = {
   id: number;
   handle: string;
@@ -26,7 +27,7 @@ export type Page = {
   index: number;
   appId: number;
 };
-
+//TODO: send the correct workspace ,app ids in the requests when done integrating
 export function PageSelector() {
   const { workspaceId, appId } = useParams<{
     workspaceId: string;
@@ -61,8 +62,35 @@ export function PageSelector() {
     // Update the search parameter in the URL whenever searchParams.search changes
     setSearchParams({ search: searchParams.get('search') || '' });
   }, [searchParams, setSearchParams]);
-  const searchParam = searchParams.get('search') || undefined;
-
+  const [sortedPages, setSortedPages] = useState<PageDto[]>(pages);
+  const { mutate: updateMutate } = api.pages.update.useMutation({
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: ['pages'] });
+    },
+  });
+  useEffect(() => {
+    if (pages) {
+      setSortedPages([...pages]);
+    }
+  }, [pages]);
+  useEffect(() => {
+    if (searchParams.get('search') && pages) {
+      const filteredPages = pages.filter((page) =>
+        page.name
+          .toLowerCase()
+          .includes(searchParams.get('search')?.toLowerCase() || ''),
+      );
+      setSortedPages(filteredPages);
+    } else {
+      setSortedPages(pages);
+    }
+  }, [searchParams, pages]);
+  useEffect(() => {
+    if (!isOpen || isPinned) {
+      searchParams.set('search', '');
+      setSearchParams(searchParams);
+    }
+  }, [isOpen, isPinned, searchParams, setSearchParams]);
   return (
     <Sheet
       key={'left'}
@@ -115,26 +143,45 @@ export function PageSelector() {
         </SheetHeader>
         <ul className="flex h-full w-full flex-col gap-3 overflow-y-auto">
           {isLoading ? (
-            <div>Loading </div>
-          ) : (pages || []).length > 0 ? (
-            (pages || [])
-              .filter((page: PageDto) =>
-                searchParam
-                  ? page.name.toLowerCase().includes(searchParam.toLowerCase())
-                  : true,
-              )
-              .map((page: PageDto) => (
-                <li key={String(page.id)}>
-                  <Page
-                    page={page}
-                    workspaceId={+(workspaceId || 1)}
-                    appId={+(appId || 1)}
-                  />
-                </li>
-              ))
+            'is Loading'
           ) : (
-            <div>No pages found.</div>
+            <SortableList
+              items={sortedPages || []}
+              onSortEnd={(p1: Page, p2: Page) => {
+                //TODO: make sure the setSortedPages is done correctly
+                const page1: Page = pages.find(
+                  (item: Page) => item.index === p1.index,
+                );
+                const page2: Page = pages.find(
+                  (item: Page) => item.index === p2.index,
+                );
+                updateMutate({
+                  workspaceId: 1,
+                  appId: 1,
+                  pageId: page1.id,
+                  pageDto: {
+                    index: page2.index,
+                  },
+                });
+                updateMutate({
+                  workspaceId: 1,
+                  appId: 1,
+                  pageId: page2.id,
+                  pageDto: {
+                    index: page1.index,
+                  },
+                });
+                queryClient.invalidateQueries({ queryKey: ['pages', 1, 1] });
+              }}
+              renderItem={(item: PageDto) => (
+                <Page key={item.id} workspaceId={1} appId={1} page={item} />
+              )}
+            />
           )}
+          {/* // ) : (
+          //   <div>No pages found.</div>
+          // )} */}
+
           {newPageBeingCreated && (
             <div className="w-[100%]">
               <AddingPageHandler

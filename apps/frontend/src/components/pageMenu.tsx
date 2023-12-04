@@ -11,6 +11,23 @@ import { api } from '@/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from './ui/input';
 import { useState } from 'react';
+import { Dialog, DialogHeader } from './ui/dialog';
+import {
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from '@radix-ui/react-dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { Button } from './ui/button';
+import { useForm } from 'react-hook-form';
+import { set } from 'lodash';
 
 export interface PageDto {
   id: number;
@@ -21,7 +38,86 @@ export interface PageDto {
   index: number;
   appId: number;
 }
+function UpdateHandleDialog({ open, setIsOpen, page, updateHandle }) {
+  //TODO: use them when integrating the page management
+  // const { workspaceId, appId } = useParams<{
+  //   workspaceId: string;
+  //   appId: string;
+  // }>();
+  const form = useForm({
+    defaultValues: {
+      name: page.handle,
+    },
+  });
+  const onSubmit = (data) => {
+    updateHandle({
+      workspaceId: 1,
+      appId: 1,
+      pageId: page.id,
+      pageDto: {
+        handle: data.name,
+      },
+    });
+    setIsOpen(false);
+  };
+  console.log(open);
 
+  return (
+    <div className="right-10">
+      <Dialog open={open}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Page Handle</DialogTitle>
+          </DialogHeader>
+          <div>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Page Handle</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter Page Handle"
+                          onFocus={() => setIsOpen(true)}
+                          // onKeyDown={(
+                          //   event: React.ChangeEvent<HTMLInputElement> &
+                          //     React.KeyboardEvent<HTMLInputElement>,
+                          // ): void => {
+                          //   if (event.key === 'Enter') {
+                          //     const newHandle = event.target.value;
+                          //     updateHandle({
+                          //       workspaceId: 1,
+                          //       appId: 1,
+                          //       pageId: page.id,
+                          //       pageDto: {
+                          //         handle: newHandle,
+                          //       },
+                          //     });
+                          //   }
+                          // }}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Save</Button>
+                <Button>Cancel</Button>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 function PageMenu({
   workspaceId,
   appId,
@@ -69,35 +165,28 @@ function PageMenu({
   });
   return (
     <div className="flex  items-center justify-start  text-sm">
-      <DropdownMenu open={isOpen}>
+      {/* <UpdateHandleDialog
+        open={isUpdateHandle}
+        setIsOpen={setIsUpdateHandle}
+        page={page}
+        updateHandle={updateMutate}
+      /> */}
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger>
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="flex flex-col gap-2 ">
           <DropdownMenuItem className="flex flex-col items-start gap-3  hover:cursor-pointer ">
-            {/* //TODO : fix focusing issue of the handle input */}
+            {/* //TODO : use a dialog to update the pagehandle
+            as there's an issue with putting manipulating an input directly inside a dropdownmenu
+            */}
             <Label>Page Handle</Label>
             <Input
-              // defaultValue={`.../${page.handle}`}
-              // onFocus={setIsOpen(true)}
-              onBlur={() => setIsOpen(true)}
-              value={page.handle}
-              onKeyDown={(
-                event: React.ChangeEvent<HTMLInputElement> &
-                  React.KeyboardEvent<HTMLInputElement>,
-              ): void => {
-                if (event.key === 'Enter') {
-                  setIsOpen(false);
-                  const newHandle = event.target.value;
-                  updateMutate({
-                    workspaceId,
-                    appId,
-                    pageId: page.id,
-                    pageDto: {
-                      handle: newHandle,
-                    },
-                  });
-                }
+              // readOnly
+              defaultValue={page.handle}
+              onFocus={() => {
+                setIsUpdateHandle(true);
+                setIsOpen(false);
               }}
             />
           </DropdownMenuItem>
