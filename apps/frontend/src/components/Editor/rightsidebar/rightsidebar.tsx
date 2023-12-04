@@ -4,6 +4,12 @@ import { WebloomComponents } from '../WebloomComponents';
 import NewNodeAdapter from '../WebloomComponents/lib/NewNodeAdapter';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+<<<<<<< HEAD:apps/frontend/src/components/Editor/rightsidebar/rightsidebar.tsx
+=======
+import { WebloomWidgets } from '..';
+import { NewNodeAdapter } from '../lib';
+import { ConfigPanel } from '../configPanel/index';
+>>>>>>> d59194e (chore: rename inspector to configPanel):apps/frontend/src/pages/Editor/Components/Rightsidebar/index.tsx
 
 function InsertTab() {
   return (
@@ -32,7 +38,13 @@ function InspectTab() {
   } else if (selectedIds.size === 1) {
     return (
       <TabsContent value="inspect">
+<<<<<<< HEAD:apps/frontend/src/components/Editor/rightsidebar/rightsidebar.tsx
         <p>TODO: render form elements based on the component type</p>
+=======
+        <div className="p-2">
+          <ConfigPanel />
+        </div>
+>>>>>>> d59194e (chore: rename inspector to configPanel):apps/frontend/src/pages/Editor/Components/Rightsidebar/index.tsx
       </TabsContent>
     );
   } else if (selectedIds.size > 1) {
