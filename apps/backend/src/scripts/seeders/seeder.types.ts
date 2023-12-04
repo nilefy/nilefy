@@ -1,4 +1,5 @@
 import { DatabaseI } from '../../drizzle/drizzle.provider';
+import { DataSourceDto } from '../../dto/data_sources.dto';
 import { z } from 'zod';
 
 export type SeederI<T> = (db: DatabaseI) => Promise<T>;
@@ -16,3 +17,16 @@ export const dataSources = {
   'cloud storage': ['aws s3', 'azure blob'],
   plugin: ['github', 'open ai'],
 };
+
+export type DataSourceT = Omit<DataSourceDto, 'id'>;
+
+export type ConfigT = {
+  sectionName: string;
+  children: {
+    id: string;
+    key: string;
+    label: string;
+    type: string;
+    options?: Record<string, unknown>;
+  }[];
+}[];
