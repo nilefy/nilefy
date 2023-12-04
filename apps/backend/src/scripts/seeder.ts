@@ -5,6 +5,7 @@ import { workspaceSeeder } from './seeders/workspace.seeder';
 import { appSeeder } from './seeders/app.seeder';
 import { permissionsSeeder } from './seeders/permissions.seeder';
 import { rolesSeeder } from './seeders/roles.seeder';
+import { dataSourcesSeeder } from './seeders/data_sources.seeder';
 
 async function main() {
   configDotenv();
@@ -15,13 +16,14 @@ async function main() {
   const users = await userSeeder(db);
   const userIds = users.map((u) => u.id);
   const workspaces = await workspaceSeeder(db, userIds);
-
   const workspaceIds = workspaces.map((w) => w.id);
   const permissions = await permissionsSeeder(db);
   const permissionIds = permissions.map((p) => p.id);
   const [adminId, ...rest] = userIds;
   await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);
   await appSeeder(db, userIds, workspaceIds);
+
+  await dataSourcesSeeder(db);
 
   client.end();
 }
