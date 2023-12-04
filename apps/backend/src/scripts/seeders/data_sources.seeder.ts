@@ -46,10 +46,11 @@ export async function dataSourcesSeeder(db: DatabaseI) {
                 key: 'ssl',
                 label: 'SSL',
                 type: 'input',
+                options: {},
               },
               {
                 id: 'database_name',
-                key: 'database_name',
+                key: 'database',
                 label: 'Database Name',
                 type: 'input',
                 options: {
@@ -59,7 +60,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
               },
               {
                 id: 'username',
-                key: 'username',
+                key: 'user',
                 label: 'Username',
                 type: 'input',
                 options: {
@@ -78,18 +79,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
                 },
               },
               {
-                id: 'password',
-                key: 'password',
-                label: 'Password',
-                type: 'input',
-                options: {
-                  placeholder: 'Enter password',
-                  type: 'password',
-                },
-              },
-              {
                 id: 'certificate',
-                key: 'certificate',
+                key: 'sslCertificate',
                 label: 'SSL Certificate',
                 type: 'select',
                 options: {
