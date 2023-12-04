@@ -1,12 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { AddQueryDto, QueryDb, QueryDto } from '../dto/data_queries.dto';
+import {
+  AddQueryDto,
+  QueryDb,
+  QueryDto,
+  UpdateQueryDto,
+} from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
 import { dataSources, queries } from '../drizzle/schema/data_sources.schema';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { getQueryService } from '../data_sources/plugins/common/service';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 
 @Injectable()
 export class DataQueriesService {
@@ -22,7 +27,10 @@ export class DataQueriesService {
   }
 
   async addQuery(query: QueryDb): Promise<QueryDto> {
-    const [q] = await this.db.insert(queries).values(query).returning();
+    const [q] = await this.db
+      .insert(queries)
+      .values({ ...query, createdAt: sql`now()` })
+      .returning();
     return q as QueryDto;
   }
 
@@ -34,6 +42,7 @@ export class DataQueriesService {
       where: and(
         eq(queries.dataSourceId, dataSourceId),
         eq(queries.appId, appId),
+        isNull(queries.deletedAt),
       ),
     });
     return q as QueryDto[];
@@ -41,15 +50,36 @@ export class DataQueriesService {
 
   async getQuery(queryId: QueryDto['id']): Promise<QueryDto> {
     const q = await this.db.query.queries.findFirst({
-      where: and(eq(queries.id, queryId)),
+      where: and(eq(queries.id, queryId), isNull(queries.deletedAt)),
     });
     return q as QueryDto;
   }
 
-  async deleteQuery(queryId: QueryDto['id']): Promise<QueryDto> {
+  async deleteQuery(
+    queryId: QueryDto['id'],
+    deletedById: QueryDto['deletedById'],
+  ): Promise<QueryDto> {
     const [q] = await this.db
-      .delete(queries)
-      .where(and(eq(queries.id, queryId)))
+      .update(queries)
+      .set({ deletedById, deletedAt: sql`now()` })
+      .where(eq(queries.id, queryId))
+      .returning();
+    return q as QueryDto;
+  }
+
+  async updateQuery({
+    queryId,
+    updatedById,
+    query,
+  }: {
+    queryId: QueryDto['id'];
+    updatedById: QueryDto['updatedById'];
+    query: UpdateQueryDto;
+  }): Promise<QueryDto> {
+    const [q] = await this.db
+      .update(queries)
+      .set({ ...query, updatedById, updatedAt: sql`now()` })
+      .where(and(eq(queries.id, queryId), isNull(queries.deletedAt)))
       .returning();
     return q as QueryDto;
   }

@@ -75,4 +75,6 @@ export const queries = pgTable('workspace_app_queries', {
     .references(() => workspaceDataSources.id)
     .notNull(),
   ...whoToBlame,
+  ...timeStamps,
+  ...softDelete,
 });

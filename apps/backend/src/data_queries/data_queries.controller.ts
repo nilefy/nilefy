@@ -8,12 +8,19 @@ import {
   Req,
   Get,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { DataQueriesService } from './data_queries.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
-import { addQuerySchema, AddQueryDto, QueryDto } from '../dto/data_queries.dto';
+import {
+  addQuerySchema,
+  AddQueryDto,
+  QueryDto,
+  updateQuerySchema,
+  UpdateQueryDto,
+} from '../dto/data_queries.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { QueryRet } from './query.types';
@@ -93,7 +100,21 @@ export class DataQueriesController {
   @Delete(':id')
   async deleteQuery(
     @Param('id', ParseIntPipe) queryId: number,
+    @Req() req: ExpressAuthedRequest,
   ): Promise<QueryDto | undefined> {
-    return await this.dataQueriesService.deleteQuery(queryId);
+    return await this.dataQueriesService.deleteQuery(queryId, req.user.userId);
+  }
+
+  @Put(':id')
+  async updateQuery(
+    @Param('id', ParseIntPipe) queryId: number,
+    @Body(new ZodValidationPipe(updateQuerySchema)) query: UpdateQueryDto,
+    @Req() req: ExpressAuthedRequest,
+  ): Promise<QueryDto> {
+    return await this.dataQueriesService.updateQuery({
+      queryId,
+      updatedById: req.user.userId,
+      query,
+    });
   }
 }
