@@ -4,7 +4,10 @@ import { ConfigT } from './types';
 import { Pool, PoolConfig } from 'pg';
 
 export default class RESTQueryService implements QueryRunnerI {
-  async run(dataSourceConfig: ConfigT, query: QueryConfig): Promise<QueryRet> {
+  async run(
+    dataSourceConfig: ConfigT,
+    query: QueryConfig<string>,
+  ): Promise<QueryRet> {
     query;
     let data = {};
     let eMessage;
