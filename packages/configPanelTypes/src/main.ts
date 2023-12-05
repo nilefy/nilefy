@@ -30,6 +30,10 @@ type FormControlOptions = {
   select: InspectorSelectProps;
   color: InspectorColorProps;
   event: InspectorEvents;
+  sqlEditor: {
+    value?: string;
+    placeholder?: string;
+  };
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;

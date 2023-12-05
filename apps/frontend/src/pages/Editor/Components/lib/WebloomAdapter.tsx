@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 import {
@@ -9,9 +9,9 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { commandManager } from '@/actions/commandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { SelectionAction } from '@/actions/editor/selection';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { DeleteAction } from '@/actions/editor/Delete';
 import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
@@ -39,7 +39,7 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
         isNew: false,
       },
     });
-  if (id === ROOT_NODE_ID) {
+  if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
     attributes.role = 'canvas';
   }
   const modListeners = useMemo(() => {
@@ -72,47 +72,63 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       height: elDimensions.height,
     } as React.CSSProperties;
   }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
-
+  if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+    return (
+      <div
+        {...modListeners}
+        {...attributes}
+        style={style}
+        ref={ref}
+        className="target relative touch-none overflow-hidden outline-none"
+        data-id={id}
+      >
+        {props.children}
+      </div>
+    );
+  }
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <div
-            {...modListeners}
-            {...attributes}
-            style={style}
-            ref={ref}
-            className="target relative touch-none overflow-hidden outline-none"
-            data-id={id}
-          >
-            {!!active && (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          key={'adapter' + id}
+          {...modListeners}
+          {...attributes}
+          style={style}
+          ref={ref}
+          className="target relative touch-none overflow-hidden outline-none"
+          data-id={id}
+        >
+          {
+            //this is to prevent widgets from capturing focus when drag is happening
+            !!active && (
               <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+            )
+          }
+          <div
+            key={id}
+            className={cn(
+              {
+                hidden: isDragging || isResizing,
+              },
+              {
+                flex: !isDragging && !isResizing,
+              },
+              'w-full h-full',
             )}
-            <div
-              className={cn(
-                {
-                  hidden: isDragging || isResizing,
-                },
-                {
-                  flex: !isDragging && !isResizing,
-                },
-                'w-full h-full',
-              )}
-            >
-              {props.children}
-            </div>
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onMouseDown={() => {
-              commandManager.executeCommand(new DeleteAction());
-            }}
           >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-    </>
+            {props.children}
+          </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onMouseDown={() => {
+            commandManager.executeCommand(new DeleteAction());
+          }}
+        >
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };

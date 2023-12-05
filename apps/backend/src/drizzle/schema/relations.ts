@@ -16,6 +16,7 @@ import {
   dataSources,
   queries,
 } from './data_sources.schema';
+import { components, pages } from './appsState.schema';
 
 // to remove Disambiguating relations
 // @link https://orm.drizzle.team/docs/rqb#disambiguating-relations
@@ -46,6 +47,9 @@ const workspaceRolesRelation = 'workspaceRoles';
 const permissionPermissionsInRoleRelation = 'permissionpermissionsInRole';
 const rolePermissionsInRoleRelation = 'rolepermissionsInRole';
 
+// apps
+const pagesToappsRelation = 'pagesinapp';
+
 const dataSourceWorkspaceRelation = 'dataSource';
 const workspaceDataSourcesRelation = 'workspaceDataSources';
 const userDataSourceRelation = 'userDataSource';
@@ -54,6 +58,8 @@ const userDeleteDataSourceRelation = 'lastDeletedDataSource';
 const userQueriesRelation = 'userQueries';
 const appQueriesRelation = 'appQueries';
 const wsDataSourceQueriesRelation = 'dataSourceQueriesRelation';
+const componentsToPageRelation = 'componentsToPage';
+const componentParentRelation = 'componentParent';
 
 export const usersRelations = relations(users, ({ many }) => {
   return {
@@ -171,6 +177,9 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
   queries: many(queries, {
     relationName: appQueriesRelation,
   }),
+  pages: many(pages, {
+    relationName: pagesToappsRelation,
+  }),
 }));
 
 export const webloomTableRelations = relations(
@@ -207,7 +216,7 @@ export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
  */
 export const queriesRelations = relations(queries, ({ one }) => ({
   createdBy: one(users, {
-    fields: [queries.userId],
+    fields: [queries.createdById],
     references: [users.id],
     relationName: userQueriesRelation,
   }),
@@ -359,3 +368,32 @@ export const usersToWorkspacesRelations = relations(
     }),
   }),
 );
+
+export const pagesRelations = relations(pages, ({ many, one }) => {
+  return {
+    app: one(apps, {
+      fields: [pages.appId],
+      references: [apps.id],
+      relationName: pagesToappsRelation,
+    }),
+    components: many(components, {
+      relationName: componentsToPageRelation,
+    }),
+  };
+});
+
+export const componentsRelations = relations(components, ({ one, many }) => ({
+  page: one(pages, {
+    fields: [components.pageId],
+    references: [pages.id],
+    relationName: componentsToPageRelation,
+  }),
+  parent: one(components, {
+    fields: [components.parent],
+    references: [components.id],
+    relationName: componentParentRelation,
+  }),
+  children: many(components, {
+    relationName: componentParentRelation,
+  }),
+}));

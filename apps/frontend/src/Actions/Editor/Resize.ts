@@ -1,10 +1,10 @@
 import store, { handleParentCollisions } from '@/store';
-import { Command, UndoableCommand } from '../types';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
+import { Command, UndoableCommand } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -49,7 +49,7 @@ class ResizeAction {
     this.direction = key.split('-') as MainResizingKeys[];
     const positionsSnapshot = Object.entries(store.getState().tree).reduce(
       (acc, node) => {
-        if (node[0] === ROOT_NODE_ID) return acc;
+        if (node[0] === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
         return {
           ...acc,
           [node[0]]: {
@@ -90,7 +90,7 @@ class ResizeAction {
     resizingKey: ResizingKeys | null,
   ) {
     if (resizingKey === null) return;
-    const root = store.getState().tree[ROOT_NODE_ID];
+    const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
     if (!root.dom) return;
 
     const { width: initialWidth, height: initialHeight } = initialDimensions;
@@ -266,9 +266,20 @@ class ResizeAction {
     store.getState().setResizedNode(null);
     store.getState().setShadowElement(null);
     if (!dims) return null;
-    const command = {
+    const command: UndoableCommand = {
       execute: () => {
         this._resize(id, dims!);
+        // return means data will be send to the server
+        const updates = [
+          store.getState().tree[id],
+          ...undoData
+            .filter((test) => test.id !== id)
+            .map((k) => store.getState().tree[k.id]),
+        ];
+        return {
+          event: 'update' as const,
+          data: updates,
+        };
       },
       undo: () => {
         this.returnToInitialDimensions(initialGridPosition, id);

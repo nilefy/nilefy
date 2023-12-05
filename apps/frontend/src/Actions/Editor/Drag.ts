@@ -1,18 +1,13 @@
 import store, { convertGridToPixel } from '@/store';
 import { Command, UndoableCommand } from '../types';
-
 import { nanoid } from 'nanoid';
-
 import { Point } from '@/types';
-import {
-  PREVIEW_NODE_ID,
-  ROOT_NODE_ID,
-  ROW_HEIGHT,
-} from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
 import { RefAttributes } from 'react';
+
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -34,12 +29,13 @@ const {
   getPixelDimensions,
   getDropCoordinates,
 } = store.getState();
+
 class DragAction {
   private static threshold = 5;
   private static isNew = false;
   private static newType: string;
   private static id: string | null = null;
-  private static readonly previewId = PREVIEW_NODE_ID;
+  private static readonly previewId = EDITOR_CONSTANTS.PREVIEW_NODE_ID;
   private static oldParent: string;
   private static currentParent: string;
   private static movedToNewParent = false;
@@ -70,7 +66,7 @@ class DragAction {
       this.id = nanoid();
       const parent = store.getState().tree[args.new!.parent];
       const colWidth = parent.columnWidth;
-      const rowHeight = ROW_HEIGHT;
+      const rowHeight = EDITOR_CONSTANTS.ROW_HEIGHT;
       this.startPosition = {
         x: args.new!.startPosition.x * colWidth!,
         y: args.new!.startPosition.y * rowHeight,
@@ -107,7 +103,7 @@ class DragAction {
       };
       this.gridStartPosition = { x: draggedNode.col, y: draggedNode.row };
     }
-    this.oldParent ||= ROOT_NODE_ID;
+    this.oldParent ||= EDITOR_CONSTANTS.ROOT_NODE_ID;
     const dims = getPixelDimensions(this.previewId);
     setShadowElement(dims);
     setDraggedNode(this.id!);
@@ -129,7 +125,7 @@ class DragAction {
   ) {
     if (!this.id) return;
     if (!overId) return;
-    if (overId === ROOT_NODE_ID) {
+    if (overId === EDITOR_CONSTANTS.ROOT_NODE_ID) {
       this.touchedRoot = true;
     }
     if (this.isNew) {
@@ -169,10 +165,12 @@ class DragAction {
     const newShadow = this.getDropCoordinates(
       delta,
       this.previewId!,
-      overId === this.previewId! ? ROOT_NODE_ID : overId,
+      overId === this.previewId! ? EDITOR_CONSTANTS.ROOT_NODE_ID : overId,
     );
-    if (newParent === ROOT_NODE_ID) {
-      const rootPixelDimensions = getPixelDimensions(ROOT_NODE_ID);
+    if (newParent === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+      const rootPixelDimensions = getPixelDimensions(
+        EDITOR_CONSTANTS.ROOT_NODE_ID,
+      );
       if (newShadow.y + newShadow.height >= rootPixelDimensions.height) {
         newShadow.y = rootPixelDimensions.height - newShadow.height;
       }
@@ -204,7 +202,7 @@ class DragAction {
   public static _end(overId: string | null): UndoableCommand | null {
     if (overId === null) {
       if (this.touchedRoot) {
-        overId = ROOT_NODE_ID;
+        overId = EDITOR_CONSTANTS.ROOT_NODE_ID;
       } else {
         this.cleanUp();
         return null;
@@ -239,6 +237,17 @@ class DragAction {
         execute: () => {
           addNode(newNode, newNode.parent!);
           undoData = moveNodeIntoGrid(id, endPosition);
+          // return data means this data should be sent to the server
+          const affectedNodes = Object.keys(undoData)
+            .filter((test) => test !== id)
+            .map((k) => store.getState().tree[k]);
+          return {
+            event: 'insert' as const,
+            data: {
+              node: store.getState().tree[id],
+              sideEffects: affectedNodes,
+            },
+          };
         },
         undo: () => {
           store.getState().setSelectedNodeIds((ids) => {
@@ -259,6 +268,17 @@ class DragAction {
             moveNode(id, newNode.parent);
           }
           undoData = moveNodeIntoGrid(id, endPosition);
+          const tree = store.getState().tree;
+          const remoteData = [
+            tree[id],
+            ...Object.keys(undoData)
+              .filter((test) => test !== id)
+              .map((k) => tree[k]),
+          ];
+          return {
+            event: 'update',
+            data: remoteData,
+          };
         },
         undo: () => {
           Object.entries(undoData).forEach(([id, coords]) => {

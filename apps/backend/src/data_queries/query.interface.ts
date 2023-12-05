@@ -1,12 +1,13 @@
-import { AddQueryDto } from '../dto/data_queries.dto';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
-import { QueryRet } from './query.types';
+import { QueryConfig, QueryRet } from './query.types';
 
-export interface QueryRunnerI {
-  run(
-    dataSourceConfig: DataSourceConfigT,
-    query: AddQueryDto,
-  ): Promise<QueryRet>;
+export interface QueryRunnerI<
+  T = DataSourceConfigT,
+  U = Record<string, unknown>,
+> {
+  run(dataSourceConfig: T, query: QueryConfig<U>): Promise<QueryRet>;
 
-  connect(dataSourceConfig: DataSourceConfigT): any;
+  connect?(dataSourceConfig: T): any;
+
+  testConnection?: (dataSourceConfig: T) => Promise<boolean>;
 }

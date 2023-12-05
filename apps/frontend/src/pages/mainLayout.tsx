@@ -10,6 +10,9 @@ import { Inspector } from '@/components/inspector';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
+import { getToken, removeToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from '@/types/auth.types';
 const dashboardPaths = [
   {
     name: 'apps',
@@ -45,16 +48,25 @@ const allWorkspacesQuery = () => ({
 export const loader =
   (queryClient: QueryClient) =>
   async ({ request }: { request: Request }) => {
-    const query = allWorkspacesQuery();
-    // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
-    // why do i need this check? well i want to redirect the user to workspace the first time they visit the dashboard, not every time
-    const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
-    if (t === undefined) {
-      const workspaces = await queryClient.fetchQuery(query);
+    // as this loader runs before react renders we need to check for token first
+    const token = getToken();
+    if (!token) {
+      return redirect('/signin');
+    } else {
+      // check is the token still valid
+      // Decode the token
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        removeToken();
+        return redirect('/signin');
+      }
+      const query = allWorkspacesQuery();
+      // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
+      const workspaces: WorkSpaces =
+        queryClient.getQueryData<WorkSpaces>(['workspaces']) ??
+        (await queryClient.fetchQuery(query));
       const urlPath = new URL(request.url).pathname;
       return urlPath === '/' ? redirect(`/${workspaces[0].id}`) : null;
-    } else {
-      return t;
     }
   };
 
