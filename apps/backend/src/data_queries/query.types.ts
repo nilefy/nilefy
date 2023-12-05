@@ -4,7 +4,7 @@ export type QueryRet = {
   error?: string;
 };
 
-export type QueryConfig<T = Record<string, unknown>> = {
+export type QueryConfig<T extends object = Record<string, unknown>> = {
   name: string;
   query: T;
 };
