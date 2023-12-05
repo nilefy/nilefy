@@ -2,28 +2,59 @@ import { api } from '@/api';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
-import { Delete } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Trash } from 'lucide-react';
+import { useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { matchSorter } from 'match-sorter';
+import { DebouncedInput } from '@/components/debouncedInput';
 
 function DataSourcesView() {
-  const dataSources = api.globalDataSource.index.useQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isPending, isError, error, data } =
+    api.globalDataSource.index.useQuery();
+  const filteredDataSources = useMemo(() => {
+    if (!data) {
+      return;
+    }
+    const filter = searchParams.get('filter');
+    const globalSearch = searchParams.get('gsearch');
+    let tempData;
+    if (filter === null || filter === '') {
+      tempData = data;
+    } else {
+      tempData = data.filter((d) => d.type === filter);
+    }
+    return matchSorter(tempData, globalSearch ?? '', {
+      keys: ['description', 'name'],
+    });
+  }, [searchParams, data]);
 
-  if (dataSources.isPending) {
+  if (isPending) {
     return <div>Loading...</div>;
-  } else if (dataSources.isError) {
-    throw dataSources.error;
+  } else if (isError) {
+    throw error;
   }
 
   return (
     <div className="flex h-full w-full flex-col gap-4 p-3">
-      <Input placeholder="Search" type="search" />
+      <DebouncedInput
+        value={searchParams.get('gsearch') ?? ''}
+        placeholder="Search"
+        type="search"
+        onChange={(value) => {
+          setSearchParams((prev) => {
+            const s = new URLSearchParams(prev);
+            s.set('gsearch', value.toString());
+            return s;
+          });
+        }}
+      />
       <ScrollArea className="h-full w-full">
         <div className="flex flex-wrap justify-between gap-6 ">
-          {dataSources.data.map((ds) => {
+          {filteredDataSources?.map((ds) => {
             return (
               <div
                 key={ds.id}
@@ -49,32 +80,61 @@ function DataSourcesView() {
 
 function WorkspaceDataSourcesView() {
   const { workspaceId } = useParams();
-  const dss = api.dataSources.index.useQuery(+(workspaceId as string));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { data, isPending, isError, error } = api.dataSources.index.useQuery(
+    +(workspaceId as string),
+  );
+  const filteredPlugins = useMemo(() => {
+    if (!data) {
+      return;
+    }
+    const localSearch = searchParams.get('lsearch');
+    return matchSorter(data, localSearch ?? '', {
+      keys: ['name'],
+    });
+  }, [searchParams, data]);
 
-  if (dss.isPending) {
+  if (isPending) {
     return <div>Loading...</div>;
-  } else if (dss.isError) {
-    throw dss.error;
+  } else if (isError) {
+    throw error;
   }
 
   return (
-    <ScrollArea>
-      {dss.data.map((ds) => {
-        return (
-          <div key={ds.id} className="flex gap-2">
-            <Avatar className="mr-2">
-              {/**TODO: add image */}
-              <AvatarImage src={undefined} />
-              <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
-            </Avatar>
-            <p>{ds.name}</p>
-            <Button variant={'destructive'} size={'icon'}>
-              <Delete />
-            </Button>
-          </div>
-        );
-      })}
-    </ScrollArea>
+    <div className="flex h-full w-full flex-col gap-4">
+      <DebouncedInput
+        value={searchParams.get('lsearch') ?? ''}
+        placeholder="Search"
+        type="search"
+        onChange={(value) => {
+          setSearchParams((prev) => {
+            const s = new URLSearchParams(prev);
+            s.set('lsearch', value.toString());
+            return s;
+          });
+        }}
+      />
+      <ScrollArea className="w-full">
+        {filteredPlugins?.map((ds) => {
+          return (
+            <div
+              key={ds.id}
+              className="flex w-full items-center justify-start gap-2"
+            >
+              <Avatar className="mr-2">
+                {/**TODO: add image */}
+                <AvatarImage src={undefined} />
+                <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
+              </Avatar>
+              <p>{ds.name}</p>
+              <Button variant={'destructive'} size={'icon'} className="ml-auto">
+                <Trash />
+              </Button>
+            </div>
+          );
+        })}
+      </ScrollArea>
+    </div>
   );
 }
 
@@ -85,7 +145,7 @@ const dataSourceFilter = [
   },
   {
     name: 'databases',
-    q: 'databases',
+    q: 'database',
   },
   {
     name: 'APIs',
@@ -93,7 +153,7 @@ const dataSourceFilter = [
   },
   {
     name: 'Cloud Storage',
-    q: 'storage',
+    q: 'cloud storage',
   },
   {
     name: 'Plugin',
@@ -102,6 +162,8 @@ const dataSourceFilter = [
 ];
 
 export function DataSourcesLayout() {
+  const [_searchParams, setSearchParams] = useSearchParams();
+
   return (
     <div className="flex h-full w-full">
       {/**
@@ -114,7 +176,12 @@ export function DataSourcesLayout() {
           <h4>Filters</h4>
           {dataSourceFilter.map((ds, i) => {
             return (
-              <Button key={ds.q + i} variant={'link'} className="block">
+              <Button
+                onClick={() => setSearchParams({ filter: ds.q })}
+                key={ds.q + i}
+                variant={'link'}
+                className="block"
+              >
                 {ds.name}
               </Button>
             );
@@ -123,7 +190,6 @@ export function DataSourcesLayout() {
         <Separator />
         {/** configured plugins*/}
         <h4>plugins</h4>
-        <Input placeholder="Search" type="search" />
         <WorkspaceDataSourcesView />
         <div className="mt-auto">
           <SelectWorkSpace />
