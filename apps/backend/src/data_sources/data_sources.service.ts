@@ -78,8 +78,7 @@ export class DataSourcesService {
       .where(
         and(
           eq(workspaceDataSources.workspaceId, obj.workspaceId),
-          eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-          eq(workspaceDataSources.name, obj.name as string),
+          eq(workspaceDataSources.id, obj.dataSourceId),
         ),
       )
       .returning();

@@ -79,6 +79,24 @@ async function insert({
   return (await res.json()) as WsDataSourceI;
 }
 
+async function deleteOne({
+  workspaceId,
+  dataSourceId,
+}: {
+  workspaceId: number;
+  dataSourceId: number;
+}) {
+  console.log('in delete');
+  const res = await fetchX(
+    `workspaces/${workspaceId}/data-sources/${dataSourceId}`,
+    {
+      method: 'DELETE',
+    },
+  );
+  console.log(res);
+  return await res.json();
+}
+
 // async function update(i: {
 //   workspaceId: number;
 //   groupId: Group['id'];
@@ -136,6 +154,26 @@ function useInsertDatasource(
   return mutate;
 }
 
+function useDeleteDatasource(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteOne>>,
+    Error,
+    Parameters<typeof deleteOne>[0]
+  >,
+) {
+  const queryClient = useQueryClient();
+  const mutate = useMutation({
+    mutationFn: deleteOne,
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+    },
+    ...options,
+  });
+  return mutate;
+}
+
 // function useUpdateGroup(
 //   options?: UseMutationOptions<
 //     Awaited<ReturnType<typeof update>>,
@@ -155,6 +193,7 @@ export const dataSources = {
   //   one: { useQuery: useGroup },
   insert: { useMutation: useInsertDatasource },
   //   update: { useMutation: useUpdateGroup },
+  delete: { useMutation: useDeleteDatasource },
 };
 
 export const globalDataSource = {

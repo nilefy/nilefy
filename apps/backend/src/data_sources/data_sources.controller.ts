@@ -67,34 +67,31 @@ export class DataSourcesController {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
-  @Delete(':dataSourceId')
-  async deleteAll(
-    @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
-    @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Req() req: ExpressAuthedRequest,
-  ): Promise<WsDataSourceDto[]> {
-    return await this.dataSourceService.deleteAll(req.user.userId, {
-      workspaceId,
-      dataSourceId,
-    });
-  }
+  // @Delete(':dataSourceId')
+  // async deleteAll(
+  //   @Param('workspaceId', ParseIntPipe)
+  //   workspaceId: WsDataSourceDto['workspaceId'],
+  //   @Param('dataSourceId', ParseIntPipe)
+  //   dataSourceId: WsDataSourceDto['dataSourceId'],
+  //   @Req() req: ExpressAuthedRequest,
+  // ): Promise<WsDataSourceDto[]> {
+  //   return await this.dataSourceService.deleteAll(req.user.userId, {
+  //     workspaceId,
+  //     dataSourceId,
+  //   });
+  // }
 
-  @Delete(':dataSourceId/:dataSourceName')
+  @Delete(':dataSourceId')
   async deleteOne(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Param('dataSourceName')
-    dataSourceName: WsDataSourceDto['name'],
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
     return await this.dataSourceService.deleteOne(req.user.userId, {
       workspaceId,
       dataSourceId,
-      name: dataSourceName,
     });
   }
 

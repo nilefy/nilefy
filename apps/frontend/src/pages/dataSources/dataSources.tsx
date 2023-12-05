@@ -1,7 +1,7 @@
 import { api } from '@/api';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
@@ -10,6 +10,17 @@ import { useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
 import { DebouncedInput } from '@/components/debouncedInput';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 function DataSourcesView() {
   const { workspaceId } = useParams();
@@ -97,6 +108,7 @@ function WorkspaceDataSourcesView() {
   const { data, isPending, isError, error } = api.dataSources.index.useQuery(
     +(workspaceId as string),
   );
+  const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
   const filteredPlugins = useMemo(() => {
     if (!data) {
       return;
@@ -141,13 +153,44 @@ function WorkspaceDataSourcesView() {
                   <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                 </Avatar>
                 <p>{ds.name}</p>
-                <Button
-                  variant={'destructive'}
-                  size={'icon'}
-                  className="ml-auto"
-                >
-                  <Trash />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    className={buttonVariants({
+                      variant: 'destructive',
+                      size: 'icon',
+                      className: 'ml-auto',
+                    })}
+                  >
+                    <Trash />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. will remove all queries
+                        related to this datasource
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          if (!workspaceId)
+                            throw new Error('must have workspaceId');
+                          console.log('in delete');
+                          deleteMutate({
+                            workspaceId: +workspaceId,
+                            dataSourceId: ds.id,
+                          });
+                        }}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             );
           })}
@@ -191,7 +234,7 @@ export function DataSourcesLayout() {
       <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
         <h2 className="ml-2 text-3xl">Data Sources</h2>
         {/** plugins filter*/}
-        <ScrollArea className="">
+        <ScrollArea className="h-full">
           <h4>Filters</h4>
           {dataSourceFilter.map((ds, i) => {
             return (
