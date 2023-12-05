@@ -12,9 +12,10 @@ export default class RESTQueryService implements QueryRunnerI {
     let data = {};
     let eMessage;
     let status = 200;
-    //todo 1. custom headers
-    //todo 2.
-    //todo 3.  Documentation
+    //todo 1. custom headers ✅
+    //todo 2. custom body ✅
+    //todo 3. Documentation
+    //todo 4. config schema
     switch (dataSourceConfig.auth_type) {
       case 'none':
         fetch(dataSourceConfig.base_url + '/' + query.query, {
@@ -37,6 +38,8 @@ export default class RESTQueryService implements QueryRunnerI {
           error: eMessage,
         };
       case 'oauth2':
+
+      // todo
       // try {
       //   const tokenResponse = await this.getOAuth2Token(dataSourceConfig);
       //   const token = tokenResponse.data.access_token;
@@ -64,7 +67,9 @@ export default class RESTQueryService implements QueryRunnerI {
             Authorization:
               'Basic ' +
               btoa(dataSourceConfig.username + ':' + dataSourceConfig.password),
+            ...query.query.headers,
           },
+          body: query.query.body,
         })
           .then((v) => {
             status = 200;
@@ -90,6 +95,7 @@ export default class RESTQueryService implements QueryRunnerI {
         fetch(dataSourceConfig.base_url + '/' + query.query, {
           method: query.query.method,
           headers: { ...myHeaders, ...query.query.headers },
+          body: query.query.body,
         })
           .then((v) => {
             status = 200;
