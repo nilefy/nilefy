@@ -47,6 +47,12 @@ importers:
       '@nestjs/websockets':
         specifier: ^10.2.10
         version: 10.2.10(@nestjs/common@10.2.10)(@nestjs/core@10.2.10)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@webloom/configpaneltypes':
+        specifier: workspace:*
+        version: link:../../packages/configPanelTypes
+      '@webloom/data-sources':
+        specifier: workspace:*
+        version: link:../../packages/data_sources
       '@webloom/permissions':
         specifier: workspace:*
         version: link:../../packages/permissions
@@ -433,6 +439,12 @@ importers:
       '@types/react':
         specifier: ^18.2.31
         version: 18.2.31
+
+  packages/data_sources:
+    dependencies:
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/permissions:
     dependencies:

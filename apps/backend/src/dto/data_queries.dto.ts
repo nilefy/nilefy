@@ -10,6 +10,12 @@ export const addQuerySchema = z.object({
   query: z.record(z.string(), z.any()),
 });
 
+export const updateQuerySchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  query: z.record(z.string(), z.any()).optional(),
+});
+
 export type AddQueryDto = z.infer<typeof addQuerySchema>;
+export type UpdateQueryDto = z.infer<typeof updateQuerySchema>;
 export type QueryDto = z.infer<typeof querySchema>;
 export type QueryDb = z.infer<typeof queryDb>;

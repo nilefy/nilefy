@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
-  GetWsDataSourceDto,
   UpdateWsDataSourceDto,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -21,22 +20,31 @@ export class DataSourcesService {
     return dataSource as WsDataSourceDto;
   }
 
-  async get(obj: GetWsDataSourceDto): Promise<WsDataSourceDto[]> {
+  async getConnections({
+    workspaceId,
+    dataSourceId,
+  }: {
+    workspaceId: WsDataSourceDto['workspaceId'];
+    dataSourceId: WsDataSourceDto['dataSourceId'];
+  }): Promise<WsDataSourceDto[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
-      where: obj.name
-        ? and(
-            eq(workspaceDataSources.workspaceId, obj.workspaceId),
-            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-            eq(workspaceDataSources.name, obj.name),
-            isNull(workspaceDataSources.deletedAt),
-          )
-        : and(
-            eq(workspaceDataSources.workspaceId, obj.workspaceId),
-            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-            isNull(workspaceDataSources.deletedAt),
-          ),
+      where: and(
+        eq(workspaceDataSources.workspaceId, workspaceId),
+        eq(workspaceDataSources.dataSourceId, dataSourceId),
+        isNull(workspaceDataSources.deletedAt),
+      ),
     });
     return ds as WsDataSourceDto[];
+  }
+
+  async getOne(dataSourceId: WsDataSourceDto['id']): Promise<WsDataSourceDto> {
+    const ds = await this.db.query.workspaceDataSources.findFirst({
+      where: and(
+        eq(workspaceDataSources.id, dataSourceId),
+        isNull(workspaceDataSources.deletedAt),
+      ),
+    });
+    return ds as WsDataSourceDto;
   }
 
   async getWsDataSources(
@@ -51,51 +59,49 @@ export class DataSourcesService {
     return ds as WsDataSourceDto[];
   }
 
-  async deleteAll(
-    deletedById: WsDataSourceDto['deletedById'],
-    obj: GetWsDataSourceDto,
-  ): Promise<WsDataSourceDto[]> {
+  async deleteConnections({
+    deletedById,
+    workspaceId,
+    dataSourceId,
+  }: {
+    deletedById: WsDataSourceDto['deletedById'];
+    workspaceId: WsDataSourceDto['workspaceId'];
+    dataSourceId: WsDataSourceDto['dataSourceId'];
+  }): Promise<WsDataSourceDto[]> {
     const ds = await this.db
       .update(workspaceDataSources)
       .set({ deletedAt: sql`now()`, deletedById })
       .where(
         and(
-          eq(workspaceDataSources.workspaceId, obj.workspaceId),
-          eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
+          eq(workspaceDataSources.workspaceId, workspaceId),
+          eq(workspaceDataSources.dataSourceId, dataSourceId),
         ),
       )
       .returning();
     return ds as WsDataSourceDto[];
   }
 
-  async deleteOne(
-    deletedById: WsDataSourceDto['deletedById'],
-    obj: GetWsDataSourceDto,
-  ): Promise<WsDataSourceDto> {
+  async deleteOne({
+    deletedById,
+    dataSourceId,
+  }: {
+    deletedById: WsDataSourceDto['deletedById'];
+    dataSourceId: WsDataSourceDto['id'];
+  }): Promise<WsDataSourceDto> {
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ deletedAt: sql`now()`, deletedById })
-      .where(
-        and(
-          eq(workspaceDataSources.workspaceId, obj.workspaceId),
-          eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-          eq(workspaceDataSources.name, obj.name as string),
-        ),
-      )
+      .where(eq(workspaceDataSources.id, dataSourceId))
       .returning();
     return ds as WsDataSourceDto;
   }
 
   async update(
     {
-      workspaceId,
       dataSourceId,
-      dataSourceName,
       updatedById,
     }: {
-      workspaceId: WsDataSourceDto['workspaceId'];
-      dataSourceId: WsDataSourceDto['dataSourceId'];
-      dataSourceName: WsDataSourceDto['name'];
+      dataSourceId: WsDataSourceDto['id'];
       updatedById: WsDataSourceDto['updatedById'];
     },
     dataSourceDto: UpdateWsDataSourceDto,
@@ -105,9 +111,7 @@ export class DataSourcesService {
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
       .where(
         and(
-          eq(workspaceDataSources.workspaceId, workspaceId),
-          eq(workspaceDataSources.dataSourceId, dataSourceId),
-          eq(workspaceDataSources.name, dataSourceName),
+          eq(workspaceDataSources.id, dataSourceId),
           isNull(workspaceDataSources.deletedAt),
         ),
       )
