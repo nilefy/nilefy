@@ -1,12 +1,12 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
-import { ConfigT } from './types';
+import { ConfigT, QueryT } from './types';
 import { Pool, PoolConfig } from 'pg';
 
 export default class RESTQueryService implements QueryRunnerI {
   async run(
     dataSourceConfig: ConfigT,
-    query: QueryConfig<string>,
+    query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
     query;
     let data = {};
@@ -17,8 +17,10 @@ export default class RESTQueryService implements QueryRunnerI {
     //todo 3.  Documentation
     switch (dataSourceConfig.auth_type) {
       case 'none':
-        fetch(dataSourceConfig.url + '/' + query.query, {
-          method: query.operation,
+        fetch(dataSourceConfig.base_url + '/' + query.query, {
+          method: query.query.method,
+          headers: query.query.headers,
+          body: query.query.body,
         })
           .then((v) => {
             status = 200;
@@ -56,8 +58,8 @@ export default class RESTQueryService implements QueryRunnerI {
       // }
       // break;
       case 'basic':
-        fetch(dataSourceConfig.url + '/' + query.query, {
-          method: query.operation,
+        fetch(dataSourceConfig.base_url + '/' + query.query, {
+          method: query.query.method,
           headers: {
             Authorization:
               'Basic ' +
@@ -85,9 +87,9 @@ export default class RESTQueryService implements QueryRunnerI {
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append('Authorization', `Bearer ${token}`);
 
-        fetch(dataSourceConfig.url + '/' + query.query, {
-          method: query.operation,
-          headers: myHeaders,
+        fetch(dataSourceConfig.base_url + '/' + query.query, {
+          method: query.query.method,
+          headers: { ...myHeaders, ...query.query.headers },
         })
           .then((v) => {
             status = 200;

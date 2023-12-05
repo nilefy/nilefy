@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const configSchema = z.object({
-  url: z.string().url({
+  base_url: z.string().url({
     message: 'Invalid URL. Please enter a valid URL.',
   }),
   bearer_token: z.string(),
@@ -34,3 +34,12 @@ export const configSchema = z.object({
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
+
+export type QueryT = {
+  name: string;
+  endpoint: string;
+  method: string;
+  headers: [string, string][];
+  params: Record<string, unknown>;
+  body: string;
+};
