@@ -12,6 +12,8 @@ import { matchSorter } from 'match-sorter';
 import { DebouncedInput } from '@/components/debouncedInput';
 
 function DataSourcesView() {
+  const { workspaceId } = useParams();
+  const { mutate } = api.dataSources.insert.useMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isPending, isError, error, data } =
     api.globalDataSource.index.useQuery();
@@ -66,7 +68,18 @@ function DataSourcesView() {
                 </Avatar>
                 <p className="line-clamp-1">{ds.name}</p>
                 <p className="line-clamp-2 h-12">{ds.description}</p>
-                <Button size={'sm'} variant={'outline'}>
+                <Button
+                  size={'sm'}
+                  variant={'outline'}
+                  onClick={() => {
+                    if (!workspaceId) throw new Error('must have workspaceId');
+                    mutate({
+                      workspaceId: +workspaceId,
+                      globalDataSourceId: ds.id,
+                      dto: { name: 'new name', config: {} },
+                    });
+                  }}
+                >
                   Add
                 </Button>
               </div>
@@ -115,24 +128,30 @@ function WorkspaceDataSourcesView() {
         }}
       />
       <ScrollArea className="w-full">
-        {filteredPlugins?.map((ds) => {
-          return (
-            <div
-              key={ds.id}
-              className="flex w-full items-center justify-start gap-2"
-            >
-              <Avatar className="mr-2">
-                {/**TODO: add image */}
-                <AvatarImage src={undefined} />
-                <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
-              </Avatar>
-              <p>{ds.name}</p>
-              <Button variant={'destructive'} size={'icon'} className="ml-auto">
-                <Trash />
-              </Button>
-            </div>
-          );
-        })}
+        <div className="flex w-full flex-col gap-6">
+          {filteredPlugins?.map((ds) => {
+            return (
+              <div
+                key={ds.id}
+                className="flex w-full items-center justify-start gap-2"
+              >
+                <Avatar className="mr-2">
+                  {/**TODO: add image */}
+                  <AvatarImage src={undefined} />
+                  <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
+                </Avatar>
+                <p>{ds.name}</p>
+                <Button
+                  variant={'destructive'}
+                  size={'icon'}
+                  className="ml-auto"
+                >
+                  <Trash />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       </ScrollArea>
     </div>
   );

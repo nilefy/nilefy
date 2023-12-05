@@ -3,9 +3,18 @@ import {
   UseMutationOptions,
   useMutation,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
+import z from 'zod';
 
 const DATASOURCES_QUERY_KEY = 'datasources';
+
+export const dataSourceMeta = z.object({
+  name: z.string().min(1).max(100),
+  config: z.record(z.string(), z.unknown()),
+});
+
+export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
 
 export type GlobalDataSourceI = {
   id: number;
@@ -48,16 +57,27 @@ async function index({ workspaceId }: { workspaceId: number }) {
 //   return (await res.json()) as Group;
 // }
 
-// async function insert(i: { workspaceId: number; dto: GroupMetaSchema }) {
-//   const res = await fetchX(`workspaces/${i.workspaceId}/roles`, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json;charset=utf-8',
-//     },
-//     body: JSON.stringify(i.dto),
-//   });
-//   return (await res.json()) as GroupMetaSchema & { id: number };
-// }
+async function insert({
+  workspaceId,
+  dto,
+  globalDataSourceId,
+}: {
+  globalDataSourceId: number;
+  workspaceId: number;
+  dto: DataSourceMeta;
+}) {
+  const res = await fetchX(
+    `workspaces/${workspaceId}/data-sources/${globalDataSourceId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      body: JSON.stringify(dto),
+    },
+  );
+  return (await res.json()) as WsDataSourceI;
+}
 
 // async function update(i: {
 //   workspaceId: number;
@@ -96,19 +116,25 @@ function useWsDataSources(workspaceId: number) {
 //   });
 // }
 
-// function useInsertGroup(
-//   options?: UseMutationOptions<
-//     Awaited<ReturnType<typeof insert>>,
-//     Error,
-//     Parameters<typeof insert>[0]
-//   >,
-// ) {
-//   const mutate = useMutation({
-//     mutationFn: insert,
-//     ...options,
-//   });
-//   return mutate;
-// }
+function useInsertDatasource(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof insert>>,
+    Error,
+    Parameters<typeof insert>[0]
+  >,
+) {
+  const queryClient = useQueryClient();
+  const mutate = useMutation({
+    mutationFn: insert,
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+    },
+    ...options,
+  });
+  return mutate;
+}
 
 // function useUpdateGroup(
 //   options?: UseMutationOptions<
@@ -127,7 +153,7 @@ function useWsDataSources(workspaceId: number) {
 export const dataSources = {
   index: { useQuery: useWsDataSources },
   //   one: { useQuery: useGroup },
-  //   insert: { useMutation: useInsertGroup },
+  insert: { useMutation: useInsertDatasource },
   //   update: { useMutation: useUpdateGroup },
 };
 
