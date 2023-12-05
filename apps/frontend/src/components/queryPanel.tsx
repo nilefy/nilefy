@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { matchSorter } from 'match-sorter';
 
@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, Copy } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { cn } from '@/lib/cn';
+import { getDataSources, getGlobalDataSources } from '@/api/datasources';
+import { useParams } from 'react-router-dom';
 
 type Query = {
   id: string;
@@ -77,6 +79,19 @@ export function QueryPanel() {
     'name' | 'source' | 'dateModified'
   >('name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
+  const { workspaceId } = useParams();
+  console.log(workspaceId);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (workspaceId) {
+        console.log(await getDataSources({ workspaceId }), 'blabla');
+      }
+      console.log(getGlobalDataSources());
+    };
+console.log(getGlobalDataSources());
+    fetchData();
+  }, [workspaceId]);
 
   const handleDataSourceSearchChange = (
     event: React.ChangeEvent<HTMLInputElement>,
