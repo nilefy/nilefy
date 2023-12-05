@@ -27,10 +27,7 @@ export class DataQueriesService {
   }
 
   async addQuery(query: QueryDb): Promise<QueryDto> {
-    const [q] = await this.db
-      .insert(queries)
-      .values({ ...query, createdAt: sql`now()` })
-      .returning();
+    const [q] = await this.db.insert(queries).values(query).returning();
     return q as QueryDto;
   }
 

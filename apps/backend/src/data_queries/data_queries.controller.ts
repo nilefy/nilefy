@@ -27,7 +27,7 @@ import { QueryRet } from './query.types';
 
 @UseGuards(JwtGuard)
 @Controller(
-  'workspaces/:workspaceId/apps/:appId/datasources/:dataSourceId/:dataSourceName/queries',
+  'workspaces/:workspaceId/apps/:appId/datasources/:dataSourceId/queries',
 )
 export class DataQueriesController {
   constructor(
@@ -37,14 +37,10 @@ export class DataQueriesController {
 
   @Post('run')
   async runQuery(
-    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
-    @Param('dataSourceName') name: string,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
   ): Promise<QueryRet> {
-    const ds = (
-      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
-    )[0];
+    const ds = await this.dataSourcesService.getOne(dataSourceId);
 
     return await this.dataQueriesService.runQuery(
       ds.config as DataSourceConfigT,
@@ -55,22 +51,17 @@ export class DataQueriesController {
 
   @Post('add')
   async addQuery(
-    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
-    @Param('dataSourceName') name: string,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<QueryDto> {
     const jsonQuery: QueryDto['query'] = JSON.stringify(query.query);
-    const ds = (
-      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
-    )[0];
 
     return await this.dataQueriesService.addQuery({
       name: query.name,
       query: jsonQuery,
-      dataSourceId: ds.id,
+      dataSourceId,
       createdById: req.user.userId,
       appId,
     });
@@ -78,22 +69,16 @@ export class DataQueriesController {
 
   @Get()
   async getAppQueries(
-    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
-    @Param('dataSourceName') name: string,
   ): Promise<QueryDto[]> {
-    const ds = (
-      await this.dataSourcesService.get({ workspaceId, dataSourceId, name })
-    )[0]?.id;
-
-    return await this.dataQueriesService.getAppQueries(ds, appId);
+    return await this.dataQueriesService.getAppQueries(dataSourceId, appId);
   }
 
   @Get(':id')
   async getQuery(
     @Param('id', ParseIntPipe) queryId: number,
-  ): Promise<QueryDto | undefined> {
+  ): Promise<QueryDto> {
     return await this.dataQueriesService.getQuery(queryId);
   }
 
@@ -101,7 +86,7 @@ export class DataQueriesController {
   async deleteQuery(
     @Param('id', ParseIntPipe) queryId: number,
     @Req() req: ExpressAuthedRequest,
-  ): Promise<QueryDto | undefined> {
+  ): Promise<QueryDto> {
     return await this.dataQueriesService.deleteQuery(queryId, req.user.userId);
   }
 
