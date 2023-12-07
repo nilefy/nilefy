@@ -7,6 +7,10 @@ import {
 } from '../seeders/seeder.types';
 import { DatabaseI } from '../../drizzle/drizzle.provider';
 import * as schema from '../../drizzle/schema/data_sources.schema';
+import {
+  PostgresqlConfigT,
+  PostgresqlQueryConfigT,
+} from '@webloom/data-sources';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -14,10 +18,11 @@ export async function dataSourcesSeeder(db: DatabaseI) {
   const ds: DataSourceT[] = [];
   dataSourcesEnum.options.forEach((type) => {
     dataSources[type].forEach((name) => {
-      let config: ConfigT;
+      let dataSourceConfig: unknown;
+      let queryConfig: unknown;
 
       if (name === 'postgresql') {
-        config = [
+        const postgresqlConfig: ConfigT<PostgresqlConfigT> = [
           {
             sectionName: 'Development',
             children: [
@@ -105,8 +110,36 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             ],
           },
         ];
+        const postgresqlQueryConfig: ConfigT<PostgresqlQueryConfigT> = [
+          {
+            sectionName: 'PostgreSQL',
+            children: [
+              {
+                id: 'connection',
+                key: 'dataSourceId',
+                label: 'Data Source',
+                type: 'select',
+                options: {
+                  items: [
+                    // fetch all data source connections
+                  ],
+                },
+              },
+              {
+                id: 'sql',
+                key: 'sql',
+                label: 'SQL',
+                type: 'input',
+                options: {},
+              },
+            ],
+          },
+        ];
+        dataSourceConfig = postgresqlConfig;
+        queryConfig = postgresqlQueryConfig;
       } else {
-        config = [];
+        dataSourceConfig = [];
+        queryConfig = [];
       }
 
       ds.push({
@@ -117,7 +150,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           null,
         ]),
         image: faker.helpers.arrayElement([faker.image.url(), null]),
-        config: JSON.stringify(config),
+        config: JSON.stringify(dataSourceConfig),
+        queryConfig: JSON.stringify(queryConfig),
       });
     });
   });

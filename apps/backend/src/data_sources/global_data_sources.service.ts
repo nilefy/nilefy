@@ -24,6 +24,7 @@ export class GlobalDataSourcesService {
     const ds = await this.db.query.dataSources.findMany({
       columns: {
         config: false,
+        queryConfig: false,
       },
     });
     return ds;
