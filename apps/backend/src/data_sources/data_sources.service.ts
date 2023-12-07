@@ -7,10 +7,14 @@ import {
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { DataQueriesService } from '../data_queries/data_queries.service';
 
 @Injectable()
 export class DataSourcesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private dataQueriesService: DataQueriesService,
+  ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
     const [dataSource] = await this.db
@@ -67,18 +71,24 @@ export class DataSourcesService {
     deletedById: WsDataSourceDto['deletedById'];
     workspaceId: WsDataSourceDto['workspaceId'];
     dataSourceId: WsDataSourceDto['dataSourceId'];
-  }): Promise<WsDataSourceDto[]> {
-    const ds = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
-      .where(
-        and(
-          eq(workspaceDataSources.workspaceId, workspaceId),
-          eq(workspaceDataSources.dataSourceId, dataSourceId),
-        ),
-      )
-      .returning();
-    return ds as WsDataSourceDto[];
+  }): Promise<WsDataSourceDto['id'][]> {
+    const ds = (
+      await this.db
+        .update(workspaceDataSources)
+        .set({ deletedAt: sql`now()`, deletedById })
+        .where(
+          and(
+            eq(workspaceDataSources.workspaceId, workspaceId),
+            eq(workspaceDataSources.dataSourceId, dataSourceId),
+          ),
+        )
+        .returning({ id: workspaceDataSources.id })
+    ).map((d) => d.id);
+
+    // delete data source connections' queries
+    await this.dataQueriesService.deleteDataSourceQueries(ds, deletedById);
+
+    return ds as WsDataSourceDto['id'][];
   }
 
   async deleteOne({
@@ -93,6 +103,10 @@ export class DataSourcesService {
       .set({ deletedAt: sql`now()`, deletedById })
       .where(eq(workspaceDataSources.id, dataSourceId))
       .returning();
+
+    // delete data source connection's queries
+    await this.dataQueriesService.deleteDataSourceQueries([ds.id], deletedById);
+
     return ds as WsDataSourceDto;
   }
 

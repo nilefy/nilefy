@@ -11,7 +11,7 @@ import { QueryRet } from './query.types';
 import { dataSources, queries } from '../drizzle/schema/data_sources.schema';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { getQueryService } from '../data_sources/plugins/common/service';
-import { eq, and, sql, isNull } from 'drizzle-orm';
+import { eq, and, sql, isNull, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class DataQueriesService {
@@ -31,7 +31,7 @@ export class DataQueriesService {
     return q as QueryDto;
   }
 
-  async getAppQueries(
+  async getDataSourceQueries(
     dataSourceId: QueryDto['dataSourceId'],
     appId: QueryDto['appId'],
   ): Promise<QueryDto[]> {
@@ -62,6 +62,18 @@ export class DataQueriesService {
       .where(eq(queries.id, queryId))
       .returning();
     return q as QueryDto;
+  }
+
+  async deleteDataSourceQueries(
+    dataSourceId: QueryDto['dataSourceId'][],
+    deletedById: QueryDto['deletedById'],
+  ): Promise<QueryDto[]> {
+    const q = await this.db
+      .update(queries)
+      .set({ deletedAt: sql`now()`, deletedById })
+      .where(inArray(queries.dataSourceId, dataSourceId))
+      .returning();
+    return q as QueryDto[];
   }
 
   async updateQuery({
