@@ -34,7 +34,7 @@ export const dataSources = pgTable('data_sources', {
     .default(sql`'{}'::json`)
     .notNull(),
   queryConfig: json('query_config')
-    .default(sql`{}::json`)
+    .default(sql`'{}'::json`)
     .notNull(),
 });
 
