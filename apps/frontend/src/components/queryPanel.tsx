@@ -22,7 +22,11 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, Copy } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { cn } from '@/lib/cn';
-import { getDataSources, getGlobalDataSources } from '@/api/datasources';
+import {
+  dataSource,
+  getDataSources,
+  getGlobalDataSources,
+} from '@/api/datasources';
 import { useParams } from 'react-router-dom';
 
 type Query = {
@@ -69,6 +73,7 @@ export function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
   const [dataSources] = useState(_dataSources);
+  const [globalDataSources, setGlobalDataSources] = useState<dataSource>();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
@@ -87,9 +92,9 @@ export function QueryPanel() {
       if (workspaceId) {
         console.log(await getDataSources({ workspaceId }), 'blabla');
       }
-      console.log(getGlobalDataSources());
+      setGlobalDataSources(await getGlobalDataSources());
+      console.log(globalDataSources);
     };
-console.log(getGlobalDataSources());
     fetchData();
   }, [workspaceId]);
 
