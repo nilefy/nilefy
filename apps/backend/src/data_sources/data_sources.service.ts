@@ -7,13 +7,13 @@ import {
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { DataQueriesService } from '../data_queries/data_queries.service';
+// import { DataQueriesService } from '../data_queries/data_queries.service';
 
 @Injectable()
 export class DataSourcesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
-    private dataQueriesService: DataQueriesService,
+    // private dataQueriesService: DataQueriesService,
   ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
@@ -86,7 +86,7 @@ export class DataSourcesService {
     ).map((d) => d.id);
 
     // delete data source connections' queries
-    await this.dataQueriesService.deleteDataSourceQueries(ds, deletedById);
+    // await this.dataQueriesService.deleteDataSourceQueries(ds, deletedById);
 
     return ds as WsDataSourceDto['id'][];
   }
@@ -105,7 +105,7 @@ export class DataSourcesService {
       .returning();
 
     // delete data source connection's queries
-    await this.dataQueriesService.deleteDataSourceQueries([ds.id], deletedById);
+    // await this.dataQueriesService.deleteDataSourceQueries([ds.id], deletedById);
 
     return ds as WsDataSourceDto;
   }
