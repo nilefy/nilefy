@@ -6,7 +6,8 @@ import { GlobalDataSourcesService } from './global_data_sources.service';
 import { DataQueriesService } from '../data_queries/data_queries.service';
 
 @Module({
+  imports: [DataQueriesService],
   controllers: [DataSourcesController, GlobalDataSourcesController],
-  providers: [DataSourcesService, GlobalDataSourcesService, DataQueriesService],
+  providers: [DataSourcesService, GlobalDataSourcesService],
 })
 export class DataSourcesModule {}
