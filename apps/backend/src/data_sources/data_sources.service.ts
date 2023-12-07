@@ -6,15 +6,11 @@ import {
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
-// import { DataQueriesService } from '../data_queries/data_queries.service';
+import { and, eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DataSourcesService {
-  constructor(
-    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
-    // private dataQueriesService: DataQueriesService,
-  ) {}
+  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
     const [dataSource] = await this.db
@@ -35,7 +31,6 @@ export class DataSourcesService {
       where: and(
         eq(workspaceDataSources.workspaceId, workspaceId),
         eq(workspaceDataSources.dataSourceId, dataSourceId),
-        isNull(workspaceDataSources.deletedAt),
       ),
     });
     return ds as WsDataSourceDto[];
@@ -43,10 +38,7 @@ export class DataSourcesService {
 
   async getOne(dataSourceId: WsDataSourceDto['id']): Promise<WsDataSourceDto> {
     const ds = await this.db.query.workspaceDataSources.findFirst({
-      where: and(
-        eq(workspaceDataSources.id, dataSourceId),
-        isNull(workspaceDataSources.deletedAt),
-      ),
+      where: eq(workspaceDataSources.id, dataSourceId),
     });
     return ds as WsDataSourceDto;
   }
@@ -55,58 +47,37 @@ export class DataSourcesService {
     workspaceId: WsDataSourceDto['workspaceId'],
   ): Promise<WsDataSourceDto[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
-      where: and(
-        eq(workspaceDataSources.workspaceId, workspaceId),
-        isNull(workspaceDataSources.deletedAt),
-      ),
+      where: eq(workspaceDataSources.workspaceId, workspaceId),
     });
     return ds as WsDataSourceDto[];
   }
 
   async deleteConnections({
-    deletedById,
     workspaceId,
     dataSourceId,
   }: {
-    deletedById: WsDataSourceDto['deletedById'];
     workspaceId: WsDataSourceDto['workspaceId'];
     dataSourceId: WsDataSourceDto['dataSourceId'];
-  }): Promise<WsDataSourceDto['id'][]> {
-    const ds = (
-      await this.db
-        .update(workspaceDataSources)
-        .set({ deletedAt: sql`now()`, deletedById })
-        .where(
-          and(
-            eq(workspaceDataSources.workspaceId, workspaceId),
-            eq(workspaceDataSources.dataSourceId, dataSourceId),
-          ),
-        )
-        .returning({ id: workspaceDataSources.id })
-    ).map((d) => d.id);
-
-    // delete data source connections' queries
-    // await this.dataQueriesService.deleteDataSourceQueries(ds, deletedById);
-
-    return ds as WsDataSourceDto['id'][];
+  }): Promise<WsDataSourceDto[]> {
+    const ds = await this.db
+      .delete(workspaceDataSources)
+      .where(
+        and(
+          eq(workspaceDataSources.workspaceId, workspaceId),
+          eq(workspaceDataSources.dataSourceId, dataSourceId),
+        ),
+      )
+      .returning();
+    return ds as WsDataSourceDto[];
   }
 
-  async deleteOne({
-    deletedById,
-    dataSourceId,
-  }: {
-    deletedById: WsDataSourceDto['deletedById'];
-    dataSourceId: WsDataSourceDto['id'];
-  }): Promise<WsDataSourceDto> {
+  async deleteOne(
+    dataSourceId: WsDataSourceDto['id'],
+  ): Promise<WsDataSourceDto> {
     const [ds] = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
+      .delete(workspaceDataSources)
       .where(eq(workspaceDataSources.id, dataSourceId))
       .returning();
-
-    // delete data source connection's queries
-    // await this.dataQueriesService.deleteDataSourceQueries([ds.id], deletedById);
-
     return ds as WsDataSourceDto;
   }
 
@@ -123,12 +94,7 @@ export class DataSourcesService {
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
-      .where(
-        and(
-          eq(workspaceDataSources.id, dataSourceId),
-          isNull(workspaceDataSources.deletedAt),
-        ),
-      )
+      .where(eq(workspaceDataSources.id, dataSourceId))
       .returning();
     return ds as WsDataSourceDto;
   }

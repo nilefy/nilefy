@@ -84,10 +84,8 @@ export class DataSourcesController {
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Req() req: ExpressAuthedRequest,
-  ): Promise<WsDataSourceDto['id'][]> {
+  ): Promise<WsDataSourceDto[]> {
     return await this.dataSourceService.deleteConnections({
-      deletedById: req.user.userId,
       workspaceId,
       dataSourceId,
     });
@@ -97,12 +95,8 @@ export class DataSourcesController {
   async deleteOne(
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
-    @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
-    return await this.dataSourceService.deleteOne({
-      deletedById: req.user.userId,
-      dataSourceId,
-    });
+    return await this.dataSourceService.deleteOne(dataSourceId);
   }
 
   @Put(':dataSourceId')

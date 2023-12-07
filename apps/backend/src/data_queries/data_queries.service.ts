@@ -11,7 +11,7 @@ import { QueryRet } from './query.types';
 import { dataSources, queries } from '../drizzle/schema/data_sources.schema';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { getQueryService } from '../data_sources/plugins/common/service';
-import { eq, and, sql, isNull, inArray } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DataQueriesService {
@@ -39,7 +39,6 @@ export class DataQueriesService {
       where: and(
         eq(queries.dataSourceId, dataSourceId),
         eq(queries.appId, appId),
-        isNull(queries.deletedAt),
       ),
     });
     return q as QueryDto[];
@@ -47,31 +46,25 @@ export class DataQueriesService {
 
   async getQuery(queryId: QueryDto['id']): Promise<QueryDto> {
     const q = await this.db.query.queries.findFirst({
-      where: and(eq(queries.id, queryId), isNull(queries.deletedAt)),
+      where: eq(queries.id, queryId),
     });
     return q as QueryDto;
   }
 
-  async deleteQuery(
-    queryId: QueryDto['id'],
-    deletedById: QueryDto['deletedById'],
-  ): Promise<QueryDto> {
+  async deleteQuery(queryId: QueryDto['id']): Promise<QueryDto> {
     const [q] = await this.db
-      .update(queries)
-      .set({ deletedById, deletedAt: sql`now()` })
+      .delete(queries)
       .where(eq(queries.id, queryId))
       .returning();
     return q as QueryDto;
   }
 
   async deleteDataSourceQueries(
-    dataSourceId: QueryDto['dataSourceId'][],
-    deletedById: QueryDto['deletedById'],
+    dataSourceId: QueryDto['dataSourceId'],
   ): Promise<QueryDto[]> {
     const q = await this.db
-      .update(queries)
-      .set({ deletedAt: sql`now()`, deletedById })
-      .where(inArray(queries.dataSourceId, dataSourceId))
+      .delete(queries)
+      .where(eq(queries.dataSourceId, dataSourceId))
       .returning();
     return q as QueryDto[];
   }
@@ -88,7 +81,7 @@ export class DataQueriesService {
     const [q] = await this.db
       .update(queries)
       .set({ ...query, updatedById, updatedAt: sql`now()` })
-      .where(and(eq(queries.id, queryId), isNull(queries.deletedAt)))
+      .where(eq(queries.id, queryId))
       .returning();
     return q as QueryDto;
   }
