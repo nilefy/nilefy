@@ -203,7 +203,10 @@ const CustomPanelResizeHandle = () => {
 };
 function Editor() {
   const [code, setCode] = React.useState('');
-
+  const inlineEditorOnChange = useCallback((value: string) => {
+    console.log('value', value);
+    setCode(value);
+  }, []);
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -379,9 +382,7 @@ function Editor() {
                 <div className="h-full w-full">
                   <WebloomInlineEditor
                     value={code}
-                    onChange={(a) => {
-                      setCode(a);
-                    }}
+                    onChange={inlineEditorOnChange}
                   />
                 </div>
               </Panel>

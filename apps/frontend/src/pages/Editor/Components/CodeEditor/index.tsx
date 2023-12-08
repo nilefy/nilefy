@@ -79,9 +79,14 @@ export type WebloomCodeEditorProps = {
 export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   const { initialState, onChange, autoFocus = true, value = '', setup } = props;
   const editor = useRef<HTMLDivElement>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<EditorView>();
   const [state, setState] = useState<EditorState>();
-
+  useEffect(() => {
+    if (editor.current) {
+      setContainer(editor.current);
+    }
+  }, []);
   const updateListener = EditorView.updateListener.of(
     (viewUpdate: ViewUpdate) => {
       if (
@@ -113,8 +118,8 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     },
     [view],
   );
+
   useEffect(() => {
-    const container = editor.current;
     if (container && !state) {
       const config: EditorStateConfig = {
         doc: value,
@@ -140,7 +145,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, editor]);
+  }, [state, container]);
 
   useEffect(() => {
     if (autoFocus && view) {
@@ -154,6 +159,15 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setup, onChange]);
+  useEffect(
+    () => () => {
+      if (view) {
+        view.destroy();
+        setView(undefined);
+      }
+    },
+    [view],
+  );
 
   useEffect(() => {
     if (value === undefined) {

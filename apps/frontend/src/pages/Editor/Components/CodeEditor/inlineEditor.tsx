@@ -14,7 +14,7 @@ import {
 } from '@codemirror/language';
 import { lintKeymap } from '@codemirror/lint';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { EditorState, Extension } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 import {
   EditorView,
   crosshairCursor,
