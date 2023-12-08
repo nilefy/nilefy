@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { createContext, useCallback, useMemo, useState } from 'react';
 
 export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
@@ -63,7 +63,10 @@ const InspectorSection = (props: {
     </Collapsible>
   );
 };
-
+export const FormControlContext = createContext<{
+  onChange: (newValue: unknown) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}>({} as any);
 const FormControl = (props: {
   control: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number]['children'][number];
   selectedId: string;
@@ -85,9 +88,14 @@ const FormControl = (props: {
     },
     [control.key, selectedId],
   );
+  const contextValue = useMemo(() => ({ onChange }), [onChange]);
   return (
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
-    <Component {...options} onChange={onChange} key={control.id} />
+    <FormControlContext.Provider value={contextValue}>
+      {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        <Component {...options} key={control.id} />
+      }
+    </FormControlContext.Provider>
   );
 };
