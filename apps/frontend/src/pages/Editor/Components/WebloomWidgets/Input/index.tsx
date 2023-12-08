@@ -1,6 +1,6 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { ComponentPropsWithoutRef, useContext, useRef } from 'react';
+import { ComponentPropsWithoutRef, useContext } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
@@ -13,13 +13,7 @@ export type WebloomInputProps = Pick<
   label: string;
   type: 'text' | 'password';
 };
-export type WebloomInputInterface = {
-  setValue: (value: string) => void;
-  setDisabled: (value: boolean) => void;
-  setLoading: (value: boolean) => void;
-  clearValue: () => void;
-  focus: () => void;
-};
+
 const WebloomInput = (props: WebloomInputProps) => {
   const { label, ...rest } = props;
   const { onPropChange } = useContext(WidgetContext);
@@ -91,10 +85,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
         id: `${widgetName}-placeholder`,
         key: 'placeholder',
         label: 'Placeholder',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter placeholder',
-          type: 'text',
+          label: 'Placeholder',
         },
       },
     ],

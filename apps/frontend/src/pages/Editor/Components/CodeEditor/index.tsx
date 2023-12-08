@@ -13,6 +13,7 @@ import { sql, PostgreSQL } from '@codemirror/lang-sql';
 import {
   Annotation,
   EditorState,
+  EditorStateConfig,
   Extension,
   StateEffect,
   StateField,
@@ -20,6 +21,7 @@ import {
 
 import { webLoomContext } from './autoComplete';
 import { basicSetup } from 'codemirror';
+import { cn } from '@/lib/cn';
 
 const External = Annotation.define<boolean>();
 
@@ -63,6 +65,7 @@ export type WebloomCodeEditorProps = {
     fields?: Record<string, StateField<any>>;
   };
   onChange?: (value: string, view: ViewUpdate) => void;
+  className?: string;
   autoFocus?: boolean;
   value?: string;
   setup: Extension;
@@ -96,17 +99,11 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     },
   );
 
-  const extension = useMemo(
-    () => [
-      setup,
-      javascript(),
-      updateListener,
-      webLoomContext,
-      jsTemplatePlugin,
-    ],
-    [updateListener, setup],
+  const extensions = useMemo(
+    () => [setup, javascript(), webLoomContext, jsTemplatePlugin],
+    [setup],
   );
-
+  const getExtensions = [...extensions, updateListener];
   useEffect(
     () => () => {
       if (view) {
@@ -119,9 +116,9 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   useEffect(() => {
     const container = editor.current;
     if (container && !state) {
-      const config = {
+      const config: EditorStateConfig = {
         doc: value,
-        extension,
+        extensions: getExtensions,
       };
       const stateCurrent = initialState
         ? EditorState.fromJSON(initialState.json, config, initialState.fields)
@@ -153,10 +150,10 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
   useEffect(() => {
     if (view) {
-      view.dispatch({ effects: StateEffect.reconfigure.of(extension) });
+      view.dispatch({ effects: StateEffect.reconfigure.of(getExtensions) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extension, onChange]);
+  }, [setup, onChange]);
 
   useEffect(() => {
     if (value === undefined) {
@@ -172,7 +169,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     }
   }, [value, view]);
 
-  return <div ref={editor} className="h-full w-full" />;
+  return <div ref={editor} className={cn('w-full h-full', props.className)} />;
 }
 
 export function SQLEditor() {

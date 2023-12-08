@@ -7,7 +7,6 @@ import React, {
   useRef,
   ElementType,
   useCallback,
-  createContext,
 } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -48,7 +47,7 @@ import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteAction } from '@/actions/Editor/Delete';
-import { WebloomCodeEditor } from './Components/CodeEditor';
+import { WebloomInlineEditor } from './Components/CodeEditor/inlineEditor';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -378,7 +377,7 @@ function Editor() {
                 collapsible
               >
                 <div className="h-full w-full">
-                  <WebloomCodeEditor
+                  <WebloomInlineEditor
                     value={code}
                     onChange={(a) => {
                       setCode(a);

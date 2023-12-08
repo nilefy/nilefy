@@ -25,6 +25,7 @@ type FormControlOptions = {
     value?: string;
     placeholder?: string;
   };
+  inlineCodeInput: InlineCodeInputProps
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -44,10 +45,16 @@ type WidgetInspectorConfig<TProps> = {
 
 type InspectorFormControls = keyof FormControlOptions;
 
+ type InlineCodeInputProps = {
+  label: string;
+  placeholder?: string;
+  value?: string;
+};
 export type {
   BaseControlProps,
   InspectorInputProps,
   InspectorSelectProps,
   WidgetInspectorConfig,
   InspectorFormControls,
+  InlineCodeInputProps ,
 };
