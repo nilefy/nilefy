@@ -8,13 +8,12 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
   const selectedId = [...selected][0];
   const selectedNode = store.getState().tree[selectedId];
-  const selectedNodeProps = store((state) => state.tree[selectedId].props);
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
   return inspectorConfig.map((section) => {
@@ -23,7 +22,6 @@ export const ConfigPanel = () => {
         key={section.sectionName}
         section={section}
         selectedId={selectedId}
-        selectedNodeProps={selectedNodeProps}
       />
     );
   });
@@ -32,9 +30,8 @@ export const ConfigPanel = () => {
 const InspectorSection = (props: {
   section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
   selectedId: string;
-  selectedNodeProps: Record<string, unknown>;
 }) => {
-  const { section, selectedId, selectedNodeProps } = props;
+  const { section, selectedId } = props;
   const [opened, setOpened] = useState(true);
   return (
     <Collapsible
@@ -54,22 +51,43 @@ const InspectorSection = (props: {
       </div>
       <CollapsibleContent className="space-y-5">
         {section.children.map((control) => {
-          const Component = InspectorFormControls[control.type];
-          const options = {
-            ...control,
-            ...control.options,
-            value: selectedNodeProps[control.key],
-          };
-          const onChange = (newValue: unknown) => {
-            store.getState().setProp(selectedId, control.key, newValue);
-          };
           return (
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            <Component {...options} onChange={onChange} key={control.id} />
+            <FormControl
+              key={control.id}
+              control={control}
+              selectedId={selectedId}
+            />
           );
         })}
       </CollapsibleContent>
     </Collapsible>
+  );
+};
+
+const FormControl = (props: {
+  control: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number]['children'][number];
+  selectedId: string;
+}) => {
+  const { control, selectedId } = props;
+  const Component = InspectorFormControls[control.type];
+  const prop = store((state) => state.tree[selectedId].props[control.key]);
+  const options = useMemo(
+    () => ({
+      ...control,
+      ...control.options,
+      value: prop,
+    }),
+    [control, prop],
+  );
+  const onChange = useCallback(
+    (newValue: unknown) => {
+      store.getState().setProp(selectedId, control.key, newValue);
+    },
+    [control.key, selectedId],
+  );
+  return (
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    <Component {...options} onChange={onChange} key={control.id} />
   );
 };

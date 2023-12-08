@@ -12,7 +12,7 @@ const InlineCodeInput = (
     console.log('value', value);
   }, []);
   return (
-    <div className="flex w-full items-center justify-center gap-2">
+    <div className="flex flex-col space-y-3">
       <Label>{props.label}</Label>
 
       <WebloomInlineEditor
