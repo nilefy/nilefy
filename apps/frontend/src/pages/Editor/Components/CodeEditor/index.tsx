@@ -37,6 +37,7 @@ function enumeratePropertyCompletions(
   const options = [],
     seen: Set<string> = new Set();
   for (let depth = 0; ; depth++) {
+    //todo : return methods as well
     for (const name of Object.keys(obj)) {
       if (seen.has(name)) continue;
       seen.add(name);

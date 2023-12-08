@@ -195,7 +195,7 @@ class DragAction {
     ...args: Parameters<typeof DragAction._end>
   ): UndoableCommand | null {
     if (!this.moved) {
-      removeNode(this.previewId!);
+      removeNode(this.previewId!, false);
       this.cleanUp();
       return null;
     }
@@ -232,7 +232,7 @@ class DragAction {
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
-    removeNode(this.previewId);
+    removeNode(this.previewId, false);
     if (isNew) {
       newNode.id = id;
       command = {
