@@ -10,12 +10,12 @@ import { useState } from 'react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 
 type GenericConfig = WidgetInspectorConfig<Record<string, unknown>>;
-export type GenricOnChange = (key: string, newValue: unknown) => void;
+export type ConfigFormGenricOnChange = (key: string, newValue: unknown) => void;
 
 const InspectorSection = (props: {
   section: GenericConfig[number];
   itemProps: Record<string, unknown>;
-  onChange: GenricOnChange;
+  onChange: ConfigFormGenricOnChange;
 }) => {
   const { section, itemProps, onChange } = props;
   const [opened, setOpened] = useState(true);
@@ -67,7 +67,7 @@ export const ConfigForm = ({
   itemProps,
 }: {
   config: GenericConfig;
-  onChange: GenricOnChange;
+  onChange: ConfigFormGenricOnChange;
   itemProps: Record<string, unknown>;
 }) => {
   return inspectorConfig.map((section) => {

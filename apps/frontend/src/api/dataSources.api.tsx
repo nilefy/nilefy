@@ -1,13 +1,14 @@
-import { fetchX } from '@/utils/fetch';
+import { FetchXError, fetchX } from '@/utils/fetch';
 import {
   UseMutationOptions,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import z from 'zod';
 
-const DATASOURCES_QUERY_KEY = 'datasources';
+export const DATASOURCES_QUERY_KEY = 'datasources';
 
 export const dataSourceMeta = z.object({
   name: z.string().min(1).max(100),
@@ -22,7 +23,7 @@ export type GlobalDataSourceI = {
   description: string | null;
   type: 'database' | 'api' | 'cloud storage' | 'plugin';
   image: string | null;
-  config: Record<string, unknown>;
+  config: WidgetInspectorConfig<Record<string, unknown>>;
 };
 
 export type WsDataSourceI = {
@@ -47,15 +48,26 @@ async function index({ workspaceId }: { workspaceId: number }) {
   const res = await fetchX(`workspaces/${workspaceId}/data-sources`, {
     method: 'GET',
   });
-  return (await res.json()) as WsDataSourceI[];
+  return (await res.json()) as (Pick<
+    WsDataSourceI,
+    'id' | 'name' | 'workspaceId'
+  > & { dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image'> })[];
 }
 
-// async function one(i: { workspaceId: number; dataSourceId: number }) {
-//   const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.roleId}`, {
-//     method: 'GET',
-//   });
-//   return (await res.json()) as Group;
-// }
+async function one(i: { workspaceId: number; dataSourceId: number }) {
+  const res = await fetchX(
+    `workspaces/${i.workspaceId}/data-sources/${i.dataSourceId}`,
+    {
+      method: 'GET',
+    },
+  );
+  return (await res.json()) as Pick<
+    WsDataSourceI,
+    'id' | 'name' | 'workspaceId' | 'config'
+  > & {
+    dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'config'>;
+  };
+}
 
 async function insert({
   workspaceId,
@@ -86,31 +98,36 @@ async function deleteOne({
   workspaceId: number;
   dataSourceId: number;
 }) {
-  console.log('in delete');
   const res = await fetchX(
     `workspaces/${workspaceId}/data-sources/${dataSourceId}`,
     {
       method: 'DELETE',
     },
   );
-  console.log(res);
   return await res.json();
 }
 
-// async function update(i: {
-//   workspaceId: number;
-//   groupId: Group['id'];
-//   dto: GroupMetaSchema;
-// }) {
-//   const res = await fetchX(`workspaces/${i.workspaceId}/roles/${i.groupId}`, {
-//     method: 'PUT',
-//     headers: {
-//       'Content-Type': 'application/json;charset=utf-8',
-//     },
-//     body: JSON.stringify(i.dto),
-//   });
-//   return (await res.json()) as GroupMetaSchema & { id: number };
-// }
+async function update({
+  workspaceId,
+  dataSourceId,
+  dto,
+}: {
+  workspaceId: number;
+  dataSourceId: WsDataSourceI['id'];
+  dto: Partial<DataSourceMeta>;
+}) {
+  const res = await fetchX(
+    `workspaces/${workspaceId}/data-sources/${dataSourceId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      body: JSON.stringify(dto),
+    },
+  );
+  return await res.json();
+}
 
 function useGlobalDataSources() {
   return useQuery({
@@ -127,17 +144,17 @@ function useWsDataSources(workspaceId: number) {
   });
 }
 
-// function useGroup(workspaceId: number, roleId: number) {
-//   return useQuery({
-//     queryKey: ['groups', { workspaceId, roleId }],
-//     queryFn: () => one({ workspaceId, roleId }),
-//   });
-// }
+function useDataSource(workspaceId: number, dataSourceId: number) {
+  return useQuery({
+    queryKey: [DATASOURCES_QUERY_KEY, { workspaceId, dataSourceId }],
+    queryFn: () => one({ workspaceId, dataSourceId }),
+  });
+}
 
 function useInsertDatasource(
   options?: UseMutationOptions<
     Awaited<ReturnType<typeof insert>>,
-    Error,
+    FetchXError,
     Parameters<typeof insert>[0]
   >,
 ) {
@@ -174,25 +191,31 @@ function useDeleteDatasource(
   return mutate;
 }
 
-// function useUpdateGroup(
-//   options?: UseMutationOptions<
-//     Awaited<ReturnType<typeof update>>,
-//     Error,
-//     Parameters<typeof update>[0]
-//   >,
-// ) {
-//   const mutate = useMutation({
-//     mutationFn: update,
-//     ...options,
-//   });
-//   return mutate;
-// }
+function useUpdateDataSource(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof update>>,
+    Error,
+    Parameters<typeof update>[0]
+  >,
+) {
+  const queryClient = useQueryClient();
+  const mutate = useMutation({
+    mutationFn: update,
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+    },
+    ...options,
+  });
+  return mutate;
+}
 
 export const dataSources = {
   index: { useQuery: useWsDataSources },
-  //   one: { useQuery: useGroup },
+  one: { useQuery: useDataSource },
   insert: { useMutation: useInsertDatasource },
-  //   update: { useMutation: useUpdateGroup },
+  update: { useMutation: useUpdateDataSource },
   delete: { useMutation: useDeleteDatasource },
 };
 

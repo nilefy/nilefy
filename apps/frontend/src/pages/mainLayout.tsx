@@ -96,8 +96,6 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
-        {/**TODO: move to editor layout */}
-        <Inspector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">

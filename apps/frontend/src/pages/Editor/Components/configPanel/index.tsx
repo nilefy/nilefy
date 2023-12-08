@@ -2,7 +2,7 @@ import store from '@/store';
 import { WebloomWidgets } from '..';
 import { commandManager } from '@/actions/commandManager';
 import { ChangePropAction } from '@/Actions/Editor/changeProps';
-import { ConfigForm, GenricOnChange } from '@/components/configForm';
+import { ConfigForm, ConfigFormGenricOnChange } from '@/components/configForm';
 
 export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
@@ -11,7 +11,7 @@ export const ConfigPanel = () => {
   const selectedNodeProps = store((state) => state.tree[selectedId].props);
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
-  const onChange: GenricOnChange = (key, newValue) => {
+  const onChange: ConfigFormGenricOnChange = (key, newValue) => {
     commandManager.executeCommand(
       new ChangePropAction(selectedId, key, newValue),
     );
