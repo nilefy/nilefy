@@ -54,16 +54,16 @@ export class DataSourcesController {
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
-  ): Promise<WsDataSourceDto[]> {
-    return await this.dataSourceService.get({ workspaceId, dataSourceId });
+    dataSourceId: WsDataSourceDto['id'],
+  ) {
+    return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
   @Get()
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceDto[]> {
+  ) {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
@@ -95,14 +95,12 @@ export class DataSourcesController {
     });
   }
 
-  @Put(':dataSourceId/:dataSourceName')
+  @Put(':dataSourceId')
   async update(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Param('dataSourceName')
-    dataSourceName: WsDataSourceDto['name'],
+    dataSourceId: WsDataSourceDto['id'],
     @Body(new ZodValidationPipe(updateWsDataSourceSchema))
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
@@ -111,7 +109,6 @@ export class DataSourcesController {
       {
         workspaceId,
         dataSourceId,
-        dataSourceName,
         updatedById: req.user.userId,
       },
       data,
