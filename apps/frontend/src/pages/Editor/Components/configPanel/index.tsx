@@ -9,10 +9,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { createContext, useCallback, useMemo, useState } from 'react';
-
 export const ConfigPanel = () => {
-  const selected = store((state) => state.selectedNodeIds);
-  const selectedId = [...selected][0];
+  const selectedId = store((state) => {
+    const selectedIds = [...state.selectedNodeIds];
+    return selectedIds[0];
+  });
   const selectedNode = store.getState().tree[selectedId];
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
