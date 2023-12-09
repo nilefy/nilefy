@@ -77,6 +77,7 @@ export function scopeCompletionSource(scope: any): CompletionSource {
     };
   };
 }
+
 function webloomCompletions(context: CompletionContext) {
   const before = context.matchBefore(/\w+/);
   // If completion wasn't explicitly started and there

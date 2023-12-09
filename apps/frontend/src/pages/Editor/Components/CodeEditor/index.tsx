@@ -1,10 +1,11 @@
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { javascript } from '@codemirror/lang-javascript';
+import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
 
 import {
   Annotation,
+  Compartment,
   EditorState,
   EditorStateConfig,
   Extension,
@@ -15,6 +16,7 @@ import {
 import { webLoomContext } from './autoComplete';
 import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
+import { language } from '@codemirror/language';
 
 const External = Annotation.define<boolean>();
 
@@ -33,6 +35,7 @@ export type WebloomCodeEditorProps = {
   className?: string;
   autoFocus?: boolean;
   value?: string;
+  templateAutocompletionOnly?: boolean;
   setup: Extension;
 };
 /**
@@ -41,6 +44,21 @@ export type WebloomCodeEditorProps = {
  *
  */
 
+// prettier-ignore
+const languageConf = new Compartment;
+const oneSideTemplate = /{{(.*?)/gm;
+const autoLanguage = EditorState.transactionExtender.of((tr) => {
+  if (!tr.docChanged) return null;
+  //check if before the cursor is a js template {{
+  const inJavascriptTemplate =
+    tr.state.sliceDoc(0, tr.selection?.main.head || 0).match(oneSideTemplate)
+      ?.length || 0 > 0;
+  const stateIsJavscript = tr.startState.facet(language) == javascriptLanguage;
+  if (stateIsJavscript === inJavascriptTemplate) return null;
+  return {
+    effects: languageConf.reconfigure(inJavascriptTemplate ? javascript() : []),
+  };
+});
 export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   const { initialState, onChange, autoFocus = true, value = '', setup } = props;
   const editor = useRef<HTMLDivElement>(null);
@@ -52,6 +70,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       setContainer(editor.current);
     }
   }, []);
+
   const updateListener = EditorView.updateListener.of(
     (viewUpdate: ViewUpdate) => {
       if (
@@ -69,10 +88,15 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     },
   );
 
-  const extensions = useMemo(
-    () => [setup, javascript(), webLoomContext],
-    [setup],
-  );
+  const extensions = useMemo(() => {
+    const extensions = [setup, webLoomContext];
+    if (props.templateAutocompletionOnly) {
+      extensions.push(...[languageConf.of([]), autoLanguage]);
+    } else {
+      extensions.push(languageConf.of(javascript()));
+    }
+    return extensions;
+  }, [setup, props.templateAutocompletionOnly]);
   const getExtensions = [...extensions, updateListener];
   useEffect(
     () => () => {

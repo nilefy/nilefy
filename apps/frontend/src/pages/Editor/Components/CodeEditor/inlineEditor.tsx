@@ -15,7 +15,6 @@ import {
 import { lintKeymap } from '@codemirror/lint';
 import {
   RegExpCursor,
-  SearchCursor,
   highlightSelectionMatches,
   searchKeymap,
 } from '@codemirror/search';
@@ -133,5 +132,11 @@ export const WebloomInlineEditor = (props: WebloomInlineEditorProps) => {
     () => inlineSetupCallback(props.placeholder),
     [props.placeholder],
   );
-  return <WebloomCodeEditor setup={inlineSetup} {...props} />;
+  return (
+    <WebloomCodeEditor
+      setup={inlineSetup}
+      {...props}
+      templateAutocompletionOnly
+    />
+  );
 };
