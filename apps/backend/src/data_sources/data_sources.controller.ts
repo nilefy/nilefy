@@ -18,6 +18,7 @@ import {
   createWsDataSourceSchema,
   updateWsDataSourceSchema,
   UpdateWsDataSourceDto,
+  WsDataSourceP,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
@@ -66,7 +67,7 @@ export class DataSourcesController {
   async getOne(
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
-  ) {
+  ): Promise<WsDataSourceP> {
     return await this.dataSourceService.getOne(dataSourceId);
   }
 
@@ -74,7 +75,7 @@ export class DataSourcesController {
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
-  ) {
+  ): Promise<WsDataSourceP[]> {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
