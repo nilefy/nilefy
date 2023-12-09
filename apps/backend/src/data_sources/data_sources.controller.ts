@@ -66,7 +66,7 @@ export class DataSourcesController {
   async getOne(
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
-  ): Promise<WsDataSourceDto> {
+  ) {
     return await this.dataSourceService.getOne(dataSourceId);
   }
 
@@ -74,7 +74,7 @@ export class DataSourcesController {
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceDto[]> {
+  ) {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 

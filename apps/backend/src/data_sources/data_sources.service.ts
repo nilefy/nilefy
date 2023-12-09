@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
   UpdateWsDataSourceDto,
+  WsDataSourceP,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
@@ -36,20 +37,53 @@ export class DataSourcesService {
     return ds as WsDataSourceDto[];
   }
 
-  async getOne(dataSourceId: WsDataSourceDto['id']): Promise<WsDataSourceDto> {
-    const ds = await this.db.query.workspaceDataSources.findFirst({
-      where: eq(workspaceDataSources.id, dataSourceId),
-    });
-    return ds as WsDataSourceDto;
-  }
-
   async getWsDataSources(
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceDto[]> {
+  ): Promise<WsDataSourceP[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
+      columns: {
+        id: true,
+        name: true,
+        workspaceId: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
       where: eq(workspaceDataSources.workspaceId, workspaceId),
     });
-    return ds as WsDataSourceDto[];
+    return ds;
+  }
+
+  async getOne(datasourceId: WsDataSourceDto['id']): Promise<WsDataSourceP> {
+    const ds = await this.db.query.workspaceDataSources.findFirst({
+      columns: {
+        id: true,
+        name: true,
+        workspaceId: true,
+        config: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            config: true,
+          },
+        },
+      },
+      where: eq(workspaceDataSources.id, datasourceId),
+    });
+    if (!ds) {
+      throw new NotFoundException('cannot find this data source');
+    }
+    return ds as WsDataSourceP;
   }
 
   async deleteConnections({
@@ -96,6 +130,7 @@ export class DataSourcesService {
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
       .where(eq(workspaceDataSources.id, dataSourceId))
       .returning();
+    if (!ds) throw new NotFoundException();
     return ds as WsDataSourceDto;
   }
 }
