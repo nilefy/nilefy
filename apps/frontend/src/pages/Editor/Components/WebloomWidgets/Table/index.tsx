@@ -1,6 +1,8 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import {
   ArrowUpDown,
+  ChevronsLeft,
+  ChevronsRight,
   MoveLeft,
   MoveRight,
   Table as TableIcon,
@@ -75,18 +77,20 @@ const WebloomTable = (props: WebloomTableProps) => {
     isPaginationEnabled,
   } = props;
 
-  // merging predefined cols and cols generated from data
-  const cols = React.useMemo(() => generateColumnsFromData(data), [data]);
-  cols.forEach((propCol) => {
-    const exists = columns.find((col) => col.id === propCol.id);
-    if (!exists) {
-      columns.push(propCol);
-    }
-  });
-  React.useEffect(
-    () => onPropChange({ key: columns, value: cols }),
-    [cols, columns, onPropChange],
-  );
+  //  to run only once when the component is mounted
+  React.useEffect(() => {
+    // merging predefined cols and cols generated from data
+    const cols = generateColumnsFromData(data);
+    cols.forEach((propCol) => {
+      const exists = columns.find((col) => col.id === propCol.id);
+      if (!exists) {
+        columns.push(propCol);
+      }
+    });
+
+    onPropChange({ key: columns, value: cols });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // pagination options
   const [{ pageIndex }, setPagination] = React.useState<PaginationState>({
@@ -107,6 +111,7 @@ const WebloomTable = (props: WebloomTableProps) => {
   const [globalFilter, setGlobalFilter] = React.useState('');
   // selection options
   const [rowSelection, setRowSelection] = React.useState({});
+
   // mapping the columns to be  compatible with tanstack-table
 
   const tableCols = columns.map((col) => {
@@ -170,7 +175,7 @@ const WebloomTable = (props: WebloomTableProps) => {
   });
 
   return (
-    <div className="h-full w-full">
+    <div className="flex h-full w-full flex-col">
       {isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
           <Input
@@ -181,8 +186,8 @@ const WebloomTable = (props: WebloomTableProps) => {
           />
         </div>
       )}
-      <div className="rounded-md border shadow-md">
-        <Table>
+      <div className="h-full w-full rounded-md border shadow-md">
+        <Table className="h-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -218,6 +223,14 @@ const WebloomTable = (props: WebloomTableProps) => {
         <div className="flex items-center justify-center space-x-2 py-4">
           <Button
             variant="ghost"
+            className="rounded border p-1"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ChevronsLeft />
+          </Button>
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
@@ -232,6 +245,35 @@ const WebloomTable = (props: WebloomTableProps) => {
           >
             <MoveRight />
           </Button>
+          <Button
+            variant="ghost"
+            className="rounded border p-1"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            <ChevronsRight />
+          </Button>
+          <span className="flex items-center gap-1">
+            <div>Page</div>
+            <strong>
+              {table.getState().pagination.pageIndex + 1} of{' '}
+              {table.getPageCount()}
+            </strong>
+          </span>
+          <span className="flex items-center gap-1">
+            | Go to page:
+            <Input
+              type="number"
+              min={1}
+              max={table.getPageCount()}
+              defaultValue={table.getState().pagination.pageIndex + 1}
+              onChange={(e) => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                table.setPageIndex(page);
+              }}
+              className="w-16 rounded border p-1"
+            />
+          </span>
         </div>
       )}
     </div>
@@ -326,6 +368,8 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
         key: 'isRowSelectionEnabled',
         label: 'Allow Selection',
         type: 'checkbox',
+        // defaultValue: ,
+        // value: isRowSelectionEnabled,
         options: {
           label: 'Allow Selection',
         },

@@ -12,7 +12,10 @@ const InspectorCheckBox = (
 ) => {
   return (
     <div className="flex flex-row gap-2">
-      <Checkbox onCheckedChange={(checked) => props.onChange(checked)} />
+      <Checkbox
+        checked={props.value as boolean}
+        onCheckedChange={(checked) => props.onChange(checked)}
+      />
       <Label>{props.label}</Label>
     </div>
   );
