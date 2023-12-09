@@ -48,7 +48,7 @@ const inlineTheme = EditorView.baseTheme({
     outline: 'none',
   },
   '.cm-jstemplate': {
-    backgroundColor: '#b2eef8',
+    backgroundColor: '#85edff49',
   },
 });
 // HIGHLIGHT JS TEMPLATEs

@@ -14,7 +14,7 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
         placeholder={props.placeholder}
         value={props.value || ''}
         onChange={onChange}
-        className="border-input bg-background ring-offset-background focus-visible:ring-ring h-10 w-full overflow-auto rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-input bg-background ring-offset-background focus-visible:ring-ring min-h-10 w-full overflow-auto rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
   );
