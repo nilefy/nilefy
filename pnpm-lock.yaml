@@ -306,6 +306,9 @@ importers:
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
+      match-sorter:
+        specifier: ^6.3.1
+        version: 6.3.1
       nanoid:
         specifier: ^5.0.2
         version: 5.0.3
@@ -8831,6 +8834,13 @@ packages:
 
   /material-colors@1.2.6:
     resolution: {integrity: sha512-6qE4B9deFBIa9YSpOc9O0Sgc43zTeVYbgDT5veRKSlB2+ZuHNoVVxA1L/ckMUayV9Ay9y7Z/SZCLcGteW9i7bg==}
+    dev: false
+
+  /match-sorter@6.3.1:
+    resolution: {integrity: sha512-mxybbo3pPNuA+ZuCUhm5bwNkXrJTbsk5VWbR5wiwz/GC6LIiegBGn2w3O08UG/jdbYLinw51fSQ5xNU1U3MgBw==}
+    dependencies:
+      '@babel/runtime': 7.23.2
+      remove-accents: 0.4.2
     dev: false
 
   /media-typer@0.3.0:

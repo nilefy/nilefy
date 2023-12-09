@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 
 // A debounced input react component
-function DebouncedInput({
+export function DebouncedInput({
   value: initialValue,
   onChange,
   debounce = 500,
@@ -35,5 +35,3 @@ function DebouncedInput({
     />
   );
 }
-
-export default DebouncedInput;

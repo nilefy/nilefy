@@ -1,16 +1,8 @@
 import store from '@/store';
-import { WebloomWidgets, WidgetTypes } from '..';
-import { InspectorFormControls } from './formControls';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { WebloomWidgets } from '..';
 import { commandManager } from '@/actions/commandManager';
 import { ChangePropAction } from '@/Actions/Editor/changeProps';
+import { ConfigForm, ConfigFormGenricOnChange } from '@/components/configForm';
 
 export const ConfigPanel = () => {
   const selected = store((state) => state.selectedNodeIds);
@@ -19,62 +11,16 @@ export const ConfigPanel = () => {
   const selectedNodeProps = store((state) => state.tree[selectedId].props);
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
-  return inspectorConfig.map((section) => {
-    return (
-      <InspectorSection
-        key={section.sectionName}
-        section={section}
-        selectedId={selectedId}
-        selectedNodeProps={selectedNodeProps}
-      />
+  const onChange: ConfigFormGenricOnChange = (key, newValue) => {
+    commandManager.executeCommand(
+      new ChangePropAction(selectedId, key, newValue),
     );
-  });
-};
-
-const InspectorSection = (props: {
-  section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
-  selectedId: string;
-  selectedNodeProps: Record<string, unknown>;
-}) => {
-  const { section, selectedId, selectedNodeProps } = props;
-  const [opened, setOpened] = useState(true);
+  };
   return (
-    <Collapsible
-      open={opened}
-      onOpenChange={setOpened}
-      className="space-y-2"
-      key={section.sectionName}
-    >
-      <div className="flex items-center justify-between space-x-4">
-        <h4 className="text-sm font-semibold">{section.sectionName}</h4>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-9 p-0">
-            {opened ? <ChevronDown /> : <ChevronUp />}
-            <span className="sr-only">Toggle</span>
-          </Button>
-        </CollapsibleTrigger>
-      </div>
-      <CollapsibleContent className="space-y-5">
-        {section.children.map((control) => {
-          const Component = InspectorFormControls[control.type];
-          const options = {
-            ...control,
-            ...control.options,
-            value: selectedNodeProps[control.key],
-          };
-          const onChange = (newValue: unknown) => {
-            // store.getState().setProp(selectedId, control.key, newValue);
-            commandManager.executeCommand(
-              new ChangePropAction(selectedId, control.key, newValue),
-            );
-          };
-          return (
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            <Component {...options} onChange={onChange} key={control.id} />
-          );
-        })}
-      </CollapsibleContent>
-    </Collapsible>
+    <ConfigForm
+      config={inspectorConfig}
+      itemProps={selectedNodeProps}
+      onChange={onChange}
+    />
   );
 };

@@ -6,6 +6,7 @@ import { appSeeder } from './seeders/app.seeder';
 import { permissionsSeeder } from './seeders/permissions.seeder';
 import { rolesSeeder } from './seeders/roles.seeder';
 import { dataSourcesSeeder } from './seeders/data_sources.seeder';
+// import { datasourcesSeeder } from './seeders/datasources.seeder';
 
 async function main() {
   configDotenv();
@@ -22,6 +23,7 @@ async function main() {
   const [adminId, ...rest] = userIds;
   await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);
   await appSeeder(db, userIds, workspaceIds);
+  // await datasourcesSeeder(db);
 
   await dataSourcesSeeder(db);
 
