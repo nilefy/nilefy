@@ -112,7 +112,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
         ];
         const postgresqlQueryConfig: ConfigT<PostgresqlQueryConfigT> = [
           {
-            sectionName: 'PostgreSQL',
+            sectionName: '',
             children: [
               {
                 id: 'connection',

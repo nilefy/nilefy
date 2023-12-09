@@ -68,14 +68,10 @@ export class DataQueriesController {
   }
 
   @Get()
-  async getDataSourceQueries(
+  async getAppQueries(
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
   ): Promise<QueryDto[]> {
-    return await this.dataQueriesService.getDataSourceQueries(
-      dataSourceId,
-      appId,
-    );
+    return await this.dataQueriesService.getAppQueries(appId);
   }
 
   @Get(':id')

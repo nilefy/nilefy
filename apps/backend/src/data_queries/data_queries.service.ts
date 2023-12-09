@@ -11,7 +11,7 @@ import { QueryRet } from './query.types';
 import { dataSources, queries } from '../drizzle/schema/data_sources.schema';
 import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { getQueryService } from '../data_sources/plugins/common/service';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DataQueriesService {
@@ -31,15 +31,9 @@ export class DataQueriesService {
     return q as QueryDto;
   }
 
-  async getDataSourceQueries(
-    dataSourceId: QueryDto['dataSourceId'],
-    appId: QueryDto['appId'],
-  ): Promise<QueryDto[]> {
+  async getAppQueries(appId: QueryDto['appId']): Promise<QueryDto[]> {
     const q = await this.db.query.queries.findMany({
-      where: and(
-        eq(queries.dataSourceId, dataSourceId),
-        eq(queries.appId, appId),
-      ),
+      where: eq(queries.appId, appId),
     });
     return q as QueryDto[];
   }
