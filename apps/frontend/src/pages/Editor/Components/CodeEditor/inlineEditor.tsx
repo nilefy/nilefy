@@ -13,10 +13,19 @@ import {
   syntaxHighlighting,
 } from '@codemirror/language';
 import { lintKeymap } from '@codemirror/lint';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import {
+  RegExpCursor,
+  SearchCursor,
+  highlightSelectionMatches,
+  searchKeymap,
+} from '@codemirror/search';
 import { EditorState } from '@codemirror/state';
 import {
+  Decoration,
+  DecorationSet,
   EditorView,
+  ViewPlugin,
+  ViewUpdate,
   crosshairCursor,
   dropCursor,
   highlightSpecialChars,
@@ -39,7 +48,54 @@ const inlineTheme = EditorView.baseTheme({
   '&.cm-focused': {
     outline: 'none',
   },
+  '.cm-jstemplate': {
+    backgroundColor: '#b2eef8',
+  },
 });
+// HIGHLIGHT JS TEMPLATEs
+const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
+/**
+ * extension that adds new class to use in the mark
+ */
+
+//todo: fix this, new lines breaks the plugin
+//todo: move it into lib
+const jsTemplatePlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = this.getDeco(view);
+    }
+    getDeco(view: EditorView) {
+      const templateRegexString = '\\{\\{([^}]+)\\}\\}';
+      const { state } = view;
+      const decos = [];
+      for (const part of view.visibleRanges) {
+        const cursor = new RegExpCursor(
+          state.doc,
+          templateRegexString,
+          {},
+          part.from,
+          part.to,
+        );
+        for (const match of cursor) {
+          const { from, to } = match;
+          decos.push(templateMarkDeco.range(from, to));
+        }
+      }
+      return Decoration.set(decos);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = this.getDeco(update.view);
+      }
+    }
+  },
+  {
+    decorations: (instance) => instance.decorations,
+  },
+);
+
 export const inlineSetupCallback = (
   placeholderText: string = 'Enter something',
 ) => [
@@ -57,6 +113,7 @@ export const inlineSetupCallback = (
   placeholder(placeholderText),
   inlineTheme,
   highlightSelectionMatches(),
+  jsTemplatePlugin,
   keymap.of([
     ...closeBracketsKeymap,
     ...defaultKeymap,

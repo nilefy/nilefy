@@ -1,11 +1,4 @@
-import {
-  EditorView,
-  MatchDecorator,
-  Decoration,
-  ViewPlugin,
-  DecorationSet,
-  ViewUpdate,
-} from '@codemirror/view';
+import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { javascript } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
@@ -24,34 +17,6 @@ import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 
 const External = Annotation.define<boolean>();
-
-// HIGHLIGHT JS TEMPLATEs
-const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
-/**
- * extension that adds new class to use in the mark
- */
-
-const templateMatcher = new MatchDecorator({
-  regexp: /{{(.*?)}}/g,
-  decoration: templateMarkDeco,
-});
-
-//todo: fix this, new lines breaks the plugin
-//todo: move it into lib
-const jsTemplatePlugin = ViewPlugin.fromClass(
-  class {
-    templates: DecorationSet;
-    constructor(view: EditorView) {
-      this.templates = templateMatcher.createDeco(view);
-    }
-    update(update: ViewUpdate) {
-      this.templates = templateMatcher.updateDeco(update, this.templates);
-    }
-  },
-  {
-    decorations: (instance) => instance.templates,
-  },
-);
 
 /**
  * produce the extension that highlights the js template with `cm-loom-jstemplate`
@@ -105,7 +70,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   );
 
   const extensions = useMemo(
-    () => [setup, javascript(), webLoomContext, jsTemplatePlugin],
+    () => [setup, javascript(), webLoomContext],
     [setup],
   );
   const getExtensions = [...extensions, updateListener];
