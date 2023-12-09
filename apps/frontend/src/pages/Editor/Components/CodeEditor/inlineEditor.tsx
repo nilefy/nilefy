@@ -106,7 +106,6 @@ export const inlineSetupCallback = (
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   bracketMatching(),
   closeBrackets(),
-  autocompletion(),
   rectangularSelection(),
   crosshairCursor(),
   placeholder(placeholderText),

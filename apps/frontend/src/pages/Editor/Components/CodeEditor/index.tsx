@@ -17,6 +17,7 @@ import { webLoomContext } from './autoComplete';
 import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
+import { autocompletion } from '@codemirror/autocomplete';
 
 const External = Annotation.define<boolean>();
 
@@ -45,18 +46,20 @@ export type WebloomCodeEditorProps = {
  */
 
 // prettier-ignore
-const languageConf = new Compartment;
-const oneSideTemplate = /{{(.*?)/gm;
-const autoLanguage = EditorState.transactionExtender.of((tr) => {
+const autoCompletionConf = new Compartment;
+// regex to match unclosed template "{{" if there's any balanced "}}" after it then it won't match
+const oneSideTemplate = /{{(?![^}]*}})/g;
+const setAutoCompletionAllowed = EditorState.transactionExtender.of((tr) => {
   if (!tr.docChanged) return null;
-  //check if before the cursor is a js template {{
   const inJavascriptTemplate =
     tr.state.sliceDoc(0, tr.selection?.main.head || 0).match(oneSideTemplate)
       ?.length || 0 > 0;
   const stateIsJavscript = tr.startState.facet(language) == javascriptLanguage;
   if (stateIsJavscript === inJavascriptTemplate) return null;
   return {
-    effects: languageConf.reconfigure(inJavascriptTemplate ? javascript() : []),
+    effects: autoCompletionConf.reconfigure(
+      inJavascriptTemplate ? autocompletion() : [],
+    ),
   };
 });
 export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
@@ -89,11 +92,11 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   );
 
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext];
+    const extensions = [setup, webLoomContext, javascript()];
     if (props.templateAutocompletionOnly) {
-      extensions.push(...[languageConf.of([]), autoLanguage]);
+      extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {
-      extensions.push(languageConf.of(javascript()));
+      extensions.push(autoCompletionConf.of(autocompletion()));
     }
     return extensions;
   }, [setup, props.templateAutocompletionOnly]);
