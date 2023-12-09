@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 //Types
 type RowData = Record<string, unknown>;
@@ -175,7 +176,7 @@ const WebloomTable = (props: WebloomTableProps) => {
   });
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col overflow-auto">
       {isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
           <Input
