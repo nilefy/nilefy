@@ -28,6 +28,7 @@ import {
   getGlobalDataSources,
 } from '@/api/datasources';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 type Query = {
   id: string;
@@ -73,6 +74,7 @@ export function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
   const [dataSources] = useState(_dataSources);
+  const [dataLocalSources, setLocalDataSources] = useState({});
   const [globalDataSources, setGlobalDataSources] = useState<dataSource>();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -87,16 +89,49 @@ export function QueryPanel() {
   const { workspaceId } = useParams();
   console.log(workspaceId);
 
+  const {
+    isLoading: globalLoading,
+    isError: globalError,
+    data: globalData,
+    error: globalQueryError,
+  } = useQuery({
+    queryKey: ['globalDataSorces'],
+    queryFn: getGlobalDataSources,
+  });
+  const {
+    isLoading: dataLoading,
+    isError: dataError,
+    data: data,
+    error: dataQueryError,
+  } = useQuery({
+    queryKey: ['dataSorces', workspaceId],
+    queryFn: () => getDataSources({ workspaceId }),
+  });
   useEffect(() => {
-    const fetchData = async () => {
-      if (workspaceId) {
-        console.log(await getDataSources({ workspaceId }), 'blabla');
-      }
-      setGlobalDataSources(await getGlobalDataSources());
+    if (!globalLoading && globalData) {
+      setGlobalDataSources(globalData);
       console.log(globalDataSources);
-    };
-    fetchData();
-  }, [workspaceId]);
+    }
+    if (!dataLoading && data) {
+      setLocalDataSources(data);
+      console.log(data);
+    }
+  }, [globalLoading, globalData, dataLoading, data]);
+  // const {
+  //  isLoading, isError, data, error
+  // } = useQuery(queryKey:['dataSorces'], queryFn:getDataSources({ workspaceId }));
+  // setDataSources(data);
+  // console.log(data);
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (workspaceId) {
+  //       console.log(await getDataSources({ workspaceId }), 'blabla');
+  //     }
+  //     console.log(globalDataSources);
+  //   };
+  //   fetchData();
+  // }, [workspaceId]);
 
   const handleDataSourceSearchChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -204,7 +239,7 @@ export function QueryPanel() {
     return matchSorter(dataSources, dataSourceSearch, {
       keys: ['name', 'type'],
     });
-  }, [dataSources, dataSourceSearch]);
+  }, [globalDataSources, dataSourceSearch]);
   return (
     <div className="h-full w-full">
       <div className="h-1 w-full "></div>
