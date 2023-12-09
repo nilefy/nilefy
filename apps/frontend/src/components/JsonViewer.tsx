@@ -7,10 +7,9 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import store from '@/store';
-import { commandManager } from '@/actions/commandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
 import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
-
+import { commandManager } from '@/Actions/CommandManager';
+import { SelectionAction } from '@/Actions/Editor/selection';
 type ElementProps = {
   [key: string]: unknown;
 };
@@ -129,7 +128,7 @@ export function JsonViewer() {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="h-full w-full space-y-0 overflow-y-auto font-mono scrollbar-thin scrollbar-track-gray-300 scrollbar-thumb-gray-700 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700"
+      className="scrollbar-thin scrollbar-track-gray-300 scrollbar-thumb-gray-700 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700 h-full w-full space-y-0 overflow-y-auto font-mono"
     >
       <div className="flex items-center">
         <CollapsibleTrigger asChild>

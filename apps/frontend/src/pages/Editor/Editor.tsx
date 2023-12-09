@@ -35,14 +35,13 @@ import {
   WebloomAdapter,
   WebloomElementShadow,
 } from './Components/lib';
-import { commandManager } from '@/actions/commandManager';
-import DragAction from '@/actions/editor/Drag';
-import { normalize } from '@/lib/editor/utils';
-import { SelectionAction } from '@/actions/editor/selection';
+import { commandManager } from '@/Actions/CommandManager';
+import DragAction from '@/Actions/Editor/Drag';
+import { normalize } from '@/lib/Editor/utils';
+import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DeleteAction } from '@/actions/editor/Delete';
 import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
 import { QueryClient } from '@tanstack/react-query';
 import { getToken, removeToken } from '@/lib/token.localstorage';
@@ -50,6 +49,7 @@ import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { Loader } from 'lucide-react';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
