@@ -2,15 +2,22 @@ import store from '@/store';
 import { Command } from '../types';
 import { WebloomNode } from '@/lib/Editor/interface';
 
-export class ChangePropAction implements Command {
+export class ChangePropAction<T extends boolean> implements Command {
   constructor(
     private comId: WebloomNode['id'],
-    private key: string,
+    private updateMeta: T,
+    private key: T extends true ? keyof WebloomNode : string,
     private value: unknown,
   ) {}
 
   execute() {
-    store.getState().setProp(this.comId, this.key, this.value);
+    if (this.updateMeta === true) {
+      store
+        .getState()
+        .setWidgetMeta(this.comId, this.key as keyof WebloomNode, this.value);
+    } else {
+      store.getState().setProp(this.comId, this.key, this.value);
+    }
     return {
       event: 'update' as const,
       data: [store.getState().tree[this.comId]],
