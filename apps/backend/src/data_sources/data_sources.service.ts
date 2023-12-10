@@ -60,7 +60,10 @@ export class DataSourcesService {
     return ds;
   }
 
-  async getOne(datasourceId: WsDataSourceDto['id']): Promise<WsDataSourceP> {
+  async getOne(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ) {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
         id: true,
@@ -78,12 +81,15 @@ export class DataSourcesService {
           },
         },
       },
-      where: eq(workspaceDataSources.id, datasourceId),
+      where: and(
+        eq(workspaceDataSources.workspaceId, workspaceId),
+        eq(workspaceDataSources.id, datasourceId),
+      ),
     });
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    return ds as WsDataSourceP;
+    return ds;
   }
 
   async deleteConnections({
@@ -117,20 +123,27 @@ export class DataSourcesService {
 
   async update(
     {
+      workspaceId,
       dataSourceId,
       updatedById,
     }: {
       dataSourceId: WsDataSourceDto['id'];
+      workspaceId: WsDataSourceDto['workspaceId'];
       updatedById: WsDataSourceDto['updatedById'];
     },
     dataSourceDto: UpdateWsDataSourceDto,
-  ): Promise<WsDataSourceDto> {
+  ) {
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
-      .where(eq(workspaceDataSources.id, dataSourceId))
+      .where(
+        and(
+          eq(workspaceDataSources.workspaceId, workspaceId),
+          eq(workspaceDataSources.id, dataSourceId),
+        ),
+      )
       .returning();
     if (!ds) throw new NotFoundException();
-    return ds as WsDataSourceDto;
+    return ds;
   }
 }

@@ -378,8 +378,6 @@ export function DataSourceView() {
         dataSourceId: +(datasourceId as string),
       },
     ];
-    console.log(queryKey);
-
     queryClient.setQueryData<WsDataSourceI>(queryKey, (prev) => {
       if (!prev) return;
       return {
@@ -417,7 +415,6 @@ export function DataSourceView() {
   } else if (isError) {
     throw error;
   }
-
   return (
     <div className="flex h-full w-full">
       <DataSourcesSidebar />
