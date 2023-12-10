@@ -13,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import store from '../../../../../store/index';
+import store from '../../../store/index';
 import React, { useState } from 'react';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
 import { InspectorInput } from './input';
 import { Input } from '@/components/ui/input';
 

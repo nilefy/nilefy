@@ -29,6 +29,7 @@ import {
 } from '@/api/datasources';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ConfigForm } from './configForm';
 
 type Query = {
   id: string;
@@ -448,7 +449,102 @@ export function QueryPanel() {
         </div>
         <div className="flex w-full flex-col border border-r-0 border-t-0 border-gray-300 ">
           <div className="flex h-10 flex-row justify-between border-b border-gray-300 pb-2">
-            <div className="flex flex-row "></div>
+            <div className="flex flex-row ">
+              <ConfigForm
+                config={[
+                  {
+                    sectionName: 'Development',
+                    children: [
+                      {
+                        id: 'host',
+                        key: 'host',
+                        label: 'Host',
+                        type: 'input',
+                        options: {
+                          placeholder: 'localhost',
+                          type: 'text',
+                        },
+                      },
+                      {
+                        id: 'port',
+                        key: 'port',
+                        label: 'Port',
+                        type: 'input',
+                        options: {
+                          placeholder: '5000',
+                          type: 'number',
+                        },
+                      },
+                      {
+                        id: 'ssl',
+                        key: 'ssl',
+                        label: 'SSL',
+                        type: 'input',
+                        options: {},
+                      },
+                      {
+                        id: 'database_name',
+                        key: 'database',
+                        label: 'Database Name',
+                        type: 'input',
+                        options: {
+                          placeholder: 'Name of the database',
+                          type: 'text',
+                        },
+                      },
+                      {
+                        id: 'username',
+                        key: 'user',
+                        label: 'Username',
+                        type: 'input',
+                        options: {
+                          placeholder: 'Enter username',
+                          type: 'text',
+                        },
+                      },
+                      {
+                        id: 'password',
+                        key: 'password',
+                        label: 'Password',
+                        type: 'input',
+                        options: {
+                          placeholder: 'Enter password',
+                          type: 'password',
+                        },
+                      },
+                      {
+                        id: 'certificate',
+                        key: 'sslCertificate',
+                        label: 'SSL Certificate',
+                        type: 'select',
+                        options: {
+                          items: [
+                            {
+                              label: 'CA Certificate',
+                              value: 'ca',
+                            },
+                            {
+                              label: 'Self-signed Certificate',
+                              value: 'self-signed',
+                            },
+                            {
+                              label: 'None',
+                              value: 'none',
+                            },
+                          ],
+                          placeholder: 'None',
+                        },
+                      },
+                      // TODO: add connection options key-value pairs
+                    ],
+                  },
+                ]}
+                itemProps={{}}
+                onChange={(key, value) => {
+                  console.log(key, value);
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
