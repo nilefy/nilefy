@@ -31,11 +31,34 @@ export class DataQueriesService {
     return q as QueryDto;
   }
 
-  async getAppQueries(appId: QueryDto['appId']): Promise<QueryDto[]> {
+  async getAppQueries(appId: QueryDto['appId']) {
     const q = await this.db.query.queries.findMany({
       where: eq(queries.appId, appId),
+      columns: {
+        id: true,
+        name: true,
+        query: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+          },
+          with: {
+            dataSource: {
+              columns: {
+                queryConfig: true,
+                id: true,
+                type: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
-    return q as QueryDto[];
+    return q;
   }
 
   async getQuery(queryId: QueryDto['id']): Promise<QueryDto> {
