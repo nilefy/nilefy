@@ -38,9 +38,11 @@ export class DataQueriesController {
   @Post('run')
   async runQuery(
     @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
   ): Promise<QueryRet> {
-    const ds = await this.dataSourcesService.getOne(dataSourceId);
+    const ds = await this.dataSourcesService.getOne(workspaceId, dataSourceId);
 
     return await this.dataQueriesService.runQuery(
       ds.config as DataSourceConfigT,
@@ -68,9 +70,7 @@ export class DataQueriesController {
   }
 
   @Get()
-  async getAppQueries(
-    @Param('appId', ParseIntPipe) appId: number,
-  ): Promise<QueryDto[]> {
+  async getAppQueries(@Param('appId', ParseIntPipe) appId: number) {
     return await this.dataQueriesService.getAppQueries(appId);
   }
 
