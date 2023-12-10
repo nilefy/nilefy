@@ -5,16 +5,18 @@ import {
   BaseControlProps,
   InspectorCheckboxProps,
 } from '@webloom/configpaneltypes';
+import { useContext } from 'react';
+import { FormControlContext } from '..';
 
 const InspectorCheckBox = (
-  props: InspectorCheckboxProps &
-    BaseControlProps & { onChange: (newValue: unknown) => void },
+  props: InspectorCheckboxProps & BaseControlProps,
 ) => {
+  const { onChange } = useContext(FormControlContext);
   return (
     <div className="flex flex-row gap-2">
       <Checkbox
         checked={props.value as boolean}
-        onCheckedChange={(checked) => props.onChange(checked)}
+        onCheckedChange={(checked) => onChange(checked)}
       />
       <Label>{props.label}</Label>
     </div>

@@ -12,7 +12,7 @@ function InsertTab() {
   return (
     <TabsContent value="insert">
       <div className="grid w-full  grid-cols-2 gap-2">
-        {Object.entries(WebloomWidgets).map(([name, component]) => {
+        {Object.entries(WebloomWidgets).map(([name]) => {
           const config =
             WebloomWidgets[name as keyof typeof WebloomWidgets].config;
           return (
@@ -34,24 +34,24 @@ function InsertTab() {
 }
 
 function InspectTab() {
-  const selectedIds = store((state) => state.selectedNodeIds);
+  const selectedIdsSize = store((state) => state.selectedNodeIds.size);
 
-  if (selectedIds.size === 0) {
+  if (selectedIdsSize === 0) {
     return (
       <TabsContent value="inspect">
         <p>please select item to inspect</p>
       </TabsContent>
     );
-  } else if (selectedIds.size === 1) {
+  } else if (selectedIdsSize === 1) {
     return (
       <TabsContent value="inspect">
         <ConfigPanel />
       </TabsContent>
     );
-  } else if (selectedIds.size > 1) {
+  } else if (selectedIdsSize > 1) {
     return (
       <TabsContent value="inspect">
-        <p> {selectedIds.size} components selected</p>
+        <p> {selectedIdsSize} components selected</p>
         <Button
           variant={'destructive'}
           onClick={() => commandManager.executeCommand(new DeleteAction())}
@@ -68,7 +68,7 @@ type RightSidebarTabs = 'insert' | 'inspect' | 'page';
 export function RightSidebar() {
   // i need it to be controlled so i can change it when the selected items count change
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
-  const { size } = store((state) => state.selectedNodeIds);
+  const size = store((state) => state.selectedNodeIds.size);
 
   useEffect(() => {
     if (size > 0) setOpenedTab('inspect');

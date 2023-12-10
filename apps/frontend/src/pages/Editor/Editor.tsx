@@ -358,7 +358,6 @@ export function Editor() {
           autoScroll={{ layoutShiftCompensation: false }}
         >
           <PanelGroup direction="horizontal">
-            <CustomPanelResizeHandle />
             <Panel
               defaultSizePercentage={70}
               minSizePercentage={50}

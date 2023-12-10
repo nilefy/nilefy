@@ -34,6 +34,7 @@ type FormControlOptions = {
   };
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
+  inlineCodeInput: InlineCodeInputProps
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -53,6 +54,11 @@ type WidgetInspectorConfig<TProps> = {
 
 type InspectorFormControls = keyof FormControlOptions;
 
+ type InlineCodeInputProps = {
+  label: string;
+  placeholder?: string;
+  value?: string;
+};
 export type {
   BaseControlProps,
   InspectorInputProps,
@@ -61,4 +67,5 @@ export type {
   InspectorCheckboxProps,
   WidgetInspectorConfig,
   InspectorFormControls,
+  InlineCodeInputProps ,
 };

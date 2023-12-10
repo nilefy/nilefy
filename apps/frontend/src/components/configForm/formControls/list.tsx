@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
   FormItem,
   FormLabel,
@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Grip, MoreVertical } from 'lucide-react';
 import { WebLoomTableColumn } from '@/pages/Editor/Components/WebloomWidgets/Table/index';
+import { FormControlContext } from '..';
 
 const columnsTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 // export type columnsTypes = typeof columnsTypes;
@@ -199,10 +200,9 @@ function ColumnDialog({
   );
 }
 
-const InspectorList = (
-  props: InspectorListProps &
-    BaseControlProps & { onChange: (newValue: unknown) => void },
-) => {
+const InspectorList = (props: InspectorListProps & BaseControlProps) => {
+  const { onChange } = useContext(FormControlContext);
+
   const [isCreateColumnDialogOpen, setIsCreateColumDialogOpen] =
     useState(false);
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false);
@@ -274,7 +274,7 @@ const InspectorList = (
       </div>
       <ColumnDialog
         columns={props.value ?? []}
-        onChange={props.onChange}
+        onChange={onChange}
         open={isCreateColumnDialogOpen}
         onOpen={(value) => setIsCreateColumDialogOpen(value)}
         create={true}
@@ -282,7 +282,7 @@ const InspectorList = (
       {isEditColumnDialogOpen && (
         <ColumnDialog
           columns={props.value ?? []}
-          onChange={props.onChange}
+          onChange={onChange}
           initialValues={editableColumn}
           open={isEditColumnDialogOpen}
           onOpen={(value) => setIsEditColumnDialogOpen(value)}
@@ -300,14 +300,14 @@ const InspectorList = (
 
       if (oldIndex !== -1 && newIndex !== -1) {
         // Update the state with the new order of columns
-        props.onChange(arrayMove(props.value, oldIndex, newIndex));
+        onChange(arrayMove(props.value, oldIndex, newIndex));
       }
     }
   }
 
   function handleRemove(id: string) {
     const newCols = props.value?.filter((col) => col.id !== id);
-    props.onChange(newCols);
+    onChange(newCols);
   }
 };
 export { InspectorList };

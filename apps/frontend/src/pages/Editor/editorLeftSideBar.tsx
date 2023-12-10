@@ -11,19 +11,27 @@ export function EditorLeftSidebar() {
   const { mutate } = useSignOut();
 
   return (
-    <div className="flex h-full w-max flex-col gap-5 p-3">
-      <NavLink to={`/${workspaceId}`}>
+    <div className="flex h-full w-max flex-col gap-5 p-2">
+      <NavLink
+        to={`/${workspaceId}`}
+        className="flex items-center justify-center"
+      >
         <Wind size={30} />
       </NavLink>
       {/*paths*/}
-      <div className=" flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Inspector />
         <PageSelector />
       </div>
-      <div className="mt-auto flex flex-col gap-4">
+      <div className="mt-auto flex items-center justify-center">
         <ModeToggle />
       </div>
-      <Button variant={'ghost'} size={'icon'} onClick={() => mutate()}>
+      <Button
+        variant={'ghost'}
+        size={'icon'}
+        onClick={() => mutate()}
+        className="flex items-center justify-center"
+      >
         <LogOut />
       </Button>
     </div>

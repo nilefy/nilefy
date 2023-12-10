@@ -22,7 +22,7 @@ export class DeleteAction implements UndoableCommand {
     const selectedIds = getSelectedNodeIds();
     setSelectedNodeIds(() => new Set());
     for (const id of selectedIds) {
-      removeNode(id, this.nodes);
+      this.nodes = [...this.nodes, ...removeNode(id)];
     }
     return {
       event: 'delete' as const,

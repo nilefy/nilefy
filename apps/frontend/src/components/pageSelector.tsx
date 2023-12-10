@@ -69,10 +69,10 @@ export function PageSelector() {
       }}
       modal={false}
     >
-      <SheetTrigger>
+      <SheetTrigger className="flex items-center justify-center">
         <BookOpenText className="h-8 w-8 rotate-0 scale-100 cursor-pointer transition-all" />
       </SheetTrigger>
-      <SheetContent side={'left'} className="left-16">
+      <SheetContent side={'left'} className="left-14">
         <SheetHeader>
           <SheetTitle>Pages</SheetTitle>
           <div className="flex flex-row justify-end ">

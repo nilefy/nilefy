@@ -19,10 +19,10 @@ export function Inspector() {
       onOpenChange={setOpen}
       modal={false}
     >
-      <SheetTrigger>
+      <SheetTrigger className="flex items-center justify-center">
         <MousePointer2 className="h-8 w-8 rotate-0 scale-100 cursor-pointer transition-all" />
       </SheetTrigger>
-      <SheetContent side={'left'} className="left-16">
+      <SheetContent side={'left'} className="left-14">
         <SheetHeader>
           <SheetTitle>Inspector</SheetTitle>
           <div className="absolute right-3">

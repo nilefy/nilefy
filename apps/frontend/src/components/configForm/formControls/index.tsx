@@ -3,6 +3,7 @@ import { InspectorSelect } from './select';
 import { SqlEditor } from './sqlEditor';
 import { InspectorList } from './list';
 import { InspectorCheckBox } from './checkbox';
+import { InlineCodeInput } from './inlineCodeInput';
 
 export const InspectorFormControls = {
   input: InspectorInput,
@@ -10,4 +11,5 @@ export const InspectorFormControls = {
   sqlEditor: SqlEditor,
   list: InspectorList,
   checkbox: InspectorCheckBox,
+  inlineCodeInput: InlineCodeInput,
 } as const;
