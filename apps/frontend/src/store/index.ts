@@ -79,6 +79,11 @@ interface WebloomActions {
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  setWidgetMeta<T extends keyof WebloomNode>(
+    id: string,
+    metaKey: T,
+    value: unknown,
+  ): void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
@@ -343,6 +348,20 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
+    },
+    setWidgetMeta(id, key, value) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            [key]: value,
+          },
+        };
+        return { tree: newTree };
+      });
     },
 
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {

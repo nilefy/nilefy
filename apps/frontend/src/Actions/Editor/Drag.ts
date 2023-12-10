@@ -6,17 +6,8 @@ import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
-import { RefAttributes } from 'react';
 import { getNewWidgetName } from '@/store/widgetName';
 
-function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
 const {
   moveNodeIntoGrid,
   moveNode,
