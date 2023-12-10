@@ -7,6 +7,7 @@ import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
 import { RefAttributes } from 'react';
+import { getNewWidgetName } from '@/store/widgetName';
 
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
@@ -233,6 +234,7 @@ class DragAction {
     removeNode(this.previewId, false);
     if (isNew) {
       newNode.id = id;
+      newNode.name = getNewWidgetName(newNode.type);
       command = {
         execute: () => {
           addNode(newNode, newNode.parent!);
