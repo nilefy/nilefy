@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SortableItem } from './SortableItem';
+import { SortableItem } from '@/components/sortableItem';
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
@@ -47,8 +47,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical } from 'lucide-react';
-import { WebLoomTableColumn } from '../../WebloomWidgets/Table';
+import { Grip, MoreVertical } from 'lucide-react';
+import { WebLoomTableColumn } from '@/pages/Editor/Components/WebloomWidgets/Table/index';
 
 const columnsTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 // export type columnsTypes = typeof columnsTypes;
@@ -243,15 +243,10 @@ const InspectorList = (
                 className="w-full"
                 onClick={() => handleColumnClick(item)}
               >
-                <div>
-                  <SortableItem
-                    key={item.id}
-                    id={item.id}
-                    label={item.header}
-                    data={item.header}
-                    className="basis-3"
-                  />
-                </div>
+                <SortableItem key={item.id} id={item.id}>
+                  <Grip size={15} />
+                  <p>{item.header}</p>
+                </SortableItem>
               </button>
               <div className="basis-1">
                 <DropdownMenu>
