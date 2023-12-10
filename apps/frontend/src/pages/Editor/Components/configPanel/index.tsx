@@ -1,26 +1,80 @@
 import store from '@/store';
-import { WebloomWidgets } from '..';
-import { commandManager } from '@/actions/commandManager';
-import { ChangePropAction } from '@/Actions/Editor/changeProps';
-import { ConfigForm, ConfigFormGenricOnChange } from '@/components/configForm';
-
+import { WebloomWidgets, WidgetTypes } from '..';
+import { InspectorFormControls } from '@/components/configForm/formControls';
+import { FormControlContext, FormSectionView } from '@/components/configForm';
+import { useCallback, useMemo } from 'react';
+import { commandManager } from '@/Actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
 export const ConfigPanel = () => {
-  const selected = store((state) => state.selectedNodeIds);
-  const selectedId = [...selected][0];
+  const selectedId = store((state) => {
+    const selectedIds = [...state.selectedNodeIds];
+    return selectedIds[0];
+  });
   const selectedNode = store.getState().tree[selectedId];
-  const selectedNodeProps = store((state) => state.tree[selectedId].props);
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
-  const onChange: ConfigFormGenricOnChange = (key, newValue) => {
-    commandManager.executeCommand(
-      new ChangePropAction(selectedId, key, newValue),
+  return inspectorConfig.map((section) => {
+    return (
+      <InspectorSection
+        key={section.sectionName}
+        section={section}
+        selectedId={selectedId}
+      />
     );
-  };
+  });
+};
+
+const InspectorSection = (props: {
+  section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
+  selectedId: string;
+}) => {
+  const { section, selectedId } = props;
   return (
-    <ConfigForm
-      config={inspectorConfig}
-      itemProps={selectedNodeProps}
-      onChange={onChange}
-    />
+    <FormSectionView sectionName={section.sectionName}>
+      {section.children.map((control) => {
+        return (
+          <FormControl
+            key={control.id}
+            control={control}
+            selectedId={selectedId}
+          />
+        );
+      })}
+    </FormSectionView>
+  );
+};
+
+const FormControl = (props: {
+  control: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number]['children'][number];
+  selectedId: string;
+}) => {
+  const { control, selectedId } = props;
+  const Component = InspectorFormControls[control.type];
+  const prop = store((state) => state.tree[selectedId].props[control.key]);
+  const options = useMemo(
+    () => ({
+      ...control,
+      ...control.options,
+      value: prop,
+    }),
+    [control, prop],
+  );
+  const onChange = useCallback(
+    (newValue: unknown) => {
+      commandManager.executeCommand(
+        new ChangePropAction(selectedId, control.key, newValue),
+      );
+    },
+    [control.key, selectedId],
+  );
+  const contextValue = useMemo(() => ({ onChange }), [onChange]);
+  return (
+    <FormControlContext.Provider value={contextValue}>
+      {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        <Component {...options} key={control.id} />
+      }
+    </FormControlContext.Provider>
   );
 };

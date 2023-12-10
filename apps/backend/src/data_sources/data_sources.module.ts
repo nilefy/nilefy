@@ -5,7 +5,8 @@ import { GlobalDataSourcesController } from './global_data_sources.controller';
 import { GlobalDataSourcesService } from './global_data_sources.service';
 
 @Module({
-  controllers: [DataSourcesController, GlobalDataSourcesController],
   providers: [DataSourcesService, GlobalDataSourcesService],
+  controllers: [DataSourcesController, GlobalDataSourcesController],
+  exports: [DataSourcesService],
 })
 export class DataSourcesModule {}

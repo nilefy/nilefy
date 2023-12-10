@@ -3,8 +3,8 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 type BaseControlProps = {
   id: string;
   label: string;
-  defaultValue?: string | number;
-  value?: string | number;
+  defaultValue?: string | number | boolean;
+  value?: string | number | boolean;
 };
 
 // each widget props
@@ -24,6 +24,13 @@ type InspectorEvents = {
   
 };
 
+type InspectorListProps = {
+  value?: any[];
+};
+
+type InspectorCheckboxProps = {
+//  label: string; 
+};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -34,6 +41,9 @@ type FormControlOptions = {
     value?: string;
     placeholder?: string;
   };
+  list: InspectorListProps;
+  checkbox: InspectorCheckboxProps;
+  inlineCodeInput: InlineCodeInputProps
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -53,12 +63,18 @@ type WidgetInspectorConfig<TProps> = {
 
 type InspectorFormControls = keyof FormControlOptions;
 
+ type InlineCodeInputProps = {
+  label: string;
+  placeholder?: string;
+  value?: string;
+};
 export type {
   BaseControlProps,
   InspectorInputProps,
   InspectorSelectProps,
+  InspectorListProps,
+  InspectorCheckboxProps,
   WidgetInspectorConfig,
   InspectorFormControls,
-  InspectorColorProps,
-  InspectorEvents,
+  InlineCodeInputProps ,
 };

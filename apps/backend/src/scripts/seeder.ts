@@ -23,7 +23,6 @@ async function main() {
   const [adminId, ...rest] = userIds;
   await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);
   await appSeeder(db, userIds, workspaceIds);
-  // await datasourcesSeeder(db);
 
   await dataSourcesSeeder(db);
 

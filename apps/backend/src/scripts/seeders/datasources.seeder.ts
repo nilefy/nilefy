@@ -104,6 +104,7 @@ function generateFakeDataSource(): Omit<DataSourceDto, 'id'> {
       faker.commerce.productDescription(),
       null,
     ]),
+    queryConfig: [],
   };
 }
 

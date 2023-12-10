@@ -3,10 +3,11 @@ import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
   UpdateWsDataSourceDto,
+  WsDataSourceP,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DataSourcesService {
@@ -31,13 +32,14 @@ export class DataSourcesService {
       where: and(
         eq(workspaceDataSources.workspaceId, workspaceId),
         eq(workspaceDataSources.dataSourceId, dataSourceId),
-        isNull(workspaceDataSources.deletedAt),
       ),
     });
     return ds as WsDataSourceDto[];
   }
 
-  async getWsDataSources(workspaceId: WsDataSourceDto['workspaceId']) {
+  async getWsDataSources(
+    workspaceId: WsDataSourceDto['workspaceId'],
+  ): Promise<WsDataSourceP[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
       columns: {
         id: true,
@@ -53,10 +55,7 @@ export class DataSourcesService {
           },
         },
       },
-      where: and(
-        eq(workspaceDataSources.workspaceId, workspaceId),
-        isNull(workspaceDataSources.deletedAt),
-      ),
+      where: eq(workspaceDataSources.workspaceId, workspaceId),
     });
     return ds;
   }
@@ -64,7 +63,7 @@ export class DataSourcesService {
   async getOne(
     workspaceId: WsDataSourceDto['workspaceId'],
     datasourceId: WsDataSourceDto['id'],
-  ) {
+  ): Promise<WsDataSourceP> {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
         id: true,
@@ -85,27 +84,23 @@ export class DataSourcesService {
       where: and(
         eq(workspaceDataSources.workspaceId, workspaceId),
         eq(workspaceDataSources.id, datasourceId),
-        isNull(workspaceDataSources.deletedAt),
       ),
     });
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    return ds;
+    return ds as WsDataSourceP;
   }
 
   async deleteConnections({
-    deletedById,
     workspaceId,
     dataSourceId,
   }: {
-    deletedById: WsDataSourceDto['deletedById'];
     workspaceId: WsDataSourceDto['workspaceId'];
     dataSourceId: WsDataSourceDto['dataSourceId'];
   }): Promise<WsDataSourceDto[]> {
     const ds = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
+      .delete(workspaceDataSources)
       .where(
         and(
           eq(workspaceDataSources.workspaceId, workspaceId),
@@ -116,22 +111,16 @@ export class DataSourcesService {
     return ds as WsDataSourceDto[];
   }
 
-  async deleteOne({
-    deletedById,
-    dataSourceId,
-    workspaceId,
-  }: {
-    workspaceId: WsDataSourceDto['workspaceId'];
-    deletedById: WsDataSourceDto['deletedById'];
-    dataSourceId: WsDataSourceDto['id'];
-  }): Promise<WsDataSourceDto> {
+  async deleteOne(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    dataSourceId: WsDataSourceDto['id'],
+  ): Promise<WsDataSourceDto> {
     const [ds] = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
+      .delete(workspaceDataSources)
       .where(
         and(
-          eq(workspaceDataSources.workspaceId, workspaceId),
           eq(workspaceDataSources.id, dataSourceId),
+          eq(workspaceDataSources.workspaceId, workspaceId),
         ),
       )
       .returning();
@@ -140,8 +129,8 @@ export class DataSourcesService {
 
   async update(
     {
-      dataSourceId,
       workspaceId,
+      dataSourceId,
       updatedById,
     }: {
       dataSourceId: WsDataSourceDto['id'];
@@ -149,7 +138,7 @@ export class DataSourcesService {
       updatedById: WsDataSourceDto['updatedById'];
     },
     dataSourceDto: UpdateWsDataSourceDto,
-  ) {
+  ): Promise<WsDataSourceDto> {
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
@@ -157,11 +146,10 @@ export class DataSourcesService {
         and(
           eq(workspaceDataSources.workspaceId, workspaceId),
           eq(workspaceDataSources.id, dataSourceId),
-          isNull(workspaceDataSources.deletedAt),
         ),
       )
       .returning();
     if (!ds) throw new NotFoundException();
-    return ds;
+    return ds as WsDataSourceDto;
   }
 }

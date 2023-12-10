@@ -25,6 +25,9 @@ export type WsDataSourceDto = z.infer<typeof workspaceDataSourcesSelect>;
 export type CreateWsDataSourceDb = z.infer<typeof workspaceDataSourcesInsert>;
 export type CreateWsDataSourceDto = z.infer<typeof createWsDataSourceSchema>;
 export type UpdateWsDataSourceDto = z.infer<typeof updateWsDataSourceSchema>;
+export type WsDataSourceP = Partial<WsDataSourceDto> & {
+  dataSource: DataSourceP;
+};
 
 export type DataSourceDto = z.infer<typeof dataSourceSelect>;
 export type DataSourceDb = z.infer<typeof dataSourcesInsert>;

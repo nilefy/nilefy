@@ -70,9 +70,8 @@ export class DataQueriesController {
   @Get()
   async getAppQueries(
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
   ): Promise<QueryDto[]> {
-    return await this.dataQueriesService.getAppQueries(dataSourceId, appId);
+    return await this.dataQueriesService.getAppQueries(appId);
   }
 
   @Get(':id')
@@ -85,9 +84,15 @@ export class DataQueriesController {
   @Delete(':id')
   async deleteQuery(
     @Param('id', ParseIntPipe) queryId: number,
-    @Req() req: ExpressAuthedRequest,
   ): Promise<QueryDto> {
-    return await this.dataQueriesService.deleteQuery(queryId, req.user.userId);
+    return await this.dataQueriesService.deleteQuery(queryId);
+  }
+
+  @Delete()
+  async deleteDataSourceQueries(
+    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+  ): Promise<QueryDto[]> {
+    return await this.dataQueriesService.deleteDataSourceQueries(dataSourceId);
   }
 
   @Put(':id')

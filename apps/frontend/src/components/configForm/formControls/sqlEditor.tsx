@@ -1,18 +1,18 @@
 import { BaseControlProps } from '@webloom/configpaneltypes';
 import { basicSetup } from 'codemirror';
 import { EditorView } from '@codemirror/view';
-import { useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
 import { EditorState } from '@codemirror/state';
+import { FormControlContext } from '..';
 
 const SqlEditor = ({
   value,
   id,
-  onChange,
 }: BaseControlProps & {
   value?: string;
-  onChange: (newValue: string) => void;
 }) => {
+  const { onChange } = useContext(FormControlContext);
   const editor = useRef<HTMLDivElement>(null);
   // add extenion to update the state when the view changes
   const onUpdate = EditorView.updateListener.of((update) => {

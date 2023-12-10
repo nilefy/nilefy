@@ -8,14 +8,7 @@ import {
   varchar,
   unique,
 } from 'drizzle-orm/pg-core';
-import {
-  workspaces,
-  users,
-  timeStamps,
-  softDelete,
-  apps,
-  whoToBlame,
-} from './schema';
+import { workspaces, users, timeStamps, apps } from './schema';
 
 export const dataSourcesEnum = pgEnum('data_sources_enum', [
   'database',
@@ -31,6 +24,9 @@ export const dataSources = pgTable('data_sources', {
   description: varchar('description', { length: 255 }),
   image: varchar('image_url'),
   config: json('config')
+    .default(sql`'{}'::json`)
+    .notNull(),
+  queryConfig: json('query_config')
     .default(sql`'{}'::json`)
     .notNull(),
 });
@@ -50,12 +46,10 @@ export const workspaceDataSources = pgTable(
       .default(sql`'{}'::json`)
       .notNull(),
     ...timeStamps,
-    ...softDelete,
     createdById: integer('created_by_id')
       .references(() => users.id)
       .notNull(),
     updatedById: integer('updated_by_id').references(() => users.id),
-    deletedById: integer('deleted_by_id').references(() => users.id),
   },
   (t) => {
     return {
@@ -72,9 +66,11 @@ export const queries = pgTable('workspace_app_queries', {
     .references(() => apps.id)
     .notNull(),
   dataSourceId: integer('data_source_id')
-    .references(() => workspaceDataSources.id)
+    .references(() => workspaceDataSources.id, { onDelete: 'cascade' })
     .notNull(),
-  ...whoToBlame,
+  createdById: integer('created_by_id')
+    .references(() => users.id)
+    .notNull(),
+  updatedById: integer('updated_by_id').references(() => users.id),
   ...timeStamps,
-  ...softDelete,
 });

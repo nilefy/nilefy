@@ -50,14 +50,16 @@ const rolePermissionsInRoleRelation = 'rolepermissionsInRole';
 // apps
 const pagesToappsRelation = 'pagesinapp';
 
+// data sources/queries
 const dataSourceWorkspaceRelation = 'dataSource';
 const workspaceDataSourcesRelation = 'workspaceDataSources';
 const userDataSourceRelation = 'userDataSource';
 const userUpdateDataSourceRelation = 'lastUpdatedDataSource';
-const userDeleteDataSourceRelation = 'lastDeletedDataSource';
 const userQueriesRelation = 'userQueries';
+const userUpdateQueryRelation = 'lastUpdatedQuery';
 const appQueriesRelation = 'appQueries';
 const wsDataSourceQueriesRelation = 'dataSourceQueriesRelation';
+
 const componentsToPageRelation = 'componentsToPage';
 const componentParentRelation = 'componentParent';
 
@@ -66,58 +68,54 @@ export const usersRelations = relations(users, ({ many }) => {
     lastUpdatedWorkspaces: many(workspaces, {
       relationName: userUpdateWorkspaceRelation,
     }),
-    DeletedWorkspaces: many(workspaces, {
-      relationName: userDeleteWorkspaceRelation,
-    }),
     lastUpdatedApps: many(apps, {
       relationName: userUpdateAppRelation,
+    }),
+    lastUpdatedDataSources: many(workspaceDataSources, {
+      relationName: userUpdateDataSourceRelation,
+    }),
+    lastUpdatedQueries: many(queries, {
+      relationName: userUpdateQueryRelation,
     }),
     DeletedApps: many(apps, {
       relationName: userDeleteAppRelation,
     }),
+    lastDeletedWorkspaces: many(workspaces, {
+      relationName: userDeleteWorkspaceRelation,
+    }),
+
     /**
-     * workspaces user created/own
+     * user created/own
      */
-    ownedWorkspaces: many(workspaces, { relationName: userWorkspaceRelation }),
+    ownedWorkspaces: many(workspaces, {
+      relationName: userWorkspaceRelation,
+    }),
+    apps: many(apps, {
+      relationName: userAppRelation,
+    }),
+    webloomTables: many(webloomTables, {
+      relationName: userWebloomTablesRelation,
+    }),
+    dataSources: many(workspaceDataSources, {
+      relationName: userDataSourceRelation,
+    }),
+    queries: many(queries, {
+      relationName: userQueriesRelation,
+    }),
+
     /**
      * workspaces user is in
      */
     workspaces: many(usersToWorkspaces, {
       relationName: userUserInWorkspacesRelation,
     }),
-    /**
-     * Apps user created/own
-     */
-    apps: many(apps, { relationName: userAppRelation }),
-    /**
-     * webloom tables user created/own
-     */
-    webloomTables: many(webloomTables, {
-      relationName: userWebloomTablesRelation,
-    }),
-    // usersToGroups: many(usersToGroups, {
-    //   relationName: userUsersInGroupRelation,
-    // }),
+
     // roles
     usersToRoles: many(usersToRoles, { relationName: userUsersInRoleRelation }),
 
-    lastDeletedWorkspaces: many(workspaces, {
-      relationName: userDeleteWorkspaceRelation,
-    }),
-    lastUpdatedDataSources: many(workspaceDataSources, {
-      relationName: userUpdateDataSourceRelation,
-    }),
-    lastDeletedDataSources: many(workspaceDataSources, {
-      relationName: userDeleteDataSourceRelation,
-    }),
-    // data sources user created
-    dataSources: many(workspaceDataSources, {
-      relationName: userDataSourceRelation,
-    }),
-    // queries user created
-    queries: many(queries, {
-      relationName: userQueriesRelation,
-    }),
+    // usersToGroups: many(usersToGroups, {
+    //   relationName: userUsersInGroupRelation,
+    // }),
   };
 });
 
@@ -220,6 +218,11 @@ export const queriesRelations = relations(queries, ({ one }) => ({
     references: [users.id],
     relationName: userQueriesRelation,
   }),
+  updatedBy: one(users, {
+    fields: [queries.updatedById],
+    references: [users.id],
+    relationName: userUpdateQueryRelation,
+  }),
   app: one(apps, {
     fields: [queries.appId],
     references: [apps.id],
@@ -244,11 +247,6 @@ export const workspaceDataSourcesRelations = relations(
       fields: [workspaceDataSources.updatedById],
       references: [users.id],
       relationName: userUpdateDataSourceRelation,
-    }),
-    deletedBy: one(users, {
-      fields: [workspaceDataSources.deletedById],
-      references: [users.id],
-      relationName: userDeleteDataSourceRelation,
     }),
     workspace: one(workspaces, {
       fields: [workspaceDataSources.workspaceId],
