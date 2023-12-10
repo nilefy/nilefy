@@ -30,6 +30,8 @@ import {
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ConfigForm } from './configForm';
+import { api } from '@/api';
+import { GlobalDataSourceI, WsDataSourceI } from '@/api/dataSources.api';
 
 type Query = {
   id: string;
@@ -49,7 +51,10 @@ const _dataSources = [
     type: 'Source B',
   },
 ] as const;
-type DataSourceTypes = (typeof _dataSources)[number]['type'];
+type DataSourceTypes = (Pick<WsDataSourceI, 'id' | 'name' | 'workspaceId'> & {
+  dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
+})[];
+// type DataSourceTypes = (typeof _dataSources)[number]['type'];
 export function QueryPanel() {
   //todo: temp until backend is finished
   const [queries, setQueries] = useState<Array<Query>>(() => [
@@ -74,9 +79,7 @@ export function QueryPanel() {
   ]);
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
-  const [dataSources] = useState(_dataSources);
-  const [dataLocalSources, setLocalDataSources] = useState({});
-  const [globalDataSources, setGlobalDataSources] = useState<dataSource>();
+  const [dataSources, setDataSources] = useState(_dataSources);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
@@ -89,51 +92,13 @@ export function QueryPanel() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId } = useParams();
   console.log(workspaceId);
-
-  const {
-    isLoading: globalLoading,
-    isError: globalError,
-    data: globalData,
-    error: globalQueryError,
-  } = useQuery({
-    queryKey: ['globalDataSorces'],
-    queryFn: getGlobalDataSources,
-  });
-  const {
-    isLoading: dataLoading,
-    isError: dataError,
-    data: data,
-    error: dataQueryError,
-  } = useQuery({
-    queryKey: ['dataSorces', workspaceId],
-    queryFn: () => getDataSources({ workspaceId }),
-  });
-  useEffect(() => {
-    if (!globalLoading && globalData) {
-      setGlobalDataSources(globalData);
-      console.log(globalDataSources);
-    }
-    if (!dataLoading && data) {
-      setLocalDataSources(data);
-      console.log(data);
-    }
-  }, [globalLoading, globalData, dataLoading, data]);
-  // const {
-  //  isLoading, isError, data, error
-  // } = useQuery(queryKey:['dataSorces'], queryFn:getDataSources({ workspaceId }));
-  // setDataSources(data);
-  // console.log(data);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (workspaceId) {
-  //       console.log(await getDataSources({ workspaceId }), 'blabla');
-  //     }
-  //     console.log(globalDataSources);
-  //   };
-  //   fetchData();
-  // }, [workspaceId]);
-
+  const { isPending, isError, error, data } = api.dataSources1.index.useQuery(
+    +(workspaceId as string),
+  );
+  if (data) {
+    //setDataSources(data);
+    console.log(data);
+  }
   const handleDataSourceSearchChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -237,10 +202,13 @@ export function QueryPanel() {
     sortQueries,
   ]);
   const dataSourcesToShow = useMemo(() => {
+    if (!dataSources) {
+      return; // Provide a default value when dataSources is undefined
+    }
     return matchSorter(dataSources, dataSourceSearch, {
       keys: ['name', 'type'],
     });
-  }, [globalDataSources, dataSourceSearch]);
+  }, [dataSources, dataSourceSearch]);
   return (
     <div className="h-full w-full">
       <div className="h-1 w-full "></div>

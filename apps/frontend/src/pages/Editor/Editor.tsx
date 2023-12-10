@@ -51,6 +51,7 @@ import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
+import { QueryPanel } from '@/components/queryPanel';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -423,7 +424,7 @@ export function Editor() {
                   defaultSizePercentage={10}
                   collapsible
                 >
-                  <div className="h-full w-full border-t-2 bg-red-100"></div>
+                  <QueryPanel />
                 </Panel>
               </PanelGroup>
             </Panel>

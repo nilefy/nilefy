@@ -283,7 +283,7 @@ export const globalDataSources = {
   one: { useQuery: useGlobalDataSource },
   insert: { useMutation: useAddGlobalDataSource },
 };
-export const dataSources = {
+export const dataSources1 = {
   index: { useQuery: useDataSources },
   one: { useQuery: useDataSource },
   sameConnection: { useQuery: useDataSourcesSameConnection },
