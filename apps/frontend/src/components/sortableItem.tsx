@@ -1,10 +1,16 @@
+import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Grip } from 'lucide-react';
 
-export function SortableItem(props) {
+function SortableItem({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: props.id });
+    useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -15,12 +21,13 @@ export function SortableItem(props) {
     <div
       ref={setNodeRef}
       style={style}
+      className="flex items-center gap-5"
       {...attributes}
       {...listeners}
-      className="flex flex-row"
     >
-      <Grip size={15} className="mr-[15px] mt-[5px]" />
-      {props.data}
+      {children}
     </div>
   );
 }
+
+export { SortableItem };
