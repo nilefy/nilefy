@@ -321,7 +321,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
       <h2 className="ml-2 text-3xl">Data Sources</h2>
       {/** plugins filter*/}
       <ScrollArea className="h-full">
