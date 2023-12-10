@@ -50,6 +50,7 @@ import { JwtPayload } from '@/types/auth.types';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
+import { EditorLeftSidebar } from './editorLeftSidebar';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -341,96 +342,100 @@ export function Editor() {
   }, [draggedNode]);
 
   return (
-    <div className="isolate flex h-full max-h-full w-full bg-transparent">
-      {/*sidebar*/}
-      <DndContext
-        collisionDetection={pointerWithin}
-        sensors={sensors}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragMove={handleDragMove}
-        onDragCancel={handleCancel}
-        autoScroll={{ layoutShiftCompensation: false }}
-      >
-        <PanelGroup direction="horizontal">
-          <Panel maxSizePercentage={25} minSizePercentage={10}>
-            <div className="h-full w-full"></div>
-          </Panel>
-          <CustomPanelResizeHandle />
-          <Panel
-            defaultSizePercentage={70}
-            minSizePercentage={50}
-            onResize={(sizes) => {
-              throttledResizeCanvas(sizes.sizePixels);
-            }}
-          >
-            <PanelGroup direction="vertical">
-              <Panel defaultSizePercentage={90} minSizePercentage={25}>
-                <ScrollArea
-                  ref={editorRef}
-                  className="h-full w-full"
-                  scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
+    <>
+      <div className="isolate flex h-full max-h-full w-full bg-transparent">
+        <EditorLeftSidebar />
+        {/*sidebar*/}
+        <DndContext
+          key={'editor-dnd-context'}
+          id={'editor-dnd-context'}
+          collisionDetection={pointerWithin}
+          sensors={sensors}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragMove={handleDragMove}
+          onDragCancel={handleCancel}
+          autoScroll={{ layoutShiftCompensation: false }}
+        >
+          <PanelGroup direction="horizontal">
+            <CustomPanelResizeHandle />
+            <Panel
+              defaultSizePercentage={70}
+              minSizePercentage={50}
+              onResize={(sizes) => {
+                throttledResizeCanvas(sizes.sizePixels);
+              }}
+            >
+              <PanelGroup direction="vertical">
+                <Panel defaultSizePercentage={90} minSizePercentage={25}>
+                  <ScrollArea
+                    ref={editorRef}
+                    className="h-full w-full"
+                    scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
+                  >
+                    <WebloomElementShadow />
+                    <MultiSelectBounding />
+                    <WebloomRoot />
+                    <ResizeHandlers />
+                    <Selecto
+                      // The container to add a selection element
+                      container={editorRef.current}
+                      selectableTargets={['.target']}
+                      selectFromInside={true}
+                      selectByClick={false}
+                      hitRate={100}
+                      dragCondition={(e) => {
+                        const triggerTarget = e.inputEvent.target;
+                        const isRoot = triggerTarget.getAttribute('data-id');
+                        return isRoot === EDITOR_CONSTANTS.ROOT_NODE_ID;
+                      }}
+                      onSelect={(e) => {
+                        e.added.forEach((el) => {
+                          const data = el.getAttribute('data-id');
+                          if (data) {
+                            commandManager.executeCommand(
+                              new SelectionAction(data, true),
+                            );
+                          }
+                        });
+                        e.removed.forEach((el) => {
+                          const data = el.getAttribute('data-id');
+                          if (data) {
+                            store.getState().setSelectedNodeIds((prev) => {
+                              return new Set(
+                                [...prev].filter((i) => i !== data),
+                              );
+                            });
+                          }
+                        });
+                      }}
+                    />
+                    {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
+                    <DragOverlay
+                      key={'drag-overlay'}
+                      style={{ display: 'none' }}
+                      dropAnimation={{ duration: 0 }}
+                    />
+                  </ScrollArea>
+                </Panel>
+                <CustomPanelResizeHandle />
+                <Panel
+                  maxSizePercentage={75}
+                  defaultSizePercentage={10}
+                  collapsible
                 >
-                  <WebloomElementShadow />
-                  <MultiSelectBounding />
-                  <WebloomRoot />
-                  <ResizeHandlers />
-                  <Selecto
-                    // The container to add a selection element
-                    container={editorRef.current}
-                    selectableTargets={['.target']}
-                    selectFromInside={true}
-                    selectByClick={false}
-                    hitRate={100}
-                    dragCondition={(e) => {
-                      const triggerTarget = e.inputEvent.target;
-                      const isRoot = triggerTarget.getAttribute('data-id');
-                      return isRoot === EDITOR_CONSTANTS.ROOT_NODE_ID;
-                    }}
-                    onSelect={(e) => {
-                      e.added.forEach((el) => {
-                        const data = el.getAttribute('data-id');
-                        if (data) {
-                          commandManager.executeCommand(
-                            new SelectionAction(data, true),
-                          );
-                        }
-                      });
-                      e.removed.forEach((el) => {
-                        const data = el.getAttribute('data-id');
-                        if (data) {
-                          store.getState().setSelectedNodeIds((prev) => {
-                            return new Set([...prev].filter((i) => i !== data));
-                          });
-                        }
-                      });
-                    }}
-                  />
-                  {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
-                  <DragOverlay
-                    key={'drag-overlay'}
-                    style={{ display: 'none' }}
-                    dropAnimation={{ duration: 0 }}
-                  />
-                </ScrollArea>
-              </Panel>
-              <CustomPanelResizeHandle />
-              <Panel
-                maxSizePercentage={75}
-                defaultSizePercentage={10}
-                collapsible
-              >
-                <div className="h-full w-full border-t-2 bg-red-100"></div>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-          <CustomPanelResizeHandle />
-          <Panel maxSizePercentage={25} minSizePercentage={10}>
-            <RightSidebar />
-          </Panel>
-        </PanelGroup>
-      </DndContext>
-    </div>
+                  <div className="h-full w-full border-t-2 bg-red-100"></div>
+                </Panel>
+              </PanelGroup>
+            </Panel>
+            <CustomPanelResizeHandle />
+            <Panel maxSizePercentage={25} minSizePercentage={10}>
+              <RightSidebar />
+            </Panel>
+          </PanelGroup>
+        </DndContext>
+      </div>
+    </>
   );
 }
 
@@ -444,7 +449,6 @@ export function App() {
           const tree = a.defaultPage.tree;
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
-          console.log(tree);
           // depends on root be with the name 'ROOT'
           EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
             (c) => c.name === 'ROOT',
