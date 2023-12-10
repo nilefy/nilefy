@@ -50,18 +50,18 @@ export class DataSourcesController {
     });
   }
 
-  // @Get(':dataSourceId') // global data source id
-  // async getConnections(
-  //   @Param('workspaceId', ParseIntPipe)
-  //   workspaceId: WsDataSourceDto['workspaceId'],
-  //   @Param('dataSourceId', ParseIntPipe)
-  //   dataSourceId: WsDataSourceDto['dataSourceId'],
-  // ): Promise<WsDataSourceDto[]> {
-  //   return await this.dataSourceService.getConnections({
-  //     workspaceId,
-  //     dataSourceId,
-  //   });
-  // }
+  @Get(':dataSourceId/all') // global data source id
+  async getConnections(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WsDataSourceDto['workspaceId'],
+    @Param('dataSourceId', ParseIntPipe)
+    dataSourceId: WsDataSourceDto['dataSourceId'],
+  ): Promise<WsDataSourceDto[]> {
+    return await this.dataSourceService.getConnections({
+      workspaceId,
+      dataSourceId,
+    });
+  }
 
   @Get(':dataSourceId')
   async getOne(
@@ -69,7 +69,7 @@ export class DataSourcesController {
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
-  ) {
+  ): Promise<WsDataSourceP> {
     return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
@@ -81,7 +81,7 @@ export class DataSourcesController {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
-  @Delete(':dataSourceId') // global data source id
+  @Delete(':dataSourceId/all') // global data source id
   async deleteConnections(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
@@ -96,10 +96,12 @@ export class DataSourcesController {
 
   @Delete(':dataSourceId')
   async deleteOne(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
   ): Promise<WsDataSourceDto> {
-    return await this.dataSourceService.deleteOne(dataSourceId);
+    return await this.dataSourceService.deleteOne(workspaceId, dataSourceId);
   }
 
   @Put(':dataSourceId')
@@ -111,7 +113,7 @@ export class DataSourcesController {
     @Body(new ZodValidationPipe(updateWsDataSourceSchema))
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
-  ) {
+  ): Promise<WsDataSourceDto> {
     return this.dataSourceService.update(
       {
         workspaceId,
