@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-
 import { matchSorter } from 'match-sorter';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,85 +18,89 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, Copy } from 'lucide-react';
-import { nanoid } from 'nanoid';
 import { cn } from '@/lib/cn';
-import {
-  dataSource,
-  getDataSources,
-  getGlobalDataSources,
-} from '@/api/datasources';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { ConfigForm } from './configForm';
 import { api } from '@/api';
 import { GlobalDataSourceI, WsDataSourceI } from '@/api/dataSources.api';
 
 type Query = {
-  id: string;
+  id: number;
   name: string;
-  source: string;
-  dateModified: Date;
+  query: object;
+  dataSource: {
+    id: number;
+    name: string;
+    dataSource: {
+      queryConfig: [];
+      id: number;
+      type: string;
+      name: string;
+    };
+  };
 };
-const _dataSources = [
-  {
-    name: 'Data Source 1',
-    icon: 'https://picsum.photos/200',
-    type: 'Source A',
-  },
-  {
-    name: 'Data Source 2',
-    icon: 'https://picsum.photos/200',
-    type: 'Source B',
-  },
-] as const;
+
 type DataSourceTypes = (Pick<WsDataSourceI, 'id' | 'name' | 'workspaceId'> & {
   dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
 })[];
-// type DataSourceTypes = (typeof _dataSources)[number]['type'];
+
 export function QueryPanel() {
-  //todo: temp until backend is finished
-  const [queries, setQueries] = useState<Array<Query>>(() => [
-    {
-      id: nanoid(),
-      name: 'Item 1',
-      source: 'Source A',
-      dateModified: new Date('2023-01-01'),
-    },
-    {
-      id: nanoid(),
-      name: 'Item 2',
-      source: 'Source B',
-      dateModified: new Date('2023-01-02'),
-    },
-    {
-      id: nanoid(),
-      name: 'Item 4',
-      source: 'Source A',
-      dateModified: new Date('2023-01-03'),
-    },
-  ]);
+  const [queries, setQueries] = useState<Array<Query>>();
+  const [querieNumber, setQueryNumber] = useState(0);
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
-  const [dataSources, setDataSources] = useState(_dataSources);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [dataSources, setDataSources] = useState<DataSourceTypes>();
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
-  const [selectedSource, setSelectedSource] = useState<DataSourceTypes | 'all'>(
-    'all',
-  );
+  const [selectedSource, setSelectedSource] = useState('all');
   const [sortingCriteria, setSortingCriteria] = useState<
     'name' | 'source' | 'dateModified'
   >('name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
-  const { workspaceId } = useParams();
-  console.log(workspaceId);
-  const { isPending, isError, error, data } = api.dataSources1.index.useQuery(
+  const { workspaceId, appId } = useParams();
+
+  const { isPending, data } = api.dataSources.index.useQuery(
     +(workspaceId as string),
   );
-  if (data) {
-    //setDataSources(data);
-    console.log(data);
-  }
+  const {
+    isPending: queryPending,
+    data: queryData,
+    refetch: refetchQueries,
+  } = api.queries.index.useQuery(
+    +(workspaceId as string),
+    1,
+    +(appId as string),
+  );
+  const { mutate: addMutation } = api.queries.insert.useMutation({
+    onSuccess: () => {
+      refetchQueries();
+    },
+  });
+  const { mutate: deleteMutation } = api.queries.delete.useMutation({
+    onSuccess: () => {
+      refetchQueries();
+    },
+  });
+  const { mutate: updateMutation } = api.queries.update.useMutation({
+    onSuccess: () => {
+      refetchQueries();
+    },
+  });
+
+  useEffect(() => {
+    if (data && !isPending) {
+      setDataSources(data);
+      console.log(data);
+    }
+    if (queryData && !queryPending) {
+      setQueries(queryData);
+    }
+  }, [queryData, data, queryPending, isPending]);
+  const uniqueDataSourceTypes = Array.from(
+    new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
+  );
+
   const handleDataSourceSearchChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -106,51 +108,33 @@ export function QueryPanel() {
     setDataSourceSearch(query);
   };
 
-  const addItem = (newItem: {
-    id: string;
-    name: string;
-    source: string;
-    dateModified: Date;
-  }) => {
-    setQueries((prevData) => [...prevData, newItem]);
-  };
-
-  const deleteItem = (itemId: string) => {
-    setQueries((prevData) => prevData.filter((item) => item.id !== itemId));
-  };
-
-  const renameItem = (
-    item: { id: string; name: string; source: string; dateModified: Date },
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const renameItem = (item: Query, e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
-    setQueries((prevData) =>
-      prevData.map((prevItem) =>
-        prevItem.id === item.id
-          ? { ...prevItem, name: newName, dateModified: new Date() }
-          : prevItem,
-      ),
-    );
+    updateMutation({
+      workspaceId,
+      appId,
+      dataSourceId: item.dataSource.id,
+      id: item.id,
+      data: { name: newName, query: item.query },
+    });
   };
 
-  const duplicateItem = (item: {
-    id: string;
-    name: string;
-    source: string;
-    dateModified: Date;
-  }) => {
+  const duplicateItem = (item: Query) => {
     if (item) {
       const newItem = {
-        id: nanoid(),
         name: `Copy of ${item.name}`,
-        source: item.source,
-        dateModified: new Date(),
+        query: item.query,
       };
-      setQueries((prevData) => [...prevData, newItem]);
+      addMutation({
+        workspaceId,
+        appId,
+        dataSourceId: item.dataSource.id,
+        query: newItem,
+      });
     }
   };
 
-  const handleItemClick = (itemId: string) => {
+  const handleItemClick = (itemId: number) => {
     setSelectedItemId((prevSelectedItemId) =>
       prevSelectedItemId === itemId ? null : itemId,
     );
@@ -164,7 +148,7 @@ export function QueryPanel() {
     ) => {
       const sortedData = [...queries];
 
-      if (sortingCriteria === 'name' || sortingCriteria === 'source') {
+      if (sortingCriteria === 'name') {
         sortedData.sort((a, b) => {
           const aValue = a[sortingCriteria].toLowerCase();
           const bValue = b[sortingCriteria].toLowerCase();
@@ -172,27 +156,41 @@ export function QueryPanel() {
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
         });
-      } else if (sortingCriteria === 'dateModified') {
+      } else if (sortingCriteria === 'source') {
         sortedData.sort((a, b) => {
-          const aValue = a.dateModified.getTime();
-          const bValue = b.dateModified.getTime();
-          return sortingOrder === 'asc' ? aValue - bValue : bValue - aValue;
+          const aValue = a.dataSource.dataSource.type.toLowerCase();
+          const bValue = b.dataSource.dataSource.type.toLowerCase();
+          return sortingOrder === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
         });
       }
+      //  else if (sortingCriteria === 'dateModified') {
+      //   sortedData.sort((a, b) => {
+      //     const aValue = a.dateModified.getTime();
+      //     const bValue = b.dateModified.getTime();
+      //     return sortingOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      //   });
+      // }
       return sortedData;
     },
     [],
   );
 
   const queriesToShow = useMemo(() => {
-    const filtered = matchSorter(queries, querySearch, {
-      keys: ['name', 'source'],
-    }).filter((item) => {
-      if (selectedSource === 'all' || item.source === selectedSource) {
-        return item;
-      }
-    });
-    return sortQueries(filtered, sortingCriteria, sortingOrder);
+    if (queries && !queryPending) {
+      const filtered = matchSorter(queries, querySearch, {
+        keys: ['name', 'type'],
+      }).filter((item) => {
+        if (
+          selectedSource === 'all' ||
+          item.dataSource.dataSource.type === selectedSource
+        ) {
+          return item;
+        }
+      });
+      return sortQueries(filtered, sortingCriteria, sortingOrder);
+    }
   }, [
     queries,
     selectedSource,
@@ -200,15 +198,15 @@ export function QueryPanel() {
     sortingOrder,
     sortingCriteria,
     sortQueries,
+    queryPending,
   ]);
   const dataSourcesToShow = useMemo(() => {
-    if (!dataSources) {
-      return; // Provide a default value when dataSources is undefined
+    if (dataSources && !isPending) {
+      return matchSorter(dataSources, dataSourceSearch, {
+        keys: ['name', 'type'],
+      });
     }
-    return matchSorter(dataSources, dataSourceSearch, {
-      keys: ['name', 'type'],
-    });
-  }, [dataSources, dataSourceSearch]);
+  }, [dataSources, dataSourceSearch, isPending]);
   return (
     <div className="h-full w-full">
       <div className="h-1 w-full "></div>
@@ -231,7 +229,7 @@ export function QueryPanel() {
                     <Select
                       value={selectedSource}
                       onValueChange={(e) => {
-                        setSelectedSource(e as DataSourceTypes | 'all');
+                        setSelectedSource(e);
                       }}
                     >
                       <SelectTrigger className="w-[180px]">
@@ -239,12 +237,9 @@ export function QueryPanel() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Sources</SelectItem>
-                        {dataSources.map((dataSource) => (
-                          <SelectItem
-                            key={dataSource.type}
-                            value={dataSource.type}
-                          >
-                            {dataSource.type}
+                        {uniqueDataSourceTypes?.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -288,7 +283,7 @@ export function QueryPanel() {
                   >
                     Type : Z-A
                   </DropdownMenuItem>
-
+                  {/* 
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => {
@@ -306,7 +301,7 @@ export function QueryPanel() {
                     }}
                   >
                     Last Modified : Newest First
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -326,18 +321,18 @@ export function QueryPanel() {
                   />
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {dataSourcesToShow.map((item) => (
+                {dataSourcesToShow?.map((item) => (
                   <DropdownMenuItem
-                    key={item.type}
+                    key={item.dataSource.type}
                     onClick={() => {
-                      const newItem = {
-                        id: nanoid(),
-                        //todo: handle name collisions (hadhoud)
-                        name: item.name,
-                        source: item.type,
-                        dateModified: new Date(),
+                      setQueryNumber(querieNumber + 1);
+                      const query = {
+                        name: item.name + querieNumber,
+                        query: {},
                       };
-                      addItem(newItem);
+                      console.log(item.id, 'jlj');
+                      const dataSourceId: number = item.id;
+                      addMutation({ workspaceId, appId, dataSourceId, query });
                     }}
                   >
                     {item.name}
@@ -370,7 +365,7 @@ export function QueryPanel() {
                   </Button>
                 </div>
               )}
-              {queriesToShow.map((item) => (
+              {queriesToShow?.map((item) => (
                 <Button
                   key={item.id}
                   variant="outline"
@@ -396,7 +391,18 @@ export function QueryPanel() {
                         <span>{item.name}</span>
                         {selectedItemId === item.id && (
                           <div className="invisible flex items-center justify-center gap-2 group-hover:visible ">
-                            <button onClick={() => deleteItem(item.id)}>
+                            <button
+                              onClick={() => {
+                                console.log('delete');
+                                setQueryNumber(querieNumber - 1);
+                                deleteMutation({
+                                  workspaceId,
+                                  appId,
+                                  dataSourceId: item.dataSource.id,
+                                  id: item.id,
+                                });
+                              }}
+                            >
                               <Trash size={16} />
                             </button>
                             <button onClick={() => setEditingItemId(item.id)}>

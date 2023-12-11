@@ -17,7 +17,7 @@ export type query = {
 };
 const dataSourceMeta = z.object({
   name: z.string().min(1).max(100),
-  config: z.record(z.string(), z.any()),
+  config: z.object({}),
 });
 
 export async function getQueries({
@@ -35,7 +35,7 @@ export async function getQueries({
       method: 'GET',
     },
   );
-  return (await res.json()) as query;
+  return await res.json();
 }
 
 export async function getQuery({
@@ -60,21 +60,21 @@ export async function getQuery({
 
 export async function addQuery({
   workspaceId,
-  dataSourceId,
   appId,
-  data,
+  dataSourceId,
+  query,
 }: {
   workspaceId: string | undefined;
+  appId: string | undefined;
   dataSourceId: number;
-  appId: number;
-  data: z.infer<typeof dataSourceMeta>;
+  query: object;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/add`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(query),
     },
   );
   return (await res.json()) as Partial<query>;
@@ -88,7 +88,7 @@ export async function runQuery({
   workspaceId: string | undefined;
   dataSourceId: number;
   appId: number;
-  data: z.infer<typeof dataSourceMeta>;
+  data: object;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/run`,
@@ -103,16 +103,16 @@ export async function runQuery({
 
 export async function updateQuery({
   workspaceId,
-  dataSourceId,
   appId,
+  dataSourceId,
   id,
   data,
 }: {
-  workspaceId: number;
-  appId: number;
+  workspaceId: string | undefined;
+  appId: string | undefined;
   dataSourceId: number;
   id: number;
-  data: z.infer<typeof dataSourceMeta>;
+  data: object;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/${id}`,
@@ -122,7 +122,7 @@ export async function updateQuery({
       body: JSON.stringify(data),
     },
   );
-  return (await res.json()) as { dataSourceId: string; updatedById: string };
+  return await res.json();
 }
 export async function deleteQuery({
   workspaceId,
@@ -130,15 +130,15 @@ export async function deleteQuery({
   appId,
   id,
 }: {
-  workspaceId: number;
-  appId: number;
+  workspaceId: string | undefined;
+  appId: string | undefined;
   dataSourceId: number;
   id: number;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/${id}`,
     {
-      method: 'PUT',
+      method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
     },
   );

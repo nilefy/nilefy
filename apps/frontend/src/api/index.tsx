@@ -2,13 +2,13 @@ import { apps } from './apps.api';
 import { pages } from './pages.api';
 import { groups } from './groups.api';
 import { dataSources, globalDataSource } from './dataSources.api';
-import { dataSources1 } from './dataSources';
+import { queries } from './querys.api';
 
 export const api = {
   apps,
   groups,
   dataSources,
-  dataSources1,
+  queries,
   globalDataSource,
   pages,
 };
