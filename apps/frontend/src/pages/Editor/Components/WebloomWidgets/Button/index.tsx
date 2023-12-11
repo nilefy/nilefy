@@ -1,4 +1,10 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  Events,
+  EventsEnum,
+  Widget,
+  WidgetConfig,
+  eventConfig,
+} from '@/lib/Editor/interface';
 import { MousePointerSquare } from 'lucide-react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { Button } from '@/components/ui/button';
@@ -8,13 +14,7 @@ import { Loader2 } from 'lucide-react';
 export type WebloomButtonProps = {
   text: string;
   color: string;
-  events: Array<{
-    eventType: string;
-    actionType: string;
-    selectedComponent: string;
-    action: string;
-    actionValue: string;
-  }>;
+  events: Events;
   loading: boolean;
   visibility: boolean;
   disabled: boolean;
@@ -24,7 +24,7 @@ const WebloomButton = (props: WebloomButtonProps) => {
     {
       Array.isArray(props.events) &&
         props.events.map((event) => {
-          if (event.eventType == 'click') {
+          if (event.eventType == 'onClick') {
             switch (event.actionType) {
               case 'alert':
                 alert(event.actionValue);
@@ -102,6 +102,24 @@ const config: WidgetConfig = {
   },
   resizingDirection: 'Both',
 };
+const eventsConfig: eventConfig = {
+  events: [
+    { value: EventsEnum.onClick, name: 'On Click' },
+    { value: EventsEnum.hover, name: 'On Hover' },
+  ],
+  actions: [
+    { value: 'alert', name: 'Show Alert' },
+    { value: 'controlComponent', name: 'Control Component' },
+    { value: 'runQuery', name: 'Run Query' },
+    { value: 'openWebPage', name: 'Open Web Page' },
+  ],
+  actionsOn: [
+    { value: 'setText', name: 'Set Text' },
+    { value: 'loading', name: 'Loading' },
+    { value: 'disabled', name: 'Disable' },
+    { value: 'visiblity', name: 'Visibility' },
+  ],
+};
 
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
@@ -161,6 +179,7 @@ export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  eventsConfig,
 };
 
 export { WebloomButton };

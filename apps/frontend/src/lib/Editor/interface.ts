@@ -69,10 +69,29 @@ export type WebloomNode = {
   props: Record<string, unknown>;
   type: WidgetTypes;
 } & WebloomGridDimensions;
+export type eventConfig = {
+  events: Array<{ value: (typeof EventsEnum)[EventTypes]; name: string }>;
+  actions: Array<{ value: string; name: string }>;
+  actionsOn: Array<{ value: string; name: string }>;
+};
+export const EventsEnum = {
+  onClick: 1,
+  hover: 2,
+} as const;
+export type EventTypes = keyof typeof EventsEnum;
+export type Event = {
+  eventType: string;
+  actionType: string;
+  selectedComponent: string;
+  action: string;
+  actionValue: string;
+};
 
+export type Events = Event[];
 export type Widget<WidgetProps> = {
   component: React.FC<WidgetProps>;
   config: WidgetConfig;
   defaultProps: WidgetProps;
   inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+  eventsConfig: eventConfig;
 };

@@ -2,14 +2,17 @@ import { Button } from '@/components/ui/button';
 import store from '@/store';
 import { PlusSquare } from 'lucide-react';
 import React, { useContext } from 'react';
-import InspectorEventManger from './events';
+import InspectorEventItem from './events';
 import { FormControlContext } from '..';
 import { nanoid } from 'nanoid';
+import { WebloomWidgets } from '@/pages/Editor/Components';
 
-function EventManagerButton(props) {
+function EventManager(props) {
   console.log(props);
   const selected = store((state) => state.selectedNodeIds);
   const selectedId = [...selected][0];
+  const selectedNode = store.getState().tree[selectedId];
+  const eventsConfig = WebloomWidgets[selectedNode.type].eventsConfig;
   const events = props.value;
   const { onChange } = useContext(FormControlContext);
   const handleClick = () => {
@@ -42,12 +45,13 @@ function EventManagerButton(props) {
       {events?.map((event, index) => {
         // console.log(index + selectedId);
         return (
-          <InspectorEventManger
+          <InspectorEventItem
             key={index + selectedId}
             eventIndex={index}
             handleOnChange={handleOnChange}
             handleOnDelete={handleDelete}
             event={event}
+            config={eventsConfig}
           />
         );
       })}
@@ -59,4 +63,4 @@ function EventManagerButton(props) {
   );
 }
 
-export default EventManagerButton;
+export default EventManager;

@@ -4,9 +4,9 @@ import { SqlEditor } from './sqlEditor';
 import { InspectorList } from './list';
 import { InspectorCheckBox } from './checkbox';
 import { InlineCodeInput } from './inlineCodeInput';
-import InspectorEventManger from './events';
+import InspectorEventItem from './events';
 import { InspectorColor } from './colorPicker';
-import EventManagerButton from './eventManagerButton';
+import EventManager from './eventManagerButton';
 
 export const InspectorFormControls = {
   input: InspectorInput,
@@ -15,7 +15,7 @@ export const InspectorFormControls = {
   list: InspectorList,
   checkbox: InspectorCheckBox,
   inlineCodeInput: InlineCodeInput,
-  events: InspectorEventManger,
+  events: InspectorEventItem,
   color: InspectorColor,
-  EventManagerButton: EventManagerButton,
+  EventManagerButton: EventManager,
 } as const;

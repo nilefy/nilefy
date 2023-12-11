@@ -21,12 +21,16 @@ import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { Trash2 } from 'lucide-react';
 import store from '@/store';
 import { FormControlContext } from '..';
+import { Event, eventConfig } from '@/lib/Editor/interface';
+import { api } from '@/api';
+import { useParams } from 'react-router-dom';
 
-function InspectorEventManger(props: {
+function InspectorEventItem(props: {
   eventIndex: number;
   handleOnChange: (newValue: unknown, index: number) => void;
   handleOnDelete: (index: number) => void;
-  event: Array;
+  event: Event;
+  config: eventConfig;
 }) {
   const tree = store((state) => state.tree);
   const [selectedComponent, setSelectedComponent] = useState(
@@ -38,6 +42,16 @@ function InspectorEventManger(props: {
   );
   const [eventType, SetEventType] = useState(props.event.eventType);
   const [actionType, SetActionType] = useState(props.event.actionType);
+  const { workspaceId, appId } = useParams();
+  // const {
+  //   isPending: queryPending,
+  //   data: queryData,
+  //   refetch: refetchQueries,
+  // } = api.queries.index.useQuery(
+  //   +(workspaceId as string),
+  //   1,
+  //   +(appId as string),
+  // );
   const handleEventChange = () => {
     props.handleOnChange(
       {
@@ -54,62 +68,10 @@ function InspectorEventManger(props: {
   const handleDelete = () => {
     props.handleOnDelete(props.eventIndex);
   };
-
-  return (
-    <DropdownMenu>
-      <div className="flex w-full justify-between bg-slate-100 p-1">
-        <DropdownMenuTrigger className="w-full pl-3 text-left">
-          onClick
-        </DropdownMenuTrigger>
-        <Trash2
-          onClick={handleDelete}
-          className="mr-2 cursor-pointer text-red-500"
-        />
-      </div>
-      <DropdownMenuContent
-        onPointerDownOutside={handleEventChange}
-        className="space-y-2"
-      >
-        <div className="flex items-center justify-evenly">
-          <p>Event</p>
-          <Select
-            value={eventType}
-            onValueChange={(e) => {
-              SetEventType(e);
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Event" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="click">onClick</SelectItem>
-              <SelectItem value="hover">Hover</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center justify-evenly">
-          <p>Action</p>
-          <Select
-            value={actionType}
-            onValueChange={(e) => {
-              SetActionType(e);
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Action" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alert">alert</SelectItem>
-              <SelectItem value="controlComponent">
-                Control Component
-              </SelectItem>
-              <SelectItem value="openWebPage">Open Web Page</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Action Options</DropdownMenuLabel>
-        {actionType == 'controlComponent' && (
+  function ExtraOptions() {
+    switch (actionType) {
+      case 'controlComponent':
+        return (
           <>
             <div className="flex items-center justify-evenly">
               <p>Component</p>
@@ -147,28 +109,133 @@ function InspectorEventManger(props: {
                   <SelectValue placeholder="Action" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Set Text</SelectItem>
-                  <SelectItem value="disabled">Disable</SelectItem>
-                  <SelectItem value="visibility">Visibility</SelectItem>
-                  <SelectItem value="loading">Loading</SelectItem>
+                  {props.config.actionsOn.map((actionValue) => (
+                    <SelectItem
+                      value={actionValue.value}
+                      key={actionValue.value}
+                    >
+                      {actionValue.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+            {action == 'setText' && (
+              <div className="flex items-center justify-evenly">
+                Text
+                <Input
+                  onChange={(e) => setActionValue(e.target.value)}
+                  value={actionValue?.toString()}
+                />
+              </div>
+            )}
           </>
-        )}
-        {actionType != 'controlComponent' && (
+        );
+      // case 'runQuery':
+      // return <div><Select
+      //           value={selectedComponent}
+      //           onValueChange={(e) => {
+      //             setSelectedComponent(e);
+      //           }}
+      //         >
+      //           <SelectTrigger className="w-[180px]">
+      //             <SelectValue placeholder="Component" />
+      //           </SelectTrigger>
+      //           <SelectContent>
+      //             {Object.values(tree).map(
+      //               (node) =>
+      //                 node.id != EDITOR_CONSTANTS.ROOT_NODE_ID && (
+      //                   <SelectItem value={node.id} key={node.id}>
+      //                     {node.name}
+      //                   </SelectItem>
+      //                 ),
+      //             )}
+      //           </SelectContent>
+      //         </Select></div>
+      case 'alert':
+        return (
           <div className="flex items-center justify-evenly">
-            {actionType == 'alert' ? 'Text' : 'Url'}{' '}
+            Text
             <Input
               onChange={(e) => setActionValue(e.target.value)}
               value={actionValue?.toString()}
             />
           </div>
-        )}
-        <DropdownMenuItem>Subscription</DropdownMenuItem>
+        );
+      case 'openWebPage':
+        return (
+          <div className="flex items-center justify-evenly">
+            URL
+            <Input
+              onChange={(e) => setActionValue(e.target.value)}
+              value={actionValue?.toString()}
+            />
+          </div>
+        );
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <div className="flex w-full justify-between bg-slate-100 p-1">
+        <DropdownMenuTrigger className="w-full pl-3 text-left">
+          {eventType}
+        </DropdownMenuTrigger>
+        <Trash2
+          onClick={handleDelete}
+          className="mr-2 cursor-pointer text-red-500"
+        />
+      </div>
+      <DropdownMenuContent
+        onPointerDownOutside={handleEventChange}
+        className="space-y-4 p-4"
+      >
+        <div className="flex items-center justify-evenly">
+          <p>Event</p>
+          <Select
+            value={eventType}
+            onValueChange={(e) => {
+              SetEventType(e);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Event" />
+            </SelectTrigger>
+            <SelectContent>
+              {props.config.events.map((event) => (
+                <SelectItem key={event.value} value={event.value.toString()}>
+                  {event.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center justify-evenly">
+          <p>Action</p>
+          <Select
+            value={actionType}
+            onValueChange={(e) => {
+              SetActionType(e);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Action" />
+            </SelectTrigger>
+            <SelectContent>
+              {props.config.actions.map((action) => (
+                <SelectItem key={action.value} value={action.value}>
+                  {action.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Action Options</DropdownMenuLabel>
+        <ExtraOptions />
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export default InspectorEventManger;
+export default InspectorEventItem;

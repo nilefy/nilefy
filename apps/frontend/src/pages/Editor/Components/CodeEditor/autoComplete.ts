@@ -89,7 +89,7 @@ function webloomCompletions(context: CompletionContext) {
     widgets: Object.keys(tree).reduce((acc, key) => {
       return {
         ...acc,
-        [key]: {
+        [tree[key].name]: {
           ...tree[key].props,
         },
       };
