@@ -1,9 +1,4 @@
-import {
-  NUMBER_OF_COLUMNS,
-  PREVIEW_NODE_ID,
-  ROOT_NODE_ID,
-  ROW_HEIGHT,
-} from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import {
   BoundingRect,
   ShadowElement,
@@ -17,6 +12,11 @@ import { create } from 'zustand';
 
 export type WebloomTree = {
   [key: string]: WebloomNode;
+};
+
+export type AutoCompleteItem = {
+  name: string;
+  id: string;
 };
 export interface WebloomState {
   tree: WebloomTree;
@@ -44,7 +44,7 @@ interface WebloomActions {
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string) => void;
-  removeNode: (id: string, stack?: WebloomNode[]) => void;
+  removeNode: (id: string, recursive?: boolean) => WebloomNode[];
   moveNodeIntoGrid: (
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
@@ -79,6 +79,11 @@ interface WebloomActions {
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  setWidgetMeta<T extends keyof WebloomNode>(
+    id: string,
+    metaKey: T,
+    value: unknown,
+  ): void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
@@ -288,6 +293,10 @@ export function handleParentCollisions(
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
   (set, get) => ({
     tree: {},
+    autoCompleteKeys: {
+      widgets: [],
+      actions: [],
+    },
     draggedNode: null,
     overNode: null,
     selectedNodeIds: new Set(),
@@ -344,6 +353,21 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     getProps(id) {
       return get().tree[id].props;
     },
+    setWidgetMeta(id, key, value) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            [key]: value,
+          },
+        };
+        return { tree: newTree };
+      });
+    },
+
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
       const el = tree[id];
@@ -376,7 +400,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       };
       const draggedNode = get().draggedNode;
       const overEl = tree[overId];
-      if (overId !== ROOT_NODE_ID && overId !== draggedNode) {
+      if (overId !== EDITOR_CONSTANTS.ROOT_NODE_ID && overId !== draggedNode) {
         dimensions = handleHoverCollision(
           dimensions,
           get().getPixelDimensions(parent.id),
@@ -403,7 +427,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         forShadow,
       );
       dimensions.columnsCount = Math.min(
-        NUMBER_OF_COLUMNS,
+        EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
         dimensions.columnsCount,
       );
       dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
@@ -455,7 +479,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, node.id],
           },
         };
-
         return { tree: newTree };
       });
       set((state) => {
@@ -470,39 +493,38 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: { ...state.tree, [parentId]: parent } };
       });
     },
-
     /**
-     * @param stack if stack is supplied will push deleted node to it
+     * @returns stack of deleted nodes
      */
-    removeNode(id, stack) {
+    removeNode(id, recursive = false) {
       // cannot delete a non existing node
-      if (!(id in get().tree)) return;
+      if (!(id in get().tree)) return [];
+      const stack: WebloomNode[] = [];
       const node = get().tree[id];
-      // remove node children then remove it
-      for (const childId of node.nodes) {
-        // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
-        // but we don't want this so just skip the recursive calls and go directly deleting the preview
-        if (id === PREVIEW_NODE_ID) break;
-        get().removeNode(childId, stack);
-      } // base case is that element has no child
-      set((state) => {
-        const node = state.tree[id];
-        if (stack !== undefined) {
-          stack.push(node);
+      const toBeDeletedNodes = [node.id];
+      function recurse(id: string) {
+        const node = get().tree[id];
+        if (!node) return;
+        toBeDeletedNodes.push(node.id);
+        for (const child of node.nodes) {
+          recurse(child);
         }
-        if (!node) return state;
-        const newTree = {
-          ...state.tree,
-          [node.parent]: {
-            ...state.tree[node.parent],
-            nodes: state.tree[node.parent].nodes.filter(
-              (nodeId) => nodeId !== id,
-            ),
-          },
-        };
-        delete newTree[id];
-        return { tree: newTree };
-      });
+      }
+      if (recursive) recurse(id);
+      const newTree = { ...get().tree };
+      for (const nodeId of toBeDeletedNodes) {
+        const node = newTree[nodeId];
+        if (!node) continue;
+        stack.push(node);
+        const parent = newTree[node.parent];
+        if (parent) {
+          parent.nodes = parent.nodes.filter((nodeId) => nodeId !== id);
+          newTree[node.parent] = parent;
+        }
+        delete newTree[nodeId];
+      }
+      set({ tree: newTree });
+      return stack;
     },
     moveNode(id, parentId) {
       set((state) => {
@@ -543,15 +565,15 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     // return first canvas node starting from id and going up the tree until root
     getCanvas: (id: string): WebloomNode => {
-      if (id === ROOT_NODE_ID) return get().getNode(id)!;
+      if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) return get().getNode(id)!;
       const node = get().getNode(id)!;
       const parent = get().getNode(node.parent)!;
       if (parent.isCanvas) return parent;
-      return get().getCanvas(node?.parent || ROOT_NODE_ID);
+      return get().getCanvas(node?.parent || EDITOR_CONSTANTS.ROOT_NODE_ID);
     },
     getGridSize: (id) => {
       const canvasParent = get().getCanvas(id);
-      return [ROW_HEIGHT, canvasParent.columnWidth!];
+      return [EDITOR_CONSTANTS.ROW_HEIGHT, canvasParent.columnWidth!];
     },
     /**
      * gets actual x, y coordinates of a node
@@ -559,19 +581,21 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     getPixelDimensions(id) {
       const node = get().getNode(id)!;
       const parent = get().getCanvas(id)!;
-      if (node.id === ROOT_NODE_ID) {
+      if (node.id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
         return {
           x: 0,
           y: 0,
-          columnsCount: NUMBER_OF_COLUMNS,
+          columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
           rowsCount: parent.rowsCount,
           columnWidth: parent.columnWidth,
-          width: Math.round(parent.columnWidth! * NUMBER_OF_COLUMNS),
-          height: parent.rowsCount * ROW_HEIGHT,
+          width: Math.round(
+            parent.columnWidth! * EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+          ),
+          height: parent.rowsCount * EDITOR_CONSTANTS.ROW_HEIGHT,
         };
       }
       const gridColSize = parent.columnWidth!;
-      const gridRowSize = ROW_HEIGHT;
+      const gridRowSize = EDITOR_CONSTANTS.ROW_HEIGHT;
       const parentDimensions = get().getPixelDimensions(node.parent);
       return convertGridToPixel(
         {
@@ -586,20 +610,20 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     getRelativePixelDimensions(id) {
       const node = get().getNode(id)!;
-      if (node.id === ROOT_NODE_ID) {
+      if (node.id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
         return {
           x: 0,
           y: 0,
-          columnsCount: NUMBER_OF_COLUMNS,
+          columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
           rowsCount: node.rowsCount,
           columnWidth: node.columnWidth,
-          width: node.columnWidth! * NUMBER_OF_COLUMNS,
-          height: node.rowsCount * ROW_HEIGHT,
+          width: node.columnWidth! * EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+          height: node.rowsCount * EDITOR_CONSTANTS.ROW_HEIGHT,
         };
       }
       const parent = get().getNode(node.parent)!;
       const gridColSize = parent.columnWidth!;
-      const gridRowSize = ROW_HEIGHT;
+      const gridRowSize = EDITOR_CONSTANTS.ROW_HEIGHT;
       return convertGridToPixel(
         {
           row: node.row,
@@ -636,13 +660,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
 
     resizeCanvas(id, dimensions) {
       const node = get().tree[id];
-      const oldColumnWidth = node.columnWidth;
+      const oldColumnWidth = node.columnWidth ?? 0;
       if (node.isCanvas) {
         let newColumnWidth = dimensions.columnWidth || oldColumnWidth;
-        if (id !== ROOT_NODE_ID) {
+        if (id !== EDITOR_CONSTANTS.ROOT_NODE_ID) {
           const [, gridcol] = get().getGridSize(id);
           const columnsCount = dimensions.columnsCount || node.columnsCount;
-          newColumnWidth = (columnsCount * gridcol) / NUMBER_OF_COLUMNS;
+          newColumnWidth =
+            (columnsCount * gridcol) / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
         }
         recurse(id, {
           ...dimensions,
@@ -661,7 +686,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           const childNode = get().tree[child];
           const newColumnWidth =
             (childNode.columnsCount * dimensions.columnWidth!) /
-            NUMBER_OF_COLUMNS;
+            EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
           recurse(child, { columnWidth: newColumnWidth });
         }
       }
@@ -729,14 +754,14 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         });
         const parentBoundingRect = get().getBoundingRect(parent.id);
         const parentTop = parentBoundingRect.top;
-        const gridrow = ROW_HEIGHT;
+        const gridrow = EDITOR_CONSTANTS.ROW_HEIGHT;
         const nodeTop = top * gridrow + parentTop;
         const nodeBottom = nodeTop + rowCount * gridrow;
         if (nodeBottom > parentBoundingRect.bottom) {
           // the voo-doo value is just to add pading under the expension resulted by the element
           const diff = nodeBottom - parentBoundingRect.bottom + 100;
           const newRowCount = Math.floor(diff / gridrow);
-          if (parent.id === ROOT_NODE_ID) {
+          if (parent.id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
             get().resizeCanvas(parent.id, {
               rowsCount: parent.rowsCount + newRowCount,
             });
@@ -750,7 +775,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             };
           }
         }
-        colCount = Math.min(NUMBER_OF_COLUMNS, colCount);
+        colCount = Math.min(EDITOR_CONSTANTS.NUMBER_OF_COLUMNS, colCount);
         if (node.isCanvas) {
           get().resizeCanvas(id, {
             columnsCount: colCount,

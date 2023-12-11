@@ -1,7 +1,6 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   integer,
-  json,
   pgEnum,
   pgTable,
   serial,
@@ -21,6 +20,17 @@ export const timeStamps = {
     .notNull()
     .default(sql`now()`),
   updatedAt: timestamp('updated_at'),
+};
+
+/**
+ *  spread to create `created_by_id` `updated_by_id` `deleted_by_id`
+ */
+export const whoToBlame = {
+  createdById: integer('created_by_id')
+    .references(() => users.id)
+    .notNull(),
+  updatedById: integer('updated_by_id').references(() => users.id),
+  deletedById: integer('deleted_by_id').references(() => users.id),
 };
 
 export const softDelete = {
@@ -103,11 +113,7 @@ export const roles = pgTable(
       .notNull(),
     ...timeStamps,
     ...softDelete,
-    createdById: integer('created_by_id')
-      .references(() => users.id)
-      .notNull(),
-    updatedById: integer('updated_by_id').references(() => users.id),
-    deletedById: integer('deleted_by_id').references(() => users.id),
+    ...whoToBlame,
   },
   (t) => ({
     // role name must be unique by workspace
@@ -126,7 +132,7 @@ export const permissionsToRoles = pgTable(
       .references(() => roles.id),
   },
   (t) => ({
-    pk: primaryKey(t.roleId, t.permissionId),
+    pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
   }),
 );
 
@@ -141,7 +147,7 @@ export const usersToRoles = pgTable(
       .references(() => roles.id),
   },
   (t) => ({
-    pk: primaryKey(t.roleId, t.userId),
+    pk: primaryKey({ columns: [t.roleId, t.userId] }),
   }),
 );
 
@@ -187,7 +193,7 @@ export const usersToWorkspaces = pgTable(
       .references(() => workspaces.id),
   },
   (t) => ({
-    pk: primaryKey(t.userId, t.workspaceId),
+    pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
   }),
 );
 
@@ -198,9 +204,6 @@ export const apps = pgTable('apps', {
     .notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   description: varchar('description', { length: 255 }),
-  state: json('state')
-    .default(sql`'{}'::json`)
-    .notNull(),
   /**
    * workspace this app belongs to
    */
@@ -250,249 +253,3 @@ export const webloomColumns = pgTable(
     name: unique().on(t.tableId, t.name),
   }),
 );
-
-// to remove Disambiguating relations
-// @link https://orm.drizzle.team/docs/rqb#disambiguating-relations
-// users
-const userWorkspaceRelation = 'userWorkspaces';
-const userAppRelation = 'userApps';
-const userWebloomTablesRelation = 'userTables';
-const userUserInWorkspacesRelation = 'userworkspaceUsers';
-const workspaceUserInWorkspacesRelation = 'workspaceworkspaceUsers';
-// workspaces
-const workspaceAppsRelation = 'workspaceApps';
-const workspaceWebloomTablesRelation = 'workspaceWebloomTables';
-const userUpdateWorkspaceRelation = 'lastUpdatedWorkspaces';
-const userDeleteWorkspaceRelation = 'DeletedWorkspaces';
-const userUpdateAppRelation = 'lastUpdatedApps';
-const userDeleteAppRelation = 'DeletedApps';
-const webloomTablesColumnsRelation = 'webloomTablesColumns';
-// groups
-// const userUsersInGroupRelation = 'useruserInGroup';
-// const groupUsersInGroupRelation = 'groupuserInGroup';
-// const groupGroupRolesRelation = 'groupgroupRoles';
-// const roleGroupRolesRelation = 'rolegroupRoles';
-// roles
-const userUsersInRoleRelation = 'userUsersInRole';
-const roleUsersInRoleRelation = 'roleUsersInRole';
-const workspaceRolesRelation = 'workspaceRoles';
-// permissions
-const permissionPermissionsInRoleRelation = 'permissionpermissionsInRole';
-const rolePermissionsInRoleRelation = 'rolepermissionsInRole';
-
-export const usersRelations = relations(users, ({ many }) => {
-  return {
-    lastUpdatedWorkspaces: many(workspaces, {
-      relationName: userUpdateWorkspaceRelation,
-    }),
-    DeletedWorkspaces: many(workspaces, {
-      relationName: userDeleteWorkspaceRelation,
-    }),
-    lastUpdatedApps: many(apps, {
-      relationName: userUpdateAppRelation,
-    }),
-    DeletedApps: many(apps, {
-      relationName: userDeleteAppRelation,
-    }),
-    /**
-     * workspaces user created/own
-     */
-    ownedWorkspaces: many(workspaces, { relationName: userWorkspaceRelation }),
-    /**
-     * workspaces user is in
-     */
-    workspaces: many(usersToWorkspaces, {
-      relationName: userUserInWorkspacesRelation,
-    }),
-    /**
-     * Apps user created/own
-     */
-    apps: many(apps, { relationName: userAppRelation }),
-    /**
-     * webloom tables user created/own
-     */
-    webloomTables: many(webloomTables, {
-      relationName: userWebloomTablesRelation,
-    }),
-    // usersToGroups: many(usersToGroups, {
-    //   relationName: userUsersInGroupRelation,
-    // }),
-    // roles
-    usersToRoles: many(usersToRoles, { relationName: userUsersInRoleRelation }),
-  };
-});
-
-export const permissionsRelations = relations(permissions, ({ many }) => ({
-  permissionsToRoles: many(permissionsToRoles, {
-    relationName: permissionPermissionsInRoleRelation,
-  }),
-}));
-
-// export const groupsRelations = relations(groups, ({ many }) => ({
-//   usersToGroups: many(usersToGroups, {
-//     relationName: groupUsersInGroupRelation,
-//   }),
-//   rolesToGroups: many(rolesToGroups, { relationName: groupGroupRolesRelation }),
-// }));
-
-export const rolesRelations = relations(roles, ({ one, many }) => ({
-  permissionsToRoles: many(permissionsToRoles, {
-    relationName: rolePermissionsInRoleRelation,
-  }),
-  usersToRoles: many(usersToRoles, { relationName: roleUsersInRoleRelation }),
-  // rolesToGroups: many(rolesToGroups, { relationName: roleGroupRolesRelation }),
-  workspace: one(workspaces, {
-    fields: [roles.workspaceId],
-    references: [workspaces.id],
-    relationName: workspaceRolesRelation,
-  }),
-}));
-
-// export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
-//   group: one(groups, {
-//     fields: [usersToGroups.groupId],
-//     references: [groups.id],
-//     relationName: groupUsersInGroupRelation,
-//   }),
-//   user: one(users, {
-//     fields: [usersToGroups.userId],
-//     references: [users.id],
-//     relationName: userUsersInGroupRelation,
-//   }),
-// }));
-
-export const permissionsToRolesRelations = relations(
-  permissionsToRoles,
-  ({ one }) => ({
-    permission: one(permissions, {
-      fields: [permissionsToRoles.permissionId],
-      references: [permissions.id],
-      relationName: permissionPermissionsInRoleRelation,
-    }),
-    role: one(roles, {
-      fields: [permissionsToRoles.roleId],
-      references: [roles.id],
-      relationName: rolePermissionsInRoleRelation,
-    }),
-  }),
-);
-
-export const usersToRolesRelations = relations(usersToRoles, ({ one }) => ({
-  role: one(roles, {
-    fields: [usersToRoles.roleId],
-    references: [roles.id],
-    relationName: roleUsersInRoleRelation,
-  }),
-  user: one(users, {
-    fields: [usersToRoles.userId],
-    references: [users.id],
-    relationName: userUsersInRoleRelation,
-  }),
-}));
-
-// export const rolesToGroupsRelations = relations(rolesToGroups, ({ one }) => ({
-//   group: one(groups, {
-//     fields: [rolesToGroups.groupId],
-//     references: [groups.id],
-//     relationName: groupGroupRolesRelation,
-//   }),
-//   role: one(roles, {
-//     fields: [rolesToGroups.roleId],
-//     references: [roles.id],
-//     relationName: roleGroupRolesRelation,
-//   }),
-// }));
-
-export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
-  createdBy: one(users, {
-    fields: [workspaces.createdById],
-    references: [users.id],
-    relationName: userWorkspaceRelation,
-  }),
-  updatedBy: one(users, {
-    fields: [workspaces.updatedById],
-    references: [users.id],
-    relationName: userUpdateWorkspaceRelation,
-  }),
-  deletedBy: one(users, {
-    fields: [workspaces.deletedById],
-    references: [users.id],
-    relationName: userDeleteWorkspaceRelation,
-  }),
-  apps: many(apps, { relationName: workspaceAppsRelation }),
-  webloomTables: many(webloomTables, {
-    relationName: workspaceWebloomTablesRelation,
-  }),
-  /**
-   * users in the workspace
-   */
-  uesrs: many(usersToWorkspaces, {
-    relationName: workspaceUserInWorkspacesRelation,
-  }),
-}));
-
-export const usersToWorkspacesRelations = relations(
-  usersToWorkspaces,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [usersToWorkspaces.userId],
-      references: [users.id],
-      relationName: userUserInWorkspacesRelation,
-    }),
-    workspace: one(workspaces, {
-      fields: [usersToWorkspaces.workspaceId],
-      references: [workspaces.id],
-      relationName: workspaceUserInWorkspacesRelation,
-    }),
-  }),
-);
-
-export const appsRelations = relations(apps, ({ one }) => ({
-  createdBy: one(users, {
-    fields: [apps.createdById],
-    references: [users.id],
-    relationName: userAppRelation,
-  }),
-  updatedBy: one(users, {
-    fields: [apps.updatedById],
-    references: [users.id],
-    relationName: userUpdateAppRelation,
-  }),
-  deletedBy: one(users, {
-    fields: [apps.deletedById],
-    references: [users.id],
-    relationName: userDeleteAppRelation,
-  }),
-  workspace: one(workspaces, {
-    fields: [apps.workspaceId],
-    references: [workspaces.id],
-    relationName: workspaceAppsRelation,
-  }),
-}));
-
-export const webloomTableRelations = relations(
-  webloomTables,
-  ({ one, many }) => ({
-    columns: many(webloomColumns, {
-      relationName: webloomTablesColumnsRelation,
-    }),
-    createdBy: one(users, {
-      fields: [webloomTables.createdById],
-      references: [users.id],
-      relationName: userWebloomTablesRelation,
-    }),
-    workspace: one(workspaces, {
-      fields: [webloomTables.workspaceId],
-      references: [workspaces.id],
-      relationName: workspaceWebloomTablesRelation,
-    }),
-  }),
-);
-
-export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
-  tableId: one(webloomTables, {
-    fields: [webloomColumns.tableId],
-    references: [webloomTables.id],
-    relationName: webloomTablesColumnsRelation,
-  }),
-}));

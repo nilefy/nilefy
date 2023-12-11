@@ -8,7 +8,13 @@ import { Loader2 } from 'lucide-react';
 export type WebloomButtonProps = {
   text: string;
   color: string;
-  events: Array<Array<string>>;
+  events: Array<{
+    eventType: string;
+    actionType: string;
+    selectedComponent: string;
+    action: string;
+    actionValue: string;
+  }>;
   loading: boolean;
   visibility: boolean;
   disabled: boolean;
@@ -18,17 +24,23 @@ const WebloomButton = (props: WebloomButtonProps) => {
     {
       Array.isArray(props.events) &&
         props.events.map((event) => {
-          if (event[0] == 'click') {
-            switch (event[1]) {
+          if (event.eventType == 'click') {
+            switch (event.actionType) {
               case 'alert':
-                alert(event[4]);
+                alert(event.actionValue);
                 console.log('success');
                 break;
               case 'controlComponent':
-                store.getState().setProp(event[2], event[3], event[4]);
+                store
+                  .getState()
+                  .setProp(
+                    event.selectedComponent,
+                    event.action,
+                    event.actionValue,
+                  );
                 break;
               case 'openWebPage':
-                window.open(event[4], '_blank');
+                window.open(event.actionValue, '_blank');
                 break;
             }
           }
@@ -39,14 +51,20 @@ const WebloomButton = (props: WebloomButtonProps) => {
     {
       Array.isArray(props.events) &&
         props.events.map((event) => {
-          if (event[0] == 'hover') {
-            switch (event[1]) {
+          if (event.eventType == 'hover') {
+            switch (event.actionType) {
               case 'alert':
-                alert(event[4]);
+                alert(event.actionValue);
                 console.log('success');
                 break;
               case 'controlComponent':
-                store.getState().setProp(event[2], event[3], event[4]);
+                store
+                  .getState()
+                  .setProp(
+                    event.selectedComponent,
+                    event.action,
+                    event.actionValue,
+                  );
                 break;
             }
           }
@@ -114,15 +132,8 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
   {
     sectionName: 'Interactions',
     children: [
-      // events.map((event) => ({
-      //   id: `${widgetName}-text`,
-      //   key: 'events',
-      //   label: 'EventManagerButton',
-      //   type: 'EventManagerButton',
-      //   options: {},
-      // })),
       {
-        id: `${widgetName}-text`,
+        id: `${widgetName}-events`,
         key: 'events',
         label: 'EventManagerButton',
         type: 'EventManagerButton',

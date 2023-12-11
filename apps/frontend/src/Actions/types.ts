@@ -1,5 +1,26 @@
+import { WebloomNode } from '@/lib/Editor/interface';
+
+type UpdateNodePayload = (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+
+type RemoteTypes =
+  | {
+      event: 'insert';
+      data: {
+        node: WebloomNode;
+        sideEffects: UpdateNodePayload;
+      };
+    }
+  | {
+      event: 'update';
+      data: UpdateNodePayload;
+    }
+  | {
+      event: 'delete';
+      data: WebloomNode['id'][];
+    };
+
 export abstract class Command {
-  abstract execute(): void;
+  abstract execute(): void | RemoteTypes;
 }
 
 export abstract class UndoableCommand extends Command {

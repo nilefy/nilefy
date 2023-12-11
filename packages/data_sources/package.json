@@ -1,0 +1,7 @@
+{
+	"name": "@webloom/data-sources",
+	"main": "src/index.ts",
+	"dependencies": {
+		"zod": "^3.22.4"
+	}
+}

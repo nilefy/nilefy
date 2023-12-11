@@ -46,15 +46,13 @@ export class AuthController {
   @UseGuards(SignInGoogleOAuthGuard)
   @Get('login/google-redirect')
   async signInGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    req.user = await this.authService.signIn(req.user as LoginUserDto);
-    return;
+    return await this.authService.signIn(req.user as LoginUserDto);
   }
 
   @UseGuards(SignUpGoogleOAuthGuard)
   @Get('signup/google-redirect')
   async signUpGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    req.user = await this.authService.signUp(req.user as CreateUserDto);
-    return;
+    return await this.authService.signUp(req.user as CreateUserDto);
   }
 
   @UseGuards(JwtGuard)

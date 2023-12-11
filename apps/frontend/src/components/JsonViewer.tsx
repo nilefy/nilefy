@@ -7,9 +7,9 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import store from '@/store';
-import { commandManager } from '@/actions/commandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { commandManager } from '@/Actions/CommandManager';
+import { SelectionAction } from '@/Actions/Editor/selection';
 type ElementProps = {
   [key: string]: unknown;
 };
@@ -51,7 +51,7 @@ export function JsonViewer() {
   const trueTypeOf = (obj: unknown) =>
     Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
   const [isOpen, setIsOpen] = React.useState(false);
-  const root = store((state) => state.tree[ROOT_NODE_ID]);
+  const root = store((state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID]);
   const initialState = root.nodes.reduce(
     (acc, nodeId) => {
       (acc as Record<string, boolean>)[nodeId] = false;
@@ -184,7 +184,6 @@ export function JsonViewer() {
                   </button>
                 </h4>
                 <p className="ml-2 text-xs">
-                  {' '}
                   {typeof node} {root.nodes.length} entries
                 </p>
               </div>

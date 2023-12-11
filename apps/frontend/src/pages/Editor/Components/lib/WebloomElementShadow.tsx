@@ -18,6 +18,7 @@ function ElementShadow({
 }) {
   return (
     <div
+      key={'shadown'}
       className="absolute z-50 bg-gray-500 opacity-50"
       style={{
         width: width,

@@ -7,6 +7,7 @@ import React, {
   useRef,
   ElementType,
   useCallback,
+  Suspense,
 } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -26,12 +27,7 @@ import {
 } from '@dnd-kit/core';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import {
-  NUMBER_OF_COLUMNS,
-  PREVIEW_NODE_ID,
-  ROOT_NODE_ID,
-  ROW_HEIGHT,
-} from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import {
   Grid,
   MultiSelectBounding,
@@ -39,14 +35,23 @@ import {
   WebloomAdapter,
   WebloomElementShadow,
 } from './Components/lib';
-import { commandManager } from '@/actions/commandManager';
-import DragAction from '@/actions/Editor/Drag';
+import { commandManager } from '@/Actions/CommandManager';
+import DragAction from '@/Actions/Editor/Drag';
 import { normalize } from '@/lib/Editor/utils';
-import { SelectionAction } from '@/actions/Editor/selection';
+import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
-import { WebloomWidgets } from './Components';
+import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
+import { QueryClient } from '@tanstack/react-query';
+import { getToken, removeToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from '@/types/auth.types';
+import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { Loader } from 'lucide-react';
+import { DeleteAction } from '@/Actions/Editor/Delete';
+import { EditorLeftSidebar } from './editorLeftSidebar';
+import { seedNameMap } from '@/store/widgetName';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -59,8 +64,12 @@ const throttledResizeCanvas = throttle(
   },
 );
 function WebloomRoot() {
-  const props = store((state) => state.tree[ROOT_NODE_ID].props);
-  const nodes = store((state) => state.tree[ROOT_NODE_ID].nodes);
+  const props = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].props,
+  );
+  const nodes = store(
+    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].nodes,
+  );
   const ref = React.useRef<HTMLDivElement>(null);
   const width = store((state) => state.editorWidth);
   const height = store((state) => state.editorHeight);
@@ -74,16 +83,19 @@ function WebloomRoot() {
     return children;
   }, [nodes, props.children]);
   useLayoutEffect(() => {
-    const columnWidth = width / NUMBER_OF_COLUMNS;
-    let rowsCount = store.getState().tree[ROOT_NODE_ID].rowsCount;
+    const columnWidth = width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+    let rowsCount =
+      store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
     if (rowsCount === 0) {
       store
         .getState()
         .setEditorDimensions({ height: ref.current?.clientHeight });
-      rowsCount = Math.round(ref.current!.clientHeight / ROW_HEIGHT);
+      rowsCount = Math.round(
+        ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
+      );
     }
 
-    resizeCanvas(ROOT_NODE_ID, { columnWidth, rowsCount });
+    resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, { columnWidth, rowsCount });
   }, [height, width]);
 
   useEffect(() => {
@@ -92,7 +104,7 @@ function WebloomRoot() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  useSetDom(ref, ROOT_NODE_ID);
+  useSetDom(ref, EDITOR_CONSTANTS.ROOT_NODE_ID);
   const handleResize = () => {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
@@ -102,8 +114,8 @@ function WebloomRoot() {
 
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter droppable id={ROOT_NODE_ID}>
-        <Grid id={ROOT_NODE_ID} />
+      <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
+        <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
         {children}
       </WebloomAdapter>
     </div>
@@ -131,19 +143,25 @@ function WebloomElement({ id }: { id: string }) {
     }
     return children;
   }, [nodes, props.children]);
+  const contextValue = useMemo(() => {
+    return {
+      onPropChange,
+      id,
+    };
+  }, [onPropChange, id]);
   const rendered = useMemo(
-    () =>
-      createElement(
-        WebloomWidgets[tree.type].component as ElementType,
-        {
-          ...props,
-          onPropChange,
-        },
-        children,
-      ),
-    [tree.type, props, children, onPropChange],
+    () => (
+      <WidgetContext.Provider value={contextValue}>
+        {createElement(
+          WebloomWidgets[tree.type].component as ElementType,
+          props,
+          children,
+        )}
+      </WidgetContext.Provider>
+    ),
+    [tree.type, props, children, contextValue],
   );
-  if (id === PREVIEW_NODE_ID) return null;
+  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
   return (
     <WebloomAdapter draggable droppable resizable key={id} id={id}>
       {tree.isCanvas && <Grid id={id} />}
@@ -153,15 +171,15 @@ function WebloomElement({ id }: { id: string }) {
 }
 
 const initTree: WebloomTree = {
-  [ROOT_NODE_ID]: {
-    id: ROOT_NODE_ID,
-    name: ROOT_NODE_ID,
+  [EDITOR_CONSTANTS.ROOT_NODE_ID]: {
+    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    name: EDITOR_CONSTANTS.ROOT_NODE_ID,
     col: 0,
     row: 0,
     columnWidth: 0,
-    columnsCount: NUMBER_OF_COLUMNS,
+    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
     nodes: [],
-    parent: ROOT_NODE_ID,
+    parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
     isCanvas: true,
     dom: null,
     rowsCount: 0,
@@ -171,10 +189,11 @@ const initTree: WebloomTree = {
     type: 'WebloomContainer',
   },
 };
-store.setState((state) => {
-  state.tree = initTree;
-  return state;
-});
+// store.setState((state) => {
+//   state.tree = initTree;
+//   return state;
+// });
+
 const CustomPanelResizeHandle = () => {
   return (
     <PanelResizeHandle className="group relative flex shrink-0 grow-0 basis-1 items-stretch justify-stretch overflow-visible outline-none">
@@ -194,7 +213,41 @@ const CustomPanelResizeHandle = () => {
     </PanelResizeHandle>
   );
 };
-function Editor() {
+
+export const appLoader =
+  (queryClient: QueryClient) =>
+  async ({ params }: { params: Record<string, string | undefined> }) => {
+    // as this loader runs before react renders we need to check for token first
+    const token = getToken();
+    if (!token) {
+      return redirect('/signin');
+    } else {
+      // check is the token still valid
+      // Decode the token
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        removeToken();
+        return redirect('/signin');
+      }
+      const query = useAppQuery({
+        workspaceId: +(params.workspaceId as string),
+        appId: +(params.appId as string),
+      });
+      return defer({
+        app: queryClient.fetchQuery(query),
+      });
+    }
+  };
+
+function EditorLoader() {
+  return (
+    <div className="flex h-full w-full  items-center justify-center ">
+      <Loader className="animate-spin " size={30} />
+    </div>
+  );
+}
+
+export function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -206,12 +259,12 @@ function Editor() {
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      distance: ROW_HEIGHT,
+      distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
@@ -225,12 +278,14 @@ function Editor() {
     if (e.active.id === e.over?.id) return;
     store.getState().setOverNode((e.over?.id as string) ?? null);
     if (e.active.data.current?.isNew && draggedNode === null) {
-      const [gridrow] = store.getState().getGridSize(ROOT_NODE_ID);
+      const [gridrow] = store
+        .getState()
+        .getGridSize(EDITOR_CONSTANTS.ROOT_NODE_ID);
       let x = 0;
-      const root = store.getState().tree[ROOT_NODE_ID];
+      const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
       const rootBoundingRect = root.dom!.getBoundingClientRect();
       if (mousePos.current.x > rootBoundingRect.width / 2) {
-        x = NUMBER_OF_COLUMNS - 2;
+        x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
       }
       const y = normalize(
         (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
@@ -242,7 +297,7 @@ function Editor() {
           id: 'new',
           mouseStartPosition: mousePos.current,
           new: {
-            parent: ROOT_NODE_ID,
+            parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
             startPosition: { x, y },
             type: e.active.data.current.type,
             initialDelta: e.delta,
@@ -272,7 +327,7 @@ function Editor() {
 
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const rootDom = store.getState().tree[ROOT_NODE_ID].dom;
+      const rootDom = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].dom;
       if (!rootDom) return;
       const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
@@ -288,96 +343,124 @@ function Editor() {
   }, [draggedNode]);
 
   return (
-    <div className="isolate flex h-full max-h-full w-full bg-transparent">
-      {/*sidebar*/}
-      <DndContext
-        collisionDetection={pointerWithin}
-        sensors={sensors}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragMove={handleDragMove}
-        onDragCancel={handleCancel}
-        autoScroll={{ layoutShiftCompensation: false }}
-      >
-        <PanelGroup direction="horizontal">
-          <Panel maxSizePercentage={25} minSizePercentage={10}>
-            <div className="h-full w-full"></div>
-          </Panel>
-          <CustomPanelResizeHandle />
-          <Panel
-            defaultSizePercentage={70}
-            minSizePercentage={50}
-            onResize={(sizes) => {
-              throttledResizeCanvas(sizes.sizePixels);
-            }}
-          >
-            <PanelGroup direction="vertical">
-              <Panel defaultSizePercentage={90} minSizePercentage={25}>
-                <ScrollArea
-                  ref={editorRef}
-                  className="h-full w-full"
-                  scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
+    <>
+      <div className="isolate flex h-full max-h-full w-full bg-transparent">
+        <EditorLeftSidebar />
+        {/*sidebar*/}
+        <DndContext
+          key={'editor-dnd-context'}
+          id={'editor-dnd-context'}
+          collisionDetection={pointerWithin}
+          sensors={sensors}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragMove={handleDragMove}
+          onDragCancel={handleCancel}
+          autoScroll={{ layoutShiftCompensation: false }}
+        >
+          <PanelGroup direction="horizontal">
+            <Panel
+              defaultSizePercentage={70}
+              minSizePercentage={50}
+              onResize={(sizes) => {
+                throttledResizeCanvas(sizes.sizePixels);
+              }}
+            >
+              <PanelGroup direction="vertical">
+                <Panel defaultSizePercentage={90} minSizePercentage={25}>
+                  <ScrollArea
+                    ref={editorRef}
+                    className="h-full w-full"
+                    scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
+                  >
+                    <WebloomElementShadow />
+                    <MultiSelectBounding />
+                    <WebloomRoot />
+                    <ResizeHandlers />
+                    <Selecto
+                      // The container to add a selection element
+                      container={editorRef.current}
+                      selectableTargets={['.target']}
+                      selectFromInside={true}
+                      selectByClick={false}
+                      hitRate={100}
+                      dragCondition={(e) => {
+                        const triggerTarget = e.inputEvent.target;
+                        const isRoot = triggerTarget.getAttribute('data-id');
+                        return isRoot === EDITOR_CONSTANTS.ROOT_NODE_ID;
+                      }}
+                      onSelect={(e) => {
+                        e.added.forEach((el) => {
+                          const data = el.getAttribute('data-id');
+                          if (data) {
+                            commandManager.executeCommand(
+                              new SelectionAction(data, true),
+                            );
+                          }
+                        });
+                        e.removed.forEach((el) => {
+                          const data = el.getAttribute('data-id');
+                          if (data) {
+                            store.getState().setSelectedNodeIds((prev) => {
+                              return new Set(
+                                [...prev].filter((i) => i !== data),
+                              );
+                            });
+                          }
+                        });
+                      }}
+                    />
+                    {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
+                    <DragOverlay
+                      key={'drag-overlay'}
+                      style={{ display: 'none' }}
+                      dropAnimation={{ duration: 0 }}
+                    />
+                  </ScrollArea>
+                </Panel>
+                <CustomPanelResizeHandle />
+                <Panel
+                  maxSizePercentage={75}
+                  defaultSizePercentage={10}
+                  collapsible
                 >
-                  <WebloomElementShadow />
-                  <MultiSelectBounding />
-                  <WebloomRoot />
-                  <ResizeHandlers />
-                  <Selecto
-                    // The container to add a selection element
-                    container={editorRef.current}
-                    selectableTargets={['.target']}
-                    selectFromInside={true}
-                    selectByClick={false}
-                    hitRate={100}
-                    dragCondition={(e) => {
-                      const triggerTarget = e.inputEvent.target;
-                      const isRoot = triggerTarget.getAttribute('data-id');
-                      return isRoot === ROOT_NODE_ID;
-                    }}
-                    onSelect={(e) => {
-                      e.added.forEach((el) => {
-                        const data = el.getAttribute('data-id');
-                        if (data) {
-                          commandManager.executeCommand(
-                            new SelectionAction(data, true),
-                          );
-                        }
-                      });
-                      e.removed.forEach((el) => {
-                        const data = el.getAttribute('data-id');
-                        if (data) {
-                          store.getState().setSelectedNodeIds((prev) => {
-                            return new Set([...prev].filter((i) => i !== data));
-                          });
-                        }
-                      });
-                    }}
-                  />
-                  {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
-                  <DragOverlay
-                    style={{ display: 'none' }}
-                    dropAnimation={{ duration: 0 }}
-                  />
-                </ScrollArea>
-              </Panel>
-              <CustomPanelResizeHandle />
-              <Panel
-                maxSizePercentage={75}
-                defaultSizePercentage={10}
-                collapsible
-              >
-                <div className="h-full w-full border-t-2 bg-red-100"></div>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-          <CustomPanelResizeHandle />
-          <Panel maxSizePercentage={25} minSizePercentage={10}>
-            <RightSidebar />
-          </Panel>
-        </PanelGroup>
-      </DndContext>
-    </div>
+                  <div className="h-full w-full border-t-2 bg-red-100"></div>
+                </Panel>
+              </PanelGroup>
+            </Panel>
+            <CustomPanelResizeHandle />
+            <Panel maxSizePercentage={25} minSizePercentage={10}>
+              <RightSidebar />
+            </Panel>
+          </PanelGroup>
+        </DndContext>
+      </div>
+    </>
   );
 }
 
-export default Editor;
+export function App() {
+  const { app } = useLoaderData();
+  return (
+    <Suspense fallback={<EditorLoader />}>
+      <Await resolve={app} errorElement={<p>Error loading app</p>}>
+        {(app) => {
+          const a = app as AppCompleteT;
+          const tree = a.defaultPage.tree;
+          seedNameMap(Object.values(tree));
+          // connect to ws
+          commandManager.connectToEditor(a.id, a.defaultPage.id);
+          // depends on root be with the name 'ROOT'
+          EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
+            (c) => c.name === 'ROOT',
+          )!.id;
+          store.setState((state) => {
+            state.tree = tree;
+            return state;
+          });
+          return <Editor />;
+        }}
+      </Await>
+    </Suspense>
+  );
+}

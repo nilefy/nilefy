@@ -1,4 +1,4 @@
-import { ROW_HEIGHT } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
@@ -23,7 +23,7 @@ const Grid = ({ id }: { id: string }) => {
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.setLineDash([2, ROW_HEIGHT]);
+    ctx.setLineDash([2, EDITOR_CONSTANTS.ROW_HEIGHT]);
     ctx.lineCap = 'round';
     ctx.lineWidth = 1;
     ctx.beginPath();

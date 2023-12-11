@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 import {
@@ -8,10 +8,10 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { commandManager } from '@/actions/commandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
-import { ROOT_NODE_ID } from '@/lib/Editor/constants';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { commandManager } from '@/Actions/CommandManager';
+import { SelectionAction } from '@/Actions/Editor/selection';
+import { DeleteAction } from '@/Actions/Editor/Delete';
 import { cn } from '@/lib/cn';
 
 type WebloomAdapterProps = {
@@ -31,16 +31,15 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   });
   const ref = useRef<HTMLDivElement>(null);
   const elDimensions = store((store) => store.getRelativePixelDimensions(id));
-  const { attributes, listeners, setNodeRef, isDragging } = useWebloomDraggable(
-    {
+  const { attributes, listeners, setNodeRef, isDragging, active } =
+    useWebloomDraggable({
       id,
       disabled: !props.draggable,
       data: {
         isNew: false,
       },
-    },
-  );
-  if (id === ROOT_NODE_ID) {
+    });
+  if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
     attributes.role = 'canvas';
   }
   const modListeners = useMemo(() => {
@@ -73,44 +72,63 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       height: elDimensions.height,
     } as React.CSSProperties;
   }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
-
+  if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+    return (
+      <div
+        {...modListeners}
+        {...attributes}
+        style={style}
+        ref={ref}
+        className="target relative touch-none overflow-hidden outline-none"
+        data-id={id}
+      >
+        {props.children}
+      </div>
+    );
+  }
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          key={'adapter' + id}
+          {...modListeners}
+          {...attributes}
+          style={style}
+          ref={ref}
+          className="target relative touch-none overflow-hidden outline-none"
+          data-id={id}
+        >
+          {
+            //this is to prevent widgets from capturing focus when drag is happening
+            !!active && (
+              <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+            )
+          }
           <div
-            {...modListeners}
-            {...attributes}
-            style={style}
-            ref={ref}
-            className="target touch-none overflow-hidden outline-none"
-            data-id={id}
+            key={id}
+            className={cn(
+              {
+                hidden: isDragging || isResizing,
+              },
+              {
+                flex: !isDragging && !isResizing,
+              },
+              'w-full h-full',
+            )}
           >
-            <div
-              className={cn(
-                {
-                  hidden: isDragging || isResizing,
-                },
-                {
-                  flex: !isDragging && !isResizing,
-                },
-                'w-full h-full',
-              )}
-            >
-              {props.children}
-            </div>
+            {props.children}
           </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onMouseDown={() => {
-              commandManager.executeCommand(new DeleteAction());
-            }}
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-    </>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onMouseDown={() => {
+            commandManager.executeCommand(new DeleteAction());
+          }}
+        >
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };

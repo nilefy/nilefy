@@ -1,5 +1,3 @@
-import React from 'react';
-import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -13,31 +11,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-
-// TODO: move the schema to seprate package to make sharing between front/back easier
-// TODO: add re-password check
-export const signUpSchema = z.object({
-  name: z.string().min(3).max(255),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-type SignUpSchema = z.infer<typeof signUpSchema>;
-
+import { Link } from 'react-router-dom';
+import { SignUpSchema } from '@/api/auth';
+import { signUpSchema } from '@/api/auth';
+import { useSignUp } from '@/hooks/useSignUp';
 export function SignUp() {
-  const navigate = useNavigate();
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: '',
+      username: '',
       password: '',
+      rePassword: '',
       email: '',
     },
   });
+  const { mutate, isError, error, isPending } = useSignUp();
   function onSubmit(values: SignUpSchema) {
-    console.log(values);
-    return navigate('/');
+    mutate(values);
   }
 
   return (
@@ -53,7 +43,7 @@ export function SignUp() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="name"
+            name="username"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Name</FormLabel>
@@ -92,7 +82,24 @@ export function SignUp() {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          <FormField
+            control={form.control}
+            name="rePassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                {/* <FormDescription>confirm password</FormDescription> */}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {isError && <p className="text-red-900">{error?.message}</p>}
+          <Button type="submit" disabled={isPending}>
+            Submit
+          </Button>
         </form>
       </Form>
     </div>

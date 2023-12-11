@@ -1,19 +1,28 @@
 import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog, Table } from 'lucide-react';
+import { Wind, Layout, Cog, Table, Braces, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
-import { User } from './workspace/users';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
 import { Inspector } from '@/components/inspector';
-
+import { useAuthStore } from '@/hooks/useAuthStore';
+import { Button } from '@/components/ui/button';
+import { useSignOut } from '@/hooks/useSignOut';
+import { getToken, removeToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from '@/types/auth.types';
 const dashboardPaths = [
   {
     name: 'apps',
     path: '',
     icon: <Layout size={30} />,
+  },
+  {
+    name: 'dataSources',
+    path: 'datasources',
+    icon: <Braces size={30} />,
   },
 
   {
@@ -31,10 +40,8 @@ const dashboardPaths = [
 const allWorkspacesQuery = () => ({
   queryKey: ['workspaces'],
   queryFn: async () => {
-    // TODO: re-enable this when the frontend auth is ready
-    // const res = await fetchX('workspaces');
-    // return (await res.json()) as WorkSpaces;
-    return [{ id: 1, imageUrl: null, name: 'work' }] satisfies WorkSpaces;
+    const res = await fetchX('workspaces');
+    return (await res.json()) as WorkSpaces;
   },
 });
 
@@ -46,28 +53,32 @@ const allWorkspacesQuery = () => ({
 export const loader =
   (queryClient: QueryClient) =>
   async ({ request }: { request: Request }) => {
-    const query = allWorkspacesQuery();
-    // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
-    // why do i need this check? well i want to redirect the user to workspace the first time they visit the dashboard, not every time
-    const t = queryClient.getQueryData<WorkSpaces>(['workspaces']);
-    if (t === undefined) {
-      const workspaces = await queryClient.fetchQuery(query);
+    // as this loader runs before react renders we need to check for token first
+    const token = getToken();
+    if (!token) {
+      return redirect('/signin');
+    } else {
+      // check is the token still valid
+      // Decode the token
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        removeToken();
+        return redirect('/signin');
+      }
+      const query = allWorkspacesQuery();
+      // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
+      const workspaces: WorkSpaces =
+        queryClient.getQueryData<WorkSpaces>(['workspaces']) ??
+        (await queryClient.fetchQuery(query));
       const urlPath = new URL(request.url).pathname;
       return urlPath === '/' ? redirect(`/${workspaces[0].id}`) : null;
-    } else {
-      return t;
     }
   };
 
 export function Dashboard() {
+  const { mutate } = useSignOut();
   const { workspaceId } = useParams();
-  // TODO: change to real authed user
-  const user: User = {
-    id: 'nagy',
-    username: 'nagy',
-    email: 'nagy@nagy',
-    status: 'active',
-  };
+  const { user } = useAuthStore();
 
   return (
     <div className="flex h-screen w-screen">
@@ -85,17 +96,21 @@ export function Dashboard() {
             </NavLink>
           ))}
         </div>
-        {/**TODO: move to editor layout */}
-        <Inspector />
         <div className="mt-auto flex flex-col gap-4">
           <ModeToggle />
           <NavLink to="profile-settings">
             <Avatar className="mr-2">
-              <AvatarImage src={user.imageUrl} />
-              <AvatarFallback>{getInitials(user.username)}</AvatarFallback>
+              {/* src={user.imageUrl} */}
+              <AvatarImage />
+              <AvatarFallback>
+                {getInitials(user?.data?.username || '')}
+              </AvatarFallback>
             </Avatar>
           </NavLink>
         </div>
+        <Button variant={'ghost'} size={'icon'} onClick={() => mutate()}>
+          <LogOut />
+        </Button>
       </div>
 
       <Outlet />

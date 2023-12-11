@@ -25,10 +25,6 @@ export type ExpressAuthedRequest = Request & {
 
 export type JwtToken = { access_token: string };
 
-export type JwtRequest = Request & {
-  user: JwtToken;
-};
-
 export type GoogleAuthedRequest = Request & {
-  user: CreateUserDto | LoginUserDto | JwtToken;
+  user: CreateUserDto | LoginUserDto;
 };

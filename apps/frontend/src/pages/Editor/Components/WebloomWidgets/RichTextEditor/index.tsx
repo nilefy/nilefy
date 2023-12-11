@@ -25,6 +25,7 @@ import 'tinymce/plugins/anchor';
 import 'tinymce/plugins/searchreplace';
 import 'tinymce/plugins/visualblocks';
 import 'tinymce/plugins/fullscreen';
+import 'tinymce/plugins/wordcount';
 import 'tinymce/plugins/emoticons';
 import 'tinymce/plugins/emoticons/js/emojis';
 import 'tinymce/plugins/print';
@@ -34,14 +35,8 @@ import contentCss from 'tinymce/skins/content/default/content.min.css?inline';
 import contentUiCss from 'tinymce/skins/ui/oxide/content.inline.css?inline';
 import { isMacOs } from '@/lib/utils';
 import { Label } from '@radix-ui/react-label';
-import {
-  ComponentPropsWithoutRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import tinymce from 'tinymce/tinymce';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { WidgetContext } from '../..';
 
 type WebloomTextEditorProps = {
   label: string;
@@ -53,9 +48,9 @@ const toolbarConfig =
 
 export default function WebloomTextEditor(props: WebloomTextEditorProps) {
   const { label } = props;
-  const [editorValue, setEditorValue] = useState<string>(props.value as string);
+  const [editorValue, setEditorValue] = useState<string>(props.value);
   const initalRender = useRef(true);
-  const editorRef = useRef<Editor>(null);
+  const { onPropChange, id } = useContext(WidgetContext);
   const handleEditorChange = useCallback<EditorOnChange>(
     (newValue, editor) => {
       // avoid updating value, when there is no actual change.
@@ -68,23 +63,27 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
         //
         if (isFocused) {
           setEditorValue(newValue);
-          props.onPropChange(newValue);
+          onPropChange({
+            key: 'value',
+            value: newValue,
+          });
         }
       }
     },
-    [props.onPropChange, editorValue],
+    [onPropChange, editorValue],
   );
   useEffect(() => {
     if (initalRender.current) {
       initalRender.current = false;
       return;
     }
-    setEditorValue(props.value as string);
+    setEditorValue(props.value);
   }, [props.value]);
+
   const menuRef = useRef<Element | null>(null);
   return (
     <div
-      className="h-full w-full "
+      className="flex h-full w-full flex-col gap-2 overflow-hidden rounded-sm"
       onPointerDown={() => {
         //if any opened menu is open, close it
         //dirty hack to close the context menu
@@ -104,11 +103,10 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
     >
       <Label className="text-sm font-medium text-gray-700">{label}</Label>
       <Editor
-        ref={editorRef}
         init={{
           skin: false,
+          id: 'editor-' + id,
           content_css: false,
-
           content_style: [contentCss, contentUiCss].join('\n'),
           height: '100%',
           menubar: false,
@@ -124,9 +122,11 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
             'insertdatetime media table paste code help',
             'emoticons',
             'code',
+            'wordcount',
           ],
           toolbar: toolbarConfig,
           setup: function (editor) {
+            editor.id = id;
             editor.ui.registry.addMenuItem('useBrowserSpellcheck', {
               text: `Use "${
                 isMacOs() ? 'Control' : 'Ctrl'
@@ -152,10 +152,8 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
           },
         }}
         onEditorChange={handleEditorChange}
-        value={
-          editorValue ||
-          '<p><br></p>' /* TinyMCE doesn't accept empty string as value */
-        }
+        key={'editor'}
+        value={editorValue}
       />
     </div>
   );
