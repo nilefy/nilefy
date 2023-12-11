@@ -70,7 +70,7 @@ export type WebloomNode = {
   type: WidgetTypes;
 } & WebloomGridDimensions;
 export type eventConfig = {
-  events: Array<{ value: (typeof EventsEnum)[EventTypes]; name: string }>;
+  events: Array<{ value: string; name: string }>;
   actions: Array<{ value: string; name: string }>;
   actionsOn: Array<{ value: string; name: string }>;
 };
@@ -84,7 +84,7 @@ export type Event = {
   actionType: string;
   selectedComponent: string;
   action: string;
-  actionValue: string;
+  actionValue: string | boolean;
 };
 
 export type Events = Event[];

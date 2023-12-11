@@ -21,7 +21,7 @@ type InspectorColorProps = {
 };
 
 type InspectorEvents = {
-  
+  value:Event[];
 };
 type EventManagerButton = {
   

@@ -6,8 +6,10 @@ import InspectorEventItem from './events';
 import { FormControlContext } from '..';
 import { nanoid } from 'nanoid';
 import { WebloomWidgets } from '@/pages/Editor/Components';
+import { BaseControlProps, InspectorEvents } from '@webloom/configpaneltypes';
+import { Events } from '@/lib/Editor/interface';
 
-function EventManager(props) {
+function EventManager(props: Array<Events> & InspectorEvents) {
   console.log(props);
   const selected = store((state) => state.selectedNodeIds);
   const selectedId = [...selected][0];
@@ -20,7 +22,7 @@ function EventManager(props) {
       onChange([
         ...events,
         {
-          eventType: 'click',
+          eventType: 'onClick',
           actionType: 'alert',
           selectedComponent: null,
           action: null,
@@ -30,7 +32,7 @@ function EventManager(props) {
     }
   };
 
-  const handleOnChange = (newValue: unknown, index: number) => {
+  const handleOnChange = (newValue: Event, index: number) => {
     const updatedEvents = [...events];
     updatedEvents[index] = newValue;
     onChange(updatedEvents);

@@ -24,10 +24,11 @@ import { FormControlContext } from '..';
 import { Event, eventConfig } from '@/lib/Editor/interface';
 import { api } from '@/api';
 import { useParams } from 'react-router-dom';
+import { nanoid } from 'nanoid';
 
 function InspectorEventItem(props: {
   eventIndex: number;
-  handleOnChange: (newValue: unknown, index: number) => void;
+  handleOnChange: (newValue: Event, index: number) => void;
   handleOnDelete: (index: number) => void;
   event: Event;
   config: eventConfig;
@@ -73,7 +74,7 @@ function InspectorEventItem(props: {
       case 'controlComponent':
         return (
           <>
-            <div className="flex items-center justify-evenly">
+            <div className="flex items-center justify-between pt-4">
               <p>Component</p>
               <Select
                 value={selectedComponent}
@@ -96,7 +97,7 @@ function InspectorEventItem(props: {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-evenly">
+            <div className="flex items-center justify-between">
               <p>Action</p>
               <Select
                 value={action}
@@ -120,15 +121,16 @@ function InspectorEventItem(props: {
                 </SelectContent>
               </Select>
             </div>
-            {action == 'setText' && (
-              <div className="flex items-center justify-evenly">
-                Text
-                <Input
-                  onChange={(e) => setActionValue(e.target.value)}
-                  value={actionValue?.toString()}
-                />
-              </div>
-            )}
+
+            <div className="flex items-center justify-between ">
+              Text
+              <Input
+                onChange={(e) => setActionValue(e.target.value)}
+                value={actionValue?.toString()}
+                autoFocus
+                className="w-2/3"
+              />
+            </div>
           </>
         );
       // case 'runQuery':
@@ -154,21 +156,25 @@ function InspectorEventItem(props: {
       //         </Select></div>
       case 'alert':
         return (
-          <div className="flex items-center justify-evenly">
+          <div className="flex items-center justify-between pt-4">
             Text
             <Input
               onChange={(e) => setActionValue(e.target.value)}
               value={actionValue?.toString()}
+              autoFocus //to solve losing focus //adding key didn't work
+              className="w-2/3"
             />
           </div>
         );
       case 'openWebPage':
         return (
-          <div className="flex items-center justify-evenly">
+          <div className="flex items-center justify-between pt-4">
             URL
             <Input
               onChange={(e) => setActionValue(e.target.value)}
               value={actionValue?.toString()}
+              autoFocus
+              className="w-2/3"
             />
           </div>
         );
@@ -190,7 +196,7 @@ function InspectorEventItem(props: {
         onPointerDownOutside={handleEventChange}
         className="space-y-4 p-4"
       >
-        <div className="flex items-center justify-evenly">
+        <div className="flex items-center justify-between">
           <p>Event</p>
           <Select
             value={eventType}
@@ -203,14 +209,14 @@ function InspectorEventItem(props: {
             </SelectTrigger>
             <SelectContent>
               {props.config.events.map((event) => (
-                <SelectItem key={event.value} value={event.value.toString()}>
+                <SelectItem key={event.value} value={event.value}>
                   {event.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center justify-evenly">
+        <div className="flex items-center justify-between pb-4">
           <p>Action</p>
           <Select
             value={actionType}
@@ -231,7 +237,9 @@ function InspectorEventItem(props: {
           </Select>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Action Options</DropdownMenuLabel>
+        <DropdownMenuLabel className="absolute left-16 top-28 my-3 text-center">
+          Action Options
+        </DropdownMenuLabel>
         <ExtraOptions />
       </DropdownMenuContent>
     </DropdownMenu>

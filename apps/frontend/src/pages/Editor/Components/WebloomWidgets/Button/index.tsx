@@ -65,6 +65,7 @@ const WebloomButton = (props: WebloomButtonProps) => {
                     event.action,
                     event.actionValue,
                   );
+
                 break;
             }
           }
@@ -104,8 +105,8 @@ const config: WidgetConfig = {
 };
 const eventsConfig: eventConfig = {
   events: [
-    { value: EventsEnum.onClick, name: 'On Click' },
-    { value: EventsEnum.hover, name: 'On Hover' },
+    { value: 'onClick', name: 'On Click' },
+    { value: 'hover', name: 'On Hover' },
   ],
   actions: [
     { value: 'alert', name: 'Show Alert' },
@@ -114,7 +115,7 @@ const eventsConfig: eventConfig = {
     { value: 'openWebPage', name: 'Open Web Page' },
   ],
   actionsOn: [
-    { value: 'setText', name: 'Set Text' },
+    { value: 'text', name: 'Set Text' },
     { value: 'loading', name: 'Loading' },
     { value: 'disabled', name: 'Disable' },
     { value: 'visiblity', name: 'Visibility' },
