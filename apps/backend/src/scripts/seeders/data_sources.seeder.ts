@@ -8,9 +8,9 @@ import {
 import { DatabaseI } from '../../drizzle/drizzle.provider';
 import * as schema from '../../drizzle/schema/data_sources.schema';
 import {
-  PostgresqlConfigT,
-  PostgresqlQueryConfigT,
-} from '@webloom/data-sources';
+  QueryT as PostgresqlQueryConfigT,
+  ConfigT as PostgresqlConfigT,
+} from '../../data_sources/plugins/postgresql/types';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -42,7 +42,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
                 label: 'Port',
                 type: 'input',
                 options: {
-                  placeholder: 5000,
+                  placeholder: 5432,
                   type: 'number',
                 },
               },
@@ -50,7 +50,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
                 id: 'ssl',
                 key: 'ssl',
                 label: 'SSL',
-                type: 'input',
+                type: 'checkbox',
                 options: {},
               },
               {
@@ -115,22 +115,11 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             sectionName: '',
             children: [
               {
-                id: 'connection',
-                key: 'dataSourceId',
-                label: 'Data Source',
-                type: 'select',
-                options: {
-                  items: [
-                    // fetch all data source connections
-                  ],
-                },
-              },
-              {
                 id: 'sql',
-                key: 'sql',
+                key: 'query',
                 label: 'SQL',
                 type: 'sqlEditor',
-                options: {},
+                options: { placeholder: 'select * from table;' },
               },
             ],
           },
