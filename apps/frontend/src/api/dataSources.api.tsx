@@ -24,6 +24,7 @@ export type GlobalDataSourceI = {
   type: 'database' | 'api' | 'cloud storage' | 'plugin';
   image: string | null;
   config: WidgetInspectorConfig<Record<string, unknown>>;
+  queryConfig: WidgetInspectorConfig<Record<string, unknown>>;
 };
 
 export type WsDataSourceI = {
