@@ -105,11 +105,11 @@ export async function updateQuery({
   workspaceId: number;
   appId: number;
   queryId: number;
-  dto: {
+  dto: Partial<{
     datasourceId: number;
     name: QueryI['name'];
     query: QueryI['query'];
-  };
+  }>;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/queries/${queryId}`,

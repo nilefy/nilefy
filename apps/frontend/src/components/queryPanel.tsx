@@ -17,17 +17,25 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil } from 'lucide-react';
-import { useParams } from 'react-router-dom';
-import { ConfigForm } from './configForm';
+import { Link, useParams } from 'react-router-dom';
+import { ConfigForm, ConfigFormGenricOnChange } from './configForm';
 import { api } from '@/api';
 import { CompeleteQueryI } from '@/api/queries.api';
 import { DebouncedInput } from './debouncedInput';
 import clsx from 'clsx';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
+import { useQueryClient } from '@tanstack/react-query';
 
 function QueryItem({ query }: { query?: CompeleteQueryI }) {
   const { workspaceId, appId } = useParams();
+  const queryClient = useQueryClient();
+
+  const { mutate: updateMutation } = api.queries.update.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['queries'] });
+    },
+  });
   const { mutate: run } = api.queries.run.useMutation({
     onSuccess(data, variables) {
       console.log(
@@ -48,13 +56,50 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
       </div>
     );
   }
+
+  const onQueryChange: ConfigFormGenricOnChange = (key, value) => {
+    // i need a place to store config changes until i update them on the backend, react query seams like a good place
+    queryClient.setQueryData<Record<string, unknown>>(
+      ['queries', query.id, 'config'],
+      (prev) => {
+        if (!prev) {
+          return {
+            ...query.query,
+            [key]: value,
+          };
+        } else {
+          return {
+            ...prev,
+            [key]: value,
+          };
+        }
+      },
+    );
+  };
+
+  const onSaveQuery = () => {
+    if (!workspaceId || !appId) {
+      throw new Error('workspaceId or appId is not defined!');
+    }
+    updateMutation({
+      workspaceId: +workspaceId,
+      appId: +appId,
+      queryId: query.id,
+      dto: {
+        query: queryClient.getQueryData(['queries', query.id, 'config']),
+      },
+    });
+  };
+
   return (
     <div className="h-full w-full">
       {/* HEADER */}
       <div className="flex h-10 flex-row items-center justify-end gap-5 border border-gray-300">
         <Input defaultValue={query.name} />
         {/* TODO: */}
-        <Button className="mr-auto">save</Button>
+        <Button className="mr-auto" onClick={onSaveQuery}>
+          save
+        </Button>
         {/* <Button>preview</Button> */}
         <Button
           onClick={() => {
@@ -75,10 +120,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
         <ConfigForm
           config={query.dataSource.dataSource.queryConfig}
           itemProps={query.query}
-          // TODO:
-          onChange={(key, value) => {
-            console.log(key, value);
-          }}
+          onChange={onQueryChange}
         />
       </ScrollArea>
     </div>
@@ -116,11 +158,6 @@ export function QueryPanel() {
       refetchQueries();
     },
   });
-  // const { mutate: updateMutation } = api.queries.update.useMutation({
-  //   onSuccess: () => {
-  //     refetchQueries();
-  //   },
-  // });
 
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
@@ -355,6 +392,9 @@ export function QueryPanel() {
                   {item.name}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuItem asChild>
+                <Link to={`/${workspaceId}/datasources`}>Add New</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
