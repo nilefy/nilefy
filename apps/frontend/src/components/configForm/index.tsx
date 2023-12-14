@@ -35,7 +35,7 @@ export const FormSectionView = (props: {
     <Collapsible
       open={opened}
       onOpenChange={setOpened}
-      className="space-y-2"
+      className="h-full w-full space-y-2"
       key={sectionName}
     >
       <div className="flex items-center justify-between space-x-4">

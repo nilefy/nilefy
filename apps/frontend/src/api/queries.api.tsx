@@ -1,161 +1,158 @@
-import { fetchX } from '@/utils/fetch';
+import { FetchXError, fetchX } from '@/utils/fetch';
 import {
   UseMutationOptions,
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { z } from 'zod';
+import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
 
-export type query = {
-  id: string;
+export type QueryI = {
+  id: number;
   name: string;
-  query: object;
+  query: Record<string, unknown>;
   dataSourceId: number;
   appId: number;
   createdById: number;
   updatedById: number;
 };
-const dataSourceMeta = z.object({
-  name: z.string().min(1).max(100),
-  config: z.object({}),
-});
+
+export type CompeleteQueryI = QueryI & {
+  dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
+    dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
+  };
+};
 
 export async function getQueries({
   workspaceId,
   appId,
-  dataSourceId,
 }: {
   workspaceId: number;
   appId: number;
-  dataSourceId: number;
 }) {
-  const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries`,
-    {
-      method: 'GET',
-    },
-  );
-  return await res.json();
+  const res = await fetchX(`workspaces/${workspaceId}/apps/${appId}/queries`, {
+    method: 'GET',
+  });
+  return (await res.json()) as CompeleteQueryI[];
 }
 
 export async function getQuery({
   workspaceId,
   appId,
-  dataSourceId,
   id,
 }: {
   workspaceId: number;
   appId: number;
-  dataSourceId: number;
   id: number;
 }) {
   const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/${id}`,
+    `workspaces/${workspaceId}/apps/${appId}/queries/${id}`,
     {
       method: 'GET',
     },
   );
-  return (await res.json()) as query;
+  return (await res.json()) as QueryI;
 }
 
 export async function addQuery({
   workspaceId,
   appId,
-  dataSourceId,
-  query,
+  dto,
 }: {
-  workspaceId: string | undefined;
-  appId: string | undefined;
-  dataSourceId: number;
-  query: object;
-}) {
-  const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/add`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(query),
-    },
-  );
-  return (await res.json()) as Partial<query>;
-}
-export async function runQuery({
-  workspaceId,
-  dataSourceId,
-  appId,
-  data,
-}: {
-  workspaceId: string | undefined;
-  dataSourceId: number;
+  workspaceId: number;
   appId: number;
-  data: object;
+  dto: {
+    dataSourceId: number;
+    name: QueryI['name'];
+    query: QueryI['query'];
+  };
 }) {
   const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/run`,
+    `workspaces/${workspaceId}/apps/${appId}/queries/add`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(dto),
     },
   );
-  return (await res.json()) as Partial<query>;
+  return (await res.json()) as Partial<QueryI>;
+}
+
+async function runQuery({
+  workspaceId,
+  queryId,
+  appId,
+}: {
+  workspaceId: number;
+  queryId: number;
+  appId: number;
+}) {
+  const res = await fetchX(
+    `workspaces/${workspaceId}/apps/${appId}/queries/run/${queryId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
+  return (await res.json()) as Partial<QueryI>;
 }
 
 export async function updateQuery({
   workspaceId,
   appId,
-  dataSourceId,
-  id,
-  data,
+  queryId,
+  dto,
 }: {
-  workspaceId: string | undefined;
-  appId: string | undefined;
-  dataSourceId: number;
-  id: number;
-  data: object;
+  workspaceId: number;
+  appId: number;
+  queryId: number;
+  dto: {
+    datasourceId: number;
+    name: QueryI['name'];
+    query: QueryI['query'];
+  };
 }) {
   const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/${id}`,
+    `workspaces/${workspaceId}/apps/${appId}/queries/${queryId}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(dto),
     },
   );
   return await res.json();
 }
+
 export async function deleteQuery({
   workspaceId,
-  dataSourceId,
   appId,
-  id,
+  queryId,
 }: {
-  workspaceId: string | undefined;
-  appId: string | undefined;
-  dataSourceId: number;
-  id: number;
+  workspaceId: number;
+  appId: number;
+  queryId: number;
 }) {
   const res = await fetchX(
-    `workspaces/${workspaceId}/apps/${appId}/datasources/${dataSourceId}/queries/${id}`,
+    `workspaces/${workspaceId}/apps/${appId}/queries/${queryId}`,
     {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
     },
   );
   return (await res.json()) as {
-    dataSourceId: string;
-    deletedById: string;
-    workspaceId: string;
+    dataSourceId: number;
+    deletedById: number;
+    workspaceId: number;
   };
 }
 
-function useQuerys(workspaceId: number, dataSourceId: number, appId: number) {
+function useQuries(workspaceId: number, appId: number) {
   return useQuery({
-    queryKey: ['queries', { workspaceId, appId, dataSourceId }],
-    queryFn: () => getQueries({ workspaceId, appId, dataSourceId }),
+    queryKey: ['queries', { workspaceId, appId }],
+    queryFn: () => getQueries({ workspaceId, appId }),
     staleTime: 0,
   });
 }
+
 function useGetQuery(
   workspaceId: number,
   dataSourceId: number,
@@ -164,7 +161,7 @@ function useGetQuery(
 ) {
   return useQuery({
     queryKey: ['query', { workspaceId, appId, dataSourceId, id }],
-    queryFn: () => getQuery({ workspaceId, appId, dataSourceId, id }),
+    queryFn: () => getQuery({ workspaceId, appId, id }),
     staleTime: 0,
   });
 }
@@ -172,7 +169,7 @@ function useGetQuery(
 function useUpdateQuery(
   options?: UseMutationOptions<
     Awaited<ReturnType<typeof updateQuery>>,
-    Error,
+    FetchXError,
     Parameters<typeof updateQuery>[0]
   >,
 ) {
@@ -186,7 +183,7 @@ function useUpdateQuery(
 function useAddQuery(
   options?: UseMutationOptions<
     Awaited<ReturnType<typeof addQuery>>,
-    Error,
+    FetchXError,
     Parameters<typeof addQuery>[0]
   >,
 ) {
@@ -196,10 +193,11 @@ function useAddQuery(
   });
   return mutate;
 }
+
 function useDeleteQuery(
   options?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteQuery>>,
-    Error,
+    FetchXError,
     Parameters<typeof deleteQuery>[0]
   >,
 ) {
@@ -210,10 +208,25 @@ function useDeleteQuery(
   return mutate;
 }
 
+function useRunQuery(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof runQuery>>,
+    FetchXError,
+    Parameters<typeof runQuery>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: runQuery,
+    ...options,
+  });
+  return mutate;
+}
+
 export const queries = {
-  index: { useQuery: useQuerys },
+  index: { useQuery: useQuries },
   one: { useQuery: useGetQuery },
   insert: { useMutation: useAddQuery },
   update: { useMutation: useUpdateQuery },
   delete: { useMutation: useDeleteQuery },
+  run: { useMutation: useRunQuery },
 };
