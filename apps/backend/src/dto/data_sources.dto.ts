@@ -5,10 +5,20 @@ import {
 } from '../drizzle/schema/data_sources.schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
-export const workspaceDataSourcesSelect =
-  createSelectSchema(workspaceDataSources);
-export const workspaceDataSourcesInsert =
-  createInsertSchema(workspaceDataSources);
+export const workspaceDataSourcesSelect = createSelectSchema(
+  workspaceDataSources,
+  {
+    name: z.string().min(1).max(100),
+    config: z.record(z.string(), z.any()),
+  },
+);
+export const workspaceDataSourcesInsert = createInsertSchema(
+  workspaceDataSources,
+  {
+    name: z.string().min(1).max(100),
+    config: z.record(z.string(), z.any()),
+  },
+);
 export const createWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100),
   config: z.record(z.string(), z.any()),

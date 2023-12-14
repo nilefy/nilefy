@@ -43,6 +43,7 @@ export const workspaceDataSources = pgTable(
       .references(() => dataSources.id)
       .notNull(),
     config: json('config')
+      .$type<Record<string, unknown>>()
       .default(sql`'{}'::json`)
       .notNull(),
     ...timeStamps,
@@ -61,7 +62,7 @@ export const workspaceDataSources = pgTable(
 export const queries = pgTable('workspace_app_queries', {
   id: serial('id').primaryKey(),
   name: varchar('query_name', { length: 100 }).unique().notNull(),
-  query: json('query').notNull(),
+  query: json('query').$type<Record<string, unknown>>().notNull(),
   appId: integer('app_id')
     .references(() => apps.id)
     .notNull(),

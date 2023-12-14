@@ -129,7 +129,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
                 id: 'sql',
                 key: 'sql',
                 label: 'SQL',
-                type: 'input',
+                type: 'sqlEditor',
                 options: {},
               },
             ],
