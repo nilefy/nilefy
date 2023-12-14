@@ -16,25 +16,32 @@ type InspectorSelectProps = {
   items: { label: string; value: string }[];
   placeholder?: string;
 };
+type InspectorColorProps = {
+  color: string;
+};
+
+type InspectorEvents = {};
 
 type InspectorListProps = {
   value?: any[];
 };
 
 type InspectorCheckboxProps = {
-//  label: string; 
+  //  label: string;
 };
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
   select: InspectorSelectProps;
+  color: InspectorColorProps;
+  event: InspectorEvents;
   sqlEditor: {
     value?: string;
     placeholder?: string;
   };
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
-  inlineCodeInput: InlineCodeInputProps
+  inlineCodeInput: InlineCodeInputProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -54,7 +61,7 @@ type WidgetInspectorConfig<TProps> = {
 
 type InspectorFormControls = keyof FormControlOptions;
 
- type InlineCodeInputProps = {
+type InlineCodeInputProps = {
   label: string;
   placeholder?: string;
   value?: string;
@@ -67,5 +74,6 @@ export type {
   InspectorCheckboxProps,
   WidgetInspectorConfig,
   InspectorFormControls,
-  InlineCodeInputProps ,
+  InlineCodeInputProps,
+  InspectorColorProps,
 };

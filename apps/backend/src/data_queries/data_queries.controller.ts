@@ -21,49 +21,32 @@ import {
   updateQuerySchema,
   UpdateQueryDto,
 } from '../dto/data_queries.dto';
-import { DataSourcesService } from '../data_sources/data_sources.service';
-import { DataSourceConfigT } from '../dto/data_sources.dto';
 import { QueryRet } from './query.types';
+import { WorkspaceDto } from '../dto/workspace.dto';
 
 @UseGuards(JwtGuard)
-@Controller(
-  'workspaces/:workspaceId/apps/:appId/datasources/:dataSourceId/queries',
-)
+@Controller('workspaces/:workspaceId/apps/:appId/queries')
 export class DataQueriesController {
-  constructor(
-    private dataQueriesService: DataQueriesService,
-    private dataSourcesService: DataSourcesService,
-  ) {}
+  constructor(private dataQueriesService: DataQueriesService) {}
 
-  @Post('run')
+  @Post('run/:queryId')
   async runQuery(
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('queryId', ParseIntPipe) queryId: number,
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: number,
-    @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
+    workspaceId: WorkspaceDto['id'],
   ): Promise<QueryRet> {
-    const ds = await this.dataSourcesService.getOne(workspaceId, dataSourceId);
-
-    return await this.dataQueriesService.runQuery(
-      ds.config as DataSourceConfigT,
-      query,
-      dataSourceId,
-    );
+    return await this.dataQueriesService.runQuery(workspaceId, appId, queryId);
   }
 
   @Post('add')
   async addQuery(
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<QueryDto> {
-    const jsonQuery: QueryDto['query'] = JSON.stringify(query.query);
-
     return await this.dataQueriesService.addQuery({
-      name: query.name,
-      query: jsonQuery,
-      dataSourceId,
+      ...query,
       createdById: req.user.userId,
       appId,
     });
@@ -77,15 +60,17 @@ export class DataQueriesController {
   @Get(':id')
   async getQuery(
     @Param('id', ParseIntPipe) queryId: number,
+    @Param('appId', ParseIntPipe) appId: number,
   ): Promise<QueryDto> {
-    return await this.dataQueriesService.getQuery(queryId);
+    return await this.dataQueriesService.getQuery(appId, queryId);
   }
 
   @Delete(':id')
   async deleteQuery(
+    @Param('appId', ParseIntPipe) appId: number,
     @Param('id', ParseIntPipe) queryId: number,
   ): Promise<QueryDto> {
-    return await this.dataQueriesService.deleteQuery(queryId);
+    return await this.dataQueriesService.deleteQuery(appId, queryId);
   }
 
   @Delete()

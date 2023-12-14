@@ -4,10 +4,16 @@ import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { Button } from '@/components/ui/button';
 export type WebloomButtonProps = {
   text: string;
+  color: string;
+  event: string;
 };
 const WebloomButton = (props: WebloomButtonProps) => {
   return (
-    <Button {...props} className="block h-full w-full active:bg-primary/20">
+    <Button
+      {...props}
+      className={`active:bg-primary/20 block h-full w-full`}
+      style={{ backgroundColor: props.color }}
+    >
       {props.text}
     </Button>
   );
@@ -27,6 +33,8 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
+  color: 'black',
+  event: 'onclick',
 };
 const widgetName = 'WebloomButton';
 
@@ -42,6 +50,32 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
         options: {
           placeholder: 'Enter text',
           type: 'text',
+        },
+      },
+    ],
+  },
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        id: `${widgetName}-text`,
+        key: 'event',
+        label: 'Event',
+        type: 'event',
+        options: {},
+      },
+    ],
+  },
+  {
+    sectionName: 'Color',
+    children: [
+      {
+        id: `${widgetName}-color`,
+        key: 'color',
+        label: 'Color',
+        type: 'color',
+        options: {
+          color: '#fff',
         },
       },
     ],

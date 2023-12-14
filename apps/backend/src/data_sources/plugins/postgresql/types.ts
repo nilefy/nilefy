@@ -6,7 +6,7 @@ export const configSchema = z.object({
   port: z.number(),
   database: z.string(),
   password: z.string(),
-  ssl: z.any(),
+  ssl: z.boolean(),
   sslCertificate: z.string(),
   connectionOptions: z.string(),
 });

@@ -41,6 +41,20 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
       },
     ],
   },
+  {
+    sectionName: 'Color',
+    children: [
+      {
+        id: `${widgetName}-color`,
+        key: 'color',
+        label: 'Color',
+        type: 'color',
+        options: {
+          color: '#fff',
+        },
+      },
+    ],
+  },
 ];
 export const config: WidgetConfig = {
   name: 'Container',
