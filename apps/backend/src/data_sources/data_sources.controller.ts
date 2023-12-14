@@ -38,14 +38,10 @@ export class DataSourcesController {
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
-    const { name, config } = createDataSourceDto;
-    const jsonConfig: WsDataSourceDto['config'] = JSON.stringify(config);
-
     return await this.dataSourceService.create({
-      name,
+      ...createDataSourceDto,
       workspaceId,
       dataSourceId,
-      config: jsonConfig,
       createdById: req.user.userId,
     });
   }
@@ -69,7 +65,7 @@ export class DataSourcesController {
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['id'],
-  ): Promise<WsDataSourceP> {
+  ) {
     return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
