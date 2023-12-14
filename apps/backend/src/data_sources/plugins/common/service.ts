@@ -4,7 +4,7 @@ import PostgresqlQueryService from '../postgresql/main';
 
 export const getQueryService = (name: string): QueryRunnerI => {
   switch (name.toLowerCase()) {
-    case 'postqresql':
+    case 'postgresql':
       return new PostgresqlQueryService();
     default:
       throw new BadRequestException();
