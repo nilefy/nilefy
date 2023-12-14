@@ -2,28 +2,33 @@ import store from '@/store';
 import { WebloomWidgets, WidgetTypes } from '..';
 import { InspectorFormControls } from '@/components/configForm/formControls';
 import { FormControlContext, FormSectionView } from '@/components/configForm';
-import { useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { commandManager } from '@/Actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
 import { WebloomNode } from '@/lib/Editor/interface';
 
 function ConfigPanelHeader({ node }: { node: WebloomNode }) {
+  const [value, setValue] = useState(node.id);
+  const onChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setValue(e.target.value);
+    },
+    [setValue],
+  );
+  useEffect(() => {
+    setValue(node.id);
+  }, [node.id]);
+  if (!node) return null;
   return (
     <div className="flex items-center justify-center">
       <Input
-        defaultValue={node.name}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            commandManager.executeCommand(
-              new ChangePropAction(
-                node.id,
-                true,
-                'name',
-                e.currentTarget.value,
-              ),
-            );
-          }
+        value={value}
+        onChange={onChange}
+        onBlur={(e) => {
+          // commandManager.executeCommand(
+          //   new ChangePropAction(node.id, true, 'name', e.currentTarget.value),
+          // );
         }}
       />
     </div>
@@ -97,7 +102,10 @@ const FormControl = (props: {
     },
     [control.key, selectedId],
   );
-  const contextValue = useMemo(() => ({ onChange }), [onChange]);
+  const contextValue = useMemo(
+    () => ({ onChange, id: selectedId, toProperty: control.key }),
+    [onChange, selectedId, control.key],
+  );
   return (
     <FormControlContext.Provider value={contextValue}>
       {

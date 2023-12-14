@@ -1,8 +1,8 @@
 import store, { convertGridToPixel } from '@/store';
 import { Command, UndoableCommand } from '../types';
-import { nanoid } from 'nanoid';
 import { Point } from '@/types';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
@@ -23,13 +23,11 @@ const {
 } = store.getState();
 
 class DragAction {
-  private static threshold = 5;
   private static isNew = false;
   private static newType: string;
   private static id: string | null = null;
   private static readonly previewId = EDITOR_CONSTANTS.PREVIEW_NODE_ID;
   private static oldParent: string;
-  private static currentParent: string;
   private static movedToNewParent = false;
   private static touchedRoot = false;
   private static startPosition: Point;
@@ -39,7 +37,6 @@ class DragAction {
   private static mouseStartPosition: Point;
   private static mouseCurrentPosition: Point;
   private static moved = false;
-  private static counter = 0;
 
   private static _start(args: {
     new?: {
@@ -55,7 +52,7 @@ class DragAction {
     this.mouseStartPosition = args.mouseStartPosition;
     if (this.isNew) {
       this.initialDelta = args.new!.initialDelta;
-      this.id = nanoid();
+      this.id = getNewWidgetName(args.new!.type as WidgetTypes);
       const parent = store.getState().tree[args.new!.parent];
       const colWidth = parent.columnWidth;
       const rowHeight = EDITOR_CONSTANTS.ROW_HEIGHT;
@@ -68,8 +65,8 @@ class DragAction {
       const widget = WebloomWidgets[this.newType as WidgetTypes];
       const node: WebloomNode = {
         id: this.previewId,
-        name: this.previewId,
         nodes: [],
+        dependancies: [],
         //todo change this to be the parent
         parent: args.new!.parent,
         dom: null,
@@ -149,7 +146,6 @@ class DragAction {
     }
     if (newParent !== this.previewId && node.parent !== newParent) {
       this.movedToNewParent = true;
-      this.currentParent = newParent;
       moveNode(this.previewId, newParent);
     }
 
@@ -225,7 +221,6 @@ class DragAction {
     removeNode(this.previewId, false);
     if (isNew) {
       newNode.id = id;
-      newNode.name = getNewWidgetName(newNode.type);
       command = {
         execute: () => {
           addNode(newNode, newNode.parent!);
@@ -316,7 +311,6 @@ class DragAction {
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
     this.movedToNewParent = false;
-    this.counter = 0;
     setDraggedNode(null);
     setShadowElement(null);
   }

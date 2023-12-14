@@ -1,6 +1,6 @@
 import store from '@/store';
 import { UndoableCommand } from '../types';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { WebloomNode } from '@/lib/Editor/interface';
 
 const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =

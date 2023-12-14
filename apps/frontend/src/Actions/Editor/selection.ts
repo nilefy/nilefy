@@ -1,6 +1,6 @@
 import store from '@/store';
 import { Command } from '../types';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export class SelectionAction implements Command {
   constructor(

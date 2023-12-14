@@ -57,16 +57,18 @@ export interface WidgetConfig {
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
 }
-
+export type EntityDependancy = Record<string, string[]>;
 export type WebloomNode = {
   id: string;
-  name: string;
 
   dom: HTMLElement | null;
   nodes: string[];
   parent: string;
   isCanvas?: boolean;
   props: Record<string, unknown>;
+  dependants: EntityDependancy;
+  dependancies: EntityDependancy;
+  toBeEvaluatedProps: Set<string>;
   type: WidgetTypes;
 } & WebloomGridDimensions;
 

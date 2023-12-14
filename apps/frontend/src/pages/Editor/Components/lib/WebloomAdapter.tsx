@@ -8,7 +8,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { DeleteAction } from '@/Actions/Editor/Delete';

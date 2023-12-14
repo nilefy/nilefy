@@ -1,7 +1,8 @@
 import store, { handleParentCollisions } from '@/store';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand } from '../types';

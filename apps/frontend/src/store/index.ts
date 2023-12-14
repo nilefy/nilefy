@@ -1,6 +1,8 @@
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import {
   BoundingRect,
+  EntityDependancy,
   ShadowElement,
   WebloomGridDimensions,
   WebloomNode,
@@ -14,10 +16,6 @@ export type WebloomTree = {
   [key: string]: WebloomNode;
 };
 
-export type AutoCompleteItem = {
-  name: string;
-  id: string;
-};
 export interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
@@ -85,6 +83,15 @@ interface WebloomActions {
     value: unknown,
   ): void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
+  setDependancies: (
+    from: string,
+    toProperty: string,
+    dependancies: {
+      on: string;
+      property: string;
+    }[],
+    overwrite?: boolean,
+  ) => void;
 }
 
 interface WebloomGetters {
@@ -103,8 +110,13 @@ interface WebloomGetters {
     forShadow?: boolean,
   ) => WebloomGridDimensions;
   getSelectedNodeIds: () => WebloomState['selectedNodeIds'];
+  getEvaluationContext: () => EvaluationContext;
+  getDependancies: (id: string) => EntityDependancy;
+  getDependants: (id: string) => EntityDependancy;
 }
-
+export type EvaluationContext = {
+  widgets: Record<string, WebloomNode['props']>;
+};
 function handleHoverCollision(
   dimensions: WebloomGridDimensions,
   parentPixelDims: WebloomPixelDimensions,
@@ -292,10 +304,7 @@ export function handleParentCollisions(
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
   (set, get) => ({
     tree: {},
-    autoCompleteKeys: {
-      widgets: [],
-      actions: [],
-    },
+
     draggedNode: null,
     overNode: null,
     selectedNodeIds: new Set(),
@@ -465,6 +474,12 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: newTree };
       });
     },
+    getDependancies(id) {
+      return get().tree[id]?.dependancies || {};
+    },
+    getDependants(id) {
+      return get().tree[id]?.dependants || {};
+    },
     addNode: (node: WebloomNode, parentId: string) => {
       set((state) => {
         const newTree = {
@@ -558,6 +573,24 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
 
     getNode: (id: string) => {
       return get().tree[id] || null;
+    },
+    getEvaluationContext() {
+      const tree = get().tree;
+      const widgets: EvaluationContext['widgets'] = Object.keys(tree).reduce(
+        (acc, key) => {
+          return {
+            ...acc,
+            [key]: {
+              ...tree[key].props,
+            },
+          };
+        },
+        {},
+      );
+      delete widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
+      return {
+        widgets,
+      };
     },
     // return first canvas node starting from id and going up the tree until root
     getCanvas: (id: string): WebloomNode => {
@@ -653,6 +686,37 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     resize(id, dimensions) {},
+    setDependancies(dependant, toProperty, dependancies, overwrite = true) {
+      const state = get();
+      const node = state.tree[dependant];
+      const newTree = state.tree;
+      if (!node) return;
+      const newDependancies = overwrite ? {} : node.dependancies || {};
+      for (const dependancy of dependancies) {
+        const { on, property } = dependancy;
+        const master = state.tree[on];
+        if (!master) continue;
+        const dependants = master.dependants || {};
+        dependants[dependant] = overwrite ? [] : dependants[dependant] || [];
+        dependants[dependant].push(property);
+        const newMaster = {
+          ...master,
+          dependants,
+        };
+        newTree[on] = newMaster;
+        newDependancies[on] = overwrite ? [] : newDependancies[on] || [];
+        newDependancies[on].push(property);
+      }
+      const newNode: WebloomNode = {
+        ...node,
+        toBeEvaluatedProps: overwrite
+          ? new Set([toProperty])
+          : new Set([...node.toBeEvaluatedProps, toProperty]),
+        dependancies: newDependancies,
+      };
+      newTree[dependant] = newNode;
+      set({ tree: newTree });
+    },
 
     resizeCanvas(id, dimensions) {
       const node = get().tree[id];

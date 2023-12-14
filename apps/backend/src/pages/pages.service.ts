@@ -15,8 +15,6 @@ import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto, WebloomNode, WebloomTree } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { nanoid } from 'nanoid';
-
 @Injectable()
 export class PagesService {
   constructor(
@@ -47,8 +45,7 @@ export class PagesService {
       .returning();
     const rootComponent = await this.componentsService.create(
       {
-        id: nanoid(),
-        name: 'ROOT',
+        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
         isCanvas: true,
         pageId: p.id,

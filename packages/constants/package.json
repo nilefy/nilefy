@@ -1,0 +1,14 @@
+{
+  "name": "@webloom/constants",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "tsup": "^8.0.1"
+  },
+  "scripts": {
+    "dev": "tsup --watch --dts",
+    "build": "tsup "
+  }
+}
+ 

@@ -27,7 +27,8 @@ import {
 } from '@dnd-kit/core';
 
 import { useSetDom } from '@/hooks/useSetDom';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import {
   Grid,
   MultiSelectBounding,
@@ -52,6 +53,7 @@ import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
 import { seedNameMap } from '@/store/widgetName';
+import { useEvaluation } from '@/lib/Editor/evaluation';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -127,7 +129,8 @@ function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
-  const props = store((state) => state.tree[id].props);
+  let props = store((state) => state.tree[id].props);
+  props = useEvaluation(id, props);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
       store.getState().setProp(id, key, value);
@@ -169,30 +172,6 @@ function WebloomElement({ id }: { id: string }) {
     </WebloomAdapter>
   );
 }
-
-const initTree: WebloomTree = {
-  [EDITOR_CONSTANTS.ROOT_NODE_ID]: {
-    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    name: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    col: 0,
-    row: 0,
-    columnWidth: 0,
-    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
-    nodes: [],
-    parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    isCanvas: true,
-    dom: null,
-    rowsCount: 0,
-    props: {
-      className: 'h-full w-full',
-    },
-    type: 'WebloomContainer',
-  },
-};
-// store.setState((state) => {
-//   state.tree = initTree;
-//   return state;
-// });
 
 const CustomPanelResizeHandle = () => {
   return (
@@ -450,10 +429,7 @@ export function App() {
           seedNameMap(Object.values(tree));
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
-          // depends on root be with the name 'ROOT'
-          EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
-            (c) => c.name === 'ROOT',
-          )!.id;
+
           store.setState((state) => {
             state.tree = tree;
             return state;

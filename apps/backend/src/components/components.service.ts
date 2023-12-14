@@ -13,6 +13,7 @@ import {
   CreateComponentDb,
   UpdateComponentDb,
 } from '../dto/components.dto';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 @Injectable()
 export class ComponentsService {
@@ -46,7 +47,7 @@ export class ComponentsService {
         and(
           eq(components.pageId, pageId),
           inArray(components.id, componentIds),
-          ne(components.name, 'ROOT'),
+          ne(components.id, EDITOR_CONSTANTS.ROOT_NODE_ID),
         ),
       )
       .returning({ id: components.id });
@@ -79,12 +80,12 @@ export class ComponentsService {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
-      SELECT id, name, parent_id as "parent", is_canvas as "isCanvas", props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level 
+      SELECT id, parent_id as "parent", is_canvas as "isCanvas", props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level 
         FROM ${components}
        WHERE ${and(isNull(components.parent), eq(components.pageId, pageId))}
     UNION ALL 
     -- recursive
-      SELECT t.id, t.name, t.parent_id as "parent", t.is_canvas as "isCanvas", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level
+      SELECT t.id, t.parent_id as "parent", t.is_canvas as "isCanvas", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level
         FROM components as t
         JOIN rectree
           ON t.parent_id = rectree.id
@@ -97,7 +98,6 @@ export class ComponentsService {
     rows.forEach((row) => {
       tree[row.id] = {
         id: row.id.toString(),
-        name: row.name,
         nodes: [],
         parent: row.parent?.toString() ?? row.id.toString(),
         isCanvas: row.isCanvas ?? undefined,

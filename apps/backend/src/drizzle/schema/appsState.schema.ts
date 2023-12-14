@@ -52,8 +52,7 @@ export const pages = pgTable(
 export const components = pgTable(
   'components',
   {
-    id: text('id').unique().notNull(),
-    name: varchar('name').notNull(),
+    id: text('id').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
     props: json('props').$type<WebloomNode['props']>().notNull(),

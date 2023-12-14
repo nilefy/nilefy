@@ -1,4 +1,5 @@
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import store from '@/store';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';

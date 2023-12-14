@@ -58,7 +58,6 @@ export type WebloomGridDimensions = {
 
 export type WebloomNode = {
   id: string;
-  name: string;
   nodes: string[];
   parent: string;
   isCanvas?: boolean;

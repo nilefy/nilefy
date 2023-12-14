@@ -85,12 +85,12 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       ) {
         const doc = viewUpdate.state.doc;
         const value = doc.toString();
+
         onChange(value, viewUpdate);
       }
       // onStatistics && onStatistics(getStatistics(vu));
     },
   );
-
   const extensions = useMemo(() => {
     const extensions = [setup, webLoomContext, javascript()];
     if (props.templateAutocompletionOnly) {

@@ -6,7 +6,6 @@ import {
   MessageBody,
   WsException,
   OnGatewayDisconnect,
-  OnGatewayInit,
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { AppDto, WebloomNode } from '../dto/apps.dto';
@@ -109,6 +108,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
             createdById: user.userId,
           },
           {
+            // eslint-disable-next-line
             // @ts-ignore
             tx,
           },
@@ -116,7 +116,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await Promise.all(
           payload.sideEffects.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            const { columnWidth, nodes, dom, ...temp } = c;
+            // eslint-disable-next-line
+            const { columnWidth, nodes, dom, dependancies, ...temp } = c;
             return this.componentsService.update(
               socket.pageId,
               c.id,
@@ -125,6 +126,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 updatedById: user.userId,
               },
               {
+                // eslint-disable-next-line
                 // @ts-ignore
                 tx,
               },
@@ -158,7 +160,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return await Promise.all(
           payload.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            const { columnWidth, nodes, dom, ...temp } = c;
+            // eslint-disable-next-line
+            const { columnWidth, nodes, dom, dependancies, ...temp } = c;
             return this.componentsService.update(
               socket.pageId,
               c.id,
