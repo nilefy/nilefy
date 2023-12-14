@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
 import { SketchPicker } from 'react-color';
 import {
   BaseControlProps,
   InspectorColorProps,
 } from '@webloom/configpaneltypes';
+import { useContext } from 'react';
+import { FormControlContext } from '..';
 
-const InspectorColor = (
-  props: InspectorColorProps &
-    BaseControlProps & { onChange: (newValue: unknown) => void },
-) => {
-  const [color, setColor] = useState('#fff');
+const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
+  const { onChange } = useContext(FormControlContext);
   return (
     <SketchPicker
-      color={color}
+      color={props.color}
       onChangeComplete={(e) => {
-        props.onChange(e.hex);
-        setColor(e.hex);
+        onChange(e.hex);
       }}
     />
   );
