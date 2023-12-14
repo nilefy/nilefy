@@ -52,6 +52,7 @@ import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
 import { QueryPanel } from '@/components/queryPanel';
+import { seedNameMap } from '@/store/widgetName';
 
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
@@ -447,6 +448,7 @@ export function App() {
         {(app) => {
           const a = app as AppCompleteT;
           const tree = a.defaultPage.tree;
+          seedNameMap(Object.values(tree));
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
           // depends on root be with the name 'ROOT'
