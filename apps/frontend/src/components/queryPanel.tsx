@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { matchSorter } from 'match-sorter';
 import {
   DropdownMenu,
@@ -15,41 +15,80 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, Copy } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { Filter, Search, Trash, Pencil } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { ConfigForm } from './configForm';
 import { api } from '@/api';
-import { GlobalDataSourceI, WsDataSourceI } from '@/api/dataSources.api';
+import { CompeleteQueryI } from '@/api/queries.api';
+import { DebouncedInput } from './debouncedInput';
+import clsx from 'clsx';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
 
-type Query = {
-  id: number;
-  name: string;
-  query: object;
-  dataSource: {
-    id: number;
-    name: string;
-    dataSource: {
-      queryConfig: [];
-      id: number;
-      type: string;
-      name: string;
-    };
-  };
-};
+function QueryItem({ query }: { query?: CompeleteQueryI }) {
+  const { workspaceId, appId } = useParams();
+  const { mutate: run } = api.queries.run.useMutation({
+    onSuccess(data, variables) {
+      console.log(
+        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mvariables\x1b[0m = ',
+        variables,
+      );
+      console.log(
+        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
+        data,
+      );
+    },
+  });
 
-type DataSourceTypes = (Pick<WsDataSourceI, 'id' | 'name' | 'workspaceId'> & {
-  dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
-})[];
+  if (!query) {
+    return (
+      <div className="h-full w-full flex-row items-center justify-center border border-gray-300">
+        <p>create new query!</p>
+      </div>
+    );
+  }
+  return (
+    <div className="h-full w-full">
+      {/* HEADER */}
+      <div className="flex h-10 flex-row items-center justify-end gap-5 border border-gray-300">
+        <Input defaultValue={query.name} />
+        {/* TODO: */}
+        <Button className="mr-auto">save</Button>
+        {/* <Button>preview</Button> */}
+        <Button
+          onClick={() => {
+            if (!workspaceId || !appId) {
+              throw new Error('workspaceId or appId is not defined!');
+            }
+            run({
+              workspaceId: +workspaceId,
+              appId: +appId,
+              queryId: query.id,
+            });
+          }}
+        >
+          run
+        </Button>
+      </div>
+      <ScrollArea className="h-full w-full border border-gray-300">
+        <ConfigForm
+          config={query.dataSource.dataSource.queryConfig}
+          itemProps={query.query}
+          // TODO:
+          onChange={(key, value) => {
+            console.log(key, value);
+          }}
+        />
+      </ScrollArea>
+    </div>
+  );
+}
 
 export function QueryPanel() {
-  const [queries, setQueries] = useState<Array<Query>>();
   const [querieNumber, setQueryNumber] = useState(0);
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
-  const [dataSources, setDataSources] = useState<DataSourceTypes>();
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
@@ -60,16 +99,11 @@ export function QueryPanel() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId, appId } = useParams();
 
-  const { isPending, data } = api.dataSources.index.useQuery(
+  const { data: dataSources } = api.dataSources.index.useQuery(
     +(workspaceId as string),
   );
-  const {
-    isPending: queryPending,
-    data: queryData,
-    refetch: refetchQueries,
-  } = api.queries.index.useQuery(
+  const { data: queries, refetch: refetchQueries } = api.queries.index.useQuery(
     +(workspaceId as string),
-    1,
     +(appId as string),
   );
   const { mutate: addMutation } = api.queries.insert.useMutation({
@@ -82,57 +116,41 @@ export function QueryPanel() {
       refetchQueries();
     },
   });
-  const { mutate: updateMutation } = api.queries.update.useMutation({
-    onSuccess: () => {
-      refetchQueries();
-    },
-  });
+  // const { mutate: updateMutation } = api.queries.update.useMutation({
+  //   onSuccess: () => {
+  //     refetchQueries();
+  //   },
+  // });
 
-  useEffect(() => {
-    if (data && !isPending) {
-      setDataSources(data);
-      console.log(data);
-    }
-    if (queryData && !queryPending) {
-      setQueries(queryData);
-    }
-  }, [queryData, data, queryPending, isPending]);
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
   );
 
-  const handleDataSourceSearchChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const query = event.target.value.toLowerCase();
-    setDataSourceSearch(query);
-  };
+  // const renameItem = (item: QueryI, e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const newName = e.target.value;
+  //   updateMutation({
+  //     workspaceId,
+  //     appId,
+  //     queryId: item.dataSource.id,
+  //     id: item.id,
+  //     data: { name: newName, query: item.query },
+  //   });
+  // };
 
-  const renameItem = (item: Query, e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    updateMutation({
-      workspaceId,
-      appId,
-      dataSourceId: item.dataSource.id,
-      id: item.id,
-      data: { name: newName, query: item.query },
-    });
-  };
-
-  const duplicateItem = (item: Query) => {
-    if (item) {
-      const newItem = {
-        name: `Copy of ${item.name}`,
-        query: item.query,
-      };
-      addMutation({
-        workspaceId,
-        appId,
-        dataSourceId: item.dataSource.id,
-        query: newItem,
-      });
-    }
-  };
+  // const duplicateItem = (item: Query) => {
+  //   if (item) {
+  //     const newItem = {
+  //       name: `Copy of ${item.name}`,
+  //       query: item.query,
+  //     };
+  //     addMutation({
+  //       workspaceId,
+  //       appId,
+  //       dataSourceId: item.dataSource.id,
+  //       query: newItem,
+  //     });
+  //   }
+  // };
 
   const handleItemClick = (itemId: number) => {
     setSelectedItemId((prevSelectedItemId) =>
@@ -142,8 +160,8 @@ export function QueryPanel() {
 
   const sortQueries = useCallback(
     (
-      queries: Query[],
-      sortingCriteria: string,
+      queries: CompeleteQueryI[],
+      sortingCriteria: 'name' | 'dateModified' | 'source',
       sortingOrder: 'asc' | 'desc' | null,
     ) => {
       const sortedData = [...queries];
@@ -177,19 +195,38 @@ export function QueryPanel() {
     [],
   );
 
-  const queriesToShow = useMemo(() => {
-    if (queries && !queryPending) {
-      const filtered = matchSorter(queries, querySearch, {
+  const filteredDatasources = useMemo(() => {
+    if (dataSources) {
+      return matchSorter(dataSources, dataSourceSearch, {
         keys: ['name', 'type'],
-      }).filter((item) => {
-        if (
-          selectedSource === 'all' ||
-          item.dataSource.dataSource.type === selectedSource
-        ) {
-          return item;
-        }
       });
-      return sortQueries(filtered, sortingCriteria, sortingOrder);
+    } else {
+      return [];
+    }
+  }, [dataSources, dataSourceSearch]);
+
+  const filtredQueries = useMemo(() => {
+    if (queries) {
+      const temp = sortQueries(queries, sortingCriteria, sortingOrder).filter(
+        (item) => {
+          if (
+            selectedSource === 'all' ||
+            item.dataSource.dataSource.type === selectedSource
+          ) {
+            return item;
+          }
+        },
+      );
+      const res = matchSorter(temp, querySearch, {
+        keys: ['name', 'type'],
+      });
+      if (res.length > 0) {
+        setSelectedItemId(res[0].id);
+      }
+      return res;
+    } else {
+      setSelectedItemId(null);
+      return [];
     }
   }, [
     queries,
@@ -198,329 +235,211 @@ export function QueryPanel() {
     sortingOrder,
     sortingCriteria,
     sortQueries,
-    queryPending,
   ]);
-  const dataSourcesToShow = useMemo(() => {
-    if (dataSources && !isPending) {
-      return matchSorter(dataSources, dataSourceSearch, {
-        keys: ['name', 'type'],
-      });
-    }
-  }, [dataSources, dataSourceSearch, isPending]);
+
   return (
-    <div className="h-full w-full">
-      <div className="h-1 w-full "></div>
-      <div className="flex h-full w-full   flex-row border border-gray-300 pb-4 ">
-        <div className="flex w-1/3 flex-col border-gray-300">
-          <div className="flex h-10 flex-row items-center justify-between border-b border-gray-300 p-4">
-            <div className="flex flex-row items-center gap-x-2">
-              <Search
-                className="h-4 w-4 cursor-pointer"
-                onClick={() => setCloseSearsh(true)}
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Filter className="h-4 w-4 cursor-pointer" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Filter By</DropdownMenuLabel>
-
-                  <DropdownMenuItem>
-                    <Select
-                      value={selectedSource}
-                      onValueChange={(e) => {
-                        setSelectedSource(e);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Data Source" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sources</SelectItem>
-                        {uniqueDataSourceTypes?.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('name');
-                      setSortingOrder('asc');
-                    }}
-                  >
-                    Name : A-Z
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('name');
-                      setSortingOrder('desc');
-                    }}
-                  >
-                    Name : Z-A
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('source');
-                      setSortingOrder('asc');
-                    }}
-                  >
-                    Type : A-Z
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('source');
-                      setSortingOrder('desc');
-                    }}
-                  >
-                    Type : Z-A
-                  </DropdownMenuItem>
-                  {/* 
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('dateModified');
-                      setSortingOrder('asc');
-                    }}
-                  >
-                    Last Modified : Oldest First
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSortingCriteria('dateModified');
-                      setSortingOrder('desc');
-                    }}
-                  >
-                    Last Modified : Newest First
-                  </DropdownMenuItem> */}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
+    <div className="flex h-full w-full border border-gray-300">
+      {/* LEFT SIDE */}
+      <div className="flex h-full w-1/3 flex-col">
+        {/* SEARCH, FILTER AND ADD*/}
+        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-gray-300 p-4">
+          {/* SEARCH and FILTER */}
+          <div className="flex flex-row items-center gap-x-2">
+            <Button
+              onClick={() => setCloseSearsh(true)}
+              size={'icon'}
+              variant={'ghost'}
+            >
+              <Search className="h-4 w-4 " />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <div className="h-8">+ Add</div>
+                <Filter className="h-4 w-4 cursor-pointer" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuLabel>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={dataSourceSearch}
-                    onChange={(e) => handleDataSourceSearchChange(e)}
-                    className=" mb-4 rounded-md border border-gray-300 p-2"
-                  />
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {dataSourcesToShow?.map((item) => (
-                  <DropdownMenuItem
-                    key={item.dataSource.type}
-                    onClick={() => {
-                      setQueryNumber(querieNumber + 1);
-                      const query = {
-                        name: item.name + querieNumber,
-                        query: {},
-                      };
-                      console.log(item.id, 'jlj');
-                      const dataSourceId: number = item.id;
-                      addMutation({ workspaceId, appId, dataSourceId, query });
+                <DropdownMenuLabel>Filter By</DropdownMenuLabel>
+                <DropdownMenuItem>
+                  <Select
+                    value={selectedSource}
+                    onValueChange={(e) => {
+                      setSelectedSource(e);
                     }}
                   >
-                    {item.name}
-                  </DropdownMenuItem>
-                ))}
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Data Source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sources</SelectItem>
+                      {uniqueDataSourceTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSortingCriteria('name');
+                    setSortingOrder('asc');
+                  }}
+                >
+                  Name : A-Z
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSortingCriteria('name');
+                    setSortingOrder('desc');
+                  }}
+                >
+                  Name : Z-A
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSortingCriteria('source');
+                    setSortingOrder('asc');
+                  }}
+                >
+                  Type : A-Z
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSortingCriteria('source');
+                    setSortingOrder('desc');
+                  }}
+                >
+                  Type : Z-A
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
-          <div className="px-2">
-            <ul>
-              {closeSearsh && (
-                <div className="flex items-center justify-between border-b border-gray-300">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={querySearch}
-                    onChange={(e) => {
-                      setQuerySearch(e.target.value);
-                    }}
-                    className="h-6 w-2/3  rounded-md border border-gray-300"
-                  />
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setCloseSearsh(false);
-                    }}
-                  >
-                    close
-                  </Button>
-                </div>
-              )}
-              {queriesToShow?.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="outline"
-                  className={cn(
-                    'group cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-gray-200',
-                    {
-                      'bg-blue-100': selectedItemId === item.id,
-                    },
-                  )}
-                  onClick={() => handleItemClick(item.id)}
+          {/* ADD QUERY DROP DOWN */}
+          <DropdownMenu>
+            <DropdownMenuTrigger>+ Add</DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>
+                <DebouncedInput
+                  type="search"
+                  placeholder="Search..."
+                  value={dataSourceSearch}
+                  onChange={(v) => setDataSourceSearch(v.toString())}
+                  className=" mb-4 rounded-md border border-gray-300 p-2"
+                />
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {filteredDatasources.map((item) => (
+                <DropdownMenuItem
+                  key={item.dataSource.type}
+                  onClick={() => {
+                    // TODO: change to use same logic as widgets in main
+                    setQueryNumber(querieNumber + 1);
+                    if (!workspaceId || !appId) throw new Error();
+                    addMutation({
+                      workspaceId: +workspaceId,
+                      appId: +appId,
+                      dto: {
+                        dataSourceId: item.id,
+                        name: item.name + querieNumber,
+                        query: {},
+                      },
+                    });
+                  }}
                 >
-                  <li className="w-full">
-                    {editingItemId === item.id ? (
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) => renameItem(item, e)}
-                        autoFocus
-                        onBlur={() => setEditingItemId(null)}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <span>{item.name}</span>
-                        {selectedItemId === item.id && (
-                          <div className="invisible flex items-center justify-center gap-2 group-hover:visible ">
-                            <button
-                              onClick={() => {
-                                console.log('delete');
-                                setQueryNumber(querieNumber - 1);
-                                deleteMutation({
-                                  workspaceId,
-                                  appId,
-                                  dataSourceId: item.dataSource.id,
-                                  id: item.id,
-                                });
-                              }}
-                            >
-                              <Trash size={16} />
-                            </button>
-                            <button onClick={() => setEditingItemId(item.id)}>
-                              <Pencil size={16} />
-                            </button>
-                            <button onClick={() => duplicateItem(item)}>
-                              <Copy size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                </Button>
+                  {item.name}
+                </DropdownMenuItem>
               ))}
-            </ul>
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <div className="flex w-full flex-col border border-r-0 border-t-0 border-gray-300 ">
-          <div className="flex h-10 flex-row justify-between border-b border-gray-300 pb-2">
-            <div className="flex flex-row ">
-              <ConfigForm
-                config={[
-                  {
-                    sectionName: 'Development',
-                    children: [
-                      {
-                        id: 'host',
-                        key: 'host',
-                        label: 'Host',
-                        type: 'input',
-                        options: {
-                          placeholder: 'localhost',
-                          type: 'text',
-                        },
-                      },
-                      {
-                        id: 'port',
-                        key: 'port',
-                        label: 'Port',
-                        type: 'input',
-                        options: {
-                          placeholder: '5000',
-                          type: 'number',
-                        },
-                      },
-                      {
-                        id: 'ssl',
-                        key: 'ssl',
-                        label: 'SSL',
-                        type: 'input',
-                        options: {},
-                      },
-                      {
-                        id: 'database_name',
-                        key: 'database',
-                        label: 'Database Name',
-                        type: 'input',
-                        options: {
-                          placeholder: 'Name of the database',
-                          type: 'text',
-                        },
-                      },
-                      {
-                        id: 'username',
-                        key: 'user',
-                        label: 'Username',
-                        type: 'input',
-                        options: {
-                          placeholder: 'Enter username',
-                          type: 'text',
-                        },
-                      },
-                      {
-                        id: 'password',
-                        key: 'password',
-                        label: 'Password',
-                        type: 'input',
-                        options: {
-                          placeholder: 'Enter password',
-                          type: 'password',
-                        },
-                      },
-                      {
-                        id: 'certificate',
-                        key: 'sslCertificate',
-                        label: 'SSL Certificate',
-                        type: 'select',
-                        options: {
-                          items: [
-                            {
-                              label: 'CA Certificate',
-                              value: 'ca',
-                            },
-                            {
-                              label: 'Self-signed Certificate',
-                              value: 'self-signed',
-                            },
-                            {
-                              label: 'None',
-                              value: 'none',
-                            },
-                          ],
-                          placeholder: 'None',
-                        },
-                      },
-                      // TODO: add connection options key-value pairs
-                    ],
-                  },
-                ]}
-                itemProps={{}}
-                onChange={(key, value) => {
-                  console.log(key, value);
-                }}
-              />
-            </div>
-          </div>
-        </div>
+
+        <ScrollArea className="h-full w-full">
+          <ul className="h-full w-full overflow-y-auto">
+            {closeSearsh && (
+              <div className="flex items-center justify-between border-b border-gray-300">
+                <DebouncedInput
+                  type="text"
+                  placeholder="Search..."
+                  value={querySearch}
+                  onChange={(e) => {
+                    setQuerySearch(e.toString());
+                  }}
+                  className="h-6 w-2/3  rounded-md border border-gray-300"
+                />
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setCloseSearsh(false);
+                  }}
+                >
+                  close
+                </Button>
+              </div>
+            )}
+            {filtredQueries?.map((item) => (
+              <li className="flex w-full " key={item.id}>
+                {editingItemId === item.id ? (
+                  <Input
+                    type="text"
+                    value={item.name}
+                    // onChange={(e) => renameItem(item, e)}
+                    autoFocus
+                    onBlur={() => setEditingItemId(null)}
+                  />
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className={clsx({
+                        'group cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-primary/5':
+                          true,
+                        'bg-primary/10': selectedItemId === item.id,
+                      })}
+                      onClick={() => handleItemClick(item.id)}
+                    >
+                      {item.name}
+                    </Button>
+                    <Button
+                      size={'icon'}
+                      variant={'ghost'}
+                      onClick={() => setEditingItemId(item.id)}
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                    {/* <button onClick={() => duplicateItem(item)}>
+                              <Copy size={16} />
+                            </button> */}
+
+                    <Button
+                      size={'icon'}
+                      variant={'ghost'}
+                      onClick={() => {
+                        if (!workspaceId || !appId) throw new Error();
+                        deleteMutation({
+                          workspaceId: +workspaceId,
+                          appId: +appId,
+                          queryId: item.id,
+                        });
+                      }}
+                    >
+                      <Trash size={16} />
+                    </Button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
+      </div>
+      {/* ITEM */}
+      <div className="h-full w-full">
+        <QueryItem query={queries?.find((q) => q.id === selectedItemId)} />
       </div>
     </div>
   );
