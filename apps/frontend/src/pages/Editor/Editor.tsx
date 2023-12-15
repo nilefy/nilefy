@@ -86,7 +86,7 @@ function WebloomRoot() {
     return children;
   }, [nodes, props.children]);
   useLayoutEffect(() => {
-    const columnWidth = width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+    const columnWidth = Math.round(width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
     let rowsCount =
       store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
     if (rowsCount === 0) {

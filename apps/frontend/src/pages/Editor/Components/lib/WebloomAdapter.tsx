@@ -14,6 +14,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { cn } from '@/lib/cn';
+import { useShallow } from 'zustand/react/shallow';
 
 type WebloomAdapterProps = {
   id: string;
@@ -31,7 +32,9 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store((store) => store.getRelativePixelDimensions(id));
+  const elDimensions = store(
+    useShallow((store) => store.getRelativePixelDimensions(id)),
+  );
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useWebloomDraggable({
       id,
