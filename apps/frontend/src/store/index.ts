@@ -11,7 +11,7 @@ import {
 import { checkOverlap, getBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
-
+import { produce } from 'immer';
 export type WebloomTree = {
   [key: string]: WebloomNode;
 };
@@ -372,7 +372,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: newTree };
       });
     },
-
+    getProp(id: string) {},
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
       const el = tree[id];

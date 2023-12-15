@@ -130,8 +130,8 @@ function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
-  let props = store((state) => state.tree[id].props);
-  props = useEvaluation(id, props);
+  const props = store((state) => state.tree[id].props);
+  // props = useEvaluation(id, props);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
       store.getState().setProp(id, key, value);
@@ -430,7 +430,6 @@ export function App() {
           seedNameMap(Object.values(tree));
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
-
           store.setState((state) => {
             state.tree = tree;
             return state;
