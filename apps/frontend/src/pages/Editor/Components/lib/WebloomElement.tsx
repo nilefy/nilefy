@@ -12,12 +12,13 @@ import {
 import { Grid, WebloomAdapter } from '.';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
+import { useShallow } from 'zustand/react/shallow';
 
 export function WebloomElement({ id }: { id: string }) {
   const wholeTree = store.getState().tree;
   const tree = wholeTree[id];
   const nodes = store((state) => state.tree[id].nodes);
-  const props = store((state) => state.tree[id].props);
+  const props = store(useShallow((state) => state.getProps(id)));
   // props = useEvaluation(id, props);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {

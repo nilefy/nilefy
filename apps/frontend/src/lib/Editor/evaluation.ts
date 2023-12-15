@@ -1,5 +1,8 @@
+import { commandManager } from '@/Actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
 import store from '@/store';
 import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 export type EvaluationContext = {
   widgets: {
@@ -8,10 +11,13 @@ export type EvaluationContext = {
     };
   };
 };
-export const evaluate = (code: string) => {
+export const evaluate = (
+  code: string,
+  evaluationContext: EvaluationContext,
+) => {
   if (!code) return code;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const evaluationContext = store.getState().getEvaluationContext();
+
+  console.log('evaluationContext', evaluationContext);
   if (!code.includes('{{')) return code;
   const matches = code.matchAll(/{{([^}]*)}}/g);
 
@@ -45,31 +51,7 @@ export const evaluate = (code: string) => {
   return final;
 };
 
-export const useEvaluation = (
-  id: string,
-  props: Record<string, unknown>,
-): Record<string, unknown> => {
-  const toBeEvaluatedProps = store((state) => {
-    return [...(state.tree[id].toBeEvaluatedProps ?? [])];
-  });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const dependancies = store((state) => {
-    return state.tree[id].dependancies;
-  });
-  const evaluatedProps = useMemo(
-    () =>
-      toBeEvaluatedProps.reduce(
-        (acc, prop) => {
-          const code = props[prop] as string;
-          const evaluated = evaluate(code);
-          acc[prop] = evaluated;
-          return acc;
-        },
-        { ...props },
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [toBeEvaluatedProps, props, dependancies],
-  );
-  console.log('evaluatedProps', evaluatedProps);
-  return evaluatedProps;
+export const useEvaluation = (id: string): Record<string, unknown> => {
+  const props = store(useShallow((state) => state.getProps(id)));
+  return props;
 };

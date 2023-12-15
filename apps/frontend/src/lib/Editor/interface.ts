@@ -57,7 +57,11 @@ export interface WidgetConfig {
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
 }
-export type EntityDependancy = Record<string, string[]>;
+// key is the id of the node and the array are keys of props
+/**
+ * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
+ */
+export type EntityDependancy = Record<string, Record<string, Set<string>>>;
 export type WebloomNode = {
   id: string;
 
@@ -66,6 +70,7 @@ export type WebloomNode = {
   parent: string;
   isCanvas?: boolean;
   props: Record<string, unknown>;
+  dynamicProps: Record<string, unknown>;
   dependants: EntityDependancy;
   dependancies: EntityDependancy;
   toBeEvaluatedProps: Set<string>;

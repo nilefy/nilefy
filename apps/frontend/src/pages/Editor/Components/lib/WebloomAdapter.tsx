@@ -2,17 +2,11 @@ import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
 import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
-import { DeleteAction } from '@/Actions/Editor/Delete';
 import { cn } from '@/lib/cn';
 import { useShallow } from 'zustand/react/shallow';
 

@@ -11,7 +11,7 @@ import {
 import { checkOverlap, getBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { create } from 'zustand';
-import { produce } from 'immer';
+import { evaluate } from '@/lib/Editor/evaluation';
 export type WebloomTree = {
   [key: string]: WebloomNode;
 };
@@ -77,6 +77,10 @@ interface WebloomActions {
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  reflectPropsOnDependants: (id: string, key: string) => void;
+  evaluateProp: (id: string, key: string) => void;
+  setDynamicProp: (id: string, key: string, value: unknown) => void;
+  setToBeEvaluatedProps: (id: string, toBeEvaluatedProps: Set<string>) => void;
   setWidgetMeta<T extends keyof WebloomNode>(
     id: string,
     metaKey: T,
@@ -109,6 +113,8 @@ interface WebloomGetters {
     overId: string,
     forShadow?: boolean,
   ) => WebloomGridDimensions;
+  getProp: (id: string, key: string) => unknown;
+  getProps: (id: string, forContext?: boolean) => WebloomNode['props'];
   getSelectedNodeIds: () => WebloomState['selectedNodeIds'];
   getEvaluationContext: () => EvaluationContext;
   getDependancies: (id: string) => EntityDependancy;
@@ -357,6 +363,47 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
+      get().reflectPropsOnDependants(id, key);
+    },
+    evaluateProp(id, key) {
+      const context = get().getEvaluationContext();
+      const prop = evaluate(get().tree[id].props[key] as string, context);
+      get().setDynamicProp(id, key, prop);
+    },
+    setDynamicProp(id, key, value) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            dynamicProps: {
+              ...node.dynamicProps,
+              [key]: value,
+            },
+          },
+        };
+        return { tree: newTree };
+      });
+      get().reflectPropsOnDependants(id, key);
+    },
+    reflectPropsOnDependants(id, key) {
+      const dependants = get().getDependants(id);
+      const affectedNodes: Record<string, string[]> = {};
+      for (const dependant in dependants) {
+        for (const property in dependants[dependant]) {
+          if (dependants[dependant][property].has(key)) {
+            affectedNodes[dependant] ??= [];
+            affectedNodes[dependant].push(property);
+          }
+        }
+      }
+      for (const node in affectedNodes) {
+        for (const property of affectedNodes[node]) {
+          get().evaluateProp(node, property);
+        }
+      }
     },
     setWidgetMeta(id, key, value) {
       set((state) => {
@@ -372,7 +419,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         return { tree: newTree };
       });
     },
-    getProp(id: string) {},
+
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
       const el = tree[id];
@@ -449,6 +496,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setSelectedNodeIds: (callback) => {
       set((prev) => ({ selectedNodeIds: callback(prev.selectedNodeIds) }));
     },
+
     setNewNode(newNode) {
       set({ newNode });
     },
@@ -503,6 +551,22 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         }
         return { tree: { ...state.tree, [parentId]: parent } };
       });
+    },
+    getProp(id, key) {
+      const dynamicProps = get().tree[id].dynamicProps || {};
+      const toBeEvaluatedProps = get().tree[id].toBeEvaluatedProps;
+      if (toBeEvaluatedProps && toBeEvaluatedProps.has(id))
+        return dynamicProps[key];
+      return get().tree[id].props[key];
+    },
+    getProps(id) {
+      const props = { ...get().tree[id].props };
+      const dynamicProps = get().tree[id].dynamicProps || {};
+      const toBeEvaluatedProps = get().tree[id].toBeEvaluatedProps || [];
+      for (const prop of toBeEvaluatedProps) {
+        if (prop in dynamicProps) props[prop] = dynamicProps[prop];
+      }
+      return props;
     },
     /**
      * @returns stack of deleted nodes
@@ -581,7 +645,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           return {
             ...acc,
             [key]: {
-              ...tree[key].props,
+              ...get().getProps(key, true),
             },
           };
         },
@@ -686,32 +750,85 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     resize(id, dimensions) {},
+    setToBeEvaluatedProps(id, toBeEvaluatedProps) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            toBeEvaluatedProps,
+          },
+        };
+        return { tree: newTree };
+      });
+    },
     setDependancies(dependant, toProperty, dependancies, overwrite = true) {
       const state = get();
       const node = state.tree[dependant];
       const newTree = state.tree;
       if (!node) return;
+      if (dependancies.length === 0) {
+        // remove all toProperty
+        const newDependancies = node.dependancies || {};
+        for (const on in newDependancies) {
+          delete newDependancies[on][toProperty];
+        }
+        const toBeEvaluatedProps = new Set(node.toBeEvaluatedProps || []);
+        toBeEvaluatedProps.delete(toProperty);
+        const newNode = {
+          ...node,
+          dependancies: newDependancies,
+          toBeEvaluatedProps,
+        };
+        newTree[dependant] = newNode;
+        for (const node in newTree) {
+          const dependants = newTree[node].dependants || {};
+          if (!dependants[dependant]) continue;
+          delete dependants[dependant][toProperty];
+          if (Object.keys(dependants[dependant]).length === 0)
+            delete dependants[dependant];
+          newTree[node] = {
+            ...newTree[node],
+            dependants,
+          };
+        }
+        set({ tree: newTree });
+        return;
+      }
       const newDependancies = overwrite ? {} : node.dependancies || {};
       for (const dependancy of dependancies) {
         const { on, property } = dependancy;
         const master = state.tree[on];
         if (!master) continue;
         const dependants = master.dependants || {};
-        dependants[dependant] = overwrite ? [] : dependants[dependant] || [];
-        dependants[dependant].push(property);
+        dependants[dependant] ??= {};
+        dependants[dependant][toProperty] ??= new Set();
+        if (overwrite) {
+          dependants[dependant][toProperty] = new Set([property]);
+        } else {
+          dependants[dependant][toProperty].add(property);
+        }
         const newMaster = {
           ...master,
           dependants,
         };
         newTree[on] = newMaster;
-        newDependancies[on] = overwrite ? [] : newDependancies[on] || [];
-        newDependancies[on].push(property);
+        newDependancies[on] ??= {};
+        newDependancies[on][property] ??= new Set();
+        if (overwrite) {
+          newDependancies[on][property] = new Set([toProperty]);
+        } else {
+          newDependancies[on][property].add(toProperty);
+        }
       }
-      const newNode: WebloomNode = {
+      const newNode = {
         ...node,
-        toBeEvaluatedProps: overwrite
-          ? new Set([toProperty])
-          : new Set([...node.toBeEvaluatedProps, toProperty]),
+        toBeEvaluatedProps: new Set([
+          ...(node.toBeEvaluatedProps || []),
+          toProperty,
+        ]),
         dependancies: newDependancies,
       };
       newTree[dependant] = newNode;
