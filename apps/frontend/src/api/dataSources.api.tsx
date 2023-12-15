@@ -24,6 +24,7 @@ export type GlobalDataSourceI = {
   type: 'database' | 'api' | 'cloud storage' | 'plugin';
   image: string | null;
   config: WidgetInspectorConfig<Record<string, unknown>>;
+  queryConfig: WidgetInspectorConfig<Record<string, unknown>>;
 };
 
 export type WsDataSourceI = {
@@ -36,7 +37,6 @@ export type WsDataSourceI = {
    */
   dataSourceId: number;
 };
-
 async function GlobalDataSourceIndex() {
   const res = await fetchX(`data-sources/global`, {
     method: 'GET',
@@ -51,7 +51,9 @@ async function index({ workspaceId }: { workspaceId: number }) {
   return (await res.json()) as (Pick<
     WsDataSourceI,
     'id' | 'name' | 'workspaceId'
-  > & { dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image'> })[];
+  > & {
+    dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
+  })[];
 }
 
 async function one(i: { workspaceId: number; dataSourceId: number }) {

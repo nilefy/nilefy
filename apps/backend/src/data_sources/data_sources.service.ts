@@ -18,7 +18,7 @@ export class DataSourcesService {
       .insert(workspaceDataSources)
       .values(dataSourceDto)
       .returning();
-    return dataSource as WsDataSourceDto;
+    return dataSource;
   }
 
   async getConnections({
@@ -64,7 +64,7 @@ export class DataSourcesService {
   async getOne(
     workspaceId: WsDataSourceDto['workspaceId'],
     datasourceId: WsDataSourceDto['id'],
-  ): Promise<WsDataSourceP> {
+  ) {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
         id: true,
@@ -91,7 +91,7 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    return ds as WsDataSourceP;
+    return ds;
   }
 
   async deleteConnections({
@@ -110,7 +110,7 @@ export class DataSourcesService {
         ),
       )
       .returning();
-    return ds as WsDataSourceDto[];
+    return ds;
   }
 
   async deleteOne(
@@ -126,7 +126,7 @@ export class DataSourcesService {
         ),
       )
       .returning();
-    return ds as WsDataSourceDto;
+    return ds;
   }
 
   async update(
@@ -152,6 +152,6 @@ export class DataSourcesService {
       )
       .returning();
     if (!ds) throw new NotFoundException();
-    return ds as WsDataSourceDto;
+    return ds;
   }
 }

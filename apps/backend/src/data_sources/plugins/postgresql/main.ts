@@ -16,7 +16,7 @@ export default class PostgresqlQueryService
       const res = await pool.query(query.query.query);
       return {
         status: 200,
-        data: res,
+        data: res.rows,
       };
     } catch (error) {
       return {
@@ -31,8 +31,9 @@ export default class PostgresqlQueryService
     // TODO: valid config
     const config: PoolConfig = {
       ...dataSourceConfig,
-      statement_timeout: 10000,
-      connectionTimeoutMillis: 10000,
+      // statement_timeout: 10000,
+      // connectionTimeoutMillis: 10000,
+      ssl: dataSourceConfig.ssl,
     };
 
     // TODO: ssl + connection options
