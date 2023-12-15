@@ -56,6 +56,14 @@ import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/store/widgetName';
 import { useEvaluation } from '@/lib/Editor/evaluation';
 
+import {
+  ContextMenuPortal,
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+
 const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -167,10 +175,25 @@ function WebloomElement({ id }: { id: string }) {
   );
   if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
   return (
-    <WebloomAdapter draggable droppable resizable key={id} id={id}>
-      {tree.isCanvas && <Grid id={id} />}
-      {rendered}
-    </WebloomAdapter>
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <WebloomAdapter draggable droppable resizable key={id} id={id}>
+          {tree.isCanvas && <Grid id={id} />}
+          {rendered}
+        </WebloomAdapter>
+      </ContextMenuTrigger>
+      <ContextMenuPortal>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onMouseDown={() => {
+              commandManager.executeCommand(new DeleteAction());
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenuPortal>
+    </ContextMenu>
   );
 }
 

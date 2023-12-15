@@ -63,7 +63,13 @@ const setAutoCompletionAllowed = EditorState.transactionExtender.of((tr) => {
   };
 });
 export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
-  const { initialState, onChange, autoFocus = true, value = '', setup } = props;
+  const {
+    initialState,
+    onChange,
+    autoFocus = false,
+    value = '',
+    setup,
+  } = props;
   const editor = useRef<HTMLDivElement>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<EditorView>();

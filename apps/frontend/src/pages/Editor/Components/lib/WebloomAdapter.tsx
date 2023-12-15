@@ -91,48 +91,35 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     );
   }
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div
-          key={'adapter' + id}
-          {...modListeners}
-          {...attributes}
-          style={style}
-          ref={ref}
-          className="target relative touch-none overflow-hidden outline-none"
-          data-id={id}
-        >
+    <div
+      key={'adapter' + id}
+      {...modListeners}
+      {...attributes}
+      style={style}
+      ref={ref}
+      className="target relative touch-none overflow-hidden outline-none"
+      data-id={id}
+    >
+      {
+        //this is to prevent widgets from capturing focus when drag is happening
+        !!active && (
+          <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+        )
+      }
+      <div
+        key={id}
+        className={cn(
           {
-            //this is to prevent widgets from capturing focus when drag is happening
-            !!active && (
-              <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
-            )
-          }
-          <div
-            key={id}
-            className={cn(
-              {
-                hidden: isDragging || isResizing,
-              },
-              {
-                flex: !isDragging && !isResizing,
-              },
-              'w-full h-full',
-            )}
-          >
-            {props.children}
-          </div>
-        </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          onMouseDown={() => {
-            commandManager.executeCommand(new DeleteAction());
-          }}
-        >
-          Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+            hidden: isDragging || isResizing,
+          },
+          {
+            flex: !isDragging && !isResizing,
+          },
+          'w-full h-full',
+        )}
+      >
+        {props.children}
+      </div>
+    </div>
   );
 };
