@@ -4,7 +4,8 @@ import NewNodeAdapter from './NewNodeAdapter';
 import { ResizeHandlers } from './ResizeHandlers';
 import { WebloomAdapter } from './WebloomAdapter';
 import { WebloomElementShadow } from './WebloomElementShadow';
-
+import { WebloomElement } from './WebloomElement';
+import { WebloomRoot } from './WebloomRoot';
 export {
   Grid,
   MultiSelectBounding,
@@ -12,4 +13,6 @@ export {
   ResizeHandlers,
   WebloomAdapter,
   WebloomElementShadow,
+  WebloomElement,
+  WebloomRoot,
 };
