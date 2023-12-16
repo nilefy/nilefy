@@ -367,6 +367,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     },
     evaluateProp(id, key) {
       const context = get().getEvaluationContext();
+      console.log(id, get().tree[id]);
       const prop = evaluate(get().tree[id].props[key] as string, context);
       get().setDynamicProp(id, key, prop);
     },
@@ -653,7 +654,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       );
       delete widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
       return {
-        widgets,
+        widgets: widgets,
       };
     },
     // return first canvas node starting from id and going up the tree until root
@@ -777,10 +778,13 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         }
         const toBeEvaluatedProps = new Set(node.toBeEvaluatedProps || []);
         toBeEvaluatedProps.delete(toProperty);
+        const dynamicProps = node.dynamicProps || {};
+        delete dynamicProps[toProperty];
         const newNode = {
           ...node,
           dependancies: newDependancies,
           toBeEvaluatedProps,
+          dynamicProps,
         };
         newTree[dependant] = newNode;
         for (const node in newTree) {
@@ -809,6 +813,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
           dependants[dependant][toProperty] = new Set([property]);
         } else {
           dependants[dependant][toProperty].add(property);
+          get().evaluateProp(on, property);
         }
         const newMaster = {
           ...master,
@@ -832,6 +837,7 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
         dependancies: newDependancies,
       };
       newTree[dependant] = newNode;
+      console.log(newTree[dependant]);
       set({ tree: newTree });
     },
 
