@@ -1,6 +1,6 @@
 import store from '@/store';
 import { Identifier, MemberExpression, parse } from 'acorn';
-import { ancestor, findNodeAfter, simple } from 'acorn-walk';
+import { ancestor } from 'acorn-walk';
 export const analyzeDependancies = (
   code: string,
   caller: string,

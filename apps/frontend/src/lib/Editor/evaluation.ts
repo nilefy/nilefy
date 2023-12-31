@@ -1,23 +1,16 @@
-import { commandManager } from '@/Actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
 import store from '@/store';
-import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-
 export type EvaluationContext = {
-  widgets: {
-    [key: string]: {
-      [key: string]: unknown;
-    };
-  };
+  widgets: Record<string, Record<string, unknown>>;
+  queries: Record<string, unknown>;
 };
+
 export const evaluate = (
   code: string,
   evaluationContext: EvaluationContext,
 ) => {
   if (!code) return code;
 
-  console.log('evaluationContext', evaluationContext);
   if (!code.includes('{{')) return code;
   const matches = code.matchAll(/{{([^}]*)}}/g);
 

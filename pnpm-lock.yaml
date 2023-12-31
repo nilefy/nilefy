@@ -336,6 +336,12 @@ importers:
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
+      mobx:
+        specifier: ^6.12.0
+        version: 6.12.0
+      mobx-react-lite:
+        specifier: ^4.0.5
+        version: 4.0.5(mobx@6.12.0)(react-dom@18.2.0)(react@18.2.0)
       nanoid:
         specifier: ^5.0.2
         version: 5.0.3
@@ -9291,6 +9297,29 @@ packages:
     resolution: {integrity: sha512-FPUtkhtJ0efmEFGpU14x7jGbTB+s18LrzRL2KgoWz9YvcY3cPomz8tih01GbHwnGk/OmkOKfqd/RAQoc8Lm7DQ==}
     dependencies:
       obliterator: 2.0.4
+    dev: false
+
+  /mobx-react-lite@4.0.5(mobx@6.12.0)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-StfB2wxE8imKj1f6T8WWPf4lVMx3cYH9Iy60bbKXEs21+HQ4tvvfIBZfSmMXgQAefi8xYEwQIz4GN9s0d2h7dg==}
+    peerDependencies:
+      mobx: ^6.9.0
+      react: ^16.8.0 || ^17 || ^18
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+    dependencies:
+      mobx: 6.12.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    dev: false
+
+  /mobx@6.12.0:
+    resolution: {integrity: sha512-Mn6CN6meXEnMa0a5u6a5+RKrqRedHBhZGd15AWLk9O6uFY4KYHzImdt8JI8WODo1bjTSRnwXhJox+FCUZhCKCQ==}
     dev: false
 
   /morgan@1.10.0:

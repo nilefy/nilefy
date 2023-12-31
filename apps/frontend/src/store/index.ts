@@ -227,35 +227,6 @@ function handleLateralCollisions(
   };
 }
 
-export function convertGridToPixel(
-  dims: WebloomGridDimensions,
-  grid: [number, number],
-  parentDims: Pick<WebloomPixelDimensions, 'x' | 'y'> = {
-    x: 0,
-    y: 0,
-  },
-): WebloomPixelDimensions {
-  const [gridrow, gridcol] = grid;
-  return {
-    x: dims.col * gridcol + parentDims.x,
-    y: dims.row * gridrow + parentDims.y,
-    width: dims.columnsCount * gridcol,
-    height: dims.rowsCount * gridrow,
-  };
-}
-export function convertPixelToGrid(
-  dims: WebloomPixelDimensions,
-  grid: [number, number],
-  parentDims: Pick<WebloomPixelDimensions, 'x' | 'y'>,
-): WebloomGridDimensions {
-  return {
-    col: Math.round((dims.x - parentDims.x) / grid[1]),
-    row: Math.round((dims.y - parentDims.y) / grid[0]),
-    columnsCount: Math.round(dims.width / grid[1]),
-    rowsCount: Math.round(dims.height / grid[0]),
-  };
-}
-
 export function handleParentCollisions(
   dimensions: WebloomGridDimensions,
   parentDims: WebloomPixelDimensions,
