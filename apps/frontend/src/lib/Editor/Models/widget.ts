@@ -106,6 +106,7 @@ export class WebloomWidget
       boundingRect: computed.struct,
       setDom: action,
       pixelDimensions: computed.struct,
+      relativePixelDimensions: computed.struct,
     });
   }
 
@@ -141,6 +142,7 @@ export class WebloomWidget
   }
 
   setDimensions(dimensions: Partial<WebloomGridDimensions>) {
+    console.log('setting dimensions', dimensions);
     this.row = dimensions.row || this.row;
     this.col = dimensions.col || this.col;
     this.columnsCount = dimensions.columnsCount || this.columnsCount;
@@ -150,6 +152,7 @@ export class WebloomWidget
 
   get pixelDimensions(): WebloomPixelDimensions {
     if (this.isRoot) {
+      console.log('columnWidth', this.columnWidth);
       return {
         x: 0,
         y: 0,
@@ -167,6 +170,7 @@ export class WebloomWidget
   }
 
   get relativePixelDimensions(): WebloomPixelDimensions {
+    console.log('in relative');
     if (this.isRoot) return this.pixelDimensions;
     return convertGridToPixel(
       this.gridDimensions,

@@ -40,7 +40,9 @@ export const WebloomRoot = observer(function WebloomRoot() {
     return children;
   }, [nodes, props.children]);
   useLayoutEffect(() => {
+    console.log('width in layout', width);
     const columnWidth = Math.round(width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
+    console.log('columnWidth', columnWidth);
     let rowsCount = editorStore.currentPage.rootWidget.rowsCount;
     // let rowsCount =
     //   store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;

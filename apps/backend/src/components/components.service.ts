@@ -80,15 +80,15 @@ export class ComponentsService {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
-      SELECT id, parent_id as "parent", is_canvas as "isCanvas", props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level 
+      SELECT id, parent_id as "parent",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id 
         FROM ${components}
        WHERE ${and(isNull(components.parentId), eq(components.pageId, pageId))}
     UNION ALL 
     -- recursive
-      SELECT t.id, t.parent_id as "parent", t.is_canvas as "isCanvas", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level
+      SELECT t.id, t.parent_id as "parent", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level, t.page_id
         FROM components as t
         JOIN rectree
-          ON t.parent_id = rectree.id
+          ON t.parent_id = rectree.id and t.page_id = rectree.page_id
     ) 
   SELECT * FROM rectree
   order by level;
@@ -100,7 +100,6 @@ export class ComponentsService {
         id: row.id.toString(),
         nodes: [],
         parent: row.parentId?.toString() ?? row.id.toString(),
-        isCanvas: row.isCanvas ?? undefined,
         props: row.props,
         type: row.type,
         col: row.col,

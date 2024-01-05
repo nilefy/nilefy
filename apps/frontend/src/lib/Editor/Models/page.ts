@@ -152,12 +152,12 @@ export class WebloomPage {
         newColumnWidth =
           (columnsCount * gridcol!) / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
       }
+      //recurse to set the new columnWidth of all children
       recurse.call(this, id, {
         ...dimensions,
         columnWidth: newColumnWidth,
         columnsCount: dimensions.columnsCount || widget.columnsCount,
       });
-      //recurse to set the new columnWidth of all children
     } else {
       widget.setDimensions(dimensions);
     }

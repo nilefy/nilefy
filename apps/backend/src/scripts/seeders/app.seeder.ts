@@ -44,9 +44,10 @@ export async function appSeeder(
         type: 'WebloomContainer',
         pageId: p[0].id,
         createdById: userIds[0],
-        parent: null,
+        parentId: null,
         props: {
           className: 'h-full w-full',
+          isCanvas: true,
         },
         col: 0,
         row: 0,

@@ -118,6 +118,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
             // clear all columns that not on the db(i hate drizzzle already)
             // eslint-disable-next-line
             const { columnWidth, nodes, dom, dependancies, ...temp } = c;
+
             return this.componentsService.update(
               socket.pageId,
               c.id,

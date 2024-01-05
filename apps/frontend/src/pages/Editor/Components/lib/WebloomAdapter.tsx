@@ -29,8 +29,9 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions =
+  const { x, y, width, height } =
     editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
+  console.log('elDimensions69', x, y, width, height);
   // const elDimensions = store(
   //   useShallow((store) => store.getRelativePixelDimensions(id)),
   // );
@@ -68,13 +69,13 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   }, [setDropNodeRef, setNodeRef, props.draggable, props.droppable]);
   const style = useMemo(() => {
     return {
-      top: elDimensions.y,
-      left: elDimensions.x,
+      top: y,
+      left: x,
       position: 'absolute',
-      width: elDimensions.width,
-      height: elDimensions.height,
+      width: width,
+      height: height,
     } as React.CSSProperties;
-  }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
+  }, [x, y, width, height]);
   if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
     return (
       <div
