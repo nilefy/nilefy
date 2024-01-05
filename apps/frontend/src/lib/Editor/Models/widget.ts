@@ -151,7 +151,6 @@ export class WebloomWidget
   }
 
   setDimensions(dimensions: Partial<WebloomGridDimensions>) {
-    console.log('setting dimensions', dimensions);
     this.row = dimensions.row || this.row;
     this.col = dimensions.col || this.col;
     this.columnsCount = dimensions.columnsCount || this.columnsCount;

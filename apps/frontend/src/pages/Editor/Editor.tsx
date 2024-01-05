@@ -335,7 +335,6 @@ export function App() {
               }),
             ],
           });
-          console.log(editorStore);
           return <Editor />;
         }}
       </Await>

@@ -48,10 +48,9 @@ export class PagesService {
       {
         id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
-        isCanvas: true,
         pageId: p.id,
         createdById: pageDto.createdById,
-        parent: null,
+        parentId: null,
         props: {
           className: 'h-full w-full',
         },
@@ -70,8 +69,7 @@ export class PagesService {
         [rootComponent.id]: {
           ...rootComponent,
           id: rootComponent.id,
-          parent: rootComponent.parent ?? rootComponent.id,
-          isCanvas: rootComponent.isCanvas ?? undefined,
+          parentId: rootComponent.parentId ?? rootComponent.id,
           props: rootComponent.props as WebloomNode['props'],
           nodes: [],
         },

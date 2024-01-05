@@ -31,7 +31,6 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, width, height } =
     editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
-  console.log('elDimensions69', x, y, width, height);
   // const elDimensions = store(
   //   useShallow((store) => store.getRelativePixelDimensions(id)),
   // );

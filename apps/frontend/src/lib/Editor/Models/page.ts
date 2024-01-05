@@ -174,6 +174,7 @@ export class WebloomPage {
         const newColumnWidth =
           (childNode.columnsCount * dimensions.columnWidth!) /
           EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+
         recurse.call(this, child, { columnWidth: newColumnWidth });
       }
     }
