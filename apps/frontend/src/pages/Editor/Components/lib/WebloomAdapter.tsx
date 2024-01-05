@@ -9,6 +9,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { cn } from '@/lib/cn';
+import { observer } from 'mobx-react-lite';
 // import { useShallow } from 'zustand/react/shallow';
 
 type WebloomAdapterProps = {
@@ -19,7 +20,7 @@ type WebloomAdapterProps = {
   resizable?: boolean;
 };
 
-export const WebloomAdapter = (props: WebloomAdapterProps) => {
+export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const { id } = props;
   const isResizing = editorStore.currentPage.resizedWidgetId === id;
   // const isResizing = store((state) => state.resizedNode === id);
@@ -120,4 +121,4 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
       </div>
     </div>
   );
-};
+});

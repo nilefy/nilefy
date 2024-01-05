@@ -59,7 +59,7 @@ export const components = pgTable(
     /**
      * parent_id
      */
-    parent: text('parent_id'),
+    parentId: text('parent_id'),
     // LAYOUT
     /**
      * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
@@ -84,7 +84,7 @@ export const components = pgTable(
   (t) => ({
     pk: primaryKey({ columns: [t.id, t.pageId] }),
     parentFK: foreignKey({
-      columns: [t.parent],
+      columns: [t.parentId],
       foreignColumns: [t.id],
     }).onDelete('cascade'),
   }),

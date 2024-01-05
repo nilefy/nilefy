@@ -16,6 +16,7 @@ import { observer } from 'mobx-react-lite';
 
 export const WebloomRoot = observer(function WebloomRoot() {
   const root = editorStore.currentPage.rootWidget;
+  console.log('root', root);
   const props = root.props;
   const nodes = root.nodes;
   // const props = store(

@@ -82,7 +82,7 @@ export class ComponentsService {
       -- anchor element
       SELECT id, parent_id as "parent", is_canvas as "isCanvas", props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level 
         FROM ${components}
-       WHERE ${and(isNull(components.parent), eq(components.pageId, pageId))}
+       WHERE ${and(isNull(components.parentId), eq(components.pageId, pageId))}
     UNION ALL 
     -- recursive
       SELECT t.id, t.parent_id as "parent", t.is_canvas as "isCanvas", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level
@@ -99,7 +99,7 @@ export class ComponentsService {
       tree[row.id] = {
         id: row.id.toString(),
         nodes: [],
-        parent: row.parent?.toString() ?? row.id.toString(),
+        parent: row.parentId?.toString() ?? row.id.toString(),
         isCanvas: row.isCanvas ?? undefined,
         props: row.props,
         type: row.type,
@@ -110,7 +110,7 @@ export class ComponentsService {
         columnWidth: 0,
       };
       if (row.level > 1) {
-        tree[row.parent!.toString()]['nodes'].push(row.id.toString());
+        tree[row.parentId!.toString()]['nodes'].push(row.id.toString());
       }
     });
     return tree;

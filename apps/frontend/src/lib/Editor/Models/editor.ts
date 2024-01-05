@@ -19,6 +19,7 @@ export class EditorState {
       removePage: action,
       setEditorDimensions: action,
       adjustDimensions: action,
+      init: action,
     });
   }
   init({

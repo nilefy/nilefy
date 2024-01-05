@@ -2,7 +2,7 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -48,6 +48,7 @@ export class WebloomPage {
         page: this,
       });
     });
+    this.widgets = widgetMap;
     this.queries = queries;
     makeObservable(this, {
       widgets: observable,
@@ -73,10 +74,10 @@ export class WebloomPage {
       moveWidgetIntoGrid: action,
       moveWidget: action,
       id: observable,
-      rootWidget: computed,
       mousePosition: observable,
       setMousePosition: action,
       firstSelectedWidget: computed,
+      rootWidget: computed,
     });
   }
   get firstSelectedWidget() {

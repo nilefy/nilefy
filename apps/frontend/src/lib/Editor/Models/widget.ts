@@ -209,7 +209,7 @@ export class WebloomWidget
 
   setProp(key: string, value: unknown) {
     if (key === 'id') {
-      this.page.widgets[value] = this;
+      this.page.widgets[value as string] = this;
       delete this.page.widgets[this.id];
     }
     this.props[key] = value;
