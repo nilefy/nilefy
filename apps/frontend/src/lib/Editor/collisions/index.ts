@@ -1,3 +1,4 @@
+import { editorStore } from '../Models';
 import { Point } from '@/types';
 import {
   BoundingRect,
@@ -66,8 +67,10 @@ export function handleLateralCollisions(
     if (sibling === id || sibling === draggedNode) continue;
     // we don't want to check collisions with the node we are hovering over
     if (sibling === overId) continue;
-    const otherNode = store.getState().tree[sibling];
-    const otherBoundingRect = store.getState().getBoundingRect(sibling);
+    const otherNode = editorStore.currentPage.getWidgetById(sibling);
+    // const otherNode = store.getState().tree[sibling];
+    const otherBoundingRect = otherNode.boundingRect;
+    // const otherBoundingRect = store.getState().getBoundingRect(sibling);
     const otherBottom = otherNode.row + otherNode.rowsCount;
     const otherTop = otherNode.row;
     const otherLeft = otherNode.col;

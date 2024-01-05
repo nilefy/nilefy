@@ -1,4 +1,5 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,8 @@ function InsertTab() {
 }
 
 function InspectTab() {
-  const selectedIdsSize = store((state) => state.selectedNodeIds.size);
+  const selectedIdsSize = editorStore.currentPage.selectedNodeIds.size;
+  // const selectedIdsSize = store((state) => state.selectedNodeIds.size);
 
   if (selectedIdsSize === 0) {
     return (
@@ -68,7 +70,9 @@ type RightSidebarTabs = 'insert' | 'inspect' | 'page';
 export function RightSidebar() {
   // i need it to be controlled so i can change it when the selected items count change
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
-  const size = store((state) => state.selectedNodeIds.size);
+
+  const size = editorStore.currentPage.selectedNodeIds.size;
+  // const size = store((state) => state.selectedNodeIds.size);
 
   useEffect(() => {
     if (size > 0) setOpenedTab('inspect');

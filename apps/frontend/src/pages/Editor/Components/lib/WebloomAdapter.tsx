@@ -1,6 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -8,7 +9,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { cn } from '@/lib/cn';
-import { useShallow } from 'zustand/react/shallow';
+// import { useShallow } from 'zustand/react/shallow';
 
 type WebloomAdapterProps = {
   id: string;
@@ -20,15 +21,18 @@ type WebloomAdapterProps = {
 
 export const WebloomAdapter = (props: WebloomAdapterProps) => {
   const { id } = props;
-  const isResizing = store((state) => state.resizedNode === id);
+  const isResizing = editorStore.currentPage.resizedWidgetId === id;
+  // const isResizing = store((state) => state.resizedNode === id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store(
-    useShallow((store) => store.getRelativePixelDimensions(id)),
-  );
+  const elDimensions =
+    editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
+  // const elDimensions = store(
+  //   useShallow((store) => store.getRelativePixelDimensions(id)),
+  // );
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useWebloomDraggable({
       id,

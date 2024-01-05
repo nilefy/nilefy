@@ -1,6 +1,9 @@
-import store from '@/store';
+// import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+
 export const WebloomElementShadow = () => {
-  const shadow = store((state) => state.shadowElement);
+  const shadow = editorStore.currentPage.shadowElement;
+  // const shadow = store((state) => state.shadowElement);
   if (!shadow) return null;
   return <ElementShadow {...shadow} />;
 };

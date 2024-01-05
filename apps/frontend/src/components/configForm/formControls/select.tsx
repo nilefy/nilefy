@@ -45,4 +45,4 @@ const InspectorSelect = (props: InspectorSelectProps & BaseControlProps) => {
   );
 };
 
-export { InspectorSelect };
+export default InspectorSelect;

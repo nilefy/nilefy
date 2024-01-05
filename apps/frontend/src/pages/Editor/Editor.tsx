@@ -40,7 +40,7 @@ import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
 import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/store/widgetName';
-import { Page } from '@/lib/Editor/Models/page';
+import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
 
 const throttledResizeCanvas = throttle(
@@ -326,10 +326,10 @@ export function App() {
           commandManager.connectToEditor(a.id, a.defaultPage.id);
 
           editorStore.init({
-            currentPageId: a.defaultPage.id,
+            currentPageId: a.defaultPage.id.toString(),
             pages: [
-              new Page({
-                id: a.defaultPage.id,
+              new WebloomPage({
+                id: a.defaultPage.id.toString(),
                 widgets: tree,
                 queries: {},
               }),

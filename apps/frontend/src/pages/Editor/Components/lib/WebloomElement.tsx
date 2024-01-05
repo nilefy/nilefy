@@ -1,4 +1,5 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { ElementType, createElement, useCallback, useMemo } from 'react';
 import { WebloomWidgets, WidgetContext } from '..';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -12,19 +13,29 @@ import {
 import { Grid, WebloomAdapter } from '.';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
-import { useShallow } from 'zustand/react/shallow';
+// import { useShallow } from 'zustand/react/shallow';
+import { observer } from 'mobx-react-lite';
+// import { useEvaluation } from '@/lib/Editor/evaluation';
 
-export function WebloomElement({ id }: { id: string }) {
-  const wholeTree = store.getState().tree;
-  const tree = wholeTree[id];
-  const nodes = store((state) => state.tree[id].nodes);
-  const props = store(useShallow((state) => state.getProps(id)));
+export const WebloomElement = observer(function WebloomElement({
+  id,
+}: {
+  id: string;
+}) {
+  const tree = editorStore.currentPage.getWidgetById(id);
+  const nodes = tree.nodes;
+  const props = tree.props;
+  // const wholeTree = store.getState().tree;
+  // const tree = wholeTree[id];
+  // const nodes = store((state) => state.tree[id].nodes);
+  // const props = store(useShallow((state) => state.getProps(id)));
   // props = useEvaluation(id, props);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      store.getState().setProp(id, key, value);
+      tree.setProp(key, value);
+      // store.getState().setProp(id, key, value);
     },
-    [id],
+    [tree],
   );
   const children = useMemo(() => {
     let children = props.children as React.ReactElement[];
@@ -75,4 +86,4 @@ export function WebloomElement({ id }: { id: string }) {
       </ContextMenuPortal>
     </ContextMenu>
   );
-}
+});

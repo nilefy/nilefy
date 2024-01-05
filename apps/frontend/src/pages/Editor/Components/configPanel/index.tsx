@@ -1,4 +1,5 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { WebloomWidgets, WidgetTypes } from '..';
 import { InspectorFormControls } from '@/components/configForm/formControls';
 import { FormControlContext, FormSectionView } from '@/components/configForm';
@@ -6,9 +7,9 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { commandManager } from '@/Actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
-import { WebloomNode } from '@/lib/Editor/interface';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
-function ConfigPanelHeader({ node }: { node: WebloomNode }) {
+function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   const [value, setValue] = useState(node.id);
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -36,11 +37,13 @@ function ConfigPanelHeader({ node }: { node: WebloomNode }) {
 }
 
 export const ConfigPanel = () => {
-  const selectedId = store((state) => {
-    const selectedIds = [...state.selectedNodeIds];
-    return selectedIds[0];
-  });
-  const selectedNode = store.getState().tree[selectedId];
+  const selectedId = editorStore.currentPage.firstSelectedWidget;
+  // const selectedId = store((state) => {
+  //   const selectedIds = [...state.selectedNodeIds];
+  //   return selectedIds[0];
+  // });
+  const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
+  // const selectedNode = store.getState().tree[selectedId];
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
   return (
@@ -85,7 +88,9 @@ const FormControl = (props: {
 }) => {
   const { control, selectedId } = props;
   const Component = InspectorFormControls[control.type];
-  const prop = store((state) => state.tree[selectedId].props[control.key]);
+  const prop =
+    editorStore.currentPage.getWidgetById(selectedId).props[control.key];
+  // const prop = store((state) => state.tree[selectedId].props[control.key]);
   const options = useMemo(
     () => ({
       ...control,
@@ -97,7 +102,7 @@ const FormControl = (props: {
   const onChange = useCallback(
     (newValue: unknown) => {
       commandManager.executeCommand(
-        new ChangePropAction(selectedId, false, control.key, newValue),
+        new ChangePropAction(selectedId, control.key, newValue),
       );
     },
     [control.key, selectedId],

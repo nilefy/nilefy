@@ -1,9 +1,12 @@
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { useEffect, useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { WebloomWidgets } from '..';
+import { observer } from 'mobx-react-lite';
+
 const handlePositions = {
   'top-left': [0, 0],
   'top-right': [0, 1],
@@ -25,8 +28,10 @@ const cursors = {
   left: 'ew-resize',
   right: 'ew-resize',
 } as const;
-export function ResizeHandlers() {
-  const selectedIds = store((state) => state.selectedNodeIds);
+
+export const ResizeHandlers = observer(function ResizeHandlers() {
+  const selectedIds = editorStore.currentPage.selectedNodeIds;
+  // const selectedIds = store((state) => state.selectedNodeIds);
   const selectedIdsArray = Array.from(selectedIds);
   useHotkeys('esc', () => {
     commandManager.executeCommand(ResizeAction.cancel());
@@ -66,11 +71,13 @@ export function ResizeHandlers() {
       ))}
     </>
   );
-}
+});
 
-function Handles({ id }: { id: string }) {
-  const dims = store((state) => state.getPixelDimensions(id));
-  const node = store.getState().tree[id];
+const Handles = observer(function Handles({ id }: { id: string }) {
+  const node = editorStore.currentPage.getWidgetById(id);
+  const dims = node.pixelDimensions;
+  // const dims = store((state) => state.getPixelDimensions(id));
+  // const node = store.getState().tree[id];
   const direction = WebloomWidgets[node.type].config.resizingDirection;
   const componentHandles = useMemo(
     () =>
@@ -86,7 +93,8 @@ function Handles({ id }: { id: string }) {
       }),
     [direction],
   );
-  const isDragging = store((state) => state.draggedNode === id);
+  const isDragging = editorStore.currentPage.draggedWidgetId === id;
+  // const isDragging = store((state) => state.draggedNode === id);
   const handleSize = 8;
   const handleStyle: React.CSSProperties = {
     position: 'absolute',
@@ -161,4 +169,4 @@ function Handles({ id }: { id: string }) {
       </div>
     )
   );
-}
+});

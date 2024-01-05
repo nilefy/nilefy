@@ -4,8 +4,9 @@ import { useCallback, useContext } from 'react';
 import { FormControlContext } from '..';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { WebloomInlineEditor } from '@/pages/Editor/Components/CodeEditor/inlineEditor';
-import { analyzeDependancies } from '@/lib/Editor/dependancyManager';
+import { analyzeDependancies } from '@/lib/Editor/dependancyUtils';
 import { debounce } from 'lodash';
+
 const debouncedAnalyzeDependancies = debounce(analyzeDependancies, 1000);
 const InlineCodeInput = (props: InlineCodeInputProps) => {
   const {
@@ -38,4 +39,4 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
   );
 };
 
-export { InlineCodeInput };
+export default InlineCodeInput;

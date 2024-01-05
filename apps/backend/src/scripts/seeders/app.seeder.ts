@@ -42,7 +42,6 @@ export async function appSeeder(
       db.insert(components).values({
         id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
-        isCanvas: true,
         pageId: p[0].id,
         createdById: userIds[0],
         parent: null,

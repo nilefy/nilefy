@@ -1,33 +1,38 @@
-import store, { convertGridToPixel } from '@/store';
+// import store, { convertGridToPixel } from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
 import { Command, UndoableCommand } from '../types';
 import { Point } from '@/types';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { normalize } from '@/lib/Editor/utils';
-import { WebloomNode } from '@/lib/Editor/interface';
+import { convertGridToPixel, normalize } from '@/lib/Editor/utils';
 import { getNewWidgetName } from '@/store/widgetName';
+import { WebloomPage } from '@/lib/Editor/Models/page';
 
-const {
-  moveNodeIntoGrid,
-  moveNode,
-  getGridSize,
-  getBoundingRect,
-  setShadowElement,
-  addNode,
-  removeNode,
-  setDraggedNode,
-  setDimensions,
-  getPixelDimensions,
-  getDropCoordinates,
-} = store.getState();
+type AddWidgetPayload = Parameters<
+  InstanceType<typeof WebloomPage>['addWidget']
+>[0];
+
+// const {
+//   moveNodeIntoGrid,
+//   moveNode,
+//   getGridSize,
+//   getBoundingRect,
+//   setShadowElement,
+//   addNode,
+//   removeNode,
+//   setDraggedNode,
+//   setDimensions,
+//   getPixelDimensions,
+//   getDropCoordinates,
+// } = store.getState();
 
 class DragAction {
   private static isNew = false;
   private static newType: string;
   private static id: string | null = null;
   private static readonly previewId = EDITOR_CONSTANTS.PREVIEW_NODE_ID;
-  private static oldParent: string;
+  private static oldParentId: string;
   private static movedToNewParent = false;
   private static touchedRoot = false;
   private static startPosition: Point;
@@ -53,7 +58,8 @@ class DragAction {
     if (this.isNew) {
       this.initialDelta = args.new!.initialDelta;
       this.id = getNewWidgetName(args.new!.type as WidgetTypes);
-      const parent = store.getState().tree[args.new!.parent];
+      const parent = editorStore.currentPage.getWidgetById(args.new!.parent);
+      // const parent = store.getState().tree[args.new!.parent];
       const colWidth = parent.columnWidth;
       const rowHeight = EDITOR_CONSTANTS.ROW_HEIGHT;
       this.startPosition = {
@@ -63,14 +69,13 @@ class DragAction {
       this.gridStartPosition = args.new!.startPosition;
       this.newType = args.new!.type;
       const widget = WebloomWidgets[this.newType as WidgetTypes];
-      const node: WebloomNode = {
+      const node: AddWidgetPayload = {
         id: this.previewId,
         nodes: [],
-        dependancies: [],
+        // dependancies: [],
         //todo change this to be the parent
-        parent: args.new!.parent,
-        dom: null,
-        isCanvas: widget.config.isCanvas,
+        parentId: args.new!.parent,
+        // isCanvas: widget.config.isCanvas,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
         columnsCount: widget.config.layoutConfig.colsCount,
@@ -78,24 +83,36 @@ class DragAction {
         props: widget.defaultProps,
         type: this.newType as WidgetTypes,
       };
-      addNode(node, args.new!.parent);
+      editorStore.currentPage.addWidget(node);
     } else {
       this.id = args.id;
-      const draggedNode = store.getState().tree[this.id!];
-      const node = { ...draggedNode, id: this.previewId, name: this.previewId };
-      addNode(node, draggedNode.parent);
-      const nodeBoundingRect = getBoundingRect(this.id!);
-      this.oldParent = draggedNode.parent;
+      const draggedNode = editorStore.currentPage.getWidgetById(this.id);
+      const snapshot = draggedNode.snapshot;
+      // const draggedNode = store.getState().tree[this.id!];
+      const node: AddWidgetPayload = {
+        ...snapshot,
+        id: this.previewId,
+      };
+      editorStore.currentPage.addWidget(node);
+      // addNode(node, draggedNode.parent);
+      const nodeBoundingRect = draggedNode.boundingRect;
+      // const nodeBoundingRect = getBoundingRect(this.id!);
+      this.oldParentId = draggedNode.parentId;
       this.startPosition = {
         x: nodeBoundingRect.left,
         y: nodeBoundingRect.top,
       };
       this.gridStartPosition = { x: draggedNode.col, y: draggedNode.row };
     }
-    this.oldParent ||= EDITOR_CONSTANTS.ROOT_NODE_ID;
-    const dims = getPixelDimensions(this.previewId);
-    setShadowElement(dims);
-    setDraggedNode(this.id!);
+    this.oldParentId ||= EDITOR_CONSTANTS.ROOT_NODE_ID;
+    const dims = editorStore.currentPage.getWidgetById(
+      this.previewId,
+    ).pixelDimensions;
+    // const dims =  getPixelDimensions(this.previewId);
+    editorStore.currentPage.setShadowElement(dims);
+    // setShadowElement(dims);
+    editorStore.currentPage.setDraggedWidgetId(this.id!);
+    // setDraggedNode(this.id!);
   }
   public static start(
     ...args: Parameters<typeof DragAction._start>
@@ -136,17 +153,20 @@ class DragAction {
     }
     if (!this.moved) return;
     if (overId === this.id) {
-      overId = store.getState().tree[overId].parent!;
+      overId = editorStore.currentPage.getWidgetById(overId).parentId;
+      // overId = store.getState().tree[overId].parent!;
     }
-    const node = store.getState().tree[this.previewId];
-    const over = store.getState().tree[overId];
-    let newParent: string = overId;
+    const node = editorStore.currentPage.getWidgetById(this.previewId);
+    const over = editorStore.currentPage.getWidgetById(overId);
+    // const node = store.getState().tree[this.previewId];
+    // const over = store.getState().tree[overId];
+    let newParentId: string = overId;
     if (!over.isCanvas) {
-      newParent = over.parent;
+      newParentId = over.parentId;
     }
-    if (newParent !== this.previewId && node.parent !== newParent) {
+    if (newParentId !== this.previewId && node.parentId !== newParentId) {
       this.movedToNewParent = true;
-      moveNode(this.previewId, newParent);
+      editorStore.currentPage.moveWidget(this.previewId, newParentId);
     }
 
     //Shadow element
@@ -155,20 +175,21 @@ class DragAction {
       this.previewId!,
       overId === this.previewId! ? EDITOR_CONSTANTS.ROOT_NODE_ID : overId,
     );
-    if (newParent === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-      const rootPixelDimensions = getPixelDimensions(
-        EDITOR_CONSTANTS.ROOT_NODE_ID,
-      );
+    if (newParentId === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+      const rootPixelDimensions =
+        editorStore.currentPage.rootWidget.pixelDimensions;
+      // const rootPixelDimensions = getPixelDimensions(
+      //   EDITOR_CONSTANTS.ROOT_NODE_ID,
+      // );
       if (newShadow.y + newShadow.height >= rootPixelDimensions.height) {
         newShadow.y = rootPixelDimensions.height - newShadow.height;
       }
       if (newShadow.y < 0) {
-        console.log('here 2');
-
         newShadow.y = 0;
       }
     }
-    setShadowElement(newShadow);
+    editorStore.currentPage.setShadowElement(newShadow);
+    // setShadowElement(newShadow);
   }
   public static move(...args: Parameters<typeof DragAction._move>): Command {
     return {
@@ -181,7 +202,8 @@ class DragAction {
     ...args: Parameters<typeof DragAction._end>
   ): UndoableCommand | null {
     if (!this.moved) {
-      removeNode(this.previewId!, false);
+      editorStore.currentPage.removeWidget(this.previewId!, false);
+      // removeNode(this.previewId!, false);
       this.cleanUp();
       return null;
     }
@@ -198,70 +220,110 @@ class DragAction {
     }
     const isNew = this.isNew;
     const delta = this.delta;
-    const newNode = store.getState().tree[this.previewId!];
-    const [gridrow, gridcol] = getGridSize(this.previewId!);
+    const newNode = editorStore.currentPage.getWidgetById(this.previewId);
+    const [gridrow, gridcol] = newNode.gridSize;
+    // const newNode = store.getState().tree[this.previewId!];
+    // const [gridrow, gridcol] = getGridSize(this.previewId!);
     const normalizedDelta = {
       x: normalize(delta.x, gridcol),
       y: normalize(delta.y, gridrow),
     };
 
-    const endPosition = getDropCoordinates(
+    const endPosition = newNode.getDropCoordinates(
       this.startPosition,
       normalizedDelta,
       this.previewId!,
       overId,
+      this.mouseCurrentPosition,
       false,
     );
-    const oldParent = this.oldParent;
+    // const endPosition = getDropCoordinates(
+    //   this.startPosition,
+    //   normalizedDelta,
+    //   this.previewId!,
+    //   overId,
+    //   false,
+    // );
+    const oldParentId = this.oldParentId;
     const startPosition = this.gridStartPosition;
     const movedToNewParent = this.movedToNewParent;
     const id = this.id!;
-    let undoData: ReturnType<typeof moveNodeIntoGrid>;
+    let undoData: ReturnType<
+      InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
+    >;
     let command: UndoableCommand;
-    removeNode(this.previewId, false);
+    editorStore.currentPage.removeWidget(this.previewId, false);
+    // removeNode(this.previewId, false);
     if (isNew) {
-      newNode.id = id;
+      const snapshot = newNode.snapshot;
+      const nodePayload: AddWidgetPayload = {
+        ...snapshot,
+        id: id,
+      };
       command = {
         execute: () => {
-          addNode(newNode, newNode.parent!);
-          undoData = moveNodeIntoGrid(id, endPosition);
+          editorStore.currentPage.addWidget(nodePayload);
+          // addNode(newNode, newNode.parent!);
+          undoData = editorStore.currentPage.moveWidgetIntoGrid(
+            id,
+            endPosition,
+          );
+          // undoData = moveNodeIntoGrid(id, endPosition);
+
           // return data means this data should be sent to the server
           const affectedNodes = Object.keys(undoData)
             .filter((test) => test !== id)
-            .map((k) => store.getState().tree[k]);
+            .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
+          // const affectedNodes = Object.keys(undoData)
+          //   .filter((test) => test !== id)
+          //   .map((k) => store.getState().tree[k]);
           return {
             event: 'insert' as const,
             data: {
-              node: store.getState().tree[id],
+              node: editorStore.currentPage.getWidgetById(id).snapshot,
+              // node: store.getState().tree[id],
               sideEffects: affectedNodes,
             },
           };
         },
         undo: () => {
-          store.getState().setSelectedNodeIds((ids) => {
+          editorStore.currentPage.setSelectedNodeIds((ids) => {
             const newIds = new Set(ids);
             newIds.delete(id);
             return newIds;
           });
-          removeNode(id);
+          // store.getState().setSelectedNodeIds((ids) => {
+          //   const newIds = new Set(ids);
+          //   newIds.delete(id);
+          //   return newIds;
+          // });
+          editorStore.currentPage.removeWidget(id);
+          // removeNode(id);
           Object.entries(undoData).forEach(([id, coords]) => {
-            setDimensions(id, coords);
+            editorStore.currentPage.getWidgetById(id).setDimensions(coords);
           });
+          // Object.entries(undoData).forEach(([id, coords]) => {
+          //   setDimensions(id, coords);
+          // });
         },
       };
     } else {
       command = {
         execute: () => {
           if (movedToNewParent) {
-            moveNode(id, newNode.parent);
+            editorStore.currentPage.moveWidget(id, newNode.parentId);
+            // moveNode(id, newNode.parent);
           }
-          undoData = moveNodeIntoGrid(id, endPosition);
-          const tree = store.getState().tree;
+          undoData = editorStore.currentPage.moveWidgetIntoGrid(
+            id,
+            endPosition,
+          );
+          // undoData = moveNodeIntoGrid(id, endPosition);
           const remoteData = [
-            tree[id],
+            editorStore.currentPage.getWidgetById(id).snapshot,
             ...Object.keys(undoData)
               .filter((test) => test !== id)
-              .map((k) => tree[k]),
+              .map((k) => editorStore.currentPage.getWidgetById(k).snapshot),
           ];
           return {
             event: 'update',
@@ -270,13 +332,12 @@ class DragAction {
         },
         undo: () => {
           Object.entries(undoData).forEach(([id, coords]) => {
-            setDimensions(id, coords);
+            editorStore.currentPage.getWidgetById(id).setDimensions(coords);
           });
           if (movedToNewParent) {
-            moveNode(id, oldParent);
+            editorStore.currentPage.moveWidget(id, oldParentId);
           }
-          setDimensions(
-            id,
+          editorStore.currentPage.getWidgetById(id).setDimensions(
             {
               col: startPosition.x,
               row: startPosition.y,
@@ -290,11 +351,21 @@ class DragAction {
   }
 
   private static getDropCoordinates(delta: Point, id: string, overId: string) {
-    const node = store.getState().tree[id];
-    const grid = getGridSize(id);
-    const parentPixelDimensions = getPixelDimensions(node.parent);
+    const node = editorStore.currentPage.getWidgetById(id);
+    const grid = node.gridSize;
+    // const node = store.getState().tree[id];
+    // const grid = getGridSize(id);
+    const parentPixelDimensions = node.parent.pixelDimensions;
+    // const parentPixelDimensions = getPixelDimensions(node.parent);
     return convertGridToPixel(
-      getDropCoordinates(this.startPosition, delta, id, overId, true),
+      node.getDropCoordinates(
+        this.startPosition,
+        delta,
+        overId,
+        this.id!,
+        this.mouseCurrentPosition,
+        true,
+      ),
       grid,
       parentPixelDimensions,
     );
@@ -311,8 +382,8 @@ class DragAction {
     this.mouseCurrentPosition = { x: 0, y: 0 };
     this.moved = false;
     this.movedToNewParent = false;
-    setDraggedNode(null);
-    setShadowElement(null);
+    editorStore.currentPage.setDraggedWidgetId(null);
+    editorStore.currentPage.setShadowElement(null);
   }
   public static cancel(): Command {
     return {

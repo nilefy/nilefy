@@ -4,7 +4,7 @@ import { getNewWidgetName } from '@/store/widgetName';
 import { WebloomQuery } from './query';
 import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
-import { Page } from './page';
+import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
   EntityDependancy,
@@ -40,7 +40,6 @@ export class WebloomWidget
   nodes: string[];
   parentId: string;
   columnWidth?: number;
-  isCanvas?: boolean;
   props: Record<string, unknown>;
   dependancies: EntityDependancy;
   type: WidgetTypes;
@@ -48,7 +47,7 @@ export class WebloomWidget
   row: number;
   columnsCount: number;
   rowsCount: number;
-  page: Page;
+  page: WebloomPage;
   constructor({
     type,
     parentId,
@@ -64,7 +63,7 @@ export class WebloomWidget
   }: {
     type: WidgetTypes;
     parentId: string;
-    page: Page;
+    page: WebloomPage;
     row: number;
     col: number;
     id?: string;
@@ -131,7 +130,6 @@ export class WebloomWidget
       page: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      isCanvas: this.isCanvas,
       props: this.props,
       dependancies: this.dependancies,
       type: this.type,
@@ -210,6 +208,10 @@ export class WebloomWidget
   }
 
   setProp(key: string, value: unknown) {
+    if (key === 'id') {
+      this.page.widgets[value] = this;
+      delete this.page.widgets[this.id];
+    }
     this.props[key] = value;
   }
 
@@ -233,7 +235,7 @@ export class WebloomWidget
     });
   }
 
-  get gridSize() {
+  get gridSize(): [number, number] {
     const parent = this.canvasParent;
     return [EDITOR_CONSTANTS.ROW_HEIGHT, parent.columnWidth!];
   }
@@ -320,5 +322,9 @@ export class WebloomWidget
     const snapshot = this.snapshot;
     snapshot.id = getNewWidgetName(snapshot.type);
     return new WebloomWidget({ ...snapshot, page: this.page });
+  }
+
+  get isCanvas() {
+    return WebloomWidgets[this.type].config.isCanvas;
   }
 }

@@ -310,4 +310,4 @@ const InspectorList = (props: InspectorListProps & BaseControlProps) => {
     onChange(newCols);
   }
 };
-export { InspectorList };
+export default InspectorList;

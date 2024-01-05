@@ -19,7 +19,7 @@ import {
 } from '../utils';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 
-export class Page {
+export class WebloomPage {
   id: string;
   widgets: Record<string, WebloomWidget> = {};
   queries: Record<string, WebloomQuery> = {};
@@ -70,13 +70,17 @@ export class Page {
       setSelectedNodeIds: action,
       setShadowElement: action,
       resizeCanvas: action,
-      moveNodeIntoGrid: action,
-      moveNode: action,
+      moveWidgetIntoGrid: action,
+      moveWidget: action,
       id: observable,
       rootWidget: computed,
       mousePosition: observable,
       setMousePosition: action,
+      firstSelectedWidget: computed,
     });
+  }
+  get firstSelectedWidget() {
+    return [...this.selectedNodeIds][0];
   }
   setMousePosition(point: Point | null) {
     this.mousePosition = point;
@@ -113,7 +117,9 @@ export class Page {
    * @param widgetArgs the constructor args for the widget
    * @description adds a widget to the page.
    */
-  addWidget(widgetArgs: ConstructorParameters<typeof WebloomWidget>[0]) {
+  addWidget(
+    widgetArgs: Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'>,
+  ) {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
@@ -155,7 +161,7 @@ export class Page {
       widget.setDimensions(dimensions);
     }
     function recurse(
-      this: Page,
+      this: WebloomPage,
       id: string,
       dimensions: Partial<WebloomGridDimensions>,
     ) {
@@ -212,7 +218,7 @@ export class Page {
     const stack = [];
     const widget = this.widgets[id];
     const toBeDeletedNodes = [widget.id];
-    function recurse(this: Page, id: string) {
+    function recurse(this: WebloomPage, id: string) {
       const node = this.widgets[id];
       if (!node) return;
       toBeDeletedNodes.push(node.id);
@@ -243,7 +249,7 @@ export class Page {
    * @description moves a node to a new parent.
    * @returns
    */
-  moveNode(id: string, parentId: string) {
+  moveWidget(id: string, parentId: string) {
     const widget = this.widgets[id];
     const oldParent = widget.parent;
     if (oldParent.id === parentId || id === parentId) return;
@@ -319,7 +325,7 @@ export class Page {
           rowsCount: parent.rowsCount + newRowCount,
         });
       } else {
-        const originalParentCoords = this.moveNodeIntoGrid(parent.id, {
+        const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
           rowsCount: parent.rowsCount + newRowCount,
         });
         return {
@@ -337,7 +343,7 @@ export class Page {
    * @description moves a node to a new position in the grid, this functions performs side effects. namely it'll push other nodes recursively to make space for the node being moved.
    * @returns the original coordinates of all the affected nodes. (used for undo)
    */
-  moveNodeIntoGrid(
+  moveWidgetIntoGrid(
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
   ): MoveNodeReturnType {
@@ -348,7 +354,7 @@ export class Page {
     const nodes = parent.nodes;
 
     function moveNodeRecursively(
-      this: Page,
+      this: WebloomPage,
       id: string,
       newCoordsP: Partial<WebloomGridDimensions>,
     ) {

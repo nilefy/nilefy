@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 
-const InspectorFormControls = {
+export const InspectorFormControls = {
   input: lazy(() => import('./input')),
   select: lazy(() => import('./select')),
   color: lazy(() => import('./colorPicker')),
@@ -10,5 +10,3 @@ const InspectorFormControls = {
   checkbox: lazy(() => import('./checkbox')),
   inlineCodeInput: lazy(() => import('./inlineCodeInput')),
 } as const;
-
-export default InspectorFormControls;

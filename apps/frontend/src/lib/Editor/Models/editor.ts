@@ -1,9 +1,9 @@
 import { makeObservable, observable, action, computed } from 'mobx';
-import { Page } from './page';
+import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export class EditorState {
-  pages: Record<string, Page> = {};
+  pages: Record<string, WebloomPage> = {};
   currentPageId: string = '';
   width: number = 0;
   height: number = 0;
@@ -25,7 +25,7 @@ export class EditorState {
     pages: pages = [],
     currentPageId = '',
   }: Partial<{
-    pages: Page[];
+    pages: WebloomPage[];
     currentPageId: string;
   }>) {
     pages.forEach((page) => {
@@ -61,7 +61,7 @@ export class EditorState {
     }
   }
   addPage(id: string) {
-    this.pages[id] = new Page({ id, widgets: {}, queries: {} });
+    this.pages[id] = new WebloomPage({ id, widgets: {}, queries: {} });
   }
   removePage(id: string) {
     delete this.pages[id];
