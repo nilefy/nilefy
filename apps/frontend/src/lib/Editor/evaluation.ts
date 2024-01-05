@@ -1,4 +1,4 @@
-import store from '@/store';
+const store = {};
 import { useShallow } from 'zustand/react/shallow';
 export type EvaluationContext = {
   widgets: Record<string, Record<string, unknown>>;

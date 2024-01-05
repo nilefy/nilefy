@@ -1,19 +1,14 @@
-import { InspectorColor } from './colorPicker';
-import InspectorEventManger from './event';
-import { InspectorInput } from './input';
-import { InspectorSelect } from './select';
-import { SqlEditor } from './sqlEditor';
-import { InspectorList } from './list';
-import { InspectorCheckBox } from './checkbox';
-import { InlineCodeInput } from './inlineCodeInput';
+import { lazy } from 'react';
 
-export const InspectorFormControls = {
-  input: InspectorInput,
-  select: InspectorSelect,
-  color: InspectorColor,
-  event: InspectorEventManger,
-  sqlEditor: SqlEditor,
-  list: InspectorList,
-  checkbox: InspectorCheckBox,
-  inlineCodeInput: InlineCodeInput,
+const InspectorFormControls = {
+  input: lazy(() => import('./input')),
+  select: lazy(() => import('./select')),
+  color: lazy(() => import('./colorPicker')),
+  event: lazy(() => import('./event')),
+  sqlEditor: lazy(() => import('./sqlEditor')),
+  list: lazy(() => import('./list')),
+  checkbox: lazy(() => import('./checkbox')),
+  inlineCodeInput: lazy(() => import('./inlineCodeInput')),
 } as const;
+
+export default InspectorFormControls;

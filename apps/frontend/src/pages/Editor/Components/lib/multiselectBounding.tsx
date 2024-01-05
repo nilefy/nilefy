@@ -1,5 +1,5 @@
-import store, { WebloomState } from '@/store';
-
+import { WebloomState } from '@/store';
+const store = {};
 const { getBoundingRect } = store.getState();
 
 function calcBoundingRect(
@@ -21,6 +21,7 @@ function calcBoundingRect(
 
 export function MultiSelectBounding() {
   const selectedIds = store((state) => state.selectedNodeIds);
+
   if (selectedIds.size < 2) return null;
   const boundingRect = calcBoundingRect(selectedIds);
 

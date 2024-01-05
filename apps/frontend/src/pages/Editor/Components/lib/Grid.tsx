@@ -1,14 +1,14 @@
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-
-import store from '@/store';
+import { observer } from 'mobx-react-lite';
 import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
+import { editorStore } from '@/lib/Editor/Models';
 
-const Grid = ({ id }: { id: string }) => {
-  const columnWidth = store((state) => state.tree[id].columnWidth);
+const Grid = observer(({ id }: { id: string }) => {
+  const columnWidth = editorStore.currentPage.getWidgetById(id).columnWidth;
   const gridSize = columnWidth!;
   const { active } = useDndContext();
-  const resized = store((state) => state.resizedNode);
+  const resized = editorStore.currentPage.resizedWidgetId;
   const shown = !!active || !!resized;
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
@@ -42,6 +42,6 @@ const Grid = ({ id }: { id: string }) => {
       {shown && <canvas ref={ref}></canvas>}
     </div>
   );
-};
+});
 export { Grid };
 export default Grid;

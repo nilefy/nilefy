@@ -6,7 +6,11 @@ import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
 import { Page } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
+import {
+  EntityDependancy,
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+} from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -38,7 +42,7 @@ export class WebloomWidget
   columnWidth?: number;
   isCanvas?: boolean;
   props: Record<string, unknown>;
-  dependancies: Record<string, Set<WebloomWidget | WebloomQuery>>;
+  dependancies: EntityDependancy;
   type: WidgetTypes;
   col: number;
   row: number;
@@ -68,7 +72,7 @@ export class WebloomWidget
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependancies?: Record<string, Set<WebloomWidget | WebloomQuery>>;
+    dependancies?: EntityDependancy;
   }) {
     this.id = id;
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
@@ -231,7 +235,7 @@ export class WebloomWidget
 
   get gridSize() {
     const parent = this.canvasParent;
-    return [EDITOR_CONSTANTS.ROW_HEIGHT, parent.columnWidth];
+    return [EDITOR_CONSTANTS.ROW_HEIGHT, parent.columnWidth!];
   }
 
   getDropCoordinates(

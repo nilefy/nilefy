@@ -1,8 +1,8 @@
 import Selecto from 'react-selecto';
+import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, Suspense, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
-import store from '../../store';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DndContext,
@@ -40,10 +40,12 @@ import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
 import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/store/widgetName';
+import { Page } from '@/lib/Editor/Models/page';
+import { editorStore } from '@/lib/Editor/Models';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
-    store.getState().setEditorDimensions({ width: Math.round(width) });
+    editorStore.setEditorDimensions({ width: Math.round(width) });
   },
   100,
   {
@@ -104,7 +106,7 @@ function EditorLoader() {
   );
 }
 
-export function Editor() {
+export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
 
   useHotkeys('ctrl+z', () => {
@@ -115,7 +117,7 @@ export function Editor() {
     commandManager.executeCommand(new DeleteAction());
   });
 
-  const draggedNode = store((state) => state.draggedNode);
+  const draggedNode = editorStore.currentPage.draggedWidgetId;
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -135,19 +137,17 @@ export function Editor() {
     if (!e.active.data.current) return;
     const over: string | null = e.over ? (e.over.id as string) : null;
     commandManager.executeCommand(DragAction.end(over));
-    store.getState().setOverNode(null);
+    editorStore.currentPage.setOverWidgetId(null);
   }, []);
 
   const handleDragOver = useCallback(
     (e: DragOverEvent) => {
       if (e.active.id === e.over?.id) return;
-      store.getState().setOverNode((e.over?.id as string) ?? null);
+      editorStore.currentPage.setOverWidgetId((e.over?.id as string) ?? null);
       if (e.active.data.current?.isNew && draggedNode === null) {
-        const [gridrow] = store
-          .getState()
-          .getGridSize(EDITOR_CONSTANTS.ROOT_NODE_ID);
+        const root = editorStore.currentPage.rootWidget;
+        const [gridrow] = root.gridSize;
         let x = 0;
-        const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
         const rootBoundingRect = root.dom!.getBoundingClientRect();
         if (mousePos.current.x > rootBoundingRect.width / 2) {
           x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
@@ -188,7 +188,7 @@ export function Editor() {
           }),
         );
       }
-      store.getState().setMousePos(mousePos.current);
+      editorStore.currentPage.setMousePosition(mousePos.current);
     },
     [draggedNode],
   );
@@ -199,7 +199,7 @@ export function Editor() {
 
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const rootDom = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].dom;
+      const rootDom = editorStore.currentPage.rootWidget.dom;
       if (!rootDom) return;
       const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
@@ -273,11 +273,13 @@ export function Editor() {
                         e.removed.forEach((el) => {
                           const data = el.getAttribute('data-id');
                           if (data) {
-                            store.getState().setSelectedNodeIds((prev) => {
-                              return new Set(
-                                [...prev].filter((i) => i !== data),
-                              );
-                            });
+                            editorStore.currentPage.setSelectedNodeIds(
+                              (prev) => {
+                                return new Set(
+                                  [...prev].filter((i) => i !== data),
+                                );
+                              },
+                            );
                           }
                         });
                       }}
@@ -309,7 +311,7 @@ export function Editor() {
       </div>
     </>
   );
-}
+});
 
 export function App() {
   const { app } = useLoaderData();
@@ -322,10 +324,18 @@ export function App() {
           seedNameMap(Object.values(tree));
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
-          store.setState((state) => {
-            state.tree = tree;
-            return state;
+
+          editorStore.init({
+            currentPageId: a.defaultPage.id,
+            pages: [
+              new Page({
+                id: a.defaultPage.id,
+                widgets: tree,
+                queries: {},
+              }),
+            ],
           });
+          console.log(editorStore);
           return <Editor />;
         }}
       </Await>

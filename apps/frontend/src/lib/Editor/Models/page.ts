@@ -30,17 +30,24 @@ export class Page {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
+  mousePosition: Point | null = null;
   constructor({
     id,
     widgets,
     queries,
   }: {
     id: string;
-    widgets: Record<string, WebloomWidget>;
+    widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
     queries: Record<string, WebloomQuery>;
   }) {
     this.id = id;
-    this.widgets = widgets;
+    const widgetMap: Record<string, WebloomWidget> = {};
+    Object.values(widgets).forEach((widget) => {
+      widgetMap[widget.id] = new WebloomWidget({
+        ...widget,
+        page: this,
+      });
+    });
     this.queries = queries;
     makeObservable(this, {
       widgets: observable,
@@ -66,9 +73,24 @@ export class Page {
       moveNodeIntoGrid: action,
       moveNode: action,
       id: observable,
+      rootWidget: computed,
+      mousePosition: observable,
+      setMousePosition: action,
     });
   }
+  setMousePosition(point: Point | null) {
+    this.mousePosition = point;
+  }
 
+  setNewNodeTranslate(point: Point | null) {
+    this.newNodeTranslate = point;
+  }
+  setOverWidgetId(id: string | null) {
+    this.mouseOverWidgetId = id;
+  }
+  setShadowElement(element: ShadowElement | null) {
+    this.shadowElement = element;
+  }
   /**
    * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
    */
@@ -106,7 +128,12 @@ export class Page {
       });
     }
   }
-
+  getWidgetById(id: string) {
+    return this.widgets[id];
+  }
+  get rootWidget() {
+    return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
+  }
   resizeCanvas(id: string, dimensions: Partial<WebloomGridDimensions>) {
     const widget = this.widgets[id];
     const oldColumnWidth = widget.columnWidth ?? 0;
@@ -157,20 +184,16 @@ export class Page {
     this.newNode = node;
   }
 
-  setNewNodeTranslate(point: Point | null) {
-    this.newNodeTranslate = point;
-  }
-
-  setOverWidgetId(id: string | null) {
-    this.mouseOverWidgetId = id;
-  }
-
-  setSelectedNodeIds(ids: Set<string>) {
-    this.selectedNodeIds = ids;
-  }
-
-  setShadowElement(element: ShadowElement | null) {
-    this.shadowElement = element;
+  setSelectedNodeIds(ids: Set<string>): void;
+  setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
+  setSelectedNodeIds(
+    idsOrCb: Set<string> | ((ids: Set<string>) => Set<string>),
+  ): void {
+    if (typeof idsOrCb === 'function') {
+      this.selectedNodeIds = idsOrCb(new Set(this.selectedNodeIds));
+    } else {
+      this.selectedNodeIds = idsOrCb;
+    }
   }
 
   /**
