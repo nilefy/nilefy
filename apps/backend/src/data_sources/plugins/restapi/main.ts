@@ -1,123 +1,107 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { ConfigT, QueryT } from './types';
-import { Pool, PoolConfig } from 'pg';
 
-export default class RESTQueryService implements QueryRunnerI {
+export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
   async run(
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
-    query;
-    let data = {};
-    let eMessage;
-    let status = 200;
+    const queryUrl = dataSourceConfig.base_url + '/' + query.query.endpoint;
+    const collectedHeaders = {
+      ...dataSourceConfig.headers,
+      ...query.query.headers,
+    };
+    const body = query.query.body;
+    const reqBody = typeof body === 'string' ? body : JSON.stringify(body);
     //todo 1. custom headers ✅
     //todo 2. custom body ✅
     //todo 3. Documentation
-    //todo 4. config schema
-    switch (dataSourceConfig.auth_type) {
-      case 'none':
-        fetch(dataSourceConfig.base_url + '/' + query.query, {
-          method: query.query.method,
-          headers: query.query.headers,
-          body: query.query.body,
-        })
-          .then((v) => {
-            status = 200;
-            return (data = v);
-          })
-          .catch((e) => {
-            status = 500;
-            eMessage = e.message;
-            return (eMessage = e);
-          }); //options are to be defined
-        return {
-          status: status,
-          data: data,
-          error: eMessage,
-        };
-      case 'oauth2':
+    //todo 4. config schema ✅
+    try {
+      let res: Response;
+      switch (dataSourceConfig.auth.auth_type) {
+        case 'none':
+          {
+            res = await fetch(queryUrl, {
+              method: query.query.method,
+              headers: collectedHeaders,
+              body: reqBody,
+            });
+          }
+          break;
+        // case 'oauth2': {
+        //   throw new Error("don't support OUATH2")
+        // todo
+        // try {
+        //   const tokenResponse = await this.getOAuth2Token(dataSourceConfig);
+        //   const token = tokenResponse.data.access_token;
 
-      // todo
-      // try {
-      //   const tokenResponse = await this.getOAuth2Token(dataSourceConfig);
-      //   const token = tokenResponse.data.access_token;
+        //   const response = await axios({
+        //     method: query.operation,
+        //     url: `${dataSourceConfig.url}/${query.query}`,
+        //     headers: {
+        //       Authorization: `Bearer ${token}`,
+        //       'Content-Type': 'application/json',
+        //     },
+        //   });
 
-      //   const response = await axios({
-      //     method: query.operation,
-      //     url: `${dataSourceConfig.url}/${query.query}`,
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //       'Content-Type': 'application/json',
-      //     },
-      //   });
+        //   status = response.status;
+        //   data = response.data;
+        // } catch (error) {
+        //   status = error.response ? error.response.status : 500;
+        //   eMessage = error.message;
+        // }
+        // break;
+        // } break;
 
-      //   status = response.status;
-      //   data = response.data;
-      // } catch (error) {
-      //   status = error.response ? error.response.status : 500;
-      //   eMessage = error.message;
-      // }
-      // break;
-      case 'basic':
-        fetch(dataSourceConfig.base_url + '/' + query.query, {
-          method: query.query.method,
-          headers: {
-            Authorization:
-              'Basic ' +
-              btoa(dataSourceConfig.username + ':' + dataSourceConfig.password),
-            ...query.query.headers,
-          },
-          body: query.query.body,
-        })
-          .then((v) => {
-            status = 200;
-            return (data = v);
-          })
-          .catch((e) => {
-            status = 500;
-            eMessage = e.message;
-            return (eMessage = e);
-          }); //options are to be defined
-        return {
-          status: status,
-          data: data,
-          error: eMessage,
-        };
-      case 'bearer':
-        const myHeaders = new Headers();
-        const token = dataSourceConfig.bearer_token;
+        case 'basic':
+          {
+            res = await fetch(queryUrl, {
+              method: query.query.method,
+              headers: {
+                Authorization:
+                  'Basic ' +
+                  btoa(
+                    dataSourceConfig.auth.username +
+                      ':' +
+                      dataSourceConfig.auth.password,
+                  ),
 
-        myHeaders.append('Content-Type', 'application/json');
-        myHeaders.append('Authorization', `Bearer ${token}`);
+                ...collectedHeaders,
+              },
+              body: reqBody,
+            });
+          }
+          break;
+        case 'bearer':
+          {
+            res = await fetch(queryUrl, {
+              method: query.query.method,
+              headers: {
+                Authorization: `Bearer ${dataSourceConfig.auth.bearer_token}`,
+                ...collectedHeaders,
+              },
+              body: reqBody,
+            });
+          }
+          break;
+        default:
+          throw new Error('unreachable');
+      }
 
-        fetch(dataSourceConfig.base_url + '/' + query.query, {
-          method: query.query.method,
-          headers: { ...myHeaders, ...query.query.headers },
-          body: query.query.body,
-        })
-          .then((v) => {
-            status = 200;
-            return (data = v);
-          })
-          .catch((e) => {
-            status = 500;
-            eMessage = e.message;
-            return (eMessage = e);
-          }); //options are to be defined
-        return {
-          status: status,
-          data: data,
-          error: eMessage,
-        };
+      return {
+        status: res.status,
+        data: await res.json(),
+        error: '',
+      };
+    } catch (e) {
+      return {
+        status: 500,
+        data: {},
+        error: 'server error: ' + e,
+      };
     }
-
-    return {
-      status: 200,
-      data: data,
-      error: eMessage,
-    };
   }
   // async getOAuth2Token(dataSourceConfig: ConfigT): Promise<any> {
   //   const { client_id, client_secret, grant_type, scope, username, password } =
@@ -140,14 +124,4 @@ export default class RESTQueryService implements QueryRunnerI {
 
   //   return response.data;
   // }
-
-  // irrelevent
-  connect(dataSourceConfig: ConfigT): Pool {
-    const config: PoolConfig = {
-      ...dataSourceConfig,
-      statement_timeout: 10000,
-      connectionTimeoutMillis: 10000,
-    };
-    return new Pool(config);
-  }
 }
