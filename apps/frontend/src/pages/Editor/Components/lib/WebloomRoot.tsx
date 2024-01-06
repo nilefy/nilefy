@@ -12,8 +12,6 @@ import {
 import { useSetDom } from '@/hooks';
 import { observer } from 'mobx-react-lite';
 
-// const { resizeCanvas } = store.getState();
-
 export const WebloomRoot = observer(function WebloomRoot() {
   const root = editorStore.currentPage.rootWidget;
   const props = root.props;
@@ -41,9 +39,8 @@ export const WebloomRoot = observer(function WebloomRoot() {
         ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
       );
     }
-    console.log(columnWidth, editorStore.currentPage.rootWidget.columnWidth);
 
-    editorStore.currentPage.resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, {
+    editorStore.currentPage.rootWidget.setDimensions({
       columnWidth,
       rowsCount,
     });

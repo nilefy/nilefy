@@ -30,7 +30,10 @@ export class WebloomPage {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  mousePosition: Point | null = null;
+  mousePosition: Point = {
+    x: 0,
+    y: 0,
+  };
   width: number = 0;
   height: number = 0;
   constructor({
@@ -72,7 +75,6 @@ export class WebloomPage {
       setOverWidgetId: action,
       setSelectedNodeIds: action,
       setShadowElement: action,
-      resizeCanvas: action,
       moveWidgetIntoGrid: action,
       moveWidget: action,
       id: observable,
@@ -149,7 +151,7 @@ export class WebloomPage {
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
     if (widget.isCanvas) {
-      this.resizeCanvas(widget.id, {
+      widget.setDimensions({
         columnsCount: widget.columnsCount,
         rowsCount: widget.rowsCount,
       });
@@ -160,10 +162,6 @@ export class WebloomPage {
   }
   get rootWidget() {
     return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
-  }
-  resizeCanvas(id: string, dimensions: Partial<WebloomGridDimensions>) {
-    const widget = this.widgets[id];
-    widget.setDimensions(dimensions);
   }
 
   setDraggedWidgetId(id: string | null) {
@@ -309,7 +307,7 @@ export class WebloomPage {
         nodePixelBoundingRect.bottom - parentBoundingRect.bottom + 100;
       const newRowCount = Math.floor(verticalExpansion / gridrow);
       if (parent.isRoot) {
-        this.resizeCanvas(parent.id, {
+        parent.setDimensions({
           rowsCount: parent.rowsCount + newRowCount,
         });
       } else {
@@ -377,11 +375,7 @@ export class WebloomPage {
         EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
         newCoords.columnsCount,
       );
-      if (node.isCanvas) {
-        this.resizeCanvas(id, newCoords);
-      } else {
-        node.setDimensions(newCoords);
-      }
+      node.setDimensions(newCoords);
       overlappingNodesToMove.forEach((node) => {
         changedNodesOriginalCoords[node.id] ??=
           this.widgets[node.id].gridDimensions;

@@ -1,4 +1,4 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, toJS } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/store/widgetName';
 import { WebloomQuery } from './query';
@@ -259,10 +259,9 @@ export class WebloomWidget
     delta: Point,
     overId: string,
     draggedId: string,
-    mousePos: Point,
     forShadow = false,
   ) {
-    const tree = this.page.widgets;
+    const mousePos = this.page.mousePosition;
     const [gridrow, gridcol] = this.gridSize as [number, number];
     const normalizedDelta = {
       x: normalize(delta.x, gridcol),
@@ -272,7 +271,8 @@ export class WebloomWidget
       x: startPosition.x + normalizedDelta.x,
       y: startPosition.y + normalizedDelta.y,
     }; // -> this is the absolute position in pixels (normalized to the grid)
-    const parent = tree[this.parentId];
+    const overEl = this.page.getWidgetById(overId);
+    const parent = this.canvasParent;
     const parentBoundingRect = parent.boundingRect;
     const position = {
       x: newPosition.x - parentBoundingRect.left,
@@ -289,14 +289,14 @@ export class WebloomWidget
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
     };
-    const overEl = tree[overId];
+
     if (overId !== EDITOR_CONSTANTS.ROOT_NODE_ID && overId !== draggedId) {
       dimensions = handleHoverCollision(
         dimensions,
         parent.pixelDimensions,
         overEl.boundingRect,
         [gridrow, gridcol],
-        !!overEl.isCanvas!,
+        !!overEl.isCanvas,
         mousePos,
         forShadow,
       );
