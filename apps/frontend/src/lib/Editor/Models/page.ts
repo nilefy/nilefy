@@ -2,7 +2,7 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -91,7 +91,7 @@ export class WebloomPage {
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }
-  setMousePosition(point: Point | null) {
+  setMousePosition(point: Point) {
     this.mousePosition = point;
   }
   adjustDimensions() {

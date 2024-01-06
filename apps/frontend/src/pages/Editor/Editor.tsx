@@ -108,7 +108,6 @@ function EditorLoader() {
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
-
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
