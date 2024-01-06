@@ -18,17 +18,9 @@ export const WebloomRoot = observer(function WebloomRoot() {
   const root = editorStore.currentPage.rootWidget;
   const props = root.props;
   const nodes = root.nodes;
-  // const props = store(
-  //   (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].props,
-  // );
-  // const nodes = store(
-  //   (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].nodes,
-  // );
   const ref = useRef<HTMLDivElement>(null);
-  const width = editorStore.width;
-  const height = editorStore.height;
-  // const width = store((state) => state.editorWidth);
-  // const height = store((state) => state.editorHeight);
+  const width = editorStore.currentPage.width;
+  const height = editorStore.currentPage.height;
   const children = useMemo(() => {
     let children = props.children as ReactElement[];
     if (nodes.length > 0) {
@@ -41,23 +33,15 @@ export const WebloomRoot = observer(function WebloomRoot() {
   useLayoutEffect(() => {
     const columnWidth = Math.round(width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
     let rowsCount = editorStore.currentPage.rootWidget.rowsCount;
-    // let rowsCount =
-    //   store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
-
     if (rowsCount === 0) {
-      editorStore.setEditorDimensions({ height: ref.current?.clientHeight });
+      editorStore.currentPage.setPageDimensions({
+        height: ref.current?.clientHeight,
+      });
       rowsCount = Math.round(
         ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
       );
     }
-    // if (rowsCount === 0) {
-    //   store
-    //     .getState()
-    //     .setEditorDimensions({ height: ref.current?.clientHeight });
-    //   rowsCount = Math.round(
-    //     ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
-    //   );
-    // }
+    console.log(columnWidth, editorStore.currentPage.rootWidget.columnWidth);
 
     editorStore.currentPage.resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, {
       columnWidth,
@@ -76,7 +60,7 @@ export const WebloomRoot = observer(function WebloomRoot() {
     if (!ref.current) return;
     const width = ref.current?.clientWidth;
     const height = ref.current?.clientHeight;
-    editorStore.setEditorDimensions({ width, height });
+    editorStore.currentPage.setPageDimensions({ width, height });
     // store.getState().setEditorDimensions({ width, height });
   };
 

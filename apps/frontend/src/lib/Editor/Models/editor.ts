@@ -1,24 +1,19 @@
 import { makeObservable, observable, action, computed } from 'mobx';
 import { WebloomPage } from './page';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export class EditorState {
   pages: Record<string, WebloomPage> = {};
   currentPageId: string = '';
-  width: number = 0;
-  height: number = 0;
+
   constructor() {
     makeObservable(this, {
       pages: observable,
       currentPageId: observable,
-      width: observable,
-      height: observable,
+
       currentPage: computed,
       changePage: action,
       addPage: action,
       removePage: action,
-      setEditorDimensions: action,
-      adjustDimensions: action,
       init: action,
     });
   }
@@ -45,14 +40,6 @@ export class EditorState {
     return this.pages[this.currentPageId];
   }
 
-  adjustDimensions() {
-    const currentPage = this.currentPage;
-    if (!currentPage) return;
-    const dims =
-      currentPage.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].pixelDimensions;
-    this.width = dims.width;
-    this.height = dims.height;
-  }
   changePage(id: string) {
     if (!this.pages[id]) {
       this.addPage(id);
@@ -67,22 +54,11 @@ export class EditorState {
   removePage(id: string) {
     delete this.pages[id];
   }
-  setEditorDimensions(
-    dims: Partial<{
-      width: number;
-      height: number;
-    }>,
-  ) {
-    this.width = dims.width || this.width;
-    this.height = dims.height || this.height;
-  }
 
   snapshot() {
     return {
       pages: Object.values(this.pages).map((page) => page.snapshot),
       currentPageId: this.currentPageId,
-      width: this.width,
-      height: this.height,
     };
   }
 }

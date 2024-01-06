@@ -45,7 +45,7 @@ import { editorStore } from '@/lib/Editor/Models';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
-    editorStore.setEditorDimensions({ width: Math.round(width) });
+    editorStore.currentPage.setPageDimensions({ width: Math.round(width) });
   },
   100,
   {

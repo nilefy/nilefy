@@ -13,14 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import store from '../../../store/index';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 function InspectorEventManger() {
-  const tree = store((state) => state.tree);
-  const [selectedComponent, setSelectedComponent] = useState('');
+  // const tree = store((state) => state.tree);
+  // const [selectedComponent, setSelectedComponent] = useState('');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>onClick</DropdownMenuTrigger>
@@ -54,7 +53,7 @@ function InspectorEventManger() {
         <DropdownMenuLabel>Action Options</DropdownMenuLabel>
         <DropdownMenuItem>
           <p>Component</p>
-          <Select
+          {/* <Select
             value={selectedComponent}
             onValueChange={(e) => {
               setSelectedComponent(e);
@@ -72,7 +71,7 @@ function InspectorEventManger() {
                   </SelectItem>
                 ))}
             </SelectContent>
-          </Select>
+          </Select> */}
         </DropdownMenuItem>
         <DropdownMenuItem>
           <p>Action</p>

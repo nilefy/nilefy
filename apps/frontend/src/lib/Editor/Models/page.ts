@@ -31,6 +31,8 @@ export class WebloomPage {
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
   mousePosition: Point | null = null;
+  width: number = 0;
+  height: number = 0;
   constructor({
     id,
     widgets,
@@ -78,6 +80,10 @@ export class WebloomPage {
       setMousePosition: action,
       firstSelectedWidget: computed,
       rootWidget: computed,
+      width: observable,
+      height: observable,
+      setPageDimensions: action,
+      adjustDimensions: action,
     });
   }
   get firstSelectedWidget() {
@@ -85,6 +91,20 @@ export class WebloomPage {
   }
   setMousePosition(point: Point | null) {
     this.mousePosition = point;
+  }
+  adjustDimensions() {
+    const dims = this.rootWidget.pixelDimensions;
+    this.width = dims.width;
+    this.height = dims.height;
+  }
+  setPageDimensions(
+    dims: Partial<{
+      width: number;
+      height: number;
+    }>,
+  ) {
+    this.width = dims.width || this.width;
+    this.height = dims.height || this.height;
   }
 
   setNewNodeTranslate(point: Point | null) {
@@ -143,41 +163,7 @@ export class WebloomPage {
   }
   resizeCanvas(id: string, dimensions: Partial<WebloomGridDimensions>) {
     const widget = this.widgets[id];
-    const oldColumnWidth = widget.columnWidth ?? 0;
-    if (widget.isCanvas) {
-      let newColumnWidth = dimensions.columnWidth || oldColumnWidth;
-      if (id !== EDITOR_CONSTANTS.ROOT_NODE_ID) {
-        const [, gridcol] = widget.gridSize;
-        const columnsCount = dimensions.columnsCount || widget.columnsCount;
-        newColumnWidth =
-          (columnsCount * gridcol!) / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
-      }
-      //recurse to set the new columnWidth of all children
-      recurse.call(this, id, {
-        ...dimensions,
-        columnWidth: newColumnWidth,
-        columnsCount: dimensions.columnsCount || widget.columnsCount,
-      });
-    } else {
-      widget.setDimensions(dimensions);
-    }
-    function recurse(
-      this: WebloomPage,
-      id: string,
-      dimensions: Partial<WebloomGridDimensions>,
-    ) {
-      const node = this.widgets[id];
-      widget.setDimensions(dimensions);
-      const children = node.nodes;
-      for (const child of children) {
-        const childNode = this.widgets[child];
-        const newColumnWidth =
-          (childNode.columnsCount * dimensions.columnWidth!) /
-          EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
-
-        recurse.call(this, child, { columnWidth: newColumnWidth });
-      }
-    }
+    widget.setDimensions(dimensions);
   }
 
   setDraggedWidgetId(id: string | null) {

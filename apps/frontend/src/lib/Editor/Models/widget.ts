@@ -39,7 +39,6 @@ export class WebloomWidget
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
-  columnWidth?: number;
   props: Record<string, unknown>;
   dependancies: EntityDependancy;
   type: WidgetTypes;
@@ -110,7 +109,7 @@ export class WebloomWidget
       gridDimensions: computed.struct,
       addChild: action,
       canvasParent: computed,
-      columnWidth: observable,
+      columnWidth: computed,
       removeSelf: action,
       parent: computed,
       isRoot: observable,
@@ -118,7 +117,13 @@ export class WebloomWidget
       removeChild: action,
     });
   }
-
+  get columnWidth(): number {
+    if (this.isRoot)
+      return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+    if (this.isCanvas)
+      return this.parent.pixelDimensions.width / this.columnsCount;
+    return this.parent.columnWidth || 0;
+  }
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
@@ -155,7 +160,6 @@ export class WebloomWidget
     this.col = dimensions.col || this.col;
     this.columnsCount = dimensions.columnsCount || this.columnsCount;
     this.rowsCount = dimensions.rowsCount || this.rowsCount;
-    this.columnWidth = dimensions.columnWidth || this.columnWidth;
   }
 
   get pixelDimensions(): WebloomPixelDimensions {
