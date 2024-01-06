@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ function CreatePluginForm({
   globalDataSourceId: number;
   workspaceId: number;
 }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState<boolean>(false);
   const [formError, setFormError] = useState('');
   const queryClient = useQueryClient();
@@ -69,13 +71,14 @@ function CreatePluginForm({
     onError(error) {
       setFormError(error.message);
     },
-    async onSuccess() {
+    async onSuccess(data) {
       await queryClient.invalidateQueries({
         queryKey: [DATASOURCES_QUERY_KEY],
       });
       setFormError('');
       form.reset();
       setOpen(false);
+      navigate(`/${workspaceId}/datasources/${data.id}`);
     },
   });
   function onSubmit(values: DataSourceMeta) {
@@ -321,7 +324,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
       <h2 className="ml-2 text-3xl">Data Sources</h2>
       {/** plugins filter*/}
       <ScrollArea className="h-full">
