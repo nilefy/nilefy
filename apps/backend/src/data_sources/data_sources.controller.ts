@@ -16,11 +16,9 @@ import {
   CreateWsDataSourceDto,
   WsDataSourceDto,
   createWsDataSourceSchema,
-  dataSourcesInsert,
-  DataSourceDb,
-  DataSourceDto,
   updateWsDataSourceSchema,
   UpdateWsDataSourceDto,
+  WsDataSourceP,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
@@ -30,7 +28,7 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 export class DataSourcesController {
   constructor(private dataSourceService: DataSourcesService) {}
 
-  @Post(':dataSourceId')
+  @Post(':dataSourceId') // global data source id
   async create(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
@@ -40,98 +38,85 @@ export class DataSourcesController {
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
-    const { name, config } = createDataSourceDto;
-    const jsonConfig: WsDataSourceDto['config'] = JSON.stringify(config);
-
-    // TODO: check whether config matches the plugin requirements
-
     return await this.dataSourceService.create({
-      name,
+      ...createDataSourceDto,
       workspaceId,
       dataSourceId,
-      config: jsonConfig,
       createdById: req.user.userId,
     });
   }
 
-  @Get(':dataSourceId')
-  async get(
+  @Get(':dataSourceId/all') // global data source id
+  async getConnections(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['dataSourceId'],
   ): Promise<WsDataSourceDto[]> {
-    return await this.dataSourceService.get({ workspaceId, dataSourceId });
+    return await this.dataSourceService.getConnections({
+      workspaceId,
+      dataSourceId,
+    });
+  }
+
+  @Get(':dataSourceId')
+  async getOne(
+    @Param('workspaceId', ParseIntPipe)
+    workspaceId: WsDataSourceDto['workspaceId'],
+    @Param('dataSourceId', ParseIntPipe)
+    dataSourceId: WsDataSourceDto['id'],
+  ) {
+    return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
   @Get()
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceDto[]> {
+  ): Promise<WsDataSourceP[]> {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
-  @Delete(':dataSourceId')
-  async deleteAll(
+  @Delete(':dataSourceId/all') // global data source id
+  async deleteConnections(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto[]> {
-    return await this.dataSourceService.deleteAll(req.user.userId, {
+    return await this.dataSourceService.deleteConnections({
       workspaceId,
       dataSourceId,
     });
   }
 
-  @Delete(':dataSourceId/:dataSourceName')
+  @Delete(':dataSourceId')
   async deleteOne(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Param('dataSourceName')
-    dataSourceName: WsDataSourceDto['name'],
-    @Req() req: ExpressAuthedRequest,
+    dataSourceId: WsDataSourceDto['id'],
   ): Promise<WsDataSourceDto> {
-    return await this.dataSourceService.deleteOne(req.user.userId, {
-      workspaceId,
-      dataSourceId,
-      name: dataSourceName,
-    });
+    return await this.dataSourceService.deleteOne(workspaceId, dataSourceId);
   }
 
-  @Put(':dataSourceId/:dataSourceName')
+  @Put(':dataSourceId')
   async update(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WsDataSourceDto['workspaceId'],
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
-    @Param('dataSourceName')
-    dataSourceName: WsDataSourceDto['name'],
+    dataSourceId: WsDataSourceDto['id'],
     @Body(new ZodValidationPipe(updateWsDataSourceSchema))
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
-  ) {
+  ): Promise<WsDataSourceDto> {
     return this.dataSourceService.update(
       {
         workspaceId,
         dataSourceId,
-        dataSourceName,
         updatedById: req.user.userId,
       },
       data,
     );
-  }
-
-  // TODO: another controller for global data sources
-  @Post('')
-  async add(
-    @Body(new ZodValidationPipe(dataSourcesInsert))
-    dataSource: DataSourceDb,
-  ): Promise<DataSourceDto> {
-    return await this.dataSourceService.add(dataSource);
   }
 }

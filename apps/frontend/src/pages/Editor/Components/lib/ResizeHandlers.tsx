@@ -1,5 +1,5 @@
-import ResizeAction from '@/actions/Editor/Resize';
-import { commandManager } from '@/actions/commandManager';
+import ResizeAction from '@/Actions/Editor/Resize';
+import { commandManager } from '@/Actions/CommandManager';
 import store from '@/store';
 import { useEffect, useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';

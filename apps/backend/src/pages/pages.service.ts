@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   DatabaseI,
   DrizzleAsyncProvider,
@@ -201,6 +206,17 @@ export class PagesService {
     pageId: PageDto['id'];
     deletedById: UserDto['id'];
   }) {
+    const [{ count }] = await this.db
+      .select({
+        count: sql<number>`cast(count(${pages.id}) as int)`,
+      })
+      .from(pages)
+      .where(and(eq(pages.appId, appId), isNull(pages.deletedAt)));
+
+    if (count === 1) {
+      throw new BadRequestException('cannot delete the only page in an app');
+    }
+
     return await this.db
       .update(pages)
       .set({

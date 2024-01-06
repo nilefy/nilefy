@@ -26,4 +26,6 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 
 - run all packages in dev mode `pnpm run dev`
 
+- you can check swagger docs in [http://localhost:3000/api#/](http://localhost:3000/api)
+
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)

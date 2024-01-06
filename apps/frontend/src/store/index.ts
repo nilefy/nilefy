@@ -13,6 +13,11 @@ import { create } from 'zustand';
 export type WebloomTree = {
   [key: string]: WebloomNode;
 };
+
+export type AutoCompleteItem = {
+  name: string;
+  id: string;
+};
 export interface WebloomState {
   tree: WebloomTree;
   overNode: string | null;
@@ -39,7 +44,7 @@ interface WebloomActions {
   setOverNode: (id: string | null) => void;
   setShadowElement: (shadowElement: ShadowElement | null) => void;
   moveNode: (id: string, parentId: string) => void;
-  removeNode: (id: string, stack?: WebloomNode[]) => void;
+  removeNode: (id: string, recursive?: boolean) => WebloomNode[];
   moveNodeIntoGrid: (
     id: string,
     newCoords: Partial<WebloomGridDimensions>,
@@ -74,6 +79,11 @@ interface WebloomActions {
   setResizedNode: (id: string | null) => void;
   setProp: (id: string, key: string, value: unknown) => void;
   setProps: (id: string, newProps: Partial<WebloomNode['props']>) => void;
+  setWidgetMeta<T extends keyof WebloomNode>(
+    id: string,
+    metaKey: T,
+    value: unknown,
+  ): void;
   setEditorDimensions: (dims: { width?: number; height?: number }) => void;
 }
 
@@ -282,6 +292,10 @@ export function handleParentCollisions(
 const store = create<WebloomState & WebloomActions & WebloomGetters>()(
   (set, get) => ({
     tree: {},
+    autoCompleteKeys: {
+      widgets: [],
+      actions: [],
+    },
     draggedNode: null,
     overNode: null,
     selectedNodeIds: new Set(),
@@ -335,6 +349,21 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
     setProp(id, key, value) {
       get().setProps(id, { [key]: value });
     },
+    setWidgetMeta(id, key, value) {
+      set((state) => {
+        const node = state.tree[id];
+        if (!node) return state;
+        const newTree = {
+          ...state.tree,
+          [id]: {
+            ...node,
+            [key]: value,
+          },
+        };
+        return { tree: newTree };
+      });
+    },
+
     getDropCoordinates(startPosition, delta, id, overId, forShadow = false) {
       const tree = get().tree;
       const el = tree[id];
@@ -446,7 +475,6 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
             nodes: [...state.tree[parentId].nodes, node.id],
           },
         };
-
         return { tree: newTree };
       });
       set((state) => {
@@ -462,37 +490,37 @@ const store = create<WebloomState & WebloomActions & WebloomGetters>()(
       });
     },
     /**
-     * @param stack if stack is supplied will push deleted node to it
+     * @returns stack of deleted nodes
      */
-    removeNode(id, stack) {
+    removeNode(id, recursive = false) {
       // cannot delete a non existing node
-      if (!(id in get().tree)) return;
+      if (!(id in get().tree)) return [];
+      const stack: WebloomNode[] = [];
       const node = get().tree[id];
-      // remove node children then remove it
-      for (const childId of node.nodes) {
-        // when drag start we create preview element that has same children as the the node being moved, and remove the preview when drag end, so if the node being moved has children, those children will be removed at the end of the drag.
-        // but we don't want this so just skip the recursive calls and go directly deleting the preview
-        if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) break;
-        get().removeNode(childId, stack);
-      } // base case is that element has no child
-      set((state) => {
-        const node = state.tree[id];
-        if (stack !== undefined) {
-          stack.push(node);
+      const toBeDeletedNodes = [node.id];
+      function recurse(id: string) {
+        const node = get().tree[id];
+        if (!node) return;
+        toBeDeletedNodes.push(node.id);
+        for (const child of node.nodes) {
+          recurse(child);
         }
-        if (!node) return state;
-        const newTree = {
-          ...state.tree,
-          [node.parent]: {
-            ...state.tree[node.parent],
-            nodes: state.tree[node.parent].nodes.filter(
-              (nodeId) => nodeId !== id,
-            ),
-          },
-        };
-        delete newTree[id];
-        return { tree: newTree };
-      });
+      }
+      if (recursive) recurse(id);
+      const newTree = { ...get().tree };
+      for (const nodeId of toBeDeletedNodes) {
+        const node = newTree[nodeId];
+        if (!node) continue;
+        stack.push(node);
+        const parent = newTree[node.parent];
+        if (parent) {
+          parent.nodes = parent.nodes.filter((nodeId) => nodeId !== id);
+          newTree[node.parent] = parent;
+        }
+        delete newTree[nodeId];
+      }
+      set({ tree: newTree });
+      return stack;
     },
     moveNode(id, parentId) {
       set((state) => {

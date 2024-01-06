@@ -1,18 +1,13 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
-  DataSourceDto,
-  DataSourceDb,
-  GetWsDataSourceDto,
   UpdateWsDataSourceDto,
+  WsDataSourceP,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import {
-  dataSources,
-  workspaceDataSources,
-} from '../drizzle/schema/data_sources.schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
+import { and, eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DataSourcesService {
@@ -23,84 +18,125 @@ export class DataSourcesService {
       .insert(workspaceDataSources)
       .values(dataSourceDto)
       .returning();
-    return dataSource as WsDataSourceDto;
+    return dataSource;
   }
 
-  async get(obj: GetWsDataSourceDto): Promise<WsDataSourceDto[]> {
+  async getConnections({
+    workspaceId,
+    dataSourceId,
+  }: {
+    workspaceId: WsDataSourceDto['workspaceId'];
+    dataSourceId: WsDataSourceDto['dataSourceId'];
+  }): Promise<WsDataSourceDto[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
-      where: obj.name
-        ? and(
-            eq(workspaceDataSources.workspaceId, obj.workspaceId),
-            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-            eq(workspaceDataSources.name, obj.name),
-            isNull(workspaceDataSources.deletedAt),
-          )
-        : and(
-            eq(workspaceDataSources.workspaceId, obj.workspaceId),
-            eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-            isNull(workspaceDataSources.deletedAt),
-          ),
+      where: and(
+        eq(workspaceDataSources.workspaceId, workspaceId),
+        eq(workspaceDataSources.dataSourceId, dataSourceId),
+      ),
     });
     return ds as WsDataSourceDto[];
   }
 
   async getWsDataSources(
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceDto[]> {
+  ): Promise<WsDataSourceP[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
-      where: and(
-        eq(workspaceDataSources.workspaceId, workspaceId),
-        isNull(workspaceDataSources.deletedAt),
-      ),
+      columns: {
+        id: true,
+        name: true,
+        workspaceId: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            type: true,
+          },
+        },
+      },
+      where: eq(workspaceDataSources.workspaceId, workspaceId),
     });
-    return ds as WsDataSourceDto[];
+    return ds;
   }
 
-  async deleteAll(
-    deletedById: WsDataSourceDto['deletedById'],
-    obj: GetWsDataSourceDto,
-  ): Promise<WsDataSourceDto[]> {
+  async getOne(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ) {
+    const ds = await this.db.query.workspaceDataSources.findFirst({
+      columns: {
+        id: true,
+        name: true,
+        workspaceId: true,
+        config: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            config: true,
+            type: true,
+          },
+        },
+      },
+      where: and(
+        eq(workspaceDataSources.workspaceId, workspaceId),
+        eq(workspaceDataSources.id, datasourceId),
+      ),
+    });
+    if (!ds) {
+      throw new NotFoundException('cannot find this data source');
+    }
+    return ds;
+  }
+
+  async deleteConnections({
+    workspaceId,
+    dataSourceId,
+  }: {
+    workspaceId: WsDataSourceDto['workspaceId'];
+    dataSourceId: WsDataSourceDto['dataSourceId'];
+  }): Promise<WsDataSourceDto[]> {
     const ds = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
+      .delete(workspaceDataSources)
       .where(
         and(
-          eq(workspaceDataSources.workspaceId, obj.workspaceId),
-          eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
+          eq(workspaceDataSources.workspaceId, workspaceId),
+          eq(workspaceDataSources.dataSourceId, dataSourceId),
         ),
       )
       .returning();
-    return ds as WsDataSourceDto[];
+    return ds;
   }
 
   async deleteOne(
-    deletedById: WsDataSourceDto['deletedById'],
-    obj: GetWsDataSourceDto,
+    workspaceId: WsDataSourceDto['workspaceId'],
+    dataSourceId: WsDataSourceDto['id'],
   ): Promise<WsDataSourceDto> {
     const [ds] = await this.db
-      .update(workspaceDataSources)
-      .set({ deletedAt: sql`now()`, deletedById })
+      .delete(workspaceDataSources)
       .where(
         and(
-          eq(workspaceDataSources.workspaceId, obj.workspaceId),
-          eq(workspaceDataSources.dataSourceId, obj.dataSourceId),
-          eq(workspaceDataSources.name, obj.name as string),
+          eq(workspaceDataSources.id, dataSourceId),
+          eq(workspaceDataSources.workspaceId, workspaceId),
         ),
       )
       .returning();
-    return ds as WsDataSourceDto;
+    return ds;
   }
 
   async update(
     {
       workspaceId,
       dataSourceId,
-      dataSourceName,
       updatedById,
     }: {
+      dataSourceId: WsDataSourceDto['id'];
       workspaceId: WsDataSourceDto['workspaceId'];
-      dataSourceId: WsDataSourceDto['dataSourceId'];
-      dataSourceName: WsDataSourceDto['name'];
       updatedById: WsDataSourceDto['updatedById'];
     },
     dataSourceDto: UpdateWsDataSourceDto,
@@ -111,21 +147,11 @@ export class DataSourcesService {
       .where(
         and(
           eq(workspaceDataSources.workspaceId, workspaceId),
-          eq(workspaceDataSources.dataSourceId, dataSourceId),
-          eq(workspaceDataSources.name, dataSourceName),
-          isNull(workspaceDataSources.deletedAt),
+          eq(workspaceDataSources.id, dataSourceId),
         ),
       )
       .returning();
-    return ds as WsDataSourceDto;
-  }
-
-  // GLOBAL
-  async add(dataSource: DataSourceDb): Promise<DataSourceDto> {
-    const [ds] = await this.db
-      .insert(dataSources)
-      .values(dataSource)
-      .returning();
-    return ds as DataSourceDto;
+    if (!ds) throw new NotFoundException();
+    return ds;
   }
 }

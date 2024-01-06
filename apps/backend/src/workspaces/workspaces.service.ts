@@ -5,7 +5,7 @@ import {
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import * as schema from '../drizzle/schema/schema';
 
 @Injectable()
@@ -14,9 +14,7 @@ export class WorkspacesService {
 
   async index(includeDeleted: boolean): Promise<WorkspaceDto[]> {
     const ws = await this.db.query.workspaces.findMany({
-      where: includeDeleted
-        ? isNotNull(schema.workspaces.deletedAt)
-        : undefined,
+      where: includeDeleted ? undefined : isNull(schema.workspaces.deletedAt),
     });
     return ws;
   }

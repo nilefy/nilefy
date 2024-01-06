@@ -8,14 +8,7 @@ import {
   varchar,
   unique,
 } from 'drizzle-orm/pg-core';
-import {
-  workspaces,
-  users,
-  timeStamps,
-  softDelete,
-  apps,
-  whoToBlame,
-} from './schema';
+import { workspaces, users, timeStamps, apps } from './schema';
 
 export const dataSourcesEnum = pgEnum('data_sources_enum', [
   'database',
@@ -33,6 +26,9 @@ export const dataSources = pgTable('data_sources', {
   config: json('config')
     .default(sql`'{}'::json`)
     .notNull(),
+  queryConfig: json('query_config')
+    .default(sql`'{}'::json`)
+    .notNull(),
 });
 
 export const workspaceDataSources = pgTable(
@@ -47,15 +43,14 @@ export const workspaceDataSources = pgTable(
       .references(() => dataSources.id)
       .notNull(),
     config: json('config')
+      .$type<Record<string, unknown>>()
       .default(sql`'{}'::json`)
       .notNull(),
     ...timeStamps,
-    ...softDelete,
     createdById: integer('created_by_id')
       .references(() => users.id)
       .notNull(),
     updatedById: integer('updated_by_id').references(() => users.id),
-    deletedById: integer('deleted_by_id').references(() => users.id),
   },
   (t) => {
     return {
@@ -64,15 +59,25 @@ export const workspaceDataSources = pgTable(
   },
 );
 
-export const queries = pgTable('workspace_app_queries', {
-  id: serial('id').primaryKey(),
-  name: varchar('query_name', { length: 100 }).unique().notNull(),
-  query: json('query').notNull(),
-  appId: integer('app_id')
-    .references(() => apps.id)
-    .notNull(),
-  dataSourceId: integer('data_source_id')
-    .references(() => workspaceDataSources.id)
-    .notNull(),
-  ...whoToBlame,
-});
+export const queries = pgTable(
+  'workspace_app_queries',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('query_name', { length: 100 }).notNull(),
+    query: json('query').$type<Record<string, unknown>>().notNull(),
+    appId: integer('app_id')
+      .references(() => apps.id)
+      .notNull(),
+    dataSourceId: integer('data_source_id')
+      .references(() => workspaceDataSources.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdById: integer('created_by_id')
+      .references(() => users.id)
+      .notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    ...timeStamps,
+  },
+  (t) => ({
+    nameUnique: unique().on(t.name, t.appId),
+  }),
+);

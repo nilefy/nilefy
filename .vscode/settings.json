@@ -1,10 +1,11 @@
 {
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "files.associations": {
     "*.css": "tailwindcss"
   },
   "prettier.tabWidth": 2,
   "prettier.useTabs": false,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

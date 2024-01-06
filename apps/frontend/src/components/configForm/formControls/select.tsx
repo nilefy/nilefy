@@ -13,17 +13,17 @@ import {
   InspectorSelectProps,
 } from '@webloom/configpaneltypes';
 import { Label } from '@/components/ui/label';
+import { useContext } from 'react';
+import { FormControlContext } from '..';
 
-const InspectorSelect = (
-  props: InspectorSelectProps &
-    BaseControlProps & { onChange: (newValue: unknown) => void },
-) => {
+const InspectorSelect = (props: InspectorSelectProps & BaseControlProps) => {
+  const { onChange } = useContext(FormControlContext);
   return (
     <div className="flex flex-col space-y-3">
       <Label htmlFor={props.id}>{props.label}</Label>
       <Select
         onValueChange={(newValue) => {
-          props.onChange(newValue);
+          onChange(newValue);
         }}
         value={props.value as string}
       >

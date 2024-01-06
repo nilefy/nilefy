@@ -6,16 +6,8 @@ import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { normalize } from '@/lib/Editor/utils';
 import { WebloomNode } from '@/lib/Editor/interface';
-import { RefAttributes } from 'react';
+import { getNewWidgetName } from '@/store/widgetName';
 
-function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
 const {
   moveNodeIntoGrid,
   moveNode,
@@ -193,7 +185,7 @@ class DragAction {
     ...args: Parameters<typeof DragAction._end>
   ): UndoableCommand | null {
     if (!this.moved) {
-      removeNode(this.previewId!);
+      removeNode(this.previewId!, false);
       this.cleanUp();
       return null;
     }
@@ -230,9 +222,10 @@ class DragAction {
     const id = this.id!;
     let undoData: ReturnType<typeof moveNodeIntoGrid>;
     let command: UndoableCommand;
-    removeNode(this.previewId);
+    removeNode(this.previewId, false);
     if (isNew) {
       newNode.id = id;
+      newNode.name = getNewWidgetName(newNode.type);
       command = {
         execute: () => {
           addNode(newNode, newNode.parent!);
