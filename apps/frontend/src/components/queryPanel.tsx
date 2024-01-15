@@ -117,11 +117,11 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
         </Button>
       </div>
       <ScrollArea className="h-full w-full border border-gray-300">
-        <ConfigForm
-          config={query.dataSource.dataSource.queryConfig}
-          itemProps={query.query}
-          onChange={onQueryChange}
-        />
+        {/* <ConfigForm */}
+        {/*   config={query.dataSource.dataSource.queryConfig} */}
+        {/*   itemProps={query.query} */}
+        {/*   onChange={onQueryChange} */}
+        {/* /> */}
       </ScrollArea>
     </div>
   );

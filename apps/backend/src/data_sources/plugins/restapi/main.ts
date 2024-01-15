@@ -7,7 +7,11 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
-    const queryUrl = dataSourceConfig.base_url + '/' + query.query.endpoint;
+    const queryUrl = new URL(
+      query.query.endpoint,
+      dataSourceConfig.base_url,
+    ).toString();
+
     const collectedHeaders = {
       ...dataSourceConfig.headers,
       ...query.query.headers,

@@ -66,9 +66,9 @@ const endpointMethods = z.union([
   z.literal('GET'),
   z.literal('POST'),
   z.literal('PUT'),
-  z.literal('POST'),
   z.literal('DELETE'),
 ]);
+
 export const querySchema = z.object({
   endpoint: z.string(),
   method: endpointMethods,
