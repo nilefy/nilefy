@@ -4,7 +4,7 @@ import { InspectorFormControls } from '@/components/configForm/formControls';
 import { FormControlContext, FormSectionView } from '@/components/configForm';
 import { useCallback, useMemo } from 'react';
 import { commandManager } from '@/Actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { ChangePropAction } from '@/Actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
 import { WebloomNode } from '@/lib/Editor/interface';
 
