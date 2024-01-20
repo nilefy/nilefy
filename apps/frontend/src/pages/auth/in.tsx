@@ -46,7 +46,11 @@ export function SignIn() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="nagy@webloom.com" {...field} />
+                  <Input
+                    placeholder="nagy@webloom.com"
+                    autoFocus={true}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
