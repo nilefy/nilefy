@@ -416,15 +416,6 @@ export function DataSourceView() {
       },
     });
   };
-  const schema: RJSFSchema = {
-    title: 'Todo',
-    type: 'object',
-    required: ['title'],
-    properties: {
-      title: { type: 'string', title: 'Title', default: 'A new task' },
-      done: { type: 'boolean', title: 'Done?', default: false },
-    },
-  };
 
   const log = (type: unknown) => console.log.bind(console, type);
 
@@ -442,20 +433,21 @@ export function DataSourceView() {
             <Input defaultValue={data.name} />
           </div>
           <RJSFShadcn
-            schema={schema}
+            schema={data.dataSource.config}
             validator={validator}
             onChange={log('changed')}
             onSubmit={log('submitted')}
             onError={log('errors')}
+            formData={data.config}
           />
           {/* <ConfigForm */}
           {/*   config={data.dataSource.config} */}
           {/*   itemProps={data.config} */}
           {/*   onChange={onChange} */}
           {/* /> */}
-          <Button onClick={submitUpdate} className="w-16">
-            Save
-          </Button>
+          {/* <Button onClick={submitUpdate} className="w-16"> */}
+          {/*   Save */}
+          {/* </Button> */}
         </div>
       </ScrollArea>
     </div>

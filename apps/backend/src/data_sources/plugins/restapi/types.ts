@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+// import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const authUnion = z.discriminatedUnion('auth_type', [
   z.object({
@@ -80,88 +81,89 @@ export const querySchema = z.object({
 
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
+export const pluginConfigForm = zodToJsonSchema(configSchema, 'configSchema');
+// export const pluginConfigForm: WidgetInspectorConfig<ConfigT> = [
+//   {
+//     sectionName: 'Development',
+//     children: [
+//       {
+//         id: 'rest-api-baseurl',
+//         key: 'base_url',
+//         label: 'Base Url',
+//         type: 'input',
+//         options: {
+//           placeholder: 'https://restapi/',
+//           type: 'text',
+//         },
+//       },
+//       {
+//         id: 'rest-api-auth',
+//         key: 'auth',
+//         label: 'Auth',
+//         // TODO: use form control that can handle unions
+//         type: 'input',
+//         options: {},
+//       },
+//       {
+//         id: 'rest-api-headers',
+//         key: 'headers',
+//         label: 'Headers',
+//         // TODO: use form control that can handle this type
+//         type: 'input',
+//         options: {},
+//       },
+//     ],
+//   },
+// ];
 
-export const pluginConfigForm: WidgetInspectorConfig<ConfigT> = [
-  {
-    sectionName: 'Development',
-    children: [
-      {
-        id: 'rest-api-baseurl',
-        key: 'base_url',
-        label: 'Base Url',
-        type: 'input',
-        options: {
-          placeholder: 'https://restapi/',
-          type: 'text',
-        },
-      },
-      {
-        id: 'rest-api-auth',
-        key: 'auth',
-        label: 'Auth',
-        // TODO: use form control that can handle unions
-        type: 'input',
-        options: {},
-      },
-      {
-        id: 'rest-api-headers',
-        key: 'headers',
-        label: 'Headers',
-        // TODO: use form control that can handle this type
-        type: 'input',
-        options: {},
-      },
-    ],
-  },
-];
-
-export const queryConfigForm: WidgetInspectorConfig<QueryT> = [
-  {
-    sectionName: '',
-    children: [
-      {
-        id: 'rest-query-endpoint',
-        key: 'endpoint',
-        label: 'End-Point',
-        type: 'input',
-        options: { placeholder: '/users', type: 'text' },
-      },
-      {
-        id: 'rest-query-method',
-        key: 'method',
-        label: 'Method',
-        type: 'select',
-        options: {
-          items: endpointMethods.options.map((i) => ({
-            label: i.value,
-            value: i.value,
-          })),
-        },
-      },
-      {
-        id: 'rest-query-headers',
-        key: 'headers',
-        label: 'Headers',
-        // TODO: use form control that can handle this type
-        type: 'input',
-        options: {},
-      },
-      {
-        id: 'rest-query-params',
-        key: 'params',
-        label: 'Params',
-        // todo: use form control that can handle this type
-        type: 'input',
-        options: {},
-      },
-      {
-        id: 'rest-query-body',
-        key: 'body',
-        label: 'Body',
-        // todo: use form control that can handle this type
-        type: 'input',
-        options: { type: 'text', placeholder: '{"msg", "body"}' },
-      },
-    ],
-  },
-];
+export const queryConfigForm = zodToJsonSchema(querySchema, 'querySchema');
+// export const queryConfigForm: WidgetInspectorConfig<QueryT> = [
+//   {
+//     sectionName: '',
+//     children: [
+//       {
+//         id: 'rest-query-endpoint',
+//         key: 'endpoint',
+//         label: 'End-Point',
+//         type: 'input',
+//         options: { placeholder: '/users', type: 'text' },
+//       },
+//       {
+//         id: 'rest-query-method',
+//         key: 'method',
+//         label: 'Method',
+//         type: 'select',
+//         options: {
+//           items: endpointMethods.options.map((i) => ({
+//             label: i.value,
+//             value: i.value,
+//           })),
+//         },
+//       },
+//       {
+//         id: 'rest-query-headers',
+//         key: 'headers',
+//         label: 'Headers',
+//         // TODO: use form control that can handle this type
+//         type: 'input',
+//         options: {},
+//       },
+//       {
+//         id: 'rest-query-params',
+//         key: 'params',
+//         label: 'Params',
+//         // todo: use form control that can handle this type
+//         type: 'input',
+//         options: {},
+//       },
+//       {
+//         id: 'rest-query-body',
+//         key: 'body',
+//         label: 'Body',
+//         // todo: use form control that can handle this type
+//         type: 'input',
+//         options: { type: 'text', placeholder: '{"msg", "body"}' },
+//       },
+//     ],
+//   },
+// ];
