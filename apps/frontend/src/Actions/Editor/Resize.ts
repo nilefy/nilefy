@@ -15,15 +15,7 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-// const {
-//   moveNodeIntoGrid,
-//   getGridSize,
-//   setDimensions,
-//   resizeCanvas,
-//   getPixelDimensions,
-//   getBoundingRect,
-// } = store.getState();
-//
+
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
@@ -65,32 +57,14 @@ class ResizeAction {
         };
       }, {});
 
-    // const positionsSnapshot = Object.entries(store.getState().tree).reduce(
-    //   (acc, node) => {
-    //     if (node[0] === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
-    //     return {
-    //       ...acc,
-    //       [node[0]]: {
-    //         col: node[1].col,
-    //         row: node[1].row,
-    //         columnsCount: node[1].columnsCount,
-    //         rowsCount: node[1].rowsCount,
-    //       },
-    //     };
-    //   },
-    //   {},
-    // );
     this.orginalPositions = positionsSnapshot;
     this.initialGridPosition =
       editorStore.currentPage.getWidgetById(id).gridDimensions;
-    // store.getState().getGridDimensions(id);
     this.initialDimensions = dimensions;
     editorStore.currentPage.setResizedWidgetId(id);
-    // store.getState().setResizedNode(id);
     editorStore.currentPage.setShadowElement(
       editorStore.currentPage.getWidgetById(id).pixelDimensions,
     );
-    // store.getState().setShadowElement(store.getState().getPixelDimensions(id));
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -116,7 +90,6 @@ class ResizeAction {
   ) {
     if (resizingKey === null) return;
     const root = editorStore.currentPage.rootWidget;
-    // const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
     if (!root.dom) return;
 
     const { width: initialWidth, height: initialHeight } = initialDimensions;
@@ -133,10 +106,8 @@ class ResizeAction {
     x -= rect.left;
     y -= rect.top; // -> so that we get the mousePos relative to the root element
     const node = editorStore.currentPage.getWidgetById(id);
-    // const node = store.getState().tree[id];
 
     const [gridRow, gridCol] = node.gridSize;
-    // const [gridRow, gridCol] = getGridSize(id);
     const minWidth = gridCol * 2;
     const minHeight = gridRow * 10;
     if (direction.includes('top')) {
@@ -176,7 +147,6 @@ class ResizeAction {
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
     const parent = node.parent.pixelDimensions;
-    // const parent = store.getState().getPixelDimensions(node.parent);
     newLeft -= parent.x;
     newTop -= parent.y;
     const colCount = Math.round(newWidth / gridCol);
@@ -209,9 +179,7 @@ class ResizeAction {
     editorStore.currentPage.setShadowElement(
       editorStore.currentPage.getWidgetById(this.id).pixelDimensions,
     );
-    // store
-    //   .getState()
-    //   .setShadowElement(store.getState().getPixelDimensions(this.id));
+
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
@@ -225,13 +193,6 @@ class ResizeAction {
         this.collidingNodes.delete(id);
       }
     });
-    //   if (
-    //     pos.row === store.getState().tree[id].row &&
-    //     pos.rowsCount === store.getState().tree[id].rowsCount
-    //   ) {
-    //     this.collidingNodes.delete(id);
-    //   }
-    // });
   }
 
   public static move(
@@ -266,7 +227,6 @@ class ResizeAction {
       if (id === this.id) return;
       const pos = this.orginalPositions[id];
       editorStore.currentPage.getWidgetById(id).setDimensions(pos);
-      // setDimensions(id, pos);
     });
   }
 
@@ -277,16 +237,10 @@ class ResizeAction {
     if (!id) return;
 
     const node = editorStore.currentPage.getWidgetById(id);
-    // const node = store.getState().tree[id];
     if (!node) return;
-    if (node.isCanvas) {
-      editorStore.currentPage.resizeCanvas(id, initialGridPosition);
-      return;
-    }
     editorStore.currentPage
       .getWidgetById(id)
       .setDimensions(initialGridPosition);
-    // setDimensions(id, initialGridPosition);
   }
 
   public static end(mousePos: Point): UndoableCommand | null {
@@ -310,8 +264,6 @@ class ResizeAction {
     );
     editorStore.currentPage.setResizedWidgetId(null);
     editorStore.currentPage.setShadowElement(null);
-    // store.getState().setResizedNode(null);
-    // store.getState().setShadowElement(null);
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
@@ -323,12 +275,7 @@ class ResizeAction {
             .filter((test) => test.id !== id)
             .map((k) => editorStore.currentPage.getWidgetById(k.id).snapshot),
         ];
-        // const updates = [
-        //   store.getState().tree[id],
-        //   ...undoData
-        //     .filter((test) => test.id !== id)
-        //     .map((k) => store.getState().tree[k.id]),
-        // ];
+
         return {
           event: 'update' as const,
           data: updates,
@@ -338,7 +285,6 @@ class ResizeAction {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
           editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
-          // setDimensions(data.id, data);
         });
       },
     };
@@ -369,9 +315,7 @@ class ResizeAction {
     }>,
   ) {
     const collidedNodes = [];
-    // const tree = store.getState().tree;
     const node = editorStore.currentPage.getWidgetById(id);
-    // const node = tree[id];
     if (!node) return [];
 
     let dims = {
@@ -407,15 +351,8 @@ class ResizeAction {
       editorStore.currentPage.getWidgetById(id).gridSize,
       false,
     );
-    // dims = handleParentCollisions(
-    //   dims,
-    //   getPixelDimensions(node.parent),
-    //   getBoundingRect(node.parent),
-    //   getGridSize(id),
-    //   false,
-    // );
+
     const orgCoords = editorStore.currentPage.moveWidgetIntoGrid(id, dims);
-    // const orgCoords = moveNodeIntoGrid(id, dims);
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }

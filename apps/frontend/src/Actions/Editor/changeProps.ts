@@ -3,7 +3,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { Command } from '../types';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
-export class ChangePropAction<T extends boolean> implements Command {
+export class ChangePropAction implements Command {
   constructor(
     private comId: WebloomWidget['id'],
     private key: keyof WebloomWidget | keyof WebloomWidget['props'],

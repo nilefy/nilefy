@@ -1,20 +1,18 @@
-import store from '@/store';
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
+import { EvaluationContext } from './evaluation';
 export const analyzeDependancies = (
   code: string,
   caller: string,
   toProperty: string,
+  keys: EvaluationContext,
 ) => {
+  const keysSet = new Set(Object.keys(keys.widgets));
   // caller is dependant on "to" for "property"
   const dependancies = new Set<{
     on: string;
     property: string;
   }>();
-  const context = store.getState().getEvaluationContext();
-  const keys = Object.keys(context.widgets);
-  console.log(keys);
-  const keysSet = new Set(keys);
   // find every {{*}} in the code
   const matches = code.matchAll(/{{([^}]*)}}/g);
   let isCode = false;
@@ -37,10 +35,11 @@ export const analyzeDependancies = (
     }
   }
   const dependanciesArray = Array.from(dependancies);
-  store.getState().setDependancies(caller, toProperty, dependanciesArray);
-  if (isCode) {
-    store.getState().setToBeEvaluatedProps(caller, new Set([toProperty]));
-  }
+  console.log('dependanciesArray', dependanciesArray);
+  // store.getState().setDependancies(caller, toProperty, dependanciesArray);
+  // if (isCode) {
+  //   store.getState().setToBeEvaluatedProps(caller, new Set([toProperty]));
+  // }
 };
 
 /**

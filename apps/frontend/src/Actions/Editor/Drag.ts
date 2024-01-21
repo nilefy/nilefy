@@ -59,7 +59,6 @@ class DragAction {
       this.initialDelta = args.new!.initialDelta;
       this.id = getNewWidgetName(args.new!.type as WidgetTypes);
       const parent = editorStore.currentPage.getWidgetById(args.new!.parent);
-      // const parent = store.getState().tree[args.new!.parent];
       const colWidth = parent.columnWidth;
       const rowHeight = EDITOR_CONSTANTS.ROW_HEIGHT;
       this.startPosition = {
@@ -72,10 +71,7 @@ class DragAction {
       const node: AddWidgetPayload = {
         id: this.previewId,
         nodes: [],
-        // dependancies: [],
-        //todo change this to be the parent
         parentId: args.new!.parent,
-        // isCanvas: widget.config.isCanvas,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
         columnsCount: widget.config.layoutConfig.colsCount,
@@ -88,16 +84,13 @@ class DragAction {
       this.id = args.id;
       const draggedNode = editorStore.currentPage.getWidgetById(this.id);
       const snapshot = draggedNode.snapshot;
-      // const draggedNode = store.getState().tree[this.id!];
       const node: AddWidgetPayload = {
         ...snapshot,
         id: this.previewId,
       };
       editorStore.currentPage.addWidget(node);
-      // addNode(node, draggedNode.parent);
       const nodeBoundingRect = draggedNode.boundingRect;
-      // const nodeBoundingRect = getBoundingRect(this.id!);
-      this.oldParentId = draggedNode.parentId;
+      this.oldParentId = draggedNode.parent.id;
       this.startPosition = {
         x: nodeBoundingRect.left,
         y: nodeBoundingRect.top,
@@ -108,11 +101,8 @@ class DragAction {
     const dims = editorStore.currentPage.getWidgetById(
       this.previewId,
     ).pixelDimensions;
-    // const dims =  getPixelDimensions(this.previewId);
     editorStore.currentPage.setShadowElement(dims);
-    // setShadowElement(dims);
     editorStore.currentPage.setDraggedWidgetId(this.id!);
-    // setDraggedNode(this.id!);
   }
   public static start(
     ...args: Parameters<typeof DragAction._start>
@@ -153,18 +143,16 @@ class DragAction {
     }
     if (!this.moved) return;
     if (overId === this.id) {
-      overId = editorStore.currentPage.getWidgetById(overId).parentId;
-      // overId = store.getState().tree[overId].parent!;
+      overId = editorStore.currentPage.getWidgetById(overId).parent.id;
     }
     const node = editorStore.currentPage.getWidgetById(this.previewId);
     const over = editorStore.currentPage.getWidgetById(overId);
-    // const node = store.getState().tree[this.previewId];
-    // const over = store.getState().tree[overId];
+
     let newParentId: string = overId;
     if (!over.isCanvas) {
-      newParentId = over.parentId;
+      newParentId = over.parent.id;
     }
-    if (newParentId !== this.previewId && node.parentId !== newParentId) {
+    if (newParentId !== this.previewId && node.parent.id !== newParentId) {
       this.movedToNewParent = true;
       editorStore.currentPage.moveWidget(this.previewId, newParentId);
     }
@@ -178,9 +166,7 @@ class DragAction {
     if (newParentId === EDITOR_CONSTANTS.ROOT_NODE_ID) {
       const rootPixelDimensions =
         editorStore.currentPage.rootWidget.pixelDimensions;
-      // const rootPixelDimensions = getPixelDimensions(
-      //   EDITOR_CONSTANTS.ROOT_NODE_ID,
-      // );
+
       if (newShadow.y + newShadow.height >= rootPixelDimensions.height) {
         newShadow.y = rootPixelDimensions.height - newShadow.height;
       }
@@ -189,7 +175,6 @@ class DragAction {
       }
     }
     editorStore.currentPage.setShadowElement(newShadow);
-    // setShadowElement(newShadow);
   }
   public static move(...args: Parameters<typeof DragAction._move>): Command {
     return {
@@ -203,7 +188,6 @@ class DragAction {
   ): UndoableCommand | null {
     if (!this.moved) {
       editorStore.currentPage.removeWidget(this.previewId!, false);
-      // removeNode(this.previewId!, false);
       this.cleanUp();
       return null;
     }
@@ -221,29 +205,14 @@ class DragAction {
     const isNew = this.isNew;
     const delta = this.delta;
     const newNode = editorStore.currentPage.getWidgetById(this.previewId);
-    const [gridrow, gridcol] = newNode.gridSize;
-    // const newNode = store.getState().tree[this.previewId!];
-    // const [gridrow, gridcol] = getGridSize(this.previewId!);
-    const normalizedDelta = {
-      x: normalize(delta.x, gridcol),
-      y: normalize(delta.y, gridrow),
-    };
 
     const endPosition = newNode.getDropCoordinates(
       this.startPosition,
-      normalizedDelta,
-      this.previewId!,
+      delta,
       overId,
-      this.mouseCurrentPosition,
+      this.id!,
       false,
     );
-    // const endPosition = getDropCoordinates(
-    //   this.startPosition,
-    //   normalizedDelta,
-    //   this.previewId!,
-    //   overId,
-    //   false,
-    // );
     const oldParentId = this.oldParentId;
     const startPosition = this.gridStartPosition;
     const movedToNewParent = this.movedToNewParent;
@@ -274,14 +243,11 @@ class DragAction {
           const affectedNodes = Object.keys(undoData)
             .filter((test) => test !== id)
             .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
-          // const affectedNodes = Object.keys(undoData)
-          //   .filter((test) => test !== id)
-          //   .map((k) => store.getState().tree[k]);
+
           return {
             event: 'insert' as const,
             data: {
               node: editorStore.currentPage.getWidgetById(id).snapshot,
-              // node: store.getState().tree[id],
               sideEffects: affectedNodes,
             },
           };
@@ -292,33 +258,23 @@ class DragAction {
             newIds.delete(id);
             return newIds;
           });
-          // store.getState().setSelectedNodeIds((ids) => {
-          //   const newIds = new Set(ids);
-          //   newIds.delete(id);
-          //   return newIds;
-          // });
+
           editorStore.currentPage.removeWidget(id);
-          // removeNode(id);
           Object.entries(undoData).forEach(([id, coords]) => {
             editorStore.currentPage.getWidgetById(id).setDimensions(coords);
           });
-          // Object.entries(undoData).forEach(([id, coords]) => {
-          //   setDimensions(id, coords);
-          // });
         },
       };
     } else {
       command = {
         execute: () => {
           if (movedToNewParent) {
-            editorStore.currentPage.moveWidget(id, newNode.parentId);
-            // moveNode(id, newNode.parent);
+            editorStore.currentPage.moveWidget(id, newNode.parent.id);
           }
           undoData = editorStore.currentPage.moveWidgetIntoGrid(
             id,
             endPosition,
           );
-          // undoData = moveNodeIntoGrid(id, endPosition);
           const remoteData = [
             editorStore.currentPage.getWidgetById(id).snapshot,
             ...Object.keys(undoData)
@@ -353,22 +309,15 @@ class DragAction {
   private static getDropCoordinates(delta: Point, id: string, overId: string) {
     const node = editorStore.currentPage.getWidgetById(id);
     const grid = node.gridSize;
-    // const node = store.getState().tree[id];
-    // const grid = getGridSize(id);
     const parentPixelDimensions = node.parent.pixelDimensions;
-    // const parentPixelDimensions = getPixelDimensions(node.parent);
-    return convertGridToPixel(
-      node.getDropCoordinates(
-        this.startPosition,
-        delta,
-        overId,
-        this.id!,
-        this.mouseCurrentPosition,
-        true,
-      ),
-      grid,
-      parentPixelDimensions,
+    const gridDropCoordinates = node.getDropCoordinates(
+      this.startPosition,
+      delta,
+      overId,
+      this.id!,
+      true,
     );
+    return convertGridToPixel(gridDropCoordinates, grid, parentPixelDimensions);
   }
 
   private static cleanUp() {

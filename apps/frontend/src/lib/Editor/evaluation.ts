@@ -1,5 +1,3 @@
-const store = {};
-import { useShallow } from 'zustand/react/shallow';
 export type EvaluationContext = {
   widgets: Record<string, Record<string, unknown>>;
   queries: Record<string, unknown>;
@@ -42,9 +40,4 @@ export const evaluate = (
     return evaluatedExpressions[index];
   });
   return final;
-};
-
-export const useEvaluation = (id: string): Record<string, unknown> => {
-  const props = store(useShallow((state) => state.getProps(id)));
-  return props;
 };

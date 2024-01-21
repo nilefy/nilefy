@@ -3,11 +3,12 @@ import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
 import { ComponentPropsWithoutRef } from 'react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { observer } from 'mobx-react-lite';
 
 type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
-const WebloomContainer = (props: WebloomContainerProps) => {
+const WebloomContainer = observer((props: WebloomContainerProps) => {
   return <Container {...props} />;
-};
+});
 const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: 'blue',

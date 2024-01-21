@@ -1,16 +1,11 @@
-import { makeObservable, observable, computed, action, toJS } from 'mobx';
+import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/store/widgetName';
-import { WebloomQuery } from './query';
 import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import {
-  EntityDependancy,
-  WebloomGridDimensions,
-  WebloomPixelDimensions,
-} from '../interface';
+import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -24,8 +19,10 @@ import {
 } from '../collisions';
 import { cloneDeep } from 'lodash';
 import { Snapshotable } from './interfaces';
-// type EntityDependancy =
-
+type DependantPropName = string;
+type DependancyPropName = string;
+type DependancyRelation = Map<WebloomWidget, Set<DependancyPropName>>;
+export type EntityDependancy = Record<DependantPropName, DependancyRelation>;
 export class WebloomWidget
   implements
     Snapshotable<
@@ -40,7 +37,7 @@ export class WebloomWidget
   nodes: string[];
   parentId: string;
   props: Record<string, unknown>;
-  dependancies: EntityDependancy;
+  dependancies: EntityDependancy = {};
   type: WidgetTypes;
   col: number;
   row: number;
@@ -115,14 +112,18 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      toBeEvaluatedProps: computed,
+      addDependancy: action,
+      removeDependancy: action,
+      removeDependancyPropName: action,
+      removeDependantPropName: action,
     });
   }
   get columnWidth(): number {
     if (this.isRoot)
       return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
-    if (this.isCanvas)
-      return this.parent.pixelDimensions.width / this.columnsCount;
-    return this.parent.columnWidth || 0;
+    if (this.isCanvas) return this.pixelDimensions.width / this.columnsCount;
+    return 0;
   }
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
@@ -133,7 +134,9 @@ export class WebloomWidget
   setDom(dom: HTMLElement) {
     this.dom = dom;
   }
-
+  getProp(key: string) {
+    return this.dynamicProps[key] || this.props[key];
+  }
   /**
    *
    * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
@@ -195,30 +198,88 @@ export class WebloomWidget
       col: this.col,
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
-      columnWidth: this.columnWidth,
     };
+  }
+
+  get toBeEvaluatedProps() {
+    return Object.keys(this.props).filter((propName) => {
+      return this.dependancies[propName];
+    });
   }
 
   get dynamicProps(): typeof this.props {
     const dynamicProps = { ...this.props };
     // loop over all the dependancies and evaluate the code
-    Object.keys(this.dependancies).forEach((key) => {
-      const dependancy = this.dependancies[key];
-      const context: EvaluationContext = {
-        widgets: {},
-        queries: {},
-      };
-      dependancy.forEach((entity) => {
-        if (entity instanceof WebloomWidget) {
-          context.widgets[entity.id] = entity.dynamicProps;
-        } else if (entity instanceof WebloomQuery) {
-          context.queries[entity.id] = entity.value;
-        }
-      });
-      const value = evaluate(key, context);
-      dynamicProps[key] = value;
-    });
+    const evaluationContext: EvaluationContext = {
+      widgets: {},
+      queries: {},
+    };
+
+    for (const toBeEvaluatedProp of this.toBeEvaluatedProps) {
+      const dependancies = this.dependancies[toBeEvaluatedProp];
+      if (!dependancies) continue;
+      for (const [dependancy, dependancyProps] of dependancies) {
+        const propsWidgetDependsOn: Record<string, unknown> = [
+          ...dependancyProps,
+        ].reduce((acc, cur) => {
+          return {
+            ...acc,
+            [cur]: dependancy.getProp(cur),
+          };
+        }, {});
+        evaluationContext.widgets[dependancy.id] = propsWidgetDependsOn;
+      }
+    }
+    for (const toBeEvaluatedProp of this.toBeEvaluatedProps) {
+      const code = this.props[toBeEvaluatedProp];
+      const evaluatedProp = evaluate(code as string, evaluationContext);
+      dynamicProps[toBeEvaluatedProp] = evaluatedProp;
+    }
     return dynamicProps;
+  }
+  addDependancy(
+    dependantPropName: DependantPropName,
+    dependancy: WebloomWidget,
+    dependancyPropName: DependancyPropName,
+  ) {
+    if (!this.dependancies[dependantPropName])
+      this.dependancies[dependantPropName] = new Map();
+    if (!this.dependancies[dependantPropName].get(dependancy))
+      this.dependancies[dependantPropName].set(dependancy, new Set());
+    this.dependancies[dependantPropName]
+      .get(dependancy)!
+      .add(dependancyPropName);
+  }
+
+  removeDependancyPropName(
+    dependantPropName: DependantPropName,
+    dependancy: WebloomWidget,
+    dependancyPropName: DependancyPropName,
+  ) {
+    if (!this.dependancies[dependantPropName]) return;
+    if (!this.dependancies[dependantPropName].get(dependancy)) return;
+    this.dependancies[dependantPropName]
+      .get(dependancy)!
+      .delete(dependancyPropName);
+  }
+
+  removeDependantPropName(dependantPropName: DependantPropName) {
+    delete this.dependancies[dependantPropName];
+  }
+
+  removeDependancy(
+    dependancy: WebloomWidget,
+    dependantPropName?: DependantPropName,
+  ) {
+    if (!dependantPropName) {
+      Object.keys(this.dependancies).forEach((dependantPropName) => {
+        this.removeDependancy(dependancy, dependantPropName);
+      });
+      return;
+    }
+    if (!this.dependancies[dependantPropName]) return;
+    if (!this.dependancies[dependantPropName].get(dependancy)) return;
+    this.dependancies[dependantPropName].delete(dependancy);
   }
 
   setProp(key: string, value: unknown) {
@@ -247,6 +308,8 @@ export class WebloomWidget
       const bNode = this.page.widgets[b].row;
       return -aNode + bNode;
     });
+    const node = this.page.widgets[nodeId];
+    node.parentId = this.id;
   }
 
   get gridSize(): [number, number] {

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { WidgetContext } from '../..';
+import { observer } from 'mobx-react-lite';
 
 export type WebloomInputProps = Pick<
   ComponentPropsWithoutRef<typeof Input>,
@@ -14,7 +15,7 @@ export type WebloomInputProps = Pick<
   type: 'text' | 'password';
 };
 
-const WebloomInput = (props: WebloomInputProps) => {
+const WebloomInput = observer((props: WebloomInputProps) => {
   const { label, ...rest } = props;
   const { onPropChange } = useContext(WidgetContext);
   return (
@@ -31,7 +32,7 @@ const WebloomInput = (props: WebloomInputProps) => {
       />
     </div>
   );
-};
+});
 const config: WidgetConfig = {
   name: 'Input',
   icon: <TextCursorInput />,

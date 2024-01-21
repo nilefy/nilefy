@@ -6,6 +6,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { WebloomInlineEditor } from '@/pages/Editor/Components/CodeEditor/inlineEditor';
 import { analyzeDependancies } from '@/lib/Editor/dependancyUtils';
 import { debounce } from 'lodash';
+import { editorStore } from '@/lib/Editor/Models';
 
 const debouncedAnalyzeDependancies = debounce(analyzeDependancies, 1000);
 const InlineCodeInput = (props: InlineCodeInputProps) => {
@@ -17,7 +18,12 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
   const onChange = useCallback(
     (newValue: string) => {
       if (id && toProperty) {
-        debouncedAnalyzeDependancies(newValue, id, toProperty);
+        debouncedAnalyzeDependancies(
+          newValue,
+          id,
+          toProperty,
+          editorStore.currentPage.context,
+        );
       }
 
       _onChange(newValue);

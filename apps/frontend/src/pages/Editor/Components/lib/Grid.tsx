@@ -5,8 +5,7 @@ import { useEffect, useRef } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
 
 const Grid = observer(({ id }: { id: string }) => {
-  const columnWidth = editorStore.currentPage.getWidgetById(id).columnWidth;
-  const gridSize = columnWidth!;
+  const gridSize = editorStore.currentPage.getWidgetById(id).columnWidth;
   const { active } = useDndContext();
   const resized = editorStore.currentPage.resizedWidgetId;
   const shown = !!active || !!resized;

@@ -91,6 +91,7 @@ export class WebloomPage {
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }
+
   setMousePosition(point: Point) {
     this.mousePosition = point;
   }
@@ -356,7 +357,6 @@ export class WebloomPage {
         nodes,
         id,
       );
-      const parentBoundingRect = parent.gridBoundingRect;
       const [gridrow, gridcol] = parent.gridSize as [number, number];
       const nodePixelDims = convertGridToPixel(
         newCoords as WebloomGridDimensions,
@@ -366,7 +366,7 @@ export class WebloomPage {
       const nodePixelBoundingRect = getBoundingRect(nodePixelDims);
       changedNodesOriginalCoords = this.handleVerticalExpansion(
         nodePixelBoundingRect,
-        parentBoundingRect,
+        parent.boundingRect,
         gridrow,
         parent,
         changedNodesOriginalCoords,

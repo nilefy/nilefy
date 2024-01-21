@@ -52,25 +52,17 @@ export const WebloomElement = observer(function WebloomElement({
       id,
     };
   }, [onPropChange, id]);
-  const rendered = useMemo(
-    () => (
-      <WidgetContext.Provider value={contextValue}>
-        {createElement(
-          WebloomWidgets[tree.type].component as ElementType,
-          props,
-          children,
-        )}
-      </WidgetContext.Provider>
-    ),
-    [tree.type, props, children, contextValue],
-  );
+
   if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
+  const Component = WebloomWidgets[tree.type].component as ElementType;
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <WebloomAdapter draggable droppable resizable key={id} id={id}>
           {tree.isCanvas && <Grid id={id} />}
-          {rendered}
+          <WidgetContext.Provider value={contextValue}>
+            {createElement(Component, props, children)}
+          </WidgetContext.Provider>
         </WebloomAdapter>
       </ContextMenuTrigger>
       <ContextMenuPortal>
