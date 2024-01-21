@@ -1,3 +1,6 @@
+import { RJSFSchema } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
+import RjsfForm from '@rjsf/core';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -48,6 +51,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfigForm, ConfigFormGenricOnChange } from '@/components/configForm';
+import { RJSFShadcn } from '@/components/rjsf_shad';
 
 function CreatePluginForm({
   workspaceId,
@@ -324,7 +328,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
       <h2 className="ml-2 text-3xl">Data Sources</h2>
       {/** plugins filter*/}
       <ScrollArea className="h-full">
@@ -412,6 +416,17 @@ export function DataSourceView() {
       },
     });
   };
+  const schema: RJSFSchema = {
+    title: 'Todo',
+    type: 'object',
+    required: ['title'],
+    properties: {
+      title: { type: 'string', title: 'Title', default: 'A new task' },
+      done: { type: 'boolean', title: 'Done?', default: false },
+    },
+  };
+
+  const log = (type: unknown) => console.log.bind(console, type);
 
   if (isPending) {
     return <>loading ....</>;
@@ -426,11 +441,18 @@ export function DataSourceView() {
           <div className="flex gap-5">
             <Input defaultValue={data.name} />
           </div>
-          <ConfigForm
-            config={data.dataSource.config}
-            itemProps={data.config}
-            onChange={onChange}
+          <RJSFShadcn
+            schema={schema}
+            validator={validator}
+            onChange={log('changed')}
+            onSubmit={log('submitted')}
+            onError={log('errors')}
           />
+          {/* <ConfigForm */}
+          {/*   config={data.dataSource.config} */}
+          {/*   itemProps={data.config} */}
+          {/*   onChange={onChange} */}
+          {/* /> */}
           <Button onClick={submitUpdate} className="w-16">
             Save
           </Button>
