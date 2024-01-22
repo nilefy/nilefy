@@ -10,6 +10,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { cn } from '@/lib/cn';
 import { observer } from 'mobx-react-lite';
+import { trace } from 'mobx';
 // import { useShallow } from 'zustand/react/shallow';
 
 type WebloomAdapterProps = {

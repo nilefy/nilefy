@@ -2,7 +2,15 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, computed, makeObservable, observable } from 'mobx';
+import {
+  action,
+  autorun,
+  comparer,
+  computed,
+  entries,
+  makeObservable,
+  observable,
+} from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -24,7 +32,7 @@ export class WebloomPage {
   widgets: Record<string, WebloomWidget> = {};
   queries: Record<string, WebloomQuery> = {};
   mouseOverWidgetId: string | null = null;
-  selectedNodeIds: Set<string> = new Set();
+  selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
   newNode: WebloomWidget | null = null;
@@ -45,27 +53,22 @@ export class WebloomPage {
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
     queries: Record<string, WebloomQuery>;
   }) {
-    this.id = id;
-    const widgetMap: Record<string, WebloomWidget> = {};
-    Object.values(widgets).forEach((widget) => {
-      widgetMap[widget.id] = new WebloomWidget({
-        ...widget,
-        page: this,
-      });
-    });
-    this.widgets = widgetMap;
-    this.queries = queries;
     makeObservable(this, {
       widgets: observable,
       queries: observable,
       mouseOverWidgetId: observable,
       selectedNodeIds: observable,
+      selectedNodesSize: computed,
+      firstSelectedWidget: computed,
       draggedWidgetId: observable,
       resizedWidgetId: observable,
       newNode: observable,
       newNodeTranslate: observable,
       shadowElement: observable,
-      context: computed.struct,
+      context: computed({
+        keepAlive: true,
+        equals: comparer.structural,
+      }),
       removeWidget: action,
       addWidget: action,
       setDraggedWidgetId: action,
@@ -80,16 +83,46 @@ export class WebloomPage {
       id: observable,
       mousePosition: observable,
       setMousePosition: action,
-      firstSelectedWidget: computed,
       rootWidget: computed,
       width: observable,
       height: observable,
       setPageDimensions: action,
       adjustDimensions: action,
+      snapshot: computed,
     });
+    this.id = id;
+    const widgetMap: Record<string, WebloomWidget> = {};
+    Object.values(widgets).forEach((widget) => {
+      widgetMap[widget.id] = new WebloomWidget({
+        ...widget,
+        page: this,
+      });
+    });
+    this.widgets = widgetMap;
+    this.queries = queries;
+    this.selectedNodeIds = new Set();
   }
+  setSelectedNodeIds(ids: Set<string>): void;
+  setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
+  setSelectedNodeIds(
+    idsOrCb: Set<string> | ((ids: Set<string>) => Set<string>),
+  ): void {
+    let tempIds: Set<string>;
+    if (typeof idsOrCb === 'function') {
+      tempIds = idsOrCb(new Set(this.selectedNodeIds));
+    } else {
+      tempIds = idsOrCb;
+    }
+    this.selectedNodeIds.clear();
+    tempIds.forEach((id) => this.selectedNodeIds.add(id));
+  }
+
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
+  }
+  get selectedNodesSize() {
+    console.log('selectedNodesSize');
+    return this.selectedNodeIds.size;
   }
 
   setMousePosition(point: Point) {
@@ -175,18 +208,6 @@ export class WebloomPage {
 
   setNewNode(node: WebloomWidget | null) {
     this.newNode = node;
-  }
-
-  setSelectedNodeIds(ids: Set<string>): void;
-  setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
-  setSelectedNodeIds(
-    idsOrCb: Set<string> | ((ids: Set<string>) => Set<string>),
-  ): void {
-    if (typeof idsOrCb === 'function') {
-      this.selectedNodeIds = idsOrCb(new Set(this.selectedNodeIds));
-    } else {
-      this.selectedNodeIds = idsOrCb;
-    }
   }
 
   /**

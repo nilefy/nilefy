@@ -15,7 +15,6 @@ import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 // import { useShallow } from 'zustand/react/shallow';
 import { observer } from 'mobx-react-lite';
-import { toJS } from 'mobx';
 // import { useEvaluation } from '@/lib/Editor/evaluation';
 
 export const WebloomElement = observer(function WebloomElement({

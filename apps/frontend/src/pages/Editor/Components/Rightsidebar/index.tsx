@@ -8,6 +8,7 @@ import { NewNodeAdapter } from '../lib';
 import { ConfigPanel } from '../configPanel/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
+import { observer } from 'mobx-react-lite';
 
 function InsertTab() {
   return (
@@ -34,10 +35,8 @@ function InsertTab() {
   );
 }
 
-function InspectTab() {
-  const selectedIdsSize = editorStore.currentPage.selectedNodeIds.size;
-  // const selectedIdsSize = store((state) => state.selectedNodeIds.size);
-
+const InspectTab = observer(() => {
+  const selectedIdsSize = editorStore.currentPage.selectedNodesSize;
   if (selectedIdsSize === 0) {
     return (
       <TabsContent value="inspect">
@@ -63,15 +62,15 @@ function InspectTab() {
       </TabsContent>
     );
   }
-}
+});
 
 type RightSidebarTabs = 'insert' | 'inspect' | 'page';
 
-export function RightSidebar() {
+export const RightSidebar = observer(() => {
   // i need it to be controlled so i can change it when the selected items count change
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
 
-  const size = editorStore.currentPage.selectedNodeIds.size;
+  const size = editorStore.currentPage.selectedNodesSize;
   // const size = store((state) => state.selectedNodeIds.size);
 
   useEffect(() => {
@@ -99,4 +98,4 @@ export function RightSidebar() {
       </Tabs>
     </div>
   );
-}
+});

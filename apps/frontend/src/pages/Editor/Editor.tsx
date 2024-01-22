@@ -42,6 +42,7 @@ import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/store/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
+import { toJS, trace } from 'mobx';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {

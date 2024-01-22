@@ -8,6 +8,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { observer } from 'mobx-react-lite';
 
 function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   const [value, setValue] = useState(node.id);
@@ -36,14 +37,9 @@ function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   );
 }
 
-export const ConfigPanel = () => {
+export const ConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
-  // const selectedId = store((state) => {
-  //   const selectedIds = [...state.selectedNodeIds];
-  //   return selectedIds[0];
-  // });
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
-  // const selectedNode = store.getState().tree[selectedId];
   const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
 
   return (
@@ -60,7 +56,7 @@ export const ConfigPanel = () => {
       })}
     </div>
   );
-};
+});
 
 const InspectorSection = (props: {
   section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
