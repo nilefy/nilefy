@@ -1,14 +1,21 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
-import { ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef, useContext } from 'react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { observer } from 'mobx-react-lite';
+import { editorStore } from '@/lib/Editor/Models';
+import { WidgetContext } from '../..';
 
 type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
-const WebloomContainer = observer((props: WebloomContainerProps) => {
-  return <Container {...props} />;
-});
+const WebloomContainer = observer(
+  ({ children }: { children: React.ReactNode }) => {
+    const { id } = useContext(WidgetContext);
+    const props = editorStore.currentPage.getWidgetById(id)
+      .props as WebloomContainerProps;
+    return <Container {...props}>{children}</Container>;
+  },
+);
 const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: 'blue',

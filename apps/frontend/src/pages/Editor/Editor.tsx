@@ -303,7 +303,9 @@ export const Editor = observer(() => {
             </Panel>
             <CustomPanelResizeHandle />
             <Panel maxSizePercentage={25} minSizePercentage={10}>
-              <RightSidebar />
+              <Suspense fallback={<div>Loading...</div>}>
+                <RightSidebar />
+              </Suspense>
             </Panel>
           </PanelGroup>
         </DndContext>

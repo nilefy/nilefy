@@ -78,7 +78,7 @@ export type WebloomNode = {
 } & WebloomGridDimensions;
 
 export type Widget<WidgetProps> = {
-  component: React.FC<WidgetProps>;
+  component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
   inspectorConfig: WidgetInspectorConfig<WidgetProps>;

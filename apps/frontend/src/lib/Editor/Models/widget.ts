@@ -122,7 +122,8 @@ export class WebloomWidget
   get columnWidth(): number {
     if (this.isRoot)
       return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
-    if (this.isCanvas) return this.pixelDimensions.width / this.columnsCount;
+    if (this.isCanvas)
+      return this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
     return 0;
   }
   get boundingRect() {

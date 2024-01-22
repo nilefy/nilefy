@@ -1,12 +1,13 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { observer } from 'mobx-react-lite';
 export type WebloomTextProps = {
   text: string;
 };
-const WebloomText = (props: WebloomTextProps) => {
+const WebloomText = observer((props: WebloomTextProps) => {
   return <span className="h-full w-full break-all">{props.text}</span>;
-};
+});
 const config: WidgetConfig = {
   name: 'Text',
   icon: <Type />,

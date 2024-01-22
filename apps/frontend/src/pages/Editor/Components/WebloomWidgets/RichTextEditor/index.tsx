@@ -37,6 +37,8 @@ import { isMacOs } from '@/lib/utils';
 import { Label } from '@radix-ui/react-label';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { WidgetContext } from '../..';
+import { editorStore } from '@/lib/Editor/Models';
+import { observer } from 'mobx-react-lite';
 
 type WebloomTextEditorProps = {
   label: string;
@@ -46,11 +48,13 @@ type EditorOnChange = NonNullable<typeof Editor.prototype.props.onEditorChange>;
 const toolbarConfig =
   'insertfile undo redo | formatselect | bold italic underline backcolor forecolor | lineheight | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | table | print preview media | emoticons | code | help';
 
-export default function WebloomTextEditor(props: WebloomTextEditorProps) {
+export const WebloomTextEditor = observer(() => {
+  const { onPropChange, id } = useContext(WidgetContext);
+  const props = editorStore.currentPage.getWidgetById(id)
+    .props as WebloomTextEditorProps;
   const { label } = props;
   const [editorValue, setEditorValue] = useState<string>(props.value);
   const initalRender = useRef(true);
-  const { onPropChange, id } = useContext(WidgetContext);
   const handleEditorChange = useCallback<EditorOnChange>(
     (newValue, editor) => {
       // avoid updating value, when there is no actual change.
@@ -157,7 +161,7 @@ export default function WebloomTextEditor(props: WebloomTextEditorProps) {
       />
     </div>
   );
-}
+});
 
 const config: WidgetConfig = {
   name: 'Text Editor',
@@ -201,5 +205,3 @@ export const WebloomTextEditorWidget: Widget<WebloomTextEditorProps> = {
   defaultProps,
   inspectorConfig,
 };
-
-export { WebloomTextEditor };
