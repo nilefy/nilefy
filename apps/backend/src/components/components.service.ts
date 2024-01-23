@@ -5,13 +5,13 @@ import {
   PgTrans,
 } from '../drizzle/drizzle.provider';
 import { PageDto } from '../dto/pages.dto';
-import { WebloomTree } from '../dto/apps.dto';
 import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
   CreateComponentDb,
   UpdateComponentDb,
+  WebloomTree,
 } from '../dto/components.dto';
 
 @Injectable()
