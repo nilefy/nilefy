@@ -349,12 +349,12 @@ export class WebloomPage {
     function moveNodeRecursively(
       this: WebloomPage,
       id: string,
-      newCoordsP: Partial<WebloomGridDimensions>,
+      _newCoords: Partial<WebloomGridDimensions>,
     ) {
       const node = this.widgets[id];
       if (!node) return;
       const gridDimensions = node.gridDimensions;
-      const newCoords = normalizeCoords(newCoordsP, gridDimensions);
+      const newCoords = normalizeCoords(_newCoords, gridDimensions);
       // if the node is the same as the newCoords, return
       if (isSameCoords(newCoords, gridDimensions)) return;
       const nodeGridBoundingRect = getGridBoundingRect(newCoords);

@@ -1,4 +1,4 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, toJS } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { EvaluationContext, evaluate } from '../evaluation';
@@ -160,10 +160,10 @@ export class WebloomWidget
   }
 
   setDimensions(dimensions: Partial<WebloomGridDimensions>) {
-    this.row = dimensions.row || this.row;
-    this.col = dimensions.col || this.col;
-    this.columnsCount = dimensions.columnsCount || this.columnsCount;
-    this.rowsCount = dimensions.rowsCount || this.rowsCount;
+    this.row = dimensions.row ?? this.row;
+    this.col = dimensions.col ?? this.col;
+    this.columnsCount = dimensions.columnsCount ?? this.columnsCount;
+    this.rowsCount = dimensions.rowsCount ?? this.rowsCount;
   }
 
   get pixelDimensions(): WebloomPixelDimensions {
