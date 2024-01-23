@@ -71,6 +71,9 @@ importers:
       drizzle-zod:
         specifier: ^0.5.1
         version: 0.5.1(drizzle-orm@0.29.1)(zod@3.22.4)
+      lodash:
+        specifier: 4.17.21
+        version: 4.17.21
       morgan:
         specifier: ^1.10.0
         version: 1.10.0
@@ -129,6 +132,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.2
         version: 29.5.2
+      '@types/lodash':
+        specifier: ^4.14.202
+        version: 4.14.202
       '@types/morgan':
         specifier: ^1.9.7
         version: 1.9.9
