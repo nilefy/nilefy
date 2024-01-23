@@ -1,5 +1,5 @@
 import { Label } from '@/components/ui/label';
-import { InlineCodeInputProps } from '@webloom/configpaneltypes';
+import { InlineCodeInputProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { FormControlContext } from '..';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';

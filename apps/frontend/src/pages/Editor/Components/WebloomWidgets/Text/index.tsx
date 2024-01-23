@@ -1,6 +1,6 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 export type WebloomTextProps = {
   text: string;
 };

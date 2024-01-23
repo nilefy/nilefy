@@ -77,11 +77,9 @@ export function MoveUpButton<
     registry: { translateString },
   } = props;
   return (
-    <ChakraIconButton<T, S, F>
-      title={translateString(TranslatableString.MoveUpButton)}
-      {...props}
-      icon={<ArrowUpIcon />}
-    />
+    <Button {...props} size={'icon'} variant={'destructive'}>
+      <ArrowUpIcon />
+    </Button>
   );
 }
 

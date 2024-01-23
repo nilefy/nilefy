@@ -8,10 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import {
-  BaseControlProps,
-  InspectorSelectProps,
-} from '@webloom/configpaneltypes';
+import { BaseControlProps, InspectorSelectProps } from '@/lib/Editor/interface';
 import { Label } from '@/components/ui/label';
 import { useContext } from 'react';
 import { FormControlContext } from '..';

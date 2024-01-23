@@ -1,3 +1,4 @@
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { FetchXError, fetchX } from '@/utils/fetch';
 import {
   UseMutationOptions,
@@ -5,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+// import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import z from 'zod';
 
 export const DATASOURCES_QUERY_KEY = 'datasources';

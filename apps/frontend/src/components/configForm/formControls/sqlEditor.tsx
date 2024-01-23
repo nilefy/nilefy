@@ -1,4 +1,4 @@
-import { BaseControlProps } from '@webloom/configpaneltypes';
+import { BaseControlProps } from '@/lib/Editor/interface';
 import { basicSetup } from 'codemirror';
 import { EditorView } from '@codemirror/view';
 import { useContext, useEffect, useRef } from 'react';

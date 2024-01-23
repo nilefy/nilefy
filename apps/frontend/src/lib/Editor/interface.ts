@@ -1,7 +1,73 @@
+import { InputProps } from '@/components/ui/input';
 import { WidgetTypes } from '@/pages/Editor/Components';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { ReactNode } from 'react';
 
+type BaseControlProps = {
+  id: string;
+  label: string;
+  defaultValue?: string | number | boolean;
+  value?: string | number | boolean;
+};
+
+// each widget props
+type InspectorInputProps = Partial<
+  Pick<InputProps, 'type' | 'placeholder' | 'max' | 'min'>
+>;
+
+type InspectorSelectProps = {
+  items: { label: string; value: string }[];
+  placeholder?: string;
+};
+type InspectorColorProps = {
+  color: string;
+};
+
+type InspectorEvents = Record<string, never>;
+
+type InspectorListProps = {
+  value?: unknown[];
+};
+
+type InspectorCheckboxProps = {
+  //  label: string;
+};
+// config panel types
+type FormControlOptions = {
+  input: InspectorInputProps;
+  select: InspectorSelectProps;
+  color: InspectorColorProps;
+  event: InspectorEvents;
+  sqlEditor: {
+    value?: string;
+    placeholder?: string;
+  };
+  list: InspectorListProps;
+  checkbox: InspectorCheckboxProps;
+  inlineCodeInput: InlineCodeInputProps;
+};
+
+type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
+type WidgetInspectorConfig<TProps> = {
+  sectionName: string;
+  children: MappedTypeToArray<{
+    [key in keyof TProps]: {
+      [key2 in InspectorFormControls]: {
+        type: key2;
+        key: key;
+        options: FormControlOptions[key2];
+        label: string;
+      } & BaseControlProps;
+    }[InspectorFormControls];
+  }>;
+}[];
+
+type InspectorFormControls = keyof FormControlOptions;
+
+type InlineCodeInputProps = {
+  label: string;
+  placeholder?: string;
+  value?: string;
+};
 export type BoundingRect = {
   left: number;
   top: number;
@@ -75,4 +141,17 @@ export type Widget<WidgetProps> = {
   config: WidgetConfig;
   defaultProps: WidgetProps;
   inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+};
+
+// inspector types
+export type {
+  BaseControlProps,
+  InspectorInputProps,
+  InspectorSelectProps,
+  InspectorListProps,
+  InspectorCheckboxProps,
+  WidgetInspectorConfig,
+  InspectorFormControls,
+  InlineCodeInputProps,
+  InspectorColorProps,
 };

@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { MousePointerSquare } from 'lucide-react';
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 // TinyMCE so the global var exists
 // eslint-disable-next-line no-unused-vars
 import 'tinymce/tinymce';

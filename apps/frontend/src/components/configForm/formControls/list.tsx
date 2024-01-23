@@ -1,7 +1,4 @@
-import {
-  BaseControlProps,
-  InspectorListProps,
-} from '@webloom/configpaneltypes';
+import { BaseControlProps, InspectorListProps } from '@/lib/Editor/interface';
 import {
   DndContext,
   closestCenter,
