@@ -30,8 +30,8 @@ const config: WidgetConfig = {
   icon: <MousePointerSquare />,
   isCanvas: false,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 5,
+    rowsCount: 7,
     minColumns: 1,
     minRows: 4,
   },

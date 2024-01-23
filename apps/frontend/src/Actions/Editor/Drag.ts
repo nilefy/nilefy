@@ -6,7 +6,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { convertGridToPixel, normalize } from '@/lib/Editor/utils';
-import { getNewWidgetName } from '@/store/widgetName';
+import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 
 type AddWidgetPayload = Parameters<

@@ -59,7 +59,7 @@ export class WebloomPage {
       shadowElement: observable,
       context: computed({
         keepAlive: true,
-        equals: comparer.structural,
+        equals: comparer.shallow,
       }),
       removeWidget: action,
       addWidget: action,

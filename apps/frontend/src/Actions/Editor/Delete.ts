@@ -4,6 +4,7 @@ import { UndoableCommand } from '../types';
 // import { EDITOR_CONSTANTS } from '@webloom/constants';
 // import { WebloomNode } from '@/lib/Editor/interface';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { toJS } from 'mobx';
 
 // const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
 //   store.getState();
@@ -21,18 +22,13 @@ export class DeleteAction implements UndoableCommand {
 
   execute() {
     // those ids are in the same tree levels
-    const selectedIds = editorStore.currentPage.selectedNodeIds;
-    // const selectedIds = getSelectedNodeIds();
+    const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
     editorStore.currentPage.setSelectedNodeIds(new Set());
-    // setSelectedNodeIds(() => new Set());
 
     for (const id of selectedIds) {
       this.nodes = [...this.nodes, ...editorStore.currentPage.removeWidget(id)];
     }
 
-    // for (const id of selectedIds) {
-    //   this.nodes = [...this.nodes, ...removeNode(id)];
-    // }
     return {
       event: 'delete' as const,
       data: [...selectedIds],
@@ -45,10 +41,7 @@ export class DeleteAction implements UndoableCommand {
       if (!node) {
         break;
       }
-      editorStore.currentPage.addWidget({
-        ...node,
-      });
-      // addNode(node, node.parent ?? EDITOR_CONSTANTS.ROOT_NODE_ID);
+      editorStore.currentPage.addWidget(node);
     }
   }
 }
