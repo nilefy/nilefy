@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 function InspectorEventManger() {
   const tree = store((state) => state.tree);
   const [selectedComponent, setSelectedComponent] = useState('');
-  console.log(tree);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>onClick</DropdownMenuTrigger>
