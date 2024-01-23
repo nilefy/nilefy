@@ -10,46 +10,16 @@ import store from '@/store';
 import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
+
+// TODO: add real JSON type, you can copy it from `typefest`
 type ElementProps = {
   [key: string]: unknown;
 };
 
-const myProps = {
-  prop1: 0,
-  prop: function bla() {},
-  prop2: {
-    nestedProp1: 'nestedValue1',
-    nestedProp2: {
-      deeplyNestedProp: 'deeplyNestedValue',
-    },
-  },
-  prop22: {
-    nestedProp1: 'nestedValue1',
-    nestedProp2: {
-      deeplyNestedProp: 'deeplyNestedValue',
-    },
-  },
-  prop23: {
-    nestedProp1: 'nestedValue1',
-    nestedProp2: {
-      deeplyNestedProp: 'deeplyNestedValue',
-    },
-  },
-  prop24: {
-    nestedProp1: 'nestedValue1',
-    nestedProp2: {
-      deeplyNestedProp: 'deeplyNestedValue',
-    },
-  },
-  prop3: {
-    bla1: ['nestedValue1', 'dwwdkl', 0],
-    bla2: false,
-  },
-};
+const trueTypeOf = (obj: unknown) =>
+  Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
 
 export function JsonViewer() {
-  const trueTypeOf = (obj: unknown) =>
-    Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
   const [isOpen, setIsOpen] = React.useState(false);
   const root = store((state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID]);
   const initialState = root.nodes.reduce(
@@ -61,13 +31,9 @@ export function JsonViewer() {
   );
   const [open, setOpen] = React.useState(initialState);
 
-  const initialPropsOpenStates: Record<string, boolean> = {};
-  for (const key in myProps) {
-    initialPropsOpenStates[key] = false;
-  }
-  const [openPropsStates, setOpenPropsStates] = React.useState(
-    initialPropsOpenStates,
-  );
+  const [openPropsStates, setOpenPropsStates] = React.useState<
+    Record<string, boolean>
+  >({});
 
   const recursiveProps = (props: ElementProps) => {
     const collectedProps: JSX.Element[] = [];
@@ -176,7 +142,7 @@ export function JsonViewer() {
                   <button
                     onClick={() =>
                       commandManager.executeCommand(
-                        new SelectionAction(node.id),
+                        new SelectionAction(node.id, false),
                       )
                     }
                   >
@@ -189,7 +155,7 @@ export function JsonViewer() {
               </div>
 
               <CollapsibleContent className="ml-4 space-y-0 border-l-2 pl-8">
-                {recursiveProps(myProps)}
+                {recursiveProps(node.props)}
               </CollapsibleContent>
             </Collapsible>
           );
