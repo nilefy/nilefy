@@ -1,7 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
-// import store from '@/store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
@@ -71,9 +70,8 @@ export const RightSidebar = observer(() => {
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
 
   const size = editorStore.currentPage.selectedNodesSize;
-  // const size = store((state) => state.selectedNodeIds.size);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (size > 0) setOpenedTab('inspect');
     else setOpenedTab('insert');
   }, [size]);

@@ -1,7 +1,6 @@
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
-// import store from '@/store';
 import { useEffect, useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { WebloomWidgets } from '..';
@@ -31,7 +30,6 @@ const cursors = {
 
 export const ResizeHandlers = observer(function ResizeHandlers() {
   const selectedIds = editorStore.currentPage.selectedNodeIds;
-  // const selectedIds = store((state) => state.selectedNodeIds);
   const selectedIdsArray = Array.from(selectedIds);
   useHotkeys('esc', () => {
     commandManager.executeCommand(ResizeAction.cancel());
@@ -76,8 +74,7 @@ export const ResizeHandlers = observer(function ResizeHandlers() {
 const Handles = observer(function Handles({ id }: { id: string }) {
   const node = editorStore.currentPage.getWidgetById(id);
   const dims = node.pixelDimensions;
-  // const dims = store((state) => state.getPixelDimensions(id));
-  // const node = store.getState().tree[id];
+
   const direction = WebloomWidgets[node.type].config.resizingDirection;
   const componentHandles = useMemo(
     () =>
@@ -94,7 +91,6 @@ const Handles = observer(function Handles({ id }: { id: string }) {
     [direction],
   );
   const isDragging = editorStore.currentPage.draggedWidgetId === id;
-  // const isDragging = store((state) => state.draggedNode === id);
   const handleSize = 8;
   const handleStyle: React.CSSProperties = {
     position: 'absolute',

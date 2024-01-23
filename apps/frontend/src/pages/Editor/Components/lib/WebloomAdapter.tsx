@@ -1,7 +1,6 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
-// import store from '@/store';
 import { useWebloomDraggable } from '@/hooks';
 
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -10,8 +9,6 @@ import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { cn } from '@/lib/cn';
 import { observer } from 'mobx-react-lite';
-import { trace } from 'mobx';
-// import { useShallow } from 'zustand/react/shallow';
 
 type WebloomAdapterProps = {
   id: string;
@@ -24,7 +21,6 @@ type WebloomAdapterProps = {
 export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const { id } = props;
   const isResizing = editorStore.currentPage.resizedWidgetId === id;
-  // const isResizing = store((state) => state.resizedNode === id);
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
@@ -32,9 +28,7 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, width, height } =
     editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
-  // const elDimensions = store(
-  //   useShallow((store) => store.getRelativePixelDimensions(id)),
-  // );
+
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useWebloomDraggable({
       id,

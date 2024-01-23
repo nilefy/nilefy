@@ -39,10 +39,9 @@ import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSidebar';
 import { QueryPanel } from '@/components/queryPanel';
-import { seedNameMap } from '@/store/widgetName';
+import { seedNameMap } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
-import { toJS, trace } from 'mobx';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -213,7 +212,6 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
-
   return (
     <>
       <div className="isolate flex h-full max-h-full w-full bg-transparent">

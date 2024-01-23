@@ -1,6 +1,6 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewWidgetName } from '@/store/widgetName';
+import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
 import { WebloomPage } from './page';

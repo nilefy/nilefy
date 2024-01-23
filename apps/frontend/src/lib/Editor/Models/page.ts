@@ -2,15 +2,7 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import {
-  action,
-  autorun,
-  comparer,
-  computed,
-  entries,
-  makeObservable,
-  observable,
-} from 'mobx';
+import { action, comparer, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -121,7 +113,6 @@ export class WebloomPage {
     return [...this.selectedNodeIds][0];
   }
   get selectedNodesSize() {
-    console.log('selectedNodesSize');
     return this.selectedNodeIds.size;
   }
 
@@ -184,12 +175,6 @@ export class WebloomPage {
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    if (widget.isCanvas) {
-      widget.setDimensions({
-        columnsCount: widget.columnsCount,
-        rowsCount: widget.rowsCount,
-      });
-    }
   }
   getWidgetById(id: string) {
     return this.widgets[id];
