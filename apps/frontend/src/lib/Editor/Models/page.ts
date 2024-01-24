@@ -1,7 +1,7 @@
 import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
-import { DependencyRelation, WebloomWidget } from './widget';
+import { WebloomWidget } from './widget';
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
@@ -17,6 +17,7 @@ import {
   isSameCoords,
   normalizeCoords,
 } from '../utils';
+import { analyzeDependancies } from '../dependancyUtils';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -84,18 +85,33 @@ export class WebloomPage {
     });
     this.id = id;
     const widgetMap: Record<string, WebloomWidget> = {};
+    this.queries = queries;
+    this.selectedNodeIds = new Set();
     Object.values(widgets).forEach((widget) => {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
       });
     });
-
     this.widgets = widgetMap;
+    // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height = this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
-
-    this.queries = queries;
-    this.selectedNodeIds = new Set();
+    // analyze dependancies
+    Object.values(widgetMap).forEach((widget) => {
+      for (const prop of widget.props) {
+        const key = prop[0];
+        const value = prop[1].value;
+        const { dependencies, isCode } = analyzeDependancies(
+          value,
+          key,
+          this.context,
+        );
+        if (isCode) {
+          widget.setIsPropCode(key, true);
+          widget.addDependencies(dependencies);
+        }
+      }
+    });
   }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;

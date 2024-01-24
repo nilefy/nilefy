@@ -18,12 +18,16 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
   const onChange = useCallback(
     (newValue: string) => {
       if (id && toProperty) {
-        debouncedAnalyzeDependancies(
+        const res = debouncedAnalyzeDependancies(
           newValue,
-          id,
           toProperty,
           editorStore.currentPage.context,
         );
+        if (res) {
+          const widget = editorStore.currentPage.getWidgetById(id);
+          widget.setIsPropCode(toProperty, res.isCode);
+          widget.addDependencies(res.dependencies);
+        }
       }
 
       _onChange(newValue);

@@ -1,14 +1,13 @@
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
 import { EvaluationContext } from './evaluation';
-import { editorStore } from './Models';
 import { DependencyRelation } from './Models/widget';
 export const analyzeDependancies = (
-  code: string,
-  callerId: string,
+  code: unknown,
   toProperty: string,
   keys: EvaluationContext,
 ) => {
+  if (typeof code !== 'string') return { dependencies: [], isCode: false };
   const keysSet = new Set(Object.keys(keys.widgets));
   const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(/{{([^}]*)}}/g);
@@ -35,11 +34,7 @@ export const analyzeDependancies = (
       //todo handle field validation
     }
   }
-  const caller = editorStore.currentPage.getWidgetById(callerId);
-  caller.setIsPropCode(toProperty, isCode);
-  if (dependencies.length > 0) {
-    caller.addDependencies(dependencies);
-  }
+  return { dependencies, isCode };
 };
 
 /**

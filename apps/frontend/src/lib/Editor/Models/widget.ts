@@ -1,7 +1,7 @@
-import { makeObservable, observable, computed, action, toJS } from 'mobx';
+import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { EvaluationContext, evaluate, isPropCode } from '../evaluation';
+import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -103,18 +103,13 @@ export class WebloomWidget
     this.row = row;
     this.col = col;
     this.props = new Map();
+    if (!props) {
+      props = {};
+    }
     if (props) {
       Object.keys(props).forEach((key) => {
-        const isCode = isPropCode(props[key]);
         this.props.set(key, {
-          value: props[key],
-          isCode,
-        });
-      });
-    } else {
-      Object.keys(defaultProps).forEach((key) => {
-        this.props.set(key, {
-          value: defaultProps[key as keyof typeof defaultProps],
+          value: props[key] ?? defaultProps[key as keyof typeof defaultProps],
           isCode: false,
         });
       });
