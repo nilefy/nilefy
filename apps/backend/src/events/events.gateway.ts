@@ -8,7 +8,7 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { AppDto, WebloomNode } from '../dto/apps.dto';
+import { AppDto } from '../dto/apps.dto';
 import { Server, WebSocket } from 'ws';
 import { ComponentsService } from '../components/components.service';
 import { PayloadUser, RequestUser } from 'src/auth/auth.types';
@@ -16,6 +16,8 @@ import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { PageDto } from 'src/dto/pages.dto';
+import { pick } from 'lodash';
+import { WebloomNode, frontKnownKeys } from '../dto/components.dto';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -116,9 +118,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await Promise.all(
           payload.sideEffects.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            // eslint-disable-next-line
-            const { columnWidth, nodes, dom, dependancies, ...temp } = c;
-
+            // const { columnWidth, nodes, dom, ...temp } = c;
+            const temp = pick(c, frontKnownKeys);
             return this.componentsService.update(
               socket.pageId,
               c.id,
@@ -161,8 +162,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return await Promise.all(
           payload.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            // eslint-disable-next-line
-            const { columnWidth, nodes, dom, dependancies, ...temp } = c;
+            // const { columnWidth, nodes, dom, ...temp } = c;
+            const temp = pick(c, frontKnownKeys);
             return this.componentsService.update(
               socket.pageId,
               c.id,

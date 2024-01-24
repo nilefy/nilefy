@@ -5,7 +5,7 @@ import { InspectorFormControls } from '@/components/configForm/formControls';
 import { FormControlContext, FormSectionView } from '@/components/configForm';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { commandManager } from '@/Actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { ChangePropAction } from '@/Actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { observer } from 'mobx-react-lite';

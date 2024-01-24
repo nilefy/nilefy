@@ -12,10 +12,12 @@ import {
 import { CreatePageDb, PageDto, UpdatePageDb } from '../dto/pages.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
-import { AppDto, WebloomNode, WebloomTree } from '../dto/apps.dto';
+import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { nanoid } from 'nanoid';
+import { WebloomNode, WebloomTree } from '../dto/components.dto';
+
 @Injectable()
 export class PagesService {
   constructor(

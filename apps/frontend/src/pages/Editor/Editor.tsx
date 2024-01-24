@@ -37,7 +37,7 @@ import { JwtPayload } from '@/types/auth.types';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
-import { EditorLeftSidebar } from './editorLeftSidebar';
+import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';

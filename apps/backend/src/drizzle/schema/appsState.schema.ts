@@ -12,7 +12,7 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { apps, timeStamps, softDelete, whoToBlame } from './schema';
-import { WebloomNode } from '../../dto/apps.dto';
+import { WebloomNode } from '../../dto/components.dto';
 
 /**
  * any app contains multiple pages, each page have a seprate `tree`/`state`

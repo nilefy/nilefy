@@ -48,7 +48,7 @@ export function SignUp() {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="nagy" {...field} />
+                  <Input placeholder="nagy" autoFocus={true} {...field} />
                 </FormControl>
                 <FormDescription>enter your full name</FormDescription>
                 <FormMessage />

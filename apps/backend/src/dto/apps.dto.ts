@@ -35,33 +35,3 @@ export type CreateAppDb = z.infer<typeof createAppDb>;
 export type CreateAppDto = z.infer<typeof createAppSchema>;
 export type UpdateAppDb = z.infer<typeof updateAppDb>;
 export type UpdateAppDto = z.infer<typeof updateAppSchema>;
-
-// TODO: remove this type and import it from shared package
-export type WebloomGridDimensions = {
-  /**
-   * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
-   */
-  col: number;
-  /**
-   * rowNumber from top to bottom starting from 0 to infinity
-   */
-  row: number;
-  // this propert is exclusive for canvas nodes
-  columnWidth?: number;
-  // number of columns this node takes
-  columnsCount: number;
-  /**
-   * number of rows this node takes
-   */
-  rowsCount: number;
-};
-
-export type WebloomNode = {
-  id: string;
-  nodes: string[];
-  parentId: string;
-  props: Record<string, unknown>;
-  type: string;
-} & WebloomGridDimensions;
-
-export type WebloomTree = Record<string, WebloomNode>;
