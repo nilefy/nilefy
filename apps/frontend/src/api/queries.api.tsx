@@ -16,6 +16,16 @@ export type QueryI = {
   updatedById: number;
 };
 
+export type QueryReturnT = {
+  status: number;
+  data: unknown;
+  error?: string;
+};
+
+type RunQueryBody = {
+  evaluatedConfig: Record<string, unknown>;
+};
+
 export type CompeleteQueryI = QueryI & {
   dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
     dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
@@ -81,19 +91,22 @@ async function runQuery({
   workspaceId,
   queryId,
   appId,
+  body,
 }: {
   workspaceId: number;
   queryId: number;
   appId: number;
+  body: RunQueryBody;
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/queries/run/${queryId}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     },
   );
-  return (await res.json()) as Partial<QueryI>;
+  return (await res.json()) as QueryReturnT;
 }
 
 export async function updateQuery({

@@ -58,6 +58,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
   }
 
   const onQueryChange: ConfigFormGenricOnChange = (key, value) => {
+    // NOTE: this will change in PR https://github.com/z-grad-pr-sh/frontend/pull/172
     // i need a place to store config changes until i update them on the backend, react query seams like a good place
     queryClient.setQueryData<Record<string, unknown>>(
       ['queries', query.id, 'config'],
@@ -106,10 +107,15 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
+            // TODO: the evaluatedConfige should be eval(query.query, context)
+            const evaluatedConfig = query.query;
             run({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
+              body: {
+                evaluatedConfig,
+              },
             });
           }}
         >
