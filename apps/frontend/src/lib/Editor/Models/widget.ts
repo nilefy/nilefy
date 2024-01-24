@@ -45,7 +45,7 @@ export class WebloomWidget
   implements
     Snapshotable<
       Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'> & {
-        page: string;
+        pageId: string;
       }
     >,
     Dependable
@@ -230,7 +230,7 @@ export class WebloomWidget
     return {
       id: this.id,
       nodes: [...this.nodes],
-      page: this.page.id,
+      pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
       props: props,

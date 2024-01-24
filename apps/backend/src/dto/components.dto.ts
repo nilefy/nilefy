@@ -48,9 +48,8 @@ export type WebloomGridDimensions = {
 
 export type WebloomNode = {
   id: string;
-  name: string;
   nodes: string[];
-  parent: string;
+  parentId: string;
   isCanvas?: boolean;
   props: Record<string, unknown>;
   type: string;
@@ -58,8 +57,7 @@ export type WebloomNode = {
 
 export const frontKnownKeysSchema = componentSchema.pick({
   id: true,
-  name: true,
-  parent: true,
+  parentId: true,
   isCanvas: true,
   props: true,
   type: true,
