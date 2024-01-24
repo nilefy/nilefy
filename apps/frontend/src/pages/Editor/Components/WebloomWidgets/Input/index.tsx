@@ -19,7 +19,7 @@ export type WebloomInputProps = Pick<
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
-    .props as WebloomInputProps;
+    .evaluatedProps as WebloomInputProps;
 
   return (
     <div className="flex w-full items-center justify-center gap-2">

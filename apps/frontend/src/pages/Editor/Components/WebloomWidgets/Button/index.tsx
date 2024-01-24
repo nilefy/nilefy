@@ -14,7 +14,7 @@ export type WebloomButtonProps = {
 const WebloomButton = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .props as WebloomButtonProps;
+    .evaluatedProps as WebloomButtonProps;
   return (
     <Button
       {...props}

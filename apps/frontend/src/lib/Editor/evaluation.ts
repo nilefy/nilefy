@@ -2,7 +2,14 @@ export type EvaluationContext = {
   widgets: Record<string, Record<string, unknown>>;
   queries: Record<string, unknown>;
 };
-
+export const isPropCode = (code: unknown) => {
+  if (typeof code !== 'string') return false;
+  const matches = code.matchAll(/{{([^}]*)}}/g);
+  for (const match of matches) {
+    return !!match;
+  }
+  return false;
+};
 export const evaluate = (
   code: string,
   evaluationContext: EvaluationContext,

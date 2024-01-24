@@ -1,7 +1,7 @@
 import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
-import { WebloomWidget } from './widget';
+import { DependencyRelation, WebloomWidget } from './widget';
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
@@ -18,7 +18,7 @@ import {
   normalizeCoords,
 } from '../utils';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-
+export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
   id: string;
   widgets: Record<string, WebloomWidget> = {};
@@ -90,7 +90,10 @@ export class WebloomPage {
         page: this,
       });
     });
+
     this.widgets = widgetMap;
+    this.height = this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
+
     this.queries = queries;
     this.selectedNodeIds = new Set();
   }
@@ -152,7 +155,8 @@ export class WebloomPage {
       queries: {},
     };
     Object.values(this.widgets).forEach((widget) => {
-      context['widgets'][widget.id] = widget.dynamicProps;
+      if (widget.isRoot) return;
+      context['widgets'][widget.id] = widget.evaluatedProps;
     });
     Object.values(this.queries).forEach((query) => {
       context['queries'][query.id] = query.value;
@@ -182,7 +186,9 @@ export class WebloomPage {
   get rootWidget() {
     return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
   }
-
+  getEntityById(id: string): WebloomEntity | undefined {
+    return this.widgets[id] || this.queries[id];
+  }
   setDraggedWidgetId(id: string | null) {
     this.draggedWidgetId = id;
   }
@@ -229,6 +235,7 @@ export class WebloomPage {
       const parent = this.widgets[node.parentId];
       if (parent) parent.removeChild(nodeId);
       // remove from page
+      this.widgets[nodeId].cleanup();
       delete this.widgets[nodeId];
     }
     // return the stack of deleted widgets for undo

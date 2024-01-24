@@ -1,45 +1,45 @@
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
 import { EvaluationContext } from './evaluation';
+import { editorStore } from './Models';
+import { DependencyRelation } from './Models/widget';
 export const analyzeDependancies = (
   code: string,
-  caller: string,
+  callerId: string,
   toProperty: string,
   keys: EvaluationContext,
 ) => {
   const keysSet = new Set(Object.keys(keys.widgets));
-  // caller is dependant on "to" for "property"
-  const dependancies = new Set<{
-    on: string;
-    property: string;
-  }>();
-  // find every {{*}} in the code
+  const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(/{{([^}]*)}}/g);
   let isCode = false;
-  // for each match, find the dependancies
   for (const match of matches) {
     isCode = true;
     const expression = match[1];
-    // for each expression, extract the dependancies if they exist
-    const dependanciesInExpression = extractMemberExpression(expression);
-    for (const dependancy of dependanciesInExpression) {
-      const dependancyParts = dependancy.split('.');
-      const dependancyName = dependancyParts[1];
-      // if the dependancy is a widget, add it to the dependancies
-      if (keysSet.has(dependancyName)) {
-        dependancies.add({
-          on: dependancyName,
-          property: [...dependancyParts.slice(2)].join('.'),
-        });
+    try {
+      const dependanciesInExpression = extractMemberExpression(expression);
+      for (const dependancy of dependanciesInExpression) {
+        const dependancyParts = dependancy.split('.');
+        const dependancyName = dependancyParts[1];
+        if (keysSet.has(dependancyName)) {
+          dependencies.push({
+            to: toProperty,
+            on: {
+              entityId: dependancyName,
+              props: [...dependancyParts.slice(2)],
+            },
+          });
+        }
       }
+    } catch (_) {
+      //todo handle field validation
     }
   }
-  const dependanciesArray = Array.from(dependancies);
-  console.log('dependanciesArray', dependanciesArray);
-  // store.getState().setDependancies(caller, toProperty, dependanciesArray);
-  // if (isCode) {
-  //   store.getState().setToBeEvaluatedProps(caller, new Set([toProperty]));
-  // }
+  const caller = editorStore.currentPage.getWidgetById(callerId);
+  caller.setIsPropCode(toProperty, isCode);
+  if (dependencies.length > 0) {
+    caller.addDependencies(dependencies);
+  }
 };
 
 /**

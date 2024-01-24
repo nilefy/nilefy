@@ -51,7 +51,7 @@ const toolbarConfig =
 export const WebloomTextEditor = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .props as WebloomTextEditorProps;
+    .evaluatedProps as WebloomTextEditorProps;
   const { label } = props;
   const [editorValue, setEditorValue] = useState<string>(props.value);
   const initalRender = useRef(true);

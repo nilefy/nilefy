@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, action, toJS } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { EvaluationContext, evaluate } from '../evaluation';
+import { EvaluationContext, evaluate, isPropCode } from '../evaluation';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -17,27 +17,47 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import { cloneDeep } from 'lodash';
-import { Snapshotable } from './interfaces';
-type DependantPropName = string;
-type DependancyPropName = string;
-type DependancyRelation = Map<WebloomWidget, Set<DependancyPropName>>;
-export type EntityDependancy = Record<DependantPropName, DependancyRelation>;
+import { Dependable, Snapshotable } from './interfaces';
+import { WebloomQuery } from './query';
+import { EntityDependents } from './entityDependents';
+
+export type RuntimeProps = Map<
+  string,
+  {
+    value: unknown;
+    isCode: boolean;
+  }
+>;
+type EvaluatedRunTimeProps = SnapshotProps;
+export type SnapshotProps = Record<string, unknown>;
+type ToProperty = string;
+export type SnapshotDependencies = {
+  relations: Array<DependencyRelation>;
+};
+export type DependencyRelation = {
+  to: ToProperty;
+  on: {
+    entityId: string;
+    props?: Array<string>;
+  };
+};
 export class WebloomWidget
   implements
     Snapshotable<
       Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'> & {
         page: string;
       }
-    >
+    >,
+    Dependable
 {
   isRoot = false;
   id: string;
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
-  props: Record<string, unknown>;
-  dependancies: EntityDependancy = {};
+  props: RuntimeProps;
+  dependencies: WidgetDependencies;
+  dependents: EntityDependents;
   type: WidgetTypes;
   col: number;
   row: number;
@@ -55,7 +75,7 @@ export class WebloomWidget
     rowsCount,
     columnsCount,
     props,
-    dependancies,
+    dependencies,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -67,7 +87,8 @@ export class WebloomWidget
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependancies?: EntityDependancy;
+    dependencies?: SnapshotDependencies;
+    dependents?: Set<string>;
   }) {
     this.id = id;
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
@@ -81,11 +102,30 @@ export class WebloomWidget
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-    this.props = props ?? { ...defaultProps };
-    this.dependancies = dependancies ?? {};
+    this.props = new Map();
+    if (props) {
+      Object.keys(props).forEach((key) => {
+        const isCode = isPropCode(props[key]);
+        this.props.set(key, {
+          value: props[key],
+          isCode,
+        });
+      });
+    } else {
+      Object.keys(defaultProps).forEach((key) => {
+        this.props.set(key, {
+          value: defaultProps[key as keyof typeof defaultProps],
+          isCode: false,
+        });
+      });
+    }
+    this.dependencies = new WidgetDependencies(dependencies);
+    this.dependents = new EntityDependents(new Set());
     makeObservable(this, {
       props: observable,
-      dependancies: observable,
+      evaluatedProps: computed,
+      dependencies: observable,
+      dependents: observable,
       nodes: observable,
       parentId: observable,
       dom: observable,
@@ -95,7 +135,6 @@ export class WebloomWidget
       row: observable,
       columnsCount: observable,
       rowsCount: observable,
-      dynamicProps: computed.struct,
       setProp: action,
       setDimensions: action,
       gridSize: computed.struct,
@@ -112,11 +151,11 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
-      toBeEvaluatedProps: computed,
-      addDependancy: action,
-      removeDependancy: action,
-      removeDependancyPropName: action,
-      removeDependantPropName: action,
+      codeProps: computed,
+      setIsPropCode: action,
+      addDependencies: action,
+      clearDependents: action,
+      cleanup: action,
     });
   }
   get columnWidth(): number {
@@ -135,28 +174,78 @@ export class WebloomWidget
   setDom(dom: HTMLElement) {
     this.dom = dom;
   }
+
   getProp(key: string) {
-    return this.dynamicProps[key] || this.props[key];
+    return this.evaluatedProps[key] ?? this.props.get(key)?.value;
+  }
+  get evaluatedProps(): EvaluatedRunTimeProps {
+    const localEvaluationContext: EvaluationContext = {
+      widgets: {},
+      queries: {},
+    };
+    const evaluatedProps: EvaluatedRunTimeProps = {};
+    for (const item of this.dependencies.relations) {
+      const relations = item[1];
+      for (const relation of relations) {
+        const entityId = relation[0];
+        const entity = this.page.getEntityById(entityId);
+        if (!entity) {
+          throw new Error(`entity with id ${entityId} not found`);
+        }
+        if (entity instanceof WebloomQuery) {
+          localEvaluationContext.queries[entity.id] ||= {};
+          localEvaluationContext.queries[entity.id] = entity.value;
+        }
+        if (entity instanceof WebloomWidget) {
+          const onProps = relation[1];
+          if (!onProps) {
+            throw new Error(
+              `props not found for relation with entity ${entity.id}`,
+            );
+          }
+          for (const prop of onProps) {
+            localEvaluationContext.widgets[entity.id] ||= {};
+            localEvaluationContext.widgets[entity.id][prop] =
+              entity.getProp(prop);
+          }
+        }
+      }
+    }
+    for (const prop of this.props) {
+      if (prop[1].isCode) {
+        evaluatedProps[prop[0]] = evaluate(
+          prop[1].value as string,
+          localEvaluationContext,
+        );
+      } else {
+        evaluatedProps[prop[0]] = prop[1].value;
+      }
+    }
+    return evaluatedProps;
   }
   /**
    *
    * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
    */
   get snapshot() {
-    return cloneDeep({
+    const props: SnapshotProps = {};
+    this.props.forEach((prop, key) => {
+      props[key] = prop.value;
+    });
+    return {
       id: this.id,
-      nodes: this.nodes,
+      nodes: [...this.nodes],
       page: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: this.props,
-      dependancies: this.dependancies,
+      props: props,
+      dependencies: this.dependencies.snapshot(),
       type: this.type,
       col: this.col,
       row: this.row,
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
-    });
+    };
   }
 
   setDimensions(dimensions: Partial<WebloomGridDimensions>) {
@@ -202,85 +291,17 @@ export class WebloomWidget
     };
   }
 
-  get toBeEvaluatedProps() {
-    return Object.keys(this.props).filter((propName) => {
-      return this.dependancies[propName];
-    });
-  }
-
-  get dynamicProps(): typeof this.props {
-    const dynamicProps = { ...this.props };
-    // loop over all the dependancies and evaluate the code
-    const evaluationContext: EvaluationContext = {
-      widgets: {},
-      queries: {},
-    };
-
-    for (const toBeEvaluatedProp of this.toBeEvaluatedProps) {
-      const dependancies = this.dependancies[toBeEvaluatedProp];
-      if (!dependancies) continue;
-      for (const [dependancy, dependancyProps] of dependancies) {
-        const propsWidgetDependsOn: Record<string, unknown> = [
-          ...dependancyProps,
-        ].reduce((acc, cur) => {
-          return {
-            ...acc,
-            [cur]: dependancy.getProp(cur),
-          };
-        }, {});
-        evaluationContext.widgets[dependancy.id] = propsWidgetDependsOn;
+  get codeProps() {
+    const codeProp: Record<string, unknown> = {};
+    for (const [key, value] of this.props) {
+      if (value.isCode) {
+        codeProp[key] = value.value;
       }
     }
-    for (const toBeEvaluatedProp of this.toBeEvaluatedProps) {
-      const code = this.props[toBeEvaluatedProp];
-      const evaluatedProp = evaluate(code as string, evaluationContext);
-      dynamicProps[toBeEvaluatedProp] = evaluatedProp;
-    }
-    return dynamicProps;
+    return codeProp;
   }
-  addDependancy(
-    dependantPropName: DependantPropName,
-    dependancy: WebloomWidget,
-    dependancyPropName: DependancyPropName,
-  ) {
-    if (!this.dependancies[dependantPropName])
-      this.dependancies[dependantPropName] = new Map();
-    if (!this.dependancies[dependantPropName].get(dependancy))
-      this.dependancies[dependantPropName].set(dependancy, new Set());
-    this.dependancies[dependantPropName]
-      .get(dependancy)!
-      .add(dependancyPropName);
-  }
-
-  removeDependancyPropName(
-    dependantPropName: DependantPropName,
-    dependancy: WebloomWidget,
-    dependancyPropName: DependancyPropName,
-  ) {
-    if (!this.dependancies[dependantPropName]) return;
-    if (!this.dependancies[dependantPropName].get(dependancy)) return;
-    this.dependancies[dependantPropName]
-      .get(dependancy)!
-      .delete(dependancyPropName);
-  }
-
-  removeDependantPropName(dependantPropName: DependantPropName) {
-    delete this.dependancies[dependantPropName];
-  }
-
-  removeDependancy(
-    dependancy: WebloomWidget,
-    dependantPropName?: DependantPropName,
-  ) {
-    if (!dependantPropName) {
-      Object.keys(this.dependancies).forEach((dependantPropName) => {
-        this.removeDependancy(dependancy, dependantPropName);
-      });
-      return;
-    }
-    if (!this.dependancies[dependantPropName]) return;
-    if (!this.dependancies[dependantPropName].get(dependancy)) return;
-    this.dependancies[dependantPropName].delete(dependancy);
+  isPropCode(key: string) {
+    return !!this.codeProps[key];
   }
 
   setProp(key: string, value: unknown) {
@@ -288,7 +309,16 @@ export class WebloomWidget
       this.page.widgets[value as string] = this;
       delete this.page.widgets[this.id];
     }
-    this.props[key] = value;
+    this.props.set(key, {
+      isCode: !!this.props.get(key)?.isCode,
+      value,
+    });
+  }
+  setIsPropCode(key: string, isCode: boolean) {
+    this.props.set(key, {
+      isCode,
+      value: this.props.get(key)?.value,
+    });
   }
 
   get parent() {
@@ -404,5 +434,113 @@ export class WebloomWidget
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
+  }
+  addDependencies(relations: Array<DependencyRelation>) {
+    for (const relation of relations) {
+      const onEntity = this.page.getEntityById(relation.on.entityId);
+      if (!onEntity) return;
+      this.dependencies.createRelation(relation);
+      onEntity.dependents.addDependent(this.id);
+    }
+  }
+
+  clearDependents() {
+    const dependents = this.dependents.dependents;
+    for (const dependent of dependents) {
+      const dependentWidget = this.page.getWidgetById(dependent)!;
+      dependentWidget.dependencies.deleteByEntity(this.id);
+    }
+  }
+
+  cleanup() {
+    this.clearDependents();
+  }
+}
+type OnEntityId = string;
+type OnProp = string;
+export class WidgetDependencies {
+  // Observable array to store relations
+  relations: Map<ToProperty, Map<OnEntityId, Set<OnProp>>> = new Map();
+
+  constructor(snapshot?: SnapshotDependencies) {
+    if (snapshot) {
+      for (const relation of snapshot.relations) {
+        this.createRelation(relation);
+      }
+    }
+    // this.cleanup = autorun
+    makeObservable(this, {
+      relations: observable,
+      createRelation: action,
+      deleteByOnProp: action,
+      deleteByToProperty: action,
+      deleteByEntity: action,
+    });
+  }
+  createRelation(relation: DependencyRelation) {
+    if (!this.relations.has(relation.to)) {
+      this.relations.set(relation.to, new Map());
+    }
+    const relations = this.relations.get(relation.to)!;
+    if (!relations.has(relation.on.entityId)) {
+      relations.set(relation.on.entityId, new Set());
+    }
+    const props = relations.get(relation.on.entityId)!;
+    if (relation.on.props) {
+      for (const prop of relation.on.props) {
+        props.add(prop);
+      }
+    }
+  }
+  deleteByOnProp(toProperty: ToProperty, entityId: OnEntityId, prop: OnProp) {
+    const relations = this.relations.get(toProperty);
+    if (!relations) return;
+    const props = relations.get(entityId);
+    if (!props) return;
+    props.delete(prop);
+    if (props.size === 0) {
+      relations.delete(entityId);
+    }
+    if (relations.size === 0) {
+      this.deleteByToProperty(toProperty);
+    }
+  }
+  deleteByToProperty(toProperty: ToProperty) {
+    this.relations.delete(toProperty);
+  }
+
+  deleteByEntity(entityId: OnEntityId) {
+    for (const relation of this.relations) {
+      const relations = relation[1];
+      if (relations.has(entityId)) {
+        relations.delete(entityId);
+      }
+    }
+    for (const relation of this.relations) {
+      if (relation[1].size === 0) {
+        this.relations.delete(relation[0]);
+      }
+    }
+  }
+  snapshot(): SnapshotDependencies {
+    const snapshot: SnapshotDependencies = {
+      relations: [],
+    };
+    for (const relation of this.relations) {
+      const toProperty = relation[0];
+      const relations = relation[1];
+      for (const relation of relations) {
+        const onEntityId = relation[0];
+        const props = relation[1];
+        snapshot.relations.push({
+          to: toProperty,
+          on: {
+            entityId: onEntityId,
+            props: [...props],
+          },
+        });
+      }
+    }
+    return snapshot;
   }
 }

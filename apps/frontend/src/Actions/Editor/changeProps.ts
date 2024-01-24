@@ -6,7 +6,7 @@ import { WebloomWidget } from '@/lib/Editor/Models/widget';
 export class ChangePropAction implements Command {
   constructor(
     private comId: WebloomWidget['id'],
-    private key: keyof WebloomWidget | keyof WebloomWidget['props'],
+    private key: string,
     private value: unknown,
   ) {}
 

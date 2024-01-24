@@ -11,7 +11,7 @@ export type WebloomTextProps = {
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .props as WebloomTextProps;
+    .evaluatedProps as WebloomTextProps;
   return <span className="h-full w-full break-all">{props.text}</span>;
 });
 const config: WidgetConfig = {
