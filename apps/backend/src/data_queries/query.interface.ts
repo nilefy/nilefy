@@ -5,7 +5,16 @@ export interface QueryRunnerI<
   T extends DataSourceConfigT = DataSourceConfigT,
   U extends Record<string, unknown> = Record<string, unknown>,
 > {
-  run(dataSourceConfig: T, query: QueryConfig<U>): Promise<QueryRet>;
+  run(
+    /**
+     * evaluated datasource config
+     */
+    dataSourceConfig: T,
+    /**
+     * query containg its evaluated config
+     */
+    query: QueryConfig<U>,
+  ): Promise<QueryRet>;
 
   connect?(dataSourceConfig: T): any;
 
