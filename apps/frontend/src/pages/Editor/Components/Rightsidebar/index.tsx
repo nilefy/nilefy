@@ -1,12 +1,13 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
 import { ConfigPanel } from '../configPanel/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
+import { observer } from 'mobx-react-lite';
 
 function InsertTab() {
   return (
@@ -33,9 +34,8 @@ function InsertTab() {
   );
 }
 
-function InspectTab() {
-  const selectedIdsSize = store((state) => state.selectedNodeIds.size);
-
+const InspectTab = observer(() => {
+  const selectedIdsSize = editorStore.currentPage.selectedNodesSize;
   if (selectedIdsSize === 0) {
     return (
       <TabsContent value="inspect">
@@ -61,16 +61,17 @@ function InspectTab() {
       </TabsContent>
     );
   }
-}
+});
 
 type RightSidebarTabs = 'insert' | 'inspect' | 'page';
 
-export function RightSidebar() {
+export const RightSidebar = observer(() => {
   // i need it to be controlled so i can change it when the selected items count change
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
-  const size = store((state) => state.selectedNodeIds.size);
 
-  useEffect(() => {
+  const size = editorStore.currentPage.selectedNodesSize;
+
+  useLayoutEffect(() => {
     if (size > 0) setOpenedTab('inspect');
     else setOpenedTab('insert');
   }, [size]);
@@ -95,4 +96,4 @@ export function RightSidebar() {
       </Tabs>
     </div>
   );
-}
+});

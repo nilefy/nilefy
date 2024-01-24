@@ -57,21 +57,28 @@ export interface WidgetConfig {
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
 }
-
+// key is the id of the node and the array are keys of props
+/**
+ * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
+ */
+export type EntityDependancy = Record<string, Record<string, Set<string>>>;
 export type WebloomNode = {
   id: string;
-  name: string;
 
   dom: HTMLElement | null;
   nodes: string[];
   parent: string;
   isCanvas?: boolean;
   props: Record<string, unknown>;
+  dynamicProps: Record<string, unknown>;
+  dependants: EntityDependancy;
+  dependancies: EntityDependancy;
+  toBeEvaluatedProps: Set<string>;
   type: WidgetTypes;
 } & WebloomGridDimensions;
 
 export type Widget<WidgetProps> = {
-  component: React.FC<WidgetProps>;
+  component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
   inspectorConfig: WidgetInspectorConfig<WidgetProps>;

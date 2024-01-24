@@ -1,17 +1,8 @@
 import Selecto from 'react-selecto';
-import React, {
-  createElement,
-  useMemo,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  ElementType,
-  useCallback,
-  Suspense,
-} from 'react';
+import { observer } from 'mobx-react-lite';
+import { useEffect, useRef, Suspense, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
-import store, { WebloomTree } from '../../store';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DndContext,
@@ -25,22 +16,18 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-
-import { useSetDom } from '@/hooks/useSetDom';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
-  Grid,
   MultiSelectBounding,
   ResizeHandlers,
-  WebloomAdapter,
   WebloomElementShadow,
+  WebloomRoot,
 } from './Components/lib';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
 import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
-import { WebloomWidgets, WidgetContext } from './Components';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
 import { QueryClient } from '@tanstack/react-query';
@@ -52,148 +39,19 @@ import { Loader } from 'lucide-react';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
-import { seedNameMap } from '@/store/widgetName';
+import { seedNameMap } from '@/lib/Editor/widgetName';
+import { WebloomPage } from '@/lib/Editor/Models/page';
+import { editorStore } from '@/lib/Editor/Models';
 
-const { resizeCanvas } = store.getState();
 const throttledResizeCanvas = throttle(
   (width: number) => {
-    store.getState().setEditorDimensions({ width: Math.round(width) });
+    editorStore.currentPage.setPageDimensions({ width: Math.round(width) });
   },
   100,
   {
     leading: true,
   },
 );
-function WebloomRoot() {
-  const props = store(
-    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].props,
-  );
-  const nodes = store(
-    (state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID].nodes,
-  );
-  const ref = React.useRef<HTMLDivElement>(null);
-  const width = store((state) => state.editorWidth);
-  const height = store((state) => state.editorHeight);
-  const children = useMemo(() => {
-    let children = props.children as React.ReactElement[];
-    if (nodes.length > 0) {
-      children = nodes.map((node) => {
-        return <WebloomElement id={node} key={node} />;
-      });
-    }
-    return children;
-  }, [nodes, props.children]);
-  useLayoutEffect(() => {
-    const columnWidth = width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
-    let rowsCount =
-      store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
-    if (rowsCount === 0) {
-      store
-        .getState()
-        .setEditorDimensions({ height: ref.current?.clientHeight });
-      rowsCount = Math.round(
-        ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
-      );
-    }
-
-    resizeCanvas(EDITOR_CONSTANTS.ROOT_NODE_ID, { columnWidth, rowsCount });
-  }, [height, width]);
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  useSetDom(ref, EDITOR_CONSTANTS.ROOT_NODE_ID);
-  const handleResize = () => {
-    if (!ref.current) return;
-    const width = ref.current?.clientWidth;
-    const height = ref.current?.clientHeight;
-    store.getState().setEditorDimensions({ width, height });
-  };
-
-  return (
-    <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
-        <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
-        {children}
-      </WebloomAdapter>
-    </div>
-  );
-}
-WebloomRoot.displayName = 'WebloomRoot';
-
-function WebloomElement({ id }: { id: string }) {
-  const wholeTree = store.getState().tree;
-  const tree = wholeTree[id];
-  const nodes = store((state) => state.tree[id].nodes);
-  const props = store((state) => state.tree[id].props);
-  const onPropChange = useCallback(
-    ({ value, key }: { value: unknown; key: string }) => {
-      store.getState().setProp(id, key, value);
-    },
-    [id],
-  );
-  const children = useMemo(() => {
-    let children = props.children as React.ReactElement[];
-    if (nodes.length > 0) {
-      children = nodes.map((node) => {
-        return <WebloomElement id={node} key={node} />;
-      });
-    }
-    return children;
-  }, [nodes, props.children]);
-  const contextValue = useMemo(() => {
-    return {
-      onPropChange,
-      id,
-    };
-  }, [onPropChange, id]);
-  const rendered = useMemo(
-    () => (
-      <WidgetContext.Provider value={contextValue}>
-        {createElement(
-          WebloomWidgets[tree.type].component as ElementType,
-          props,
-          children,
-        )}
-      </WidgetContext.Provider>
-    ),
-    [tree.type, props, children, contextValue],
-  );
-  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
-  return (
-    <WebloomAdapter draggable droppable resizable key={id} id={id}>
-      {tree.isCanvas && <Grid id={id} />}
-      {rendered}
-    </WebloomAdapter>
-  );
-}
-
-const initTree: WebloomTree = {
-  [EDITOR_CONSTANTS.ROOT_NODE_ID]: {
-    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    name: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    col: 0,
-    row: 0,
-    columnWidth: 0,
-    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
-    nodes: [],
-    parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    isCanvas: true,
-    dom: null,
-    rowsCount: 0,
-    props: {
-      className: 'h-full w-full',
-    },
-    type: 'WebloomContainer',
-  },
-};
-// store.setState((state) => {
-//   state.tree = initTree;
-//   return state;
-// });
 
 const CustomPanelResizeHandle = () => {
   return (
@@ -248,87 +106,99 @@ function EditorLoader() {
   );
 }
 
-export function Editor() {
+export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
+
   useHotkeys('delete', () => {
     commandManager.executeCommand(new DeleteAction());
   });
-  const draggedNode = store((state) => state.draggedNode);
+
+  const draggedNode = editorStore.currentPage.draggedWidgetId;
   const mousePos = useRef({ x: 0, y: 0 });
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
       distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
+
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
       distance: EDITOR_CONSTANTS.ROW_HEIGHT,
     },
   });
+
   const sensors = useSensors(mouseSensor, touchSensor);
-  const handleDragEnd = (e: DragEndEvent) => {
+
+  const handleDragEnd = useCallback((e: DragEndEvent) => {
     if (!e.active.data.current) return;
     const over: string | null = e.over ? (e.over.id as string) : null;
     commandManager.executeCommand(DragAction.end(over));
-    store.getState().setOverNode(null);
-  };
-  const handleDragOver = (e: DragOverEvent) => {
-    if (e.active.id === e.over?.id) return;
-    store.getState().setOverNode((e.over?.id as string) ?? null);
-    if (e.active.data.current?.isNew && draggedNode === null) {
-      const [gridrow] = store
-        .getState()
-        .getGridSize(EDITOR_CONSTANTS.ROOT_NODE_ID);
-      let x = 0;
-      const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
-      const rootBoundingRect = root.dom!.getBoundingClientRect();
-      if (mousePos.current.x > rootBoundingRect.width / 2) {
-        x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
-      }
-      const y = normalize(
-        (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
-        gridrow,
-      );
+    editorStore.currentPage.setOverWidgetId(null);
+  }, []);
 
-      commandManager.executeCommand(
-        DragAction.start({
-          id: 'new',
-          mouseStartPosition: mousePos.current,
-          new: {
-            parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
-            startPosition: { x, y },
-            type: e.active.data.current.type,
-            initialDelta: e.delta,
-          },
-        }),
-      );
-    }
-  };
-  const handleDragMove = (e: DragMoveEvent) => {
-    if (draggedNode !== null) {
-      commandManager.executeCommand(
-        DragAction.move(mousePos.current, e.delta, e.over?.id as string),
-      );
-    } else if (!e.active.data.current?.isNew) {
-      commandManager.executeCommand(
-        DragAction.start({
-          id: e.active.id as string,
-          mouseStartPosition: mousePos.current,
-        }),
-      );
-    }
-    store.getState().setMousePos(mousePos.current);
-  };
-  const handleCancel = () => {
+  const handleDragOver = useCallback(
+    (e: DragOverEvent) => {
+      if (e.active.id === e.over?.id) return;
+      editorStore.currentPage.setOverWidgetId((e.over?.id as string) ?? null);
+      if (e.active.data.current?.isNew && draggedNode === null) {
+        const root = editorStore.currentPage.rootWidget;
+        const [gridrow] = root.gridSize;
+        let x = 0;
+        const rootBoundingRect = root.dom!.getBoundingClientRect();
+        if (mousePos.current.x > rootBoundingRect.width / 2) {
+          x = EDITOR_CONSTANTS.NUMBER_OF_COLUMNS - 2;
+        }
+        const y = normalize(
+          (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
+          gridrow,
+        );
+
+        commandManager.executeCommand(
+          DragAction.start({
+            id: 'new',
+            mouseStartPosition: mousePos.current,
+            new: {
+              parent: EDITOR_CONSTANTS.ROOT_NODE_ID,
+              startPosition: { x, y },
+              type: e.active.data.current.type,
+              initialDelta: e.delta,
+            },
+          }),
+        );
+      }
+    },
+    [draggedNode],
+  );
+
+  const handleDragMove = useCallback(
+    (e: DragMoveEvent) => {
+      if (draggedNode !== null) {
+        commandManager.executeCommand(
+          DragAction.move(mousePos.current, e.delta, e.over?.id as string),
+        );
+      } else if (!e.active.data.current?.isNew) {
+        commandManager.executeCommand(
+          DragAction.start({
+            id: e.active.id as string,
+            mouseStartPosition: mousePos.current,
+          }),
+        );
+      }
+      editorStore.currentPage.setMousePosition(mousePos.current);
+    },
+    [draggedNode],
+  );
+
+  const handleCancel = useCallback(() => {
     commandManager.executeCommand(DragAction.cancel());
-  };
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: PointerEvent) => {
-      const rootDom = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID].dom;
+      const rootDom = editorStore.currentPage.rootWidget.dom;
       if (!rootDom) return;
       const boundingRect = rootDom.getBoundingClientRect();
       const x = boundingRect.left;
@@ -342,7 +212,6 @@ export function Editor() {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
-
   return (
     <>
       <div className="isolate flex h-full max-h-full w-full bg-transparent">
@@ -402,11 +271,13 @@ export function Editor() {
                         e.removed.forEach((el) => {
                           const data = el.getAttribute('data-id');
                           if (data) {
-                            store.getState().setSelectedNodeIds((prev) => {
-                              return new Set(
-                                [...prev].filter((i) => i !== data),
-                              );
-                            });
+                            editorStore.currentPage.setSelectedNodeIds(
+                              (prev) => {
+                                return new Set(
+                                  [...prev].filter((i) => i !== data),
+                                );
+                              },
+                            );
                           }
                         });
                       }}
@@ -431,14 +302,16 @@ export function Editor() {
             </Panel>
             <CustomPanelResizeHandle />
             <Panel maxSizePercentage={25} minSizePercentage={10}>
-              <RightSidebar />
+              <Suspense fallback={<div>Loading...</div>}>
+                <RightSidebar />
+              </Suspense>
             </Panel>
           </PanelGroup>
         </DndContext>
       </div>
     </>
   );
-}
+});
 
 export function App() {
   const { app } = useLoaderData();
@@ -451,13 +324,16 @@ export function App() {
           seedNameMap(Object.values(tree));
           // connect to ws
           commandManager.connectToEditor(a.id, a.defaultPage.id);
-          // depends on root be with the name 'ROOT'
-          EDITOR_CONSTANTS.ROOT_NODE_ID = Object.values(tree).find(
-            (c) => c.name === 'ROOT',
-          )!.id;
-          store.setState((state) => {
-            state.tree = tree;
-            return state;
+
+          editorStore.init({
+            currentPageId: a.defaultPage.id.toString(),
+            pages: [
+              new WebloomPage({
+                id: a.defaultPage.id.toString(),
+                widgets: tree,
+                queries: {},
+              }),
+            ],
           });
           return <Editor />;
         }}

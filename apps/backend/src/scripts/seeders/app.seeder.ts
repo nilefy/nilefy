@@ -5,7 +5,7 @@ import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
 import { DatabaseI } from '../../drizzle/drizzle.provider';
 import { components, pages } from '../../drizzle/schema/appsState.schema';
-import { nanoid } from 'nanoid';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export async function appSeeder(
   db: DatabaseI,
@@ -40,15 +40,14 @@ export async function appSeeder(
   await Promise.all(
     res2.map((p) =>
       db.insert(components).values({
-        id: nanoid(),
-        name: 'ROOT',
+        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
-        isCanvas: true,
         pageId: p[0].id,
         createdById: userIds[0],
-        parent: null,
+        parentId: null,
         props: {
           className: 'h-full w-full',
+          isCanvas: true,
         },
         col: 0,
         row: 0,

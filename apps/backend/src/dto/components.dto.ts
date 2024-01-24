@@ -6,9 +6,7 @@ export const componentSchema = createSelectSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
 });
 
-export const createComponentDb = createInsertSchema(componentsDrizzle, {
-  name: (schema) => schema.name.min(1).max(255),
-}).extend({
+export const createComponentDb = createInsertSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
 });
 

@@ -15,9 +15,8 @@ import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { nanoid } from 'nanoid';
 import { WebloomNode, WebloomTree } from '../dto/components.dto';
-
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 @Injectable()
 export class PagesService {
   constructor(
@@ -48,13 +47,11 @@ export class PagesService {
       .returning();
     const rootComponent = await this.componentsService.create(
       {
-        id: nanoid(),
-        name: 'ROOT',
+        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
-        isCanvas: true,
         pageId: p.id,
         createdById: pageDto.createdById,
-        parent: null,
+        parentId: null,
         props: {
           className: 'h-full w-full',
         },
@@ -73,8 +70,7 @@ export class PagesService {
         [rootComponent.id]: {
           ...rootComponent,
           id: rootComponent.id,
-          parent: rootComponent.parent ?? rootComponent.id,
-          isCanvas: rootComponent.isCanvas ?? undefined,
+          parentId: rootComponent.parentId ?? rootComponent.id,
           props: rootComponent.props as WebloomNode['props'],
           nodes: [],
         },

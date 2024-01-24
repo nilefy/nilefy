@@ -6,8 +6,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import store from '@/store';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { editorStore } from '@/lib/Editor/Models';
+
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
 type ElementProps = {
@@ -51,7 +51,8 @@ export function JsonViewer() {
   const trueTypeOf = (obj: unknown) =>
     Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
   const [isOpen, setIsOpen] = React.useState(false);
-  const root = store((state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID]);
+  const root = editorStore.currentPage.rootWidget;
+  // const root = store((state) => state.tree[EDITOR_CONSTANTS.ROOT_NODE_ID]);
   const initialState = root.nodes.reduce(
     (acc, nodeId) => {
       (acc as Record<string, boolean>)[nodeId] = false;
@@ -128,7 +129,7 @@ export function JsonViewer() {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="h-full w-full space-y-0 overflow-y-auto font-mono scrollbar-thin scrollbar-track-gray-300 scrollbar-thumb-gray-700 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700"
+      className="scrollbar-thin scrollbar-track-gray-300 scrollbar-thumb-gray-700 dark:scrollbar-track-white dark:scrollbar-thumb-gray-700 h-full w-full space-y-0 overflow-y-auto font-mono"
     >
       <div className="flex items-center">
         <CollapsibleTrigger asChild>
@@ -148,7 +149,8 @@ export function JsonViewer() {
       </div>
       <CollapsibleContent className="ml-4 space-y-2 border-l-2">
         {root.nodes.map((nodeId) => {
-          const node = store.getState().tree[nodeId];
+          const node = editorStore.currentPage.getWidgetById(nodeId);
+          // const node = store.getState().tree[nodeId];
           return (
             <Collapsible
               key={node.id}
@@ -180,7 +182,7 @@ export function JsonViewer() {
                       )
                     }
                   >
-                    {node.name}
+                    {node.id}
                   </button>
                 </h4>
                 <p className="ml-2 text-xs">

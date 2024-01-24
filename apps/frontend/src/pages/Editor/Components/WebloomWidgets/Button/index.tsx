@@ -2,12 +2,19 @@ import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { MousePointerSquare } from 'lucide-react';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { Button } from '@/components/ui/button';
+import { useContext } from 'react';
+import { WidgetContext } from '../..';
+import { editorStore } from '@/lib/Editor/Models';
+import { observer } from 'mobx-react-lite';
 export type WebloomButtonProps = {
   text: string;
   color: string;
   event: string;
 };
-const WebloomButton = (props: WebloomButtonProps) => {
+const WebloomButton = observer(() => {
+  const { id } = useContext(WidgetContext);
+  const props = editorStore.currentPage.getWidgetById(id)
+    .evaluatedProps as WebloomButtonProps;
   return (
     <Button
       {...props}
@@ -17,14 +24,14 @@ const WebloomButton = (props: WebloomButtonProps) => {
       {props.text}
     </Button>
   );
-};
+});
 const config: WidgetConfig = {
   name: 'Button',
   icon: <MousePointerSquare />,
   isCanvas: false,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 5,
+    rowsCount: 7,
     minColumns: 1,
     minRows: 4,
   },

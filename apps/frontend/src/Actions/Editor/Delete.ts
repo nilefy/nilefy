@@ -1,17 +1,20 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { UndoableCommand } from '../types';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
-import { WebloomNode } from '@/lib/Editor/interface';
+// import { EDITOR_CONSTANTS } from '@webloom/constants';
+// import { WebloomNode } from '@/lib/Editor/interface';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { toJS } from 'mobx';
 
-const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
-  store.getState();
+// const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
+//   store.getState();
 
 export class DeleteAction implements UndoableCommand {
   /**
    * stack of nodes to be deleted,
    * enter children then parents
    */
-  private nodes: WebloomNode[];
+  private nodes: WebloomWidget['snapshot'][];
 
   constructor() {
     this.nodes = [];
@@ -19,11 +22,13 @@ export class DeleteAction implements UndoableCommand {
 
   execute() {
     // those ids are in the same tree levels
-    const selectedIds = getSelectedNodeIds();
-    setSelectedNodeIds(() => new Set());
+    const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
+    editorStore.currentPage.setSelectedNodeIds(new Set());
+
     for (const id of selectedIds) {
-      this.nodes = [...this.nodes, ...removeNode(id)];
+      this.nodes = [...this.nodes, ...editorStore.currentPage.removeWidget(id)];
     }
+
     return {
       event: 'delete' as const,
       data: [...selectedIds],
@@ -36,7 +41,7 @@ export class DeleteAction implements UndoableCommand {
       if (!node) {
         break;
       }
-      addNode(node, node.parent ?? EDITOR_CONSTANTS.ROOT_NODE_ID);
+      editorStore.currentPage.addWidget(node);
     }
   }
 }

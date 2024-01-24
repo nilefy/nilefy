@@ -52,16 +52,14 @@ export const pages = pgTable(
 export const components = pgTable(
   'components',
   {
-    id: text('id').unique().notNull(),
-    name: varchar('name').notNull(),
+    id: text('id').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
     props: json('props').$type<WebloomNode['props']>().notNull(),
     /**
      * parent_id
      */
-    parent: text('parent_id'),
-    isCanvas: boolean('is_canvas'),
+    parentId: text('parent_id'),
     // LAYOUT
     /**
      * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
@@ -86,8 +84,8 @@ export const components = pgTable(
   (t) => ({
     pk: primaryKey({ columns: [t.id, t.pageId] }),
     parentFK: foreignKey({
-      columns: [t.parent],
-      foreignColumns: [t.id],
+      columns: [t.parentId, t.pageId],
+      foreignColumns: [t.id, t.pageId],
     }).onDelete('cascade'),
   }),
 );
