@@ -2,16 +2,17 @@ import { useState } from 'react';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { MousePointer2, Pin, PinOff } from 'lucide-react';
 import { JsonViewer } from './JsonViewer';
+
 export function Inspector() {
   const [open, setOpen] = useState(false);
   const [check, setChceck] = useState(false);
+
   return (
     <Sheet
       key={'left'}

@@ -13,13 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 function InspectorEventManger() {
-  // const tree = store((state) => state.tree);
-  // const [selectedComponent, setSelectedComponent] = useState('');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>onClick</DropdownMenuTrigger>

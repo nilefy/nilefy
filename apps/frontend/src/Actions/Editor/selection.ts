@@ -3,6 +3,10 @@ import { editorStore } from '@/lib/Editor/Models';
 import { Command } from '../types';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
+/**
+ * @param shiftKey: if shift key is clicked the new selection will be added to the set
+ * @default True
+ */
 export class SelectionAction implements Command {
   constructor(
     private id: string,
