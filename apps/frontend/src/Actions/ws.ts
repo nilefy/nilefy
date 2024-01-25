@@ -13,6 +13,13 @@ export class WebloomWebSocket {
     this.assignListeners();
   }
 
+  /**
+   *Note: The process of closing the connection begins with a closing handshake, and the close() method does not discard previously-sent messages before starting that closing handshake; even if the user agent is still busy sending those messages, the handshake will only start after the messages are sent.
+   */
+  public closeConnection() {
+    this.socket.close();
+  }
+
   getState() {
     return this.state;
   }

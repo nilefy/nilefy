@@ -1,4 +1,4 @@
-import { WidgetTypes } from '@/pages/Editor/Components';
+// import { WidgetTypes } from '@/pages/Editor/Components';
 import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { ReactNode } from 'react';
 
@@ -62,20 +62,20 @@ export interface WidgetConfig {
  * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
  */
 export type EntityDependancy = Record<string, Record<string, Set<string>>>;
-export type WebloomNode = {
-  id: string;
-
-  dom: HTMLElement | null;
-  nodes: string[];
-  parent: string;
-  isCanvas?: boolean;
-  props: Record<string, unknown>;
-  dynamicProps: Record<string, unknown>;
-  dependants: EntityDependancy;
-  dependancies: EntityDependancy;
-  toBeEvaluatedProps: Set<string>;
-  type: WidgetTypes;
-} & WebloomGridDimensions;
+// export type WebloomNode = {
+//   id: string;
+//
+//   dom: HTMLElement | null;
+//   nodes: string[];
+//   parent: string;
+//   isCanvas?: boolean;
+//   props: Record<string, unknown>;
+//   dynamicProps: Record<string, unknown>;
+//   dependants: EntityDependancy;
+//   dependancies: EntityDependancy;
+//   toBeEvaluatedProps: Set<string>;
+//   type: WidgetTypes;
+// } & WebloomGridDimensions;
 
 export type Widget<WidgetProps> = {
   component: React.ElementType;
