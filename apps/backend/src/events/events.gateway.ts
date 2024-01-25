@@ -76,7 +76,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.send('ok authed');
       return;
     } catch {
-      socket.send('bitch get out');
+      socket.send('get out');
       socket.close();
       return;
     }
@@ -153,7 +153,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('bitch send auth first');
+      socket.send('send auth first');
       socket.close();
       return;
     }
@@ -195,7 +195,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('bitch send auth first');
+      socket.send('send auth first');
       socket.close();
       return;
     }

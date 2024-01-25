@@ -60,7 +60,7 @@ export class WebloomWebSocket {
     if (msg === 'ok authed') {
       this.state = 'connected';
       console.log('authed');
-    } else if (msg === 'bitch get out') {
+    } else if (msg === 'get out') {
       this.state = 'not-authed';
       console.log("couldn't auth");
     } else {
