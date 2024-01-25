@@ -1,13 +1,6 @@
 import Selecto from 'react-selecto';
 import { observer } from 'mobx-react-lite';
-import {
-  useEffect,
-  useRef,
-  Suspense,
-  useCallback,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import { useEffect, useRef, Suspense, useCallback, useState } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
@@ -57,6 +50,7 @@ import { seedNameMap } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';
+import { WebloomLoader } from '@/components/loader';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -128,14 +122,6 @@ export const appLoader =
       });
     }
   };
-
-function EditorLoader() {
-  return (
-    <div className="flex h-full w-full  items-center justify-center ">
-      <Loader className="animate-spin " size={30} />
-    </div>
-  );
-}
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -387,7 +373,7 @@ const AppResolved = observer(function AppResolved() {
 export function App() {
   const { app } = useLoaderData();
   return (
-    <Suspense fallback={<EditorLoader />}>
+    <Suspense fallback={<WebloomLoader />}>
       <Await resolve={app} errorElement={<AppLoadError />}>
         <AppResolved />
       </Await>

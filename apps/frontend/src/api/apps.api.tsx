@@ -1,5 +1,5 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
-import { fetchX } from '@/utils/fetch';
+import { FetchXError, fetchX } from '@/utils/fetch';
 import {
   UndefinedInitialDataOptions,
   UseMutationOptions,
@@ -132,12 +132,23 @@ async function one({
   return (await res.json()) as AppCompleteT;
 }
 
-function useApps(workspaceId: number) {
-  const apps = useQuery({
-    queryKey: [APPS_QUERY_KEY, { workspaceId }],
-    queryFn: async () => await index({ workspaceId }),
-  });
-  return apps;
+export type AppsIndexRet = Awaited<ReturnType<typeof index>>;
+/**
+ * query config to get workspace apps
+ */
+export const useAppsQuery = ({
+  workspaceId,
+}: {
+  workspaceId: number;
+}): UndefinedInitialDataOptions<AppsIndexRet, FetchXError, AppsIndexRet> => ({
+  queryKey: [APPS_QUERY_KEY, { workspaceId }],
+  queryFn: async () => {
+    return await index({ workspaceId });
+  },
+  staleTime: 0,
+});
+function useApps(...rest: Parameters<typeof useAppsQuery>) {
+  return useQuery(useAppsQuery(...rest));
 }
 
 export const useAppQuery = ({
