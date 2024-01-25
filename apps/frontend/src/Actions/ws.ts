@@ -23,7 +23,9 @@ export class WebloomWebSocket {
   getState() {
     return this.state;
   }
-
+  get socketState() {
+    return this.socket.readyState;
+  }
   // note it will call the auth
   private assignListeners() {
     this.socket.onerror = function (ev) {
