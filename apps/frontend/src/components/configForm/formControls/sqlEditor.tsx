@@ -47,4 +47,4 @@ const SqlEditor = ({
   );
 };
 
-export { SqlEditor };
+export default SqlEditor;

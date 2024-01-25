@@ -1,4 +1,4 @@
-import { WebloomPixelDimensions } from './interface';
+import { WebloomGridDimensions, WebloomPixelDimensions } from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
   const { top, left, width, height } = el.getBoundingClientRect();
@@ -19,7 +19,16 @@ export const getBoundingRect = (dim: WebloomPixelDimensions) => {
     right: dim.x + dim.width,
   };
 };
-
+export const getGridBoundingRect = (dim: WebloomGridDimensions) => {
+  return {
+    top: dim.row,
+    left: dim.col,
+    width: dim.columnsCount,
+    height: dim.rowsCount,
+    bottom: dim.row + dim.rowsCount,
+    right: dim.col + dim.columnsCount,
+  };
+};
 export function normalizePoint(
   point: [number, number],
   grid: number,
@@ -67,4 +76,54 @@ export function checkOverlap(
   return (
     a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
   );
+}
+export function convertPixelToGrid(
+  dims: WebloomPixelDimensions,
+  grid: [number, number],
+  parentDims: Pick<WebloomPixelDimensions, 'x' | 'y'>,
+): WebloomGridDimensions {
+  return {
+    col: Math.round((dims.x - parentDims.x) / grid[1]),
+    row: Math.round((dims.y - parentDims.y) / grid[0]),
+    columnsCount: Math.round(dims.width / grid[1]),
+    rowsCount: Math.round(dims.height / grid[0]),
+  };
+}
+export function convertGridToPixel(
+  dims: WebloomGridDimensions,
+  grid: [number, number],
+  parentDims: Pick<WebloomPixelDimensions, 'x' | 'y'> = {
+    x: 0,
+    y: 0,
+  },
+): WebloomPixelDimensions {
+  const [gridrow, gridcol] = grid;
+  return {
+    x: dims.col * gridcol + parentDims.x,
+    y: dims.row * gridrow + parentDims.y,
+    width: dims.columnsCount * gridcol,
+    height: dims.rowsCount * gridrow,
+  };
+}
+export function isSameCoords(
+  newCoords: WebloomGridDimensions,
+  node: WebloomGridDimensions,
+) {
+  return (
+    newCoords.row === node.row &&
+    newCoords.col === node.col &&
+    newCoords.columnsCount === node.columnsCount &&
+    newCoords.rowsCount === node.rowsCount
+  );
+}
+export function normalizeCoords(
+  newCoords: Partial<WebloomGridDimensions>,
+  node: WebloomGridDimensions,
+): WebloomGridDimensions {
+  return {
+    row: newCoords.row ?? node.row,
+    col: newCoords.col ?? node.col,
+    columnsCount: newCoords.columnsCount ?? node.columnsCount,
+    rowsCount: newCoords.rowsCount ?? node.rowsCount,
+  };
 }

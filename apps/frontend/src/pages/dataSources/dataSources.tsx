@@ -166,11 +166,14 @@ function DataSourcesView() {
         placeholder="Search"
         type="search"
         onChange={(value) => {
-          setSearchParams((prev) => {
-            const s = new URLSearchParams(prev);
-            s.set('gsearch', value.toString());
-            return s;
-          });
+          setSearchParams(
+            (prev) => {
+              const s = new URLSearchParams(prev);
+              s.set('gsearch', value.toString());
+              return s;
+            },
+            { replace: true },
+          );
         }}
       />
       <ScrollArea className="h-full w-full">
@@ -230,11 +233,14 @@ function WorkspaceDataSourcesView() {
         placeholder="Search"
         type="search"
         onChange={(value) => {
-          setSearchParams((prev) => {
-            const s = new URLSearchParams(prev);
-            s.set('lsearch', value.toString());
-            return s;
-          });
+          setSearchParams(
+            (prev) => {
+              const s = new URLSearchParams(prev);
+              s.set('lsearch', value.toString());
+              return s;
+            },
+            { replace: true },
+          );
         }}
       />
       <ScrollArea className="w-full">
@@ -328,7 +334,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
       <h2 className="ml-2 text-3xl">Data Sources</h2>
       {/** plugins filter*/}
       <ScrollArea className="h-full">
@@ -371,51 +377,51 @@ export function GlobalDataSourcesView() {
 
 export function DataSourceView() {
   const { datasourceId, workspaceId } = useParams();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
     +(datasourceId as string),
   );
-  const { mutate: updateMutate } = api.dataSources.update.useMutation();
-  const onChange: ConfigFormGenricOnChange = (key, value) => {
-    const queryKey = [
-      DATASOURCES_QUERY_KEY,
-      {
-        workspaceId: +(workspaceId as string),
-        dataSourceId: +(datasourceId as string),
-      },
-    ];
-    queryClient.setQueryData<WsDataSourceI>(queryKey, (prev) => {
-      if (!prev) return;
-      return {
-        ...prev,
-        config: {
-          ...prev.config,
-          [key]: value,
-        },
-      };
-    });
-  };
-  const submitUpdate = () => {
-    // any changes made to the options i store them on the react query instance of the datasource
-    // so to send to remote i get new values from react query
-    const queryKey = [
-      DATASOURCES_QUERY_KEY,
-      {
-        workspaceId: +(workspaceId as string),
-        dataSourceId: +(datasourceId as string),
-      },
-    ];
-    const dto = queryClient.getQueryData<WsDataSourceI>(queryKey);
-    if (!dto) return;
-    updateMutate({
-      workspaceId: +(workspaceId as string),
-      dataSourceId: +(datasourceId as string),
-      dto: {
-        config: dto.config,
-      },
-    });
-  };
+  // const { mutate: updateMutate } = api.dataSources.update.useMutation();
+  // const onChange: ConfigFormGenricOnChange = (key, value) => {
+  //   const queryKey = [
+  //     DATASOURCES_QUERY_KEY,
+  //     {
+  //       workspaceId: +(workspaceId as string),
+  //       dataSourceId: +(datasourceId as string),
+  //     },
+  //   ];
+  //   queryClient.setQueryData<WsDataSourceI>(queryKey, (prev) => {
+  //     if (!prev) return;
+  //     return {
+  //       ...prev,
+  //       config: {
+  //         ...prev.config,
+  //         [key]: value,
+  //       },
+  //     };
+  //   });
+  // };
+  // const submitUpdate = () => {
+  //   // any changes made to the options i store them on the react query instance of the datasource
+  //   // so to send to remote i get new values from react query
+  //   const queryKey = [
+  //     DATASOURCES_QUERY_KEY,
+  //     {
+  //       workspaceId: +(workspaceId as string),
+  //       dataSourceId: +(datasourceId as string),
+  //     },
+  //   ];
+  //   const dto = queryClient.getQueryData<WsDataSourceI>(queryKey);
+  //   if (!dto) return;
+  //   updateMutate({
+  //     workspaceId: +(workspaceId as string),
+  //     dataSourceId: +(datasourceId as string),
+  //     dto: {
+  //       config: dto.config,
+  //     },
+  //   });
+  // };
 
   const log = (type: unknown) => console.log.bind(console, type);
 
@@ -440,14 +446,6 @@ export function DataSourceView() {
             onError={log('errors')}
             formData={data.config}
           />
-          {/* <ConfigForm */}
-          {/*   config={data.dataSource.config} */}
-          {/*   itemProps={data.config} */}
-          {/*   onChange={onChange} */}
-          {/* /> */}
-          {/* <Button onClick={submitUpdate} className="w-16"> */}
-          {/*   Save */}
-          {/* </Button> */}
         </div>
       </ScrollArea>
     </div>

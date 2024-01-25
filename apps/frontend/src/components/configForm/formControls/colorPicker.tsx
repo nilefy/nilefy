@@ -15,4 +15,4 @@ const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
   );
 };
 
-export { InspectorColor };
+export default InspectorColor;

@@ -1,26 +1,22 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+// import store from '@/store';
 import { Command } from '../types';
-import { WebloomNode } from '@/lib/Editor/interface';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
-export class ChangePropAction<T extends boolean> implements Command {
+export class ChangePropAction implements Command {
   constructor(
-    private comId: WebloomNode['id'],
-    private updateMeta: T,
-    private key: T extends true ? keyof WebloomNode : string,
+    private comId: WebloomWidget['id'],
+    private key: string,
     private value: unknown,
   ) {}
 
   execute() {
-    if (this.updateMeta === true) {
-      store
-        .getState()
-        .setWidgetMeta(this.comId, this.key as keyof WebloomNode, this.value);
-    } else {
-      store.getState().setProp(this.comId, this.key, this.value);
-    }
+    editorStore.currentPage
+      .getWidgetById(this.comId)
+      .setProp(this.key, this.value);
     return {
       event: 'update' as const,
-      data: [store.getState().tree[this.comId]],
+      data: [editorStore.currentPage.getWidgetById(this.comId).snapshot],
     };
   }
 }

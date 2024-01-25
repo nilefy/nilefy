@@ -1,18 +1,14 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef } from 'react';
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
 import { useWebloomDraggable } from '@/hooks';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import { commandManager } from '@/Actions/CommandManager';
 import { SelectionAction } from '@/Actions/Editor/selection';
-import { DeleteAction } from '@/Actions/Editor/Delete';
 import { cn } from '@/lib/cn';
+import { observer } from 'mobx-react-lite';
 
 type WebloomAdapterProps = {
   id: string;
@@ -22,15 +18,17 @@ type WebloomAdapterProps = {
   resizable?: boolean;
 };
 
-export const WebloomAdapter = (props: WebloomAdapterProps) => {
+export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const { id } = props;
-  const isResizing = store((state) => state.resizedNode === id);
+  const isResizing = editorStore.currentPage.resizedWidgetId === id;
   const { setNodeRef: setDropNodeRef } = useDroppable({
     id: id,
     disabled: !props.droppable,
   });
   const ref = useRef<HTMLDivElement>(null);
-  const elDimensions = store((store) => store.getRelativePixelDimensions(id));
+  const { x, y, width, height } =
+    editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
+
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useWebloomDraggable({
       id,
@@ -65,13 +63,13 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
   }, [setDropNodeRef, setNodeRef, props.draggable, props.droppable]);
   const style = useMemo(() => {
     return {
-      top: elDimensions.y,
-      left: elDimensions.x,
+      top: y,
+      left: x,
       position: 'absolute',
-      width: elDimensions.width,
-      height: elDimensions.height,
+      width: width,
+      height: height,
     } as React.CSSProperties;
-  }, [elDimensions.x, elDimensions.y, elDimensions.width, elDimensions.height]);
+  }, [x, y, width, height]);
   if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
     return (
       <div
@@ -87,48 +85,35 @@ export const WebloomAdapter = (props: WebloomAdapterProps) => {
     );
   }
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div
-          key={'adapter' + id}
-          {...modListeners}
-          {...attributes}
-          style={style}
-          ref={ref}
-          className="target relative touch-none overflow-hidden outline-none"
-          data-id={id}
-        >
+    <div
+      key={'adapter' + id}
+      {...modListeners}
+      {...attributes}
+      style={style}
+      ref={ref}
+      className="target relative touch-none overflow-hidden outline-none"
+      data-id={id}
+    >
+      {
+        //this is to prevent widgets from capturing focus when drag is happening
+        !!active && (
+          <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+        )
+      }
+      <div
+        key={id}
+        className={cn(
           {
-            //this is to prevent widgets from capturing focus when drag is happening
-            !!active && (
-              <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
-            )
-          }
-          <div
-            key={id}
-            className={cn(
-              {
-                hidden: isDragging || isResizing,
-              },
-              {
-                flex: !isDragging && !isResizing,
-              },
-              'w-full h-full',
-            )}
-          >
-            {props.children}
-          </div>
-        </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          onMouseDown={() => {
-            commandManager.executeCommand(new DeleteAction());
-          }}
-        >
-          Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+            hidden: isDragging || isResizing,
+          },
+          {
+            flex: !isDragging && !isResizing,
+          },
+          'w-full h-full',
+        )}
+      >
+        {props.children}
+      </div>
+    </div>
   );
-};
+});

@@ -20,6 +20,11 @@ export const addQuerySchema = queryDb.pick({
 
 export const updateQuerySchema = addQuerySchema.partial();
 
+export const runQueryBody = z.object({
+  evaluatedConfig: z.record(z.string(), z.unknown()),
+});
+export type RunQueryBody = z.infer<typeof runQueryBody>;
+
 export type AddQueryDto = z.infer<typeof addQuerySchema>;
 export type UpdateQueryDto = z.infer<typeof updateQuerySchema>;
 export type QueryDto = z.infer<typeof querySchema>;

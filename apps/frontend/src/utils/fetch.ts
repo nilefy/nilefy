@@ -7,7 +7,8 @@ const baseUrl = 'http://localhost:3000/';
  */
 export async function fetchX(...args: Parameters<typeof fetch>) {
   const [url, init] = args;
-  const res = await fetch(`${baseUrl}${url}`, {
+  const endpoint = new URL(url as string | URL, baseUrl);
+  const res = await fetch(endpoint, {
     ...init,
     headers: {
       Authorization: `Bearer ${getToken()}` ?? '',

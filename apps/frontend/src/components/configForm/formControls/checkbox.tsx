@@ -27,4 +27,4 @@ const InspectorCheckBox = (
   );
 };
 
-export { InspectorCheckBox };
+export default InspectorCheckBox;

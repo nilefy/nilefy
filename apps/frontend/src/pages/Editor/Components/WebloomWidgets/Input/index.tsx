@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
+import { observer } from 'mobx-react-lite';
+import { editorStore } from '@/lib/Editor/Models';
 
 export type WebloomInputProps = Pick<
   ComponentPropsWithoutRef<typeof Input>,
@@ -14,9 +16,11 @@ export type WebloomInputProps = Pick<
   type: 'text' | 'password';
 };
 
-const WebloomInput = (props: WebloomInputProps) => {
-  const { label, ...rest } = props;
-  const { onPropChange } = useContext(WidgetContext);
+const WebloomInput = observer(() => {
+  const { onPropChange, id } = useContext(WidgetContext);
+  const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
+    .evaluatedProps as WebloomInputProps;
+
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
@@ -31,7 +35,7 @@ const WebloomInput = (props: WebloomInputProps) => {
       />
     </div>
   );
-};
+});
 const config: WidgetConfig = {
   name: 'Input',
   icon: <TextCursorInput />,

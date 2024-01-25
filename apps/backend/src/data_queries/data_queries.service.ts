@@ -20,6 +20,7 @@ export class DataQueriesService {
     workspaceId: WorkspaceDto['id'],
     appId: QueryDto['appId'],
     queryId: QueryDto['id'],
+    evaluatedQuery: Record<string, unknown>,
   ): Promise<QueryRet> {
     const query = await this.getQuery(appId, queryId);
     const ds = await this.dataSourcesService.getOne(
@@ -27,7 +28,10 @@ export class DataQueriesService {
       query.dataSourceId,
     );
     const service = await this.getService(ds.dataSource.name);
-    return await service.run(ds.config, query);
+    return await service.run(ds.config, {
+      name: query.name,
+      query: evaluatedQuery,
+    });
   }
 
   async addQuery(query: QueryDb): Promise<QueryDto> {

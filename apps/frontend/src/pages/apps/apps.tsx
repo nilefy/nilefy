@@ -1,3 +1,4 @@
+import { matchSorter } from 'match-sorter';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,6 @@ import { useForm } from 'react-hook-form';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -47,12 +47,60 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api } from '@/api';
-import { Link, NavLink, useParams } from 'react-router-dom';
+import {
+  Await,
+  Link,
+  defer,
+  redirect,
+  useAsyncError,
+  useAsyncValue,
+  useLoaderData,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
-import { APPS_QUERY_KEY, AppI, AppMetaT, appMetaSchema } from '@/api/apps.api';
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  APPS_QUERY_KEY,
+  AppI,
+  AppMetaT,
+  AppsIndexRet,
+  appMetaSchema,
+  useAppQuery,
+  useAppsQuery,
+} from '@/api/apps.api';
+import { Suspense, useMemo, useState } from 'react';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import { getToken, removeToken } from '@/lib/token.localstorage';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from '@/types/auth.types';
+import { WebloomLoader } from '@/components/loader';
+import { FetchXError } from '@/utils/fetch';
+import { DebouncedInput } from '@/components/debouncedInput';
+
+export const appsLoader =
+  (queryClient: QueryClient) =>
+  async ({ params }: { params: Record<string, string | undefined> }) => {
+    // as this loader runs before react renders we need to check for token first
+    const token = getToken();
+    if (!token) {
+      return redirect('/signin');
+    } else {
+      // check is the token still valid
+      // Decode the token
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        removeToken();
+        return redirect('/signin');
+      }
+      const query = useAppsQuery({
+        workspaceId: +(params.workspaceId as string),
+      });
+      return defer({
+        apps: queryClient.fetchQuery(query),
+      });
+    }
+  };
 
 function AppDropDown(props: { app: AppI }) {
   const [open, setOpen] = useState<boolean>(false);
@@ -287,27 +335,43 @@ function CreateAppDialog() {
   );
 }
 
-function ApplicationsView() {
-  const { workspaceId } = useParams();
-  const apps = api.apps.index.useQuery(+(workspaceId as string));
-
-  if (apps.isError) {
-    throw apps.error;
-  } else if (apps.isPending) {
-    return <>loading</>;
-  }
+function AppsLoadError() {
+  const error = useAsyncError() as FetchXError;
   return (
-    <div className="flex h-full w-full flex-col gap-5 p-6">
-      <Input
+    <div className="h-screen w-screen content-center items-center text-red-500">
+      errors while loading app &quot;{error.message}&quot;
+    </div>
+  );
+}
+
+function ApplicationsViewResolved() {
+  const { workspaceId } = useParams();
+  const [appsQuery, setAppsQuery] = useState('');
+  const { data } = api.apps.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
+  const apps = data as NonNullable<typeof data>;
+  const filteredApps = useMemo(() => {
+    return matchSorter(apps, appsQuery, {
+      keys: ['name'],
+    });
+  }, [apps, appsQuery]);
+
+  return (
+    <div className="flex h-full w-full flex-col gap-5 p-6 pr-0">
+      <DebouncedInput
+        value={appsQuery}
+        placeholder="Search apps in this workspace"
         type="search"
-        placeholder="search apps in this workspace"
-        className="w-full"
+        onChange={(value) => {
+          setAppsQuery(value.toString());
+        }}
       />
-      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto">
-        {apps.data.map((app) => (
+      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+        {filteredApps.map((app) => (
           <Card
             key={app.id}
-            className="h-fit min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400"
+            className="h-fit min-w-[90%] max-w-[90%]   hover:cursor-pointer hover:border  hover:border-blue-400 md:min-w-[45%]  md:max-w-[45%] lg:min-w-[30%] lg:max-w-[30%]"
           >
             <CardHeader className="flex flex-col">
               <div className="flex w-full justify-between">
@@ -341,6 +405,18 @@ function ApplicationsView() {
         ))}
       </div>
     </div>
+  );
+}
+
+function ApplicationsView() {
+  const { apps } = useLoaderData();
+
+  return (
+    <Suspense fallback={<WebloomLoader />}>
+      <Await resolve={apps} errorElement={<AppsLoadError />}>
+        <ApplicationsViewResolved />
+      </Await>
+    </Suspense>
   );
 }
 

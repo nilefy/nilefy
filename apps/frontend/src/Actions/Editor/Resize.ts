@@ -1,7 +1,9 @@
-import store, { handleParentCollisions } from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+import { handleParentCollisions } from '@/lib/Editor/collisions';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@/lib/Editor/constants';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand } from '../types';
@@ -13,14 +15,7 @@ type CornerResizingKeys =
   | 'bottom-left'
   | 'bottom-right';
 type ResizingKeys = MainResizingKeys | CornerResizingKeys;
-const {
-  moveNodeIntoGrid,
-  getGridSize,
-  setDimensions,
-  resizeCanvas,
-  getPixelDimensions,
-  getBoundingRect,
-} = store.getState();
+
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;
   private static direction: MainResizingKeys[];
@@ -47,26 +42,29 @@ class ResizeAction {
     this.id = id;
     this.resizingKey = key;
     this.direction = key.split('-') as MainResizingKeys[];
-    const positionsSnapshot = Object.entries(store.getState().tree).reduce(
-      (acc, node) => {
-        if (node[0] === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
+    const positionsSnapshot = editorStore.currentPage
+      .snapshotWidgets()
+      .reduce((acc, node) => {
+        if (node.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
         return {
           ...acc,
-          [node[0]]: {
-            col: node[1].col,
-            row: node[1].row,
-            columnsCount: node[1].columnsCount,
-            rowsCount: node[1].rowsCount,
+          [node.id]: {
+            col: node.col,
+            row: node.row,
+            columnsCount: node.columnsCount,
+            rowsCount: node.rowsCount,
           },
         };
-      },
-      {},
-    );
+      }, {});
+
     this.orginalPositions = positionsSnapshot;
-    this.initialGridPosition = store.getState().getGridDimensions(id);
+    this.initialGridPosition =
+      editorStore.currentPage.getWidgetById(id).gridDimensions;
     this.initialDimensions = dimensions;
-    store.getState().setResizedNode(id);
-    store.getState().setShadowElement(store.getState().getPixelDimensions(id));
+    editorStore.currentPage.setResizedWidgetId(id);
+    editorStore.currentPage.setShadowElement(
+      editorStore.currentPage.getWidgetById(id).pixelDimensions,
+    );
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -77,6 +75,7 @@ class ResizeAction {
       },
     };
   }
+
   private static calculateNewDimensions(
     mousePosition: Point,
     id: string,
@@ -90,7 +89,7 @@ class ResizeAction {
     resizingKey: ResizingKeys | null,
   ) {
     if (resizingKey === null) return;
-    const root = store.getState().tree[EDITOR_CONSTANTS.ROOT_NODE_ID];
+    const root = editorStore.currentPage.rootWidget;
     if (!root.dom) return;
 
     const { width: initialWidth, height: initialHeight } = initialDimensions;
@@ -106,9 +105,9 @@ class ResizeAction {
     const rect = root.dom.getBoundingClientRect();
     x -= rect.left;
     y -= rect.top; // -> so that we get the mousePos relative to the root element
-    const node = store.getState().tree[id];
+    const node = editorStore.currentPage.getWidgetById(id);
 
-    const [gridRow, gridCol] = getGridSize(id);
+    const [gridRow, gridCol] = node.gridSize;
     const minWidth = gridCol * 2;
     const minHeight = gridRow * 10;
     if (direction.includes('top')) {
@@ -147,7 +146,7 @@ class ResizeAction {
     }
 
     //width = rowsCount * rowSize -> rowsCount = width/rowSize
-    const parent = store.getState().getPixelDimensions(node.parent);
+    const parent = node.parent.pixelDimensions;
     newLeft -= parent.x;
     newTop -= parent.y;
     const colCount = Math.round(newWidth / gridCol);
@@ -177,17 +176,19 @@ class ResizeAction {
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
     const newCollisions = this._resize(this.id, dims);
-    store
-      .getState()
-      .setShadowElement(store.getState().getPixelDimensions(this.id));
+    editorStore.currentPage.setShadowElement(
+      editorStore.currentPage.getWidgetById(this.id).pixelDimensions,
+    );
+
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
     // filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
+      const tempWidget = editorStore.currentPage.getWidgetById(id);
       if (
-        pos.row === store.getState().tree[id].row &&
-        pos.rowsCount === store.getState().tree[id].rowsCount
+        pos.row === tempWidget.row &&
+        pos.rowsCount === tempWidget.rowsCount
       ) {
         this.collidingNodes.delete(id);
       }
@@ -225,7 +226,7 @@ class ResizeAction {
     this.collidingNodes.forEach((id) => {
       if (id === this.id) return;
       const pos = this.orginalPositions[id];
-      setDimensions(id, pos);
+      editorStore.currentPage.getWidgetById(id).setDimensions(pos);
     });
   }
 
@@ -235,13 +236,11 @@ class ResizeAction {
   ) {
     if (!id) return;
 
-    const node = store.getState().tree[id];
+    const node = editorStore.currentPage.getWidgetById(id);
     if (!node) return;
-    if (node.isCanvas) {
-      resizeCanvas(id, initialGridPosition);
-      return;
-    }
-    setDimensions(id, initialGridPosition);
+    editorStore.currentPage
+      .getWidgetById(id)
+      .setDimensions(initialGridPosition);
   }
 
   public static end(mousePos: Point): UndoableCommand | null {
@@ -263,19 +262,20 @@ class ResizeAction {
       direction,
       key,
     );
-    store.getState().setResizedNode(null);
-    store.getState().setShadowElement(null);
+    editorStore.currentPage.setResizedWidgetId(null);
+    editorStore.currentPage.setShadowElement(null);
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
         this._resize(id, dims!);
         // return means data will be send to the server
         const updates = [
-          store.getState().tree[id],
+          editorStore.currentPage.getWidgetById(id).snapshot,
           ...undoData
             .filter((test) => test.id !== id)
-            .map((k) => store.getState().tree[k.id]),
+            .map((k) => editorStore.currentPage.getWidgetById(k.id).snapshot),
         ];
+
         return {
           event: 'update' as const,
           data: updates,
@@ -284,7 +284,7 @@ class ResizeAction {
       undo: () => {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
-          setDimensions(data.id, data);
+          editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
         });
       },
     };
@@ -315,8 +315,7 @@ class ResizeAction {
     }>,
   ) {
     const collidedNodes = [];
-    const tree = store.getState().tree;
-    const node = tree[id];
+    const node = editorStore.currentPage.getWidgetById(id);
     if (!node) return [];
 
     let dims = {
@@ -347,12 +346,13 @@ class ResizeAction {
     // }
     dims = handleParentCollisions(
       dims,
-      getPixelDimensions(node.parent),
-      getBoundingRect(node.parent),
-      getGridSize(id),
+      node.parent.pixelDimensions,
+      node.parent.boundingRect,
+      editorStore.currentPage.getWidgetById(id).gridSize,
       false,
     );
-    const orgCoords = moveNodeIntoGrid(id, dims);
+
+    const orgCoords = editorStore.currentPage.moveWidgetIntoGrid(id, dims);
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }

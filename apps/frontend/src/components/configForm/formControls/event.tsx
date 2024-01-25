@@ -13,15 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import store from '../../../store/index';
-import React, { useState } from 'react';
-import { InspectorInput } from './input';
 import { Input } from '@/components/ui/input';
 
 function InspectorEventManger() {
-  const tree = store((state) => state.tree);
-  const [selectedComponent, setSelectedComponent] = useState('');
-  console.log(tree);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>onClick</DropdownMenuTrigger>
@@ -55,7 +49,7 @@ function InspectorEventManger() {
         <DropdownMenuLabel>Action Options</DropdownMenuLabel>
         <DropdownMenuItem>
           <p>Component</p>
-          <Select
+          {/* <Select
             value={selectedComponent}
             onValueChange={(e) => {
               setSelectedComponent(e);
@@ -65,13 +59,15 @@ function InspectorEventManger() {
               <SelectValue placeholder="Theme" />
             </SelectTrigger>
             <SelectContent>
-              {Object.values(tree).map((node) => (
-                <SelectItem value={node.id} key={node.id}>
-                  {node.name}
-                </SelectItem>
-              ))}
+              {Object.values(tree)
+                .filter((node) => node.id !== EDITOR_CONSTANTS.ROOT_NODE_ID)
+                .map((node) => (
+                  <SelectItem value={node.id} key={node.id}>
+                    {node.id}
+                  </SelectItem>
+                ))}
             </SelectContent>
-          </Select>
+          </Select> */}
         </DropdownMenuItem>
         <DropdownMenuItem>
           <p>Action</p>

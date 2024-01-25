@@ -23,6 +23,8 @@ export const FormContext = createContext<{
 }>({} as any);
 export const FormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
+  id?: string;
+  toProperty?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }>({} as any);
 export const FormSectionView = (props: {

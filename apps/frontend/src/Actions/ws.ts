@@ -13,10 +13,19 @@ export class WebloomWebSocket {
     this.assignListeners();
   }
 
+  /**
+   *Note: The process of closing the connection begins with a closing handshake, and the close() method does not discard previously-sent messages before starting that closing handshake; even if the user agent is still busy sending those messages, the handshake will only start after the messages are sent.
+   */
+  public closeConnection() {
+    this.socket.close();
+  }
+
   getState() {
     return this.state;
   }
-
+  get socketState() {
+    return this.socket.readyState;
+  }
   // note it will call the auth
   private assignListeners() {
     this.socket.onerror = function (ev) {
@@ -53,7 +62,7 @@ export class WebloomWebSocket {
     if (msg === 'ok authed') {
       this.state = 'connected';
       console.log('authed');
-    } else if (msg === 'bitch get out') {
+    } else if (msg === 'get out') {
       this.state = 'not-authed';
       console.log("couldn't auth");
     } else {

@@ -1,11 +1,11 @@
-import store, { WebloomState } from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
+import { WebloomPage } from '@/lib/Editor/Models/page';
+import { observer } from 'mobx-react-lite';
 
-const { getBoundingRect } = store.getState();
-
-function calcBoundingRect(
-  els: WebloomState['selectedNodeIds'],
-): ReturnType<typeof getBoundingRect> {
-  const dims = [...els].map((id) => getBoundingRect(id));
+function calcBoundingRect(els: WebloomPage['selectedNodeIds']) {
+  const dims = [...els].map(
+    (id) => editorStore.currentPage.getWidgetById(id).boundingRect,
+  );
   const res = {
     top: Math.min(...dims.map((i) => i.top)),
     left: Math.min(...dims.map((i) => i.left)),
@@ -19,8 +19,10 @@ function calcBoundingRect(
   return res;
 }
 
-export function MultiSelectBounding() {
-  const selectedIds = store((state) => state.selectedNodeIds);
+export const MultiSelectBounding = observer(() => {
+  const selectedIds = editorStore.currentPage.selectedNodeIds;
+  // const selectedIds = store((state) => state.selectedNodeIds);
+
   if (selectedIds.size < 2) return null;
   const boundingRect = calcBoundingRect(selectedIds);
 
@@ -72,4 +74,4 @@ export function MultiSelectBounding() {
       ></div>
     </>
   );
-}
+});

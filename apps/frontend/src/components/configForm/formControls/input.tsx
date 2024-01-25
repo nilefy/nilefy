@@ -19,4 +19,4 @@ const InspectorInput = (props: InspectorInputProps & BaseControlProps) => {
   );
 };
 
-export { InspectorInput };
+export default InspectorInput;

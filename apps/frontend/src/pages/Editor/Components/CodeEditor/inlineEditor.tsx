@@ -1,5 +1,4 @@
 import {
-  autocompletion,
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,

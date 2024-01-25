@@ -20,6 +20,8 @@ import {
   QueryDto,
   updateQuerySchema,
   UpdateQueryDto,
+  runQueryBody,
+  RunQueryBody,
 } from '../dto/data_queries.dto';
 import { QueryRet } from './query.types';
 import { WorkspaceDto } from '../dto/workspace.dto';
@@ -31,12 +33,19 @@ export class DataQueriesController {
 
   @Post('run/:queryId')
   async runQuery(
-    @Param('appId', ParseIntPipe) appId: number,
-    @Param('queryId', ParseIntPipe) queryId: number,
     @Param('workspaceId', ParseIntPipe)
     workspaceId: WorkspaceDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('queryId', ParseIntPipe) queryId: number,
+    // any query should send its evaluated config
+    @Body(new ZodValidationPipe(runQueryBody)) query: RunQueryBody,
   ): Promise<QueryRet> {
-    return await this.dataQueriesService.runQuery(workspaceId, appId, queryId);
+    return await this.dataQueriesService.runQuery(
+      workspaceId,
+      appId,
+      queryId,
+      query.evaluatedConfig,
+    );
   }
 
   @Post('add')

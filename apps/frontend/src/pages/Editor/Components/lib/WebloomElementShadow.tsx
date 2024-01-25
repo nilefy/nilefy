@@ -1,9 +1,11 @@
-import store from '@/store';
-export const WebloomElementShadow = () => {
-  const shadow = store((state) => state.shadowElement);
+import { editorStore } from '@/lib/Editor/Models';
+import { observer } from 'mobx-react-lite';
+
+export const WebloomElementShadow = observer(() => {
+  const shadow = editorStore.currentPage.shadowElement;
   if (!shadow) return null;
   return <ElementShadow {...shadow} />;
-};
+});
 
 function ElementShadow({
   width,

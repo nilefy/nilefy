@@ -1,12 +1,19 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
+import { observer } from 'mobx-react-lite';
+import { useContext } from 'react';
+import { WidgetContext } from '../..';
+import { editorStore } from '@/lib/Editor/Models';
 export type WebloomTextProps = {
   text: string;
 };
-const WebloomText = (props: WebloomTextProps) => {
+const WebloomText = observer(() => {
+  const { id } = useContext(WidgetContext);
+  const props = editorStore.currentPage.getWidgetById(id)
+    .evaluatedProps as WebloomTextProps;
   return <span className="h-full w-full break-all">{props.text}</span>;
-};
+});
 const config: WidgetConfig = {
   name: 'Text',
   icon: <Type />,

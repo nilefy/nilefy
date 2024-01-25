@@ -5,12 +5,12 @@ import zodToJsonSchema from 'zod-to-json-schema';
 export const configSchema = z.object({
   user: z.string(),
   host: z.string(),
-  port: z.number(),
+  port: z.number().default(5432),
   database: z.string(),
   password: z.string(),
-  ssl: z.boolean(),
-  sslCertificate: z.string(),
-  connectionOptions: z.string(),
+  ssl: z.boolean().default(false),
+  sslCertificate: z.string().optional(),
+  connectionOptions: z.string().optional(),
 });
 
 export const querySchema = z.object({

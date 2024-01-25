@@ -32,6 +32,8 @@ import React, { useContext } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
+import { editorStore } from '@/lib/Editor/Models';
+import { observer } from 'mobx-react-lite';
 //Types
 type RowData = Record<string, unknown>;
 
@@ -67,7 +69,11 @@ const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
   });
 };
 
-const WebloomTable = (props: WebloomTableProps) => {
+const WebloomTable = observer(() => {
+  const { onPropChange, id } = useContext(WidgetContext);
+
+  const props = editorStore.currentPage.getWidgetById(id)
+    .evaluatedProps as WebloomTableProps;
   const {
     data,
     columns,
@@ -75,7 +81,6 @@ const WebloomTable = (props: WebloomTableProps) => {
     isSearchEnabled,
     isPaginationEnabled,
   } = props;
-  const { onPropChange } = useContext(WidgetContext);
   //  to run only once when the component is mounted
   React.useEffect(() => {
     if (props.columns.length > 0) {
@@ -280,7 +285,7 @@ const WebloomTable = (props: WebloomTableProps) => {
       )}
     </div>
   );
-};
+});
 
 const config: WidgetConfig = {
   name: 'Table',

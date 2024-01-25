@@ -5,14 +5,15 @@ import {
   PgTrans,
 } from '../drizzle/drizzle.provider';
 import { PageDto } from '../dto/pages.dto';
-import { WebloomTree } from '../dto/apps.dto';
 import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
   CreateComponentDb,
   UpdateComponentDb,
+  WebloomTree,
 } from '../dto/components.dto';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 @Injectable()
 export class ComponentsService {
@@ -46,7 +47,7 @@ export class ComponentsService {
         and(
           eq(components.pageId, pageId),
           inArray(components.id, componentIds),
-          ne(components.name, 'ROOT'),
+          ne(components.id, EDITOR_CONSTANTS.ROOT_NODE_ID),
         ),
       )
       .returning({ id: components.id });
@@ -79,15 +80,15 @@ export class ComponentsService {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
-      SELECT id, name, parent_id as "parent", is_canvas as "isCanvas", props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level 
+      SELECT id, parent_id as "parentId",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id 
         FROM ${components}
-       WHERE ${and(isNull(components.parent), eq(components.pageId, pageId))}
+       WHERE ${and(isNull(components.parentId), eq(components.pageId, pageId))}
     UNION ALL 
     -- recursive
-      SELECT t.id, t.name, t.parent_id as "parent", t.is_canvas as "isCanvas", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level
+      SELECT t.id, t.parent_id as "parentId", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level, t.page_id
         FROM components as t
         JOIN rectree
-          ON t.parent_id = rectree.id
+          ON t.parent_id = rectree.id and t.page_id = rectree.page_id
     ) 
   SELECT * FROM rectree
   order by level;
@@ -96,11 +97,10 @@ export class ComponentsService {
     const tree: WebloomTree = {};
     rows.forEach((row) => {
       tree[row.id] = {
-        id: row.id.toString(),
-        name: row.name,
+        id: row.id,
         nodes: [],
-        parent: row.parent?.toString() ?? row.id.toString(),
-        isCanvas: row.isCanvas ?? undefined,
+        // set root node as parent of itself
+        parentId: row.parentId ?? row.id,
         props: row.props,
         type: row.type,
         col: row.col,
@@ -110,7 +110,7 @@ export class ComponentsService {
         columnWidth: 0,
       };
       if (row.level > 1) {
-        tree[row.parent!.toString()]['nodes'].push(row.id.toString());
+        tree[row.parentId!.toString()]['nodes'].push(row.id.toString());
       }
     });
     return tree;

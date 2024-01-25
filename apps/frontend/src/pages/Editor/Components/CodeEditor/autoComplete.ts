@@ -1,4 +1,4 @@
-import store from '@/store';
+import { editorStore } from '@/lib/Editor/Models';
 import {
   Completion,
   CompletionContext,
@@ -83,18 +83,8 @@ function webloomCompletions(context: CompletionContext) {
   // If completion wasn't explicitly started and there
   // is no word before the cursor, don't open completions.
   if (!context.explicit && !before) return null;
-  const tree = store.getState().tree;
   // very naive implementation of the completion till we implement the real one
-  const autoCompleteObject = {
-    widgets: Object.keys(tree).reduce((acc, key) => {
-      return {
-        ...acc,
-        [key]: {
-          ...tree[key].props,
-        },
-      };
-    }, {}),
-  };
+  const autoCompleteObject = editorStore.currentPage.context;
 
   const result = scopeCompletionSource(autoCompleteObject)(context);
   return result;
