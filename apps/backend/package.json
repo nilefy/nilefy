@@ -36,7 +36,6 @@
     "@nestjs/platform-ws": "^10.2.10",
     "@nestjs/swagger": "^7.1.16",
     "@nestjs/websockets": "^10.2.10",
-    "@webloom/configpaneltypes": "workspace:*",
     "@webloom/data-sources": "workspace:*",
     "@webloom/permissions": "workspace:*",
     "bcrypt": "^5.1.1",
