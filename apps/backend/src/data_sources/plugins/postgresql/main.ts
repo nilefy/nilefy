@@ -1,6 +1,6 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
-import { ConfigT, QueryT } from './types';
+import { configSchema, ConfigT, QueryT } from './types';
 import { Pool, PoolConfig } from 'pg';
 
 export default class PostgresqlQueryService
@@ -10,9 +10,9 @@ export default class PostgresqlQueryService
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
-    const pool = this.connect(dataSourceConfig);
-
     try {
+      configSchema.parse(dataSourceConfig);
+      const pool = this.connect(dataSourceConfig);
       const res = await pool.query(query.query.query);
       return {
         status: 200,
@@ -22,7 +22,7 @@ export default class PostgresqlQueryService
       return {
         status: 500,
         data: {},
-        error,
+        error: (error as Error).message,
       };
     }
   }
