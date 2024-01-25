@@ -1,3 +1,4 @@
+import { matchSorter } from 'match-sorter';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ import {
   useAsyncValue,
   useLoaderData,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import {
@@ -66,7 +68,7 @@ import {
   useAppQuery,
   useAppsQuery,
 } from '@/api/apps.api';
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { getToken, removeToken } from '@/lib/token.localstorage';
@@ -74,6 +76,7 @@ import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
 import { WebloomLoader } from '@/components/loader';
 import { FetchXError } from '@/utils/fetch';
+import { DebouncedInput } from '@/components/debouncedInput';
 
 export const appsLoader =
   (queryClient: QueryClient) =>
@@ -340,21 +343,35 @@ function AppsLoadError() {
     </div>
   );
 }
+
 function ApplicationsViewResolved() {
-  const apps = useAsyncValue() as AppsIndexRet;
+  const { workspaceId } = useParams();
+  const [appsQuery, setAppsQuery] = useState('');
+  const { data } = api.apps.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
+  const apps = data as NonNullable<typeof data>;
+  const filteredApps = useMemo(() => {
+    return matchSorter(apps, appsQuery, {
+      keys: ['name'],
+    });
+  }, [apps, appsQuery]);
 
   return (
-    <div className="flex h-full w-full flex-col gap-5 p-6">
-      <Input
+    <div className="flex h-full w-full flex-col gap-5 p-6 pr-0">
+      <DebouncedInput
+        value={appsQuery}
+        placeholder="Search apps in this workspace"
         type="search"
-        placeholder="search apps in this workspace"
-        className="w-full"
+        onChange={(value) => {
+          setAppsQuery(value.toString());
+        }}
       />
-      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto">
-        {apps.map((app) => (
+      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+        {filteredApps.map((app) => (
           <Card
             key={app.id}
-            className="h-fit min-w-[33%] max-w-[33%] hover:cursor-pointer hover:border hover:border-blue-400"
+            className="h-fit min-w-[90%] max-w-[90%]   hover:cursor-pointer hover:border  hover:border-blue-400 md:min-w-[45%]  md:max-w-[45%] lg:min-w-[30%] lg:max-w-[30%]"
           >
             <CardHeader className="flex flex-col">
               <div className="flex w-full justify-between">
