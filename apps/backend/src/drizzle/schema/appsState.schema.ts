@@ -52,6 +52,9 @@ export const pages = pgTable(
 export const components = pgTable(
   'components',
   {
+    /**
+     * id now act as name as well as id
+     */
     id: text('id').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb

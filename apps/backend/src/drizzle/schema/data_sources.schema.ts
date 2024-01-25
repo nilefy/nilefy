@@ -23,9 +23,15 @@ export const dataSources = pgTable('data_sources', {
   name: varchar('name', { length: 100 }).notNull(),
   description: varchar('description', { length: 255 }),
   image: varchar('image_url'),
+  /**
+   * jsonschema for datasource configuration
+   */
   config: json('config')
     .default(sql`'{}'::json`)
     .notNull(),
+  /**
+   * jsonschema for datasource's query configuration
+   */
   queryConfig: json('query_config')
     .default(sql`'{}'::json`)
     .notNull(),
@@ -42,6 +48,9 @@ export const workspaceDataSources = pgTable(
     dataSourceId: integer('data_source_id')
       .references(() => dataSources.id)
       .notNull(),
+    /**
+     * datasource configuration(evaluated, there will be no expressions in datasource config)
+     */
     config: json('config')
       .$type<Record<string, unknown>>()
       .default(sql`'{}'::json`)
@@ -64,6 +73,9 @@ export const queries = pgTable(
   {
     id: serial('id').primaryKey(),
     name: varchar('query_name', { length: 100 }).notNull(),
+    /**
+     * query **un-evaluated** configuration(cannot run query with this config, needs to get evaluated config from front-end)
+     */
     query: json('query').$type<Record<string, unknown>>().notNull(),
     appId: integer('app_id')
       .references(() => apps.id)

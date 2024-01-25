@@ -58,12 +58,6 @@ const router = createBrowserRouter([
           {
             path: '',
             element: <ApplicationsLayout />,
-            children: [
-              {
-                path: 'editor',
-                element: <App />,
-              },
-            ],
           },
           // {
           //   path: 'database',

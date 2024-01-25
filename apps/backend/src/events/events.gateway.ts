@@ -94,9 +94,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       sideEffects: UpdateNodePayload;
     },
   ) {
+    // TODO: is there a middleware concept in ws
     const user = socket.user;
     if (user === null) {
-      socket.send('bitch send auth first');
+      socket.send('need send auth first');
       socket.close();
       return;
     }
