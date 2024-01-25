@@ -1,6 +1,7 @@
-import { WebloomTree } from '@/store';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { fetchX } from '@/utils/fetch';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -108,6 +109,10 @@ async function index({ workspaceId }: { workspaceId: number }) {
     createdBy: UserMetaI;
   })[];
 }
+type WebloomTree = Record<
+  string,
+  InstanceType<typeof WebloomWidget>['snapshot']
+>;
 
 export type AppCompleteT = AppI & {
   pages: PageI[];
@@ -138,12 +143,20 @@ function useApps(workspaceId: number) {
 export const useAppQuery = ({
   workspaceId,
   appId,
+  onSuccess,
 }: {
   workspaceId: number;
   appId: number;
-}) => ({
-  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
-  queryFn: async () => await one({ workspaceId, appId }),
+  onSuccess?: (data: AppCompleteT) => void;
+}): UndefinedInitialDataOptions<AppCompleteT, Error, AppCompleteT> => ({
+  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }, onSuccess],
+  queryFn: async () => {
+    const data = await one({ workspaceId, appId });
+    if (onSuccess) {
+      onSuccess(data);
+    }
+    return data;
+  },
   staleTime: 0,
 });
 

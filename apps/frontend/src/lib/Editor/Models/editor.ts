@@ -24,6 +24,7 @@ export class EditorState {
     pages: WebloomPage[];
     currentPageId: string;
   }>) {
+    console.log('init');
     pages.forEach((page) => {
       this.pages[page.id] = page;
     });

@@ -65,17 +65,17 @@ const router = createBrowserRouter([
               },
             ],
           },
-          {
-            path: 'database',
-            element: <DatabaseTable />,
-            errorElement: <ErrorPage />,
-            children: [
-              {
-                path: ':tableId',
-                element: <SelectDb />,
-              },
-            ],
-          },
+          // {
+          //   path: 'database',
+          //   element: <DatabaseTable />,
+          //   errorElement: <ErrorPage />,
+          //   children: [
+          //     {
+          //       path: ':tableId',
+          //       element: <SelectDb />,
+          //     },
+          //   ],
+          // },
           {
             path: 'datasources/:datasourceId',
             element: <DataSourceView />,

@@ -1,6 +1,13 @@
 import Selecto from 'react-selecto';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef, Suspense, useCallback } from 'react';
+import {
+  useEffect,
+  useRef,
+  Suspense,
+  useCallback,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
@@ -29,7 +36,14 @@ import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
+import {
+  Await,
+  defer,
+  redirect,
+  useAsyncError,
+  useAsyncValue,
+  useLoaderData,
+} from 'react-router-dom';
 import { QueryClient } from '@tanstack/react-query';
 import { getToken, removeToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
@@ -42,6 +56,7 @@ import { QueryPanel } from '@/components/queryPanel';
 import { seedNameMap } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
+import { FetchXError } from '@/utils/fetch';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -91,6 +106,22 @@ export const appLoader =
       const query = useAppQuery({
         workspaceId: +(params.workspaceId as string),
         appId: +(params.appId as string),
+        // onSuccess(app) {
+        //   // connect to ws
+        //   commandManager.connectToEditor(app.id, app.defaultPage.id);
+        //   const tree = app.defaultPage.tree;
+        //   seedNameMap(Object.values(tree));
+        //   editorStore.init({
+        //     currentPageId: app.defaultPage.id.toString(),
+        //     pages: [
+        //       new WebloomPage({
+        //         id: app.defaultPage.id.toString(),
+        //         widgets: tree,
+        //         queries: {},
+        //       }),
+        //     ],
+        //   });
+        // },
       });
       return defer({
         app: queryClient.fetchQuery(query),
@@ -313,30 +344,52 @@ export const Editor = observer(() => {
   );
 });
 
+function AppLoadError() {
+  const error = useAsyncError() as FetchXError;
+  return (
+    <div className="h-screen w-screen content-center items-center text-red-500">
+      errors while loading app &quot;{error.message}&quot;
+    </div>
+  );
+}
+
+const AppResolved = observer(function AppResolved() {
+  const [flag, setFlag] = useState(false);
+  const app = useAsyncValue() as AppCompleteT;
+  const tree = app.defaultPage.tree;
+  seedNameMap(Object.values(tree));
+  useEffect(() => {
+    if (!flag) {
+      console.log('new editor');
+      // connect to ws
+      commandManager.connectToEditor(app.id, app.defaultPage.id);
+      // FIX: init should only run one time, and of course it should not run when component demounts
+      editorStore.init({
+        currentPageId: app.defaultPage.id.toString(),
+        pages: [
+          new WebloomPage({
+            id: app.defaultPage.id.toString(),
+            widgets: tree,
+            queries: {},
+          }),
+        ],
+      });
+      setFlag(true);
+    }
+    return () => {
+      console.log('closed editor');
+      commandManager.disconnectFromConnectedEditor();
+    };
+  }, []);
+  return flag ? <Editor /> : <p>loading number 69696</p>;
+});
+
 export function App() {
   const { app } = useLoaderData();
   return (
     <Suspense fallback={<EditorLoader />}>
-      <Await resolve={app} errorElement={<p>Error loading app</p>}>
-        {(app) => {
-          const a = app as AppCompleteT;
-          const tree = a.defaultPage.tree;
-          seedNameMap(Object.values(tree));
-          // connect to ws
-          commandManager.connectToEditor(a.id, a.defaultPage.id);
-
-          editorStore.init({
-            currentPageId: a.defaultPage.id.toString(),
-            pages: [
-              new WebloomPage({
-                id: a.defaultPage.id.toString(),
-                widgets: tree,
-                queries: {},
-              }),
-            ],
-          });
-          return <Editor />;
-        }}
+      <Await resolve={app} errorElement={<AppLoadError />}>
+        <AppResolved />
       </Await>
     </Suspense>
   );
