@@ -14,6 +14,7 @@ export class CommandManager {
   }
 
   public connectToEditor(appId: number, pageId: number) {
+    if (this.socket !== null) return;
     this.socket = new WebloomWebSocket(appId, pageId);
   }
 
