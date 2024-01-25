@@ -21,10 +21,11 @@ export class CommandManager {
    *Note: The process of closing the connection begins with a closing handshake, and the close() method does not discard previously-sent messages before starting that closing handshake; even if the user agent is still busy sending those messages, the handshake will only start after the messages are sent.
    */
   public disconnectFromConnectedEditor() {
-    if (this.socket !== null) {
-      this.socket.closeConnection();
-      this.socket = null;
-    }
+    if (this.socket === null) return;
+    if (this.socket.socketState !== 1) return;
+    console.log('closing connection');
+    this.socket.closeConnection();
+    this.socket = null;
   }
 
   public executeCommand(cmd: Command | null) {

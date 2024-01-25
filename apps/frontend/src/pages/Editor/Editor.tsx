@@ -1,13 +1,6 @@
 import Selecto from 'react-selecto';
 import { observer } from 'mobx-react-lite';
-import {
-  useEffect,
-  useRef,
-  Suspense,
-  useCallback,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import { useEffect, useRef, Suspense, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
@@ -106,22 +99,6 @@ export const appLoader =
       const query = useAppQuery({
         workspaceId: +(params.workspaceId as string),
         appId: +(params.appId as string),
-        // onSuccess(app) {
-        //   // connect to ws
-        //   commandManager.connectToEditor(app.id, app.defaultPage.id);
-        //   const tree = app.defaultPage.tree;
-        //   seedNameMap(Object.values(tree));
-        //   editorStore.init({
-        //     currentPageId: app.defaultPage.id.toString(),
-        //     pages: [
-        //       new WebloomPage({
-        //         id: app.defaultPage.id.toString(),
-        //         widgets: tree,
-        //         queries: {},
-        //       }),
-        //     ],
-        //   });
-        // },
       });
       return defer({
         app: queryClient.fetchQuery(query),
@@ -353,39 +330,37 @@ function AppLoadError() {
   );
 }
 
-const AppResolved = observer(function AppResolved() {
-  const [flag, setFlag] = useState(false);
+const AppResolved = function AppResolved() {
   const app = useAsyncValue() as AppCompleteT;
   const tree = app.defaultPage.tree;
-  seedNameMap(Object.values(tree));
+  // todo : put the init state inside the editor store itself
+  const inited = useRef(false);
+  if (!inited.current) {
+    seedNameMap(Object.values(tree));
+    editorStore.init({
+      currentPageId: app.defaultPage.id.toString(),
+      pages: [
+        new WebloomPage({
+          id: app.defaultPage.id.toString(),
+          widgets: tree,
+          queries: {},
+        }),
+      ],
+    });
+    inited.current = true;
+  }
   useEffect(() => {
-    if (!flag) {
-      console.log('new editor');
-      // connect to ws
-      commandManager.connectToEditor(app.id, app.defaultPage.id);
-      // FIX: init should only run one time, and of course it should not run when component demounts
-      editorStore.init({
-        currentPageId: app.defaultPage.id.toString(),
-        pages: [
-          new WebloomPage({
-            id: app.defaultPage.id.toString(),
-            widgets: tree,
-            queries: {},
-          }),
-        ],
-      });
-      setFlag(true);
-    }
+    commandManager.connectToEditor(app.id, app.defaultPage.id);
     return () => {
-      console.log('closed editor');
       commandManager.disconnectFromConnectedEditor();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return flag ? <Editor /> : <p>loading number 69696</p>;
-});
-
+  return <Editor />;
+};
 export function App() {
   const { app } = useLoaderData();
+
   return (
     <Suspense fallback={<EditorLoader />}>
       <Await resolve={app} errorElement={<AppLoadError />}>
