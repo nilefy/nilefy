@@ -11,8 +11,7 @@ import {
   RJSFSchema,
   FormContextType,
 } from '@rjsf/utils';
-import { FormItem } from '../ui/form';
-import { Label } from '../ui/label';
+import { Label } from '@/components/ui/label';
 
 export default function CheckboxWidget<
   T = any,
@@ -54,7 +53,7 @@ export default function CheckboxWidget<
   }: FocusEvent<HTMLInputElement | any>) => onFocus(id, value);
 
   return (
-    <FormItem>
+    <div className="flex items-center gap-4">
       {!hideLabel && !!description && (
         <DescriptionFieldTemplate
           id={descriptionId<T>(id)}
@@ -74,9 +73,8 @@ export default function CheckboxWidget<
         onBlur={_onBlur}
         onFocus={_onFocus}
         aria-describedby={ariaDescribedByIds<T>(id)}
-      >
-        {labelValue(<Label>{label}</Label>, hideLabel || !label)}
-      </Checkbox>
-    </FormItem>
+      />
+      {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
+    </div>
   );
 }

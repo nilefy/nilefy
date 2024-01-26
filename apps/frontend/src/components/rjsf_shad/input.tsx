@@ -1,5 +1,4 @@
 import { ChangeEvent, FocusEvent } from 'react';
-import { FormItem, FormLabel } from '../ui/form';
 import { Input } from '../ui/input';
 
 import {
@@ -12,6 +11,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
+import { Label } from '../ui/label';
 
 export default function BaseInputTemplate<
   T = any,
@@ -48,11 +48,8 @@ export default function BaseInputTemplate<
     onFocus(id, value);
 
   return (
-    <FormItem id={`${id}-label`}>
-      {/* {labelValue( */}
-      {/*   <FormLabel htmlFor={id}>{label}</FormLabel>, */}
-      {/*   hideLabel || !label, */}
-      {/* )} */}
+    <div id={`${id}-label`}>
+      {/* {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)} */}
       <Input
         disabled={disabled || readonly}
         required={required}
@@ -78,12 +75,11 @@ export default function BaseInputTemplate<
                 ? ([schema.default] as string[])
                 : [],
             )
-            .map((example: any) => {
+            .map((example) => {
               return <option key={example} value={example} />;
             })}
         </datalist>
       ) : null}
-    </FormItem>
+    </div>
   );
 }
-

@@ -1,4 +1,9 @@
+import RangeWidget from './range';
 import CheckboxWidget from './checkbox';
+import CheckboxesWidget from './checkboxes';
+import TextareaWidget from './textarea';
+import SelectWidget from './select';
+import RadioWidget from './radio';
 import {
   FormContextType,
   RegistryWidgetsType,
@@ -13,6 +18,11 @@ export function generateWidgets<
 >(): RegistryWidgetsType<T, S, F> {
   return {
     CheckboxWidget,
+    TextareaWidget,
+    RangeWidget,
+    CheckboxesWidget,
+    SelectWidget,
+    RadioWidget,
   };
 }
 

@@ -45,9 +45,11 @@ export function CopyButton<
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
+    uiSchema,
+    ...rest
   } = props;
   return (
-    <Button {...props} size={'icon'} variant={'outline'}>
+    <Button {...rest} size={'icon'} variant={'outline'}>
       <CopyIcon />
     </Button>
   );
@@ -60,9 +62,11 @@ export function MoveDownButton<
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
+    uiSchema,
+    ...rest
   } = props;
   return (
-    <Button {...props} size={'icon'} variant={'outline'}>
+    <Button {...rest} size={'icon'} variant={'outline'}>
       <ArrowDownIcon />
     </Button>
   );
@@ -75,9 +79,11 @@ export function MoveUpButton<
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
+    uiSchema,
+    ...rest
   } = props;
   return (
-    <Button {...props} size={'icon'} variant={'destructive'}>
+    <Button {...rest} size={'icon'} variant={'destructive'}>
       <ArrowUpIcon />
     </Button>
   );
@@ -90,9 +96,11 @@ export function RemoveButton<
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
+    uiSchema,
+    ...rest
   } = props;
   return (
-    <Button {...props} size={'icon'} variant={'destructive'}>
+    <Button {...rest} size={'icon'} variant={'destructive'}>
       <DeleteIcon />
     </Button>
   );

@@ -1,3 +1,10 @@
+import FieldTemplate from './fieldTemplate';
+import WrapIfAdditionalTemplate from './wrapIfAdditionalTemplate';
+import ArrayFieldItemTemplate from './arrayFieldItemTemplate';
+import ArrayFieldTemplate from './arrayFieldTemplate';
+import FieldErrorTemplate from './fieldErrorTemplate';
+import FieldHelpTemplate from './fieldHelpTemplate';
+import DescriptionField from './descriptionField';
 import {
   CopyButton,
   MoveDownButton,
@@ -13,6 +20,7 @@ import {
   StrictRJSFSchema,
   TemplatesType,
 } from '@rjsf/utils';
+import TitleField from './titleField';
 
 export function generateTemplates<
   T = any,
@@ -29,6 +37,14 @@ export function generateTemplates<
       RemoveButton,
       SubmitButton,
     },
+    TitleFieldTemplate: TitleField,
+    FieldHelpTemplate,
+    FieldErrorTemplate,
+    ArrayFieldItemTemplate,
+    ArrayFieldTemplate,
+    DescriptionFieldTemplate: DescriptionField,
+    // WrapIfAdditionalTemplate,
+    // FieldTemplate,
   };
 }
 
