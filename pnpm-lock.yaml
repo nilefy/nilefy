@@ -330,6 +330,9 @@ importers:
       immer:
         specifier: ^10.0.3
         version: 10.0.3
+      invariant:
+        specifier: ^2.2.4
+        version: 2.2.4
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -396,6 +399,9 @@ importers:
       tinymce:
         specifier: ^5.10.9
         version: 5.10.9
+      toposort:
+        specifier: ^2.0.2
+        version: 2.0.2
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -415,6 +421,9 @@ importers:
       '@testing-library/react':
         specifier: ^14.0.0
         version: 14.0.0(react-dom@18.2.0)(react@18.2.0)
+      '@types/invariant':
+        specifier: ^2.2.37
+        version: 2.2.37
       '@types/lodash':
         specifier: ^4.14.202
         version: 4.14.202
@@ -430,6 +439,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.14
         version: 18.2.17
+      '@types/toposort':
+        specifier: ^2.0.7
+        version: 2.0.7
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.8.0
         version: 6.13.1(@typescript-eslint/parser@6.13.1)(eslint@8.54.0)(typescript@5.3.3)
@@ -4144,6 +4156,10 @@ packages:
     resolution: {integrity: sha512-lPG6KlZs88gef6aD85z3HNkztpj7w2R7HmR3gygjfXCQmsLloWNARFkMuzKiiY8FGdh1XDpgBdrSf4aKDiA7Kg==}
     dev: true
 
+  /@types/invariant@2.2.37:
+    resolution: {integrity: sha512-IwpIMieE55oGWiXkQPSBY1nw1nFs6bsKXTFskNY8sdS17K24vyEBRQZEwlRS7ZmXCWnJcQtbxWzly+cODWGs2A==}
+    dev: true
+
   /@types/istanbul-lib-coverage@2.0.4:
     resolution: {integrity: sha512-z/QT1XN4K4KYuslS23k62yDIDLwLFkzxOuMplDtObz0+y7VqJCaO2o+SPwHCvLFZh7xazvvoor2tA/hPz9ee7g==}
     dev: true
@@ -4345,6 +4361,10 @@ packages:
     resolution: {integrity: sha512-X3HPWTwXRerBZS7Mo1k6vMVR1Z6zmJcDVn5O/31whe0tnjE4te6ZJSJGq1RiqHPjzPdMTfjCFogDJmwng9xHaQ==}
     dependencies:
       '@types/superagent': 4.1.19
+    dev: true
+
+  /@types/toposort@2.0.7:
+    resolution: {integrity: sha512-sQNk65vbC36+UixCkcky+dCr7MlflHcVILg1FVGqlUntsLFv9xd9ToWIVko/gTuin+cVe16t+2YubEFkhnSuPQ==}
     dev: true
 
   /@types/ws@8.5.10:
@@ -11509,6 +11529,10 @@ packages:
       '@tokenizer/token': 0.3.0
       ieee754: 1.2.1
     dev: true
+
+  /toposort@2.0.2:
+    resolution: {integrity: sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg==}
+    dev: false
 
   /totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}

@@ -1,11 +1,8 @@
-export type EvaluationContext = {
-  widgets: Record<string, Record<string, unknown>>;
-  queries: Record<string, unknown>;
-};
+export type EvaluationContext = Record<string, unknown>;
 
 export const evaluate = (
   code: string,
-  evaluationContext: EvaluationContext,
+  evaluationContext: Record<string, unknown>,
 ) => {
   if (!code) return code;
 

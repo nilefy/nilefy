@@ -18,6 +18,7 @@ import {
   normalizeCoords,
 } from '../utils';
 import { analyzeDependancies } from '../dependancyUtils';
+import { DependencyManager, DependencyRelation } from './dependencyManager';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -31,6 +32,7 @@ export class WebloomPage {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
+  dependencyManager: DependencyManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -93,25 +95,29 @@ export class WebloomPage {
         page: this,
       });
     });
+    this.dependencyManager = new DependencyManager({
+      page: this,
+    });
     this.widgets = widgetMap;
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height = this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
     // analyze dependancies
+    const allDependencies: Array<DependencyRelation> = [];
     Object.values(widgetMap).forEach((widget) => {
-      for (const prop of widget.props) {
-        const key = prop[0];
-        const value = prop[1].value;
+      for (const prop in widget.rawValues) {
+        const value = widget.rawValues[prop];
         const { dependencies, isCode } = analyzeDependancies(
           value,
-          key,
+          prop,
+          widget.id,
           this.context,
         );
         if (isCode) {
-          widget.setIsPropCode(key, true);
-          widget.addDependencies(dependencies);
+          allDependencies.push(...dependencies);
         }
       }
     });
+    this.dependencyManager.addDependencies(allDependencies);
   }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
@@ -166,16 +172,13 @@ export class WebloomPage {
    * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
    */
   get context() {
-    const context: EvaluationContext = {
-      widgets: {},
-      queries: {},
-    };
+    const context: EvaluationContext = {};
     Object.values(this.widgets).forEach((widget) => {
       if (widget.isRoot) return;
-      context['widgets'][widget.id] = widget.evaluatedProps;
+      context[widget.id] = true;
     });
     Object.values(this.queries).forEach((query) => {
-      context['queries'][query.id] = query.value;
+      context[query.id] = true;
     });
     return context;
   }

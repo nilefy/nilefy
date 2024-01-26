@@ -1,14 +1,16 @@
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
+import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
-import { DependencyRelation } from './Models/widget';
+import { DependencyRelation } from './Models/dependencyManager';
 export const analyzeDependancies = (
   code: unknown,
   toProperty: string,
+  entityId: string,
   keys: EvaluationContext,
 ) => {
   if (typeof code !== 'string') return { dependencies: [], isCode: false };
-  const keysSet = new Set(Object.keys(keys.widgets));
+  const keysSet = new Set(Object.keys(keys));
   const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(/{{([^}]*)}}/g);
   let isCode = false;
@@ -19,13 +21,16 @@ export const analyzeDependancies = (
       const dependanciesInExpression = extractMemberExpression(expression);
       for (const dependancy of dependanciesInExpression) {
         const dependancyParts = dependancy.split('.');
-        const dependancyName = dependancyParts[1];
+        const dependancyName = dependancyParts[0];
         if (keysSet.has(dependancyName)) {
           dependencies.push({
-            to: toProperty,
-            on: {
+            dependent: {
+              entityId,
+              path: toProperty,
+            },
+            dependency: {
               entityId: dependancyName,
-              props: [...dependancyParts.slice(2)],
+              path: dependancyParts.slice(1).join('.'),
             },
           });
         }
@@ -62,4 +67,23 @@ function extractMemberExpression(code: string) {
     },
   });
   return memberExpressions;
+}
+export type CycleResult =
+  | {
+      hasCycle: true;
+      cycle: Array<string>;
+    }
+  | {
+      hasCycle: false;
+    };
+
+export function hasCyclicDependencies(
+  graph: Array<[string, string]>,
+): CycleResult {
+  try {
+    toposort(graph);
+    return { hasCycle: false };
+  } catch (e) {
+    return { hasCycle: true, cycle: e.message.split(' -> ') };
+  }
 }

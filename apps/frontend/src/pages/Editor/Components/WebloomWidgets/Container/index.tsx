@@ -12,7 +12,7 @@ const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
     const props = editorStore.currentPage.getWidgetById(id)
-      .evaluatedProps as WebloomContainerProps;
+      .values as WebloomContainerProps;
     return <Container {...props}>{children}</Container>;
   },
 );

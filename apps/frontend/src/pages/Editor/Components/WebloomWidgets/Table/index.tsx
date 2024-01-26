@@ -73,7 +73,7 @@ const WebloomTable = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
 
   const props = editorStore.currentPage.getWidgetById(id)
-    .evaluatedProps as WebloomTableProps;
+    .values as WebloomTableProps;
   const {
     data,
     columns,

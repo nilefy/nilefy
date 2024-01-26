@@ -17,30 +17,14 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import { Dependable, Snapshotable } from './interfaces';
-import { WebloomQuery } from './query';
-import { EntityDependents } from './entityDependents';
+import { RuntimeEvaluable, Snapshotable } from './interfaces';
+import { DependencyRelation } from './dependencyManager';
+import { cloneDeep, get } from 'lodash';
 
-export type RuntimeProps = Map<
-  string,
-  {
-    value: unknown;
-    isCode: boolean;
-  }
->;
+export type RuntimeProps = Record<string, unknown>;
 type EvaluatedRunTimeProps = SnapshotProps;
 export type SnapshotProps = Record<string, unknown>;
-type ToProperty = string;
-export type SnapshotDependencies = {
-  relations: Array<DependencyRelation>;
-};
-export type DependencyRelation = {
-  to: ToProperty;
-  on: {
-    entityId: string;
-    props?: Array<string>;
-  };
-};
+
 export class WebloomWidget
   implements
     Snapshotable<
@@ -48,16 +32,14 @@ export class WebloomWidget
         pageId: string;
       }
     >,
-    Dependable
+    RuntimeEvaluable
 {
   isRoot = false;
   id: string;
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
-  props: RuntimeProps;
-  dependencies: WidgetDependencies;
-  dependents: EntityDependents;
+  rawValues: RuntimeProps;
   type: WidgetTypes;
   col: number;
   row: number;
@@ -75,7 +57,6 @@ export class WebloomWidget
     rowsCount,
     columnsCount,
     props,
-    dependencies,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -87,7 +68,6 @@ export class WebloomWidget
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependencies?: SnapshotDependencies;
     dependents?: Set<string>;
   }) {
     this.id = id;
@@ -102,25 +82,20 @@ export class WebloomWidget
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-    this.props = new Map();
+    this.rawValues = {};
     if (!props) {
       props = {};
     }
     if (props) {
       Object.keys(props).forEach((key) => {
-        this.props.set(key, {
-          value: props[key] ?? defaultProps[key as keyof typeof defaultProps],
-          isCode: false,
-        });
+        this.rawValues[key] =
+          props[key] ?? defaultProps[key as keyof typeof defaultProps];
       });
     }
-    this.dependencies = new WidgetDependencies(dependencies);
-    this.dependents = new EntityDependents(new Set());
+
     makeObservable(this, {
-      props: observable,
-      evaluatedProps: computed,
-      dependencies: observable,
-      dependents: observable,
+      rawValues: observable,
+      values: computed,
       nodes: observable,
       parentId: observable,
       dom: observable,
@@ -146,8 +121,6 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
-      codeProps: computed,
-      setIsPropCode: action,
       addDependencies: action,
       clearDependents: action,
       cleanup: action,
@@ -171,70 +144,34 @@ export class WebloomWidget
   }
 
   getProp(key: string) {
-    return this.evaluatedProps[key] ?? this.props.get(key)?.value;
+    return this.values[key] ?? this.rawValues[key];
   }
-  get evaluatedProps(): EvaluatedRunTimeProps {
-    const localEvaluationContext: EvaluationContext = {
-      widgets: {},
-      queries: {},
-    };
+  get values(): EvaluatedRunTimeProps {
     const evaluatedProps: EvaluatedRunTimeProps = {};
-    for (const item of this.dependencies.relations) {
-      const relations = item[1];
-      for (const relation of relations) {
-        const entityId = relation[0];
-        const entity = this.page.getEntityById(entityId);
-        if (!entity) {
-          throw new Error(`entity with id ${entityId} not found`);
-        }
-        if (entity instanceof WebloomQuery) {
-          localEvaluationContext.queries[entity.id] ||= {};
-          localEvaluationContext.queries[entity.id] = entity.value;
-        }
-        if (entity instanceof WebloomWidget) {
-          const onProps = relation[1];
-          if (!onProps) {
-            throw new Error(
-              `props not found for relation with entity ${entity.id}`,
-            );
-          }
-          for (const prop of onProps) {
-            localEvaluationContext.widgets[entity.id] ||= {};
-            localEvaluationContext.widgets[entity.id][prop] =
-              entity.getProp(prop);
-          }
-        }
+    for (const key in this.rawValues) {
+      const path = this.id + '.' + key;
+      const evaluatedValue = get(this.page.dependencyManager.evalTree, path);
+      if (evaluatedValue) {
+        evaluatedProps[key] = evaluatedValue;
       }
     }
-    for (const prop of this.props) {
-      if (prop[1].isCode) {
-        evaluatedProps[prop[0]] = evaluate(
-          prop[1].value as string,
-          localEvaluationContext,
-        );
-      } else {
-        evaluatedProps[prop[0]] = prop[1].value;
-      }
-    }
-    return evaluatedProps;
+    return {
+      ...this.rawValues,
+      ...evaluatedProps,
+    };
   }
   /**
    *
    * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
    */
   get snapshot() {
-    const props: SnapshotProps = {};
-    this.props.forEach((prop, key) => {
-      props[key] = prop.value;
-    });
     return {
       id: this.id,
       nodes: [...this.nodes],
       pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: props,
-      dependencies: this.dependencies.snapshot(),
+      props: cloneDeep(this.rawValues),
       type: this.type,
       col: this.col,
       row: this.row,
@@ -286,34 +223,12 @@ export class WebloomWidget
     };
   }
 
-  get codeProps() {
-    const codeProp: Record<string, unknown> = {};
-    for (const [key, value] of this.props) {
-      if (value.isCode) {
-        codeProp[key] = value.value;
-      }
-    }
-    return codeProp;
-  }
-  isPropCode(key: string) {
-    return !!this.codeProps[key];
-  }
-
   setProp(key: string, value: unknown) {
     if (key === 'id') {
       this.page.widgets[value as string] = this;
       delete this.page.widgets[this.id];
     }
-    this.props.set(key, {
-      isCode: !!this.props.get(key)?.isCode,
-      value,
-    });
-  }
-  setIsPropCode(key: string, isCode: boolean) {
-    this.props.set(key, {
-      isCode,
-      value: this.props.get(key)?.value,
-    });
+    this.rawValues[key] = value;
   }
 
   get parent() {
@@ -431,111 +346,14 @@ export class WebloomWidget
     return WebloomWidgets[this.type].config.isCanvas;
   }
   addDependencies(relations: Array<DependencyRelation>) {
-    for (const relation of relations) {
-      const onEntity = this.page.getEntityById(relation.on.entityId);
-      if (!onEntity) return;
-      this.dependencies.createRelation(relation);
-      onEntity.dependents.addDependent(this.id);
-    }
+    this.page.dependencyManager.addDependencies(relations);
   }
 
   clearDependents() {
-    const dependents = this.dependents.dependents;
-    for (const dependent of dependents) {
-      const dependentWidget = this.page.getWidgetById(dependent)!;
-      dependentWidget.dependencies.deleteByEntity(this.id);
-    }
+    this.page.dependencyManager.removeRelationshipsForEntity(this.id);
   }
 
   cleanup() {
     this.clearDependents();
-  }
-}
-type OnEntityId = string;
-type OnProp = string;
-export class WidgetDependencies {
-  // Observable array to store relations
-  relations: Map<ToProperty, Map<OnEntityId, Set<OnProp>>> = new Map();
-
-  constructor(snapshot?: SnapshotDependencies) {
-    if (snapshot) {
-      for (const relation of snapshot.relations) {
-        this.createRelation(relation);
-      }
-    }
-    // this.cleanup = autorun
-    makeObservable(this, {
-      relations: observable,
-      createRelation: action,
-      deleteByOnProp: action,
-      deleteByToProperty: action,
-      deleteByEntity: action,
-    });
-  }
-  createRelation(relation: DependencyRelation) {
-    if (!this.relations.has(relation.to)) {
-      this.relations.set(relation.to, new Map());
-    }
-    const relations = this.relations.get(relation.to)!;
-    if (!relations.has(relation.on.entityId)) {
-      relations.set(relation.on.entityId, new Set());
-    }
-    const props = relations.get(relation.on.entityId)!;
-    if (relation.on.props) {
-      for (const prop of relation.on.props) {
-        props.add(prop);
-      }
-    }
-  }
-  deleteByOnProp(toProperty: ToProperty, entityId: OnEntityId, prop: OnProp) {
-    const relations = this.relations.get(toProperty);
-    if (!relations) return;
-    const props = relations.get(entityId);
-    if (!props) return;
-    props.delete(prop);
-    if (props.size === 0) {
-      relations.delete(entityId);
-    }
-    if (relations.size === 0) {
-      this.deleteByToProperty(toProperty);
-    }
-  }
-  deleteByToProperty(toProperty: ToProperty) {
-    this.relations.delete(toProperty);
-  }
-
-  deleteByEntity(entityId: OnEntityId) {
-    for (const relation of this.relations) {
-      const relations = relation[1];
-      if (relations.has(entityId)) {
-        relations.delete(entityId);
-      }
-    }
-    for (const relation of this.relations) {
-      if (relation[1].size === 0) {
-        this.relations.delete(relation[0]);
-      }
-    }
-  }
-  snapshot(): SnapshotDependencies {
-    const snapshot: SnapshotDependencies = {
-      relations: [],
-    };
-    for (const relation of this.relations) {
-      const toProperty = relation[0];
-      const relations = relation[1];
-      for (const relation of relations) {
-        const onEntityId = relation[0];
-        const props = relation[1];
-        snapshot.relations.push({
-          to: toProperty,
-          on: {
-            entityId: onEntityId,
-            props: [...props],
-          },
-        });
-      }
-    }
-    return snapshot;
   }
 }

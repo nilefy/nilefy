@@ -20,11 +20,11 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
         const res = debouncedAnalyzeDependancies(
           newValue,
           toProperty,
+          id,
           editorStore.currentPage.context,
         );
         if (res) {
           const widget = editorStore.currentPage.getWidgetById(id);
-          widget.setIsPropCode(toProperty, res.isCode);
           widget.addDependencies(res.dependencies);
         }
       }
