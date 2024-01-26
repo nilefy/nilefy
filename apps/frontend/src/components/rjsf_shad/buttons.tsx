@@ -21,19 +21,25 @@ export function SubmitButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
->({ uiSchema }: SubmitButtonProps<T, S, F>) {
+>({ uiSchema, registry }: SubmitButtonProps<T, S, F>) {
   const {
     submitText,
     norender,
     props: submitButtonProps,
   } = getSubmitButtonOptions(uiSchema);
+  const { isSubmitting } = registry.formContext as { isSubmitting?: boolean };
   if (norender) {
     return null;
   }
 
   return (
-    <Button type="submit" variant="default" {...submitButtonProps}>
-      {submitText}
+    <Button
+      disabled={isSubmitting ?? false}
+      type="submit"
+      variant="default"
+      {...submitButtonProps}
+    >
+      {isSubmitting ? 'loading....' : submitText}
     </Button>
   );
 }

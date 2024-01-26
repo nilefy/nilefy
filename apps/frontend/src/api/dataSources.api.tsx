@@ -1,12 +1,11 @@
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { FetchXError, fetchX } from '@/utils/fetch';
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import {
   UseMutationOptions,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-// import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import z from 'zod';
 
 export const DATASOURCES_QUERY_KEY = 'datasources';
@@ -18,14 +17,19 @@ export const dataSourceMeta = z.object({
 
 export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
 
+export type PluginConfigT = {
+  schema: RJSFSchema;
+  uiSchema: UiSchema;
+};
+
 export type GlobalDataSourceI = {
   id: number;
   name: string;
   description: string | null;
   type: 'database' | 'api' | 'cloud storage' | 'plugin';
   image: string | null;
-  config: WidgetInspectorConfig<Record<string, unknown>>;
-  queryConfig: WidgetInspectorConfig<Record<string, unknown>>;
+  config: PluginConfigT;
+  queryConfig: PluginConfigT;
 };
 
 export type WsDataSourceI = {
@@ -38,6 +42,7 @@ export type WsDataSourceI = {
    */
   dataSourceId: number;
 };
+
 async function GlobalDataSourceIndex() {
   const res = await fetchX(`data-sources/global`, {
     method: 'GET',
