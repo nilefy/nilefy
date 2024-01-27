@@ -18,7 +18,7 @@ const WebloomButton = observer(() => {
   return (
     <Button
       {...props}
-      className={`active:bg-primary/20 block h-full w-full`}
+      className={`block h-full w-full active:bg-primary/20`}
       style={{ backgroundColor: props.color }}
     >
       {props.text}
