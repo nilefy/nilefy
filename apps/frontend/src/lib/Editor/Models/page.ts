@@ -175,10 +175,10 @@ export class WebloomPage {
     const context: EvaluationContext = {};
     Object.values(this.widgets).forEach((widget) => {
       if (widget.isRoot) return;
-      context[widget.id] = true;
+      context[widget.id] = widget.rawValues;
     });
     Object.values(this.queries).forEach((query) => {
-      context[query.id] = true;
+      context[query.id] = query.rawValues;
     });
     return context;
   }

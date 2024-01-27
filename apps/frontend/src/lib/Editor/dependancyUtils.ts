@@ -3,6 +3,7 @@ import { ancestor } from 'acorn-walk';
 import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
 import { DependencyRelation } from './Models/dependencyManager';
+import { has } from 'lodash';
 export const analyzeDependancies = (
   code: unknown,
   toProperty: string,
@@ -22,7 +23,8 @@ export const analyzeDependancies = (
       for (const dependancy of dependanciesInExpression) {
         const dependancyParts = dependancy.split('.');
         const dependancyName = dependancyParts[0];
-        if (keysSet.has(dependancyName)) {
+        const path = dependancyParts.slice(1).join('.');
+        if (keysSet.has(dependancyName) && has(keys[dependancyName], path)) {
           dependencies.push({
             dependent: {
               entityId,
@@ -30,7 +32,7 @@ export const analyzeDependancies = (
             },
             dependency: {
               entityId: dependancyName,
-              path: dependancyParts.slice(1).join('.'),
+              path,
             },
           });
         }

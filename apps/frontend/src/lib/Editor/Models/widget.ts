@@ -150,8 +150,11 @@ export class WebloomWidget
     const evaluatedProps: EvaluatedRunTimeProps = {};
     for (const key in this.rawValues) {
       const path = this.id + '.' + key;
-      const evaluatedValue = get(this.page.dependencyManager.evalTree, path);
-      if (evaluatedValue) {
+      const evaluatedValue = get(
+        this.page.dependencyManager.evaluatedForest,
+        path,
+      );
+      if (evaluatedValue !== undefined) {
         evaluatedProps[key] = evaluatedValue;
       }
     }
@@ -346,7 +349,7 @@ export class WebloomWidget
     return WebloomWidgets[this.type].config.isCanvas;
   }
   addDependencies(relations: Array<DependencyRelation>) {
-    this.page.dependencyManager.addDependencies(relations);
+    this.page.dependencyManager.addDependenciesForEntity(relations);
   }
 
   clearDependents() {

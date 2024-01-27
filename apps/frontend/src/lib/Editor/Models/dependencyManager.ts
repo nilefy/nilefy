@@ -1,10 +1,17 @@
-import { observable, makeObservable, action, computed, toJS } from 'mobx';
+import {
+  observable,
+  makeObservable,
+  action,
+  computed,
+  autorun,
+  toJS,
+} from 'mobx';
 import invariant from 'invariant';
 import { hasCyclicDependencies } from '../dependancyUtils';
 import toposort from 'toposort';
 import { WebloomPage } from './page';
 import { evaluate } from '../evaluation';
-import { get, set } from 'lodash';
+import { get, has, set } from 'lodash';
 // please note that path is something like "a.b.c"
 type Path = string;
 type EntityId = string;
@@ -45,14 +52,34 @@ export class DependencyManager {
       addDependencies: action,
       removeDependency: action,
       removeRelationshipsForEntity: action,
-      inverseDependencies: computed,
+      // inverseDependencies: computed, // we don't need this for now
       graph: computed,
-      evalTree: computed,
+      evaluatedForest: computed,
       page: observable,
     });
   }
+  /**
+   * Add multiple dependencies (doesn't overwrite so don't use it unless initialising)
+   * @param relations
+   */
   addDependencies(relations: Array<DependencyRelation>): void {
     for (const relation of relations) {
+      this.addDependency(relation);
+    }
+  }
+  /**
+   * Add multiple dependencies for a single entity, (overwrites existing dependencies)
+   * @param relations the dependent entity id in all relations must be the same or it will throw
+   */
+  addDependenciesForEntity(relations: Array<DependencyRelation>): void {
+    if (relations.length === 0) return;
+    const dependentId = relations[0].dependent.entityId;
+    this.dependencies.set(dependentId, new Map());
+    for (const relation of relations) {
+      invariant(
+        relation.dependent.entityId === dependentId,
+        'entity id mismatch, all relations must have the same dependent entity id. if you want to add multiple dependencies for different entities, use addDependencies',
+      );
       this.addDependency(relation);
     }
   }
@@ -62,13 +89,29 @@ export class DependencyManager {
     const dependencyPath = dependency.path;
     const dependentId = dependent.entityId;
     const dependencyId = dependency.entityId;
-    if (
-      this.detectCycle([
-        ...this.graph,
-        this.getGraphNodeForRelation(relationship),
-      ] as [string, string][]).hasCycle
-    ) {
-      console.log('cycle detected');
+    const dependencyEntity = this.page.getEntityById(dependencyId);
+    const dependentEntity = this.page.getEntityById(dependentId);
+    invariant(
+      dependentEntity,
+      `dependent entity "${dependentId}" not found while adding dependency "${dependentId}" -> "${dependencyId}" on path "${dependentPath}"`,
+    );
+    invariant(
+      dependencyEntity,
+      `dependency entity "${dependencyId}" not found while adding dependency "${dependentId}" -> "${dependencyId}" on path "${dependencyPath}"`,
+    );
+    invariant(
+      has(dependencyEntity.rawValues, dependencyPath),
+      `dependency path "${dependencyPath}" not found on entity "${dependencyId}" while adding dependent "${dependentId}" -> "${dependencyId}" on path "${dependentPath}"`,
+    );
+    const cycle = this.detectCycle([
+      ...this.graph,
+      this.getGraphNodeForRelation(relationship),
+    ] as [string, string][]);
+    if (cycle.hasCycle) {
+      console.log('cycle detected ', cycle.cycle);
+      //todo: handle cycle
+      // I don't know yet the business logic for handling cycles
+      // so for now just return
       return;
     }
     if (!this.dependencies.has(dependentId)) {
@@ -122,35 +165,15 @@ export class DependencyManager {
   }
   removeRelationshipsForEntity(entityId: EntityId) {
     this.dependencies.delete(entityId);
-    for (const dependentMap of this.dependencies.values()) {
+    for (const item of this.dependencies.entries()) {
+      const [dependentId, dependentMap] = item;
       dependentMap.delete(entityId);
-    }
-  }
-  get inverseDependencies(): Map<
-    Dependency,
-    Map<Dependent, Set<DependencyPath>>
-  > {
-    const dependents: Map<
-      Dependency,
-      Map<Dependent, Set<DependencyPath>>
-    > = new Map();
-    for (const [dependent, dependencyMap] of this.dependencies.entries()) {
-      for (const [dependency, dependentMap] of dependencyMap.entries()) {
-        for (const [dependentPath] of dependentMap.entries()) {
-          if (!dependents.has(dependency)) {
-            dependents.set(dependency, new Map());
-          }
-          const dependencyMap = dependents.get(dependency)!;
-          if (!dependencyMap.has(dependent)) {
-            dependencyMap.set(dependent, new Set());
-          }
-          const dependencyPathSet = dependencyMap.get(dependent)!;
-          dependencyPathSet.add(dependentPath);
-        }
+      if (dependentMap.size === 0) {
+        this.dependencies.delete(dependentId);
       }
     }
-    return dependents;
   }
+
   snapshot(): DependencyRelation[] {
     const relations: DependencyRelation[] = [];
     for (const [dependent, dependencyMap] of this.dependencies.entries()) {
@@ -196,7 +219,8 @@ export class DependencyManager {
       relation.dependency.entityId + '.' + relation.dependency.path,
     ];
   }
-  get evalTree(): Record<string, unknown> {
+  get evaluatedForest(): Record<string, unknown> {
+    // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
     const sortedGraph = toposort(this.graph).reverse();
     const evalTree: Record<string, unknown> = {};
     for (const node of sortedGraph) {
