@@ -19,7 +19,7 @@ export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
 
 export type PluginConfigT = {
   schema: RJSFSchema;
-  uiSchema: UiSchema;
+  uiSchema?: UiSchema;
 };
 
 export type GlobalDataSourceI = {

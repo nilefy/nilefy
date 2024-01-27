@@ -1,128 +1,57 @@
-// import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
 export const configSchema = z.object({
-  user: z.string(),
-  host: z.string(),
+  user: z.string().min(1),
+  host: z.string().min(1),
   port: z.number().default(5432),
-  database: z.string(),
+  database: z.string().min(1),
   password: z.string(),
   ssl: z.boolean().default(false),
-  sslCertificate: z.string().optional(),
+  sslCertificate: z.enum(['ca', 'self-signed', 'none']).optional(),
   connectionOptions: z.string().optional(),
 });
 
 export const querySchema = z.object({
-  query: z.string(),
+  query: z.string().min(1),
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
 
-export const pluginConfigForm = zodToJsonSchema(configSchema, 'configSchema');
-// export const pluginConfigForm: WidgetInspectorConfig<ConfigT> = [
-//   {
-//     sectionName: 'Development',
-//     children: [
-//       {
-//         id: 'host',
-//         key: 'host',
-//         label: 'Host',
-//         type: 'input',
-//         options: {
-//           placeholder: 'localhost',
-//           type: 'text',
-//         },
-//       },
-//       {
-//         id: 'port',
-//         key: 'port',
-//         label: 'Port',
-//         type: 'input',
-//         options: {
-//           placeholder: 5432,
-//           type: 'number',
-//         },
-//       },
-//       {
-//         id: 'ssl',
-//         key: 'ssl',
-//         label: 'SSL',
-//         type: 'checkbox',
-//         options: {},
-//       },
-//       {
-//         id: 'database_name',
-//         key: 'database',
-//         label: 'Database Name',
-//         type: 'input',
-//         options: {
-//           placeholder: 'Name of the database',
-//           type: 'text',
-//         },
-//       },
-//       {
-//         id: 'username',
-//         key: 'user',
-//         label: 'Username',
-//         type: 'input',
-//         options: {
-//           placeholder: 'Enter username',
-//           type: 'text',
-//         },
-//       },
-//       {
-//         id: 'password',
-//         key: 'password',
-//         label: 'Password',
-//         type: 'input',
-//         options: {
-//           placeholder: 'Enter password',
-//           type: 'password',
-//         },
-//       },
-//       {
-//         id: 'certificate',
-//         key: 'sslCertificate',
-//         label: 'SSL Certificate',
-//         type: 'select',
-//         options: {
-//           items: [
-//             {
-//               label: 'CA Certificate',
-//               value: 'ca',
-//             },
-//             {
-//               label: 'Self-signed Certificate',
-//               value: 'self-signed',
-//             },
-//             {
-//               label: 'None',
-//               value: 'none',
-//             },
-//           ],
-//           placeholder: 'None',
-//         },
-//       },
-//       // TODO: add connection options key-value pairs
-//     ],
-//   },
-// ];
+export const pluginConfigForm = {
+  schema: zodToJsonSchema(configSchema, 'configSchema'),
+  uiSchema: {
+    host: {
+      'ui:placeholder': 'localhost',
+      'ui:title': 'Host',
+    },
+    port: {
+      'ui:placeholder': '5432',
+      'ui:title': 'Port',
+    },
+    database: {
+      'ui:placeholder': 'Name of your database',
+      'ui:title': 'Database Name',
+    },
+    user: {
+      'ui:placeholder': 'Enter username',
+    },
+    password: {
+      'ui:widget': 'password',
+      'ui:placeholder': 'Enter password',
+    },
+  },
+};
 
-export const queryConfigForm = zodToJsonSchema(querySchema, 'querySchema');
-// export const queryConfigForm: WidgetInspectorConfig<QueryT> = [
-//   {
-//     sectionName: '',
-//     children: [
-//       {
-//         id: 'sql',
-//         key: 'query',
-//         label: 'SQL',
-//         type: 'sqlEditor',
-//         options: { placeholder: 'select * from table;' },
-//       },
-//     ],
-//   },
-// ];
-//
+export const queryConfigForm = {
+  schema: zodToJsonSchema(querySchema, 'querySchema'),
+  uiSchema: {
+    query: {
+      // TODO: make it sqleditor
+      'ui:widget': 'textarea',
+      'ui:placeholder': 'select * from table;',
+      'ui:title': 'SQL',
+    },
+  },
+};

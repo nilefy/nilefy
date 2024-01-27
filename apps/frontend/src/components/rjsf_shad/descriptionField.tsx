@@ -18,6 +18,5 @@ export default function DescriptionField<
   if (!description) {
     return null;
   }
-  return <p id={id}>desfs{description}</p>;
+  return <p id={id}>{description}</p>;
 }
-

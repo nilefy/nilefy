@@ -21,8 +21,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
   const ds: DataSourceT[] = [];
   dataSourcesEnum.options.forEach((type) => {
     dataSources[type].forEach((name) => {
-      let dataSourceConfig: unknown;
-      let queryConfig: unknown;
+      let dataSourceConfig;
+      let queryConfig;
 
       switch (name.toLocaleLowerCase()) {
         case 'postgresql':
@@ -51,8 +51,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           null,
         ]),
         image: faker.helpers.arrayElement([faker.image.url(), null]),
-        config: JSON.stringify(dataSourceConfig),
-        queryConfig: JSON.stringify(queryConfig),
+        config: dataSourceConfig,
+        queryConfig: queryConfig,
       });
     });
   });
