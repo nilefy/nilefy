@@ -1,52 +1,107 @@
 import { getToken } from '@/lib/token.localstorage';
 
+export const REPEAT_LIMIT = 5;
+export const RECONNECT_TIMEOUT = 2000;
+
 export class WebloomWebSocket {
-  socket: WebSocket;
+  socket: WebSocket | null;
   private state: 'connected' | 'not-authed' | 'connecting';
+  private retry: boolean;
+  private msgQ: string[];
+  private repeat: number;
+  private lock: boolean;
 
   constructor(
     private appId: number,
     private pageId: number,
   ) {
-    this.socket = new WebSocket('ws://localhost:3000');
+    this.socket = null;
     this.state = 'connecting';
-    this.assignListeners();
+    this.retry = true;
+    this.msgQ = [];
+    this.repeat = 0;
+    this.lock = false;
+    this.connectWebSocket();
+  }
+
+  public connectWebSocket() {
+    try {
+      this.socket = new WebSocket('ws://localhost:3000');
+      this.assignListeners();
+    } catch (ig) {
+      this.reconnect();
+    }
   }
 
   /**
    *Note: The process of closing the connection begins with a closing handshake, and the close() method does not discard previously-sent messages before starting that closing handshake; even if the user agent is still busy sending those messages, the handshake will only start after the messages are sent.
    */
   public closeConnection() {
-    this.socket.close();
+    this.retry = false;
+    this.socket?.close();
   }
 
   getState() {
     return this.state;
   }
   get socketState() {
-    return this.socket.readyState;
+    return this.socket?.readyState;
   }
   // note it will call the auth
   private assignListeners() {
-    this.socket.onerror = function (ev) {
+    this.socket!.onerror = function (ev) {
       console.log('error', ev);
     };
 
-    this.socket.onclose = function () {
-      console.log('connection closed');
-    };
+    this.socket!.addEventListener('close', () => {
+      this.reconnect();
+    });
 
-    this.socket.addEventListener('message', (e) => {
+    this.socket!.addEventListener('message', (e) => {
       this.handleMessages(e.data);
     });
 
-    this.socket.addEventListener('open', () => {
+    this.socket!.addEventListener('open', () => {
       this.auth();
     });
   }
 
+  private reconnect() {
+    if (!this.retry) {
+      console.log('connection closed');
+      return;
+    }
+    if (this.repeat > REPEAT_LIMIT) {
+      throw new Error('connection error');
+    }
+    if (this.lock) return;
+
+    console.log('reconnecting...');
+    this.lock = true;
+    this.repeat += 1;
+    setTimeout(() => {
+      this.connectWebSocket();
+      this.lock = false;
+    }, RECONNECT_TIMEOUT);
+  }
+
+  public sendMessage(msg: string) {
+    this.msgQ.push(msg);
+
+    if (this.socketState != this.socket?.OPEN) {
+      this.reconnect();
+      return;
+    }
+
+    while (this.msgQ.length) {
+      if (this.socketState != this.socket?.OPEN) break;
+      const msg = this.msgQ.shift();
+      this.socket!.send(msg as string);
+    }
+  }
+
   private auth() {
-    this.socket.send(
+    this.socket!.send(
       JSON.stringify({
         event: 'auth',
         data: {
