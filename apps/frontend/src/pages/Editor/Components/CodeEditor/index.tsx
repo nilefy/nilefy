@@ -128,6 +128,7 @@ const setAutoCompletionAllowed = EditorState.transactionExtender.of((tr) => {
     ),
   };
 });
+
 export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   const {
     initialState,

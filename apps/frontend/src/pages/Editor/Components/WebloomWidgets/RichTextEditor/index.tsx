@@ -51,7 +51,7 @@ const toolbarConfig =
 export const WebloomTextEditor = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .evaluatedProps as WebloomTextEditorProps;
+    .values as WebloomTextEditorProps;
   const { label } = props;
   const [editorValue, setEditorValue] = useState<string>(props.value);
   const initalRender = useRef(true);
@@ -190,10 +190,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTextEditorProps> = [
         id: `${widgetName}-text`,
         key: 'label',
         label: 'Text',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          type: 'text',
+          label: 'Text',
         },
       },
     ],

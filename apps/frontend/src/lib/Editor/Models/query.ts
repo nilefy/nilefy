@@ -1,28 +1,50 @@
 import { makeObservable, observable, flow } from 'mobx';
-import { Dependable } from './interfaces';
-import { EntityDependents } from './entityDependents';
-export class WebloomQuery implements Dependable {
-  query: string = '';
+import { RuntimeEvaluable, Snapshotable } from './interfaces';
+import { WebloomPage } from './page';
+export class WebloomQuery
+  implements
+    RuntimeEvaluable,
+    Snapshotable<
+      Omit<ConstructorParameters<typeof WebloomQuery>[0], 'page'> & {
+        pageId: string;
+      }
+    >
+{
   id: string = '';
-  value: unknown = undefined;
-  dependents: EntityDependents;
-  constructor() {
-    this.dependents = new EntityDependents(new Set());
+  page: WebloomPage;
+  rawValues = {
+    query: '',
+  };
+
+  constructor({
+    query,
+    id,
+    page,
+  }: {
+    query: string;
+    id: string;
+    page: WebloomPage;
+  }) {
+    this.rawValues.query = query;
+    this.id = id;
+    this.page = page;
     makeObservable(this, {
-      query: observable,
-      value: observable,
+      rawValues: observable,
       fetchValue: flow,
-      dependents: observable,
     });
   }
+  get values() {
+    return this.rawValues;
+  }
+
   fetchValue() {
-    this.value = {};
+    // this.value = {};
   }
   get snapshot() {
     return {
-      query: this.query,
+      query: this.rawValues.query,
       id: this.id,
-      value: this.value,
+      pageId: this.page.id,
     };
   }
 }

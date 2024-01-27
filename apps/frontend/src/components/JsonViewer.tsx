@@ -122,7 +122,7 @@ export const JsonViewer = observer(function JsonViewer() {
       <CollapsibleContent className="ml-4 space-y-2 border-l-2">
         {root.nodes.map((nodeId) => {
           const node = editorStore.currentPage.getWidgetById(nodeId);
-          const nodeProps = node.evaluatedProps;
+          const nodeProps = node.values;
           return (
             <Collapsible
               key={node.id}

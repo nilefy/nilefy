@@ -14,7 +14,7 @@ export type WebloomButtonProps = {
 const WebloomButton = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .evaluatedProps as WebloomButtonProps;
+    .values as WebloomButtonProps;
   return (
     <Button
       {...props}
@@ -53,10 +53,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
         id: `${widgetName}-text`,
         key: 'text',
         label: 'Text',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          type: 'text',
+          label: 'Text',
         },
       },
     ],

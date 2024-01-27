@@ -12,43 +12,15 @@ const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
     const props = editorStore.currentPage.getWidgetById(id)
-      .evaluatedProps as WebloomContainerProps;
+      .values as WebloomContainerProps;
     return <Container {...props}>{children}</Container>;
   },
 );
 const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
-  color: 'blue',
+  color: '#a883f2',
 };
 export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-color`,
-        key: 'color',
-        label: 'Color',
-        type: 'select',
-        options: {
-          placeholder: 'Select color',
-          items: [
-            {
-              label: 'Red',
-              value: 'red',
-            },
-            {
-              label: 'Blue',
-              value: 'blue',
-            },
-            {
-              label: 'Transparent',
-              value: 'transparent',
-            },
-          ],
-        },
-      },
-    ],
-  },
   {
     sectionName: 'Color',
     children: [
@@ -58,12 +30,13 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
         label: 'Color',
         type: 'color',
         options: {
-          color: '#fff',
+          color: '#a883f2',
         },
       },
     ],
   },
 ];
+
 export const config: WidgetConfig = {
   name: 'Container',
   icon: <BoxSelect />,

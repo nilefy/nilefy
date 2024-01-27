@@ -11,7 +11,7 @@ export type WebloomTextProps = {
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .evaluatedProps as WebloomTextProps;
+    .values as WebloomTextProps;
   return <span className="h-full w-full break-all">{props.text}</span>;
 });
 const config: WidgetConfig = {
@@ -40,10 +40,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTextProps> = [
         id: `${widgetName}-text`,
         key: 'text',
         label: 'Text',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          type: 'text',
+          label: 'Text',
         },
       },
     ],
