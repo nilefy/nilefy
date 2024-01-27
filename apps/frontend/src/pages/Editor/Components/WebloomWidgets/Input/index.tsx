@@ -104,10 +104,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
         id: `${widgetName}-label`,
         key: 'label',
         label: 'Label',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter label',
-          type: 'text',
+          label: 'Label',
         },
       },
     ],

@@ -190,10 +190,10 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTextEditorProps> = [
         id: `${widgetName}-text`,
         key: 'label',
         label: 'Text',
-        type: 'input',
+        type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          type: 'text',
+          label: 'Text',
         },
       },
     ],
