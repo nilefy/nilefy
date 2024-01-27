@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
 import React, { useContext } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';

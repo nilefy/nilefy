@@ -1,8 +1,8 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { ComponentPropsWithoutRef, useContext } from 'react';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { WidgetContext } from '../..';

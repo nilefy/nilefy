@@ -1,12 +1,16 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
+// import {
+//   BaseControlProps,
+//   InspectorCheckboxProps,
+// } from '@webloom/configpaneltypes';
+import { useContext } from 'react';
+import { FormControlContext } from '..';
 import {
   BaseControlProps,
   InspectorCheckboxProps,
-} from '@webloom/configpaneltypes';
-import { useContext } from 'react';
-import { FormControlContext } from '..';
+} from '@/lib/Editor/interface';
 
 const InspectorCheckBox = (
   props: InspectorCheckboxProps & BaseControlProps,

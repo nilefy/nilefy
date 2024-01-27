@@ -1,8 +1,5 @@
 import { SketchPicker } from 'react-color';
-import {
-  BaseControlProps,
-  InspectorColorProps,
-} from '@webloom/configpaneltypes';
+import { BaseControlProps, InspectorColorProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { FormControlContext } from '..';
 

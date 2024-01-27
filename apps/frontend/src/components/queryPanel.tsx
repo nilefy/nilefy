@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import validator from '@rjsf/validator-ajv8';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
 import {
   DropdownMenu,
@@ -16,9 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { ConfigForm, ConfigFormGenricOnChange } from './configForm';
 import { api } from '@/api';
 import { CompeleteQueryI } from '@/api/queries.api';
 import { DebouncedInput } from './debouncedInput';
@@ -26,16 +26,20 @@ import clsx from 'clsx';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { useQueryClient } from '@tanstack/react-query';
+import FormT from '@rjsf/core';
+import { RJSFShadcn } from './rjsf_shad';
 
 function QueryItem({ query }: { query?: CompeleteQueryI }) {
+  const rjsfRef = useRef<FormT>(null);
   const { workspaceId, appId } = useParams();
   const queryClient = useQueryClient();
 
-  const { mutate: updateMutation } = api.queries.update.useMutation({
-    onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ['queries'] });
-    },
-  });
+  const { mutate: updateMutation, isPending: isSubmitting } =
+    api.queries.update.useMutation({
+      onSuccess() {
+        queryClient.invalidateQueries({ queryKey: ['queries'] });
+      },
+    });
   const { mutate: run } = api.queries.run.useMutation({
     onSuccess(data, variables) {
       console.log(
@@ -57,51 +61,22 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
     );
   }
 
-  const onQueryChange: ConfigFormGenricOnChange = (key, value) => {
-    // NOTE: this will change in PR https://github.com/z-grad-pr-sh/frontend/pull/172
-    // i need a place to store config changes until i update them on the backend, react query seams like a good place
-    queryClient.setQueryData<Record<string, unknown>>(
-      ['queries', query.id, 'config'],
-      (prev) => {
-        if (!prev) {
-          return {
-            ...query.query,
-            [key]: value,
-          };
-        } else {
-          return {
-            ...prev,
-            [key]: value,
-          };
-        }
-      },
-    );
-  };
-
-  const onSaveQuery = () => {
-    if (!workspaceId || !appId) {
-      throw new Error('workspaceId or appId is not defined!');
-    }
-    updateMutation({
-      workspaceId: +workspaceId,
-      appId: +appId,
-      queryId: query.id,
-      dto: {
-        query: queryClient.getQueryData(['queries', query.id, 'config']),
-      },
-    });
-  };
-
   return (
     <div className="h-full w-full">
       {/* HEADER */}
       <div className="flex h-10 flex-row items-center justify-end gap-5 border border-gray-300">
         <Input defaultValue={query.name} />
-        {/* TODO: */}
-        <Button className="mr-auto" onClick={onSaveQuery}>
-          save
+        <Button className="mr-auto" onClick={() => rjsfRef.current?.submit()}>
+          {isSubmitting ? (
+            <>
+              Saving... <SaveIcon />{' '}
+            </>
+          ) : (
+            <>
+              Save <SaveIcon />
+            </>
+          )}
         </Button>
-        {/* <Button>preview</Button> */}
         <Button
           onClick={() => {
             if (!workspaceId || !appId) {
@@ -122,12 +97,33 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
           run
         </Button>
       </div>
-      <ScrollArea className="h-full w-full border border-gray-300">
-        {/* <ConfigForm */}
-        {/*   config={query.dataSource.dataSource.queryConfig} */}
-        {/*   itemProps={query.query} */}
-        {/*   onChange={onQueryChange} */}
-        {/* /> */}
+      {/*FORM*/}
+      <ScrollArea className="h-full w-full ">
+        <RJSFShadcn
+          ref={rjsfRef}
+          // formContext={{ isSubmitting: isSubmitting }}
+          schema={query.dataSource.dataSource.queryConfig.schema}
+          uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
+          formData={query.query}
+          validator={validator}
+          onSubmit={({ formData }) => {
+            if (!workspaceId || !appId)
+              throw new Error(
+                "that's weird this function should run under workspaceId, appId",
+              );
+            updateMutation({
+              workspaceId: +workspaceId,
+              appId: +appId,
+              queryId: query.id,
+              dto: {
+                query: formData,
+              },
+            });
+          }}
+        >
+          {/*to remove submit button*/}
+          <></>
+        </RJSFShadcn>
       </ScrollArea>
     </div>
   );

@@ -36,7 +36,6 @@
     "@nestjs/platform-ws": "^10.2.10",
     "@nestjs/swagger": "^7.1.16",
     "@nestjs/websockets": "^10.2.10",
-    "@webloom/configpaneltypes": "workspace:*",
     "@webloom/constants": "workspace:^",
     "@webloom/data-sources": "workspace:*",
     "@webloom/permissions": "workspace:*",
@@ -55,7 +54,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "ws": "^8.14.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.3"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.2.0",

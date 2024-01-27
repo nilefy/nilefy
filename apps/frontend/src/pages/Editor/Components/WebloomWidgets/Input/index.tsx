@@ -3,7 +3,7 @@ import { TextCursorInput } from 'lucide-react';
 import { ComponentPropsWithoutRef, useContext } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';

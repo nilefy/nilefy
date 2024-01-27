@@ -13,7 +13,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 
 type GenericConfig = WidgetInspectorConfig<Record<string, unknown>>;
 export type ConfigFormGenricOnChange = (key: string, newValue: unknown) => void;

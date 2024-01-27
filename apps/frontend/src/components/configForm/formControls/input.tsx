@@ -1,8 +1,5 @@
 import { Input } from '@/components/ui/input';
-import {
-  BaseControlProps,
-  InspectorInputProps,
-} from '@webloom/configpaneltypes';
+import { BaseControlProps, InspectorInputProps } from '@/lib/Editor/interface';
 import { Label } from '@/components/ui/label';
 import { useContext } from 'react';
 import { FormControlContext } from '..';

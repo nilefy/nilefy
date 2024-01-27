@@ -1,3 +1,4 @@
+import validator from '@rjsf/validator-ajv8';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -13,8 +14,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
-import { Trash } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { SaveIcon, Trash } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
 import { DebouncedInput } from '@/components/debouncedInput';
@@ -33,7 +34,6 @@ import { useForm } from 'react-hook-form';
 import {
   DATASOURCES_QUERY_KEY,
   DataSourceMeta,
-  WsDataSourceI,
   dataSourceMeta,
 } from '@/api/dataSources.api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,7 +47,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
-import { ConfigForm, ConfigFormGenricOnChange } from '@/components/configForm';
+import { RJSFShadcn } from '@/components/rjsf_shad';
+import FormT from '@rjsf/core';
 
 function CreatePluginForm({
   workspaceId,
@@ -372,52 +373,17 @@ export function GlobalDataSourcesView() {
 }
 
 export function DataSourceView() {
+  // i want to disable the submit  button, but i'm not in the mood to supply submitting state through context to the form and all that so i'll do it the easy way and replace the submit button
+  // ref to call the form submit
+  const rjsfRef = useRef<FormT>(null);
   const { datasourceId, workspaceId } = useParams();
   // const queryClient = useQueryClient();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
     +(datasourceId as string),
   );
-  // const { mutate: updateMutate } = api.dataSources.update.useMutation();
-  // const onChange: ConfigFormGenricOnChange = (key, value) => {
-  //   const queryKey = [
-  //     DATASOURCES_QUERY_KEY,
-  //     {
-  //       workspaceId: +(workspaceId as string),
-  //       dataSourceId: +(datasourceId as string),
-  //     },
-  //   ];
-  //   queryClient.setQueryData<WsDataSourceI>(queryKey, (prev) => {
-  //     if (!prev) return;
-  //     return {
-  //       ...prev,
-  //       config: {
-  //         ...prev.config,
-  //         [key]: value,
-  //       },
-  //     };
-  //   });
-  // };
-  // const submitUpdate = () => {
-  //   // any changes made to the options i store them on the react query instance of the datasource
-  //   // so to send to remote i get new values from react query
-  //   const queryKey = [
-  //     DATASOURCES_QUERY_KEY,
-  //     {
-  //       workspaceId: +(workspaceId as string),
-  //       dataSourceId: +(datasourceId as string),
-  //     },
-  //   ];
-  //   const dto = queryClient.getQueryData<WsDataSourceI>(queryKey);
-  //   if (!dto) return;
-  //   updateMutate({
-  //     workspaceId: +(workspaceId as string),
-  //     dataSourceId: +(datasourceId as string),
-  //     dto: {
-  //       config: dto.config,
-  //     },
-  //   });
-  // };
+  const { mutate: updateMutate, isPending: isSubmitting } =
+    api.dataSources.update.useMutation();
 
   if (isPending) {
     return <>loading ....</>;
@@ -432,17 +398,42 @@ export function DataSourceView() {
           <div className="flex gap-5">
             <Input defaultValue={data.name} />
           </div>
-          <p className="text-4xl text-red-300">
-            SORRY CONFIG FORM NOT WORKING ON THIS BRANCH
-          </p>
-          {/* <ConfigForm */}
-          {/*   config={data.dataSource.config} */}
-          {/*   itemProps={data.config} */}
-          {/*   onChange={onChange} */}
-          {/* /> */}
-          {/* <Button onClick={submitUpdate} className="w-16"> */}
-          {/*   Save */}
-          {/* </Button> */}
+          <div className="p-4">
+            <RJSFShadcn
+              ref={rjsfRef}
+              // formContext={{ isSubmitting: isSubmitting }}
+              schema={data.dataSource.config.schema}
+              uiSchema={data.dataSource.config.uiSchema}
+              formData={data.config}
+              validator={validator}
+              onSubmit={({ formData }) => {
+                console.log('submit', formData);
+                if (!workspaceId || !datasourceId)
+                  throw new Error(
+                    "that's weird this function should run under workspaceId, datasourceId",
+                  );
+                updateMutate({
+                  workspaceId: +workspaceId,
+                  dataSourceId: +datasourceId,
+                  dto: {
+                    config: formData,
+                  },
+                });
+              }}
+            >
+              <Button className="mt-4" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    Saving... <SaveIcon />{' '}
+                  </>
+                ) : (
+                  <>
+                    Save <SaveIcon />
+                  </>
+                )}
+              </Button>
+            </RJSFShadcn>
+          </div>
         </div>
       </ScrollArea>
     </div>

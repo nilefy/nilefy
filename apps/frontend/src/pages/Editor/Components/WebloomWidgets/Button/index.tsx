@@ -1,6 +1,6 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { MousePointerSquare } from 'lucide-react';
-import { WidgetInspectorConfig } from '@webloom/configpaneltypes';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
@@ -18,7 +18,7 @@ const WebloomButton = observer(() => {
   return (
     <Button
       {...props}
-      className={`active:bg-primary/20 block h-full w-full`}
+      className={`block h-full w-full active:bg-primary/20`}
       style={{ backgroundColor: props.color }}
     >
       {props.text}
