@@ -51,6 +51,7 @@
     "@tanstack/react-table": "^8.10.7",
     "@tanstack/table-core": "^8.10.7",
     "@tinymce/tinymce-react": "^4.3.2",
+    "@uiw/codemirror-theme-xcode": "^4.21.21",
     "@uiw/react-codemirror": "^4.21.20",
     "@webloom/constants": "workspace:^",
     "acorn": "^8.11.2",

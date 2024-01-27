@@ -1,3 +1,4 @@
+import { xcodeDark } from '@uiw/codemirror-theme-xcode';
 import { RegExpCursor } from '@codemirror/search';
 import {
   Decoration,
@@ -165,7 +166,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     },
   );
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext, javascript()];
+    const extensions = [setup, webLoomContext, javascript(), xcodeDark];
     if (props.templateAutocompletionOnly) {
       extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {

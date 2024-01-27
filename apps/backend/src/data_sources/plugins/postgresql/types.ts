@@ -48,8 +48,7 @@ export const queryConfigForm = {
   schema: zodToJsonSchema(querySchema, 'querySchema'),
   uiSchema: {
     query: {
-      // TODO: make it sqleditor
-      'ui:widget': 'textarea',
+      'ui:widget': 'sql',
       'ui:placeholder': 'select * from table;',
       'ui:title': 'SQL',
     },
