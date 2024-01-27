@@ -25,6 +25,7 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
         );
         if (res) {
           const widget = editorStore.currentPage.getWidgetById(id);
+          widget.setPropIsCode(toProperty, true);
           widget.addDependencies(res.dependencies);
         }
       }

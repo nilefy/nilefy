@@ -8,10 +8,8 @@ import {
 } from 'mobx';
 import invariant from 'invariant';
 import { hasCyclicDependencies } from '../dependancyUtils';
-import toposort from 'toposort';
 import { WebloomPage } from './page';
-import { evaluate } from '../evaluation';
-import { get, has, set } from 'lodash';
+import { has } from 'lodash';
 // please note that path is something like "a.b.c"
 type Path = string;
 type EntityId = string;
@@ -31,6 +29,7 @@ export type DependencyRelation = {
 };
 // thanks to appsmith for inspiration
 export class DependencyManager {
+  codeEntites: Set<EntityId> = new Set();
   dependencies: DependencyMap = new Map();
   page: WebloomPage;
   constructor({
@@ -54,13 +53,12 @@ export class DependencyManager {
       removeRelationshipsForEntity: action,
       // inverseDependencies: computed, // we don't need this for now
       graph: computed,
-      evaluatedForest: computed,
       page: observable,
     });
   }
+
   /**
    * Add multiple dependencies (doesn't overwrite so don't use it unless initialising)
-   * @param relations
    */
   addDependencies(relations: Array<DependencyRelation>): void {
     for (const relation of relations) {
@@ -69,12 +67,15 @@ export class DependencyManager {
   }
   /**
    * Add multiple dependencies for a single entity, (overwrites existing dependencies)
-   * @param relations the dependent entity id in all relations must be the same or it will throw
+   * @param relations the dependent entity id in all relations must be the same and match caller or it will throw
    */
-  addDependenciesForEntity(relations: Array<DependencyRelation>): void {
+  addDependenciesForEntity(
+    relations: Array<DependencyRelation>,
+    caller: string,
+  ): void {
+    const dependentId = caller;
+    this.dependencies.delete(dependentId);
     if (relations.length === 0) return;
-    const dependentId = relations[0].dependent.entityId;
-    this.dependencies.set(dependentId, new Map());
     for (const relation of relations) {
       invariant(
         relation.dependent.entityId === dependentId,
@@ -218,24 +219,5 @@ export class DependencyManager {
       relation.dependent.entityId + '.' + relation.dependent.path,
       relation.dependency.entityId + '.' + relation.dependency.path,
     ];
-  }
-  get evaluatedForest(): Record<string, unknown> {
-    // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
-    const sortedGraph = toposort(this.graph).reverse();
-    const evalTree: Record<string, unknown> = {};
-    for (const node of sortedGraph) {
-      const [entityId, path] = node.split('.');
-      const entity = this.page.getEntityById(entityId);
-      invariant(
-        entity,
-        `entity with id ${entityId} not found while evaluating ${node}`,
-      );
-      if (!this.getDirectDependencies(entityId)) {
-        set(evalTree, node, get(entity.rawValues, path));
-        continue;
-      }
-      set(evalTree, node, evaluate(get(entity.rawValues, path), evalTree));
-    }
-    return evalTree;
   }
 }

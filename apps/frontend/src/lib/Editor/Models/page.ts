@@ -19,6 +19,7 @@ import {
 } from '../utils';
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
+import { EvaluationManager } from './evaluationManager';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -33,6 +34,7 @@ export class WebloomPage {
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
   dependencyManager: DependencyManager;
+  evaluationManger: EvaluationManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -98,6 +100,7 @@ export class WebloomPage {
     this.dependencyManager = new DependencyManager({
       page: this,
     });
+    this.evaluationManger = new EvaluationManager(this);
     this.widgets = widgetMap;
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height = this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
@@ -113,6 +116,7 @@ export class WebloomPage {
           this.context,
         );
         if (isCode) {
+          this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
           allDependencies.push(...dependencies);
         }
       }

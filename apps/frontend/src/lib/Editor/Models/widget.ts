@@ -95,7 +95,7 @@ export class WebloomWidget
 
     makeObservable(this, {
       rawValues: observable,
-      values: computed,
+      values: computed.struct,
       nodes: observable,
       parentId: observable,
       dom: observable,
@@ -151,7 +151,7 @@ export class WebloomWidget
     for (const key in this.rawValues) {
       const path = this.id + '.' + key;
       const evaluatedValue = get(
-        this.page.dependencyManager.evaluatedForest,
+        this.page.evaluationManger.evaluatedForest,
         path,
       );
       if (evaluatedValue !== undefined) {
@@ -348,8 +348,13 @@ export class WebloomWidget
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
+
+  setPropIsCode(key: string, isCode: boolean) {
+    this.page.evaluationManger.setRawValueIsCode(this.id, key, isCode);
+  }
+
   addDependencies(relations: Array<DependencyRelation>) {
-    this.page.dependencyManager.addDependenciesForEntity(relations);
+    this.page.dependencyManager.addDependenciesForEntity(relations, this.id);
   }
 
   clearDependents() {
