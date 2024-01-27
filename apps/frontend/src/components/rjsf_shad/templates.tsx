@@ -1,3 +1,4 @@
+import ObjectFieldTemplate from './objectFieldTemplate';
 import FieldTemplate from './fieldTemplate';
 import WrapIfAdditionalTemplate from './wrapIfAdditionalTemplate';
 import ArrayFieldItemTemplate from './arrayFieldItemTemplate';
@@ -43,8 +44,10 @@ export function generateTemplates<
     ArrayFieldItemTemplate,
     ArrayFieldTemplate,
     DescriptionFieldTemplate: DescriptionField,
+    // TODO: fix those components
     // WrapIfAdditionalTemplate,
     // FieldTemplate,
+    // ObjectFieldTemplate,
   };
 }
 
