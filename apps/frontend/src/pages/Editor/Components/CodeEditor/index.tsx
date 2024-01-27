@@ -1,4 +1,12 @@
-import { EditorView, ViewUpdate } from '@codemirror/view';
+import { RegExpCursor } from '@codemirror/search';
+import {
+  Decoration,
+  DecorationSet,
+  ViewPlugin,
+  EditorView,
+  ViewUpdate,
+  placeholder,
+} from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
@@ -19,6 +27,63 @@ import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
 
+export const inlineTheme = EditorView.baseTheme({
+  '&': {
+    backgroundColor: 'hsl(var(--background))',
+  },
+
+  '&.cm-focused .cm-selectionBackground, ::selection': {
+    backgroundColor: '#c0c0c0',
+  },
+  '&.cm-focused': {
+    outline: 'none',
+  },
+  '.cm-jstemplate': {
+    backgroundColor: '#85edff49',
+  },
+});
+// HIGHLIGHT JS TEMPLATEs
+const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
+
+// TODO: fix this, new lines breaks the plugin
+/**
+ * extension that adds new class to use in the mark
+ */
+export const jsTemplatePlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = this.getDeco(view);
+    }
+    getDeco(view: EditorView) {
+      const templateRegexString = '\\{\\{([^}]+)\\}\\}';
+      const { state } = view;
+      const decos = [];
+      for (const part of view.visibleRanges) {
+        const cursor = new RegExpCursor(
+          state.doc,
+          templateRegexString,
+          {},
+          part.from,
+          part.to,
+        );
+        for (const match of cursor) {
+          const { from, to } = match;
+          decos.push(templateMarkDeco.range(from, to));
+        }
+      }
+      return Decoration.set(decos);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = this.getDeco(update.view);
+      }
+    }
+  },
+  {
+    decorations: (instance) => instance.decorations,
+  },
+);
 const External = Annotation.define<boolean>();
 
 /**
@@ -38,6 +103,7 @@ export type WebloomCodeEditorProps = {
   value?: string;
   templateAutocompletionOnly?: boolean;
   setup: Extension;
+  id?: string;
 };
 /**
  *
@@ -181,45 +247,41 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     }
   }, [value, view]);
 
-  return <div ref={editor} className={cn('w-full h-full', props.className)} />;
+  return (
+    <div
+      id={props.id}
+      ref={editor}
+      className={cn('w-full h-full', props.className)}
+    />
+  );
 }
 
-export function SQLEditor() {
-  const editor = useRef<HTMLDivElement>(null);
-  /**
-   * to hold the editor state outside the editor
-   */
-  const [code, setCode] = useState('');
-  // add extenion to update the state "code" when the view changes
-  const onUpdate = EditorView.updateListener.of((update) =>
-    setCode(update.state.doc.toString()),
+export const inlineSetupCallback = (
+  placeholderText: string = 'Enter something',
+) => [
+  placeholder(placeholderText),
+  inlineTheme,
+  basicSetup,
+  sql({
+    dialect: PostgreSQL,
+  }),
+  jsTemplatePlugin,
+];
+
+export type WebloomSQLEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
+  placeholder?: string;
+};
+
+export function SQLEditor(props: WebloomSQLEditorProps) {
+  const inlineSetup = useMemo(
+    () => inlineSetupCallback(props.placeholder),
+    [props.placeholder],
   );
-  useEffect(() => {
-    if (!editor.current) return;
-    console.log('inside the hook');
-    const editorState = EditorState.create({
-      doc: code,
-      extensions: [
-        basicSetup,
-        sql({
-          dialect: PostgreSQL,
-        }),
-        onUpdate,
-      ],
-    });
-    const view = new EditorView({
-      state: editorState,
-      parent: editor.current,
-    });
-
-    return () => view.destroy();
-  }, []);
-
-  console.log('code', code);
-
   return (
-    <div className="flex h-screen w-screen items-center justify-center">
-      <div ref={editor} className="h-8 w-2/3 " />
-    </div>
+    <WebloomCodeEditor
+      setup={inlineSetup}
+      {...props}
+      templateAutocompletionOnly
+    />
   );
 }

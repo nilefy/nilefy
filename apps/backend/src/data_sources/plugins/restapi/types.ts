@@ -43,7 +43,7 @@ export const querySchema = z.object({
   endpoint: z.string(),
   method: endpointMethods,
   headers: headersSchema,
-  params: z.record(z.unknown()),
+  params: headersSchema,
   // TODO: the plugin needs to be able to handle any body type
   body: z.union([z.string(), z.record(z.unknown())]),
 });

@@ -28,7 +28,6 @@ import { ScrollArea } from './ui/scroll-area';
 import { useQueryClient } from '@tanstack/react-query';
 import FormT from '@rjsf/core';
 import { RJSFShadcn } from './rjsf_shad';
-import { PageSelector } from './pageSelector';
 
 function QueryItem({ query }: { query?: CompeleteQueryI }) {
   const rjsfRef = useRef<FormT>(null);
@@ -98,34 +97,33 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
           run
         </Button>
       </div>
-      <ScrollArea className="h-full w-full border border-gray-300">
-        <div className="p-4">
-          <RJSFShadcn
-            ref={rjsfRef}
-            // formContext={{ isSubmitting: isSubmitting }}
-            schema={query.dataSource.dataSource.queryConfig.schema}
-            uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-            formData={query.query}
-            validator={validator}
-            onSubmit={({ formData }) => {
-              console.log('submit', formData);
-              if (!workspaceId || !appId)
-                throw new Error(
-                  "that's weird this function should run under workspaceId, appId",
-                );
-              updateMutation({
-                workspaceId: +workspaceId,
-                appId: +appId,
-                queryId: query.id,
-                dto: {
-                  query: formData,
-                },
-              });
-            }}
-          >
-            <></>
-          </RJSFShadcn>
-        </div>
+      {/*FORM*/}
+      <ScrollArea className="h-full w-full ">
+        <RJSFShadcn
+          ref={rjsfRef}
+          // formContext={{ isSubmitting: isSubmitting }}
+          schema={query.dataSource.dataSource.queryConfig.schema}
+          uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
+          formData={query.query}
+          validator={validator}
+          onSubmit={({ formData }) => {
+            if (!workspaceId || !appId)
+              throw new Error(
+                "that's weird this function should run under workspaceId, appId",
+              );
+            updateMutation({
+              workspaceId: +workspaceId,
+              appId: +appId,
+              queryId: query.id,
+              dto: {
+                query: formData,
+              },
+            });
+          }}
+        >
+          {/*to remove submit button*/}
+          <></>
+        </RJSFShadcn>
       </ScrollArea>
     </div>
   );

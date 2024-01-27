@@ -10,6 +10,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
+import SQLRJSFWidget from './sqlEditor';
 
 export function generateWidgets<
   T = any,
@@ -23,6 +24,7 @@ export function generateWidgets<
     CheckboxesWidget,
     SelectWidget,
     RadioWidget,
+    sql: SQLRJSFWidget,
   };
 }
 
