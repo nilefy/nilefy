@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: '.vitest/setup',
+    setupFiles: './src/test/setup.ts',
     include: ['**/test.{ts,tsx}'],
   },
 });
