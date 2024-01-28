@@ -32,7 +32,19 @@ export class AuthService {
         from: 'onboarding@resend.dev',
         to: email,
         subject: 'Hello World',
-        html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
+        html: `
+    <p>Dear [User],</p>
+    <p>Congratulations on signing up for [Your Project Name]! We're thrilled to have you on board.</p>
+    
+    <p>Please click the following link to confirm your email address and complete the signup process:</p>
+    <a href="">Confirm Email Address</a>
+
+    <p>If you did not sign up for [Your Project Name], please disregard this email.</p>
+
+    <p>Thank you for choosing [Your Project Name]!</p>
+    <p>Best Regards,<br/>
+    The Webloom Team</p>
+  `,
       });
       if (error) {
         console.log('Error while sending email: ${error}');
