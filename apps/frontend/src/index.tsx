@@ -23,7 +23,7 @@ import {
   GlobalDataSourcesView,
   DataSourceView,
 } from '@/pages/dataSources/dataSources';
-import { AppPreview } from '@/pages/Editor/preview';
+import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 
@@ -122,7 +122,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: '/:workspaceId/apps/:appId/edit',
+    path: '/:workspaceId/apps/edit/:appId',
     element: <App />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
@@ -133,7 +133,7 @@ const router = createBrowserRouter([
     element: <AppPreview />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
-    children: [{ path: ':pageId' }],
+    children: [{ path: ':pageId', element: <PagePreview /> }],
   },
 ]);
 

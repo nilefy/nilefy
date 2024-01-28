@@ -53,10 +53,8 @@ import {
   defer,
   redirect,
   useAsyncError,
-  useAsyncValue,
   useLoaderData,
   useParams,
-  useSearchParams,
 } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import {
@@ -392,7 +390,7 @@ function ApplicationsViewResolved() {
             </CardContent>
             <CardFooter className="flex justify-end gap-5">
               <Link
-                to={`apps/${app.id}/edit`}
+                to={`apps/edit/${app.id}`}
                 className={buttonVariants({ variant: 'default' })}
               >
                 Edit

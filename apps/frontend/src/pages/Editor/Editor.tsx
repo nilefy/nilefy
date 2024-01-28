@@ -34,6 +34,7 @@ import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
+import { WebloomLoader } from '@/components/loader';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -204,7 +205,7 @@ export const Editor = observer(() => {
                   >
                     <WebloomElementShadow />
                     <MultiSelectBounding />
-                    <WebloomRoot />
+                    <WebloomRoot isPreview={false} />
                     <ResizeHandlers />
                     <Selecto
                       // The container to add a selection element
@@ -261,7 +262,7 @@ export const Editor = observer(() => {
             </Panel>
             <CustomPanelResizeHandle />
             <Panel maxSizePercentage={25} minSizePercentage={10}>
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<WebloomLoader />}>
                 <RightSidebar />
               </Suspense>
             </Panel>
