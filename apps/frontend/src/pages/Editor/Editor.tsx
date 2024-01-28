@@ -29,27 +29,11 @@ import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Await,
-  defer,
-  redirect,
-  useAsyncError,
-  useAsyncValue,
-  useLoaderData,
-} from 'react-router-dom';
-import { QueryClient } from '@tanstack/react-query';
-import { getToken, removeToken } from '@/lib/token.localstorage';
-import { jwtDecode } from 'jwt-decode';
-import { JwtPayload } from '@/types/auth.types';
-import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
-import { seedNameMap } from '@/lib/Editor/widgetName';
-import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
-import { FetchXError } from '@/utils/fetch';
-import { WebloomLoader } from '@/components/loader';
+import { AppLoader } from './appLoader';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -80,31 +64,6 @@ const CustomPanelResizeHandle = () => {
     </PanelResizeHandle>
   );
 };
-
-export const appLoader =
-  (queryClient: QueryClient) =>
-  async ({ params }: { params: Record<string, string | undefined> }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const query = useAppQuery({
-        workspaceId: +(params.workspaceId as string),
-        appId: +(params.appId as string),
-      });
-      return defer({
-        app: queryClient.fetchQuery(query),
-      });
-    }
-  };
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -313,51 +272,10 @@ export const Editor = observer(() => {
   );
 });
 
-function AppLoadError() {
-  const error = useAsyncError() as FetchXError;
-  return (
-    <div className="h-screen w-screen content-center items-center text-red-500">
-      errors while loading app &quot;{error.message}&quot;
-    </div>
-  );
-}
-
-const AppResolved = function AppResolved() {
-  const app = useAsyncValue() as AppCompleteT;
-  const tree = app.defaultPage.tree;
-  // todo : put the init state inside the editor store itself
-  const inited = useRef(false);
-  if (!inited.current) {
-    seedNameMap(Object.values(tree));
-    editorStore.init({
-      currentPageId: app.defaultPage.id.toString(),
-      pages: [
-        new WebloomPage({
-          id: app.defaultPage.id.toString(),
-          widgets: tree,
-          queries: {},
-        }),
-      ],
-    });
-    inited.current = true;
-  }
-  useEffect(() => {
-    commandManager.connectToEditor(app.id, app.defaultPage.id);
-    return () => {
-      commandManager.disconnectFromConnectedEditor();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return <Editor />;
-};
 export function App() {
-  const { app } = useLoaderData();
-
   return (
-    <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={app} errorElement={<AppLoadError />}>
-        <AppResolved />
-      </Await>
-    </Suspense>
+    <AppLoader initWs={true}>
+      <Editor />
+    </AppLoader>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import { App, appLoader } from '@/pages/Editor/Editor';
+import { App } from '@/pages/Editor/Editor';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
@@ -9,21 +9,23 @@ import ErrorPage from './pages/error';
 import { Dashboard, loader as workspacesLoader } from './pages/mainLayout';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
-import { GroupManagement, GroupsManagement } from './pages/workspace/group';
-import { WorkspaceSettingsLayout } from './pages/workspace/workspace';
-import { ProfileSettings } from './pages/profile/settings';
+import { GroupManagement, GroupsManagement } from '@/pages/workspace/group';
+import { WorkspaceSettingsLayout } from '@/pages/workspace/workspace';
+import { ProfileSettings } from '@/pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ApplicationsLayout, appsLoader } from './pages/apps/apps';
 // import DatabaseTable from './pages/built-in-db/db';
 // import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { NonAuthRoute } from './components/non-auth-routes';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { NonAuthRoute } from '@/components/non-auth-routes';
 import {
   GlobalDataSourcesView,
   DataSourceView,
-} from './pages/dataSources/dataSources';
+} from '@/pages/dataSources/dataSources';
+import { AppPreview } from '@/pages/Editor/preview';
+import { appLoader } from '@/pages/Editor/appLoader';
+import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,10 +122,18 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: '/:workspaceId/apps/:appId',
+    path: '/:workspaceId/apps/:appId/edit',
     element: <App />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
+    children: [{ path: ':pageId' }],
+  },
+  {
+    path: '/:workspaceId/apps/:appId',
+    element: <AppPreview />,
+    errorElement: <ErrorPage />,
+    loader: appLoader(queryClient),
+    children: [{ path: ':pageId' }],
   },
 ]);
 
