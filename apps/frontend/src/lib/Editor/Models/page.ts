@@ -20,6 +20,7 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+import { WebloomWidgets } from '@/pages/Editor/Components';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -44,11 +45,11 @@ export class WebloomPage {
   constructor({
     id,
     widgets,
-    queries,
+    queries = {},
   }: {
     id: string;
-    widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
-    queries: Record<string, WebloomQuery>;
+    widgets?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
+    queries?: Record<string, WebloomQuery>;
   }) {
     makeObservable(this, {
       widgets: observable,
@@ -91,6 +92,19 @@ export class WebloomPage {
     const widgetMap: Record<string, WebloomWidget> = {};
     this.queries = queries;
     this.selectedNodeIds = new Set();
+    if (!widgets) {
+      widgets = {
+        [EDITOR_CONSTANTS.ROOT_NODE_ID]: new WebloomWidget({
+          id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+          type: 'WebloomContainer',
+          page: this,
+          col: 0,
+          row: 0,
+          rowsCount: 0,
+          parentId: EDITOR_CONSTANTS.ROOT_NODE_ID,
+        }).snapshot,
+      };
+    }
     Object.values(widgets).forEach((widget) => {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,

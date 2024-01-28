@@ -34,6 +34,7 @@ export class EvaluationManager {
   isRawValueCode(entityId: string, path: string) {
     return this.codeRawValues.has(`${entityId}.${path}`);
   }
+
   get evaluatedForest(): Record<string, unknown> {
     // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
     const sortedGraph = toposort(this.page.dependencyManager.graph).reverse();

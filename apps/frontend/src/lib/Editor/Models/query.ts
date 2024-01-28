@@ -1,6 +1,7 @@
 import { makeObservable, observable, flow } from 'mobx';
 import { RuntimeEvaluable, Snapshotable } from './interfaces';
 import { WebloomPage } from './page';
+
 export class WebloomQuery
   implements
     RuntimeEvaluable,

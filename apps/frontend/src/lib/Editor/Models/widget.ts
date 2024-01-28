@@ -330,7 +330,6 @@ export class WebloomWidget
     dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
     return dimensions;
   }
-
   removeSelf() {
     this.page.removeWidget(this.id);
   }
