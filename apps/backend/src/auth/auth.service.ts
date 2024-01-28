@@ -8,6 +8,9 @@ import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { JwtToken, PayloadUser } from './auth.types';
+import { Resend } from 'resend';
+
+const resend = new Resend('re_g5xWM5pD_JeAhaHmaccLMbc5873jSLKcc');
 
 @Injectable()
 export class AuthService {
@@ -23,7 +26,17 @@ export class AuthService {
 
     try {
       const u = await this.userService.create({ ...user, password: hashed });
+      const { email } = user;
 
+      const { error } = await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: 'Hello World',
+        html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
+      });
+      if (error) {
+        console.log('Error while sending email: ${error}');
+      }
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
