@@ -69,6 +69,7 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
   if (!inited.current) {
     seedNameMap(Object.values(tree));
     editorStore.init({
+      name: app.name,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         new WebloomPage({
@@ -78,6 +79,16 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
           widgets: tree,
           queries: {},
         }),
+        ...app.pages.map(
+          (p) =>
+            new WebloomPage({
+              id: p.id.toString(),
+              name: p.name,
+              handle: p.handle,
+              widgets: tree,
+              queries: {},
+            }),
+        ),
       ],
     });
     inited.current = true;
