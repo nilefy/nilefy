@@ -63,6 +63,12 @@ export class WebloomWebSocket {
 
     this.socket!.addEventListener('open', () => {
       this.auth();
+
+      while (this.msgQ.length) {
+        if (this.socketState != this.socket?.OPEN) break;
+        const msg = this.msgQ.shift();
+        this.socket!.send(msg as string);
+      }
     });
   }
 
