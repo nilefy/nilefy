@@ -2,6 +2,9 @@ import { makeObservable, observable, action, computed } from 'mobx';
 import { WebloomPage } from './page';
 
 export class EditorState {
+  /**
+   * @description [id]: page
+   */
   pages: Record<string, WebloomPage> = {};
   currentPageId: string = '';
 
