@@ -7,14 +7,14 @@ import { WebloomInlineEditor } from '@/pages/Editor/Components/CodeEditor/inline
 import { analyzeDependancies } from '@/lib/Editor/dependancyUtils';
 import { editorStore } from '@/lib/Editor/Models';
 import { debounce } from 'lodash';
-import { WebloomPage } from '@/lib/Editor/Models/page';
+import { EditorState } from '@/lib/Editor/Models/editor';
 
 const debouncedAnalyzeDependancies = debounce(
   (
     newValue: string,
     toProperty: string,
     id: string,
-    context: WebloomPage['context'],
+    context: EditorState['context'],
   ) => {
     const res = analyzeDependancies(newValue, toProperty, id, context);
     const widget = editorStore.currentPage.getWidgetById(id);
@@ -36,7 +36,7 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
           newValue,
           toProperty,
           id,
-          editorStore.currentPage.context,
+          editorStore.context,
         );
       }
 

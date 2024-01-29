@@ -341,7 +341,7 @@ function AppLoadError() {
 const AppResolved = function AppResolved() {
   const [app, queries] = useAsyncValue() as [
     app: AppCompleteT,
-    queries: Record<string, Awaited<ReturnType<typeof getQueries>>>,
+    queries: Awaited<ReturnType<typeof getQueries>>,
   ];
 
   const tree = app.defaultPage.tree;
@@ -353,13 +353,12 @@ const AppResolved = function AppResolved() {
     editorStore.init({
       currentPageId: app.defaultPage.id.toString(),
       pages: [
-        new WebloomPage({
+        {
           id: app.defaultPage.id.toString(),
           widgets: tree,
-          queries,
-          editorStore: editorStore,
-        }),
+        },
       ],
+      queries: queries,
     });
     inited.current = true;
   }

@@ -1,7 +1,6 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { EvaluationContext, evaluate } from '../evaluation';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -18,8 +17,9 @@ import {
   handleParentCollisions,
 } from '../collisions';
 import { RuntimeEvaluable, Snapshotable } from './interfaces';
-import { DependencyRelation } from './dependencyManager';
+import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { cloneDeep, get } from 'lodash';
+import { EvaluationManager } from './evaluationManager';
 
 export type RuntimeProps = Record<string, unknown>;
 type EvaluatedRunTimeProps = SnapshotProps;
@@ -28,7 +28,10 @@ export type SnapshotProps = Record<string, unknown>;
 export class WebloomWidget
   implements
     Snapshotable<
-      Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'> & {
+      Omit<
+        ConstructorParameters<typeof WebloomWidget>[0],
+        'page' | 'evaluationManger' | 'dependencyManager'
+      > & {
         pageId: string;
       }
     >,
@@ -46,6 +49,10 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
+  // drilled from the editor
+  evaluationManger: EvaluationManager;
+  dependencyManager: DependencyManager;
+
   constructor({
     type,
     parentId,
@@ -57,6 +64,8 @@ export class WebloomWidget
     rowsCount,
     columnsCount,
     props,
+    evaluationManger,
+    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -69,8 +78,12 @@ export class WebloomWidget
     columnsCount?: number;
     props?: Record<string, unknown>;
     dependents?: Set<string>;
+    evaluationManger: EvaluationManager;
+    dependencyManager: DependencyManager;
   }) {
     this.id = id;
+    this.evaluationManger = evaluationManger;
+    this.dependencyManager = dependencyManager;
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
@@ -150,10 +163,7 @@ export class WebloomWidget
     const evaluatedProps: EvaluatedRunTimeProps = {};
     for (const key in this.rawValues) {
       const path = this.id + '.' + key;
-      const evaluatedValue = get(
-        this.page.evaluationManger.evaluatedForest,
-        path,
-      );
+      const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
       if (evaluatedValue !== undefined) {
         evaluatedProps[key] = evaluatedValue;
       }
@@ -342,7 +352,12 @@ export class WebloomWidget
   clone() {
     const snapshot = this.snapshot;
     snapshot.id = getNewWidgetName(snapshot.type);
-    return new WebloomWidget({ ...snapshot, page: this.page });
+    return new WebloomWidget({
+      ...snapshot,
+      page: this.page,
+      evaluationManger: this.evaluationManger,
+      dependencyManager: this.dependencyManager,
+    });
   }
 
   get isCanvas() {
@@ -350,15 +365,15 @@ export class WebloomWidget
   }
 
   setPropIsCode(key: string, isCode: boolean) {
-    this.page.evaluationManger.setRawValueIsCode(this.id, key, isCode);
+    this.evaluationManger.setRawValueIsCode(this.id, key, isCode);
   }
 
   addDependencies(relations: Array<DependencyRelation>) {
-    this.page.dependencyManager.addDependenciesForEntity(relations, this.id);
+    this.dependencyManager.addDependenciesForEntity(relations, this.id);
   }
 
   clearDependents() {
-    this.page.dependencyManager.removeRelationshipsForEntity(this.id);
+    this.dependencyManager.removeRelationshipsForEntity(this.id);
   }
 
   cleanup() {

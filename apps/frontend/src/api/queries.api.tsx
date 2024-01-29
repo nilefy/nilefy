@@ -7,8 +7,7 @@ import {
 import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
 
 export type QueryI = {
-  id: number;
-  name: string;
+  id: string;
   query: Record<string, unknown>;
   dataSourceId: number;
   appId: number;
@@ -72,7 +71,7 @@ export async function addQuery({
   appId: number;
   dto: {
     dataSourceId: number;
-    name: QueryI['name'];
+    id: QueryI['id'];
     query: QueryI['query'];
   };
 }) {
@@ -120,7 +119,7 @@ export async function updateQuery({
   queryId: number;
   dto: Partial<{
     datasourceId: number;
-    name: QueryI['name'];
+    id: QueryI['id'];
     query: QueryI['query'];
   }>;
 }) {

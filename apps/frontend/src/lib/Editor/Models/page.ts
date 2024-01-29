@@ -1,8 +1,6 @@
 import { Point } from '@/types';
-import { EvaluationContext } from '../evaluation';
-import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -17,15 +15,14 @@ import {
   isSameCoords,
   normalizeCoords,
 } from '../utils';
-import { analyzeDependancies } from '../dependancyUtils';
-import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+import { DependencyManager } from './dependencyManager';
+
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-export type WebloomEntity = WebloomWidget | WebloomQuery;
+
 export class WebloomPage {
   id: string;
   widgets: Record<string, WebloomWidget> = {};
-  queries: Record<string, WebloomQuery> = {};
   mouseOverWidgetId: string | null = null;
   selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
@@ -33,26 +30,29 @@ export class WebloomPage {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  dependencyManager: DependencyManager;
-  evaluationManger: EvaluationManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
   };
   width: number = 0;
   height: number = 0;
+  // drilled from the editor
+  evaluationManger: EvaluationManager;
+  dependencyManager: DependencyManager;
+
   constructor({
     id,
     widgets,
-    queries,
+    evaluationManger,
+    dependencyManager,
   }: {
     id: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
-    queries: Record<string, WebloomQuery>;
+    evaluationManger: EvaluationManager;
+    dependencyManager: DependencyManager;
   }) {
     makeObservable(this, {
       widgets: observable,
-      queries: observable,
       mouseOverWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
@@ -62,10 +62,6 @@ export class WebloomPage {
       newNode: observable,
       newNodeTranslate: observable,
       shadowElement: observable,
-      context: computed({
-        keepAlive: true,
-        equals: comparer.shallow,
-      }),
       removeWidget: action,
       addWidget: action,
       setDraggedWidgetId: action,
@@ -88,43 +84,25 @@ export class WebloomPage {
       snapshot: computed,
     });
     this.id = id;
+    this.evaluationManger = evaluationManger;
+    this.dependencyManager = dependencyManager;
     const widgetMap: Record<string, WebloomWidget> = {};
-    this.queries = queries;
     this.selectedNodeIds = new Set();
     Object.values(widgets).forEach((widget) => {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
+        evaluationManger: this.evaluationManger,
+        dependencyManager: this.dependencyManager,
       });
     });
-    this.dependencyManager = new DependencyManager({
-      page: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
     this.widgets = widgetMap;
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-    // analyze dependancies
-    const allDependencies: Array<DependencyRelation> = [];
-    Object.values(widgetMap).forEach((widget) => {
-      for (const prop in widget.rawValues) {
-        const value = widget.rawValues[prop];
-        const { dependencies, isCode } = analyzeDependancies(
-          value,
-          prop,
-          widget.id,
-          this.context,
-        );
-        if (isCode) {
-          this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
-          allDependencies.push(...dependencies);
-        }
-      }
-    });
-    this.dependencyManager.addDependencies(allDependencies);
   }
+
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -174,20 +152,6 @@ export class WebloomPage {
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }
-  /**
-   * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
-   */
-  get context() {
-    const context: EvaluationContext = {};
-    Object.values(this.widgets).forEach((widget) => {
-      if (widget.isRoot) return;
-      context[widget.id] = widget.rawValues;
-    });
-    Object.values(this.queries).forEach((query) => {
-      context[query.id] = query.rawValues;
-    });
-    return context;
-  }
 
   /**
    *
@@ -195,11 +159,16 @@ export class WebloomPage {
    * @description adds a widget to the page.
    */
   addWidget(
-    widgetArgs: Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'>,
+    widgetArgs: Omit<
+      ConstructorParameters<typeof WebloomWidget>[0],
+      'page' | 'evaluationManger' | 'dependencyManager'
+    >,
   ) {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
+      evaluationManger: this.evaluationManger,
+      dependencyManager: this.dependencyManager,
     });
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
@@ -210,9 +179,6 @@ export class WebloomPage {
   }
   get rootWidget() {
     return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
-  }
-  getEntityById(id: string): WebloomEntity | undefined {
-    return this.widgets[id] || this.queries[id];
   }
   setDraggedWidgetId(id: string | null) {
     this.draggedWidgetId = id;
@@ -433,15 +399,10 @@ export class WebloomPage {
     return {
       id: this.id,
       widgets: this.snapshotWidgets(),
-      queries: this.snapshotQueries(),
     };
   }
 
   snapshotWidgets() {
     return Object.values(this.widgets).map((widget) => widget.snapshot);
-  }
-
-  snapshotQueries() {
-    return Object.values(this.queries).map((query) => query.snapshot);
   }
 }

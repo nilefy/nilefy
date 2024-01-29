@@ -1,8 +1,8 @@
 import { observable, makeObservable, action, computed } from 'mobx';
 import invariant from 'invariant';
 import { hasCyclicDependencies } from '../dependancyUtils';
-import { WebloomPage } from './page';
 import { has } from 'lodash';
+import { EditorState } from './editor';
 // please note that path is something like "a.b.c"
 type Path = string;
 type EntityId = string;
@@ -24,15 +24,15 @@ export type DependencyRelation = {
 export class DependencyManager {
   codeEntites: Set<EntityId> = new Set();
   dependencies: DependencyMap = new Map();
-  page: WebloomPage;
+  editor: EditorState;
   constructor({
     relations,
-    page,
+    editor,
   }: {
     relations?: Array<DependencyRelation>;
-    page: WebloomPage;
+    editor: EditorState;
   }) {
-    this.page = page;
+    this.editor = editor;
     if (relations) {
       for (const relation of relations) {
         this.addDependency(relation);
@@ -46,7 +46,7 @@ export class DependencyManager {
       removeRelationshipsForEntity: action,
       // inverseDependencies: computed, // we don't need this for now
       graph: computed,
-      page: observable,
+      editor: observable,
     });
   }
 
@@ -83,8 +83,8 @@ export class DependencyManager {
     const dependencyPath = dependency.path;
     const dependentId = dependent.entityId;
     const dependencyId = dependency.entityId;
-    const dependencyEntity = this.page.getEntityById(dependencyId);
-    const dependentEntity = this.page.getEntityById(dependentId);
+    const dependencyEntity = this.editor.getEntityById(dependencyId);
+    const dependentEntity = this.editor.getEntityById(dependentId);
     invariant(
       dependentEntity,
       `dependent entity "${dependentId}" not found while adding dependency "${dependentId}" -> "${dependencyId}" on path "${dependentPath}"`,
