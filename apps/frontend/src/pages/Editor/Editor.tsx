@@ -86,22 +86,37 @@ export const appLoader =
   async ({ params }: { params: Record<string, string | undefined> }) => {
     // as this loader runs before react renders we need to check for token first
     const token = getToken();
+
     if (!token) {
       return redirect('/signin');
     } else {
-      // check is the token still valid
+      // check if the token is still valid
       // Decode the token
       const decoded = jwtDecode<JwtPayload>(token);
+
       if (decoded.exp * 1000 < Date.now()) {
         removeToken();
         return redirect('/signin');
       }
-      const query = useAppQuery({
+
+      // Fetch queries
+      const queriesQuery = useQueriesQuery(
+        +(params.workspaceId as string),
+        +(params.appId as string),
+      );
+
+      // Fetch the app data
+      const appQuery = useAppQuery({
         workspaceId: +(params.workspaceId as string),
         appId: +(params.appId as string),
       });
+      const values = Promise.all([
+        queryClient.fetchQuery(appQuery),
+        queryClient.fetchQuery(queriesQuery),
+      ]);
+
       return defer({
-        app: queryClient.fetchQuery(query),
+        values,
       });
     }
   };
@@ -323,19 +338,29 @@ function AppLoadError() {
 }
 
 const AppResolved = function AppResolved() {
-  const app = useAsyncValue() as AppCompleteT;
+  const [app, queries] = useAsyncValue() as [
+    app: AppCompleteT,
+    queries: Record<string, WebloomQuery>,
+  ];
+
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
   const inited = useRef(false);
+
+  const { workspaceId, appId } = useParams();
+
   if (!inited.current) {
     seedNameMap(Object.values(tree));
     editorStore.init({
+      workspaceId: workspaceId ?? '',
+      appId: appId ?? '',
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         new WebloomPage({
           id: app.defaultPage.id.toString(),
           widgets: tree,
-          queries: {},
+          queries,
+          editorStore: editorStore,
         }),
       ],
     });
@@ -351,11 +376,11 @@ const AppResolved = function AppResolved() {
   return <Editor />;
 };
 export function App() {
-  const { app } = useLoaderData();
+  const { values } = useLoaderData();
 
   return (
     <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={app} errorElement={<AppLoadError />}>
+      <Await resolve={values} errorElement={<AppLoadError />}>
         <AppResolved />
       </Await>
     </Suspense>
