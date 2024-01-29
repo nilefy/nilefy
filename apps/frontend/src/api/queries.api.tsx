@@ -166,6 +166,17 @@ function useQuries(workspaceId: number, appId: number) {
   });
 }
 
+export function useQueriesQuery(workspaceId: number, appId: number) {
+  return {
+    queryKey: ['queries', { workspaceId, appId }],
+    queryFn: async () => {
+      const data = await getQueries({ workspaceId, appId });
+      return data;
+    },
+    staleTime: 0,
+  };
+}
+
 function useGetQuery(
   workspaceId: number,
   dataSourceId: number,

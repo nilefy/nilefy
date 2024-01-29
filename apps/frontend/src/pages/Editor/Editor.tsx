@@ -50,6 +50,7 @@ import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';
 import { WebloomLoader } from '@/components/loader';
+import { getQueries, useQueriesQuery } from '@/api/queries.api';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -340,20 +341,16 @@ function AppLoadError() {
 const AppResolved = function AppResolved() {
   const [app, queries] = useAsyncValue() as [
     app: AppCompleteT,
-    queries: Record<string, WebloomQuery>,
+    queries: Record<string, Awaited<ReturnType<typeof getQueries>>>,
   ];
 
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
   const inited = useRef(false);
 
-  const { workspaceId, appId } = useParams();
-
   if (!inited.current) {
     seedNameMap(Object.values(tree));
     editorStore.init({
-      workspaceId: workspaceId ?? '',
-      appId: appId ?? '',
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         new WebloomPage({
