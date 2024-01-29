@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
-  AppDto,
   CreateAppDto,
   UpdateAppDto,
   createAppSchema,
@@ -30,7 +29,7 @@ export class AppsController {
   @Post()
   async create(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Body(new ZodValidationPipe(createAppSchema)) createAppDto: CreateAppDto,
   ) {
     return await this.appsService.create({
@@ -41,16 +40,14 @@ export class AppsController {
   }
 
   @Get()
-  async findAll(
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-  ) {
+  async findAll(@Param('workspaceId', ParseIntPipe) workspaceId: number) {
     return await this.appsService.findAll(workspaceId);
   }
 
   @Get(':id')
   async findOne(
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('id', ParseIntPipe) appId: number,
   ) {
     return await this.appsService.findOne(workspaceId, appId);
   }
@@ -58,8 +55,8 @@ export class AppsController {
   @Post(':id/clone')
   async clone(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('id', ParseIntPipe) appId: number,
   ) {
     return await this.appsService.clone({
       workspaceId,
@@ -71,8 +68,8 @@ export class AppsController {
   @Put(':id')
   async update(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('id', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(updateAppSchema)) updateAppDto: UpdateAppDto,
   ) {
     return await this.appsService.update(workspaceId, appId, {
@@ -84,8 +81,8 @@ export class AppsController {
   @Delete(':id')
   async delete(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('id', ParseIntPipe) appId: number,
   ) {
     return await this.appsService.delete({
       workspaceId,

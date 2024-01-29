@@ -31,9 +31,9 @@ export class DataSourcesController {
   @Post(':dataSourceId') // global data source id
   async create(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
+    dataSourceId: number,
     @Body(new ZodValidationPipe(createWsDataSourceSchema))
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
@@ -49,9 +49,9 @@ export class DataSourcesController {
   @Get(':dataSourceId/all') // global data source id
   async getConnections(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
+    dataSourceId: number,
   ): Promise<WsDataSourceDto[]> {
     return await this.dataSourceService.getConnections({
       workspaceId,
@@ -62,9 +62,9 @@ export class DataSourcesController {
   @Get(':dataSourceId')
   async getOne(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['id'],
+    dataSourceId: number,
   ) {
     return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
@@ -72,7 +72,7 @@ export class DataSourcesController {
   @Get()
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
   ): Promise<WsDataSourceP[]> {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
@@ -80,9 +80,9 @@ export class DataSourcesController {
   @Delete(':dataSourceId/all') // global data source id
   async deleteConnections(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['dataSourceId'],
+    dataSourceId: number,
   ): Promise<WsDataSourceDto[]> {
     return await this.dataSourceService.deleteConnections({
       workspaceId,
@@ -93,9 +93,9 @@ export class DataSourcesController {
   @Delete(':dataSourceId')
   async deleteOne(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['id'],
+    dataSourceId: number,
   ): Promise<WsDataSourceDto> {
     return await this.dataSourceService.deleteOne(workspaceId, dataSourceId);
   }
@@ -103,9 +103,9 @@ export class DataSourcesController {
   @Put(':dataSourceId')
   async update(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WsDataSourceDto['workspaceId'],
+    workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
-    dataSourceId: WsDataSourceDto['id'],
+    dataSourceId: number,
     @Body(new ZodValidationPipe(updateWsDataSourceSchema))
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,

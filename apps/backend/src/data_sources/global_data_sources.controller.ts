@@ -34,7 +34,7 @@ export class GlobalDataSourcesController {
 
   @Get(':id')
   async getOne(
-    @Param('id', ParseIntPipe) dataSourceId: DataSourceDto['id'],
+    @Param('id', ParseIntPipe) dataSourceId: number,
   ): Promise<DataSourceDto> {
     return await this.dataSourceService.getOne(dataSourceId);
   }

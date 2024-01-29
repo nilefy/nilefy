@@ -11,15 +11,14 @@ import {
 } from '@nestjs/common';
 import { WebloomDbService } from './table.service';
 import {
+  InsertDto,
   InsertWebloomTableDto,
-  WebloomTableDto,
+  insertSchema,
   webloomTableInsertDto,
 } from '../dto/webloom_table.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { JwtGuard } from '../auth/jwt.guard';
-import { WorkspaceDto } from '../dto/workspace.dto';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import { z } from 'zod';
 
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/database')
@@ -29,7 +28,7 @@ export class WebloomDbController {
   @Get()
   async index(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
+    workspaceId: number,
   ) {
     return await this.webloomDbService.index(workspaceId);
   }
@@ -37,8 +36,8 @@ export class WebloomDbController {
   @Get(':id')
   async findOne(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
-    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
+    workspaceId: number,
+    @Param('id', ParseIntPipe) tableId: number,
   ) {
     return await this.webloomDbService.findOne(workspaceId, tableId);
   }
@@ -47,7 +46,7 @@ export class WebloomDbController {
   async createTable(
     @Req() req: ExpressAuthedRequest,
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
+    workspaceId: number,
     @Body(new ZodValidationPipe(webloomTableInsertDto))
     tableDto: InsertWebloomTableDto,
   ) {
@@ -61,16 +60,10 @@ export class WebloomDbController {
   @Post(':id')
   async insertDataByTableId(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
-    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
-    @Body(
-      new ZodValidationPipe(
-        z.object({
-          data: z.array(z.object({}).catchall(z.any())),
-        }),
-      ),
-    )
-    data: { data: Record<string, unknown>[] },
+    workspaceId: number,
+    @Param('id', ParseIntPipe) tableId: number,
+    @Body(new ZodValidationPipe(insertSchema))
+    data: InsertDto,
   ) {
     return await this.webloomDbService.insertDataByTableId(
       workspaceId,
@@ -82,8 +75,8 @@ export class WebloomDbController {
   @Delete(':id')
   async deleteTable(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
-    @Param('id', ParseIntPipe) tableId: WebloomTableDto['id'],
+    workspaceId: number,
+    @Param('id', ParseIntPipe) tableId: number,
   ) {
     return await this.webloomDbService.delete(workspaceId, tableId);
   }

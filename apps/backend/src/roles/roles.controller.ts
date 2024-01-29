@@ -17,12 +17,10 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 import {
   RoleInsertI,
   RoleUpdateI,
-  RolesDto,
   createRoleSchema,
   updateRoleSchema,
 } from '../dto/roles.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
-import { PermissionDto } from '../dto/permissions.dto';
 
 @UseGuards(JwtGuard, PermissionsGuard)
 @OnlyAdmin()
@@ -31,16 +29,14 @@ export class RolesController {
   constructor(private rolesService: RolesService) {}
 
   @Get()
-  async index(
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
-  ) {
+  async index(@Param('workspaceId', ParseIntPipe) workspaceId: number) {
     return await this.rolesService.index(workspaceId);
   }
 
   @Get(':roleId')
   async one(
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
-    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
   ) {
     return await this.rolesService.one(workspaceId, roleId);
   }
@@ -48,7 +44,7 @@ export class RolesController {
   @Post()
   async create(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Body(new ZodValidationPipe(createRoleSchema)) createRoleDto: RoleInsertI,
   ) {
     return await this.rolesService.create({
@@ -61,8 +57,8 @@ export class RolesController {
   @Put(':roleId')
   async update(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
-    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
     @Body(new ZodValidationPipe(updateRoleSchema)) updateRoleDto: RoleUpdateI,
   ) {
     return await this.rolesService.update(workspaceId, roleId, {
@@ -73,9 +69,9 @@ export class RolesController {
 
   @Put(':roleId/togglepermission/:permissionId')
   async togglePermission(
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
-    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
-    @Param('permissionId', ParseIntPipe) permissionId: PermissionDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Param('permissionId', ParseIntPipe) permissionId: number,
   ) {
     return await this.rolesService.togglePermission(
       workspaceId,
@@ -87,8 +83,8 @@ export class RolesController {
   @Delete(':roleId')
   async Delete(
     @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: RolesDto['workspaceId'],
-    @Param('roleId', ParseIntPipe) roleId: RolesDto['id'],
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
   ) {
     return await this.rolesService.delete({
       deletedById: req.user.userId,

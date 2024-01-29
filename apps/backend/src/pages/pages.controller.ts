@@ -13,11 +13,9 @@ import {
 import { PagesService } from './pages.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import { AppDto } from '../dto/apps.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   CreatePageDto,
-  PageDto,
   UpdatePageDto,
   createPageSchema,
   updatePageSchema,
@@ -31,7 +29,7 @@ export class PagesController {
   @Post()
   async create(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(createPageSchema)) pageDto: CreatePageDto,
   ) {
     return await this.pagesService.create({
@@ -44,8 +42,8 @@ export class PagesController {
   @Post(':pageId/clone')
   async clone(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
   ) {
     return await this.pagesService.clone({
       appId,
@@ -55,14 +53,14 @@ export class PagesController {
   }
 
   @Get()
-  async index(@Param('appId', ParseIntPipe) appId: AppDto['id']) {
+  async index(@Param('appId', ParseIntPipe) appId: number) {
     return await this.pagesService.index(appId);
   }
 
   @Get(':pageId')
   async findOne(
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
   ) {
     return await this.pagesService.findOne(appId, pageId);
   }
@@ -70,8 +68,8 @@ export class PagesController {
   @Put(':pageId')
   async update(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
     @Body(new ZodValidationPipe(updatePageSchema)) pageDto: UpdatePageDto,
   ) {
     return await this.pagesService.update(appId, pageId, {
@@ -83,8 +81,8 @@ export class PagesController {
   @Delete(':pageId')
   async delete(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
   ) {
     return await this.pagesService.delete({
       appId,

@@ -4,6 +4,7 @@ import {
   workspaceDataSources,
 } from '../drizzle/schema/data_sources.schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createZodDto } from 'nestjs-zod';
 
 export const workspaceDataSourcesSelect = createSelectSchema(
   workspaceDataSources,
@@ -31,16 +32,25 @@ export const updateWsDataSourceSchema = z.object({
 export const dataSourceSelect = createSelectSchema(dataSources);
 export const dataSourcesInsert = createInsertSchema(dataSources);
 
-export type WsDataSourceDto = z.infer<typeof workspaceDataSourcesSelect>;
+// export type WsDataSourceDto = z.infer<typeof workspaceDataSourcesSelect>;
+// export type CreateWsDataSourceDto = z.infer<typeof createWsDataSourceSchema>;
+// export type UpdateWsDataSourceDto = z.infer<typeof updateWsDataSourceSchema>;
+export class WsDataSourceDto extends createZodDto(workspaceDataSourcesSelect) {}
+export class CreateWsDataSourceDto extends createZodDto(
+  createWsDataSourceSchema,
+) {}
+export class UpdateWsDataSourceDto extends createZodDto(
+  updateWsDataSourceSchema,
+) {}
 export type CreateWsDataSourceDb = z.infer<typeof workspaceDataSourcesInsert>;
-export type CreateWsDataSourceDto = z.infer<typeof createWsDataSourceSchema>;
-export type UpdateWsDataSourceDto = z.infer<typeof updateWsDataSourceSchema>;
 export type WsDataSourceP = Partial<WsDataSourceDto> & {
   dataSource: DataSourceP;
 };
 
-export type DataSourceDto = z.infer<typeof dataSourceSelect>;
-export type DataSourceDb = z.infer<typeof dataSourcesInsert>;
+// export type DataSourceDto = z.infer<typeof dataSourceSelect>;
+export class DataSourceDto extends createZodDto(dataSourceSelect) {}
+// export type DataSourceDb = z.infer<typeof dataSourcesInsert>;
+export class DataSourceDb extends createZodDto(dataSourcesInsert) {}
 export type DataSourceP = Partial<DataSourceDto>;
 
 export type DataSourceConfigT = Record<string, unknown>;
