@@ -344,14 +344,21 @@ export class WebloomPage {
     if (nodePixelBoundingRect.bottom > parentBoundingRect.bottom) {
       const verticalExpansion =
         nodePixelBoundingRect.bottom - parentBoundingRect.bottom + 100;
-      const newRowCount = Math.floor(verticalExpansion / gridrow);
+      const newParentRowCount = Math.floor(verticalExpansion / gridrow);
       if (parent.isRoot) {
         parent.setDimensions({
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
+        return {
+          ...changedNodesOriginalCoords,
+          [parent.id]: {
+            ...parent.gridDimensions,
+            rowsCount: parent.rowsCount - newParentRowCount,
+          },
+        };
       } else {
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,
