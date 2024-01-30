@@ -98,7 +98,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
         </Button>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-full w-full ">
+      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
         <RJSFShadcn
           ref={rjsfRef}
           // formContext={{ isSubmitting: isSubmitting }}
