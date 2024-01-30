@@ -16,16 +16,19 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import { RuntimeEvaluable, Snapshotable } from './interfaces';
-import { DependencyManager, DependencyRelation } from './dependencyManager';
+import {
+  EvaluatedRunTimeProps,
+  RuntimeEvaluable,
+  RuntimeProps,
+  Snapshotable,
+} from './interfaces';
+import { DependencyManager } from './dependencyManager';
 import { cloneDeep, get } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
-
-export type RuntimeProps = Record<string, unknown>;
-type EvaluatedRunTimeProps = SnapshotProps;
-export type SnapshotProps = Record<string, unknown>;
+import { Entity } from './entity';
 
 export class WebloomWidget
+  extends Entity
   implements
     Snapshotable<
       Omit<
@@ -38,7 +41,6 @@ export class WebloomWidget
     RuntimeEvaluable
 {
   isRoot = false;
-  id: string;
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
@@ -49,9 +51,6 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
-  // drilled from the editor
-  evaluationManger: EvaluationManager;
-  dependencyManager: DependencyManager;
 
   constructor({
     type,
@@ -81,9 +80,7 @@ export class WebloomWidget
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
   }) {
-    this.id = id;
-    this.evaluationManger = evaluationManger;
-    this.dependencyManager = dependencyManager;
+    super(id, dependencyManager, evaluationManger);
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
@@ -362,21 +359,5 @@ export class WebloomWidget
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
-  }
-
-  setPropIsCode(key: string, isCode: boolean) {
-    this.evaluationManger.setRawValueIsCode(this.id, key, isCode);
-  }
-
-  addDependencies(relations: Array<DependencyRelation>) {
-    this.dependencyManager.addDependenciesForEntity(relations, this.id);
-  }
-
-  clearDependents() {
-    this.dependencyManager.removeRelationshipsForEntity(this.id);
-  }
-
-  cleanup() {
-    this.clearDependents();
   }
 }

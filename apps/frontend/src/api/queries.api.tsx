@@ -1,5 +1,6 @@
 import { FetchXError, fetchX } from '@/utils/fetch';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -157,15 +158,10 @@ export async function deleteQuery({
   };
 }
 
-function useQuries(workspaceId: number, appId: number) {
-  return useQuery({
-    queryKey: ['queries', { workspaceId, appId }],
-    queryFn: () => getQueries({ workspaceId, appId }),
-    staleTime: 0,
-  });
-}
-
-export function useQueriesQuery(workspaceId: number, appId: number) {
+export function useQueriesQuery(
+  workspaceId: number,
+  appId: number,
+): UndefinedInitialDataOptions<CompleteQueryI[], Error, CompleteQueryI[]> {
   return {
     queryKey: ['queries', { workspaceId, appId }],
     queryFn: async () => {
@@ -174,6 +170,10 @@ export function useQueriesQuery(workspaceId: number, appId: number) {
     },
     staleTime: 0,
   };
+}
+
+function useQuries(workspaceId: number, appId: number) {
+  return useQuery(useQueriesQuery(workspaceId, appId));
 }
 
 function useGetQuery(

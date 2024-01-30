@@ -1,18 +1,26 @@
 import { makeObservable, observable, flow, action } from 'mobx';
-import { RuntimeEvaluable, Snapshotable } from './interfaces';
+import {
+  EvaluatedRunTimeProps,
+  RuntimeEvaluable,
+  Snapshotable,
+} from './interfaces';
 import { CompleteQueryI } from '@/api/queries.api';
+import { get } from 'lodash';
+import { EvaluationManager } from './evaluationManager';
+import { DependencyManager } from './dependencyManager';
+import { Entity } from './entity';
 
 export class WebloomQuery
+  extends Entity
   implements
     RuntimeEvaluable,
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
-        'editor' | 'dataSource'
+        'editor' | 'dataSource' | 'evaluationManger' | 'dependencyManager'
       >
     >
 {
-  id: string;
   // TODO: can we move this from here?
   appId: CompleteQueryI['appId'];
   // TODO: can we move this from here?
@@ -38,8 +46,13 @@ export class WebloomQuery
     dataSourceId,
     createdAt,
     updatedAt,
-  }: Omit<CompleteQueryI, 'createdById' | 'updatedById'>) {
-    this.id = id;
+    evaluationManger,
+    dependencyManager,
+  }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
+    evaluationManger: EvaluationManager;
+    dependencyManager: DependencyManager;
+  }) {
+    super(id, dependencyManager, evaluationManger);
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
@@ -62,6 +75,21 @@ export class WebloomQuery
    */
   get values() {
     return this.rawValues;
+  }
+
+  get evaluatedConfig(): EvaluatedRunTimeProps {
+    const evaluatedProps: EvaluatedRunTimeProps = {};
+    for (const key in this.rawValues) {
+      const path = this.id + '.' + key;
+      const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
+      if (evaluatedValue !== undefined) {
+        evaluatedProps[key] = evaluatedValue;
+      }
+    }
+    return {
+      ...this.rawValues,
+      ...evaluatedProps,
+    };
   }
 
   updateQuery(dto: Omit<Partial<CompleteQueryI>, 'id'>) {
