@@ -6,6 +6,7 @@ export const userSchema = createSelectSchema(usersDrizzle, {
   username: (schema) => schema.username.min(3).max(255),
   email: (schema) => schema.email.email(),
   password: (schema) => schema.password.min(6).max(255),
+  conformationToken: (schema) => schema.conformationToken.max(255),
 });
 
 export const updateUserSchema = userSchema
@@ -19,6 +20,7 @@ export const signUpSchema = userSchema.pick({
   username: true,
   email: true,
   password: true,
+  conformationToken: true,
 });
 
 export const signInSchema = userSchema.pick({

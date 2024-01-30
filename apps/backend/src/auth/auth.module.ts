@@ -8,6 +8,7 @@ import { SignInGoogleStrategy, SignUpGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { TConfigService } from '../evn.validation';
+import { EmailService } from '../email/email.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TConfigService } from '../evn.validation';
     SignInGoogleStrategy,
     SignUpGoogleStrategy,
     JwtStrategy,
+    EmailService,
   ],
 })
 export class AuthModule {}

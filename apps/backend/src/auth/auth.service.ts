@@ -9,8 +9,12 @@ import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { JwtToken, PayloadUser } from './auth.types';
 import { Resend } from 'resend';
-
-const resend = new Resend('re_g5xWM5pD_JeAhaHmaccLMbc5873jSLKcc');
+import { configDotenv } from 'dotenv';
+// todo move to mail service
+configDotenv();
+const KEY = process.env.RESEND_API_KEY as string;
+console.log('resend key: ' + KEY);
+const resend = new Resend(KEY);
 
 @Injectable()
 export class AuthService {
@@ -37,14 +41,16 @@ export class AuthService {
       //todo uncomment for production
       //      const { email } = user;
       console.log('Right before sending email');
-      // todo replace with dynamic url
-      const url = 'http://localhost:3000/auth/confirm' + '/' + jwt + '/' + u.id;
+      const isDev = (process.env.NODE_ENV as string) === 'development';
+      const baseUrl = isDev
+        ? 'http://localhost:3000/'
+        : 'https://weblloom.com/';
+      const url = baseUrl + 'auth/confirm' + '/' + jwt + '/' + u.id;
       console.log('confirmation url: ' + url);
+      const { email } = user;
       const { error } = await resend.emails.send({
         from: 'onboarding@resend.dev',
-        //todo uncomment for production
-        //to: email,
-        to: 'muhammed195772@feng.bu.edu.eg',
+        to: isDev ? (process.env.SEND_TO as string) : email,
         subject: 'WebLoom - Confirm Your Email Address',
         html:
           `
