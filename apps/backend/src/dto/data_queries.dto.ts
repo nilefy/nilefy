@@ -6,15 +6,13 @@ export const querySchema = createSelectSchema(queries).extend({
   query: z.record(z.string(), z.unknown()),
 });
 
-export const queryDb = createInsertSchema(queries, {
-  name: (schema) => schema.name.min(1).max(100),
-}).extend({
+export const queryDb = createInsertSchema(queries).extend({
   query: z.record(z.string(), z.unknown()),
 });
 
 export const addQuerySchema = queryDb.pick({
   dataSourceId: true,
-  name: true,
+  id: true,
   query: true,
 });
 

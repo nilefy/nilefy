@@ -8,6 +8,13 @@ import { getQueryService } from '../data_sources/plugins/common/service';
 import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
+import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
+
+export type CompleteQueryI = QueryDto & {
+  dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
+    dataSource: Pick<DataSourceDto, 'id' | 'name' | 'type' | 'queryConfig'>;
+  };
+};
 
 @Injectable()
 export class DataQueriesService {
@@ -27,25 +34,32 @@ export class DataQueriesService {
       workspaceId,
       query.dataSourceId,
     );
-    const service = await this.getService(ds.dataSource.name);
+    const service = this.getService(ds.dataSource.name);
     return await service.run(ds.config, {
-      name: query.name,
+      name: query.id,
       query: evaluatedQuery,
     });
   }
 
-  async addQuery(query: QueryDb): Promise<QueryDto> {
-    const [q] = await this.db.insert(queries).values(query).returning();
-    return q;
+  async addQuery(query: QueryDb): Promise<CompleteQueryI> {
+    const [q] = await this.db.insert(queries).values(query).returning({
+      id: queries.id,
+    });
+    return await this.getQuery(query.appId, q.id);
   }
 
-  async getAppQueries(appId: QueryDto['appId']) {
+  async getAppQueries(appId: QueryDto['appId']): Promise<CompleteQueryI[]> {
     const q = await this.db.query.queries.findMany({
       where: eq(queries.appId, appId),
       columns: {
         id: true,
-        name: true,
         query: true,
+        updatedAt: true,
+        createdAt: true,
+        appId: true,
+        createdById: true,
+        updatedById: true,
+        dataSourceId: true,
       },
       with: {
         dataSource: {
@@ -72,9 +86,37 @@ export class DataQueriesService {
   async getQuery(
     appId: QueryDto['appId'],
     queryId: QueryDto['id'],
-  ): Promise<QueryDto> {
+  ): Promise<CompleteQueryI> {
     const q = await this.db.query.queries.findFirst({
       where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
+      columns: {
+        id: true,
+        query: true,
+        updatedAt: true,
+        createdAt: true,
+        appId: true,
+        createdById: true,
+        updatedById: true,
+        dataSourceId: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+          },
+          with: {
+            dataSource: {
+              columns: {
+                queryConfig: true,
+                id: true,
+                type: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!q) {
       throw new NotFoundException(`Query ${queryId} not found`);
@@ -82,14 +124,11 @@ export class DataQueriesService {
     return q;
   }
 
-  async deleteQuery(
-    appId: QueryDto['appId'],
-    queryId: QueryDto['id'],
-  ): Promise<QueryDto> {
+  async deleteQuery(appId: QueryDto['appId'], queryId: QueryDto['id']) {
     const [q] = await this.db
       .delete(queries)
       .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
-      .returning();
+      .returning({ id: queries.id });
     return q;
   }
 
@@ -104,23 +143,25 @@ export class DataQueriesService {
   }
 
   async updateQuery({
+    appId,
     queryId,
     updatedById,
     query,
   }: {
+    appId: QueryDto['appId'];
     queryId: QueryDto['id'];
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
-  }): Promise<QueryDto> {
+  }): Promise<CompleteQueryI> {
     const [q] = await this.db
       .update(queries)
       .set({ ...query, updatedById, updatedAt: sql`now()` })
-      .where(eq(queries.id, queryId))
-      .returning();
-    return q;
+      .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
+      .returning({ id: queries.id });
+    return await this.getQuery(appId, q.id);
   }
 
-  async getService(dataSourceName: string): Promise<QueryRunnerI> {
+  getService(dataSourceName: string): QueryRunnerI {
     return getQueryService(dataSourceName);
   }
 }

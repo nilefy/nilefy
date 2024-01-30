@@ -13,6 +13,8 @@ export type QueryI = {
   appId: number;
   createdById: number;
   updatedById: number;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 export type QueryReturnT = {
@@ -25,7 +27,7 @@ type RunQueryBody = {
   evaluatedConfig: Record<string, unknown>;
 };
 
-export type CompeleteQueryI = QueryI & {
+export type CompleteQueryI = QueryI & {
   dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
     dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
   };
@@ -41,7 +43,7 @@ export async function getQueries({
   const res = await fetchX(`workspaces/${workspaceId}/apps/${appId}/queries`, {
     method: 'GET',
   });
-  return (await res.json()) as CompeleteQueryI[];
+  return (await res.json()) as CompleteQueryI[];
 }
 
 export async function getQuery({
@@ -59,7 +61,7 @@ export async function getQuery({
       method: 'GET',
     },
   );
-  return (await res.json()) as QueryI;
+  return (await res.json()) as CompleteQueryI;
 }
 
 export async function addQuery({
@@ -83,7 +85,7 @@ export async function addQuery({
       body: JSON.stringify(dto),
     },
   );
-  return (await res.json()) as Partial<QueryI>;
+  return (await res.json()) as CompleteQueryI;
 }
 
 async function runQuery({
@@ -93,8 +95,8 @@ async function runQuery({
   body,
 }: {
   workspaceId: number;
-  queryId: number;
-  appId: number;
+  queryId: QueryI['id'];
+  appId: QueryI['appId'];
   body: RunQueryBody;
 }) {
   const res = await fetchX(
@@ -115,8 +117,8 @@ export async function updateQuery({
   dto,
 }: {
   workspaceId: number;
-  appId: number;
-  queryId: number;
+  appId: QueryI['appId'];
+  queryId: QueryI['id'];
   dto: Partial<{
     datasourceId: number;
     id: QueryI['id'];
@@ -131,7 +133,7 @@ export async function updateQuery({
       body: JSON.stringify(dto),
     },
   );
-  return await res.json();
+  return (await res.json()) as CompleteQueryI;
 }
 
 export async function deleteQuery({
@@ -140,8 +142,8 @@ export async function deleteQuery({
   queryId,
 }: {
   workspaceId: number;
-  appId: number;
-  queryId: number;
+  appId: QueryI['appId'];
+  queryId: QueryI['id'];
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/queries/${queryId}`,
@@ -151,9 +153,7 @@ export async function deleteQuery({
     },
   );
   return (await res.json()) as {
-    dataSourceId: number;
-    deletedById: number;
-    workspaceId: number;
+    id: string;
   };
 }
 
