@@ -1,6 +1,6 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewWidgetName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -59,7 +59,7 @@ export class WebloomWidget
     row,
     col,
     page,
-    id = getNewWidgetName(type),
+    id = getNewEntityName(type),
     nodes = [],
     rowsCount,
     columnsCount,
@@ -351,7 +351,7 @@ export class WebloomWidget
 
   clone() {
     const snapshot = this.snapshot;
-    snapshot.id = getNewWidgetName(snapshot.type);
+    snapshot.id = getNewEntityName(snapshot.type);
     return new WebloomWidget({
       ...snapshot,
       page: this.page,

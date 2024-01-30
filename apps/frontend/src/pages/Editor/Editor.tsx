@@ -45,8 +45,7 @@ import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
-import { seedNameMap } from '@/lib/Editor/widgetName';
-import { WebloomPage } from '@/lib/Editor/Models/page';
+import { entityNames, seedNameMap } from '@/lib/Editor/widgetName';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';
 import { WebloomLoader } from '@/components/loader';
@@ -349,7 +348,10 @@ const AppResolved = function AppResolved() {
   const inited = useRef(false);
 
   if (!inited.current) {
-    seedNameMap(Object.values(tree));
+    seedNameMap([
+      ...Object.values(tree).map((w) => w.type),
+      ...queries.map((q) => q.dataSource.name),
+    ]);
     editorStore.init({
       currentPageId: app.defaultPage.id.toString(),
       pages: [
