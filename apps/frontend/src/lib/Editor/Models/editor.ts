@@ -1,4 +1,12 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  autorun,
+  toJS,
+} from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -18,6 +26,7 @@ export class EditorState {
   constructor() {
     makeObservable(this, {
       pages: observable,
+      queries: observable,
       currentPageId: observable,
       context: computed({
         keepAlive: true,
@@ -26,6 +35,8 @@ export class EditorState {
       currentPage: computed,
       changePage: action,
       addPage: action,
+      addQuery: action,
+      removeQuery: action,
       removePage: action,
       init: action,
     });
@@ -129,8 +140,18 @@ export class EditorState {
     });
   }
 
+  addQuery(query: ConstructorParameters<typeof WebloomQuery>[0]) {
+    this.queries[query.id] = new WebloomQuery({
+      ...query,
+    });
+  }
+
   removePage(id: string) {
     delete this.pages[id];
+  }
+
+  removeQuery(id: string) {
+    delete this.queries[id];
   }
 
   snapshot() {

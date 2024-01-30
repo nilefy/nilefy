@@ -1,6 +1,6 @@
-import { makeObservable, observable, flow } from 'mobx';
+import { makeObservable, observable, flow, action } from 'mobx';
 import { RuntimeEvaluable, Snapshotable } from './interfaces';
-import { CompeleteQueryI } from '@/api/queries.api';
+import { CompleteQueryI } from '@/api/queries.api';
 
 export class WebloomQuery
   implements
@@ -14,12 +14,18 @@ export class WebloomQuery
 {
   id: string;
   // TODO: can we move this from here?
-  appId: CompeleteQueryI['appId'];
+  appId: CompleteQueryI['appId'];
   // TODO: can we move this from here?
-  dataSource: CompeleteQueryI['dataSource'];
+  dataSource: CompleteQueryI['dataSource'];
   // TODO: can we move this from here?
-  dataSourceId: CompeleteQueryI['dataSourceId'];
-  rawValues: CompeleteQueryI['query'];
+  dataSourceId: CompleteQueryI['dataSourceId'];
+  /**
+   * raw config
+   * use rawValues to show the form, send the server `values`(evaluated config)
+   */
+  public rawValues: CompleteQueryI['query'];
+  createdAt: CompleteQueryI['createdAt'];
+  updatedAt: CompleteQueryI['updatedAt'];
 
   constructor({
     query,
@@ -30,21 +36,37 @@ export class WebloomQuery
     dataSource,
     // TODO: can we move this from here?
     dataSourceId,
-  }: Omit<CompeleteQueryI, 'createdById' | 'updatedById'>) {
+    createdAt,
+    updatedAt,
+  }: Omit<CompleteQueryI, 'createdById' | 'updatedById'>) {
     this.id = id;
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
     this.rawValues = query;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     makeObservable(this, {
       rawValues: observable,
       fetchValue: flow,
+      createdAt: observable,
+      updatedAt: observable,
+      updateQuery: action,
     });
   }
 
   // TODO: return evaluated config
+  /**
+   * evaluated config
+   * use rawValues to show the form, send the server `values`(evaluated config)
+   */
   get values() {
     return this.rawValues;
+  }
+
+  updateQuery(dto: Omit<Partial<CompleteQueryI>, 'id'>) {
+    if (dto.query) this.rawValues = dto.query;
+    if (dto.updatedAt) this.updatedAt = dto.updatedAt;
   }
 
   // TODO: call server to get actual data
@@ -58,6 +80,8 @@ export class WebloomQuery
       dataSourceId: this.dataSourceId,
       query: this.rawValues,
       appId: this.appId,
+      updatedAt: this.updatedAt,
+      createdAt: this.createdAt,
     };
   }
 }
