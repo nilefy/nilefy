@@ -11,7 +11,27 @@ import {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 import { Label } from '../ui/label';
+import { debounce } from 'lodash';
+import { EditorState } from '@/lib/Editor/Models/editor';
+import { analyzeDependancies } from '@/lib/Editor/dependancyUtils';
+import { editorStore } from '@/lib/Editor/Models';
 
+const debouncedAnalyzeDependancies = debounce(
+  (
+    newValue: string,
+    toProperty: string,
+    entityId: string,
+    context: EditorState['context'],
+  ) => {
+    const res = analyzeDependancies(newValue, toProperty, entityId, context);
+    const entity = editorStore.getEntityById(entityId);
+    if (entity) {
+      entity.setPropIsCode(toProperty, true);
+      entity.addDependencies(res.dependencies);
+    }
+  },
+  2000,
+);
 export default function SQLRJSFWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
@@ -29,26 +49,25 @@ export default function SQLRJSFWidget<
     rawErrors,
     autofocus,
     placeholder,
+    name: toProperty,
+    formContext,
   } = props;
+
   const inputProps = getInputProps<T, S, F>(schema, type, options);
 
   const onChange = useCallback(
     (newValue: string) => {
-      // if (id && toProperty) {
-      //   const res = debouncedAnalyzeDependancies(
-      //     newValue,
-      //     toProperty,
-      //     editorStore.currentPage.context,
-      //   );
-      //   if (res) {
-      //     const widget = editorStore.currentPage.getWidgetById(id);
-      //     widget.setIsPropCode(toProperty, res.isCode);
-      //     widget.addDependencies(res.dependencies);
-      //   }
-      // }
+      if (formContext && formContext.entityId && formContext.editorContext) {
+        debouncedAnalyzeDependancies(
+          newValue,
+          toProperty,
+          formContext.entityId,
+          formContext.editorContext,
+        );
+      }
       _onChange(newValue === '' ? options.emptyValue : newValue);
     },
-    [_onChange, options.emptyValue],
+    [_onChange, options.emptyValue, formContext, toProperty],
   );
 
   return (

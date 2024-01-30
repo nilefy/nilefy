@@ -4,6 +4,7 @@ import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
 import { DependencyRelation } from './Models/dependencyManager';
 import { has } from 'lodash';
+
 export const analyzeDependancies = (
   code: unknown,
   toProperty: string,

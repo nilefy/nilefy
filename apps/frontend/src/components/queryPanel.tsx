@@ -81,7 +81,8 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.values;
+            const evaluatedConfig = query.evaluatedConfig;
+            console.log(evaluatedConfig);
             run({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -99,7 +100,11 @@ const QueryItem = observer(function QueryItem({
       <ScrollArea className="h-full w-full p-4">
         <RJSFShadcn
           ref={rjsfRef}
-          // formContext={{ isSubmitting: isSubmitting }}
+          formContext={{
+            // TODO: make this typesafe
+            entityId: query.id,
+            editorContext: editorStore.context,
+          }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
           formData={query.rawValues}
