@@ -55,6 +55,12 @@ export class AuthController {
     return await this.authService.signUp(req.user as CreateUserDto);
   }
 
+  @Get('confirm/:token/:id')
+  async confirm(@Req() req: { token: string; id: string }) {
+    const { token, id } = req;
+    return await this.authService.confirm(token, id);
+  }
+
   @UseGuards(JwtGuard)
   @Get('main')
   main(@Req() req: ExpressAuthedRequest) {

@@ -25,29 +25,48 @@ export class AuthService {
     const hashed = await hash(password, salt);
 
     try {
-      const u = await this.userService.create({ ...user, password: hashed });
-      const { email } = user;
+      const jwt = await this.jwtService.signAsync(
+        {
+          sub: 1,
+          username: user.username,
+        } satisfies PayloadUser,
+        { expiresIn: '1d' },
+      );
 
+      const u = await this.userService.create({ ...user, password: hashed });
+      //todo uncomment for production
+      //      const { email } = user;
+      console.log('Right before sending email');
+      // todo replace with dynamic url
+      const url = 'http://localhost:3000/auth/confirm' + '/' + jwt + '/' + u.id;
+      console.log('confirmation url: ' + url);
       const { error } = await resend.emails.send({
         from: 'onboarding@resend.dev',
-        to: email,
-        subject: 'Hello World',
-        html: `
+        //todo uncomment for production
+        //to: email,
+        to: 'muhammed195772@feng.bu.edu.eg',
+        subject: 'WebLoom - Confirm Your Email Address',
+        html:
+          `
     <p>Dear [User],</p>
-    <p>Congratulations on signing up for [Your Project Name]! We're thrilled to have you on board.</p>
+    <p>Congratulations on signing up for WebLoom! We're thrilled to have you on board.</p>
     
     <p>Please click the following link to confirm your email address and complete the signup process:</p>
-    <a href="">Confirm Email Address</a>
+    <a href="` +
+          url +
+          ` ">Confirm Email Address</a>
 
-    <p>If you did not sign up for [Your Project Name], please disregard this email.</p>
+    <p>If you did not sign up for WeblLoom, please disregard this email.</p>
 
-    <p>Thank you for choosing [Your Project Name]!</p>
+    <p>Thank you for choosing WebLoom!</p>
     <p>Best Regards,<br/>
     The Webloom Team</p>
   `,
       });
+      console.log('Right after sending email');
       if (error) {
-        console.log('Error while sending email: ${error}');
+        console.log('Error while sending email:');
+        console.log(error);
       }
       return {
         access_token: await this.jwtService.signAsync({
@@ -58,6 +77,22 @@ export class AuthService {
     } catch (err) {
       throw new BadRequestException();
     }
+  }
+
+  async confirm(token: string, email: string) {
+    await this.jwtService.verifyAsync(token);
+    const user = await this.userService.findOne(email);
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+    user.isConfirmed = true;
+    await this.userService.update(user.id, user);
+    return {
+      access_token: await this.jwtService.signAsync({
+        sub: user.id,
+        username: user.username,
+      } satisfies PayloadUser),
+    } satisfies JwtToken;
   }
 
   async signIn(user: LoginUserDto) {
