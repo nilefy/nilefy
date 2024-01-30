@@ -2,18 +2,21 @@ import { makeObservable, observable, action, computed, comparer } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
-import { WebloomWidget } from './widget';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { analyzeDependancies } from '../dependancyUtils';
+import { Entity } from './entity';
+import { seedNameMap } from '../widgetName';
 
-export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class EditorState {
+  inited: boolean = false;
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery> = {};
   currentPageId: string = '';
-  dependencyManager!: DependencyManager;
-  evaluationManger!: EvaluationManager;
+  dependencyManager: DependencyManager = new DependencyManager({
+    editor: this,
+  });
+  evaluationManger: EvaluationManager = new EvaluationManager(this);
 
   constructor() {
     makeObservable(this, {
@@ -34,6 +37,16 @@ export class EditorState {
     });
   }
 
+  cleanUp() {
+    this.pages = {};
+    this.queries = {};
+    this.currentPageId = '';
+    this.dependencyManager = new DependencyManager({
+      editor: this,
+    });
+    this.evaluationManger = new EvaluationManager(this);
+  }
+
   init({
     pages: pages = [],
     currentPageId = '',
@@ -44,14 +57,18 @@ export class EditorState {
       'dependencyManager' | 'evaluationManger'
     >[];
     currentPageId: string;
-    queries: ConstructorParameters<typeof WebloomQuery>[0][];
+    queries: Omit<
+      ConstructorParameters<typeof WebloomQuery>[0],
+      'dependencyManager' | 'evaluationManger'
+    >[];
   }) {
+    console.log('init');
+    this.cleanUp();
+    seedNameMap([
+      ...Object.values(pages[0].widgets).map((w) => w.type),
+      ...queries.map((q) => q.dataSource.name),
+    ]);
     // create resources needed for the editor
-    this.dependencyManager = new DependencyManager({
-      editor: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
-
     pages.forEach((page) => {
       this.pages[page.id] = new WebloomPage({
         ...page,
@@ -70,10 +87,13 @@ export class EditorState {
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
         ...q,
+        evaluationManger: this.evaluationManger,
+        dependencyManager: this.dependencyManager,
       });
     });
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
+    // analyze widgets props to create the initial graph
     Object.values(this.currentPage.widgets).forEach((widget) => {
       for (const prop in widget.rawValues) {
         const value = widget.rawValues[prop];
@@ -85,6 +105,22 @@ export class EditorState {
         );
         if (isCode) {
           this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
+          allDependencies.push(...dependencies);
+        }
+      }
+    });
+    // analyze queries props to create the initial graph
+    Object.values(this.queries).forEach((query) => {
+      for (const prop in query.rawValues) {
+        const value = query.rawValues[prop];
+        const { dependencies, isCode } = analyzeDependancies(
+          value,
+          prop,
+          query.id,
+          this.context,
+        );
+        if (isCode) {
+          this.evaluationManger.setRawValueIsCode(query.id, prop, true);
           allDependencies.push(...dependencies);
         }
       }
@@ -107,7 +143,7 @@ export class EditorState {
     return context;
   }
 
-  getEntityById(id: string): WebloomEntity | undefined {
+  getEntityById(id: string): Entity | undefined {
     return this.currentPage.widgets[id] || this.queries[id];
   }
 
@@ -132,9 +168,16 @@ export class EditorState {
     });
   }
 
-  addQuery(query: ConstructorParameters<typeof WebloomQuery>[0]) {
+  addQuery(
+    query: Omit<
+      ConstructorParameters<typeof WebloomQuery>[0],
+      'dependencyManager' | 'evaluationManger'
+    >,
+  ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
+      dependencyManager: this.dependencyManager,
+      evaluationManger: this.evaluationManger,
     });
   }
 

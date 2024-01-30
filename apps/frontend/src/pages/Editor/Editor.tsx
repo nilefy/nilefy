@@ -45,7 +45,7 @@ import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
 import { QueryPanel } from '@/components/queryPanel';
-import { entityNames, seedNameMap } from '@/lib/Editor/widgetName';
+import { seedNameMap } from '@/lib/Editor/widgetName';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';
 import { WebloomLoader } from '@/components/loader';
@@ -84,6 +84,11 @@ const CustomPanelResizeHandle = () => {
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
+    const workspaceId = params.workspaceId;
+    const appId = params.appId;
+    if (!workspaceId || !appId) {
+      throw new Error('use this loader under :workspaceId and :appId');
+    }
     // as this loader runs before react renders we need to check for token first
     const token = getToken();
 
@@ -100,10 +105,7 @@ export const appLoader =
       }
 
       // Fetch queries
-      const queriesQuery = useQueriesQuery(
-        +(params.workspaceId as string),
-        +(params.appId as string),
-      );
+      const queriesQuery = useQueriesQuery(+workspaceId, +appId);
 
       // Fetch the app data
       const appQuery = useAppQuery({
@@ -311,7 +313,7 @@ export const Editor = observer(() => {
                   defaultSizePercentage={10}
                   collapsible
                 >
-                  <QueryPanel />
+                  <QueryPanel key={''} />
                 </Panel>
               </PanelGroup>
             </Panel>
@@ -348,10 +350,6 @@ const AppResolved = function AppResolved() {
   const inited = useRef(false);
 
   if (!inited.current) {
-    seedNameMap([
-      ...Object.values(tree).map((w) => w.type),
-      ...queries.map((q) => q.dataSource.name),
-    ]);
     editorStore.init({
       currentPageId: app.defaultPage.id.toString(),
       pages: [
