@@ -6,13 +6,14 @@ import { ComponentPropsWithoutRef, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { WidgetContext } from '../..';
-
+import { WebloomButton } from '../Button';
 type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
 const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
     const props = editorStore.currentPage.getWidgetById(id)
       .values as WebloomContainerProps;
+    console.log(children, 'child');
     return <Container {...props}>{children}</Container>;
   },
 );

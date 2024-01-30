@@ -71,6 +71,7 @@ class DragAction {
       const node: AddWidgetPayload = {
         id: this.previewId,
         nodes: [],
+        children: widget.config.children,
         parentId: args.new!.parent,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,

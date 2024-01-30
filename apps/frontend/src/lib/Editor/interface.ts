@@ -121,6 +121,7 @@ export interface WidgetConfig {
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
+  children?: Array<object>;
 }
 // key is the id of the node and the array are keys of props
 /**

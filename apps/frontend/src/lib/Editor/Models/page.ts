@@ -202,6 +202,9 @@ export class WebloomPage {
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
+    // this.widgets[widget.id].children.map((child)=>(
+    //   widget.addChild(child.id)
+    // ));
   }
   getWidgetById(id: string) {
     return this.widgets[id];

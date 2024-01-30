@@ -38,6 +38,7 @@ export class WebloomWidget
   id: string;
   dom: HTMLElement | null;
   nodes: string[];
+  children: object[];
   parentId: string;
   rawValues: RuntimeProps;
   type: WidgetTypes;
@@ -54,6 +55,7 @@ export class WebloomWidget
     page,
     id = getNewWidgetName(type),
     nodes = [],
+    children = [],
     rowsCount,
     columnsCount,
     props,
@@ -65,6 +67,7 @@ export class WebloomWidget
     col: number;
     id?: string;
     nodes?: string[];
+    children?: object[];
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
@@ -74,6 +77,7 @@ export class WebloomWidget
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
+    this.children = children;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
