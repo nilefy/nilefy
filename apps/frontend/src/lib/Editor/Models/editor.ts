@@ -1,12 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  action,
-  computed,
-  comparer,
-  autorun,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, action, computed, comparer } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -54,7 +46,12 @@ export class EditorState {
     currentPageId: string;
     queries: ConstructorParameters<typeof WebloomQuery>[0][];
   }) {
-    console.log('init');
+    // create resources needed for the editor
+    this.dependencyManager = new DependencyManager({
+      editor: this,
+    });
+    this.evaluationManger = new EvaluationManager(this);
+
     pages.forEach((page) => {
       this.pages[page.id] = new WebloomPage({
         ...page,
@@ -75,11 +72,6 @@ export class EditorState {
         ...q,
       });
     });
-
-    this.dependencyManager = new DependencyManager({
-      editor: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
     Object.values(this.currentPage.widgets).forEach((widget) => {
