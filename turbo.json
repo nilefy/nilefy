@@ -4,11 +4,16 @@
     "lint": {
       "cache": false
     },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true,
       "dependsOn": [
-        "^build"
+        "build"
       ]
     },
     "db:push": {
