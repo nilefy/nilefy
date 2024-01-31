@@ -1,19 +1,9 @@
 import { editorStore } from '@/lib/Editor/Models';
-// import store from '@/store';
 import { UndoableCommand } from '../types';
-// import { EDITOR_CONSTANTS } from '@webloom/constants';
-// import { WebloomNode } from '@/lib/Editor/interface';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { toJS } from 'mobx';
 
-// const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
-//   store.getState();
-
-export class DeleteAction implements UndoableCommand {
-  /**
-   * stack of nodes to be deleted,
-   * enter children then parents
-   */
+export class CutAction implements UndoableCommand {
   private nodes: WebloomWidget['snapshot'][];
 
   constructor() {
@@ -21,7 +11,6 @@ export class DeleteAction implements UndoableCommand {
   }
 
   execute() {
-    // those ids are in the same tree levels
     const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
     editorStore.currentPage.setSelectedNodeIds(new Set());
 
@@ -45,4 +34,3 @@ export class DeleteAction implements UndoableCommand {
     }
   }
 }
-

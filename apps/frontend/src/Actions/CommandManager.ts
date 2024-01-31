@@ -1,3 +1,4 @@
+import { CutAction } from './Editor/Cut';
 import { UndoableCommand, Command, isUndoableCommand } from './types';
 import { WebloomWebSocket } from './ws';
 
@@ -42,13 +43,20 @@ export class CommandManager {
     }
   }
 
-  public undoCommand() {
+  public undoCommand(cut: boolean = false) {
     const cmd = this.commandStack.pop();
 
     // empty stack
     if (cmd === undefined) {
       return;
     }
+
+    if (cut && cmd instanceof CutAction == false) {
+      console.log('not cut action');
+      this.commandStack.push(cmd);
+      return;
+    }
+
     cmd.undo();
   }
 

@@ -50,6 +50,8 @@ import { WebloomPage } from '@/lib/Editor/Models/page';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';
 import { WebloomLoader } from '@/components/loader';
+import { CopyAction } from '@/Actions/Editor/Copy';
+import { CutAction } from '@/Actions/Editor/Cut';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -108,12 +110,35 @@ export const appLoader =
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const copiedWidgetsRef = useRef<Set<string> | null>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
-
   useHotkeys('delete', () => {
-    commandManager.executeCommand(new DeleteAction());
+    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+      commandManager.executeCommand(new DeleteAction());
+    }
+  });
+  useHotkeys('ctrl+x', () => {
+    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+      commandManager.executeCommand(new CutAction());
+    }
+  });
+  useHotkeys('ctrl+c', () => {
+    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+      copiedWidgetsRef.current = editorStore.currentPage.selectedNodeIds;
+    }
+  });
+  useHotkeys('ctrl+v', () => {
+    if (copiedWidgetsRef.current) {
+      for (const node of copiedWidgetsRef.current) {
+        commandManager.executeCommand(new CopyAction(node));
+      }
+      copiedWidgetsRef.current = null;
+    } else {
+      commandManager.undoCommand(true);
+    }
   });
 
   const draggedNode = editorStore.currentPage.draggedWidgetId;
