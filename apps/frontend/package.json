@@ -76,6 +76,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.47.0",
     "react-hotkeys-hook": "^4.4.1",
+    "react-json-view": "^1.21.3",
     "react-resizable-panels": "^0.0.61",
     "react-rnd": "^10.4.1",
     "react-router-dom": "^6.17.0",

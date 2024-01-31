@@ -237,7 +237,7 @@ export const Editor = observer(() => {
               }}
             >
               <PanelGroup direction="vertical">
-                <Panel defaultSizePercentage={90} minSizePercentage={25}>
+                <Panel defaultSizePercentage={70} minSizePercentage={25}>
                   <ScrollArea
                     ref={editorRef}
                     className="h-full w-full"
@@ -293,7 +293,7 @@ export const Editor = observer(() => {
                 <CustomPanelResizeHandle />
                 <Panel
                   maxSizePercentage={75}
-                  defaultSizePercentage={10}
+                  defaultSizePercentage={30}
                   collapsible
                 >
                   <QueryPanel />

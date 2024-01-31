@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
-import { CompeleteQueryI } from '@/api/queries.api';
+import { CompeleteQueryI, QueryReturnT } from '@/api/queries.api';
 import { DebouncedInput } from './debouncedInput';
 import clsx from 'clsx';
 import { Input } from './ui/input';
@@ -28,12 +28,15 @@ import { ScrollArea } from './ui/scroll-area';
 import { useQueryClient } from '@tanstack/react-query';
 import FormT from '@rjsf/core';
 import { RJSFShadcn } from './rjsf_shad';
+import ReactJson from 'react-json-view';
 
 function QueryItem({ query }: { query?: CompeleteQueryI }) {
   const rjsfRef = useRef<FormT>(null);
   const { workspaceId, appId } = useParams();
   const queryClient = useQueryClient();
-
+  const [queryResult, setQueryResult] = useState<QueryReturnT | null>(null);
+  const jsonResultRef = useRef<HTMLDivElement>(null);
+  const [showRawResult, setShowRawResult] = useState(false);
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
       onSuccess() {
@@ -50,6 +53,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
         '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
         data,
       );
+      setQueryResult(data);
     },
   });
 
@@ -84,6 +88,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
             }
             // TODO: the evaluatedConfige should be eval(query.query, context)
             const evaluatedConfig = query.query;
+            jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
             run({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -98,7 +103,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
         </Button>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-full w-full ">
+      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
         <RJSFShadcn
           ref={rjsfRef}
           // formContext={{ isSubmitting: isSubmitting }}
@@ -111,6 +116,7 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
               throw new Error(
                 "that's weird this function should run under workspaceId, appId",
               );
+            console.log('saving');
             updateMutation({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -124,6 +130,38 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
           {/*to remove submit button*/}
           <></>
         </RJSFShadcn>
+        <div className="mt-5" key={query.id + 'JSONviewer'}>
+          <div className="grid grid-cols-3 justify-between border-2  border-sky-200 bg-transparent p-3 font-mono text-gray-600 ">
+            <div className="mt-2">
+              <p className="text-md text-grey-200 mx-auto block ">Preview</p>
+            </div>
+            <div className="flex flex-row gap-2 self-center justify-self-stretch ">
+              <Button
+                variant={showRawResult ? 'default' : 'outline'}
+                onClick={() => setShowRawResult(false)}
+              >
+                JSON
+              </Button>
+              <Button
+                variant={showRawResult ? 'outline' : 'default'}
+                onClick={() => setShowRawResult(true)}
+              >
+                Raw
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3  bg-slate-100 py-5">
+            <div id="resultJSON" ref={jsonResultRef}>
+              {showRawResult ? (
+                <div className="text-md px-4 text-left leading-relaxed">
+                  {JSON.stringify(queryResult)}{' '}
+                </div>
+              ) : (
+                <ReactJson src={queryResult} />
+              )}
+            </div>
+          </div>
+        </div>
       </ScrollArea>
     </div>
   );
