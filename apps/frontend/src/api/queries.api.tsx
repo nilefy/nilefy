@@ -9,6 +9,9 @@ import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
 
 export type QueryI = {
   id: string;
+  /**
+   * un-evaluated config
+   */
   query: Record<string, unknown>;
   dataSourceId: number;
   appId: number;

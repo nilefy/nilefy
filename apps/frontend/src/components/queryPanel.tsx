@@ -29,7 +29,7 @@ import { RJSFShadcn } from './rjsf_shad';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, toJS } from 'mobx';
+import { computed } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 
 const QueryItem = observer(function QueryItem({
@@ -56,6 +56,12 @@ const QueryItem = observer(function QueryItem({
         '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
         data,
       );
+      query.updateQuery({
+        rawValues: {
+          isLoading: false,
+          ...data,
+        },
+      });
     },
   });
 
@@ -83,6 +89,7 @@ const QueryItem = observer(function QueryItem({
             }
             const evaluatedConfig = query.evaluatedConfig;
             console.log(evaluatedConfig);
+            query.setIsLoading(true);
             run({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -107,7 +114,7 @@ const QueryItem = observer(function QueryItem({
           }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          formData={query.rawValues}
+          formData={query.unEvaluatedConfig}
           validator={validator}
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)

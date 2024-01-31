@@ -7,6 +7,7 @@ import { EvaluationManager } from './evaluationManager';
 import { analyzeDependancies } from '../dependancyUtils';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
+import { RuntimeEvaluable } from './interfaces';
 
 export class EditorState {
   inited: boolean = false;
@@ -111,8 +112,8 @@ export class EditorState {
     });
     // analyze queries props to create the initial graph
     Object.values(this.queries).forEach((query) => {
-      for (const prop in query.rawValues) {
-        const value = query.rawValues[prop];
+      for (const prop in query.unEvaluatedConfig) {
+        const value = query.unEvaluatedConfig[prop];
         const { dependencies, isCode } = analyzeDependancies(
           value,
           prop,

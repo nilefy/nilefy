@@ -3,9 +3,14 @@ export interface Snapshotable<T = unknown> {
 }
 export interface RuntimeEvaluable {
   /**
-   * insert any value needed to be reachable from the evaluationManager
+   * should contains any publically available value
+   * - would be shown with autocompletation
+   * - will be used in evaluationManager to evaluate another entities props
    */
   rawValues: Record<string, unknown>;
+  /**
+   * use it to expose evaluated props
+   */
   values: Record<string, unknown>;
 }
 

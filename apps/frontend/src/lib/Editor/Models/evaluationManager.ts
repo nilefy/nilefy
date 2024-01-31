@@ -4,6 +4,8 @@ import invariant from 'invariant';
 import { get, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
+import { WebloomWidget } from './widget';
+import { WebloomQuery } from './query';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -55,14 +57,17 @@ export class EvaluationManager {
         !this.editor.dependencyManager.getDirectDependencies(entityId) &&
         !this.isRawValueCode(entityId, path)
       ) {
-        set(evalTree, node, get(entity.rawValues, path));
+        // get the public data from rawValues
+        if (entity instanceof WebloomWidget || entity instanceof WebloomQuery) {
+          set(evalTree, node, get(entity.rawValues, path));
+        }
         continue;
       }
-      set(
-        evalTree,
-        node,
-        evaluate(get(entity.rawValues, path) as string, evalTree),
-      );
+      let obj: unknown;
+      if (entity instanceof WebloomQuery) obj = entity.unEvaluatedConfig;
+      else if (entity instanceof WebloomWidget) obj = entity.rawValues;
+      else throw new Error("i don't know this type");
+      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
     }
     for (const node of this.codeRawValues) {
       if (evaluatedInGraph.has(node)) continue;
@@ -72,11 +77,11 @@ export class EvaluationManager {
         entity,
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
-      set(
-        evalTree,
-        node,
-        evaluate(get(entity.rawValues, path) as string, evalTree),
-      );
+      let obj: unknown;
+      if (entity instanceof WebloomQuery) obj = entity.unEvaluatedConfig;
+      else if (entity instanceof WebloomWidget) obj = entity.rawValues;
+      else throw new Error("i don't know this type");
+      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
     }
     return evalTree;
   }
