@@ -17,9 +17,10 @@ const debouncedAnalyzeDependancies = debounce(
     context: EditorState['context'],
   ) => {
     const res = analyzeDependancies(newValue, toProperty, id, context);
-    const widget = editorStore.currentPage.getWidgetById(id);
-    widget.setPropIsCode(toProperty, true);
-    widget.addDependencies(res.dependencies);
+    const entity = editorStore.getEntityById(id);
+    if (!entity) throw new Error("there's missing entity");
+    entity.setPropIsCode(toProperty, true);
+    entity.addDependencies(res.dependencies);
   },
   2000,
 );

@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import toposort from 'toposort';
 import invariant from 'invariant';
 import { get, set } from 'lodash';
@@ -57,15 +57,24 @@ export class EvaluationManager {
         !this.editor.dependencyManager.getDirectDependencies(entityId) &&
         !this.isRawValueCode(entityId, path)
       ) {
-        // get the public data from rawValues
         if (entity instanceof WebloomWidget || entity instanceof WebloomQuery) {
           set(evalTree, node, get(entity.rawValues, path));
         }
         continue;
       }
+      // TODO: holy shit refactor
       let obj: unknown;
-      if (entity instanceof WebloomQuery) obj = entity.unEvaluatedConfig;
-      else if (entity instanceof WebloomWidget) obj = entity.rawValues;
+      if (entity instanceof WebloomWidget) obj = entity.rawValues;
+      else if (
+        entity instanceof WebloomQuery &&
+        this.isRawValueCode(entity.id, path)
+      )
+        obj = entity.unEvaluatedConfig;
+      else if (
+        entity instanceof WebloomQuery &&
+        !this.isRawValueCode(entity.id, path)
+      )
+        obj = entity.rawValues;
       else throw new Error("i don't know this type");
       set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
     }
