@@ -3,7 +3,11 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, Suspense, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
 import {
   DndContext,
   DragEndEvent,
@@ -60,26 +64,6 @@ const throttledResizeCanvas = throttle(
     leading: true,
   },
 );
-
-const CustomPanelResizeHandle = () => {
-  return (
-    <PanelResizeHandle className="group relative flex shrink-0 grow-0 basis-1 items-stretch justify-stretch overflow-visible outline-none">
-      <div
-        className="relative
-        flex-1
-        transition-colors
-        after:absolute
-        after:left-[calc(50%-0.5rem)]
-        after:top-[calc(50%-.5rem)]
-        after:flex after:h-1
-        after:w-1
-        after:items-center
-        after:justify-center
-      group-data-[resize-handle-active]:bg-sky-500"
-      ></div>
-    </PanelResizeHandle>
-  );
-};
 
 export const appLoader =
   (queryClient: QueryClient) =>
@@ -228,16 +212,19 @@ export const Editor = observer(() => {
           onDragCancel={handleCancel}
           autoScroll={{ layoutShiftCompensation: false }}
         >
-          <PanelGroup direction="horizontal">
-            <Panel
+          <ResizablePanelGroup direction="horizontal">
+            <ResizablePanel
               defaultSizePercentage={70}
               minSizePercentage={50}
               onResize={(sizes) => {
                 throttledResizeCanvas(sizes.sizePixels);
               }}
             >
-              <PanelGroup direction="vertical">
-                <Panel defaultSizePercentage={90} minSizePercentage={25}>
+              <ResizablePanelGroup direction="vertical">
+                <ResizablePanel
+                  defaultSizePercentage={65}
+                  minSizePercentage={25}
+                >
                   <ScrollArea
                     ref={editorRef}
                     className="h-full w-full"
@@ -289,24 +276,24 @@ export const Editor = observer(() => {
                       dropAnimation={{ duration: 0 }}
                     />
                   </ScrollArea>
-                </Panel>
-                <CustomPanelResizeHandle />
-                <Panel
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
                   maxSizePercentage={75}
-                  defaultSizePercentage={10}
+                  defaultSizePercentage={35}
                   collapsible
                 >
                   <QueryPanel />
-                </Panel>
-              </PanelGroup>
-            </Panel>
-            <CustomPanelResizeHandle />
-            <Panel maxSizePercentage={25} minSizePercentage={10}>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
               <Suspense fallback={<div>Loading...</div>}>
                 <RightSidebar />
               </Suspense>
-            </Panel>
-          </PanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </DndContext>
       </div>
     </>
