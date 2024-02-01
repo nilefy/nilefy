@@ -113,7 +113,9 @@ export class WebloomPage {
     this.evaluationManger = new EvaluationManager(this);
     this.widgets = widgetMap;
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
-    this.height = this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount;
+    this.height =
+      this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
+      EDITOR_CONSTANTS.ROW_HEIGHT;
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
     Object.values(widgetMap).forEach((widget) => {
