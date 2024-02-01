@@ -26,13 +26,19 @@ import {
   DeleteDatasourceQueriesDto,
 } from '../dto/data_queries.dto';
 import { QueryRet } from './query.types';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/queries')
 export class DataQueriesController {
   constructor(private dataQueriesService: DataQueriesService) {}
 
   @Post('run/:queryId')
+  @ApiCreatedResponse({
+    description: 'query return type',
+    type: QueryRet,
+  })
   async runQuery(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
@@ -50,7 +56,13 @@ export class DataQueriesController {
   }
 
   @Post('add')
+  @ApiCreatedResponse({
+    description: 'to create new query in application',
+    type: QueryDto,
+  })
   async addQuery(
+    @Param('workspaceId', ParseIntPipe)
+    _workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,

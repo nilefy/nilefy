@@ -21,7 +21,9 @@ import {
   updateRoleSchema,
 } from '../dto/roles.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard, PermissionsGuard)
 @OnlyAdmin()
 @Controller('workspaces/:workspaceId/roles')

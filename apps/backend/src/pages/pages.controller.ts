@@ -20,7 +20,9 @@ import {
   createPageSchema,
   updatePageSchema,
 } from '../dto/pages.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/pages')
 export class PagesController {
