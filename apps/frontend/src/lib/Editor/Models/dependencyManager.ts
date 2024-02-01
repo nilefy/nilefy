@@ -1,9 +1,18 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import {
+  observable,
+  makeObservable,
+  action,
+  computed,
+  autorun,
+  toJS,
+} from 'mobx';
 import invariant from 'invariant';
 import { hasCyclicDependencies } from '../dependancyUtils';
 import { has } from 'lodash';
 import { EditorState } from './editor';
-// please note that path is something like "a.b.c"
+/*
+ * please note that path is something like "a.b.c"
+ */
 type Path = string;
 type EntityId = string;
 type Dependent = EntityId;
@@ -48,6 +57,7 @@ export class DependencyManager {
       graph: computed,
       editor: observable,
     });
+    autorun(() => console.log('dep graph', toJS(this.graph)));
   }
 
   /**
@@ -94,7 +104,7 @@ export class DependencyManager {
       `dependency entity "${dependencyId}" not found while adding dependency "${dependentId}" -> "${dependencyId}" on path "${dependencyPath}"`,
     );
     invariant(
-      has(dependencyEntity.rawValues, dependencyPath),
+      has(dependencyEntity.publicProps, dependencyPath),
       `dependency path "${dependencyPath}" not found on entity "${dependencyId}" while adding dependent "${dependentId}" -> "${dependencyId}" on path "${dependentPath}"`,
     );
     const cycle = this.detectCycle([

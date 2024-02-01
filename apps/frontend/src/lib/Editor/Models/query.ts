@@ -1,12 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  flow,
-  action,
-  computed,
-  autorun,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, flow, action, computed } from 'mobx';
 import {
   EvaluatedRunTimeProps,
   RuntimeEvaluable,
@@ -105,12 +97,23 @@ export class WebloomQuery
       rawValues: observable,
       values: computed.struct,
       evaluatedConfig: computed,
+      propsToBeEvaluated: computed,
+      unEvaluatedConfig: observable,
+      publicProps: computed,
       fetchValue: flow,
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
       setIsLoading: action,
     });
+  }
+
+  get publicProps(): Record<string, unknown> {
+    return this.rawValues;
+  }
+
+  get propsToBeEvaluated(): Record<string, unknown> {
+    return this.unEvaluatedConfig;
   }
 
   /**
@@ -131,15 +134,16 @@ export class WebloomQuery
    */
   get evaluatedConfig(): EvaluatedRunTimeProps {
     const evaluatedProps: EvaluatedRunTimeProps = {};
-    for (const key in this.unEvaluatedConfig) {
-      const path = this.id + '.' + key;
-      const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
-      if (evaluatedValue !== undefined) {
-        evaluatedProps[key] = evaluatedValue;
-      }
-    }
+    // for (const key in this.propsToBeEvaluated) {
+    //   const path = this.id + '.' + key;
+    //   const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
+    //   if (evaluatedValue !== undefined) {
+    //     evaluatedProps[key] = evaluatedValue;
+    //   }
+    // }
+    console.log('forest', this.evaluationManger.evaluatedForest);
     return {
-      ...this.unEvaluatedConfig,
+      ...this.propsToBeEvaluated,
       ...evaluatedProps,
     };
   }

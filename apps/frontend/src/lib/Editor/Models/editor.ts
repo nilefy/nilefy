@@ -1,4 +1,12 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  toJS,
+  autorun,
+} from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -8,6 +16,7 @@ import { analyzeDependancies } from '../dependancyUtils';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
 import { RuntimeEvaluable } from './interfaces';
+import _ from 'lodash';
 
 export class EditorState {
   inited: boolean = false;
@@ -96,8 +105,13 @@ export class EditorState {
     const allDependencies: Array<DependencyRelation> = [];
     // analyze widgets props to create the initial graph
     Object.values(this.currentPage.widgets).forEach((widget) => {
-      for (const prop in widget.rawValues) {
-        const value = widget.rawValues[prop];
+      const toBeEvaled = toJS(widget.propsToBeEvaluated);
+      const stringProps = this.PropertiesToArray(
+        toBeEvaled,
+        (v) => typeof v === 'string',
+      );
+      for (const prop of stringProps) {
+        const value = _.get(toBeEvaled, prop);
         const { dependencies, isCode } = analyzeDependancies(
           value,
           prop,
@@ -112,8 +126,13 @@ export class EditorState {
     });
     // analyze queries props to create the initial graph
     Object.values(this.queries).forEach((query) => {
-      for (const prop in query.unEvaluatedConfig) {
-        const value = query.unEvaluatedConfig[prop];
+      const toBeEvaled = toJS(query.propsToBeEvaluated);
+      const stringProps = this.PropertiesToArray(
+        toBeEvaled,
+        (v) => typeof v === 'string',
+      );
+      for (const prop of stringProps) {
+        const value = _.get(toBeEvaled, prop);
         const { dependencies, isCode } = analyzeDependancies(
           value,
           prop,
@@ -127,6 +146,51 @@ export class EditorState {
       }
     });
     this.dependencyManager.addDependencies(allDependencies);
+    autorun(() =>
+      console.log(
+        'deps',
+        toJS(this.dependencyManager.getDirectDependencies('post1')),
+      ),
+    );
+  }
+
+  private createPathFromStack(stack: string[]) {
+    return stack.join('.');
+  }
+
+  private isObject(val: unknown): val is Record<string, unknown> {
+    return _.isPlainObject(val);
+  }
+
+  /**
+   * return a list of all keys in object, could choose key based on condition
+   * @NOTE: the condition will only be called on types that don't match `this.isObject`
+   */
+  private PropertiesToArray(
+    obj: Record<string, unknown>,
+    condition: (value: unknown) => boolean = () => true,
+  ): string[] {
+    const stack: string[] = [];
+    const result: string[] = [];
+    // the actual function that do the recursion
+    const helper = (
+      obj: Record<string, unknown>,
+      stack: string[],
+      result: string[],
+    ) => {
+      for (const k in obj) {
+        stack.push(k);
+        const item = obj[k];
+        if (this.isObject(item)) {
+          helper(item, stack, result);
+        } else if (condition(item)) {
+          result.push(this.createPathFromStack(stack));
+        }
+        stack.pop();
+      }
+    };
+    helper(obj, stack, result);
+    return result;
   }
 
   /**
@@ -144,7 +208,7 @@ export class EditorState {
     return context;
   }
 
-  getEntityById(id: string): Entity | undefined {
+  getEntityById(id: string): RuntimeEvaluable | undefined {
     return this.currentPage.widgets[id] || this.queries[id];
   }
 

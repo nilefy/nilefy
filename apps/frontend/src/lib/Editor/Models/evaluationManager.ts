@@ -1,11 +1,16 @@
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import {
+  action,
+  autorun,
+  computed,
+  makeObservable,
+  observable,
+  toJS,
+} from 'mobx';
 import toposort from 'toposort';
 import invariant from 'invariant';
-import { get, set } from 'lodash';
+import _ from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
-import { WebloomWidget } from './widget';
-import { WebloomQuery } from './query';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -23,6 +28,7 @@ export class EvaluationManager {
     });
     this.codeRawValues = new Set();
     this.editor = editor;
+    autorun(() => console.log('evalman forest', toJS(this.evaluatedForest)));
   }
 
   /**
@@ -45,52 +51,52 @@ export class EvaluationManager {
     const sortedGraph = toposort(this.editor.dependencyManager.graph).reverse();
     const evalTree: Record<string, unknown> = {};
     const evaluatedInGraph = new Set<string>();
+    console.log('sorted', sortedGraph);
     for (const node of sortedGraph) {
       evaluatedInGraph.add(node);
-      const [entityId, path] = node.split('.');
+      const [entityId, ...rest] = node.split('.');
+      const path = rest.join('.');
       const entity = this.editor.getEntityById(entityId);
       invariant(
         entity,
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
+      // get leaf nodes values
       if (
         !this.editor.dependencyManager.getDirectDependencies(entityId) &&
         !this.isRawValueCode(entityId, path)
       ) {
-        if (entity instanceof WebloomWidget || entity instanceof WebloomQuery) {
-          set(evalTree, node, get(entity.rawValues, path));
-        }
+        _.set(evalTree, node, _.get(toJS(entity.publicProps), path));
         continue;
       }
-      // TODO: holy shit refactor
-      let obj: unknown;
-      if (entity instanceof WebloomWidget) obj = entity.rawValues;
-      else if (
-        entity instanceof WebloomQuery &&
-        this.isRawValueCode(entity.id, path)
-      )
-        obj = entity.unEvaluatedConfig;
-      else if (
-        entity instanceof WebloomQuery &&
-        !this.isRawValueCode(entity.id, path)
-      )
-        obj = entity.rawValues;
-      else throw new Error("i don't know this type");
-      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
+      console.log('path', path);
+      let obj;
+      if (this.isRawValueCode(entity.id, path)) obj = entity.propsToBeEvaluated;
+      else obj = entity.publicProps;
+      _.set(
+        evalTree,
+        node,
+        evaluate(_.get(toJS(obj), path) as string, evalTree),
+      );
     }
     for (const node of this.codeRawValues) {
       if (evaluatedInGraph.has(node)) continue;
-      const [entityId, path] = node.split('.');
+      const [entityId, ...rest] = node.split('.');
+      const path = rest.join('.');
       const entity = this.editor.getEntityById(entityId);
       invariant(
         entity,
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
-      let obj: unknown;
-      if (entity instanceof WebloomQuery) obj = entity.unEvaluatedConfig;
-      else if (entity instanceof WebloomWidget) obj = entity.rawValues;
-      else throw new Error("i don't know this type");
-      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
+      console.log('path2', path);
+      _.set(
+        evalTree,
+        node,
+        evaluate(
+          _.get(toJS(entity.propsToBeEvaluated), path) as string,
+          evalTree,
+        ),
+      );
     }
     return evalTree;
   }

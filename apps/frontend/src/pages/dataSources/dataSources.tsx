@@ -406,6 +406,7 @@ export function DataSourceView() {
               uiSchema={data.dataSource.config.uiSchema}
               formData={data.config}
               validator={validator}
+              onChange={(data) => console.log(data.formData)}
               onSubmit={({ formData }) => {
                 console.log('submit', formData);
                 if (!workspaceId || !datasourceId)
