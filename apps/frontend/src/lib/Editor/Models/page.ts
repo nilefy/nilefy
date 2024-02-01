@@ -24,6 +24,8 @@ type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
   id: string;
+  name: string;
+  handle: string;
   widgets: Record<string, WebloomWidget> = {};
   queries: Record<string, WebloomQuery> = {};
   mouseOverWidgetId: string | null = null;
@@ -43,10 +45,14 @@ export class WebloomPage {
   height: number = 0;
   constructor({
     id,
+    name,
+    handle,
     widgets,
     queries,
   }: {
     id: string;
+    name: string;
+    handle: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
     queries: Record<string, WebloomQuery>;
   }) {
@@ -78,6 +84,8 @@ export class WebloomPage {
       moveWidgetIntoGrid: action,
       moveWidget: action,
       id: observable,
+      name: observable,
+      handle: observable,
       mousePosition: observable,
       setMousePosition: action,
       rootWidget: computed,
@@ -88,6 +96,8 @@ export class WebloomPage {
       snapshot: computed,
     });
     this.id = id;
+    this.name = name;
+    this.handle = handle;
     const widgetMap: Record<string, WebloomWidget> = {};
     this.queries = queries;
     this.selectedNodeIds = new Set();
