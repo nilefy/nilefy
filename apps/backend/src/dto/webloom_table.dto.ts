@@ -4,6 +4,7 @@ import {
   webloomTables as webloomTablesDrizzle,
   webloomColumns as webloomColumnsDrizzle,
 } from '../drizzle/schema/schema';
+import { createZodDto } from 'nestjs-zod';
 
 export const webloomTableColumn = createSelectSchema(webloomColumnsDrizzle, {
   name: (schema) => schema.name.min(3).max(255),
@@ -48,8 +49,10 @@ export const webloomTableInsertDto = webloomTableInsertDb
     columns: z.array(webloomColumnInsertDto).min(1),
   });
 
-export type WebloomColumnDto = z.infer<typeof webloomTableColumn>;
-export type WebloomTableDto = z.infer<typeof webloomTableSchema>;
+// export type WebloomColumnDto = z.infer<typeof webloomTableColumn>;
+// export type WebloomTableDto = z.infer<typeof webloomTableSchema>;
+export class WebloomColumnDto extends createZodDto(webloomTableColumn) {}
+export class WebloomTableDto extends createZodDto(webloomTableSchema) {}
 /**
  * insert column db interface
  */
@@ -57,7 +60,10 @@ export type InsertWebloomColumnDb = z.infer<typeof webloomColumnInsertDb>;
 /**
  * insert column API interface
  */
-export type InsertWebloomColumnDto = z.infer<typeof webloomColumnInsertDto>;
+// export type InsertWebloomColumnDto = z.infer<typeof webloomColumnInsertDto>;
+export class InsertWebloomColumnDto extends createZodDto(
+  webloomColumnInsertDto,
+) {}
 
 /**
  * insert table db interface
@@ -66,4 +72,12 @@ export type InsertWebloomTableDb = z.infer<typeof webloomTableInsertDb>;
 /**
  * insert table API interface
  */
-export type InsertWebloomTableDto = z.infer<typeof webloomTableInsertDto>;
+// export type InsertWebloomTableDto = z.infer<typeof webloomTableInsertDto>;
+export class InsertWebloomTableDto extends createZodDto(
+  webloomTableInsertDto,
+) {}
+
+export const insertSchema = z.object({
+  data: z.array(z.object({}).catchall(z.any())),
+});
+export class InsertDto extends createZodDto(insertSchema) {}

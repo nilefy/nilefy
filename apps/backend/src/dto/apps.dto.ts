@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { apps as appsDrizzle } from '../drizzle/schema/schema';
+import { createZodDto } from 'nestjs-zod';
 
 export const appSchema = createSelectSchema(appsDrizzle);
 
@@ -24,7 +25,7 @@ export const updateAppDb = createAppDb
 
 export const updateAppSchema = createAppSchema.partial();
 
-export type AppDto = z.infer<typeof appSchema>;
+// export type AppDto = z.infer<typeof appSchema>;
 /**
  * insert in the db interface
  */
@@ -32,6 +33,10 @@ export type CreateAppDb = z.infer<typeof createAppDb>;
 /**
  * API insert interface
  */
-export type CreateAppDto = z.infer<typeof createAppSchema>;
+// export type CreateAppDto = z.infer<typeof createAppSchema>;
 export type UpdateAppDb = z.infer<typeof updateAppDb>;
-export type UpdateAppDto = z.infer<typeof updateAppSchema>;
+// export type UpdateAppDto = z.infer<typeof updateAppSchema>;
+
+export class AppDto extends createZodDto(appSchema) {}
+export class CreateAppDto extends createZodDto(createAppSchema) {}
+export class UpdateAppDto extends createZodDto(updateAppSchema) {}
