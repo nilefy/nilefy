@@ -48,7 +48,7 @@ function PreviewHeader() {
           className={buttonVariants({ variant: 'outline', size: 'icon' })}
           to={`/${workspaceId}/apps/edit/${appId}`}
         >
-          <Edit className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Edit className="absolute h-[1.2rem] w-[1.2rem] " />
         </Link>
         <ModeToggle />
       </div>

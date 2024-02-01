@@ -35,6 +35,7 @@ import { QueryPanel } from '@/components/queryPanel';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
+import { EditorHeader } from './editorHeader';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -173,8 +174,11 @@ export const Editor = observer(() => {
     };
   }, [draggedNode]);
   return (
-    <>
-      <div className="isolate flex h-full max-h-full w-full bg-transparent">
+    <div className="isolate flex h-full max-h-full w-full flex-col bg-transparent">
+      <div className="h-fit w-full">
+        <EditorHeader />
+      </div>
+      <div className="flex h-full w-full">
         <EditorLeftSidebar />
         {/*sidebar*/}
         <DndContext
@@ -269,7 +273,7 @@ export const Editor = observer(() => {
           </PanelGroup>
         </DndContext>
       </div>
-    </>
+    </div>
   );
 });
 
