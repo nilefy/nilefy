@@ -1,25 +1,27 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { Command } from '../types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
+import { WidgetSnapshot } from '@/types';
 
 export class CopyAction implements Command {
-  constructor(private nodeId: string) {}
+  private clipboard: { copied: WidgetSnapshot[] };
+
+  constructor() {
+    this.clipboard = { copied: [] };
+  }
 
   execute() {
-    const widget = editorStore.currentPage.widgets[this.nodeId].snapshot;
-    const copied = {
-      ...widget,
-      id: getNewWidgetName(widget.type),
-      row: widget.row + 2,
-      col: widget.col + 2,
-    };
-    editorStore.currentPage.addWidget(copied);
-    return {
-      event: 'insert' as const,
-      data: {
-        node: copied,
-        sideEffects: [],
-      },
-    };
+    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
+
+    for (const node of editorStore.currentPage.selectedNodeIds) {
+      const widget = editorStore.currentPage.widgets[node].snapshot;
+      const copied = {
+        ...widget,
+        id: getNewWidgetName(widget.type),
+      };
+      this.clipboard.copied.push(copied);
+    }
+
+    navigator.clipboard.writeText(JSON.stringify(this.clipboard));
   }
 }

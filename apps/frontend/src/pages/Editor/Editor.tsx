@@ -52,6 +52,7 @@ import { FetchXError } from '@/utils/fetch';
 import { WebloomLoader } from '@/components/loader';
 import { CopyAction } from '@/Actions/Editor/Copy';
 import { CutAction } from '@/Actions/Editor/Cut';
+import { PasteAction } from '@/Actions/Editor/Paste';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -111,7 +112,6 @@ export const appLoader =
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
 
-  const copiedWidgetsRef = useRef<Set<string> | null>(null);
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
@@ -120,25 +120,18 @@ export const Editor = observer(() => {
       commandManager.executeCommand(new DeleteAction());
     }
   });
-  useHotkeys('ctrl+x', () => {
-    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+
+  useHotkeys(['ctrl+c', 'ctrl+x'], (_, handlers) => {
+    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
+
+    if (handlers.keys?.join('') === 'c') {
+      commandManager.executeCommand(new CopyAction());
+    } else {
       commandManager.executeCommand(new CutAction());
     }
   });
-  useHotkeys('ctrl+c', () => {
-    if (editorStore.currentPage.selectedNodeIds.size > 0) {
-      copiedWidgetsRef.current = editorStore.currentPage.selectedNodeIds;
-    }
-  });
   useHotkeys('ctrl+v', () => {
-    if (copiedWidgetsRef.current) {
-      for (const node of copiedWidgetsRef.current) {
-        commandManager.executeCommand(new CopyAction(node));
-      }
-      copiedWidgetsRef.current = null;
-    } else {
-      commandManager.undoCommand(true);
-    }
+    commandManager.executeCommand(new PasteAction());
   });
 
   const draggedNode = editorStore.currentPage.draggedWidgetId;

@@ -1,36 +1,25 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { UndoableCommand } from '../types';
-import { WebloomWidget } from '@/lib/Editor/Models/widget';
-import { toJS } from 'mobx';
+import { Command } from '../types';
+import { WidgetSnapshot } from '@/types';
+import { commandManager } from '../CommandManager';
+import { DeleteAction } from './Delete';
 
-export class CutAction implements UndoableCommand {
-  private nodes: WebloomWidget['snapshot'][];
+export class CutAction implements Command {
+  private clipboard: { clipped: WidgetSnapshot[] };
 
   constructor() {
-    this.nodes = [];
+    this.clipboard = { clipped: [] };
   }
 
   execute() {
-    const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
-    editorStore.currentPage.setSelectedNodeIds(new Set());
+    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
 
-    for (const id of selectedIds) {
-      this.nodes = [...this.nodes, ...editorStore.currentPage.removeWidget(id)];
+    for (const node of editorStore.currentPage.selectedNodeIds) {
+      const widget = editorStore.currentPage.widgets[node].snapshot;
+      this.clipboard.clipped.push(widget);
     }
 
-    return {
-      event: 'delete' as const,
-      data: [...selectedIds],
-    };
-  }
-
-  undo(): void {
-    while (this.nodes.length > 0) {
-      const node = this.nodes.pop();
-      if (!node) {
-        break;
-      }
-      editorStore.currentPage.addWidget(node);
-    }
+    commandManager.executeCommand(new DeleteAction());
+    navigator.clipboard.writeText(JSON.stringify(this.clipboard));
   }
 }
