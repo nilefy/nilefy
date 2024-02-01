@@ -222,7 +222,7 @@ export const Editor = observer(() => {
             >
               <ResizablePanelGroup direction="vertical">
                 <ResizablePanel
-                  defaultSizePercentage={90}
+                  defaultSizePercentage={65}
                   minSizePercentage={25}
                 >
                   <ScrollArea
@@ -277,17 +277,17 @@ export const Editor = observer(() => {
                     />
                   </ScrollArea>
                 </ResizablePanel>
-                <ResizableHandle withHandle />
+                <ResizableHandle />
                 <ResizablePanel
                   maxSizePercentage={75}
-                  defaultSizePercentage={10}
+                  defaultSizePercentage={35}
                   collapsible
                 >
                   <QueryPanel />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>
-            <ResizableHandle withHandle />
+            <ResizableHandle />
             <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
               <Suspense fallback={<div>Loading...</div>}>
                 <RightSidebar />
