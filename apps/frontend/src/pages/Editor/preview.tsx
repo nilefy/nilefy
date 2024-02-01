@@ -1,12 +1,7 @@
 import {
   NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,7 +58,7 @@ function PreviewHeader() {
 
 export function PagePreview() {
   const ref = useRef<HTMLDivElement>(null);
-  // NOTE: ask me why do i have to use this
+  // on the editor the initial width comes from the resizable panel(parent of the root) here we do the same to get the initial width of the root from its parent
   useLayoutEffect(() => {
     if (ref && ref.current) {
       editorStore.currentPage.setPageDimensions({
