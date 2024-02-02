@@ -13,7 +13,7 @@
       "cache": false,
       "persistent": true,
       "dependsOn": [
-        "build"
+        "^build"
       ]
     },
     "db:push": {
@@ -23,6 +23,9 @@
       "cache": false
     },
     "db:seed": {
+      "cache": false
+    },
+    "typecheck": {
       "cache": false
     }
   }
