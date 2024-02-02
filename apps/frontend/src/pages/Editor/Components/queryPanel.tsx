@@ -31,6 +31,7 @@ import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
 import { computed } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { Label } from '@/components/ui/label';
 
 const QueryItem = observer(function QueryItem({
   query,
@@ -62,7 +63,6 @@ const QueryItem = observer(function QueryItem({
       });
     },
   });
-  console.log(curDataSource);
   return (
     <div className="h-full w-full">
       {/* HEADER */}
@@ -102,32 +102,35 @@ const QueryItem = observer(function QueryItem({
       </div>
       {/*FORM*/}
       <ScrollArea className="h-full w-full p-4">
-        <Select
-          defaultValue={curDataSource}
-          onValueChange={(e) => {
-            setCurDataSource(e);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={query?.dataSource.name} />
-          </SelectTrigger>
-          <SelectContent>
-            {dataSources
-              ?.filter(
-                (dataSource) =>
-                  dataSource.dataSource.name ===
-                  query?.dataSource?.dataSource?.name,
-              )
-              .map((dataSource) => (
-                <SelectItem
-                  key={dataSource.name}
-                  value={dataSource.id.toString()}
-                >
-                  {dataSource.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+        <Label className="flex items-center gap-4">
+          Data Source
+          <Select
+            value={curDataSource}
+            onValueChange={(e) => {
+              setCurDataSource(e);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={query?.dataSource.name} />
+            </SelectTrigger>
+            <SelectContent>
+              {dataSources
+                ?.filter(
+                  (dataSource) =>
+                    dataSource.dataSource.name ===
+                    query.dataSource.dataSource.name,
+                )
+                .map((dataSource) => (
+                  <SelectItem
+                    key={dataSource.name}
+                    value={dataSource.id.toString()}
+                  >
+                    {dataSource.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </Label>
         <RJSFShadcn
           ref={rjsfRef}
           formContext={{
@@ -144,14 +147,13 @@ const QueryItem = observer(function QueryItem({
               throw new Error(
                 "that's weird this function should run under workspaceId, appId",
               );
-            console.log(curDataSource);
             updateMutation({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
               dto: {
                 query: formData,
-                datasourceId: +curDataSource,
+                dataSourceId: +curDataSource,
               },
             });
           }}

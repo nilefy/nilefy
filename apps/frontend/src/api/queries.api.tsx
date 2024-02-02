@@ -124,7 +124,7 @@ export async function updateQuery({
   appId: QueryI['appId'];
   queryId: QueryI['id'];
   dto: Partial<{
-    datasourceId: number;
+    dataSourceId: QueryI['dataSourceId'];
     id: QueryI['id'];
     query: QueryI['query'];
   }>;
@@ -137,7 +137,6 @@ export async function updateQuery({
       body: JSON.stringify(dto),
     },
   );
-  console.log(dto);
   return (await res.json()) as CompleteQueryI;
 }
 

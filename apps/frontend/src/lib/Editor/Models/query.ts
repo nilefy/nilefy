@@ -36,13 +36,9 @@ export class WebloomQuery
       >
     >
 {
-  // TODO: can we move this from here?
   appId: CompleteQueryI['appId'];
-  // TODO: can we move this from here?
   dataSource: CompleteQueryI['dataSource'];
-  // TODO: can we move this from here?
   dataSourceId: CompleteQueryI['dataSourceId'];
-
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
 
