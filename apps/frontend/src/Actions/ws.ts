@@ -5,6 +5,9 @@ export const RECONNECT_TIMEOUT = 2000;
 
 export class WebloomWebSocket {
   socket: WebSocket | null;
+  /**
+   * @NOTE: 'connected' means connected successfully and authed
+   */
   private state: 'connected' | 'not-authed' | 'connecting';
   private retry: boolean;
   private msgQ: string[];
@@ -41,14 +44,23 @@ export class WebloomWebSocket {
     this.socket?.close();
   }
 
+  /**
+   * returnes is the internal state we keep not the state of the physical socket
+   * use this if you want to check is the user authed => 'connected'
+   * to get socket ready state use `this.socketState`
+   */
   getState() {
     return this.state;
   }
   get socketState() {
     return this.socket?.readyState;
   }
-  // note it will call the auth
+
+  /**
+   * @NOTE: once the open event fire will send `auth` msg
+   */
   private assignListeners() {
+    // TODO: do something useful with the errrs
     this.socket!.onerror = function (ev) {
       console.log('error', ev);
     };
