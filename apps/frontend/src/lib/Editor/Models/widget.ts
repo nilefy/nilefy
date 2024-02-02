@@ -95,7 +95,6 @@ export class WebloomWidget
       nodes: observable,
       parentId: observable,
       dom: observable,
-      id: observable,
       type: observable,
       col: observable,
       row: observable,

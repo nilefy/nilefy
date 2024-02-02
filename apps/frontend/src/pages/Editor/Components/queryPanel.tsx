@@ -43,22 +43,15 @@ const QueryItem = observer(function QueryItem({
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
       onSuccess(data) {
+        query.setQueryState('success');
         query.updateQuery(data);
       },
     });
   const { mutate: run } = api.queries.run.useMutation({
-    onSuccess(data, variables) {
-      console.log(
-        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mvariables\x1b[0m = ',
-        variables,
-      );
-      console.log(
-        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
-        data,
-      );
+    onSuccess(data) {
+      query.setQueryState('success');
       query.updateQuery({
         rawValues: {
-          isLoading: false,
           ...data,
         },
       });
@@ -87,9 +80,8 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.evaluatedConfig;
-            console.log(evaluatedConfig);
-            query.setQueryState(true);
+            const evaluatedConfig = query.rawConfig;
+            query.setQueryState('loading');
             run({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -114,7 +106,7 @@ const QueryItem = observer(function QueryItem({
           }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          formData={query.unEvaluatedConfig}
+          formData={query.rawConfig}
           validator={validator}
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
@@ -171,32 +163,6 @@ export const QueryPanel = observer(function QueryPanel() {
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
   );
-
-  // const renameItem = (item: QueryI, e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const newName = e.target.value;
-  //   updateMutation({
-  //     workspaceId,
-  //     appId,
-  //     queryId: item.dataSource.id,
-  //     id: item.id,
-  //     data: { name: newName, query: item.query },
-  //   });
-  // };
-
-  // const duplicateItem = (item: Query) => {
-  //   if (item) {
-  //     const newItem = {
-  //       name: `Copy of ${item.name}`,
-  //       query: item.query,
-  //     };
-  //     addMutation({
-  //       workspaceId,
-  //       appId,
-  //       dataSourceId: item.dataSource.id,
-  //       query: newItem,
-  //     });
-  //   }
-  // };
 
   /**
    * toggle the selection
