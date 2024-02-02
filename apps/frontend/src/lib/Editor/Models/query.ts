@@ -1,11 +1,6 @@
-import { makeObservable, observable, flow, action, computed } from 'mobx';
-import {
-  EvaluatedRunTimeValues,
-  RuntimeEvaluable,
-  Snapshotable,
-} from './interfaces';
+import { makeObservable, observable, flow, action } from 'mobx';
+import { Snapshotable } from './interfaces';
 import { CompleteQueryI } from '@/api/queries.api';
-import { get } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { DependencyManager } from './dependencyManager';
 import { Entity } from './entity';
@@ -47,27 +42,15 @@ export class WebloomQuery
   dataSource: CompleteQueryI['dataSource'];
   // TODO: can we move this from here?
   dataSourceId: CompleteQueryI['dataSourceId'];
-  // add any data you want to expose
-  public rawValues: QueryRawValues;
+
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
-  // TODO: i don't like this place but EvaluationManager is tigtly coupled with `rawValues`, maybe update this in the next refactor hhh
-  /**
-   * un-evaluated config
-   * @NOTE: use `unEvaluatedConfig` to render the config form.
-   * @NOTE: send the server `values` or `evaluatedConfig`: values === evaluatedConfig
-   * @NOTE: rawValues used to expose public props to the editor context
-   */
-  unEvaluatedConfig: CompleteQueryI['query'];
 
   constructor({
     query,
     id,
-    // TODO: can we move this from here?
     appId,
-    // TODO: can we move this from here?
     dataSource,
-    // TODO: can we move this from here?
     dataSourceId,
     createdAt,
     updatedAt,
@@ -77,30 +60,25 @@ export class WebloomQuery
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
   }) {
-    super(id, dependencyManager, evaluationManger);
-    this.appId = appId;
-    this.dataSourceId = dataSourceId;
-    this.dataSource = dataSource;
-    this.unEvaluatedConfig = query;
-    // setup public values
-    this.rawValues = {
+    super(id, dependencyManager, evaluationManger, {
+      config: query,
       data: undefined,
-      isLoading: false,
+      queryState: 'idle',
       type: dataSource.dataSource.type,
       status: undefined,
       error: undefined,
-    };
+    });
+    this.appId = appId;
+    this.dataSourceId = dataSourceId;
+    this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     makeObservable(this, {
-      rawValues: observable,
-      values: computed.struct,
-      evaluatedConfig: computed,
       fetchValue: flow,
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
-      setIsLoading: action,
+      setQueryState: action,
     });
   }
 
@@ -110,36 +88,15 @@ export class WebloomQuery
    * @NOTE: send the server `values` or `evaluatedConfig`: values === evaluatedConfig
    * @NOTE: rawValues used to expose public props to the editor context
    */
-  get values() {
-    return this.rawValues;
+  // get values() {
+  //   return this.rawValues;
+  // }
+  get rawConfig() {
+    return this.rawValues.config as CompleteQueryI['query'];
   }
 
-  /**
-   * evaluated config
-   * @NOTE: use `unEvaluatedConfig` to render the config form.
-   * @NOTE: send the server `values` or `evaluatedConfig`: values === evaluatedConfig
-   * @NOTE: rawValues used to expose public props to the editor context
-   */
-  get evaluatedConfig(): EvaluatedRunTimeValues {
-    const evaluatedProps: EvaluatedRunTimeValues = {};
-    for (const key in this.unEvaluatedConfig) {
-      const path = this.id + '.' + key;
-      const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
-      if (evaluatedValue !== undefined) {
-        evaluatedProps[key] = evaluatedValue;
-      }
-    }
-    return {
-      ...this.unEvaluatedConfig,
-      ...evaluatedProps,
-    };
-  }
-
-  /**
-   * wrapper around `updataQuery`
-   */
-  setIsLoading(state: boolean) {
-    this.rawValues.isLoading = state;
+  setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
+    this.rawValues.queryState = state;
   }
 
   // TODO: make it handle id update
@@ -149,7 +106,7 @@ export class WebloomQuery
       'id'
     >,
   ) {
-    if (dto.query) this.unEvaluatedConfig = dto.query;
+    if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.rawValues)
       this.rawValues = {

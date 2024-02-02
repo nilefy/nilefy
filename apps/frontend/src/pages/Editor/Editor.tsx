@@ -44,7 +44,7 @@ import { JwtPayload } from '@/types/auth.types';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
-import { QueryPanel } from '@/components/queryPanel';
+import { QueryPanel } from '@/pages/Editor/Components/queryPanel';
 import { seedNameMap } from '@/lib/Editor/widgetName';
 import { editorStore } from '@/lib/Editor/Models';
 import { FetchXError } from '@/utils/fetch';

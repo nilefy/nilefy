@@ -20,12 +20,12 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
-import { DebouncedInput } from './debouncedInput';
+import { DebouncedInput } from '../../../components/debouncedInput';
 import clsx from 'clsx';
-import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
+import { Input } from '../../../components/ui/input';
+import { ScrollArea } from '../../../components/ui/scroll-area';
 import FormT from '@rjsf/core';
-import { RJSFShadcn } from './rjsf_shad';
+import { RJSFShadcn } from '../../../components/rjsf_shad';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
@@ -89,7 +89,7 @@ const QueryItem = observer(function QueryItem({
             }
             const evaluatedConfig = query.evaluatedConfig;
             console.log(evaluatedConfig);
-            query.setIsLoading(true);
+            query.setQueryState(true);
             run({
               workspaceId: +workspaceId,
               appId: +appId,
