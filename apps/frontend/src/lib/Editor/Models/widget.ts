@@ -16,12 +16,7 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import {
-  EvaluatedRunTimeProps,
-  RuntimeEvaluable,
-  RuntimeProps,
-  Snapshotable,
-} from './interfaces';
+import { EvaluatedRunTimeValues, Snapshotable } from './interfaces';
 import { DependencyManager } from './dependencyManager';
 import { cloneDeep, get } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
@@ -37,14 +32,12 @@ export class WebloomWidget
       > & {
         pageId: string;
       }
-    >,
-    RuntimeEvaluable
+    >
 {
   isRoot = false;
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
-  rawValues: RuntimeProps;
   type: WidgetTypes;
   col: number;
   row: number;
@@ -80,32 +73,25 @@ export class WebloomWidget
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
   }) {
-    super(id, dependencyManager, evaluationManger);
+    super(
+      id,
+      dependencyManager,
+      evaluationManger,
+      props ?? WebloomWidgets[type].defaultProps,
+    );
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const { config, defaultProps } = WebloomWidgets[type];
+    const { config } = WebloomWidgets[type];
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-    this.rawValues = {};
-    if (!props) {
-      props = {};
-    }
-    if (props) {
-      Object.keys(props).forEach((key) => {
-        this.rawValues[key] =
-          props[key] ?? defaultProps[key as keyof typeof defaultProps];
-      });
-    }
 
     makeObservable(this, {
-      rawValues: observable,
-      values: computed.struct,
       nodes: observable,
       parentId: observable,
       dom: observable,
@@ -156,8 +142,8 @@ export class WebloomWidget
   getProp(key: string) {
     return this.values[key] ?? this.rawValues[key];
   }
-  get values(): EvaluatedRunTimeProps {
-    const evaluatedProps: EvaluatedRunTimeProps = {};
+  get values(): EvaluatedRunTimeValues {
+    const evaluatedProps: EvaluatedRunTimeValues = {};
     for (const key in this.rawValues) {
       const path = this.id + '.' + key;
       const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);

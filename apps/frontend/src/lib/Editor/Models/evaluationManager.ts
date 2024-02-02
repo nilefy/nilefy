@@ -47,7 +47,8 @@ export class EvaluationManager {
     const evaluatedInGraph = new Set<string>();
     for (const node of sortedGraph) {
       evaluatedInGraph.add(node);
-      const [entityId, path] = node.split('.');
+      const [entityId, ...pathArr] = node.split('.');
+      const path = pathArr.join('.');
       const entity = this.editor.getEntityById(entityId);
       invariant(
         entity,
@@ -57,26 +58,15 @@ export class EvaluationManager {
         !this.editor.dependencyManager.getDirectDependencies(entityId) &&
         !this.isRawValueCode(entityId, path)
       ) {
-        if (entity instanceof WebloomWidget || entity instanceof WebloomQuery) {
-          set(evalTree, node, get(entity.rawValues, path));
-        }
+        set(evalTree, node, toJS(get(entity.rawValues, path)));
         continue;
       }
-      // TODO: holy shit refactor
-      let obj: unknown;
-      if (entity instanceof WebloomWidget) obj = entity.rawValues;
-      else if (
-        entity instanceof WebloomQuery &&
-        this.isRawValueCode(entity.id, path)
-      )
-        obj = entity.unEvaluatedConfig;
-      else if (
-        entity instanceof WebloomQuery &&
-        !this.isRawValueCode(entity.id, path)
-      )
-        obj = entity.rawValues;
-      else throw new Error("i don't know this type");
-      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
+      const gottenValue = get(entity.rawValues, path);
+      invariant(
+        typeof gottenValue === 'string',
+        'gottenValue should be string',
+      );
+      set(evalTree, node, evaluate(gottenValue, evalTree));
     }
     for (const node of this.codeRawValues) {
       if (evaluatedInGraph.has(node)) continue;
@@ -86,11 +76,12 @@ export class EvaluationManager {
         entity,
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
-      let obj: unknown;
-      if (entity instanceof WebloomQuery) obj = entity.unEvaluatedConfig;
-      else if (entity instanceof WebloomWidget) obj = entity.rawValues;
-      else throw new Error("i don't know this type");
-      set(evalTree, node, evaluate(get(obj, path) as string, evalTree));
+      const gottenValue = get(entity.rawValues, path);
+      invariant(
+        typeof gottenValue === 'string',
+        'gottenValue should be string',
+      );
+      set(evalTree, node, evaluate(gottenValue, evalTree));
     }
     return evalTree;
   }

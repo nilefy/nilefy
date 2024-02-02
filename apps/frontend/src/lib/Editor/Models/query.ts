@@ -1,14 +1,6 @@
+import { makeObservable, observable, flow, action, computed } from 'mobx';
 import {
-  makeObservable,
-  observable,
-  flow,
-  action,
-  computed,
-  autorun,
-  toJS,
-} from 'mobx';
-import {
-  EvaluatedRunTimeProps,
+  EvaluatedRunTimeValues,
   RuntimeEvaluable,
   Snapshotable,
 } from './interfaces';
@@ -42,7 +34,6 @@ type QueryRawValues = {
 export class WebloomQuery
   extends Entity
   implements
-    RuntimeEvaluable,
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
@@ -129,8 +120,8 @@ export class WebloomQuery
    * @NOTE: send the server `values` or `evaluatedConfig`: values === evaluatedConfig
    * @NOTE: rawValues used to expose public props to the editor context
    */
-  get evaluatedConfig(): EvaluatedRunTimeProps {
-    const evaluatedProps: EvaluatedRunTimeProps = {};
+  get evaluatedConfig(): EvaluatedRunTimeValues {
+    const evaluatedProps: EvaluatedRunTimeValues = {};
     for (const key in this.unEvaluatedConfig) {
       const path = this.id + '.' + key;
       const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);

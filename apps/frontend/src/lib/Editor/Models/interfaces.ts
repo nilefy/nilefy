@@ -14,6 +14,6 @@ export interface RuntimeEvaluable {
   values: Record<string, unknown>;
 }
 
-export type RuntimeProps = Record<string, unknown>;
-export type EvaluatedRunTimeProps = SnapshotProps;
-export type SnapshotProps = Record<string, unknown>;
+export type RuntimeValues = Record<string, unknown>;
+export type EvaluatedRunTimeValues = SnapshotValues;
+export type SnapshotValues = Record<string, unknown>;
