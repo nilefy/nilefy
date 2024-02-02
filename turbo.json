@@ -4,9 +4,17 @@
     "lint": {
       "cache": false
     },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": [
+        "^build"
+      ]
     },
     "db:push": {
       "cache": false
@@ -15,6 +23,9 @@
       "cache": false
     },
     "db:seed": {
+      "cache": false
+    },
+    "typecheck": {
       "cache": false
     }
   }
