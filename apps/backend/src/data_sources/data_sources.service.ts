@@ -141,6 +141,8 @@ export class DataSourcesService {
     },
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
+    console.log(dataSourceId);
+
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })

@@ -113,6 +113,8 @@ export class WebloomQuery
   ) {
     if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
+    if (dto.dataSource) this.dataSource = dto.dataSource;
+    if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
     if (dto.rawValues)
       this.rawValues = {
         ...this.rawValues,

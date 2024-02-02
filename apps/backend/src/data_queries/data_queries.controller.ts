@@ -96,6 +96,7 @@ export class DataQueriesController {
     @Body(new ZodValidationPipe(updateQuerySchema)) query: UpdateQueryDto,
     @Req() req: ExpressAuthedRequest,
   ) {
+    console.log(req);
     return await this.dataQueriesService.updateQuery({
       appId,
       queryId,

@@ -39,7 +39,12 @@ const QueryItem = observer(function QueryItem({
 }) {
   const rjsfRef = useRef<FormT>(null);
   const { workspaceId, appId } = useParams();
-
+  const { data: dataSources } = api.dataSources.index.useQuery(
+    +(workspaceId as string),
+  );
+  const [curDataSource, setCurDataSource] = useState<string>(() =>
+    query.dataSource.id.toString(),
+  );
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
       onSuccess(data) {
@@ -57,7 +62,7 @@ const QueryItem = observer(function QueryItem({
       });
     },
   });
-  console.log('query', query);
+  console.log(curDataSource);
   return (
     <div className="h-full w-full">
       {/* HEADER */}
@@ -97,6 +102,32 @@ const QueryItem = observer(function QueryItem({
       </div>
       {/*FORM*/}
       <ScrollArea className="h-full w-full p-4">
+        <Select
+          defaultValue={curDataSource}
+          onValueChange={(e) => {
+            setCurDataSource(e);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={query?.dataSource.name} />
+          </SelectTrigger>
+          <SelectContent>
+            {dataSources
+              ?.filter(
+                (dataSource) =>
+                  dataSource.dataSource.name ===
+                  query?.dataSource?.dataSource?.name,
+              )
+              .map((dataSource) => (
+                <SelectItem
+                  key={dataSource.name}
+                  value={dataSource.id.toString()}
+                >
+                  {dataSource.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
         <RJSFShadcn
           ref={rjsfRef}
           formContext={{
@@ -113,12 +144,14 @@ const QueryItem = observer(function QueryItem({
               throw new Error(
                 "that's weird this function should run under workspaceId, appId",
               );
+            console.log(curDataSource);
             updateMutation({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
               dto: {
                 query: formData,
+                datasourceId: +curDataSource,
               },
             });
           }}

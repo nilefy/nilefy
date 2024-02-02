@@ -137,6 +137,7 @@ export async function updateQuery({
       body: JSON.stringify(dto),
     },
   );
+  console.log(dto);
   return (await res.json()) as CompleteQueryI;
 }
 
