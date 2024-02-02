@@ -1,4 +1,4 @@
-import { makeObservable, observable, flow, action } from 'mobx';
+import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI } from '@/api/queries.api';
 import { EvaluationManager } from './evaluationManager';
@@ -80,6 +80,9 @@ export class WebloomQuery
       updateQuery: action,
       setQueryState: action,
     });
+    autorun(() => {
+      console.log(`query ${this.id}`, toJS(this.rawValues));
+    });
   }
 
   /**
@@ -94,7 +97,9 @@ export class WebloomQuery
   get rawConfig() {
     return this.rawValues.config as CompleteQueryI['query'];
   }
-
+  get config() {
+    return this.values.config as CompleteQueryI['query'];
+  }
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
     this.rawValues.queryState = state;
   }

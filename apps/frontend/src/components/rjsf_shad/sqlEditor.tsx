@@ -26,7 +26,7 @@ const debouncedAnalyzeDependancies = debounce(
     const res = analyzeDependancies(newValue, toProperty, entityId, context);
     const entity = editorStore.getEntityById(entityId);
     if (entity) {
-      entity.setPropIsCode(toProperty, true);
+      entity.setPropIsCode(toProperty, res.isCode);
       entity.addDependencies(res.dependencies);
     }
   },
@@ -52,15 +52,14 @@ export default function SQLRJSFWidget<
     name: toProperty,
     formContext,
   } = props;
-
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-
+  // TODO: Nagy -> modify this so that there's 1 to 1 mapping between the form and the editor
   const onChange = useCallback(
     (newValue: string) => {
       if (formContext && formContext.entityId && formContext.editorContext) {
         debouncedAnalyzeDependancies(
           newValue,
-          toProperty,
+          'config.' + toProperty,
           formContext.entityId,
           formContext.editorContext,
         );

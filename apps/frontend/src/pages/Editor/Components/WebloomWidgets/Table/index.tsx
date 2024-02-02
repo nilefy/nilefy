@@ -71,11 +71,10 @@ const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
 
 const WebloomTable = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-
   const props = editorStore.currentPage.getWidgetById(id)
     .values as WebloomTableProps;
   const {
-    data,
+    data = [],
     columns,
     isRowSelectionEnabled,
     isSearchEnabled,
@@ -83,9 +82,6 @@ const WebloomTable = observer(() => {
   } = props;
   //  to run only once when the component is mounted
   React.useEffect(() => {
-    if (props.columns.length > 0) {
-      return;
-    }
     // merging predefined cols and cols generated from data
     const cols = generateColumnsFromData(data);
     cols.forEach((propCol) => {
@@ -97,7 +93,7 @@ const WebloomTable = observer(() => {
 
     onPropChange({ key: 'columns', value: cols });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [data]);
 
   // pagination options
   const [{ pageIndex }, setPagination] = React.useState<PaginationState>({
@@ -331,21 +327,6 @@ const defaultProps: WebloomTableProps = {
       type: 'String',
     },
   ],
-  data: [
-    {
-      id: 1,
-      name: 'John',
-      email: 'knknk@knknk.com',
-      link: 'sfsdf',
-      isActive: 'true',
-      isDeleted: 'true',
-    },
-    { id: 2, name: 'Jane', email: 'jane@jnjn.com', link: 'sfsdf' },
-    { id: 3, name: 'Joe', email: 'joe@jojo.com', link: 'sfsdf' },
-    { id: 4, name: 'Joanna', email: 'joana@joajoa.com', link: 'sfsdf' },
-    { id: 5, name: 'Joanna', email: 'joana@joajoa.com', link: 'sfsdf' },
-    { id: 6, name: 'Joanna', email: 'joana@joajoa.com', link: 'sfsdf' },
-  ],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
   isPaginationEnabled: false,
@@ -415,6 +396,21 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
         label: 'Page Size',
         type: 'input',
         options: {},
+      },
+    ],
+  },
+  {
+    sectionName: 'Data',
+    children: [
+      {
+        id: `${widgetName}-Data`,
+        key: 'data',
+        label: 'Data',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Data',
+        },
+        defaultValue: ' ',
       },
     ],
   },

@@ -1,4 +1,4 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import { observable, makeObservable, action, computed, autorun } from 'mobx';
 import invariant from 'invariant';
 import { hasCyclicDependencies } from '../dependancyUtils';
 import { has } from 'lodash';
@@ -47,6 +47,9 @@ export class DependencyManager {
       // inverseDependencies: computed, // we don't need this for now
       graph: computed,
       editor: observable,
+    });
+    autorun(() => {
+      console.log('dependencies', this.graph);
     });
   }
 

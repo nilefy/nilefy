@@ -57,7 +57,7 @@ const QueryItem = observer(function QueryItem({
       });
     },
   });
-
+  console.log('query', query);
   return (
     <div className="h-full w-full">
       {/* HEADER */}
@@ -80,7 +80,7 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.rawConfig;
+            const evaluatedConfig = query.config;
             query.setQueryState('loading');
             run({
               workspaceId: +workspaceId,

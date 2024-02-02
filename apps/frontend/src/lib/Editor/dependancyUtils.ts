@@ -87,6 +87,6 @@ export function hasCyclicDependencies(
     toposort(graph);
     return { hasCycle: false };
   } catch (e) {
-    return { hasCycle: true, cycle: e.message.split(' -> ') };
+    return { hasCycle: true, cycle: e.message };
   }
 }

@@ -89,6 +89,7 @@ const FormControl = observer(
     const Component = InspectorFormControls[control.type];
     const prop =
       editorStore.currentPage.getWidgetById(selectedId).rawValues[control.key];
+    console.log(control.key, prop);
     const options = useMemo(
       () => ({
         ...control,

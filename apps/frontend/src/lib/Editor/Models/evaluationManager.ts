@@ -1,11 +1,16 @@
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import {
+  action,
+  autorun,
+  computed,
+  makeObservable,
+  observable,
+  toJS,
+} from 'mobx';
 import toposort from 'toposort';
 import invariant from 'invariant';
 import { get, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
-import { WebloomWidget } from './widget';
-import { WebloomQuery } from './query';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -23,6 +28,9 @@ export class EvaluationManager {
     });
     this.codeRawValues = new Set();
     this.editor = editor;
+    autorun(() => {
+      console.log('evaluatedForest', toJS(this.evaluatedForest));
+    });
   }
 
   /**
@@ -64,13 +72,14 @@ export class EvaluationManager {
       const gottenValue = get(entity.rawValues, path);
       invariant(
         typeof gottenValue === 'string',
-        'gottenValue should be string',
+        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
       );
       set(evalTree, node, evaluate(gottenValue, evalTree));
     }
     for (const node of this.codeRawValues) {
       if (evaluatedInGraph.has(node)) continue;
-      const [entityId, path] = node.split('.');
+      const [entityId, ...pathArr] = node.split('.');
+      const path = pathArr.join('.');
       const entity = this.editor.getEntityById(entityId);
       invariant(
         entity,
@@ -79,7 +88,7 @@ export class EvaluationManager {
       const gottenValue = get(entity.rawValues, path);
       invariant(
         typeof gottenValue === 'string',
-        'gottenValue should be string',
+        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
       );
       set(evalTree, node, evaluate(gottenValue, evalTree));
     }
