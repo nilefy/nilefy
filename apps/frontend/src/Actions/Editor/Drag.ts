@@ -9,7 +9,7 @@ import { convertGridToPixel, normalize } from '@/lib/Editor/utils';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 
-type AddWidgetPayload = Parameters<
+export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
 >[0];
 

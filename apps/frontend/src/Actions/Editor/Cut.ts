@@ -1,14 +1,16 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { Command } from '../types';
-import { WidgetSnapshot } from '@/types';
+import { ClipboardDataT, Command } from '../types';
 import { commandManager } from '../CommandManager';
 import { DeleteAction } from './Delete';
 
 export class CutAction implements Command {
-  private clipboard: { clipped: WidgetSnapshot[] };
+  private clipboard: ClipboardDataT;
 
   constructor() {
-    this.clipboard = { clipped: [] };
+    this.clipboard = {
+      action: 'cut',
+      nodes: [],
+    };
   }
 
   execute() {
@@ -16,7 +18,7 @@ export class CutAction implements Command {
 
     for (const node of editorStore.currentPage.selectedNodeIds) {
       const widget = editorStore.currentPage.widgets[node].snapshot;
-      this.clipboard.clipped.push(widget);
+      this.clipboard.nodes.push(widget);
     }
 
     commandManager.executeCommand(new DeleteAction());

@@ -1,4 +1,10 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { WidgetSnapshot } from '@/types';
+
+export type ClipboardDataT = {
+  action: 'copy' | 'cut';
+  nodes: WidgetSnapshot[];
+};
 
 type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];

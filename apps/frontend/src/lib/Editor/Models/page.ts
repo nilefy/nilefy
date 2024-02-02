@@ -20,7 +20,7 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
-type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
+export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
   id: string;

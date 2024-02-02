@@ -53,6 +53,7 @@ import { WebloomLoader } from '@/components/loader';
 import { CopyAction } from '@/Actions/Editor/Copy';
 import { CutAction } from '@/Actions/Editor/Cut';
 import { PasteAction } from '@/Actions/Editor/Paste';
+import { ClipboardDataT } from '@/Actions/types';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -130,8 +131,26 @@ export const Editor = observer(() => {
       commandManager.executeCommand(new CutAction());
     }
   });
-  useHotkeys('ctrl+v', () => {
-    commandManager.executeCommand(new PasteAction());
+  // mouse position at any time not only while dragging
+  const mouseP = useRef({ x: 0, y: 0 });
+  useHotkeys('ctrl+v', async () => {
+    const parent = document.activeElement?.getAttribute('data-id');
+    if (!parent) return;
+    try {
+      const data: ClipboardDataT = JSON.parse(
+        await navigator.clipboard.readText(),
+      );
+      commandManager.executeCommand(
+        new PasteAction({
+          parent,
+          data,
+          mousePos: mouseP.current,
+          top: editorRef.current!.scrollTop,
+        }),
+      );
+    } catch (ig) {
+      console.log(ig);
+    }
   });
 
   const draggedNode = editorStore.currentPage.draggedWidgetId;
@@ -230,6 +249,25 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const rootDom = editorStore.currentPage.rootWidget.dom;
+      if (!rootDom) return;
+      const boundingRect = rootDom.getBoundingClientRect();
+      const x = boundingRect.left;
+      const y = boundingRect.top;
+
+      mouseP.current = { x: e.pageX - x, y: e.pageY - y };
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+    // TODO: listen only if ctrl+v is presssed
+  });
+
   return (
     <>
       <div className="isolate flex h-full max-h-full w-full bg-transparent">

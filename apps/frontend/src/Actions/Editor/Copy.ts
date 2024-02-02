@@ -1,13 +1,14 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { Command } from '../types';
-import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { WidgetSnapshot } from '@/types';
+import { ClipboardDataT, Command } from '../types';
 
 export class CopyAction implements Command {
-  private clipboard: { copied: WidgetSnapshot[] };
+  private clipboard: ClipboardDataT;
 
   constructor() {
-    this.clipboard = { copied: [] };
+    this.clipboard = {
+      action: 'copy',
+      nodes: [],
+    };
   }
 
   execute() {
@@ -15,11 +16,7 @@ export class CopyAction implements Command {
 
     for (const node of editorStore.currentPage.selectedNodeIds) {
       const widget = editorStore.currentPage.widgets[node].snapshot;
-      const copied = {
-        ...widget,
-        id: getNewWidgetName(widget.type),
-      };
-      this.clipboard.copied.push(copied);
+      this.clipboard.nodes.push(widget);
     }
 
     navigator.clipboard.writeText(JSON.stringify(this.clipboard));
