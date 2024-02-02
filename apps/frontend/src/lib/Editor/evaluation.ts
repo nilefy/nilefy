@@ -4,7 +4,6 @@ export const evaluate = (
   code: string,
   evaluationContext: Record<string, unknown>,
 ) => {
-  console.log('code', code, typeof code);
   if (!code) return code;
 
   if (!code.includes('{{')) return code;

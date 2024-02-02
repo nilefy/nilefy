@@ -54,13 +54,13 @@ export default function SQLRJSFWidget<
   } = props;
 
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  console.log(toProperty);
+
   const onChange = useCallback(
     (newValue: string) => {
       if (formContext && formContext.entityId && formContext.editorContext) {
         debouncedAnalyzeDependancies(
           newValue,
-          'unEvaluatedConfig.' + toProperty,
+          toProperty,
           formContext.entityId,
           formContext.editorContext,
         );

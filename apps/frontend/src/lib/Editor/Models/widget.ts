@@ -105,8 +105,7 @@ export class WebloomWidget
 
     makeObservable(this, {
       rawValues: observable,
-      propsToBeEvaluated: computed,
-      publicProps: computed.struct,
+      values: computed.struct,
       nodes: observable,
       parentId: observable,
       dom: observable,
@@ -137,10 +136,6 @@ export class WebloomWidget
       cleanup: action,
     });
   }
-
-  get propsToBeEvaluated(): Record<string, unknown> {
-    return this.rawValues;
-  }
   get columnWidth(): number {
     if (this.isRoot)
       return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
@@ -159,12 +154,11 @@ export class WebloomWidget
   }
 
   getProp(key: string) {
-    return this.publicProps[key] ?? this.rawValues[key];
+    return this.values[key] ?? this.rawValues[key];
   }
-
-  get values() {
+  get values(): EvaluatedRunTimeProps {
     const evaluatedProps: EvaluatedRunTimeProps = {};
-    for (const key in this.propsToBeEvaluated) {
+    for (const key in this.rawValues) {
       const path = this.id + '.' + key;
       const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
       if (evaluatedValue !== undefined) {
@@ -175,9 +169,6 @@ export class WebloomWidget
       ...this.rawValues,
       ...evaluatedProps,
     };
-  }
-  get publicProps() {
-    return this.rawValues;
   }
   /**
    *
