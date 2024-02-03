@@ -7,18 +7,26 @@ export class CopyAction implements Command {
   constructor() {
     this.clipboard = {
       action: 'copy',
-      nodes: [],
+      selected: [...editorStore.currentPage.selectedNodeIds],
+      nodes: {},
     };
   }
 
   execute() {
-    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
+    if (this.clipboard.selected.length === 0) return;
 
-    for (const node of editorStore.currentPage.selectedNodeIds) {
-      const widget = editorStore.currentPage.widgets[node].snapshot;
-      this.clipboard.nodes.push(widget);
+    for (const node of this.clipboard.selected) {
+      this.copy(node);
     }
 
     navigator.clipboard.writeText(JSON.stringify(this.clipboard));
+  }
+
+  private copy(node: string) {
+    const snapshot = editorStore.currentPage.widgets[node].snapshot;
+    this.clipboard.nodes[node] = snapshot;
+    for (const node of snapshot.nodes) {
+      this.copy(node);
+    }
   }
 }

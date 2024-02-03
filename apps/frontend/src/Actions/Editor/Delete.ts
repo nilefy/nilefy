@@ -15,12 +15,25 @@ export class DeleteAction implements UndoableCommand {
    * enter children then parents
    */
   private nodes: WebloomWidget['snapshot'][];
+  private toDelete: string[] | undefined = [];
+  private selected: boolean = true;
 
-  constructor() {
+  constructor(nodes?: string[]) {
     this.nodes = [];
+    if (nodes) {
+      this.toDelete = nodes;
+      this.selected = false;
+    }
   }
 
   execute() {
+    if (!this.selected) {
+      return {
+        event: 'delete' as const,
+        data: this.toDelete!,
+      };
+    }
+
     // those ids are in the same tree levels
     const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
     editorStore.currentPage.setSelectedNodeIds(new Set());
@@ -45,4 +58,3 @@ export class DeleteAction implements UndoableCommand {
     }
   }
 }
-

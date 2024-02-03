@@ -3,10 +3,11 @@ import { WidgetSnapshot } from '@/types';
 
 export type ClipboardDataT = {
   action: 'copy' | 'cut';
-  nodes: WidgetSnapshot[];
+  selected: string[];
+  nodes: Record<string, WidgetSnapshot>;
 };
 
-type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {
+export type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
 })[];
 

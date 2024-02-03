@@ -1,4 +1,3 @@
-import { CutAction } from './Editor/Cut';
 import { UndoableCommand, Command, isUndoableCommand } from './types';
 import { WebloomWebSocket } from './ws';
 

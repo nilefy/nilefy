@@ -265,8 +265,7 @@ export const Editor = observer(() => {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-    // TODO: listen only if ctrl+v is presssed
-  });
+  }, []);
 
   return (
     <>
