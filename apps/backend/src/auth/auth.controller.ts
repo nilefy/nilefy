@@ -18,10 +18,13 @@ import {
   LoginUserDto,
 } from '../dto/users.dto';
 import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
+// import { EmailService } from 'src/email/email.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService, // private readOnly: EmailService,
+  ) {}
 
   @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')

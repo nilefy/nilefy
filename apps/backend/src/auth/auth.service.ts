@@ -8,19 +8,14 @@ import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { JwtToken, PayloadUser } from './auth.types';
-import { Resend } from 'resend';
-import { configDotenv } from 'dotenv';
-// todo move to mail service
-configDotenv();
-const KEY = process.env.RESEND_API_KEY as string;
-console.log('resend key: ' + KEY);
-const resend = new Resend(KEY);
+import { EmailService } from './email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UsersService,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async signUp(user: CreateUserDto) {
@@ -29,51 +24,22 @@ export class AuthService {
     const hashed = await hash(password, salt);
 
     try {
-      const jwt = await this.jwtService.signAsync(
-        {
-          sub: 1,
-          username: user.username,
-        } satisfies PayloadUser,
-        { expiresIn: '1d' },
-      );
+      const u = await this.usersService.create({ ...user, password: hashed });
+      // const jwt = await this.jwtService.signAsync(
+      //   {
+      //     sub: 1,
+      //     username: user.username,
+      //   } satisfies PayloadUser,
+      //   { expiresIn: '1d' },
+      // );
 
-      const u = await this.userService.create({ ...user, password: hashed });
-      //todo uncomment for production
-      //      const { email } = user;
-      console.log('Right before sending email');
-      const isDev = (process.env.NODE_ENV as string) === 'development';
-      const baseUrl = isDev
-        ? 'http://localhost:3000/'
-        : 'https://weblloom.com/';
-      const url = baseUrl + 'auth/confirm' + '/' + jwt + '/' + u.id;
-      console.log('confirmation url: ' + url);
-      const { email } = user;
-      const { error } = await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: isDev ? (process.env.SEND_TO as string) : email,
-        subject: 'WebLoom - Confirm Your Email Address',
-        html:
-          `
-    <p>Dear [User],</p>
-    <p>Congratulations on signing up for WebLoom! We're thrilled to have you on board.</p>
-    
-    <p>Please click the following link to confirm your email address and complete the signup process:</p>
-    <a href="` +
-          url +
-          ` ">Confirm Email Address</a>
-
-    <p>If you did not sign up for WeblLoom, please disregard this email.</p>
-
-    <p>Thank you for choosing WebLoom!</p>
-    <p>Best Regards,<br/>
-    The Webloom Team</p>
-  `,
-      });
-      console.log('Right after sending email');
-      if (error) {
-        console.log('Error while sending email:');
-        console.log(error);
-      }
+      // const { error } = await
+      // this.emailService.sendEmail(user.email, u.id, jwt);
+      // no need to await since errors are acceptatble here, there should be a resend email button
+      // if (error) {
+      //   console.log('Error while sending email:');
+      //   console.log(error);
+      // }
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
@@ -87,12 +53,12 @@ export class AuthService {
 
   async confirm(token: string, email: string) {
     await this.jwtService.verifyAsync(token);
-    const user = await this.userService.findOne(email);
+    const user = await this.usersService.findOne(email);
     if (!user) {
       throw new NotFoundException('User Not Found');
     }
     user.isConfirmed = true;
-    await this.userService.update(user.id, user);
+    await this.usersService.update(user.id, user);
     return {
       access_token: await this.jwtService.signAsync({
         sub: user.id,
@@ -104,7 +70,7 @@ export class AuthService {
   async signIn(user: LoginUserDto) {
     const { email, password } = user;
 
-    const ret = await this.userService.findOne(email);
+    const ret = await this.usersService.findOne(email);
     if (!ret) {
       throw new NotFoundException('Email Not Found');
     }

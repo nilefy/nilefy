@@ -1,7 +1,5 @@
 import { faker } from '@faker-js/faker';
 
-import { JwtService } from '@nestjs/jwt';
-
 import { UserDto } from 'src/dto/users.dto';
 
 /**
@@ -10,8 +8,20 @@ import { UserDto } from 'src/dto/users.dto';
 export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  const jwt = new JwtService();
-  const token = jwt.sign({ sub: 1, username: 'mohamed' });
+  // const jwt = new JwtService();
+  // const fakePayload = {
+  //   userId: 123,
+  //   username: 'john_doe',
+  //   isAdmin: false,
+  // };
+  // const fakeOptions = {
+  //   expiresIn: '1h',
+  // };
+
+  // const token = jwt.sign(fakePayload, fakeOptions);
+  const token =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
   return {
     username: faker.internet.userName({ firstName, lastName }),
     email: faker.internet.email({ firstName, lastName }),

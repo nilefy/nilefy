@@ -14,7 +14,6 @@ import { ComponentsModule } from './components/components.module';
 import { EventsModule } from './events/events.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
-import { EmailService } from './email/email.service';
 
 @Module({
   imports: [
@@ -37,6 +36,5 @@ import { EmailService } from './email/email.service';
     DataSourcesModule,
     DataQueriesModule,
   ],
-  providers: [EmailService],
 })
 export class AppModule {}
