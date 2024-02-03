@@ -32,7 +32,9 @@ export class AuthService {
         } satisfies PayloadUser,
         { expiresIn: '1d' },
       );
+      console.log('before sending email');
       this.emailService.sendEmail(user.email, jwt);
+      console.log('after sending email');
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
@@ -40,6 +42,7 @@ export class AuthService {
         } satisfies PayloadUser),
       } satisfies JwtToken;
     } catch (err) {
+      console.log(err);
       throw new BadRequestException();
     }
   }
@@ -60,14 +63,14 @@ export class AuthService {
     } satisfies JwtToken;
   }
 
-  async signIn(user: LoginUserDto) {
-    const { email, password } = user;
+  async logIn(user: LoginUserDto) {
+    const { email, password, isConfirmed } = user;
 
     const ret = await this.usersService.findOne(email);
     if (!ret) {
       throw new NotFoundException('Email Not Found');
     }
-    if (!ret.isConfirmed) {
+    if (!isConfirmed) {
       throw new BadRequestException('Email Not Confirmed');
     }
 

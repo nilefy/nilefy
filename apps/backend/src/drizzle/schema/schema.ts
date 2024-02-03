@@ -47,7 +47,7 @@ export const users = pgTable('users', {
     length: 256,
   }),
 
-  isConfirmed: boolean('is_confirmed').notNull().default(false),
+  isConfirmed: boolean('is_confirmed').default(false).notNull(),
   ...timeStamps,
   ...softDelete,
 });

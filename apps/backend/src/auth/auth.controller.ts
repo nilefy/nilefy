@@ -6,6 +6,7 @@ import {
   UseGuards,
   Req,
   UsePipes,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInGoogleOAuthGuard, SignUpGoogleOAuthGuard } from './google.guard';
@@ -18,7 +19,6 @@ import {
   LoginUserDto,
 } from '../dto/users.dto';
 import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
-// import { EmailService } from 'src/email/email.service';
 
 @Controller('auth')
 export class AuthController {
@@ -29,13 +29,16 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
   async signUp(@Body() userDto: CreateUserDto) {
+    console.log('from signup controller');
     return await this.authService.signUp(userDto);
   }
 
   @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
   async signIn(@Body() userDto: LoginUserDto) {
-    return await this.authService.signIn(userDto);
+    console.log(userDto);
+    console.log(userDto.password);
+    return await this.authService.logIn(userDto);
   }
 
   @UseGuards(SignInGoogleOAuthGuard)
@@ -49,7 +52,7 @@ export class AuthController {
   @UseGuards(SignInGoogleOAuthGuard)
   @Get('login/google-redirect')
   async signInGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    return await this.authService.signIn(req.user as LoginUserDto);
+    return await this.authService.logIn(req.user as LoginUserDto);
   }
 
   @UseGuards(SignUpGoogleOAuthGuard)
@@ -59,8 +62,10 @@ export class AuthController {
   }
 
   @Get('confirm/:email/:token')
-  async confirm(@Req() req: { email: string; token: string }) {
-    const { email, token } = req;
+  async confirm(@Param('email') email: string, @Param('token') token: string) {
+    console.log('from confirm controller');
+    console.log(email);
+    console.log(token);
     return await this.authService.confirm(email, token);
   }
 

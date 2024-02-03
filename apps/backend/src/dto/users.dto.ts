@@ -20,12 +20,12 @@ export const signUpSchema = userSchema.pick({
   username: true,
   email: true,
   password: true,
-  conformationToken: true,
 });
 
 export const signInSchema = userSchema.pick({
   email: true,
   password: true,
+  isConfirmed: true,
 });
 
 export type UserDto = z.infer<typeof userSchema>;
