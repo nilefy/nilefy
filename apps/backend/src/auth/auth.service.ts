@@ -25,21 +25,14 @@ export class AuthService {
 
     try {
       const u = await this.usersService.create({ ...user, password: hashed });
-      // const jwt = await this.jwtService.signAsync(
-      //   {
-      //     sub: 1,
-      //     username: user.username,
-      //   } satisfies PayloadUser,
-      //   { expiresIn: '1d' },
-      // );
-
-      // const { error } = await
-      // this.emailService.sendEmail(user.email, u.id, jwt);
-      // no need to await since errors are acceptatble here, there should be a resend email button
-      // if (error) {
-      //   console.log('Error while sending email:');
-      //   console.log(error);
-      // }
+      const jwt = await this.jwtService.signAsync(
+        {
+          sub: 1,
+          username: user.username,
+        } satisfies PayloadUser,
+        { expiresIn: '1d' },
+      );
+      this.emailService.sendEmail(user.email, u.id, jwt);
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
