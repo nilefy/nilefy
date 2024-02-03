@@ -3,25 +3,31 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { signIn } from '@/api/auth';
 import { useAuthStore } from './useAuthStore';
-import { JwtPayload, SignInSchema } from '@/types/auth.types';
+import { JwtPayload } from '@/types/auth.types';
 import { jwtDecode } from 'jwt-decode';
 import { FetchXError } from '@/utils/fetch';
 
-// Define types
-// import { useAuth } from '@/providers/AuthProvider';
-export const QUERY_KEY = {
-  webloom: 'webloom',
-  user: 'user',
-};
 export function useSignIn() {
   const navigate = useNavigate();
   const { setUser, setToken } = useAuthStore();
   const signInMuation = useMutation<
     Awaited<ReturnType<typeof signIn>>,
     FetchXError,
-    Parameters<typeof signIn>[0]
+    | Parameters<typeof signIn>[0]
+    | {
+        /**
+         * if access token was provided to the hook it won't try to call the backend and will call the onSuccess with this token
+         */
+        accessToken: string;
+      }
   >({
-    mutationFn: (creds: SignInSchema) => signIn(creds),
+    mutationFn: (creds) => {
+      if ('accessToken' in creds) {
+        return new Promise((r) => r({ access_token: creds.accessToken }));
+      } else {
+        return signIn(creds);
+      }
+    },
     onSuccess: async (data) => {
       setToken(data.access_token);
       // Decode the token
@@ -31,7 +37,7 @@ export function useSignIn() {
         username: decoded.username,
         id: decoded.sub,
       };
-      //Store user information in the React Query
+      //Store user information in React Query
       setUser(userData);
       navigate('/');
     },

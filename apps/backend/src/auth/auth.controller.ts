@@ -6,9 +6,10 @@ import {
   UseGuards,
   Req,
   UsePipes,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignInGoogleOAuthGuard, SignUpGoogleOAuthGuard } from './google.guard';
+import { SignInGoogleOAuthGuard } from './google.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   signUpSchema,
@@ -17,6 +18,7 @@ import {
   LoginUserDto,
 } from '../dto/users.dto';
 import { GoogleAuthedRequest } from './auth.types';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -34,23 +36,22 @@ export class AuthController {
     return await this.authService.signIn(userDto);
   }
 
+  // will redirect user to google signin
   @UseGuards(SignInGoogleOAuthGuard)
   @Get('login/google')
   signInGoogleAuth() {}
 
-  @UseGuards(SignUpGoogleOAuthGuard)
-  @Get('signup/google')
-  signUpGoogleAuth() {}
-
   @UseGuards(SignInGoogleOAuthGuard)
   @Get('login/google-redirect')
-  async signInGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    return await this.authService.signIn(req.user as LoginUserDto);
-  }
-
-  @UseGuards(SignUpGoogleOAuthGuard)
-  @Get('signup/google-redirect')
-  async signUpGoogleRedirect(@Req() req: GoogleAuthedRequest) {
-    return await this.authService.signUp(req.user as CreateUserDto);
+  async signInGoogleRedirect(
+    @Req() req: GoogleAuthedRequest,
+    @Res() response: Response,
+  ) {
+    const frontURL = new URL('http://localhost:5173/signin');
+    frontURL.searchParams.set(
+      'token',
+      (await this.authService.authWithOAuth(req.user)).access_token,
+    );
+    response.redirect(302, frontURL.toString());
   }
 }

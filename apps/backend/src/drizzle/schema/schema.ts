@@ -41,10 +41,28 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 256 }).notNull(),
   email: varchar('email', { length: 256 }).unique().notNull(),
-  password: varchar('password', { length: 256 }).notNull(),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  password: varchar('password', { length: 256 }),
+  avatar: text('avatar'),
   ...timeStamps,
   ...softDelete,
 });
+
+export const accounts = pgTable(
+  'accounts',
+  {
+    userId: integer('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    providerAccountId: text('providerAccountId').notNull(),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  }),
+);
 
 /**
  * group could have more than one user, user could be in more than one group => many to many relation between users and groups
