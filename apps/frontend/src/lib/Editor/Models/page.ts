@@ -3,6 +3,7 @@ import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import { editorStore } from '@/lib/Editor/Models';
 import {
   BoundingRect,
   ShadowElement,
@@ -202,9 +203,8 @@ export class WebloomPage {
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    // this.widgets[widget.id].children.map((child)=>(
-    //   widget.addChild(child.id)
-    // ));
+    //console.log(widget.children.length,"lenght");
+    widget.children.map((child) => {child.parentId=widget.id; editorStore.currentPage.addWidget(child);widget.addChild(child.id)});
   }
   getWidgetById(id: string) {
     return this.widgets[id];

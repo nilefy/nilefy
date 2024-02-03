@@ -245,11 +245,13 @@ export class WebloomWidget
   get canvasParent(): WebloomWidget {
     if (this.isRoot) return this;
     const parent = this.parent;
+    console.log(this, 'lll');
     if (parent.isCanvas) return parent;
     return parent.canvasParent;
   }
 
   addChild(nodeId: string) {
+    console.log(nodeId, 'bla');
     this.nodes.push(nodeId);
     this.nodes.sort((a, b) => {
       const aNode = this.page.widgets[a].row;

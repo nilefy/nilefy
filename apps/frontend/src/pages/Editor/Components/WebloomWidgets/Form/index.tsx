@@ -9,6 +9,7 @@ import { WidgetContext } from '../..';
 import { WebloomButton } from '../Button';
 import { WebloomWidgets } from '@/pages/Editor/Components';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { getNewWidgetName } from '@/lib/Editor/widgetName';
 
 const previewId = EDITOR_CONSTANTS.PREVIEW_NODE_ID;
 type WebloomFormProps = {
@@ -55,13 +56,31 @@ export const config: WidgetConfig = {
   resizingDirection: 'Both',
   children: [
     {
-      id: previewId,
+      id: 'button30',
       parentId: '',
-      col: 2,
-      row: 3,
+      col: 20,
+      row: 35,
       colsCount: 5,
       rowsCount: 7,
       type: 'WebloomButton',
+    },
+    {
+      id: 'button25',
+      parentId: '',
+      col: 14,
+      row: 35,
+      colsCount: 5,
+      rowsCount: 7,
+      type: 'WebloomButton',
+    },
+    {
+      id: 'formlable',
+      parentId: '',
+      col: 2,
+      row: 2,
+      colsCount: 5,
+      rowsCount: 7,
+      type: 'WebloomText',
     },
   ],
 };

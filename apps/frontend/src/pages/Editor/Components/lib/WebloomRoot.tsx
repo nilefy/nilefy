@@ -4,7 +4,11 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useSetDom } from '@/hooks';
 import { observer } from 'mobx-react-lite';
-
+import {
+  createPopperLite as createPopper,
+  preventOverflow,
+  flip,
+} from '@popperjs/core';
 export const WebloomRoot = observer(function WebloomRoot() {
   const root = editorStore.currentPage.rootWidget;
   const nodes = root.nodes;
@@ -43,6 +47,19 @@ export const WebloomRoot = observer(function WebloomRoot() {
     const height = ref.current?.clientHeight;
     editorStore.currentPage.setPageDimensions({ width, height });
   };
+  console.log(Array.from(editorStore.currentPage.selectedNodeIds), 'kjj');
+  const selectedNode = Array.from(editorStore.currentPage.selectedNodeIds);
+  // useEffect(() => {
+  createPopper(
+    //@ts-expect-error bla
+    document.querySelector(`[data-id="${selectedNode[0]}"]`),
+    document.querySelector(`#${selectedNode[0]}`),
+    {
+      placement: 'top',
+      modifiers: [preventOverflow, flip],
+    },
+  );
+  //}, [selectedNode[0]]);
 
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
@@ -51,6 +68,9 @@ export const WebloomRoot = observer(function WebloomRoot() {
         {nodes.map((node) => (
           <WebloomElement id={node} key={node} />
         ))}
+        <div id={selectedNode[0]} role="tooltip">
+          {selectedNode[0]}
+        </div>
       </WebloomAdapter>
     </div>
   );
