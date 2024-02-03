@@ -105,14 +105,18 @@ export class WebloomWebSocket {
 
   public sendMessage(msg: string) {
     this.msgQ.push(msg);
-
+    console.log(
+      this.socketState !== this.socket?.OPEN || this.state !== 'connected',
+    );
+    console.log(this.socketState, this.state);
     if (this.socketState != this.socket?.OPEN) {
       this.reconnect();
       return;
     }
 
     while (this.msgQ.length) {
-      if (this.socketState != this.socket?.OPEN) break;
+      if (this.socketState !== this.socket?.OPEN || this.state !== 'connected')
+        break;
       const msg = this.msgQ.shift();
       this.socket!.send(msg as string);
     }
