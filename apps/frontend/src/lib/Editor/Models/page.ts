@@ -21,9 +21,11 @@ import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { editorStore } from '.';
+import { GlobalsT } from './editor';
 
+type PageGlobals = { rawValues: GlobalsT };
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-export type WebloomEntity = WebloomWidget | WebloomQuery;
+export type WebloomEntity = WebloomWidget | WebloomQuery | PageGlobals;
 export class WebloomPage {
   id: string;
   name: string;
@@ -45,6 +47,15 @@ export class WebloomPage {
   };
   width: number = 0;
   height: number = 0;
+  globals: PageGlobals = {
+    rawValues: {
+      currentUser: '',
+      currentPageName: '',
+      currentPageHandle: '',
+      currentPageHeight: 0,
+      currentPageWidth: 0,
+    },
+  };
 
   constructor({
     id,
@@ -137,6 +148,7 @@ export class WebloomPage {
       }
     });
     this.dependencyManager.addDependencies(allDependencies);
+    this.globals.rawValues = editorStore.globals;
   }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
@@ -199,7 +211,7 @@ export class WebloomPage {
     Object.values(this.queries).forEach((query) => {
       context[query.id] = query.rawValues;
     });
-    context['globals'] = editorStore.globals;
+    context['globals'] = this.globals.rawValues;
     return context;
   }
 
@@ -226,6 +238,9 @@ export class WebloomPage {
     return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
   }
   getEntityById(id: string): WebloomEntity | undefined {
+    if (id === 'globals') {
+      return this.globals;
+    }
     return this.widgets[id] || this.queries[id];
   }
   setDraggedWidgetId(id: string | null) {
