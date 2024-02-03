@@ -1,6 +1,14 @@
 import { makeObservable, observable, action, computed } from 'mobx';
 import { WebloomPage } from './page';
 
+export type GlobalsT = {
+  currentUser: EditorState['currentUser'];
+  currentPageName: WebloomPage['name'];
+  currentPageHandle: WebloomPage['handle'];
+  currentPageHeight: WebloomPage['height'];
+  currentPageWidth: WebloomPage['width'];
+};
+
 export class EditorState {
   /**
    * @description [id]: page
@@ -11,6 +19,14 @@ export class EditorState {
    * application name
    */
   name: string = 'New Application';
+  currentUser: string | undefined = '';
+  globals: GlobalsT = {
+    currentUser: '',
+    currentPageName: '',
+    currentPageHandle: '',
+    currentPageHeight: 0,
+    currentPageWidth: 0,
+  };
 
   constructor() {
     makeObservable(this, {
@@ -22,17 +38,20 @@ export class EditorState {
       addPage: action,
       removePage: action,
       init: action,
+      currentUser: observable,
     });
   }
   init({
     name = 'New Application',
     pages: pages = [],
     currentPageId = '',
+    user,
   }: Partial<{
     name: string;
     pages: WebloomPage[];
     currentPageId: string;
-  }>) {
+  }> & { user: string | undefined }) {
+    this.currentUser = user;
     this.name = name;
     pages.forEach((page) => {
       this.pages[page.id] = page;
@@ -46,6 +65,13 @@ export class EditorState {
     if (!this.currentPageId) {
       this.currentPageId = Object.keys(this.pages)[0];
     }
+    this.globals = {
+      currentUser: this.currentUser,
+      currentPageName: this.currentPage.name,
+      currentPageHandle: this.currentPage.handle,
+      currentPageHeight: this.currentPage.height,
+      currentPageWidth: this.currentPage.width,
+    };
   }
   get currentPage() {
     return this.pages[this.currentPageId];

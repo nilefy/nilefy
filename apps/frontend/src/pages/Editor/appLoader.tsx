@@ -1,6 +1,7 @@
 import { commandManager } from '@/Actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { WebloomLoader } from '@/components/loader';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { seedNameMap } from '@/lib/Editor/widgetName';
@@ -62,6 +63,7 @@ function AppLoadError() {
 }
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
+  const { user } = useAuthStore();
   const app = useAsyncValue() as AppCompleteT;
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
@@ -90,6 +92,7 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
             }),
         ),
       ],
+      user: user?.data?.username,
     });
     inited.current = true;
   }

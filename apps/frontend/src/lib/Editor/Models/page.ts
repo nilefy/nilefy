@@ -20,6 +20,8 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+import { editorStore } from '.';
+
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -43,6 +45,7 @@ export class WebloomPage {
   };
   width: number = 0;
   height: number = 0;
+
   constructor({
     id,
     name,
@@ -196,6 +199,7 @@ export class WebloomPage {
     Object.values(this.queries).forEach((query) => {
       context[query.id] = query.rawValues;
     });
+    context['globals'] = editorStore.globals;
     return context;
   }
 
