@@ -52,6 +52,6 @@ export class AuthController {
       'token',
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
-    response.redirect(201, frontURL.toString());
+    response.redirect(302, frontURL.toString());
   }
 }
