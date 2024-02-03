@@ -29,6 +29,9 @@ export class WebloomPage {
   widgets: Record<string, WebloomWidget> = {};
   queries: Record<string, WebloomQuery> = {};
   mouseOverWidgetId: string | null = null;
+  /**
+   * please note that those node always in the same level in the widgets tree
+   */
   selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
@@ -250,19 +253,20 @@ export class WebloomPage {
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) return [];
     if (!(id in this.widgets)) return [];
     const stack = [];
-    const widget = this.widgets[id];
-    const toBeDeletedNodes = [widget.id];
+    const toBeDeletedNodes: string[] = [id];
+    // just collect ids of the nodes to be deleted
     function recurse(this: WebloomPage, id: string) {
       const node = this.widgets[id];
       if (!node) return;
       toBeDeletedNodes.push(node.id);
-      const children = node.nodes;
-      for (const child of children) {
-        recurse.call(this, child);
+      const childrenIds = node.nodes;
+      for (const childId of childrenIds) {
+        recurse.call(this, childId);
       }
     }
     if (recursive) recurse.call(this, id);
-    for (const nodeId of toBeDeletedNodes) {
+    while (toBeDeletedNodes.length > 0) {
+      const nodeId = toBeDeletedNodes.pop() as string;
       const node = this.widgets[nodeId];
       if (!node) continue;
       stack.push(node.snapshot);

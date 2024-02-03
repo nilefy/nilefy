@@ -4,7 +4,7 @@ export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
 })[];
 
-type RemoteTypes =
+export type RemoteTypes =
   | {
       event: 'insert';
       data: {

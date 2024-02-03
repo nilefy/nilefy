@@ -1,4 +1,3 @@
-// import store, { convertGridToPixel } from '@/store';
 import { editorStore } from '@/lib/Editor/Models';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
 import { Point } from '@/types';

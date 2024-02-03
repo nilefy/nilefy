@@ -79,7 +79,6 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    console.log('dto', dto);
     return await (options?.tx ? options.tx : this.db)
       .update(components)
       .set({ ...dto, updatedAt: sql`now()` })

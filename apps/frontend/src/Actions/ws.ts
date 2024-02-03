@@ -105,10 +105,6 @@ export class WebloomWebSocket {
 
   public sendMessage(msg: string) {
     this.msgQ.push(msg);
-    console.log(
-      this.socketState !== this.socket?.OPEN || this.state !== 'connected',
-    );
-    console.log(this.socketState, this.state);
     if (this.socketState != this.socket?.OPEN) {
       this.reconnect();
       return;
