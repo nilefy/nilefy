@@ -1,4 +1,7 @@
 import { faker } from '@faker-js/faker';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { configDotenv } from 'dotenv';
+import { PayloadUser } from 'src/auth/auth.types';
 
 import { UserDto } from 'src/dto/users.dto';
 
@@ -8,19 +11,19 @@ import { UserDto } from 'src/dto/users.dto';
 export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  // const jwt = new JwtService();
-  // const fakePayload = {
-  //   userId: 123,
-  //   username: 'john_doe',
-  //   isAdmin: false,
-  // };
-  // const fakeOptions = {
-  //   expiresIn: '1h',
-  // };
+  const jwt = new JwtService();
+  const fakePayload: PayloadUser = {
+    sub: 1,
+    username: firstName + lastName,
+  };
+  configDotenv();
+  const secret = process.env.JWT_SECRET;
+  console.log(secret);
+  const fakeOptions: JwtSignOptions = {
+    secret: secret,
+  };
 
-  // const token = jwt.sign(fakePayload, fakeOptions);
-  const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+  const token = jwt.sign(fakePayload, fakeOptions);
 
   return {
     username: faker.internet.userName({ firstName, lastName }),
