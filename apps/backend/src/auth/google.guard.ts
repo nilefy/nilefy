@@ -1,15 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, Redirect } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { GoogleAuthedRequest } from './auth.types';
+import { Response } from 'express';
 
 @Injectable()
-export class SignInGoogleOAuthGuard extends AuthGuard('google_login') {
-  constructor() {
-    super({ accessType: 'offline' });
-  }
-}
-
-@Injectable()
-export class SignUpGoogleOAuthGuard extends AuthGuard('google_signup') {
+export class SignInGoogleOAuthGuard extends AuthGuard('google') {
   constructor() {
     super({ accessType: 'offline' });
   }

@@ -16,14 +16,20 @@ type AuthStore = {
 function getUser(): AuthStore['user'] {
   const token = getToken();
   if (token) {
-    const decoded = jwtDecode(token) as JwtPayload;
-    if (decoded.exp * 1000 < Date.now()) {
+    try {
+      const decoded = jwtDecode(token) as JwtPayload;
+      if (decoded.exp * 1000 < Date.now()) {
+        return null;
+      }
+      return {
+        id: decoded.sub,
+        username: decoded.username,
+      };
+    } catch (e) {
+      console.log(e.message);
+      removeToken();
       return null;
     }
-    return {
-      id: decoded.sub,
-      username: decoded.username,
-    };
   }
   return null;
 }

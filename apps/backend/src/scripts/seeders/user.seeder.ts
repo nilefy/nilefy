@@ -23,6 +23,7 @@ export const userSeeder: SeederI<UserDto[]> = async (db) => {
         email: 'admin@admin.com',
         username: 'admin',
         password: await hash('superadmin', salt),
+        emailVerified: new Date(),
       })
       .returning()
       .onConflictDoNothing()

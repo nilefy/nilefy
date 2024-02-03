@@ -129,8 +129,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 updatedById: user.userId,
               },
               {
-                // eslint-disable-next-line
-                // @ts-ignore
                 tx,
               },
             );
@@ -173,7 +171,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 updatedById: user.userId,
               },
               {
-                // @ts-ignore
                 tx,
               },
             );
