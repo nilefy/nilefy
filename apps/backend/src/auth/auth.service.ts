@@ -32,7 +32,7 @@ export class AuthService {
         } satisfies PayloadUser,
         { expiresIn: '1d' },
       );
-      this.emailService.sendEmail(user.email, u.id, jwt);
+      this.emailService.sendEmail(user.email, jwt);
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
@@ -44,7 +44,7 @@ export class AuthService {
     }
   }
 
-  async confirm(token: string, email: string) {
+  async confirm(email: string, token: string) {
     await this.jwtService.verifyAsync(token);
     const user = await this.usersService.findOne(email);
     if (!user) {
@@ -66,6 +66,9 @@ export class AuthService {
     const ret = await this.usersService.findOne(email);
     if (!ret) {
       throw new NotFoundException('Email Not Found');
+    }
+    if (!ret.isConfirmed) {
+      throw new BadRequestException('Email Not Confirmed');
     }
 
     const match = await compare(password, ret.password);

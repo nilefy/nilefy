@@ -45,7 +45,7 @@ export const users = pgTable('users', {
   password: varchar('password', { length: 256 }).notNull(),
   conformationToken: varchar('conformation_token', {
     length: 256,
-  }).notNull(),
+  }),
 
   isConfirmed: boolean('is_confirmed').notNull().default(false),
   ...timeStamps,

@@ -58,10 +58,10 @@ export class AuthController {
     return await this.authService.signUp(req.user as CreateUserDto);
   }
 
-  @Get('confirm/:token/:id')
-  async confirm(@Req() req: { token: string; id: string }) {
-    const { token, id } = req;
-    return await this.authService.confirm(token, id);
+  @Get('confirm/:email/:token')
+  async confirm(@Req() req: { email: string; token: string }) {
+    const { email, token } = req;
+    return await this.authService.confirm(email, token);
   }
 
   @UseGuards(JwtGuard)

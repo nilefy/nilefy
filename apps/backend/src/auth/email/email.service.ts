@@ -6,14 +6,14 @@ import { Resend } from 'resend';
 @Injectable()
 export class EmailService {
   constructor(private jwtService: JwtService) {}
-  async sendEmail(email: string, id: number, jwt: string) {
+  async sendEmail(email: string, jwt: string) {
     configDotenv();
     const isDev = (process.env.NODE_ENV as string) === 'development';
     const KEY = process.env.RESEND_API_KEY as string;
     const resend = new Resend(KEY);
     const baseUrl = isDev ? 'http://localhost:3000/' : 'https://weblloom.com/';
 
-    const url = baseUrl + 'auth/confirm' + '/' + jwt + '/' + id;
+    const url = baseUrl + 'auth/confirm' + '/' + email + '/' + jwt;
     const { error } = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: isDev ? (process.env.SEND_TO as string) : email,
