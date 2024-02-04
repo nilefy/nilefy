@@ -83,6 +83,10 @@ export class AuthService {
       console.log(password);
       console.log('from login(password in db):');
       console.log(ret.password);
+      console.log('from login(password in db-hashed):');
+      const salt = await genSalt(10);
+      const hashed = await hash(password, salt);
+      console.log(hashed);
       console.log('Yoink');
       throw new BadRequestException('Incorrect Password!');
     }
