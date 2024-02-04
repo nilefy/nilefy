@@ -14,6 +14,7 @@ import { ComponentsModule } from './components/components.module';
 import { EventsModule } from './events/events.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
+import { EncryptionModule } from './encryption/encryption.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { DataQueriesModule } from './data_queries/data_queries.module';
     EventsModule,
     DataSourcesModule,
     DataQueriesModule,
+    EncryptionModule,
   ],
 })
 export class AppModule {}

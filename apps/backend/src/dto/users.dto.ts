@@ -25,7 +25,6 @@ export const signUpSchema = userSchema.pick({
 export const signInSchema = userSchema.pick({
   email: true,
   password: true,
-  isConfirmed: true,
 });
 
 export type UserDto = z.infer<typeof userSchema>;

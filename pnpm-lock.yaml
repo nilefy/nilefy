@@ -59,6 +59,9 @@ importers:
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
+      crypto-ts:
+        specifier: ^1.0.2
+        version: 1.0.2(@angular/common@17.1.2)(@angular/core@17.1.2)
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
@@ -604,6 +607,30 @@ packages:
     transitivePeerDependencies:
       - chokidar
     dev: true
+
+  /@angular/common@17.1.2(@angular/core@17.1.2)(rxjs@7.8.1):
+    resolution: {integrity: sha512-y/wD+zuPaPgK3dB80Q63qBtuu5TuryKuUgjWrOmrguBWV9oiJRhKQrcp1gVw9vVrowmbDBKGtPMS622Q4oxOWQ==}
+    engines: {node: ^18.13.0 || >=20.9.0}
+    peerDependencies:
+      '@angular/core': 17.1.2
+      rxjs: ^6.5.3 || ^7.4.0
+    dependencies:
+      '@angular/core': 17.1.2(rxjs@7.8.1)(zone.js@0.14.3)
+      rxjs: 7.8.1
+      tslib: 2.6.2
+    dev: false
+
+  /@angular/core@17.1.2(rxjs@7.8.1)(zone.js@0.14.3):
+    resolution: {integrity: sha512-0M787BZVgYSVogHCUzo/dFrT56TgfQoEsOQngHMpyERJZv6dycXZlRdHc6TzvHUa+Uu/MNjn/RclBR8063bdWA==}
+    engines: {node: ^18.13.0 || >=20.9.0}
+    peerDependencies:
+      rxjs: ^6.5.3 || ^7.4.0
+      zone.js: ~0.14.0
+    dependencies:
+      rxjs: 7.8.1
+      tslib: 2.6.2
+      zone.js: 0.14.3
+    dev: false
 
   /@babel/code-frame@7.22.13:
     resolution: {integrity: sha512-XktuhWlJ5g+3TJXc5upd9Ks1HutSArik6jf2eAjYFyIOf4ej3RN+184cZbzDvbPnuTJIUhPKKJE3cIsYTiAT3w==}
@@ -6204,6 +6231,17 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  /crypto-ts@1.0.2(@angular/common@17.1.2)(@angular/core@17.1.2):
+    resolution: {integrity: sha512-TcBWwF8ghYhVd/qPSwvY4nsbDZRN/PVxQ1Uc8ryRLiX4M4C5XSPyIhVgR4M5mIhrQEnWIktLcrv+FIqhKk2t3g==}
+    peerDependencies:
+      '@angular/common': '>= 5.0.0'
+      '@angular/core': '>= 5.0.0'
+    dependencies:
+      '@angular/common': 17.1.2(@angular/core@17.1.2)(rxjs@7.8.1)
+      '@angular/core': 17.1.2(rxjs@7.8.1)(zone.js@0.14.3)
+      tslib: 1.14.1
+    dev: false
 
   /css-styled@1.0.8:
     resolution: {integrity: sha512-tCpP7kLRI8dI95rCh3Syl7I+v7PP+2JYOzWkl0bUEoSbJM+u8ITbutjlQVf0NC2/g4ULROJPi16sfwDIO8/84g==}
@@ -12017,7 +12055,6 @@ packages:
 
   /tslib@1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-    dev: true
 
   /tslib@2.3.1:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
@@ -12900,6 +12937,12 @@ packages:
 
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+
+  /zone.js@0.14.3:
+    resolution: {integrity: sha512-jYoNqF046Q+JfcZSItRSt+oXFcpXL88yq7XAZjb/NKTS7w2hHpKjRJ3VlFD1k75wMaRRXNUt5vrZVlygiMyHbA==}
+    dependencies:
+      tslib: 2.6.2
+    dev: false
 
   /zustand@4.4.7(@types/react@18.2.31)(immer@10.0.3)(react@18.2.0):
     resolution: {integrity: sha512-QFJWJMdlETcI69paJwhSMJz7PPWjVP8Sjhclxmxmxv/RYI7ZOvR5BHX+ktH0we9gTWQMxcne8q1OY8xxz604gw==}

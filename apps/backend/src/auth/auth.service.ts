@@ -22,6 +22,8 @@ export class AuthService {
     const { password } = user;
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
+    user = { ...user, password: hashed };
+    console.log(user);
 
     try {
       const u = await this.usersService.create({ ...user, password: hashed });
@@ -64,19 +66,25 @@ export class AuthService {
   }
 
   async logIn(user: LoginUserDto) {
-    const { email, password, isConfirmed } = user;
+    const { email, password } = user;
 
     const ret = await this.usersService.findOne(email);
     if (!ret) {
       throw new NotFoundException('Email Not Found');
     }
+    const { isConfirmed } = ret;
     if (!isConfirmed) {
       throw new BadRequestException('Email Not Confirmed');
     }
 
     const match = await compare(password, ret.password);
     if (!match) {
-      throw new BadRequestException();
+      console.log('from login(password entered):');
+      console.log(password);
+      console.log('from login(password in db):');
+      console.log(ret.password);
+      console.log('Yoink');
+      throw new BadRequestException('Incorrect Password!');
     }
     return {
       access_token: await this.jwtService.signAsync({
