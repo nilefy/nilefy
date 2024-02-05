@@ -69,9 +69,16 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
+    // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
+    // so we need to keep this condition true => accept root updates but discard the `parentId` update
     return await (options?.tx ? options.tx : this.db)
       .update(components)
-      .set(dto)
+      .set({
+        ...dto,
+        parentId:
+          componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
+      })
       .where(and(eq(components.pageId, pageId), eq(components.id, componentId)))
       .returning();
   }
@@ -94,6 +101,10 @@ export class ComponentsService {
   order by level;
     `);
     const rows = comps.rows as (ComponentDto & { level: number })[];
+    if (rows.length === 0)
+      throw new BadRequestException(
+        'page should contain at least one component(root)',
+      ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
     const tree: WebloomTree = {};
     rows.forEach((row) => {
       tree[row.id] = {

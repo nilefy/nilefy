@@ -47,10 +47,10 @@ export class AppsController {
     return await this.appsService.findAll(workspaceId);
   }
 
-  @Get(':id')
+  @Get(':appId')
   async findOne(
     @Param('workspaceId', ParseIntPipe) workspaceId: AppDto['workspaceId'],
-    @Param('id', ParseIntPipe) appId: AppDto['id'],
+    @Param('appId', ParseIntPipe) appId: AppDto['id'],
   ) {
     return await this.appsService.findOne(workspaceId, appId);
   }

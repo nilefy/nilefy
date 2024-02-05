@@ -120,7 +120,10 @@ export class PagesService {
         isNull(pages.deletedAt),
       ),
     });
-    if (!p) throw new NotFoundException('no app or page with those ids');
+    if (!p)
+      throw new NotFoundException(
+        `no page with id ${pageId} in app with id ${appId}`,
+      );
     const tree = await this.componentsService.getTreeForPage(p.id);
     return { ...p, tree };
   }

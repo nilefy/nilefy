@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
@@ -104,13 +109,18 @@ export class AppsService {
             id: true,
             name: true,
             handle: true,
+            index: true,
+            enabled: true,
+            visible: true,
           },
         },
       },
     });
     if (!app) throw new NotFoundException('app not found in this workspace');
     if (app.pages.length < 1)
-      throw new Error("app must has at least one page what's going on");
+      throw new BadRequestException(
+        "app must has at least one page what's going on",
+      );
     // TODO: for now i get the first page as the default but needs to add default page concept to the database
     const defaultPage = await this.pagesService.findOne(
       app.id,
