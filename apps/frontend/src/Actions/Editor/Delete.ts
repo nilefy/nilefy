@@ -6,9 +6,9 @@ import { UndoableCommand } from '../types';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { toJS } from 'mobx';
 
-// const { removeNode, addNode, setSelectedNodeIds, getSelectedNodeIds } =
-//   store.getState();
-
+/**
+ * @NOTE: the default behaviour: the action will delete current selected widgets
+ */
 export class DeleteAction implements UndoableCommand {
   /**
    * stack of nodes to be deleted,
