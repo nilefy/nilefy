@@ -1,10 +1,5 @@
 import { editorStore } from '@/lib/Editor/Models';
-import {
-  ClipboardDataT,
-  Command,
-  UndoableCommand,
-  UpdateNodePayload,
-} from '../types';
+import { ClipboardDataT, UndoableCommand, UpdateNodePayload } from '../types';
 import { normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
@@ -13,6 +8,7 @@ import { AddWidgetPayload } from './Drag';
 import { commandManager } from '../CommandManager';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { DeleteAction } from './Delete';
+import { WebloomPage } from '@/lib/Editor/Models/page';
 
 type InsertDataT = {
   node: WebloomWidget['snapshot'];
@@ -48,8 +44,8 @@ export class PasteAction implements UndoableCommand {
     this.data.nodes[node].parentId = parent;
 
     if (change) {
-      this.data.nodes[node].col += change.dx;
-      this.data.nodes[node].row += change.dy;
+      this.data.nodes[node].col = change.dx;
+      this.data.nodes[node].row = change.dy;
     }
 
     for (const child of this.data.nodes[node].nodes!) {
@@ -59,14 +55,16 @@ export class PasteAction implements UndoableCommand {
 
   execute() {
     const parent = editorStore.currentPage.getWidgetById(this.parent);
-    const [gridrow, gridcol] = parent.gridSize;
-    const x = normalize(this.mousePos.x, gridcol) / gridcol;
-    const y = normalize((this.mousePos.y - this.top) / gridrow, gridrow);
-    const dx = x - this.data.nodes[this.data.selected[0]].col;
-    const dy = y - this.data.nodes[this.data.selected[0]].row;
+    const { x: px, y: py } = parent.pixelDimensions;
+    const [gridrow] = parent.gridSize;
+    const gridCol = parent.columnWidth;
+    const x = normalize(this.mousePos.x - px, gridCol) / gridCol;
+    const y = normalize((this.mousePos.y - py) / gridrow, gridrow);
 
+    // TODO: handle multi selection
     for (const node of this.data.selected) {
-      this.paste(node, this.parent, { dx, dy });
+      console.log(node, x, y);
+      this.paste(node, this.parent, { dx: x, dy: y });
     }
 
     for (const snapshot of Object.values(this.data.nodes)) {
@@ -76,13 +74,23 @@ export class PasteAction implements UndoableCommand {
       };
       editorStore.currentPage.addWidget(add);
 
-      // TODO: side effects
+      // const undoData: ReturnType<
+      //   InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
+      // > = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {
+      //   col: x,
+      //   row: y,
+      //   columnsCount: add.columnsCount,
+      //   rowsCount: add.rowsCount,
+      // });
+      // const affectedNodes = Object.keys(undoData)
+      //   .filter((test) => test !== add.id)
+      //   .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
       const data: InsertDataT = {
         node: editorStore.currentPage.getWidgetById(add.id as string).snapshot,
         sideEffects: [],
       };
-      commandManager.executeCommand(new InsertAction(data));
+      commandManager.executeCommand(new InsertAction(data, {}));
     }
   }
 
@@ -98,7 +106,12 @@ export class PasteAction implements UndoableCommand {
 }
 
 export class InsertAction implements UndoableCommand {
-  constructor(private data: InsertDataT) {}
+  constructor(
+    private data: InsertDataT,
+    private undoData: ReturnType<
+      InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
+    >,
+  ) {}
 
   execute() {
     return {
@@ -109,7 +122,8 @@ export class InsertAction implements UndoableCommand {
 
   undo() {
     editorStore.currentPage.removeWidget(this.data.node.id);
-
-    // TODO: side effects
+    Object.entries(this.undoData).forEach(([id, coords]) => {
+      editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+    });
   }
 }
