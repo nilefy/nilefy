@@ -24,24 +24,34 @@ export class ComponentsService {
    * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as child of a node
    */
   async create(
-    componentDto: CreateComponentDb,
+    componentDto: CreateComponentDb[],
     options?: {
+      /**
+       * if you want to put this operation in transaction
+       */
       tx?: PgTrans;
     },
   ) {
-    return (
-      await (options?.tx ? options.tx : this.db)
-        .insert(components)
-        .values(componentDto)
-        .returning()
-    )[0];
+    return await (options?.tx ? options.tx : this.db)
+      .insert(components)
+      .values(componentDto)
+      .returning();
   }
 
   /**
    * unlike normal tree or graph when node get deleted the sub-tree under it gets deleted(on delete cascade)
    */
-  async delete(pageId: PageDto['id'], componentIds: ComponentDto['id'][]) {
-    const [c] = await this.db
+  async delete(
+    pageId: PageDto['id'],
+    componentIds: ComponentDto['id'][],
+    options?: {
+      /**
+       * if you want to put this operation in transaction
+       */
+      tx?: PgTrans;
+    },
+  ) {
+    const c = await (options?.tx ? options.tx : this.db)
       .delete(components)
       .where(
         and(
@@ -52,7 +62,7 @@ export class ComponentsService {
       )
       .returning({ id: components.id });
     // either component doesn't exist or tried to delete root of page
-    if (c === undefined) {
+    if (c.length === 0) {
       throw new BadRequestException();
     }
     return c;
@@ -71,7 +81,7 @@ export class ComponentsService {
   ) {
     return await (options?.tx ? options.tx : this.db)
       .update(components)
-      .set(dto)
+      .set({ ...dto, updatedAt: sql`now()` })
       .where(and(eq(components.pageId, pageId), eq(components.id, componentId)))
       .returning();
   }

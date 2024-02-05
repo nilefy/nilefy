@@ -22,8 +22,6 @@ export const WebloomElement = observer(function WebloomElement({
   isPreview: boolean;
 }) {
   const tree = editorStore.currentPage.getWidgetById(id);
-  const nodes = tree.nodes;
-
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
       tree.setProp(key, value);
@@ -38,10 +36,9 @@ export const WebloomElement = observer(function WebloomElement({
     };
   }, [onPropChange, id]);
   const WebloomWidget = WebloomWidgets[tree.type].component as ElementType;
-
   if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
-  const Rendering = () => (
-    <>
+  const RenderedElement = observer(() => {
+    return (
       <WebloomAdapter
         draggable={!isPreview}
         droppable={!isPreview}
@@ -53,20 +50,20 @@ export const WebloomElement = observer(function WebloomElement({
         {tree.isCanvas && <Grid id={id} />}
         <WidgetContext.Provider value={contextValue}>
           <WebloomWidget>
-            {nodes.map((nodeId) => (
+            {tree.nodes.map((nodeId) => (
               <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
             ))}
           </WebloomWidget>
         </WidgetContext.Provider>
       </WebloomAdapter>
-    </>
-  );
+    );
+  });
 
-  if (isPreview) return <Rendering />;
+  if (isPreview) return <RenderedElement />;
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <Rendering />
+        <RenderedElement />
       </ContextMenuTrigger>
       <ContextMenuPortal>
         <ContextMenuContent>

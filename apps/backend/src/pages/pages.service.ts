@@ -45,21 +45,23 @@ export class PagesService {
         index: this.getNewPageIndexInApp(pageDto.appId),
       })
       .returning();
-    const rootComponent = await this.componentsService.create(
-      {
-        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-        type: 'WebloomContainer',
-        pageId: p.id,
-        createdById: pageDto.createdById,
-        parentId: null,
-        props: {
-          className: 'h-full w-full',
+    const [rootComponent] = await this.componentsService.create(
+      [
+        {
+          id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+          type: 'WebloomContainer',
+          pageId: p.id,
+          createdById: pageDto.createdById,
+          parentId: null,
+          props: {
+            className: 'h-full w-full',
+          },
+          col: 0,
+          row: 0,
+          columnsCount: 32,
+          rowsCount: 0,
         },
-        col: 0,
-        row: 0,
-        columnsCount: 32,
-        rowsCount: 0,
-      },
+      ],
       {
         tx: options?.tx,
       },

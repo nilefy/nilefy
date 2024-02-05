@@ -23,7 +23,8 @@
     "db:studio": "dotenv drizzle-kit studio --verbose",
     "db:generate": "dotenv drizzle-kit generate:pg",
     "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate",
-    "db:seed": "ts-node ./src/scripts/seeder"
+    "db:seed": "ts-node ./src/scripts/seeder",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "^10.2.9",
