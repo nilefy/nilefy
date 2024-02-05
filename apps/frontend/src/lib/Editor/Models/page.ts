@@ -388,7 +388,7 @@ export class WebloomPage {
       const gridDimensions = node.gridDimensions;
       const newCoords = normalizeCoords(_newCoords, gridDimensions);
       // if the node is the same as the newCoords, return
-      if (isSameCoords(newCoords, gridDimensions)) return;
+      // if (isSameCoords(newCoords, gridDimensions)) return;
       const nodeGridBoundingRect = getGridBoundingRect(newCoords);
       const overlappingNodesToMove = this.findOverlappingNodesToMove(
         nodeGridBoundingRect,

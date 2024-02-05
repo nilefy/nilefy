@@ -63,7 +63,6 @@ export class PasteAction implements UndoableCommand {
 
     // TODO: handle multi selection
     for (const node of this.data.selected) {
-      console.log(node, x, y);
       this.paste(node, this.parent, { dx: x, dy: y });
     }
 
@@ -74,23 +73,18 @@ export class PasteAction implements UndoableCommand {
       };
       editorStore.currentPage.addWidget(add);
 
-      // const undoData: ReturnType<
-      //   InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
-      // > = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {
-      //   col: x,
-      //   row: y,
-      //   columnsCount: add.columnsCount,
-      //   rowsCount: add.rowsCount,
-      // });
-      // const affectedNodes = Object.keys(undoData)
-      //   .filter((test) => test !== add.id)
-      //   .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
+      const undoData: ReturnType<
+        InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
+      > = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {});
+      const affectedNodes: UpdateNodePayload = Object.keys(undoData)
+        .filter((test) => test !== add.id)
+        .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
       const data: InsertDataT = {
         node: editorStore.currentPage.getWidgetById(add.id as string).snapshot,
-        sideEffects: [],
+        sideEffects: affectedNodes,
       };
-      commandManager.executeCommand(new InsertAction(data, {}));
+      commandManager.executeCommand(new InsertAction(data, undoData));
     }
   }
 
@@ -123,7 +117,9 @@ export class InsertAction implements UndoableCommand {
   undo() {
     editorStore.currentPage.removeWidget(this.data.node.id);
     Object.entries(this.undoData).forEach(([id, coords]) => {
-      editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+      if (id !== this.data.node.id) {
+        editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+      }
     });
   }
 }
