@@ -145,7 +145,6 @@ export const Editor = observer(() => {
           parent,
           data,
           mousePos: mouseP.current,
-          top: editorRef.current!.scrollTop,
         }),
       );
     } catch (ig) {

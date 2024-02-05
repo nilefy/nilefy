@@ -18,23 +18,19 @@ type InsertDataT = {
 export class PasteAction implements UndoableCommand {
   private parent: string;
   private data: ClipboardDataT;
-  private top: number;
   private mousePos: Point;
 
   constructor({
     parent,
     data,
-    top,
     mousePos,
   }: {
     parent: string;
     data: ClipboardDataT;
-    top: number;
     mousePos: Point;
   }) {
     this.parent = parent;
     this.data = data;
-    this.top = top;
     this.mousePos = mousePos;
   }
 
