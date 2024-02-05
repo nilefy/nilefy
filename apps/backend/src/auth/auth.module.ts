@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { SignInGoogleStrategy, SignUpGoogleStrategy } from './google.strategy';
+import { SignInGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { TConfigService } from '../evn.validation';
@@ -25,11 +25,6 @@ import { TConfigService } from '../evn.validation';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    SignInGoogleStrategy,
-    SignUpGoogleStrategy,
-    JwtStrategy,
-  ],
+  providers: [AuthService, SignInGoogleStrategy, JwtStrategy],
 })
 export class AuthModule {}

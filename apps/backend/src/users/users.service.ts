@@ -1,24 +1,36 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto, UpdateUserDto, UserDto } from '../dto/users.dto';
+import { UpdateUserDto, UserDto } from '../dto/users.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { eq } from 'drizzle-orm';
-import { users } from '../drizzle/schema/schema';
+import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
+import { accounts, users } from '../drizzle/schema/schema';
 import { genSalt, hash } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(@Inject(DrizzleAsyncProvider) private readonly db: DatabaseI) {}
 
-  async findOne(email: string): Promise<UserDto | undefined> {
+  async findOne(email: string) {
     const u = await this.db.query.users.findFirst({
-      where: eq(users.email, email),
+      where: and(eq(users.email, email), isNull(users.deletedAt)),
+      with: {
+        accounts: true,
+      },
     });
     return u;
   }
 
-  async create(user: CreateUserDto): Promise<UserDto> {
-    const u = await this.db.insert(users).values(user).returning();
-    return u[0];
+  async create(
+    user: InferInsertModel<typeof users> & {
+      accounts?: Omit<InferInsertModel<typeof accounts>, 'userId'>;
+    },
+  ): Promise<UserDto> {
+    return this.db.transaction(async (tx) => {
+      const [u] = await tx.insert(users).values(user).returning();
+      if (user.accounts) {
+        await tx.insert(accounts).values({ userId: u.id, ...user.accounts });
+      }
+      return u;
+    });
   }
 
   async update(userId: number, updateDto: UpdateUserDto) {

@@ -8,7 +8,8 @@
     "lint": "turbo lint",
     "db:push": "turbo db:push",
     "db:studio": "turbo db:studio",
-    "db:seed": "turbo db:seed"
+    "db:seed": "turbo db:seed",
+    "typecheck": "turbo typecheck"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
 import { roles as rolesDrizzle } from '../drizzle/schema/schema';
+import { createZodDto } from 'nestjs-zod';
 
 export const rolesSchema = createSelectSchema(rolesDrizzle, {
   name: (schema) => schema.name.min(2).max(100),
@@ -28,9 +29,12 @@ export const updateRoleDb = createRoleDb
     updatedById: z.number(),
   });
 
-export type RolesDto = z.infer<typeof rolesSchema>;
-export type RoleInsertI = z.infer<typeof createRoleSchema>;
-export type RoleUpdateI = z.infer<typeof updateRoleSchema>;
+// export type RolesDto = z.infer<typeof rolesSchema>;
+// export type RoleInsertI = z.infer<typeof createRoleSchema>;
+// export type RoleUpdateI = z.infer<typeof updateRoleSchema>;
+export class RolesDto extends createZodDto(rolesSchema) {}
+export class RoleInsertI extends createZodDto(createRoleSchema) {}
+export class RoleUpdateI extends createZodDto(updateRoleSchema) {}
 /**
  * insert in the db interface
  */

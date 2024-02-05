@@ -16,6 +16,10 @@ export const WebloomWidgets = {
 } as const;
 
 export const WidgetContext = createContext<{
+  /**
+   * callback function that any widget can call to change one of its props in the editor state
+   * @example input widget uses it to change its `props.value` on the editor state when user types
+   */
   onPropChange: ({ value, key }: { value: unknown; key: string }) => void;
   id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

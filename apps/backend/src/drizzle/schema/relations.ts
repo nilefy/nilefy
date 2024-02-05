@@ -10,6 +10,7 @@ import {
   permissions,
   permissionsToRoles,
   roles,
+  accounts,
 } from './schema';
 import {
   workspaceDataSources,
@@ -116,8 +117,17 @@ export const usersRelations = relations(users, ({ many }) => {
     // usersToGroups: many(usersToGroups, {
     //   relationName: userUsersInGroupRelation,
     // }),
+
+    accounts: many(accounts),
   };
 });
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
 
 export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
   createdBy: one(users, {

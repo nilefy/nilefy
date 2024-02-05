@@ -53,19 +53,15 @@ import {
   defer,
   redirect,
   useAsyncError,
-  useAsyncValue,
   useLoaderData,
   useParams,
-  useSearchParams,
 } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import {
   APPS_QUERY_KEY,
   AppI,
   AppMetaT,
-  AppsIndexRet,
   appMetaSchema,
-  useAppQuery,
   useAppsQuery,
 } from '@/api/apps.api';
 import { Suspense, useMemo, useState } from 'react';
@@ -394,12 +390,17 @@ function ApplicationsViewResolved() {
             </CardContent>
             <CardFooter className="flex justify-end gap-5">
               <Link
-                to={`apps/${app.id}`}
+                to={`apps/edit/${app.id}`}
                 className={buttonVariants({ variant: 'default' })}
               >
                 Edit
               </Link>
-              <Button>Launch</Button>
+              <Link
+                to={`apps/${app.id}`}
+                className={buttonVariants({ variant: 'default' })}
+              >
+                Launch
+              </Link>
             </CardFooter>
           </Card>
         ))}

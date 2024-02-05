@@ -35,7 +35,7 @@ export class CommandManager {
     const ret = cmd.execute();
     if (ret && this.socket !== null && this.socket.getState() === 'connected') {
       console.log('method returned value i will send to remote', ret);
-      this.socket.socket.send(JSON.stringify(ret));
+      this.socket.sendMessage(JSON.stringify(ret));
     }
     if (cmd instanceof UndoableCommand || isUndoableCommand(cmd)) {
       this.commandStack.push(cmd as UndoableCommand);
@@ -49,7 +49,11 @@ export class CommandManager {
     if (cmd === undefined) {
       return;
     }
-    cmd.undo();
+    const ret = cmd.undo();
+    if (ret && this.socket !== null && this.socket.getState() === 'connected') {
+      console.log('method returned value from undo i will send to remote', ret);
+      this.socket.sendMessage(JSON.stringify(ret));
+    }
   }
 
   public static getInstance() {

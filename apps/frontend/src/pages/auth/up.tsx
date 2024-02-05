@@ -10,7 +10,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { SignUpSchema } from '@/api/auth';
 import { signUpSchema } from '@/api/auth';
@@ -39,6 +39,17 @@ export function SignUp() {
           Sign in
         </Link>
       </p>
+      <div>
+        <Link
+          // TODO: move this hardcoded value to .env or smth
+          to={'http://localhost:3000/auth/login/google'}
+          className={buttonVariants({
+            variant: 'outline',
+          })}
+        >
+          continue with Google
+        </Link>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
