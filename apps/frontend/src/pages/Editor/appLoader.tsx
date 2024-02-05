@@ -6,7 +6,6 @@ import { WebloomPage } from '@/lib/Editor/Models/page';
 import { seedNameMap } from '@/lib/Editor/widgetName';
 import { getToken, removeToken } from '@/lib/token.localstorage';
 import { JwtPayload } from '@/types/auth.types';
-import { FetchXError } from '@/utils/fetch';
 import { QueryClient } from '@tanstack/react-query';
 import { jwtDecode } from 'jwt-decode';
 import { Suspense, useEffect, useRef } from 'react';
@@ -14,7 +13,6 @@ import {
   Await,
   defer,
   redirect,
-  useAsyncError,
   useAsyncValue,
   useLoaderData,
 } from 'react-router-dom';
@@ -51,15 +49,6 @@ type AppLoaderProps = {
   initWs: boolean;
   children: React.ReactNode;
 };
-
-function AppLoadError() {
-  const error = useAsyncError() as FetchXError;
-  return (
-    <div className="h-screen w-screen content-center items-center text-red-500">
-      errors while loading app &quot;{error.message}&quot;
-    </div>
-  );
-}
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
   const app = useAsyncValue() as AppCompleteT;
@@ -108,7 +97,7 @@ export function AppLoader(props: AppLoaderProps) {
 
   return (
     <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={app} errorElement={<AppLoadError />}>
+      <Await resolve={app}>
         <AppResolved {...props} />
       </Await>
     </Suspense>
