@@ -4,6 +4,7 @@ import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
 import { DependencyRelation } from './Models/dependencyManager';
 import { has } from 'lodash';
+import { bindingRegexGlobal } from '../utils';
 
 export const analyzeDependancies = (
   code: unknown,
@@ -14,7 +15,7 @@ export const analyzeDependancies = (
   if (typeof code !== 'string') return { dependencies: [], isCode: false };
   const keysSet = new Set(Object.keys(keys));
   const dependencies: Array<DependencyRelation> = [];
-  const matches = code.matchAll(/{{([^}]*)}}/g);
+  const matches = code.matchAll(bindingRegexGlobal);
   let isCode = false;
   for (const match of matches) {
     isCode = true;

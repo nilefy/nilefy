@@ -1,3 +1,5 @@
+import { bindingRegexGlobal } from '../utils';
+
 export type EvaluationContext = Record<string, unknown>;
 
 export const evaluate = (
@@ -7,7 +9,7 @@ export const evaluate = (
   if (!code) return code;
 
   if (!code.includes('{{')) return code;
-  const matches = code.matchAll(/{{([^}]*)}}/g);
+  const matches = code.matchAll(bindingRegexGlobal);
   const expressions: string[] = [];
   let firstMatchLength = 0;
   for (const match of matches) {
@@ -39,7 +41,7 @@ export const evaluate = (
   if (evaluatedExpressions.length === 1 && firstMatchLength === code.length) {
     return evaluatedExpressions[0];
   }
-  const final = code.replace(/{{([^}]*)}}/g, (_, p1) => {
+  const final = code.replace(bindingRegexGlobal, (_, p1) => {
     const index = expressions.indexOf(p1);
     return evaluatedExpressions[index];
   });

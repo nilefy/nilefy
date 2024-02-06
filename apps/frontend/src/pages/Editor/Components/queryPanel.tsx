@@ -142,6 +142,11 @@ const QueryItem = observer(function QueryItem({
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
           formData={query.rawConfig}
           validator={validator}
+          idSeparator="."
+          idPrefix="config"
+          onChange={(p) => {
+            console.log(p);
+          }}
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(
