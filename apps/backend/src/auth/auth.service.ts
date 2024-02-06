@@ -20,9 +20,13 @@ export class AuthService {
 
   async signUp(user: CreateUserDto) {
     const { password } = user;
-    const salt = await genSalt(10);
-    const hashed = await hash(password, salt);
+    //const salt = await genSalt(10);
+    const hashed = await hash(password, 10);
+    console.log(
+      'length: ' + password.length + ' ' + hashed.length + ' ' + hashed,
+    );
     user = { ...user, password: hashed };
+    console.log('saved user:');
     console.log(user);
 
     try {
@@ -47,22 +51,6 @@ export class AuthService {
       console.log(err);
       throw new BadRequestException();
     }
-  }
-
-  async confirm(email: string, token: string) {
-    await this.jwtService.verifyAsync(token);
-    const user = await this.usersService.findOne(email);
-    if (!user) {
-      throw new NotFoundException('User Not Found');
-    }
-    user.isConfirmed = true;
-    await this.usersService.update(user.id, user);
-    return {
-      access_token: await this.jwtService.signAsync({
-        sub: user.id,
-        username: user.username,
-      } satisfies PayloadUser),
-    } satisfies JwtToken;
   }
 
   async logIn(user: LoginUserDto) {
@@ -94,6 +82,22 @@ export class AuthService {
       access_token: await this.jwtService.signAsync({
         sub: ret.id,
         username: ret.username,
+      } satisfies PayloadUser),
+    } satisfies JwtToken;
+  }
+
+  async confirm(email: string, token: string) {
+    await this.jwtService.verifyAsync(token);
+    const user = await this.usersService.findOne(email);
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+    user.isConfirmed = true;
+    await this.usersService.update(user.id, user);
+    return {
+      access_token: await this.jwtService.signAsync({
+        sub: user.id,
+        username: user.username,
       } satisfies PayloadUser),
     } satisfies JwtToken;
   }

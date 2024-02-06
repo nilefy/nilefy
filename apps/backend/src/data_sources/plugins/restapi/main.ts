@@ -1,34 +1,42 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { ConfigT, QueryT } from './types';
+import { configDotenv } from 'dotenv';
 
 export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
   async run(
-    dataSourceConfig: ConfigT,
-    query: QueryConfig<QueryT>,
+    dataSourceConfigI: ConfigT,
+    queryI: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
+    configDotenv();
+    const environment = 'development';
+    let dataSourceConfig;
+    let query;
+    if (environment === 'development') {
+      dataSourceConfig = dataSourceConfigI.development;
+      query = queryI.query.development;
+    } else {
+      dataSourceConfig = dataSourceConfigI.production;
+      query = queryI.query.production;
+    }
     const queryUrl = new URL(
-      query.query.endpoint,
+      query.endpoint,
       dataSourceConfig.base_url,
     ).toString();
 
     const collectedHeaders = {
       ...dataSourceConfig.headers,
-      ...query.query.headers,
+      ...query.headers,
     };
-    const body = query.query.body;
+    const body = query.body;
     const reqBody = typeof body === 'string' ? body : JSON.stringify(body);
-    //todo 1. custom headers ✅
-    //todo 2. custom body ✅
-    //todo 3. Documentation
-    //todo 4. config schema ✅
     try {
       let res: Response;
       switch (dataSourceConfig.auth.auth_type) {
         case 'none':
           {
             res = await fetch(queryUrl, {
-              method: query.query.method,
+              method: query.method,
               headers: collectedHeaders,
               body: reqBody,
             });
@@ -62,7 +70,7 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
         case 'basic':
           {
             res = await fetch(queryUrl, {
-              method: query.query.method,
+              method: query.method,
               headers: {
                 Authorization:
                   'Basic ' +
@@ -81,7 +89,7 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
         case 'bearer':
           {
             res = await fetch(queryUrl, {
-              method: query.query.method,
+              method: query.method,
               headers: {
                 Authorization: `Bearer ${dataSourceConfig.auth.bearer_token}`,
                 ...collectedHeaders,

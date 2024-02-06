@@ -20,7 +20,7 @@ const headersSchema = z.array(
   z.tuple([z.string().describe('Key'), z.string().describe('Value')]),
 );
 
-export const configSchema = z.object({
+export const configSchemaBone = z.object({
   base_url: z.string().url({
     message: 'Invalid URL. Please enter a valid URL.',
   }),
@@ -31,6 +31,10 @@ export const configSchema = z.object({
    */
   headers: headersSchema,
 });
+export const configSchema = z.object({
+  development: configSchemaBone,
+  production: configSchemaBone,
+});
 
 const endpointMethods = z.union([
   z.literal('GET'),
@@ -39,7 +43,7 @@ const endpointMethods = z.union([
   z.literal('DELETE'),
 ]);
 
-export const querySchema = z.object({
+export const querySchemaBone = z.object({
   endpoint: z.string(),
   method: endpointMethods,
   headers: headersSchema,
@@ -48,11 +52,16 @@ export const querySchema = z.object({
   body: z.union([z.string(), z.record(z.unknown())]),
 });
 
+export const querySchema = z.object({
+  development: querySchemaBone,
+  production: querySchemaBone,
+});
+
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
 
 export const pluginConfigForm = {
-  schema: zodToJsonSchema(configSchema, 'configSchema'),
+  schema: zodToJsonSchema(configSchemaBone, 'configSchema'),
   uiSchema: {
     base_url: {
       'ui:placeholder': 'https://restapi/',
@@ -71,7 +80,7 @@ export const pluginConfigForm = {
 };
 
 export const queryConfigForm = {
-  schema: zodToJsonSchema(querySchema, 'querySchema'),
+  schema: zodToJsonSchema(querySchemaBone, 'querySchema'),
   uiSchema: {
     endpoint: {
       'ui:title': 'End-Point',

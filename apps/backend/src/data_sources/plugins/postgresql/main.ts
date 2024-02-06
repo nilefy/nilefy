@@ -8,12 +8,19 @@ export default class PostgresqlQueryService
 {
   async run(
     dataSourceConfig: ConfigT,
-    query: QueryConfig<QueryT>,
+    queryI: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
+    const environment = 'development';
+    let query;
+    if (environment === 'development') {
+      query = queryI.query.development;
+    } else {
+      query = queryI.query.production;
+    }
     try {
       configSchema.parse(dataSourceConfig);
       const pool = this.connect(dataSourceConfig);
-      const res = await pool.query(query.query.query);
+      const res = await pool.query(query.query);
       return {
         status: 200,
         data: res.rows,
@@ -27,7 +34,14 @@ export default class PostgresqlQueryService
     }
   }
 
-  connect(dataSourceConfig: ConfigT): Pool {
+  connect(dataSourceConfigI: ConfigT): Pool {
+    const environment = 'development';
+    let dataSourceConfig;
+    if (environment === 'development') {
+      dataSourceConfig = dataSourceConfigI.development;
+    } else {
+      dataSourceConfig = dataSourceConfigI.production;
+    }
     // TODO: valid config
     const config: PoolConfig = {
       ...dataSourceConfig,
