@@ -29,15 +29,12 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
   async signUp(@Body() userDto: CreateUserDto) {
-    console.log('from signup controller');
     return await this.authService.signUp(userDto);
   }
 
   @UsePipes(new ZodValidationPipe(signInSchema))
   @Post('login')
   async signIn(@Body() userDto: LoginUserDto) {
-    console.log(userDto);
-    console.log(userDto.password);
     return await this.authService.logIn(userDto);
   }
 
@@ -63,9 +60,6 @@ export class AuthController {
 
   @Get('confirm/:email/:token')
   async confirm(@Param('email') email: string, @Param('token') token: string) {
-    console.log('from confirm controller');
-    console.log(email);
-    console.log(token);
     return await this.authService.confirm(email, token);
   }
 

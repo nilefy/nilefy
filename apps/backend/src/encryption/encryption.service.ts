@@ -11,7 +11,7 @@ export class EncryptionService {
     if (KEY === this.DEFAULT_KEY) {
       throw new BadRequestException('Encryption key not found');
     }
-    console.log(KEY);
+
     return AES.encrypt(data, KEY).toString();
     // const iv = crypto.randomBytes(IV_LENGTH);
     // const cipher = crypto.createCipheriv(ALGORITHM, new Buffer(KEY), iv);
@@ -25,7 +25,7 @@ export class EncryptionService {
     if (KEY === this.DEFAULT_KEY) {
       throw new BadRequestException('Encryption key not found');
     }
-    console.log(KEY);
+
     return AES.decrypt(data, KEY).toString();
     // const binaryData = new Buffer(data, ENCODING);
     // const iv = binaryData.slice(-IV_LENGTH);

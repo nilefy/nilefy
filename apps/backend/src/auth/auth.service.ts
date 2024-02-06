@@ -20,11 +20,13 @@ export class AuthService {
 
   async signUp(user: CreateUserDto) {
     const { password } = user;
-    //const salt = await genSalt(10);
-    const hashed = await hash(password, 10);
-    console.log(
-      'length: ' + password.length + ' ' + hashed.length + ' ' + hashed,
-    );
+    const salt = await genSalt(10);
+    const hashed = await hash(password, salt);
+
+    const r = await compare(password, hashed);
+    console.log('compare result:');
+    console.log(r);
+
     user = { ...user, password: hashed };
     console.log('saved user:');
     console.log(user);
@@ -60,23 +62,15 @@ export class AuthService {
     if (!ret) {
       throw new NotFoundException('Email Not Found');
     }
+    //todo fix compare always returns false.
+    //! this is important
+    const match = await compare(password, ret.password);
+    if (!match) {
+      throw new BadRequestException('Incorrect Password!');
+    }
     const { isConfirmed } = ret;
     if (!isConfirmed) {
       throw new BadRequestException('Email Not Confirmed');
-    }
-
-    const match = await compare(password, ret.password);
-    if (!match) {
-      console.log('from login(password entered):');
-      console.log(password);
-      console.log('from login(password in db):');
-      console.log(ret.password);
-      console.log('from login(password in db-hashed):');
-      const salt = await genSalt(10);
-      const hashed = await hash(password, salt);
-      console.log(hashed);
-      console.log('Yoink');
-      throw new BadRequestException('Incorrect Password!');
     }
     return {
       access_token: await this.jwtService.signAsync({

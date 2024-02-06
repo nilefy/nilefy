@@ -14,8 +14,7 @@ export class EmailService {
     const baseUrl = isDev ? 'http://localhost:3000/' : 'https://weblloom.com/';
 
     const url = baseUrl + 'auth/confirm' + '/' + email + '/' + jwt;
-    console.log(url);
-    console.log(process.env.SEND_TO as string);
+
     const { error } = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: isDev ? (process.env.SEND_TO as string) : email,
