@@ -4,7 +4,7 @@ import { WidgetSnapshot } from '@/types';
 export type ClipboardDataT = {
   action: 'copy' | 'cut';
   selected: string[];
-  nodes: Record<string, WidgetSnapshot>;
+  nodes: Map<string, WidgetSnapshot>;
 };
 
 export type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {

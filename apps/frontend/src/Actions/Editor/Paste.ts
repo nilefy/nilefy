@@ -1,7 +1,7 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ClipboardDataT, UndoableCommand, UpdateNodePayload } from '../types';
 import { normalize } from '@/lib/Editor/utils';
-import { Point } from '@/types';
+import { Point, WidgetSnapshot } from '@/types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
@@ -25,21 +25,27 @@ export class PasteAction implements UndoableCommand {
     mousePos: Point;
   }) {
     this.parent = parent;
-    this.data = data;
+    this.data = {
+      ...data,
+      nodes: new Map(data.nodes),
+    };
     this.mousePos = mousePos;
   }
 
   paste(node: string, parent: string, change?: { dx: number; dy: number }) {
-    const id = getNewWidgetName(this.data.nodes[node].type as WidgetTypes);
-    this.data.nodes[node].id = id;
-    this.data.nodes[node].parentId = parent;
+    const snapshot = this.data.nodes.get(node)!;
+    console.log(snapshot);
+    const id = getNewWidgetName(snapshot.type as WidgetTypes);
+
+    snapshot.id = id;
+    snapshot.parentId = parent;
 
     if (change) {
-      this.data.nodes[node].col = change.dx;
-      this.data.nodes[node].row = change.dy;
+      snapshot.col = change.dx;
+      snapshot.row = change.dy;
     }
 
-    for (const child of this.data.nodes[node].nodes!) {
+    for (const child of this.data.nodes.get(node)!.nodes!) {
       this.paste(child, id);
     }
   }
@@ -57,7 +63,7 @@ export class PasteAction implements UndoableCommand {
       this.paste(node, this.parent, { dx: x, dy: y });
     }
 
-    for (const snapshot of Object.values(this.data.nodes)) {
+    for (const snapshot of this.data.nodes.values()) {
       const add: AddWidgetPayload = {
         ...snapshot,
         nodes: [],
@@ -80,7 +86,7 @@ export class PasteAction implements UndoableCommand {
   }
 
   undo() {
-    const data = Object.values(this.data.nodes).map((node) => node.id!);
+    const data = [...this.data.nodes.values()].map((node) => node.id!);
     commandManager.executeCommand(new DeleteAction(data));
 
     let count = data.length + 1;

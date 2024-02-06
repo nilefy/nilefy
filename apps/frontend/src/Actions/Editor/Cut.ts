@@ -10,7 +10,7 @@ export class CutAction implements Command {
     this.clipboard = {
       action: 'cut',
       selected: [...editorStore.currentPage.selectedNodeIds],
-      nodes: {},
+      nodes: new Map(),
     };
   }
 
@@ -22,12 +22,17 @@ export class CutAction implements Command {
     }
 
     commandManager.executeCommand(new DeleteAction());
-    navigator.clipboard.writeText(JSON.stringify(this.clipboard));
+    navigator.clipboard.writeText(
+      JSON.stringify({
+        ...this.clipboard,
+        nodes: Array.from(this.clipboard.nodes.entries()),
+      }),
+    );
   }
 
   private cut(node: string) {
     const snapshot = editorStore.currentPage.widgets[node].snapshot;
-    this.clipboard.nodes[node] = snapshot;
+    this.clipboard.nodes.set(node, snapshot);
     for (const node of snapshot.nodes) {
       this.cut(node);
     }

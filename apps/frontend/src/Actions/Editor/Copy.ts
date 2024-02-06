@@ -8,7 +8,7 @@ export class CopyAction implements Command {
     this.clipboard = {
       action: 'copy',
       selected: [...editorStore.currentPage.selectedNodeIds],
-      nodes: {},
+      nodes: new Map(),
     };
   }
 
@@ -18,13 +18,16 @@ export class CopyAction implements Command {
     for (const node of this.clipboard.selected) {
       this.copy(node);
     }
-
-    navigator.clipboard.writeText(JSON.stringify(this.clipboard));
+    navigator.clipboard.writeText(
+      JSON.stringify({
+        ...this.clipboard,
+        nodes: Array.from(this.clipboard.nodes.entries()),
+      }),
+    );
   }
-
   private copy(node: string) {
     const snapshot = editorStore.currentPage.widgets[node].snapshot;
-    this.clipboard.nodes[node] = snapshot;
+    this.clipboard.nodes.set(node, snapshot);
     for (const node of snapshot.nodes) {
       this.copy(node);
     }
