@@ -35,7 +35,7 @@ export class PasteAction implements UndoableCommand {
     this.mousePos = mousePos;
   }
 
-  paste(node: string, parent: string, change?: { dx: number; dy: number }) {
+  paste(node: string, parent: string, change?: { x: number; y: number }) {
     const snapshot = this.data.nodes.get(node)!;
     const id = getNewWidgetName(snapshot.type as WidgetTypes);
 
@@ -43,8 +43,8 @@ export class PasteAction implements UndoableCommand {
     snapshot.parentId = parent;
 
     if (change) {
-      snapshot.col = change.dx;
-      snapshot.row = change.dy;
+      snapshot.col = change.x;
+      snapshot.row = change.y;
     }
 
     for (const child of this.data.nodes.get(node)!.nodes!) {
@@ -60,9 +60,10 @@ export class PasteAction implements UndoableCommand {
     const x = normalize(this.mousePos.x - px, gridCol) / gridCol;
     const y = normalize((this.mousePos.y - py) / gridrow, gridrow);
 
-    // TODO: handle multi selection
+    let dy = 0;
     for (const node of this.data.selected) {
-      this.paste(node, this.parent, { dx: x, dy: y });
+      this.paste(node, this.parent, { x, y: y + dy });
+      dy += this.data.nodes.get(node)!.rowsCount! + 1;
     }
 
     const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
