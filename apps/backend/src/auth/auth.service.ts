@@ -32,7 +32,7 @@ export class AuthService {
     console.log(user);
 
     try {
-      const u = await this.usersService.create({ ...user, password: hashed });
+      const u = await this.usersService.create(user);
       const jwt = await this.jwtService.signAsync(
         {
           sub: 1,
@@ -43,6 +43,9 @@ export class AuthService {
       console.log('before sending email');
       this.emailService.sendEmail(user.email, jwt);
       console.log('after sending email');
+      const r = await compare(password, hashed);
+      console.log('compare result:');
+      console.log(r);
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
