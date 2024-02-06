@@ -115,7 +115,10 @@ export interface LayoutConfig {
   colsCount: number;
   rowsCount: number;
 }
-type childtype = Parameters<InstanceType<typeof WebloomPage>['addWidget']>[0];
+type bluePrintType = Omit<
+  Parameters<InstanceType<typeof WebloomPage>['addWidget']>[0],
+  'parentId'
+>;
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
   icon: ReactNode;
@@ -123,7 +126,7 @@ export interface WidgetConfig {
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
-  children?: childtype[];
+  bluePrint?: bluePrintType[];
 }
 // key is the id of the node and the array are keys of props
 /**

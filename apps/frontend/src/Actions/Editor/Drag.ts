@@ -72,7 +72,7 @@ class DragAction {
       const node: AddWidgetPayload = {
         id: this.previewId,
         nodes: [],
-        children: [],
+        bluePrint: [],
         parentId: args.new!.parent,
         col: args.new!.startPosition.x,
         row: args.new!.startPosition.y,
@@ -228,13 +228,13 @@ class DragAction {
     if (isNew) {
       const snapshot = newNode.snapshot;
       const widget = WebloomWidgets[this.newType as WidgetTypes];
-      widget.config.children?.map((child) => {
+      widget.config.bluePrint?.map((child) => {
         child.id = getNewWidgetName(child.type as WidgetTypes);
       });
       const nodePayload: AddWidgetPayload = {
         ...snapshot,
         id: id,
-        children: widget.config.children,
+        bluePrint: widget.config.bluePrint,
       };
 
       command = {

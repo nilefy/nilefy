@@ -50,10 +50,8 @@ export const config: WidgetConfig = {
     minRows: 24,
   },
   resizingDirection: 'Both',
-  children: [
+  bluePrint: [
     {
-      id: previewId,
-      parentId: '',
       col: 20,
       row: 60,
       columnsCount: 10,
@@ -65,8 +63,6 @@ export const config: WidgetConfig = {
       },
     },
     {
-      id: previewId,
-      parentId: '',
       col: 9,
       row: 60,
       columnsCount: 10,
@@ -78,8 +74,6 @@ export const config: WidgetConfig = {
       },
     },
     {
-      id: previewId,
-      parentId: '',
       col: 2,
       row: 2,
       columnsCount: 5,
