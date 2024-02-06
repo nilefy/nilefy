@@ -1,12 +1,10 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { ClipboardDataT, UndoableCommand, UpdateNodesPayload } from '../types';
+import { ClipboardDataT, UndoableCommand } from '../types';
 import { normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
-import { commandManager } from '../CommandManager';
-import { DeleteAction } from './Delete';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { RemoteTypes } from '../types';
 
@@ -16,7 +14,7 @@ export class PasteAction implements UndoableCommand {
   private mousePos: Point;
   private undoData: ReturnType<
     InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
-  >;
+  > = {};
 
   constructor({
     parent,
