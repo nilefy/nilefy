@@ -6,14 +6,9 @@ import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
 import { commandManager } from '../CommandManager';
-import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { DeleteAction } from './Delete';
 import { WebloomPage } from '@/lib/Editor/Models/page';
-
-type InsertDataT = {
-  node: WebloomWidget['snapshot'];
-  sideEffects: UpdateNodePayload;
-};
+import { RemoteTypes } from '../types';
 
 export class PasteAction implements UndoableCommand {
   private parent: string;
@@ -76,7 +71,7 @@ export class PasteAction implements UndoableCommand {
         .filter((test) => test !== add.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
-      const data: InsertDataT = {
+      const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
         node: editorStore.currentPage.getWidgetById(add.id as string).snapshot,
         sideEffects: affectedNodes,
       };
@@ -97,7 +92,7 @@ export class PasteAction implements UndoableCommand {
 
 export class InsertAction implements UndoableCommand {
   constructor(
-    private data: InsertDataT,
+    private data: Extract<RemoteTypes, { event: 'insert' }>['data'],
     private undoData: ReturnType<
       InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
     >,
