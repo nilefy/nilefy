@@ -22,8 +22,13 @@ type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 
 export class WebloomPage {
   id: string;
+  name: string;
+  handle: string;
   widgets: Record<string, WebloomWidget> = {};
   mouseOverWidgetId: string | null = null;
+  /**
+   * please note that those node always in the same level in the widgets tree
+   */
   selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
@@ -42,11 +47,15 @@ export class WebloomPage {
 
   constructor({
     id,
+    name,
+    handle,
     widgets,
     evaluationManger,
     dependencyManager,
   }: {
     id: string;
+    name: string;
+    handle: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
@@ -74,6 +83,8 @@ export class WebloomPage {
       moveWidgetIntoGrid: action,
       moveWidget: action,
       id: observable,
+      name: observable,
+      handle: observable,
       mousePosition: observable,
       setMousePosition: action,
       rootWidget: computed,
@@ -86,6 +97,8 @@ export class WebloomPage {
     this.id = id;
     this.evaluationManger = evaluationManger;
     this.dependencyManager = dependencyManager;
+    this.name = name;
+    this.handle = handle;
     const widgetMap: Record<string, WebloomWidget> = {};
     this.selectedNodeIds = new Set();
     Object.values(widgets).forEach((widget) => {
@@ -206,19 +219,20 @@ export class WebloomPage {
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) return [];
     if (!(id in this.widgets)) return [];
     const stack = [];
-    const widget = this.widgets[id];
-    const toBeDeletedNodes = [widget.id];
+    const toBeDeletedNodes: string[] = [id];
+    // just collect ids of the nodes to be deleted
     function recurse(this: WebloomPage, id: string) {
       const node = this.widgets[id];
       if (!node) return;
       toBeDeletedNodes.push(node.id);
-      const children = node.nodes;
-      for (const child of children) {
-        recurse.call(this, child);
+      const childrenIds = node.nodes;
+      for (const childId of childrenIds) {
+        recurse.call(this, childId);
       }
     }
     if (recursive) recurse.call(this, id);
-    for (const nodeId of toBeDeletedNodes) {
+    while (toBeDeletedNodes.length > 0) {
+      const nodeId = toBeDeletedNodes.pop() as string;
       const node = this.widgets[nodeId];
       if (!node) continue;
       stack.push(node.snapshot);
@@ -310,14 +324,21 @@ export class WebloomPage {
     if (nodePixelBoundingRect.bottom > parentBoundingRect.bottom) {
       const verticalExpansion =
         nodePixelBoundingRect.bottom - parentBoundingRect.bottom + 100;
-      const newRowCount = Math.floor(verticalExpansion / gridrow);
+      const newParentRowCount = Math.floor(verticalExpansion / gridrow);
       if (parent.isRoot) {
         parent.setDimensions({
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
+        return {
+          ...changedNodesOriginalCoords,
+          [parent.id]: {
+            ...parent.gridDimensions,
+            rowsCount: parent.rowsCount - newParentRowCount,
+          },
+        };
       } else {
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,

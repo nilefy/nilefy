@@ -16,6 +16,7 @@ type WebloomAdapterProps = {
   draggable?: boolean;
   droppable?: boolean;
   resizable?: boolean;
+  isPreview: boolean;
 };
 
 export const WebloomAdapter = observer((props: WebloomAdapterProps) => {

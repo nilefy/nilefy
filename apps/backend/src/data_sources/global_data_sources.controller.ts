@@ -14,7 +14,9 @@ import {
 } from '../dto/data_sources.dto';
 import { GlobalDataSourcesService } from './global_data_sources.service';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('data-sources/global')
 export class GlobalDataSourcesController {
   constructor(private dataSourceService: GlobalDataSourcesService) {}
@@ -34,7 +36,7 @@ export class GlobalDataSourcesController {
 
   @Get(':id')
   async getOne(
-    @Param('id', ParseIntPipe) dataSourceId: DataSourceDto['id'],
+    @Param('id', ParseIntPipe) dataSourceId: number,
   ): Promise<DataSourceDto> {
     return await this.dataSourceService.getOne(dataSourceId);
   }

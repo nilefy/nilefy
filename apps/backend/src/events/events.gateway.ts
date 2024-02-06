@@ -89,8 +89,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleInsert(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
-    payload: {
-      node: WebloomNode;
+    {
+      nodes,
+      sideEffects,
+    }: {
+      nodes: WebloomNode[];
       sideEffects: UpdateNodePayload;
     },
   ) {
@@ -105,21 +108,18 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.db.transaction(async (tx) => {
         await this.componentsService.create(
-          {
-            ...payload.node,
+          nodes.map((node) => ({
+            ...node,
             pageId: socket.pageId,
             createdById: user.userId,
-          },
+          })),
           {
-            // eslint-disable-next-line
-            // @ts-ignore
             tx,
           },
         );
         await Promise.all(
-          payload.sideEffects.map((c) => {
+          sideEffects.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            // const { columnWidth, nodes, dom, ...temp } = c;
             const temp = pick(c, frontKnownKeys);
             return this.componentsService.update(
               socket.pageId,
@@ -129,16 +129,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 updatedById: user.userId,
               },
               {
-                // eslint-disable-next-line
-                // @ts-ignore
                 tx,
               },
             );
           }),
         );
       });
-      console.log('ADDED COMPONENT');
-      return `done ${payload.node.id}`;
+      console.log('ADDED COMPONENT/s');
+      return `done ${nodes[0]?.id}`;
     } catch (e) {
       console.log(e);
       throw new WsException(e.message);
@@ -163,7 +161,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return await Promise.all(
           payload.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
-            // const { columnWidth, nodes, dom, ...temp } = c;
             const temp = pick(c, frontKnownKeys);
             return this.componentsService.update(
               socket.pageId,
@@ -173,7 +170,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 updatedById: user.userId,
               },
               {
-                // @ts-ignore
                 tx,
               },
             );
@@ -191,7 +187,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('delete')
   async handleDelete(
     @ConnectedSocket() socket: LoomSocket,
-    @MessageBody() payload: WebloomNode['id'][],
+    @MessageBody()
+    {
+      nodesId,
+      sideEffects,
+    }: {
+      nodesId: WebloomNode['id'][];
+      sideEffects: UpdateNodePayload;
+    },
   ) {
     const user = socket.user;
     if (user === null) {
@@ -200,8 +203,27 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     try {
-      await this.componentsService.delete(socket.pageId, payload);
-      console.log('DELETED COMPONENT/s');
+      this.db.transaction(async (tx) => {
+        await this.componentsService.delete(socket.pageId, nodesId, { tx });
+        await Promise.all(
+          sideEffects.map((c) => {
+            // clear all columns that not on the db(i hate drizzzle already)
+            const temp = pick(c, frontKnownKeys);
+            return this.componentsService.update(
+              socket.pageId,
+              c.id,
+              {
+                ...temp,
+                updatedById: user.userId,
+              },
+              {
+                tx,
+              },
+            );
+          }),
+        );
+      });
+      console.log('DELETED COMPONENT/s ' + nodesId);
       return `done`;
     } catch (e) {
       console.log(e);

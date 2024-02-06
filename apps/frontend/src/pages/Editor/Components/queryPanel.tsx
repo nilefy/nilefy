@@ -101,7 +101,7 @@ const QueryItem = observer(function QueryItem({
         </Button>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-full w-full p-4">
+      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
         <Label className="flex items-center gap-4">
           Data Source
           <Select

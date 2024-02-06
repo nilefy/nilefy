@@ -1,31 +1,17 @@
-// import store, { convertGridToPixel } from '@/store';
 import { editorStore } from '@/lib/Editor/Models';
-import { Command, UndoableCommand } from '../types';
+import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
 import { Point } from '@/types';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { convertGridToPixel } from '@/lib/Editor/utils';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
 type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
 >[0];
-
-// const {
-//   moveNodeIntoGrid,
-//   moveNode,
-//   getGridSize,
-//   getBoundingRect,
-//   setShadowElement,
-//   addNode,
-//   removeNode,
-//   setDraggedNode,
-//   setDimensions,
-//   getPixelDimensions,
-//   getDropCoordinates,
-// } = store.getState();
 
 class DragAction {
   private static isNew = false;
@@ -115,7 +101,7 @@ class DragAction {
   }
 
   private static _move(
-    mouseCurrentPosition: Point,
+    _mouseCurrentPosition: Point,
     delta: Point,
     overId: string | undefined,
   ) {
@@ -232,13 +218,10 @@ class DragAction {
       command = {
         execute: () => {
           editorStore.currentPage.addWidget(nodePayload);
-          // addNode(newNode, newNode.parent!);
           undoData = editorStore.currentPage.moveWidgetIntoGrid(
             id,
             endPosition,
           );
-          // undoData = moveNodeIntoGrid(id, endPosition);
-
           // return data means this data should be sent to the server
           const affectedNodes = Object.keys(undoData)
             .filter((test) => test !== id)
@@ -247,7 +230,7 @@ class DragAction {
           return {
             event: 'insert' as const,
             data: {
-              node: editorStore.currentPage.getWidgetById(id).snapshot,
+              nodes: [editorStore.currentPage.getWidgetById(id).snapshot],
               sideEffects: affectedNodes,
             },
           };
@@ -258,11 +241,23 @@ class DragAction {
             newIds.delete(id);
             return newIds;
           });
-
+          const sideEffects: WebloomWidget['snapshot'][] = [];
           editorStore.currentPage.removeWidget(id);
-          Object.entries(undoData).forEach(([id, coords]) => {
-            editorStore.currentPage.getWidgetById(id).setDimensions(coords);
-          });
+          Object.entries(undoData)
+            .filter(([key]) => key !== id)
+            .forEach(([id, coords]) => {
+              editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+              sideEffects.push(
+                editorStore.currentPage.getWidgetById(id).snapshot,
+              );
+            });
+          return {
+            event: 'delete' as const,
+            data: {
+              nodesId: [id],
+              sideEffects,
+            },
+          };
         },
       };
     } else {
@@ -278,6 +273,7 @@ class DragAction {
           const remoteData = [
             editorStore.currentPage.getWidgetById(id).snapshot,
             ...Object.keys(undoData)
+              // sometimes the widget being dragged exist in the undoData sometimes it don't(maybe needs a fix?)
               .filter((test) => test !== id)
               .map((k) => editorStore.currentPage.getWidgetById(k).snapshot),
           ];
@@ -287,18 +283,24 @@ class DragAction {
           };
         },
         undo: () => {
+          const serverData: UpdateNodesPayload = [];
           Object.entries(undoData).forEach(([id, coords]) => {
             editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+            serverData.push(editorStore.currentPage.getWidgetById(id).snapshot);
           });
+
           if (movedToNewParent) {
             editorStore.currentPage.moveWidget(id, oldParentId);
           }
-          editorStore.currentPage.getWidgetById(id).setDimensions(
-            {
-              col: startPosition.x,
-              row: startPosition.y,
-            }!,
-          );
+          editorStore.currentPage.getWidgetById(id).setDimensions({
+            col: startPosition.x,
+            row: startPosition.y,
+          });
+          serverData.push(editorStore.currentPage.getWidgetById(id).snapshot);
+          return {
+            event: 'update',
+            data: serverData,
+          };
         },
       };
     }

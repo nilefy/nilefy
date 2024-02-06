@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  toJS,
+} from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -7,10 +14,12 @@ import { EvaluationManager } from './evaluationManager';
 import { analyzeDependancies } from '../dependancyUtils';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
-import { RuntimeEvaluable } from './interfaces';
 
 export class EditorState {
   inited: boolean = false;
+  /**
+   * @description [id]: page
+   */
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery> = {};
   currentPageId: string = '';
@@ -18,6 +27,10 @@ export class EditorState {
     editor: this,
   });
   evaluationManger: EvaluationManager = new EvaluationManager(this);
+  /**
+   * application name
+   */
+  name: string = 'New Application';
 
   constructor() {
     makeObservable(this, {
@@ -28,6 +41,7 @@ export class EditorState {
         keepAlive: true,
         equals: comparer.shallow,
       }),
+      name: observable,
       currentPage: computed,
       changePage: action,
       addPage: action,
@@ -49,10 +63,12 @@ export class EditorState {
   }
 
   init({
+    name = 'New Application',
     pages: pages = [],
     currentPageId = '',
-    queries,
+    queries = [],
   }: {
+    name: string;
     pages: Omit<
       ConstructorParameters<typeof WebloomPage>[0],
       'dependencyManager' | 'evaluationManger'
@@ -63,8 +79,8 @@ export class EditorState {
       'dependencyManager' | 'evaluationManger'
     >[];
   }) {
-    console.log('init');
     this.cleanUp();
+    this.name = name;
     seedNameMap([
       ...Object.values(pages[0].widgets).map((w) => w.type),
       ...queries.map((q) => q.dataSource.name),
@@ -78,8 +94,9 @@ export class EditorState {
       });
     });
     this.currentPageId = currentPageId;
+    // NOTE: backend should create page by default
     if (pages.length === 0) {
-      this.addPage('page1');
+      this.addPage('page1', 'page1', 'page1');
       this.currentPageId = 'page1';
     }
     if (!this.currentPageId) {
@@ -110,22 +127,7 @@ export class EditorState {
         }
       }
     });
-    // analyze queries props to create the initial graph
-    Object.values(this.queries).forEach((query) => {
-      for (const prop in query.unEvaluatedConfig) {
-        const value = query.unEvaluatedConfig[prop];
-        const { dependencies, isCode } = analyzeDependancies(
-          value,
-          prop,
-          query.id,
-          this.context,
-        );
-        if (isCode) {
-          this.evaluationManger.setRawValueIsCode(query.id, prop, true);
-          allDependencies.push(...dependencies);
-        }
-      }
-    });
+
     this.dependencyManager.addDependencies(allDependencies);
   }
 
@@ -152,20 +154,23 @@ export class EditorState {
     return this.pages[this.currentPageId];
   }
 
-  changePage(id: string) {
+  changePage(id: string, name: string, handle: string) {
     if (!this.pages[id]) {
-      this.addPage(id);
+      this.addPage(id, name, handle);
       this.currentPageId = id;
     } else {
       this.currentPageId = id;
     }
   }
-  addPage(id: string) {
+
+  addPage(id: string, name: string, handle: string) {
     this.pages[id] = new WebloomPage({
       id,
-      widgets: {},
+      name,
+      handle,
       dependencyManager: this.dependencyManager,
       evaluationManger: this.evaluationManger,
+      widgets: {},
     });
   }
 
