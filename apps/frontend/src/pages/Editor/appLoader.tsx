@@ -1,9 +1,9 @@
 import { commandManager } from '@/Actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomPage } from '@/lib/Editor/Models/page';
-import { seedNameMap } from '@/lib/Editor/widgetName';
+
 import { getToken, removeToken } from '@/lib/token.localstorage';
 import { JwtPayload } from '@/types/auth.types';
 import { QueryClient } from '@tanstack/react-query';
@@ -32,12 +32,25 @@ export const appLoader =
         removeToken();
         return redirect('/signin');
       }
-      const query = useAppQuery({
+      const workspaceId = params.workspaceId;
+      const appId = params.appId;
+      if (!workspaceId || !appId) {
+        throw new Error('use this loader under :workspaceId and :appId');
+      }
+      // Fetch queries
+      const queriesQuery = useQueriesQuery(+workspaceId, +appId);
+
+      // Fetch the app data
+      const appQuery = useAppQuery({
         workspaceId: +(params.workspaceId as string),
         appId: +(params.appId as string),
       });
+      const values = Promise.all([
+        queryClient.fetchQuery(appQuery),
+        queryClient.fetchQuery(queriesQuery),
+      ]);
       return defer({
-        app: queryClient.fetchQuery(query),
+        values,
       });
     }
   };
@@ -51,33 +64,32 @@ type AppLoaderProps = {
 };
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
-  const app = useAsyncValue() as AppCompleteT;
+  const [app, queries] = useAsyncValue() as [
+    app: AppCompleteT,
+    queries: Awaited<ReturnType<typeof getQueries>>,
+  ];
+  console.log('app', app);
+  console.log('queries', queries);
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
   const inited = useRef(false);
   if (!inited.current) {
-    seedNameMap(Object.values(tree));
     editorStore.init({
       name: app.name,
+      queries,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
-        new WebloomPage({
+        {
           id: app.defaultPage.id.toString(),
           name: app.defaultPage.name,
           handle: app.defaultPage.handle,
           widgets: tree,
-          queries: {},
-        }),
-        ...app.pages.map(
-          (p) =>
-            new WebloomPage({
-              id: p.id.toString(),
-              name: p.name,
-              handle: p.handle,
-              widgets: tree,
-              queries: {},
-            }),
-        ),
+        },
+        ...app.pages.map((p) => ({
+          id: p.id.toString(),
+          name: p.name,
+          handle: p.handle,
+        })),
       ],
     });
     inited.current = true;
@@ -93,11 +105,11 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
 };
 
 export function AppLoader(props: AppLoaderProps) {
-  const { app } = useLoaderData();
+  const { values } = useLoaderData();
 
   return (
     <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={app}>
+      <Await resolve={values}>
         <AppResolved {...props} />
       </Await>
     </Suspense>

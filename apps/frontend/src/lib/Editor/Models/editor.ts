@@ -1,11 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  action,
-  computed,
-  comparer,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, action, computed, comparer } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -14,6 +7,8 @@ import { EvaluationManager } from './evaluationManager';
 import { analyzeDependancies } from '../dependancyUtils';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
+
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export class EditorState {
   inited: boolean = false;
@@ -69,9 +64,12 @@ export class EditorState {
     queries = [],
   }: {
     name: string;
-    pages: Omit<
-      ConstructorParameters<typeof WebloomPage>[0],
-      'dependencyManager' | 'evaluationManger'
+    pages: Optional<
+      Omit<
+        ConstructorParameters<typeof WebloomPage>[0],
+        'dependencyManager' | 'evaluationManger'
+      >,
+      'widgets'
     >[];
     currentPageId: string;
     queries: Omit<
@@ -82,15 +80,19 @@ export class EditorState {
     this.cleanUp();
     this.name = name;
     seedNameMap([
-      ...Object.values(pages[0].widgets).map((w) => w.type),
+      ...Object.values(pages[0].widgets || {}).map((w) => w.type),
       ...queries.map((q) => q.dataSource.name),
     ]);
     // create resources needed for the editor
-    pages.forEach((page) => {
+    pages.forEach((page, index) => {
+      // TODO: remove this check
+      if (index !== 0) return;
       this.pages[page.id] = new WebloomPage({
         ...page,
         evaluationManger: this.evaluationManger,
         dependencyManager: this.dependencyManager,
+        // Todo fix this
+        widgets: page.widgets || {},
       });
     });
     this.currentPageId = currentPageId;
