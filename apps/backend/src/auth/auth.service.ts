@@ -64,7 +64,7 @@ export class AuthService {
     }
     //todo fix compare always returns false.
     //! this is important
-    const match = await compare(password, ret.password);
+    const match = await compare(password, ret.password); //? always returns false?
     if (!match) {
       throw new BadRequestException('Incorrect Password!');
     }
