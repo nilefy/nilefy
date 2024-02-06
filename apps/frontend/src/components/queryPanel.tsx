@@ -137,13 +137,13 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
             </div>
             <div className="flex flex-row gap-2 self-center justify-self-stretch ">
               <Button
-                variant={showRawResult ? 'default' : 'outline'}
+                variant={showRawResult ? 'outline' : 'default'}
                 onClick={() => setShowRawResult(false)}
               >
                 JSON
               </Button>
               <Button
-                variant={showRawResult ? 'outline' : 'default'}
+                variant={showRawResult ? 'default' : 'outline'}
                 onClick={() => setShowRawResult(true)}
               >
                 Raw
@@ -152,13 +152,14 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
           </div>
           <div className="flex flex-col gap-3  bg-slate-100 py-5">
             <div id="resultJSON" ref={jsonResultRef}>
-              {showRawResult ? (
-                <div className="text-md px-4 text-left leading-relaxed">
-                  {JSON.stringify(queryResult)}{' '}
-                </div>
-              ) : (
-                <ReactJson src={queryResult} />
-              )}
+              {queryResult &&
+                (showRawResult ? (
+                  <div className="text-md px-4 text-left leading-relaxed">
+                    {JSON.stringify(queryResult)}{' '}
+                  </div>
+                ) : (
+                  <ReactJson src={queryResult} />
+                ))}
             </div>
           </div>
         </div>
