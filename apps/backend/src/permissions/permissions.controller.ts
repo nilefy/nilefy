@@ -1,7 +1,9 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtGuard } from '../auth/jwt.guard';
 import { PermissionsService } from './permissions.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('permissions')
 export class PermissionsController {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { pages as pagesDrizzle } from '../drizzle/schema/appsState.schema';
+import { createZodDto } from 'nestjs-zod';
 
 export const pageSchema = createSelectSchema(pagesDrizzle);
 
@@ -31,7 +32,8 @@ export const updatePageSchema = createPageDb
   })
   .partial();
 
-export type PageDto = z.infer<typeof pageSchema>;
+// export type PageDto = z.infer<typeof pageSchema>;
+export class PageDto extends createZodDto(pageSchema) {}
 /**
  * insert in the db interface
  */
@@ -39,6 +41,8 @@ export type CreatePageDb = z.infer<typeof createPageDb>;
 /**
  * API insert interface
  */
-export type CreatePageDto = z.infer<typeof createPageSchema>;
+// export type CreatePageDto = z.infer<typeof createPageSchema>;
 export type UpdatePageDb = z.infer<typeof updatePageDb>;
-export type UpdatePageDto = z.infer<typeof updatePageSchema>;
+// export type UpdatePageDto = z.infer<typeof updatePageSchema>;
+export class CreatePageDto extends createZodDto(createPageSchema) {}
+export class UpdatePageDto extends createZodDto(updatePageSchema) {}

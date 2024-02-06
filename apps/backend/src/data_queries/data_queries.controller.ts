@@ -22,19 +22,26 @@ import {
   UpdateQueryDto,
   runQueryBody,
   RunQueryBody,
+  deleteDatasourceQueriesSchema,
+  DeleteDatasourceQueriesDto,
 } from '../dto/data_queries.dto';
 import { QueryRet } from './query.types';
-import { WorkspaceDto } from '../dto/workspace.dto';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/queries')
 export class DataQueriesController {
   constructor(private dataQueriesService: DataQueriesService) {}
 
   @Post('run/:queryId')
+  @ApiCreatedResponse({
+    description: 'query return type',
+    type: QueryRet,
+  })
   async runQuery(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
+    workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Param('queryId', ParseIntPipe) queryId: number,
     // any query should send its evaluated config
@@ -49,7 +56,13 @@ export class DataQueriesController {
   }
 
   @Post('add')
+  @ApiCreatedResponse({
+    description: 'to create new query in application',
+    type: QueryDto,
+  })
   async addQuery(
+    @Param('workspaceId', ParseIntPipe)
+    _workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
@@ -84,9 +97,12 @@ export class DataQueriesController {
 
   @Delete()
   async deleteDataSourceQueries(
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Body(deleteDatasourceQueriesSchema)
+    body: DeleteDatasourceQueriesDto,
   ): Promise<QueryDto[]> {
-    return await this.dataQueriesService.deleteDataSourceQueries(dataSourceId);
+    return await this.dataQueriesService.deleteDataSourceQueries(
+      body.dataSourceId,
+    );
   }
 
   @Put(':id')

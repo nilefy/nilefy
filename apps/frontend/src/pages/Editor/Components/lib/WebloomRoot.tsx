@@ -5,7 +5,14 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useSetDom } from '@/hooks';
 import { observer } from 'mobx-react-lite';
 
-export const WebloomRoot = observer(function WebloomRoot() {
+export const WebloomRoot = observer(function WebloomRoot({
+  isPreview,
+}: {
+  /**
+   * true to remove any drag n drop/resizing/ editing of any kind
+   */
+  isPreview: boolean;
+}) {
   const root = editorStore.currentPage.rootWidget;
   const nodes = root.nodes;
   const ref = useRef<HTMLDivElement>(null);
@@ -46,10 +53,14 @@ export const WebloomRoot = observer(function WebloomRoot() {
 
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
+      <WebloomAdapter
+        droppable={!isPreview}
+        id={EDITOR_CONSTANTS.ROOT_NODE_ID}
+        isPreview={isPreview}
+      >
         <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
-        {nodes.map((node) => (
-          <WebloomElement id={node} key={node} />
+        {nodes.map((nodeId) => (
+          <WebloomElement isPreview={isPreview} id={nodeId} key={nodeId} />
         ))}
       </WebloomAdapter>
     </div>

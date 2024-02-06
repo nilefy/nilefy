@@ -7,7 +7,7 @@ export type ClipboardDataT = {
   nodes: Map<string, WidgetSnapshot>;
 };
 
-export type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {
+export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
 })[];
 
@@ -15,17 +15,20 @@ export type RemoteTypes =
   | {
       event: 'insert';
       data: {
-        node: WebloomWidget['snapshot'];
-        sideEffects: UpdateNodePayload;
+        nodes: WebloomWidget['snapshot'][];
+        sideEffects: UpdateNodesPayload;
       };
     }
   | {
       event: 'update';
-      data: UpdateNodePayload;
+      data: UpdateNodesPayload;
     }
   | {
       event: 'delete';
-      data: WebloomWidget['id'][];
+      data: {
+        nodesId: WebloomWidget['id'][];
+        sideEffects: UpdateNodesPayload;
+      };
     };
 
 export abstract class Command {
@@ -33,7 +36,7 @@ export abstract class Command {
 }
 
 export abstract class UndoableCommand extends Command {
-  abstract undo(): void;
+  abstract undo(): void | RemoteTypes;
 }
 
 export function isUndoableCommand(cmd: Command): cmd is UndoableCommand {

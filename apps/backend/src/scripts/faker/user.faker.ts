@@ -14,5 +14,7 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
     deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
+    avatar: null,
+    emailVerified: null,
   };
 }

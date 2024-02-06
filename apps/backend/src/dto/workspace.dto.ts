@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { workspaces as workspacesDrizzle } from '../drizzle/schema/schema';
+import { createZodDto } from 'nestjs-zod';
 
 export const workspaceSchema = createSelectSchema(workspacesDrizzle, {
   name: (schema) => schema.name.min(3).max(255),
@@ -33,8 +34,11 @@ export const updateWorkspaceDb = createWorkspaceDb.partial().extend({
 });
 export const updateWorkspaceSchema = createWorkspaceSchema.partial();
 
-export type WorkspaceDto = z.infer<typeof workspaceSchema>;
+// export type WorkspaceDto = z.infer<typeof workspaceSchema>;
+export class WorkspaceDto extends createZodDto(workspaceSchema) {}
 export type CreateWorkspaceDb = z.infer<typeof createWorkspaceDb>;
-export type CreateWorkspaceDto = z.infer<typeof createWorkspaceSchema>;
-export type UpdateWorkspaceDto = z.infer<typeof updateWorkspaceSchema>;
+// export type CreateWorkspaceDto = z.infer<typeof createWorkspaceSchema>;
+// export type UpdateWorkspaceDto = z.infer<typeof updateWorkspaceSchema>;
+export class CreateWorkspaceDto extends createZodDto(createWorkspaceSchema) {}
+export class UpdateWorkspaceDto extends createZodDto(updateWorkspaceSchema) {}
 export type UpdateWorkspaceDb = z.infer<typeof updateWorkspaceDb>;

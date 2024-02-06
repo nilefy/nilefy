@@ -6,12 +6,6 @@ import { JwtPayload } from '@/types/auth.types';
 import { jwtDecode } from 'jwt-decode';
 import { FetchXError } from '@/utils/fetch';
 
-// Define types
-// import { useAuth } from '@/providers/AuthProvider';
-export const QUERY_KEY = {
-  webloom: 'webloom',
-  user: 'user',
-};
 export function useSignUp() {
   const navigate = useNavigate();
   const { setUser, setToken } = useAuthStore();
