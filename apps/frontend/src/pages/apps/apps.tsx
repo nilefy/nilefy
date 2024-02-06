@@ -52,7 +52,6 @@ import {
   Link,
   defer,
   redirect,
-  useAsyncError,
   useLoaderData,
   useParams,
 } from 'react-router-dom';
@@ -71,7 +70,6 @@ import { getToken, removeToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
 import { WebloomLoader } from '@/components/loader';
-import { FetchXError } from '@/utils/fetch';
 import { DebouncedInput } from '@/components/debouncedInput';
 
 export const appsLoader =
@@ -331,15 +329,6 @@ function CreateAppDialog() {
   );
 }
 
-function AppsLoadError() {
-  const error = useAsyncError() as FetchXError;
-  return (
-    <div className="h-screen w-screen content-center items-center text-red-500">
-      errors while loading app &quot;{error.message}&quot;
-    </div>
-  );
-}
-
 function ApplicationsViewResolved() {
   const { workspaceId } = useParams();
   const [appsQuery, setAppsQuery] = useState('');
@@ -414,7 +403,7 @@ function ApplicationsView() {
 
   return (
     <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={apps} errorElement={<AppsLoadError />}>
+      <Await resolve={apps}>
         <ApplicationsViewResolved />
       </Await>
     </Suspense>
