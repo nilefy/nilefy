@@ -24,7 +24,7 @@ import { cloneDeep, get } from 'lodash';
 export type RuntimeProps = Record<string, unknown>;
 type EvaluatedRunTimeProps = SnapshotProps;
 export type SnapshotProps = Record<string, unknown>;
-
+type childtype = Parameters<InstanceType<typeof WebloomPage>['addWidget']>[0];
 export class WebloomWidget
   implements
     Snapshotable<
@@ -38,7 +38,7 @@ export class WebloomWidget
   id: string;
   dom: HTMLElement | null;
   nodes: string[];
-  children: object[];
+  children: childtype[];
   parentId: string;
   rawValues: RuntimeProps;
   type: WidgetTypes;
@@ -67,7 +67,7 @@ export class WebloomWidget
     col: number;
     id?: string;
     nodes?: string[];
-    children?: object[];
+    children?: childtype[];
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;

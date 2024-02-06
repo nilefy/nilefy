@@ -25,6 +25,7 @@ export const WebloomElement = observer(function WebloomElement({
   id: string;
 }) {
   const tree = editorStore.currentPage.getWidgetById(id);
+  console.log(tree, 'tree');
   const nodes = tree.nodes;
 
   const onPropChange = useCallback(

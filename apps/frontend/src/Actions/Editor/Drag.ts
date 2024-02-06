@@ -8,6 +8,7 @@ import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { convertGridToPixel, normalize } from '@/lib/Editor/utils';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
+import { Children } from 'react';
 
 type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
@@ -227,11 +228,15 @@ class DragAction {
     if (isNew) {
       const snapshot = newNode.snapshot;
       const widget = WebloomWidgets[this.newType as WidgetTypes];
+      widget.config.children?.map((child) => {
+        child.id = getNewWidgetName(child.type as WidgetTypes);
+      });
       const nodePayload: AddWidgetPayload = {
         ...snapshot,
         id: id,
         children: widget.config.children,
       };
+
       command = {
         execute: () => {
           editorStore.currentPage.addWidget(nodePayload);

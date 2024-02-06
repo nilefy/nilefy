@@ -1,5 +1,6 @@
 import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
+import { WebloomPage } from './Models/page';
 
 type BaseControlProps = {
   id: string;
@@ -114,6 +115,7 @@ export interface LayoutConfig {
   colsCount: number;
   rowsCount: number;
 }
+type childtype = Parameters<InstanceType<typeof WebloomPage>['addWidget']>[0];
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
   icon: ReactNode;
@@ -121,7 +123,7 @@ export interface WidgetConfig {
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
-  children?: Array<object>;
+  children?: childtype[];
 }
 // key is the id of the node and the array are keys of props
 /**
