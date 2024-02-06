@@ -1,7 +1,7 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { ClipboardDataT, UndoableCommand, UpdateNodePayload } from '../types';
+import { ClipboardDataT, UndoableCommand, UpdateNodesPayload } from '../types';
 import { normalize } from '@/lib/Editor/utils';
-import { Point, WidgetSnapshot } from '@/types';
+import { Point } from '@/types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
@@ -14,6 +14,9 @@ export class PasteAction implements UndoableCommand {
   private parent: string;
   private data: ClipboardDataT;
   private mousePos: Point;
+  private undoData: ReturnType<
+    InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
+  >;
 
   constructor({
     parent,
@@ -34,7 +37,6 @@ export class PasteAction implements UndoableCommand {
 
   paste(node: string, parent: string, change?: { dx: number; dy: number }) {
     const snapshot = this.data.nodes.get(node)!;
-    console.log(snapshot);
     const id = getNewWidgetName(snapshot.type as WidgetTypes);
 
     snapshot.id = id;
@@ -63,6 +65,10 @@ export class PasteAction implements UndoableCommand {
       this.paste(node, this.parent, { dx: x, dy: y });
     }
 
+    const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
+      nodes: [],
+      sideEffects: [],
+    };
     for (const snapshot of this.data.nodes.values()) {
       const add: AddWidgetPayload = {
         ...snapshot,
@@ -70,53 +76,47 @@ export class PasteAction implements UndoableCommand {
       };
       editorStore.currentPage.addWidget(add);
 
-      const undoData: ReturnType<
-        InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
-      > = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {});
-      const affectedNodes: UpdateNodePayload = Object.keys(undoData)
+      const ret = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {});
+      const affectedNodes = Object.keys(ret)
         .filter((test) => test !== add.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
-      const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
-        node: editorStore.currentPage.getWidgetById(add.id as string).snapshot,
-        sideEffects: affectedNodes,
+      this.undoData = {
+        ...this.undoData,
+        ...ret,
       };
-      commandManager.executeCommand(new InsertAction(data, undoData));
+      data.sideEffects.push(...affectedNodes);
+      data.nodes.push(
+        editorStore.currentPage.getWidgetById(add.id as string).snapshot,
+      );
     }
-  }
-
-  undo() {
-    const data = [...this.data.nodes.values()].map((node) => node.id!);
-    commandManager.executeCommand(new DeleteAction(data));
-
-    let count = data.length + 1;
-    while (count--) {
-      commandManager.undoCommand();
-    }
-  }
-}
-
-export class InsertAction implements UndoableCommand {
-  constructor(
-    private data: Extract<RemoteTypes, { event: 'insert' }>['data'],
-    private undoData: ReturnType<
-      InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
-    >,
-  ) {}
-
-  execute() {
     return {
       event: 'insert' as const,
-      data: this.data,
+      data,
     };
   }
 
   undo() {
-    editorStore.currentPage.removeWidget(this.data.node.id);
+    const data = [...this.data.nodes.values()].map((node) => {
+      editorStore.currentPage.removeWidget(node.id!);
+      return node.id!;
+    });
+    const sideEffects: Extract<
+      RemoteTypes,
+      { event: 'delete' }
+    >['data']['sideEffects'] = [];
     Object.entries(this.undoData).forEach(([id, coords]) => {
-      if (id !== this.data.node.id) {
+      if (!data.includes(id)) {
         editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+        sideEffects.push(editorStore.currentPage.getWidgetById(id).snapshot);
       }
     });
+    return {
+      event: 'delete' as const,
+      data: {
+        nodesId: data,
+        sideEffects,
+      },
+    };
   }
 }
