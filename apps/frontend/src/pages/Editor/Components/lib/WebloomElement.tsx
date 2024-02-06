@@ -18,6 +18,7 @@ import {
   preventOverflow,
   flip,
 } from '@popperjs/core';
+import { Trash2 } from 'lucide-react';
 export const WebloomElement = observer(function WebloomElement({
   id,
 }: {
@@ -40,19 +41,22 @@ export const WebloomElement = observer(function WebloomElement({
     };
   }, [onPropChange, id]);
   const WebloomWidget = WebloomWidgets[tree.type].component as ElementType;
-  // const selectedNode = Array.from(editorStore.currentPage.selectedNodeIds);
-  // console.log(id,"id");
-  // useEffect(() => {
-  //   createPopper(
+
+  const selectedNode = editorStore.currentPage.firstSelectedWidget;
+  const dims = selectedNode
+    ? editorStore.currentPage.getWidgetById(selectedNode).pixelDimensions
+    : null;
+  useEffect(() => {
+    createPopper(
       //@ts-expect-error bla
-  //     document.querySelector(`[data-id="${id}"]`),
-  //     document.querySelector(`#${selectedNode[0]}`),
-  //     {
-  //       placement: 'top',
-  //       modifiers: [preventOverflow, flip],
-  //     },
-  //   );
-  // }, [selectedNode[0]]);
+      document.querySelector(`[data-id="${selectedNode}"]`),
+      document.querySelector(`#${selectedNode}`),
+      {
+        placement: 'top',
+        modifiers: [preventOverflow, flip],
+      },
+    );
+  }, [selectedNode, dims?.y]);
 
   if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
 
@@ -63,11 +67,24 @@ export const WebloomElement = observer(function WebloomElement({
           {tree.isCanvas && <Grid id={id} />}
           <WidgetContext.Provider value={contextValue}>
             <WebloomWidget>
-              {/* <div id={selectedNode[0]} role="tooltip">
-                {selectedNode[0]}
-              </div> */}
               {nodes.map((node) => (
-                <WebloomElement id={node} key={node} />
+                <>
+                  {selectedNode == node && (
+                    <WebloomAdapter draggable droppable overflow id={node}>
+                      <div
+                        id={node}
+                        role="tooltip"
+                        key={node}
+                        className=" flex justify-between items-center absolute !translate-x-0 !-top-5 h-5 w-20 bg-blue-500 text-sm text-white"
+                      >
+                        <p>{node}</p>
+
+                        <Trash2 size={16} />
+                      </div>
+                    </WebloomAdapter>
+                  )}
+                  <WebloomElement id={node} key={node} />
+                </>
               ))}
             </WebloomWidget>
           </WidgetContext.Provider>

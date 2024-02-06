@@ -16,6 +16,7 @@ type WebloomAdapterProps = {
   draggable?: boolean;
   droppable?: boolean;
   resizable?: boolean;
+  overflow?: boolean;
 };
 
 export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
@@ -28,7 +29,7 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, width, height } =
     editorStore.currentPage.getWidgetById(id).relativePixelDimensions;
-
+  const selectedNode = editorStore.currentPage.firstSelectedWidget;
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useWebloomDraggable({
       id,
@@ -91,7 +92,9 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
       {...attributes}
       style={style}
       ref={ref}
-      className="target relative touch-none overflow-hidden outline-none"
+      className={`target relative touch-none ${
+        !props.overflow ? 'overflow-hidden' : 'overflow-visible'
+      } outline-none`}
       data-id={id}
     >
       {

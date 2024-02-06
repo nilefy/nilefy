@@ -20,7 +20,6 @@ const WebloomForm = observer(({ children }: { children: React.ReactNode }) => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .values as WebloomFormProps;
-  console.log(children, 'child');
   return <Container {...props}>{children}</Container>;
 });
 const widgetName = 'WebloomForm';

@@ -9,6 +9,9 @@ import {
   preventOverflow,
   flip,
 } from '@popperjs/core';
+import { Trash2 } from 'lucide-react';
+import { DeleteAction } from '@/Actions/Editor/Delete';
+import { commandManager } from '@/Actions/CommandManager';
 export const WebloomRoot = observer(function WebloomRoot() {
   const root = editorStore.currentPage.rootWidget;
   const nodes = root.nodes;
@@ -47,30 +50,51 @@ export const WebloomRoot = observer(function WebloomRoot() {
     const height = ref.current?.clientHeight;
     editorStore.currentPage.setPageDimensions({ width, height });
   };
-  console.log(Array.from(editorStore.currentPage.selectedNodeIds), 'kjj');
-  const selectedNode = Array.from(editorStore.currentPage.selectedNodeIds);
-  // useEffect(() => {
-  createPopper(
-    //@ts-expect-error bla
-    document.querySelector(`[data-id="${selectedNode[0]}"]`),
-    document.querySelector(`#${selectedNode[0]}`),
-    {
-      placement: 'top',
-      modifiers: [preventOverflow, flip],
-    },
-  );
-  //}, [selectedNode[0]]);
 
+  const selectedNode = editorStore.currentPage.firstSelectedWidget;
+  const selectedNodeParent = selectedNode
+    ? editorStore.currentPage.getWidgetById(selectedNode).parentId
+    : null;
+  const dims = selectedNode
+    ? editorStore.currentPage.getWidgetById(selectedNode).pixelDimensions
+    : null;
+
+  useEffect(() => {
+    createPopper(
+      //@ts-expect-error bla
+      document.querySelector(`[data-id="${selectedNode}"]`),
+      document.querySelector(`#${selectedNode}`),
+      {
+        placement: 'top',
+        modifiers: [preventOverflow, flip],
+      },
+    );
+  }, [selectedNode, dims?.y]);
   return (
     <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
       <WebloomAdapter droppable id={EDITOR_CONSTANTS.ROOT_NODE_ID}>
         <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
+        {selectedNodeParent == EDITOR_CONSTANTS.ROOT_NODE_ID && (
+          <WebloomAdapter draggable droppable overflow id={selectedNode}>
+            <div
+              id={selectedNode}
+              role="tooltip"
+              key={selectedNode}
+              className="!left-0  h-5 w-full text-sm text-white"
+            >
+              <div className="bg-blue-500 w-20 flex items-center justify-between">
+                <p>{selectedNode}</p>
+
+                <Trash2 size={16} />
+              </div>
+            </div>
+          </WebloomAdapter>
+        )}
         {nodes.map((node) => (
-          <WebloomElement id={node} key={node} />
+          <>
+            <WebloomElement id={node} key={node} />
+          </>
         ))}
-        <div id={selectedNode[0]} role="tooltip">
-          {selectedNode[0]}
-        </div>
       </WebloomAdapter>
     </div>
   );
