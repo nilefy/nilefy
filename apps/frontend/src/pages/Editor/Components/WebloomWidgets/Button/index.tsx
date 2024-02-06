@@ -38,7 +38,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomButtonProps = {
+export const defaultProps: WebloomButtonProps = {
   text: 'Button',
   color: 'black',
   event: 'onclick',

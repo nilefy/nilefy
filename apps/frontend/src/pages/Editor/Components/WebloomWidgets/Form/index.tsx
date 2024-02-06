@@ -6,10 +6,7 @@ import { ComponentPropsWithoutRef, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { WidgetContext } from '../..';
-import { WebloomButton } from '../Button';
-import { WebloomWidgets } from '@/pages/Editor/Components';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { getNewWidgetName } from '@/lib/Editor/widgetName';
 
 const previewId = EDITOR_CONSTANTS.PREVIEW_NODE_ID;
 type WebloomFormProps = {
@@ -47,8 +44,8 @@ export const config: WidgetConfig = {
   icon: <ClipboardType />,
   isCanvas: true,
   layoutConfig: {
-    colsCount: 10,
-    rowsCount: 44,
+    colsCount: 14,
+    rowsCount: 70,
     minColumns: 5,
     minRows: 24,
   },
@@ -58,31 +55,40 @@ export const config: WidgetConfig = {
       id: previewId,
       parentId: '',
       col: 20,
-      row: 35,
-      colsCount: 5,
+      row: 60,
+      columnsCount: 10,
       rowsCount: 7,
       type: 'WebloomButton',
       nodes: [],
+      props: {
+        text: 'Submit',
+      },
     },
     {
       id: previewId,
       parentId: '',
-      col: 14,
-      row: 35,
-      colsCount: 5,
+      col: 9,
+      row: 60,
+      columnsCount: 10,
       rowsCount: 7,
       type: 'WebloomButton',
       nodes: [],
+      props: {
+        text: 'Reset',
+      },
     },
     {
       id: previewId,
       parentId: '',
       col: 2,
       row: 2,
-      colsCount: 5,
+      columnsCount: 5,
       rowsCount: 7,
       type: 'WebloomText',
       nodes: [],
+      props: {
+        text: 'Form',
+      },
     },
   ],
 };
