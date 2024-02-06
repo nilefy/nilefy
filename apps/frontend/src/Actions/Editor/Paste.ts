@@ -35,7 +35,11 @@ export class PasteAction implements UndoableCommand {
 
   paste(node: string, parent: string, change?: { x: number; y: number }) {
     const snapshot = this.data.nodes.get(node)!;
-    const id = getNewWidgetName(snapshot.type as WidgetTypes);
+
+    let id = snapshot.id!;
+    if (this.data.action === 'copy') {
+      id = getNewWidgetName(snapshot.type as WidgetTypes);
+    }
 
     snapshot.id = id;
     snapshot.parentId = parent;
