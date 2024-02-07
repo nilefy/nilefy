@@ -26,6 +26,7 @@ export class AuthService {
     const r = await compare(password, hashed);
     console.log('compare result:');
     console.log(r);
+    console.log(hashed);
 
     user = { ...user, password: hashed };
     console.log('saved user:');
@@ -33,6 +34,7 @@ export class AuthService {
 
     try {
       const u = await this.usersService.create(user);
+      console.log(u.password);
       const jwt = await this.jwtService.signAsync(
         {
           sub: 1,
@@ -69,11 +71,14 @@ export class AuthService {
     //! this is important
     const match = await compare(password, ret.password); //? always returns false?
     if (!match) {
-      throw new BadRequestException('Incorrect Password!');
+      console.log(ret.password);
+      throw new BadRequestException(
+        'The credentials you provided are incorrect.',
+      );
     }
     const { isConfirmed } = ret;
     if (!isConfirmed) {
-      throw new BadRequestException('Email Not Confirmed');
+      // throw new BadRequestException('Email Not Confirmed');
     }
     return {
       access_token: await this.jwtService.signAsync({
