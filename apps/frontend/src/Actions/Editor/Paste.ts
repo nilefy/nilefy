@@ -16,21 +16,28 @@ export class PasteAction implements UndoableCommand {
     InstanceType<typeof WebloomPage>['moveWidgetIntoGrid']
   > = {};
 
-  constructor({
-    parent,
-    data,
-    mousePos,
-  }: {
-    parent: string;
-    data: ClipboardDataT;
-    mousePos: Point;
-  }) {
-    this.parent = parent;
+  constructor({ data, mousePos }: { data: ClipboardDataT; mousePos: Point }) {
     this.data = {
       ...data,
       nodes: new Map(data.nodes),
     };
     this.mousePos = mousePos;
+
+    let parent = editorStore.currentPage.rootWidget.id;
+    for (const id of editorStore.currentPage.selectedNodeIds) {
+      const { x, y, width, height } =
+        editorStore.currentPage.getWidgetById(id).pixelDimensions;
+      if (
+        mousePos.x > x &&
+        mousePos.x < x + width &&
+        mousePos.y > y &&
+        mousePos.y < y + height
+      ) {
+        parent = id;
+        break;
+      }
+    }
+    this.parent = parent;
   }
 
   paste(node: string, parent: string, change?: { x: number; y: number }) {

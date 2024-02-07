@@ -78,15 +78,12 @@ export const Editor = observer(() => {
   });
 
   useHotkeys('ctrl+v', async () => {
-    const parent = document.activeElement?.getAttribute('data-id');
-    if (!parent) return;
     try {
       const data: ClipboardDataT = JSON.parse(
         await navigator.clipboard.readText(),
       );
       commandManager.executeCommand(
         new PasteAction({
-          parent,
           data,
           mousePos: mousePos.current,
         }),
