@@ -17,6 +17,7 @@ type InspectorSelectProps = {
   items: { label: string; value: string }[];
   placeholder?: string;
 };
+
 type InspectorColorProps = {
   color: string;
 };
