@@ -1,4 +1,5 @@
-import validator from '@rjsf/validator-ajv8';
+import AJV8ProxyValidator from '@/components/rjsf_shad/validator';
+// import validator from '@rjsf/validator-ajv8';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
 import {
@@ -141,7 +142,7 @@ const QueryItem = observer(function QueryItem({
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
           formData={query.rawConfig}
-          validator={validator}
+          validator={AJV8ProxyValidator}
           idSeparator="."
           idPrefix="config"
           onChange={(p) => {
