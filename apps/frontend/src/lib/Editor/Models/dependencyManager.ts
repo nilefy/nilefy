@@ -48,9 +48,6 @@ export class DependencyManager {
       graph: computed,
       editor: observable,
     });
-    autorun(() => {
-      console.log('dependencies', this.graph);
-    });
   }
 
   /**

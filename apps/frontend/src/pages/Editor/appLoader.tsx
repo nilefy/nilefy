@@ -68,8 +68,6 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
     app: AppCompleteT,
     queries: Awaited<ReturnType<typeof getQueries>>,
   ];
-  console.log('app', app);
-  console.log('queries', queries);
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
   const inited = useRef(false);

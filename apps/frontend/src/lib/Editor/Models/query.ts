@@ -57,7 +57,7 @@ export class WebloomQuery
     dependencyManager: DependencyManager;
   }) {
     super(id, dependencyManager, evaluationManger, {
-      config: query,
+      ...query,
       data: undefined,
       queryState: 'idle',
       type: dataSource.dataSource.type,
@@ -76,26 +76,9 @@ export class WebloomQuery
       updateQuery: action,
       setQueryState: action,
     });
-    autorun(() => {
-      console.log(`query ${this.id}`, toJS(this.rawValues));
-    });
+    autorun(() => console.log('rawvalues', toJS(this.rawValues)));
   }
 
-  /**
-   * query public data
-   * @NOTE: use `unEvaluatedConfig` to render the config form.
-   * @NOTE: send the server `values` or `evaluatedConfig`: values === evaluatedConfig
-   * @NOTE: rawValues used to expose public props to the editor context
-   */
-  // get values() {
-  //   return this.rawValues;
-  // }
-  get rawConfig() {
-    return this.rawValues.config as CompleteQueryI['query'];
-  }
-  get config() {
-    return this.values.config as CompleteQueryI['query'];
-  }
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
     this.rawValues.queryState = state;
   }
@@ -107,7 +90,7 @@ export class WebloomQuery
       'id'
     >,
   ) {
-    if (dto.query) this.rawValues.config = dto.query;
+    if (dto.query) this.rawValues = { ...this.rawValues, ...dto.query };
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;

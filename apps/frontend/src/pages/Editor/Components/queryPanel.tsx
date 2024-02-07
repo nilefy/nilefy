@@ -30,7 +30,7 @@ import { RJSFShadcn } from '../../../components/rjsf_shad';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed } from 'mobx';
+import { computed, runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 
@@ -50,8 +50,11 @@ const QueryItem = observer(function QueryItem({
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
       onSuccess(data) {
-        query.setQueryState('success');
-        query.updateQuery(data);
+        console.warn('DEBUGPRINT[19]: queryPanel.tsx:52: data=', data);
+        runInAction(() => {
+          query.setQueryState('success');
+          query.updateQuery(data);
+        });
       },
     });
   const { mutate: run } = api.queries.run.useMutation({
@@ -86,7 +89,11 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.config;
+            const evaluatedConfig = query.values;
+            console.warn(
+              'DEBUGPRINT[20]: queryPanel.tsx:92: evaluatedConfig=',
+              evaluatedConfig,
+            );
             query.setQueryState('loading');
             run({
               workspaceId: +workspaceId,
@@ -134,6 +141,7 @@ const QueryItem = observer(function QueryItem({
         </Label>
         <RJSFShadcn
           ref={rjsfRef}
+          liveValidate
           formContext={{
             // TODO: make this typesafe
             entityId: query.id,
@@ -141,18 +149,18 @@ const QueryItem = observer(function QueryItem({
           }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          formData={query.rawConfig}
+          formData={query.rawValues}
           validator={AJV8ProxyValidator}
           idSeparator="."
-          idPrefix="config"
-          onChange={(p) => {
-            console.log(p);
-          }}
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(
                 "that's weird this function should run under workspaceId, appId",
               );
+            console.warn(
+              'DEBUGPRINT[16]: queryPanel.tsx:158: query.values=',
+              query.values,
+            );
             updateMutation({
               workspaceId: +workspaceId,
               appId: +appId,

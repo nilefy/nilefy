@@ -13,15 +13,7 @@ export const configSchema = z.object({
 });
 
 export const querySchema = z.object({
-  query: z.object({
-    query1: z.string().min(1),
-    query2: z.object({
-      query2query1: z.string().min(1),
-      query2query2: z.string().min(1),
-    }),
-    query3: z.string().min(1),
-    query4: z.string().min(1),
-  }),
+  query: z.string().min(1),
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
@@ -52,42 +44,14 @@ export const pluginConfigForm = {
   },
 };
 
-// TODO: revert this change
 export const queryConfigForm = {
   schema: zodToJsonSchema(querySchema, 'querySchema'),
   uiSchema: {
     query: {
-      query1: {
-        'ui:widget': 'sql',
-        'ui:placeholder': 'select * from table;',
-        'ui:title': 'query.query1',
-        'meta:isCode': true,
-      },
-      query2: {
-        query2query1: {
-          'ui:widget': 'sql',
-          'ui:placeholder': 'select * from table;',
-          'ui:title': 'query.query2.query2query1',
-          'meta:isCode': true,
-        },
-        query2query2: {
-          'ui:widget': 'sql',
-          'ui:placeholder': 'select * from table;',
-          'ui:title': 'query.query2.query2query2',
-        },
-      },
-      query3: {
-        'ui:widget': 'sql',
-        'ui:placeholder': 'select * from table;',
-        'ui:title': 'query.query3',
-        'meta:isCode': true,
-      },
-      query4: {
-        'ui:widget': 'sql',
-        'ui:placeholder': 'select * from table;',
-        'ui:title': 'query.query4',
-        'meta:isCode': true,
-      },
+      'ui:widget': 'sql',
+      'ui:placeholder': 'select * from table;',
+      'ui:title': 'query.query1',
+      'meta:isCode': true,
     },
   },
 };

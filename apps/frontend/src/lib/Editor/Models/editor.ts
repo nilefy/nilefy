@@ -114,21 +114,23 @@ export class EditorState {
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
     // analyze widgets props to create the initial graph
-    Object.values(this.currentPage.widgets).forEach((widget) => {
-      for (const prop in widget.rawValues) {
-        const value = widget.rawValues[prop];
-        const { dependencies, isCode } = analyzeDependancies(
-          value,
-          prop,
-          widget.id,
-          this.context,
-        );
-        if (isCode) {
-          this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
-          allDependencies.push(...dependencies);
+    Object.values({ ...this.currentPage.widgets, ...this.queries }).forEach(
+      (widget) => {
+        for (const prop in widget.rawValues) {
+          const value = widget.rawValues[prop];
+          const { dependencies, isCode } = analyzeDependancies(
+            value,
+            prop,
+            widget.id,
+            this.context,
+          );
+          if (isCode) {
+            this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
+            allDependencies.push(...dependencies);
+          }
         }
-      }
-    });
+      },
+    );
 
     this.dependencyManager.addDependencies(allDependencies);
   }

@@ -28,9 +28,6 @@ export class EvaluationManager {
     });
     this.codeRawValues = new Set();
     this.editor = editor;
-    autorun(() => {
-      console.log('evaluatedForest', toJS(this.evaluatedForest));
-    });
   }
 
   /**
@@ -70,12 +67,14 @@ export class EvaluationManager {
         continue;
       }
       const gottenValue = get(entity.rawValues, path);
-      invariant(
-        typeof gottenValue === 'string',
-        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
-      );
+      // invariant(
+      //   typeof gottenValue === 'string',
+      //   `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
+      // );
       set(evalTree, node, evaluate(gottenValue, evalTree));
     }
+    // will hit this loop with code without deps
+    // example: {{[{name: "dsa"}]}}
     for (const node of this.codeRawValues) {
       if (evaluatedInGraph.has(node)) continue;
       const [entityId, ...pathArr] = node.split('.');
@@ -86,10 +85,10 @@ export class EvaluationManager {
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
       const gottenValue = get(entity.rawValues, path);
-      invariant(
-        typeof gottenValue === 'string',
-        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
-      );
+      // invariant(
+      //   typeof gottenValue === 'string',
+      //   `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
+      // );
       set(evalTree, node, evaluate(gottenValue, evalTree));
     }
     return evalTree;

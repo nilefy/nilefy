@@ -49,24 +49,24 @@ export default function SQLRJSFWidget<
     rawErrors,
     autofocus,
     placeholder,
-    name: toProperty,
     formContext,
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
   // TODO: Nagy -> modify this so that there's 1 to 1 mapping between the form and the editor
   const onChange = useCallback(
     (newValue: string) => {
+      const toProp = id.split('.').slice(1).join('.');
       if (formContext && formContext.entityId && formContext.editorContext) {
         debouncedAnalyzeDependancies(
           newValue,
-          'config.' + toProperty,
+          toProp,
           formContext.entityId,
           formContext.editorContext,
         );
       }
       _onChange(newValue === '' ? options.emptyValue : newValue);
     },
-    [_onChange, options.emptyValue, formContext, toProperty],
+    [_onChange, options.emptyValue, formContext, id],
   );
 
   return (
@@ -75,7 +75,13 @@ export default function SQLRJSFWidget<
       <SQLEditor
         aria-invalid={rawErrors && rawErrors.length > 0}
         id={id}
-        value={value ? value : ''}
+        value={
+          value === undefined
+            ? ''
+            : typeof value === 'string'
+            ? value
+            : `{{${JSON.stringify(value)}}}`
+        }
         onChange={onChange}
         autoFocus={autofocus}
         placeholder={placeholder}

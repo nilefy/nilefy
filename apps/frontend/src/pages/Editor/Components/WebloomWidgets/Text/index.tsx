@@ -12,7 +12,7 @@ const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .values as WebloomTextProps;
-  return <span className="h-full w-full break-all">{props.text}</span>;
+  return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
 });
 const config: WidgetConfig = {
   name: 'Text',

@@ -45,6 +45,10 @@ export class Entity implements RuntimeEvaluable {
         evaluatedValues[key] = evaluatedValue;
       }
     }
+    console.warn(
+      'DEBUGPRINT[18]: entity.ts:40: evaluatedValues=',
+      evaluatedValues,
+    );
     return {
       ...this.rawValues,
       ...evaluatedValues,

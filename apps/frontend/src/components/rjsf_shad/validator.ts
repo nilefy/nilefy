@@ -15,18 +15,8 @@ import {
   ValidatorType,
 } from '@rjsf/utils';
 import _ from 'lodash';
+import { editorStore } from '@/lib/Editor/Models';
 
-const context = {
-  query: {
-    query1: 'select * from query1',
-    query2: {
-      query2query1: 'select * from query2query1',
-      query2query2: 'select * from query2query22',
-    },
-    query3: 'select * from query1',
-    query4: 'select * from query4',
-  },
-};
 /** `ValidatorType` implementation that is used as proxy as proxy between `@rjsf/validator-ajv8` and mobx data
  * @description: why do we need this? normally rjsf pass the data for the validator as user typed it in the form widget, but we have an additional step between the value in the form widget and the actual data we want to validate
  * we treat any code as string(any code is string after all) so any place we allow user to type code ajv will throw, so this class is proxy between what user sees in the form and what we validate
@@ -85,9 +75,6 @@ export class AJV8ProxyValidator<
     transformErrors?: ErrorTransformer<T, S, F>,
     uiSchema?: UiSchema<T, S, F>,
   ): ValidationData<T> {
-    console.warn('DEBUGPRINT[1]: validator.ts:70: formData=', formData);
-    console.warn('DEBUGPRINT[2]: validator.ts:71: schema=', schema);
-    console.warn('DEBUGPRINT[3]: validator.ts:74: uiSchema=', uiSchema);
     const propsThatCouldBeCode = this.PropertiesToArray(
       uiSchema ?? {},
       (v) =>
@@ -95,10 +82,6 @@ export class AJV8ProxyValidator<
         v !== null &&
         'meta:isCode' in v &&
         v['meta:isCode'] === true,
-    );
-    console.warn(
-      'DEBUGPRINT[3]: validator.ts:83: propsThatCouldBeCode=',
-      propsThatCouldBeCode,
     );
     let clonedFormData: undefined | object;
     // replace any code props to its evaluated value
@@ -109,13 +92,13 @@ export class AJV8ProxyValidator<
         _.set(
           clonedFormData,
           path,
-          _.get(context, path, _.get(formData, path)),
+          _.get(
+            editorStore.evaluationManger.evaluatedForest,
+            path,
+            _.get(formData, path),
+          ),
         );
     }
-    console.warn(
-      'DEBUGPRINT[6]: validator.ts:107: clonedFormData=',
-      clonedFormData,
-    );
     return this.ajv8.validateFormData(
       clonedFormData ?? formData,
       schema,
@@ -193,4 +176,8 @@ export function customcustomizeValidator<
   return new AJV8ProxyValidator<T, S, F>(options, localizer);
 }
 
-export default customcustomizeValidator();
+export default customcustomizeValidator({
+  ajvOptionsOverrides: {
+    removeAdditional: true,
+  },
+});
