@@ -1,4 +1,4 @@
-import Validtor, {
+import {
   CustomValidatorOptionsType,
   Localizer,
   customizeValidator,
@@ -14,7 +14,19 @@ import {
   ValidationData,
   ValidatorType,
 } from '@rjsf/utils';
+import _ from 'lodash';
 
+const context = {
+  query: {
+    query1: 'select * from query1',
+    query2: {
+      query2query1: 'select * from query2query1',
+      query2query2: 'select * from query2query22',
+    },
+    query3: 'select * from query1',
+    query4: 'select * from query4',
+  },
+};
 /** `ValidatorType` implementation that is used as proxy as proxy between `@rjsf/validator-ajv8` and mobx data
  * @description: why do we need this? normally rjsf pass the data for the validator as user typed it in the form widget, but we have an additional step between the value in the form widget and the actual data we want to validate
  * we treat any code as string(any code is string after all) so any place we allow user to type code ajv will throw, so this class is proxy between what user sees in the form and what we validate
@@ -28,10 +40,10 @@ export class AJV8ProxyValidator<
   F extends FormContextType = any,
 > implements ValidatorType<T, S, F>
 {
-  private ajv: ValidatorType;
+  private ajv8: ValidatorType;
 
   constructor(options: CustomValidatorOptionsType, localizer?: Localizer) {
-    this.ajv = customizeValidator(options, localizer);
+    this.ajv8 = customizeValidator(options, localizer);
   }
 
   /** Converts an `errorSchema` into a list of `RJSFValidationErrors`
@@ -42,7 +54,7 @@ export class AJV8ProxyValidator<
    *        the next major release.
    */
   toErrorList(errorSchema?: ErrorSchema<T>, fieldPath: string[] = []) {
-    return this.ajv.toErrorList(errorSchema, fieldPath);
+    return this.ajv8.toErrorList(errorSchema, fieldPath);
   }
 
   /** Runs the pure validation of the `schema` and `formData` without any of the RJSF functionality. Provided for use
@@ -52,7 +64,7 @@ export class AJV8ProxyValidator<
    * @param formData - The form data to validate
    */
   rawValidation<Result = any>(schema: S, formData?: T) {
-    return this.ajv.rawValidation<Result>(schema, formData);
+    return this.ajv8.rawValidation<Result>(schema, formData);
   }
 
   /** This function processes the `formData` with an optional user contributed `customValidate` function, which receives
@@ -76,15 +88,80 @@ export class AJV8ProxyValidator<
     console.warn('DEBUGPRINT[1]: validator.ts:70: formData=', formData);
     console.warn('DEBUGPRINT[2]: validator.ts:71: schema=', schema);
     console.warn('DEBUGPRINT[3]: validator.ts:74: uiSchema=', uiSchema);
-    return this.ajv.validateFormData(
-      formData,
+    const propsThatCouldBeCode = this.PropertiesToArray(
+      uiSchema ?? {},
+      (v) =>
+        typeof v === 'object' &&
+        v !== null &&
+        'meta:isCode' in v &&
+        v['meta:isCode'] === true,
+    );
+    console.warn(
+      'DEBUGPRINT[3]: validator.ts:83: propsThatCouldBeCode=',
+      propsThatCouldBeCode,
+    );
+    let clonedFormData: undefined | object;
+    // replace any code props to its evaluated value
+    if (formData) {
+      // i think rjsf provide mutable reference to the form data and if i set it directly will change the values rendered in the form
+      clonedFormData = _.cloneDeep(formData);
+      for (const path of propsThatCouldBeCode)
+        _.set(
+          clonedFormData,
+          path,
+          _.get(context, path, _.get(formData, path)),
+        );
+    }
+    console.warn(
+      'DEBUGPRINT[6]: validator.ts:107: clonedFormData=',
+      clonedFormData,
+    );
+    return this.ajv8.validateFormData(
+      clonedFormData ?? formData,
       schema,
       customValidate,
       transformErrors,
       uiSchema,
     );
   }
+  private createPathFromStack(stack: string[]) {
+    return stack.join('.');
+  }
 
+  private isObject(val: unknown): val is Record<string, unknown> {
+    return _.isPlainObject(val);
+  }
+  /**
+   * return a list of all keys in object, could choose key based on condition
+   * @NOTE: the condition will only be called on types that don't match `this.isObject`
+   */
+  private PropertiesToArray(
+    obj: Record<string, unknown>,
+    condition: (value: unknown) => boolean = () => true,
+  ): string[] {
+    const stack: string[] = [];
+    const result: string[] = [];
+    // the actual function that do the recursion
+    const helper = (
+      obj: Record<string, unknown>,
+      stack: string[],
+      result: string[],
+    ) => {
+      for (const k in obj) {
+        stack.push(k);
+        const item = obj[k];
+        if (condition(item)) {
+          result.push(this.createPathFromStack(stack));
+        }
+        if (this.isObject(item)) {
+          helper(item, stack, result);
+        }
+        stack.pop();
+      }
+    };
+    helper(obj, stack, result);
+    return result;
+  }
   /** Validates data against a schema, returning true if the data is valid, or
    * false otherwise. If the schema is invalid, then this function will return
    * false.
@@ -94,7 +171,9 @@ export class AJV8ProxyValidator<
    * @param rootSchema - The root schema used to provide $ref resolutions
    */
   isValid(schema: S, formData: T | undefined, rootSchema: S) {
-    return this.ajv.isValid(schema, formData, rootSchema);
+    console.log('in isValid');
+    console.warn('DEBUGPRINT[1]: validator.ts:97:isValid: schema=', schema);
+    return this.ajv8.isValid(schema, formData, rootSchema);
   }
 }
 
