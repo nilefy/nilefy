@@ -76,8 +76,7 @@ export const Editor = observer(() => {
       commandManager.executeCommand(new CutAction());
     }
   });
-  // mouse position at any time not only while dragging
-  const mouseP = useRef({ x: 0, y: 0 });
+
   useHotkeys('ctrl+v', async () => {
     const parent = document.activeElement?.getAttribute('data-id');
     if (!parent) return;
@@ -89,7 +88,7 @@ export const Editor = observer(() => {
         new PasteAction({
           parent,
           data,
-          mousePos: mouseP.current,
+          mousePos: mousePos.current,
         }),
       );
     } catch (ig) {
@@ -193,23 +192,6 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const rootDom = editorStore.currentPage.rootWidget.dom;
-      if (!rootDom) return;
-      const boundingRect = rootDom.getBoundingClientRect();
-      const x = boundingRect.left;
-      const y = boundingRect.top;
-
-      mouseP.current = { x: e.pageX - x, y: e.pageY - y };
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
 
   return (
     <div className="isolate flex h-full max-h-full w-full flex-col bg-transparent">
