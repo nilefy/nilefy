@@ -40,6 +40,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
 import { EditorHeader } from './editorHeader';
+import { PageState } from '@/lib/Editor/Models/page';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -157,6 +158,9 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
+  if (editorStore.currentPage.state === PageState.LOADING) {
+    return <WebloomLoader />;
+  }
   return (
     <div className="isolate flex h-full max-h-full w-full flex-col bg-transparent">
       <div className="h-fit w-full">

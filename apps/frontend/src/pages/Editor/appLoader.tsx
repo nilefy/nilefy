@@ -2,7 +2,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomPage } from '@/lib/Editor/Models/page';
+import { PageState, WebloomPage } from '@/lib/Editor/Models/page';
 import { seedNameMap } from '@/lib/Editor/widgetName';
 import { getToken, removeToken } from '@/lib/token.localstorage';
 import { JwtPayload } from '@/types/auth.types';
@@ -17,6 +17,7 @@ import {
   useAsyncError,
   useAsyncValue,
   useLoaderData,
+  useParams,
 } from 'react-router-dom';
 
 export const appLoader =
@@ -62,6 +63,7 @@ function AppLoadError() {
 }
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
+  const { pageId } = useParams();
   const app = useAsyncValue() as AppCompleteT;
   const tree = app.defaultPage.tree;
   // todo : put the init state inside the editor store itself
@@ -69,37 +71,48 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
   if (!inited.current) {
     seedNameMap(Object.values(tree));
     editorStore.init({
+      id: app.id,
       name: app.name,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         new WebloomPage({
+          appId: app.id,
           id: app.defaultPage.id.toString(),
           name: app.defaultPage.name,
           handle: app.defaultPage.handle,
           widgets: tree,
           queries: {},
+          pageState: PageState.LOADED,
         }),
-        ...app.pages.map(
-          (p) =>
-            new WebloomPage({
-              id: p.id.toString(),
-              name: p.name,
-              handle: p.handle,
-              widgets: tree,
-              queries: {},
-            }),
-        ),
+        ...app.pages
+          .filter((t) => t.id !== app.defaultPage.id)
+          .map(
+            (p) =>
+              new WebloomPage({
+                appId: app.id,
+                id: p.id.toString(),
+                name: p.name,
+                handle: p.handle,
+                widgets: {},
+                queries: {},
+                pageState: PageState.UNLOADED,
+              }),
+          ),
       ],
     });
     inited.current = true;
   }
   useEffect(() => {
+    console.log('in ws effect');
     if (initWs) commandManager.connectToEditor(app.id, app.defaultPage.id);
     return () => {
       if (initWs) commandManager.disconnectFromConnectedEditor();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  if (pageId !== undefined) {
+    editorStore.changePage(pageId);
+  }
   return <>{children}</>;
 };
 

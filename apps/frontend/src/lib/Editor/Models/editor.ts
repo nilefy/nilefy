@@ -1,5 +1,5 @@
 import { makeObservable, observable, action, computed } from 'mobx';
-import { WebloomPage } from './page';
+import { PageState, WebloomPage } from './page';
 
 export class EditorState {
   /**
@@ -10,7 +10,8 @@ export class EditorState {
   /**
    * application name
    */
-  name: string = 'New Application';
+  name!: string;
+  id!: number;
 
   constructor() {
     makeObservable(this, {
@@ -22,17 +23,24 @@ export class EditorState {
       addPage: action,
       removePage: action,
       init: action,
+      setCurrentPageId: action,
     });
   }
+
   init({
     name = 'New Application',
     pages: pages = [],
     currentPageId = '',
-  }: Partial<{
+    id,
+  }: {
+    id: number;
     name: string;
+  } & Partial<{
     pages: WebloomPage[];
     currentPageId: string;
   }>) {
+    console.log('init');
+    this.id = id;
     this.name = name;
     pages.forEach((page) => {
       this.pages[page.id] = page;
@@ -47,18 +55,39 @@ export class EditorState {
       this.currentPageId = Object.keys(this.pages)[0];
     }
   }
+
   get currentPage() {
     return this.pages[this.currentPageId];
   }
 
-  changePage(id: string, name: string, handle: string) {
-    if (!this.pages[id]) {
-      this.addPage(id, name, handle);
-      this.currentPageId = id;
-    } else {
-      this.currentPageId = id;
+  getPageState(id: string): PageState {
+    return this.pages[id].state;
+  }
+
+  setCurrentPageId(id: string) {
+    this.currentPageId = id;
+  }
+
+  /**
+   * load page from the backend if its state is PageState.UNLOADED or PageState.ERROR in any other case just change currentPage
+   */
+  async changePage(id: string) {
+    console.log('in changed page');
+    const page = this.pages[id];
+    if (!page) throw new Error(`app don't know this page`);
+    this.currentPageId = id;
+    // this.currentPage.state = PageState.LOADING;
+    console.log(this.currentPage, this.currentPageId);
+    if (
+      this.currentPage.state === PageState.UNLOADED ||
+      this.currentPage.state === PageState.ERROR
+    ) {
+      console.log('before await');
+      await page.loadTree();
     }
   }
+
+  // TODO: update this function to accept tree as the backend creates root with the page
   addPage(id: string, name: string, handle: string) {
     this.pages[id] = new WebloomPage({
       id,
@@ -66,8 +95,11 @@ export class EditorState {
       handle,
       widgets: {},
       queries: {},
+      appId: this.id,
+      pageState: PageState.UNLOADED,
     });
   }
+
   removePage(id: string) {
     delete this.pages[id];
   }

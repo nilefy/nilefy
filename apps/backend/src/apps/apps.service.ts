@@ -45,8 +45,6 @@ export class AppsService {
           appId: app.id,
         },
         {
-          // TODO: fix the type
-          // @ts-ignore
           tx: tx,
         },
       );

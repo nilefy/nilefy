@@ -126,7 +126,11 @@ const router = createBrowserRouter([
     element: <App />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
-    children: [{ path: ':pageId' }],
+    children: [
+      {
+        path: ':pageId',
+      },
+    ], // note we don't need a element here because the loader just make the changes in the store
   },
   {
     path: '/:workspaceId/apps/:appId',

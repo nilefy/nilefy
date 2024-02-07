@@ -8,6 +8,11 @@ import {
 } from '@tanstack/react-query';
 import { z } from 'zod';
 
+export type WebloomTree = Record<
+  string,
+  InstanceType<typeof WebloomWidget>['snapshot']
+>;
+
 export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
   id: number;
@@ -25,6 +30,7 @@ export type PageI = {
   id: number;
   name: string;
   handle: string;
+  index: number;
 };
 
 type UserMetaI = { id: number; username: string };
@@ -109,10 +115,6 @@ async function index({ workspaceId }: { workspaceId: number }) {
     createdBy: UserMetaI;
   })[];
 }
-type WebloomTree = Record<
-  string,
-  InstanceType<typeof WebloomWidget>['snapshot']
->;
 
 export type AppCompleteT = AppI & {
   pages: PageI[];

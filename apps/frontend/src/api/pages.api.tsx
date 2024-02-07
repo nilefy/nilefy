@@ -1,10 +1,12 @@
 import { useToast } from '@/components/ui/use-toast';
 import { FetchXError, fetchX } from '@/utils/fetch';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
+import { WebloomTree } from './apps.api';
 
 export const PAGES_QUERY_KEY = 'pages';
 
@@ -41,13 +43,36 @@ function useFetchPages(workspaceId: number, appId: number) {
   return pages;
 }
 
-const fetchPage = async (appId: number, pageId: number) => {
+export async function fetchPage(
+  appId: PageDto['appId'],
+  pageId: PageDto['id'],
+) {
   const response = await fetchX(
     `workspaces/:workspaceId/apps/${appId}/pages/${pageId}`,
   );
   const data = await response.json();
-  return data as PageDto;
-};
+  return data as PageDto & { tree: WebloomTree };
+}
+
+export type PageFetchRet = Awaited<ReturnType<typeof fetchPage>>;
+/**
+ * query config to get app page
+ */
+export const usePageQuery = ({
+  appId,
+  pageId,
+}: {
+  appId: PageDto['appId'];
+  pageId: PageDto['id'];
+}): UndefinedInitialDataOptions<PageFetchRet, FetchXError, PageFetchRet> => ({
+  queryKey: [PAGES_QUERY_KEY, { appId, pageId }],
+  queryFn: async () => fetchPage(appId, pageId),
+  staleTime: 0,
+});
+
+function useFetchPage(...rest: Parameters<typeof usePageQuery>) {
+  return useQuery(usePageQuery(...rest));
+}
 
 async function createPage({
   workspaceId,
@@ -199,7 +224,7 @@ function useDeletePage(
 
 export const pages = {
   index: { useQuery: useFetchPages },
-  one: { useQuery: fetchPage },
+  one: { useQuery: useFetchPage },
   create: { useMutation: useCreatePage },
   clone: { useMutation: useClonePage },
   update: { useMutation: useUpdatePage },

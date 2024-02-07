@@ -2,7 +2,16 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import {
+  action,
+  autorun,
+  comparer,
+  computed,
+  makeObservable,
+  observable,
+  runInAction,
+  toJS,
+} from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -20,9 +29,24 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+import { FetchXError } from '@/utils/fetch';
+import { PageDto, fetchPage } from '@/api/pages.api';
+import { WebloomTree } from '@/api/apps.api';
 type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
+
+export enum PageState {
+  'LOADED' = 1,
+  'UNLOADED' = 2,
+  'LOADING' = 3,
+  'ERROR' = 4,
+}
+
 export class WebloomPage {
+  appId: PageDto['appId'];
+  // TODO: add comment why this
+  state: PageState;
+  error?: FetchXError;
   id: string;
   name: string;
   handle: string;
@@ -32,34 +56,40 @@ export class WebloomPage {
   /**
    * please note that those node always in the same level in the widgets tree
    */
-  selectedNodeIds: Set<string>;
+  selectedNodeIds!: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  dependencyManager: DependencyManager;
-  evaluationManger: EvaluationManager;
+  dependencyManager!: DependencyManager;
+  evaluationManger!: EvaluationManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
   };
   width: number = 0;
   height: number = 0;
+
   constructor({
     id,
     name,
     handle,
     widgets,
     queries,
+    pageState,
+    appId,
   }: {
     id: string;
     name: string;
     handle: string;
-    widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
+    widgets: WebloomTree;
     queries: Record<string, WebloomQuery>;
+    pageState: PageState;
+    appId: PageDto['appId'];
   }) {
     makeObservable(this, {
+      state: observable,
       widgets: observable,
       queries: observable,
       mouseOverWidgetId: observable,
@@ -97,28 +127,65 @@ export class WebloomPage {
       setPageDimensions: action,
       adjustDimensions: action,
       snapshot: computed,
+      initPage: action,
+      loadTree: action,
+      setState: action,
     });
+    this.appId = appId;
+    this.state = pageState;
     this.id = id;
     this.name = name;
     this.handle = handle;
-    const widgetMap: Record<string, WebloomWidget> = {};
     this.queries = queries;
+    if (this.state === PageState.LOADED) this.initPage(widgets);
+    autorun(() =>
+      console.log('widgets', this.id, toJS(this.widgets), this.state),
+    );
+  }
+  setState(state: PageState) {
+    this.state = state;
+  }
+  async loadTree() {
+    try {
+      console.log('in tree');
+      this.state = PageState.LOADING;
+      let i = 1;
+      while (i < 10000000) i++;
+      const page = await fetchPage(this.appId, +this.id);
+      runInAction(() => {
+        console.log('in action 222');
+        this.initPage(page.tree);
+        this.state = PageState.LOADED;
+      });
+    } catch (err) {
+      runInAction(() => {
+        this.error = err as FetchXError;
+        this.state = PageState.ERROR;
+      });
+    }
+  }
+
+  initPage(tree: WebloomTree) {
+    console.log('init page');
+    this.draggedWidgetId = null;
+    this.widgets = {};
     this.selectedNodeIds = new Set();
-    Object.values(widgets).forEach((widget) => {
+    const widgetMap: Record<string, WebloomWidget> = {};
+    Object.values(tree).forEach((widget) => {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
       });
     });
+    this.widgets = widgetMap;
+    // set the height of the page to the height of the root node because the root node is the tallest node in the page.
+    this.height =
+      widgetMap[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
+      EDITOR_CONSTANTS.ROW_HEIGHT;
     this.dependencyManager = new DependencyManager({
       page: this,
     });
     this.evaluationManger = new EvaluationManager(this);
-    this.widgets = widgetMap;
-    // set the height of the page to the height of the root node because the root node is the tallest node in the page.
-    this.height =
-      this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
-      EDITOR_CONSTANTS.ROW_HEIGHT;
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
     Object.values(widgetMap).forEach((widget) => {
@@ -138,6 +205,7 @@ export class WebloomPage {
     });
     this.dependencyManager.addDependencies(allDependencies);
   }
+
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(

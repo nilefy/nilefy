@@ -2,6 +2,7 @@ import { useState } from 'react';
 import RenameInput from './renameInput';
 import PageMenu from './pageMenu';
 import { PageDto } from '@/api/pages.api';
+import { Link } from 'react-router-dom';
 
 function Page({
   workspaceId,
@@ -23,7 +24,12 @@ function Page({
 
   return (
     <div className={` flex flex-row items-center justify-between p-2 `}>
-      <p className="text-[15px]">{page.name}</p>
+      <Link
+        to={`/${workspaceId}/apps/edit/${appId}/${page.id}`}
+        className="text-[15px]"
+      >
+        {page.name}
+      </Link>
       <PageMenu
         page={page}
         workspaceId={workspaceId}
