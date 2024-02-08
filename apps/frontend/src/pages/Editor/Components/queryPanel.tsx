@@ -1,5 +1,4 @@
 import AJV8ProxyValidator from '@/components/rjsf_shad/validator';
-// import validator from '@rjsf/validator-ajv8';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
 import {
@@ -30,7 +29,7 @@ import { RJSFShadcn } from '../../../components/rjsf_shad';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, runInAction } from 'mobx';
+import { computed, runInAction, toJS } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 
@@ -67,6 +66,7 @@ const QueryItem = observer(function QueryItem({
       });
     },
   });
+
   return (
     <div className="h-full w-full">
       {/* HEADER */}
@@ -89,10 +89,10 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.values;
+            const evaluatedConfig = query.values.config;
             console.warn(
               'DEBUGPRINT[20]: queryPanel.tsx:92: evaluatedConfig=',
-              evaluatedConfig,
+              toJS(evaluatedConfig),
             );
             query.setQueryState('loading');
             run({
@@ -149,9 +149,13 @@ const QueryItem = observer(function QueryItem({
           }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          formData={query.rawValues}
           validator={AJV8ProxyValidator}
           idSeparator="."
+          // NOTE: the evaluation manager can access and evaluate any prop in `entity.rawValues`.
+          // but this form trying to describe only one of the nested objects inside `rawValues` which will destroy the paths while evaluation manager trying to access them
+          // to overcome this problem we supply the `idPrefix` with the name of the nested field the form describing to provide complete and full path to the evaluation manager
+          formData={query.rawValues.config}
+          idPrefix="root.config"
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(

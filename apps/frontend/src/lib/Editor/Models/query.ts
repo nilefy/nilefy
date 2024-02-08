@@ -57,7 +57,7 @@ export class WebloomQuery
     dependencyManager: DependencyManager;
   }) {
     super(id, dependencyManager, evaluationManger, {
-      ...query,
+      config: query,
       data: undefined,
       queryState: 'idle',
       type: dataSource.dataSource.type,
@@ -90,7 +90,7 @@ export class WebloomQuery
       'id'
     >,
   ) {
-    if (dto.query) this.rawValues = { ...this.rawValues, ...dto.query };
+    if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;

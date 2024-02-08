@@ -7,6 +7,7 @@ import { EvaluationManager } from './evaluationManager';
 import { analyzeDependancies } from '../dependancyUtils';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
+import _ from 'lodash';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -113,19 +114,24 @@ export class EditorState {
     });
     // analyze dependancies
     const allDependencies: Array<DependencyRelation> = [];
-    // analyze widgets props to create the initial graph
     Object.values({ ...this.currentPage.widgets, ...this.queries }).forEach(
-      (widget) => {
-        for (const prop in widget.rawValues) {
-          const value = widget.rawValues[prop];
+      (entity) => {
+        const toBeEvaled = entity.rawValues;
+        // string props are the only ones worth analyzing
+        const stringProps = this.PropertiesToArray(
+          toBeEvaled,
+          (v) => typeof v === 'string',
+        );
+        for (const prop of stringProps) {
+          const value = _.get(toBeEvaled, prop);
           const { dependencies, isCode } = analyzeDependancies(
             value,
             prop,
-            widget.id,
+            entity.id,
             this.context,
           );
           if (isCode) {
-            this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
+            this.evaluationManger.setRawValueIsCode(entity.id, prop, true);
             allDependencies.push(...dependencies);
           }
         }
@@ -134,7 +140,44 @@ export class EditorState {
 
     this.dependencyManager.addDependencies(allDependencies);
   }
+  private createPathFromStack(stack: string[]) {
+    return stack.join('.');
+  }
 
+  private isObject(val: unknown): val is Record<string, unknown> {
+    return _.isPlainObject(val);
+  }
+
+  /**
+   * return a list of all keys in object, could choose key based on condition
+   * @NOTE: the condition will only be called on types that don't match `this.isObject`
+   */
+  private PropertiesToArray(
+    obj: Record<string, unknown>,
+    condition: (value: unknown) => boolean = () => true,
+  ): string[] {
+    const stack: string[] = [];
+    const result: string[] = [];
+    // the actual function that do the recursion
+    const helper = (
+      obj: Record<string, unknown>,
+      stack: string[],
+      result: string[],
+    ) => {
+      for (const k in obj) {
+        stack.push(k);
+        const item = obj[k];
+        if (this.isObject(item)) {
+          helper(item, stack, result);
+        } else if (condition(item)) {
+          result.push(this.createPathFromStack(stack));
+        }
+        stack.pop();
+      }
+    };
+    helper(obj, stack, result);
+    return result;
+  }
   /**
    * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
    */
