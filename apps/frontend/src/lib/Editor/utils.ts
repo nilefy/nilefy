@@ -1,5 +1,8 @@
-import { ClipboardDataT } from '@/Actions/types';
-import { WebloomGridDimensions, WebloomPixelDimensions } from './interface';
+import {
+  BoundingRect,
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+} from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
   const { top, left, width, height } = el.getBoundingClientRect();
@@ -33,7 +36,7 @@ export const getGridBoundingRect = (dim: WebloomGridDimensions) => {
 export const getWidgetsBoundingRect = (
   widgets: {
     id: string;
-    boundingRect: ClipboardDataT['selected'][number]['boundingRect'];
+    boundingRect: BoundingRect;
   }[],
 ) => {
   let left = Infinity;

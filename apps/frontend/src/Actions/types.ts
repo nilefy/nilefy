@@ -1,18 +1,12 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { BoundingRect } from '@/lib/Editor/interface';
 import { WidgetSnapshot } from '@/types';
 
 export type ClipboardDataT = {
   action: 'copy' | 'cut';
   selected: {
     id: string;
-    boundingRect: {
-      top: number;
-      left: number;
-      width: number;
-      height: number;
-      bottom: number;
-      right: number;
-    };
+    boundingRect: BoundingRect;
   }[];
   nodes: Map<string, WidgetSnapshot>;
 };
