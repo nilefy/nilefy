@@ -1,12 +1,13 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ClipboardDataT, UndoableCommand } from '../types';
-import { normalize } from '@/lib/Editor/utils';
+import { getWidgetsBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { RemoteTypes } from '../types';
+import { WebloomGridDimensions } from '@/lib/Editor/interface';
 
 export class PasteAction implements UndoableCommand {
   private parent: string;
@@ -40,7 +41,7 @@ export class PasteAction implements UndoableCommand {
     this.parent = parent;
   }
 
-  paste(node: string, parent: string, change?: { x: number; y: number }) {
+  paste(node: string, parent: string, change?: WebloomGridDimensions) {
     const snapshot = this.data.nodes.get(node)!;
 
     let id = snapshot.id!;
@@ -52,8 +53,10 @@ export class PasteAction implements UndoableCommand {
     snapshot.parentId = parent;
 
     if (change) {
-      snapshot.col = change.x;
-      snapshot.row = change.y;
+      snapshot.col = change.col;
+      snapshot.row = change.row;
+      snapshot.columnsCount = change.columnsCount;
+      snapshot.rowsCount = change.rowsCount;
     }
 
     for (const child of this.data.nodes.get(node)!.nodes!) {
@@ -66,13 +69,24 @@ export class PasteAction implements UndoableCommand {
     const { x: px, y: py } = parent.pixelDimensions;
     const [gridrow] = parent.gridSize;
     const gridCol = parent.columnWidth;
-    const x = normalize(this.mousePos.x - px, gridCol) / gridCol;
-    const y = normalize((this.mousePos.y - py) / gridrow, gridrow);
 
-    let dy = 0;
-    for (const node of this.data.selected) {
-      this.paste(node, this.parent, { x, y: y + dy });
-      dy += this.data.nodes.get(node)!.rowsCount! + 1;
+    const { top, left } = getWidgetsBoundingRect(this.data.selected);
+    const dx = this.mousePos.x - left;
+    const dy = this.mousePos.y - top;
+
+    for (const widget of this.data.selected) {
+      const oldDims = widget.boundingRect;
+      const newDims = {
+        x: oldDims.left + dx,
+        y: oldDims.top + dy,
+      };
+
+      const col = normalize(newDims.x - px, gridCol) / gridCol;
+      const row = normalize((newDims.y - py) / gridrow, gridrow);
+      const columnsCount = normalize(oldDims.width, gridCol) / gridCol;
+      const rowsCount = normalize(oldDims.height / gridrow, gridrow);
+
+      this.paste(widget.id, this.parent, { col, row, columnsCount, rowsCount });
     }
 
     const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
@@ -86,6 +100,7 @@ export class PasteAction implements UndoableCommand {
       };
       editorStore.currentPage.addWidget(add);
 
+      // TODO: handle horizontal expansion in moveWidgetIntoGrid
       const ret = editorStore.currentPage.moveWidgetIntoGrid(add.id!, {});
       const affectedNodes = Object.keys(ret)
         .filter((test) => test !== add.id)

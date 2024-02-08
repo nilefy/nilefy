@@ -3,7 +3,17 @@ import { WidgetSnapshot } from '@/types';
 
 export type ClipboardDataT = {
   action: 'copy' | 'cut';
-  selected: string[];
+  selected: {
+    id: string;
+    boundingRect: {
+      top: number;
+      left: number;
+      width: number;
+      height: number;
+      bottom: number;
+      right: number;
+    };
+  }[];
   nodes: Map<string, WidgetSnapshot>;
 };
 

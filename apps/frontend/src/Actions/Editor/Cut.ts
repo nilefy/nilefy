@@ -9,16 +9,22 @@ export class CutAction implements Command {
   constructor() {
     this.clipboard = {
       action: 'cut',
-      selected: [...editorStore.currentPage.selectedNodeIds],
+      selected: [],
       nodes: new Map(),
     };
+
+    for (const node of editorStore.currentPage.selectedNodeIds) {
+      const boundingRect =
+        editorStore.currentPage.getWidgetById(node).boundingRect;
+      this.clipboard.selected.push({ id: node, boundingRect });
+    }
   }
 
   execute() {
     if (this.clipboard.selected.length === 0) return;
 
     for (const node of this.clipboard.selected) {
-      this.cut(node);
+      this.cut(node.id);
     }
 
     commandManager.executeCommand(new DeleteAction());
