@@ -1,11 +1,4 @@
-import {
-  action,
-  autorun,
-  computed,
-  makeObservable,
-  observable,
-  toJS,
-} from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import toposort from 'toposort';
 import invariant from 'invariant';
 import { get, set } from 'lodash';
@@ -67,11 +60,11 @@ export class EvaluationManager {
         continue;
       }
       const gottenValue = get(entity.rawValues, path);
-      // invariant(
-      //   typeof gottenValue === 'string',
-      //   `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
-      // );
-      set(evalTree, node, evaluate(gottenValue, evalTree));
+      invariant(
+        typeof gottenValue === 'string' || gottenValue === undefined,
+        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
+      );
+      set(evalTree, node, evaluate(gottenValue || '', evalTree));
     }
     // will hit this loop with code without deps
     // example: {{[{name: "dsa"}]}}
@@ -85,11 +78,11 @@ export class EvaluationManager {
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
       const gottenValue = get(entity.rawValues, path);
-      // invariant(
-      //   typeof gottenValue === 'string',
-      //   `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
-      // );
-      set(evalTree, node, evaluate(gottenValue, evalTree));
+      invariant(
+        typeof gottenValue === 'string' || gottenValue === undefined,
+        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
+      );
+      set(evalTree, node, evaluate(gottenValue || '', evalTree));
     }
     return evalTree;
   }

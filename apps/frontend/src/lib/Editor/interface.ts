@@ -4,8 +4,6 @@ import { ReactNode } from 'react';
 type BaseControlProps = {
   id: string;
   label: string;
-  defaultValue?: string | number | boolean;
-  value?: string | number | boolean;
 };
 
 // each widget props
@@ -48,12 +46,14 @@ type FormControlOptions = {
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
 type WidgetInspectorConfig<TProps> = {
   sectionName: string;
+  hidden?: (props: TProps) => boolean;
   children: MappedTypeToArray<{
-    [key in keyof TProps]: {
+    [key in keyof Omit<TProps, 'value'>]: {
       [key2 in InspectorFormControls]: {
         type: key2;
         key: key;
-        options: FormControlOptions[key2];
+        options: Omit<FormControlOptions[key2], 'value'>;
+        hidden?: (props: key) => boolean;
         label: string;
       } & BaseControlProps;
     }[InspectorFormControls];

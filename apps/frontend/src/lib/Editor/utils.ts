@@ -1,3 +1,4 @@
+import { isPlainObject } from 'lodash';
 import { WebloomGridDimensions, WebloomPixelDimensions } from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
@@ -126,4 +127,7 @@ export function normalizeCoords(
     columnsCount: newCoords.columnsCount ?? node.columnsCount,
     rowsCount: newCoords.rowsCount ?? node.rowsCount,
   };
+}
+export function isObject(val: unknown): val is Record<string, unknown> {
+  return isPlainObject(val);
 }

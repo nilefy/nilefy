@@ -6,13 +6,19 @@ import { DependencyRelation } from './Models/dependencyManager';
 import { has } from 'lodash';
 import { bindingRegexGlobal } from '../utils';
 
-export const analyzeDependancies = (
-  code: unknown,
-  toProperty: string,
-  entityId: string,
-  keys: EvaluationContext,
-) => {
-  if (typeof code !== 'string') return { dependencies: [], isCode: false };
+export const analyzeDependancies = ({
+  code,
+  toProperty,
+  entityId,
+  keys,
+}: {
+  code: unknown;
+  toProperty: string;
+  entityId: string;
+  keys: EvaluationContext;
+}) => {
+  if (typeof code !== 'string')
+    return { toProperty, dependencies: [], isCode: false };
   const keysSet = new Set(Object.keys(keys));
   const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(bindingRegexGlobal);
@@ -43,7 +49,7 @@ export const analyzeDependancies = (
       //todo handle field validation
     }
   }
-  return { dependencies, isCode };
+  return { toProperty, dependencies, isCode };
 };
 
 /**
@@ -88,6 +94,7 @@ export function hasCyclicDependencies(
     toposort(graph);
     return { hasCycle: false };
   } catch (e) {
+    // @ts-expect-error toposort returns a string
     return { hasCycle: true, cycle: e.message };
   }
 }

@@ -72,7 +72,7 @@ const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
 const WebloomTable = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomTableProps;
+    .finalValues as WebloomTableProps;
   const {
     data = [],
     columns,

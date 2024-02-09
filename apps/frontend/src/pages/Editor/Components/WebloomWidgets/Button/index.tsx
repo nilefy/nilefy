@@ -14,11 +14,11 @@ export type WebloomButtonProps = {
 const WebloomButton = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomButtonProps;
+    .finalValues as WebloomButtonProps;
   return (
     <Button
       {...props}
-      className={`block h-full w-full active:bg-primary/20`}
+      className={`active:bg-primary/20 block h-full w-full`}
       style={{ backgroundColor: props.color }}
     >
       {props.text}

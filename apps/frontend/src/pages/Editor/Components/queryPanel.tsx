@@ -49,7 +49,6 @@ const QueryItem = observer(function QueryItem({
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
       onSuccess(data) {
-        console.warn('DEBUGPRINT[19]: queryPanel.tsx:52: data=', data);
         runInAction(() => {
           query.setQueryState('success');
           query.updateQuery(data);
@@ -89,11 +88,8 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.values.config;
-            console.warn(
-              'DEBUGPRINT[20]: queryPanel.tsx:92: evaluatedConfig=',
-              toJS(evaluatedConfig),
-            );
+            const evaluatedConfig = query.config;
+
             query.setQueryState('loading');
             run({
               workspaceId: +workspaceId,
@@ -154,17 +150,14 @@ const QueryItem = observer(function QueryItem({
           // NOTE: the evaluation manager can access and evaluate any prop in `entity.rawValues`.
           // but this form trying to describe only one of the nested objects inside `rawValues` which will destroy the paths while evaluation manager trying to access them
           // to overcome this problem we supply the `idPrefix` with the name of the nested field the form describing to provide complete and full path to the evaluation manager
-          formData={query.rawValues.config}
+          formData={query.rawConfig}
           idPrefix="root.config"
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(
                 "that's weird this function should run under workspaceId, appId",
               );
-            console.warn(
-              'DEBUGPRINT[16]: queryPanel.tsx:158: query.values=',
-              query.values,
-            );
+
             updateMutation({
               workspaceId: +workspaceId,
               appId: +appId,

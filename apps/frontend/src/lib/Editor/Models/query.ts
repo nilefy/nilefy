@@ -56,14 +56,22 @@ export class WebloomQuery
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
   }) {
-    super(id, dependencyManager, evaluationManger, {
-      config: query,
-      data: undefined,
-      queryState: 'idle',
-      type: dataSource.dataSource.type,
-      status: undefined,
-      error: undefined,
+    super({
+      id,
+      dependencyManager,
+      evaluationManger,
+      rawValues: {
+        config: query,
+        data: undefined,
+        queryState: 'idle',
+        type: dataSource.dataSource.type,
+        status: undefined,
+        error: undefined,
+      },
+      // TODO
+      schema: {},
     });
+
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
@@ -115,5 +123,13 @@ export class WebloomQuery
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,
     };
+  }
+
+  get config() {
+    return this.values.config;
+  }
+
+  get rawConfig() {
+    return this.rawValues.config;
   }
 }

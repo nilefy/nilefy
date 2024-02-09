@@ -16,9 +16,9 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import { EvaluatedRunTimeValues, Snapshotable } from './interfaces';
+import { Snapshotable } from './interfaces';
 import { DependencyManager } from './dependencyManager';
-import { cloneDeep, get } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 
@@ -73,12 +73,14 @@ export class WebloomWidget
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
   }) {
-    super(
-      id,
+    super({
       dependencyManager,
       evaluationManger,
-      props ?? WebloomWidgets[type].defaultProps,
-    );
+      id,
+      tempRemoveMeFast: true,
+      rawValues: props ?? {},
+      schema: WebloomWidgets[type].schema ?? {},
+    });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
@@ -100,7 +102,6 @@ export class WebloomWidget
       row: observable,
       columnsCount: observable,
       rowsCount: observable,
-      setProp: action,
       setDimensions: action,
       gridSize: computed.struct,
       boundingRect: computed.struct,
@@ -116,9 +117,6 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
-      addDependencies: action,
-      clearDependents: action,
-      cleanup: action,
     });
   }
   get columnWidth(): number {
@@ -138,26 +136,10 @@ export class WebloomWidget
     this.dom = dom;
   }
 
-  getProp(key: string) {
-    return this.values[key] ?? this.rawValues[key];
-  }
-  get values(): EvaluatedRunTimeValues {
-    const evaluatedProps: EvaluatedRunTimeValues = {};
-    for (const key in this.rawValues) {
-      const path = this.id + '.' + key;
-      const evaluatedValue = get(this.evaluationManger.evaluatedForest, path);
-      if (evaluatedValue !== undefined) {
-        evaluatedProps[key] = evaluatedValue;
-      }
-    }
-    return {
-      ...this.rawValues,
-      ...evaluatedProps,
-    };
-  }
   /**
    *
-   * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
+   * @description a snapshot of the widget that can be used to recreate the widget,
+   * all computed properties are omitted. this can also be sent to the server to save the widget
    */
   get snapshot() {
     return {
@@ -216,14 +198,6 @@ export class WebloomWidget
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
     };
-  }
-
-  setProp(key: string, value: unknown) {
-    if (key === 'id') {
-      this.page.widgets[value as string] = this;
-      delete this.page.widgets[this.id];
-    }
-    this.rawValues[key] = value;
   }
 
   get parent() {

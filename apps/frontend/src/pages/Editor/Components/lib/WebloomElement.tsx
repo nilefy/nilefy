@@ -24,7 +24,7 @@ export const WebloomElement = observer(function WebloomElement({
   const tree = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      tree.setProp(key, value);
+      tree.setValue(key, value);
     },
     [tree],
   );

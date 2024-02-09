@@ -13,7 +13,7 @@ export class ChangePropAction implements Command {
   execute() {
     editorStore.currentPage
       .getWidgetById(this.comId)
-      .setProp(this.key, this.value);
+      .setValue(this.key, this.value);
     return {
       event: 'update' as const,
       data: [editorStore.currentPage.getWidgetById(this.comId).snapshot],

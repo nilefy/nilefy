@@ -1,6 +1,6 @@
 import { observable, makeObservable, action, computed, autorun } from 'mobx';
 import invariant from 'invariant';
-import { hasCyclicDependencies } from '../dependancyUtils';
+import { analyzeDependancies, hasCyclicDependencies } from '../dependancyUtils';
 import { has } from 'lodash';
 import { EditorState } from './editor';
 // please note that path is something like "a.b.c"
@@ -49,7 +49,11 @@ export class DependencyManager {
       editor: observable,
     });
   }
-
+  analyzeDependencies(
+    args: Omit<Parameters<typeof analyzeDependancies>[0], 'keys'>,
+  ) {
+    return analyzeDependancies({ ...args, keys: this.editor.context });
+  }
   /**
    * Add multiple dependencies (doesn't overwrite so don't use it unless initialising)
    */
