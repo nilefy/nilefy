@@ -1,4 +1,15 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { BoundingRect } from '@/lib/Editor/interface';
+import { WidgetSnapshot } from '@/types';
+
+export type ClipboardDataT = {
+  action: 'copy' | 'cut';
+  selected: {
+    id: string;
+    boundingRect: BoundingRect;
+  }[];
+  nodes: Map<string, WidgetSnapshot>;
+};
 
 export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];

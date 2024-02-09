@@ -20,7 +20,7 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
-type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
+export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
   id: string;
@@ -409,7 +409,7 @@ export class WebloomPage {
       const gridDimensions = node.gridDimensions;
       const newCoords = normalizeCoords(_newCoords, gridDimensions);
       // if the node is the same as the newCoords, return
-      if (isSameCoords(newCoords, gridDimensions)) return;
+      // if (isSameCoords(newCoords, gridDimensions)) return;
       const nodeGridBoundingRect = getGridBoundingRect(newCoords);
       const overlappingNodesToMove = this.findOverlappingNodesToMove(
         nodeGridBoundingRect,

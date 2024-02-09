@@ -1,4 +1,8 @@
-import { WebloomGridDimensions, WebloomPixelDimensions } from './interface';
+import {
+  BoundingRect,
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+} from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
   const { top, left, width, height } = el.getBoundingClientRect();
@@ -27,6 +31,32 @@ export const getGridBoundingRect = (dim: WebloomGridDimensions) => {
     height: dim.rowsCount,
     bottom: dim.row + dim.rowsCount,
     right: dim.col + dim.columnsCount,
+  };
+};
+export const getWidgetsBoundingRect = (
+  widgets: {
+    id: string;
+    boundingRect: BoundingRect;
+  }[],
+) => {
+  let left = Infinity;
+  let right = 0;
+  let top = Infinity;
+  let bottom = 0;
+
+  for (const widget of widgets) {
+    const { left: wl, right: wr, top: wt, bottom: wb } = widget.boundingRect;
+    left = Math.min(left, wl);
+    right = Math.max(right, wr);
+    top = Math.min(top, wt);
+    bottom = Math.max(bottom, wb);
+  }
+
+  return {
+    left,
+    right,
+    top,
+    bottom,
   };
 };
 export function normalizePoint(

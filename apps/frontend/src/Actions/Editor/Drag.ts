@@ -9,7 +9,7 @@ import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
-type AddWidgetPayload = Parameters<
+export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
 >[0];
 

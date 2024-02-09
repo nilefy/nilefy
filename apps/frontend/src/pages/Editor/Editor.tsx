@@ -40,6 +40,10 @@ import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
 import { EditorHeader } from './editorHeader';
+import { CopyAction } from '@/Actions/Editor/Copy';
+import { CutAction } from '@/Actions/Editor/Cut';
+import { PasteAction } from '@/Actions/Editor/Paste';
+import { ClipboardDataT } from '@/Actions/types';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -53,12 +57,40 @@ const throttledResizeCanvas = throttle(
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
+
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
-
   useHotkeys('delete', () => {
-    commandManager.executeCommand(new DeleteAction());
+    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+      commandManager.executeCommand(new DeleteAction());
+    }
+  });
+
+  useHotkeys(['ctrl+c', 'ctrl+x'], (_, handlers) => {
+    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
+
+    if (handlers.keys?.join('') === 'c') {
+      commandManager.executeCommand(new CopyAction());
+    } else {
+      commandManager.executeCommand(new CutAction());
+    }
+  });
+
+  useHotkeys('ctrl+v', async () => {
+    try {
+      const data: ClipboardDataT = JSON.parse(
+        await navigator.clipboard.readText(),
+      );
+      commandManager.executeCommand(
+        new PasteAction({
+          data,
+          mousePos: mousePos.current,
+        }),
+      );
+    } catch (ig) {
+      console.log(ig);
+    }
   });
 
   const draggedNode = editorStore.currentPage.draggedWidgetId;
@@ -157,6 +189,7 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
+
   return (
     <div className="isolate flex h-full max-h-full w-full flex-col bg-transparent">
       <div className="h-fit w-full">

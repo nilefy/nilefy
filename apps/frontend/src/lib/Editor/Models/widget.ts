@@ -1,8 +1,7 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { EvaluationContext, evaluate } from '../evaluation';
-import { Point } from '@/types';
+import { Point, WidgetSnapshot } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
@@ -26,13 +25,7 @@ type EvaluatedRunTimeProps = SnapshotProps;
 export type SnapshotProps = Record<string, unknown>;
 
 export class WebloomWidget
-  implements
-    Snapshotable<
-      Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'> & {
-        pageId: string;
-      }
-    >,
-    RuntimeEvaluable
+  implements Snapshotable<WidgetSnapshot>, RuntimeEvaluable
 {
   isRoot = false;
   id: string;
