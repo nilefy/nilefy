@@ -19,7 +19,6 @@ export type EntityFormProps = Omit<
   | 'idSeparator'
 > & {
   entityId: string;
-  nestedPath?: string;
 };
 
 const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
@@ -39,8 +38,11 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
     >(
       (form, id) => {
         if (!props.onChange) {
+          if (!id) {
+            return;
+          }
           const path = id!.split('.').slice(1).join('.');
-          entity.setValue(path, get(form, path));
+          entity.setValue(path, get(form.formData, path));
         } else {
           props.onChange(form, id);
         }
@@ -58,11 +60,12 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
         idSeparator="."
         uiSchema={entity.schema.uiSchema}
         schema={entity.schema.dataSchema}
-        idPrefix={`${props.entityId}.${props.nestedPath || ''}`}
-        formData={entity.values}
+        formData={entity.prefixedRawValues}
+        focusOnFirstError={false}
         // These are not really extra, they are the actual errors since we disabled the default validation these are the only errors we will get
         // The things rjsf made me do :(
         extraErrors={entity.validationErrors}
+        showErrorList={false}
         onChange={onEntityChange}
       />
     );

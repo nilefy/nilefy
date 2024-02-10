@@ -22,6 +22,7 @@ function createPathFromStack(stack: string[]) {
 const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
 const getEvaluablePathsFromSchema = (
   schema: Record<string, unknown> | undefined,
+  nestedPathPrefix?: string,
 ) => {
   if (!schema) return [];
   const stack: string[] = [];
@@ -35,7 +36,11 @@ const getEvaluablePathsFromSchema = (
     const isLastLevel = Object.keys(obj).every((k) => !isObject(obj[k]));
     if (isLastLevel) {
       if (evaluationFormControls.has(obj['ui:widget'] as string)) {
-        result.push(createPathFromStack(stack));
+        let path = createPathFromStack(stack);
+        if (nestedPathPrefix) {
+          path = nestedPathPrefix + '.' + path;
+        }
+        result.push(path);
       }
       return;
     }
@@ -60,7 +65,7 @@ export type EntitySchema = {
 export class Entity implements RuntimeEvaluable {
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
-  public schema: EntitySchema = {};
+  public readonly schema: EntitySchema;
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
@@ -68,14 +73,16 @@ export class Entity implements RuntimeEvaluable {
   public evaluationManger: EvaluationManager;
   public codePaths: Set<string>;
   public validator?: ReturnType<typeof ajv.compile>;
+  private readonly nestedPathPrefix?: string;
   constructor({
     id,
     dependencyManager,
     evaluationManger,
     rawValues,
-    schema,
+    schema = {},
     tempRemoveMeFast,
     evaluablePaths = [],
+    nestedPathPrefix,
   }: {
     id: string;
     dependencyManager: DependencyManager;
@@ -84,6 +91,7 @@ export class Entity implements RuntimeEvaluable {
     schema?: EntitySchema;
     tempRemoveMeFast?: boolean;
     evaluablePaths?: string[];
+    nestedPathPrefix?: string;
   }) {
     makeObservable(this, {
       id: observable,
@@ -104,6 +112,7 @@ export class Entity implements RuntimeEvaluable {
       applyDependencyUpdate: action,
     });
     this.id = id;
+    this.nestedPathPrefix = nestedPathPrefix;
     this.dependencyManager = dependencyManager;
     this.evaluationManger = evaluationManger;
     this.rawValues = rawValues;
@@ -113,9 +122,10 @@ export class Entity implements RuntimeEvaluable {
     }
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
-      ...getEvaluablePathsFromSchema(schema?.uiSchema || {}),
+      ...getEvaluablePathsFromSchema(schema?.uiSchema || {}, nestedPathPrefix),
     ]);
     this.codePaths = new Set<string>();
+    this.schema = schema;
     if (schema?.dataSchema) {
       this.validator = ajv.compile(schema.dataSchema);
     }
@@ -143,6 +153,8 @@ export class Entity implements RuntimeEvaluable {
         console.log('this.rawValues', toJS(this.rawValues));
         console.log('this.codePaths', toJS(this.codePaths));
         console.log('this.finalValues', toJS(this.finalValues));
+        console.log('this.validationErrors', toJS(this.validationErrors));
+        console.log('this.schema', toJS(this.schema));
         console.log(
           `-------------------------- ${this.id} end --------------------------`,
         );
@@ -223,6 +235,10 @@ export class Entity implements RuntimeEvaluable {
   }
 
   setValue(path: string, value: unknown) {
+    if (this.isPrefixed()) {
+      path = this.nestedPathPrefix + '.' + path;
+    }
+    console.log('setValue', path, value);
     set(this.rawValues, path, value);
     if (this.evaluablePaths.has(path)) {
       this.analyzeAndApplyDependencyUpdate(path);
@@ -236,9 +252,20 @@ export class Entity implements RuntimeEvaluable {
   getRawValue(key: string) {
     return get(this.rawValues, key);
   }
+  isPrefixed() {
+    return this.nestedPathPrefix !== undefined;
+  }
   get validationErrors() {
     if (!this.validator) return;
-    const isValid = this.validator(this.values);
+    let values = this.finalValues;
+    if (this.isPrefixed()) {
+      values = get(values, this.nestedPathPrefix as string) as Record<
+        string,
+        unknown
+      >;
+    }
+    console.log('values', toJS(values));
+    const isValid = this.validator(values);
     if (isValid) return;
     return toErrorSchema(
       transformRJSFValidationErrors(
@@ -248,9 +275,11 @@ export class Entity implements RuntimeEvaluable {
     );
   }
   get finalValues() {
-    return {
-      ...this.rawValues,
-      ...this.values,
-    };
+    return merge({}, this.rawValues, this.values);
+  }
+  get prefixedRawValues() {
+    return this.isPrefixed()
+      ? get(this.rawValues, this.nestedPathPrefix as string)
+      : this.rawValues;
   }
 }

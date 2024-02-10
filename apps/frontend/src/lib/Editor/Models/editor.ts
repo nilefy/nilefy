@@ -104,6 +104,7 @@ export class EditorState {
       this.currentPageId = Object.keys(this.pages)[0];
     }
     queries.forEach((q) => {
+      console.log('query', q);
       this.queries[q.id] = new WebloomQuery({
         ...q,
         evaluationManger: this.evaluationManger,

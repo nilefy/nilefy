@@ -139,7 +139,6 @@ const QueryItem = observer(function QueryItem({
         <EntityForm
           ref={rjsfRef}
           entityId={query.id}
-          nestedPath="config"
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(
@@ -156,10 +155,7 @@ const QueryItem = observer(function QueryItem({
               },
             });
           }}
-        >
-          {/*to remove submit button*/}
-          <></>
-        </EntityForm>
+        />
       </ScrollArea>
     </div>
   );

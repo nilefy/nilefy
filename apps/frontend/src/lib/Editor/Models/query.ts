@@ -68,8 +68,11 @@ export class WebloomQuery
         status: undefined,
         error: undefined,
       },
-      // TODO
-      schema: {},
+      schema: {
+        dataSchema: dataSource.dataSource.queryConfig.schema,
+        uiSchema: dataSource.dataSource.queryConfig.uiSchema,
+      },
+      nestedPathPrefix: 'config',
     });
 
     this.appId = appId;
