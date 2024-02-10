@@ -9,6 +9,7 @@ export const getQueryService = (name: string): QueryRunnerI => {
       return new PostgresqlQueryService();
     case 'rest api':
       return new RESTQueryService();
+
     default:
       throw new BadRequestException();
   }
