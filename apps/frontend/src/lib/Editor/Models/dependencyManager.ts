@@ -1,7 +1,14 @@
-import { observable, makeObservable, action, computed, autorun } from 'mobx';
+import {
+  observable,
+  makeObservable,
+  action,
+  computed,
+  autorun,
+  when,
+} from 'mobx';
 import invariant from 'invariant';
 import { analyzeDependancies, hasCyclicDependencies } from '../dependancyUtils';
-import { has } from 'lodash';
+import { concat, forEach, has } from 'lodash';
 import { EditorState } from './editor';
 // please note that path is something like "a.b.c"
 type Path = string;
@@ -25,19 +32,9 @@ export class DependencyManager {
   codeEntites: Set<EntityId> = new Set();
   dependencies: DependencyMap = new Map();
   editor: EditorState;
-  constructor({
-    relations,
-    editor,
-  }: {
-    relations?: Array<DependencyRelation>;
-    editor: EditorState;
-  }) {
+  constructor({ editor }: { editor: EditorState }) {
     this.editor = editor;
-    if (relations) {
-      for (const relation of relations) {
-        this.addDependency(relation);
-      }
-    }
+
     makeObservable(this, {
       dependencies: observable,
       addDependency: action,
@@ -47,6 +44,12 @@ export class DependencyManager {
       // inverseDependencies: computed, // we don't need this for now
       graph: computed,
       editor: observable,
+      initAnalysis: action,
+    });
+  }
+  initAnalysis() {
+    forEach(this.editor.entites, (entity) => {
+      entity.applyDependencyUpdate(entity.analyzeDependencies());
     });
   }
   analyzeDependencies(

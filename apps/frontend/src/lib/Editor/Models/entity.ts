@@ -6,6 +6,7 @@ import {
   observable,
   reaction,
   toJS,
+  when,
 } from 'mobx';
 
 import { DependencyManager, DependencyRelation } from './dependencyManager';
@@ -110,6 +111,7 @@ export class Entity implements RuntimeEvaluable {
       analyzeAndApplyDependencyUpdate: action,
       debouncedAnalyzeAndApplyDependencyUpdate: action,
       applyDependencyUpdate: action,
+      prefixedRawValues: computed,
     });
     this.id = id;
     this.nestedPathPrefix = nestedPathPrefix;
@@ -143,6 +145,7 @@ export class Entity implements RuntimeEvaluable {
       reaction(
         () => evaluationManger.evaluatedForest,
         this.applyEvaluationUpdates,
+        { fireImmediately: true },
       ),
       autorun(() => {
         console.log(
@@ -202,6 +205,7 @@ export class Entity implements RuntimeEvaluable {
   );
 
   applyEvaluationUpdates() {
+    console.log('applyEvaluationUpdates');
     for (const path of this.codePaths) {
       set(
         this.values,

@@ -10,7 +10,6 @@ import { seedNameMap } from '../widgetName';
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export class EditorState {
-  inited: boolean = false;
   /**
    * @description [id]: page
    */
@@ -104,13 +103,13 @@ export class EditorState {
       this.currentPageId = Object.keys(this.pages)[0];
     }
     queries.forEach((q) => {
-      console.log('query', q);
       this.queries[q.id] = new WebloomQuery({
         ...q,
         evaluationManger: this.evaluationManger,
         dependencyManager: this.dependencyManager,
       });
     });
+    this.dependencyManager.initAnalysis();
   }
 
   /**
@@ -181,6 +180,12 @@ export class EditorState {
     return {
       pages: Object.values(this.pages).map((page) => page.snapshot),
       currentPageId: this.currentPageId,
+    };
+  }
+  get entites() {
+    return {
+      ...this.currentPage.widgets,
+      ...this.queries,
     };
   }
 }
