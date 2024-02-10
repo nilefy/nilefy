@@ -23,11 +23,6 @@ export class AuthService {
     const salt = await genSalt(10);
     const hashed = await hash(password, salt);
 
-    const r = await compare(password, hashed);
-    console.log('compare result:');
-    console.log(r);
-    console.log(hashed);
-
     user = { ...user, password: hashed };
     console.log('saved user:');
     console.log(user);
@@ -42,12 +37,7 @@ export class AuthService {
         } satisfies PayloadUser,
         { expiresIn: '1d' },
       );
-      console.log('before sending email');
       this.emailService.sendEmail(user.email, jwt);
-      console.log('after sending email');
-      const r = await compare(password, hashed);
-      console.log('compare result:');
-      console.log(r);
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
@@ -78,6 +68,7 @@ export class AuthService {
     }
     const { isConfirmed } = ret;
     if (!isConfirmed) {
+      // todo: alert the user they need to confirm their email
       // throw new BadRequestException('Email Not Confirmed');
     }
     return {
@@ -95,7 +86,9 @@ export class AuthService {
       throw new NotFoundException('User Not Found');
     }
     user.isConfirmed = true;
-    await this.usersService.update(user.id, user);
+    await this.usersService.update(user.id, {
+      isConfirmed: true,
+    });
     return {
       access_token: await this.jwtService.signAsync({
         sub: user.id,
