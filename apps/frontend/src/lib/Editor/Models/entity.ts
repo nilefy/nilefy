@@ -14,7 +14,7 @@ import { RuntimeEvaluable } from './interfaces';
 import { debounce, get, set, unset } from 'lodash';
 import { isObject } from '../utils';
 import { ajv } from '@/lib/validations';
-import { toErrorList } from '@rjsf/utils';
+import { toErrorList, toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
@@ -227,10 +227,15 @@ export class Entity implements RuntimeEvaluable {
     return get(this.rawValues, key);
   }
   get validationErrors() {
-    if (!this.validator) return [];
+    if (!this.validator) return;
     const isValid = this.validator(this.values);
-    if (isValid) return [];
-    return transformRJSFValidationErrors(this.validator.errors || []);
+    if (isValid) return;
+    return toErrorSchema(
+      transformRJSFValidationErrors(
+        this.validator.errors || [],
+        this.schema.uiSchema,
+      ),
+    );
   }
   get finalValues() {
     return {
