@@ -44,30 +44,13 @@ export default function SQLRJSFWidget<
     label,
     hideLabel,
     schema,
-    onChange: _onChange,
+    onChange,
     options,
     rawErrors,
     autofocus,
     placeholder,
-    formContext,
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  // TODO: Nagy -> modify this so that there's 1 to 1 mapping between the form and the editor
-  const onChange = useCallback(
-    (newValue: string) => {
-      const toProp = id.split('.').slice(1).join('.');
-      if (formContext && formContext.entityId && formContext.editorContext) {
-        debouncedAnalyzeDependancies(
-          newValue,
-          toProp,
-          formContext.entityId,
-          formContext.editorContext,
-        );
-      }
-      _onChange(newValue === '' ? options.emptyValue : newValue);
-    },
-    [_onChange, options.emptyValue, formContext, id],
-  );
 
   return (
     <div id={`${id}-label`}>
