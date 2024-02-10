@@ -14,6 +14,7 @@ import { RuntimeEvaluable } from './interfaces';
 import { debounce, get, set, unset } from 'lodash';
 import { isObject } from '../utils';
 import { ajv } from '@/lib/validations';
+import { toErrorList } from '@rjsf/utils';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
@@ -223,6 +224,12 @@ export class Entity implements RuntimeEvaluable {
 
   getRawValue(key: string) {
     return get(this.rawValues, key);
+  }
+  get validationErrors() {
+    if (!this.validator) return [];
+    const isValid = this.validator(this.values);
+    if (isValid) return [];
+    return isValid;
   }
   get finalValues() {
     return {

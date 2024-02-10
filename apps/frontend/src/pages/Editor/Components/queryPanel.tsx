@@ -1,6 +1,7 @@
-import AJV8ProxyValidator from '@/components/rjsf_shad/validator';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
+import validator from '@rjsf/validator-ajv8';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,7 +138,6 @@ const QueryItem = observer(function QueryItem({
         </Label>
         <RJSFShadcn
           ref={rjsfRef}
-          liveValidate
           formContext={{
             // TODO: make this typesafe
             entityId: query.id,
@@ -145,7 +145,7 @@ const QueryItem = observer(function QueryItem({
           }}
           schema={query.dataSource.dataSource.queryConfig.schema}
           uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          validator={AJV8ProxyValidator}
+          validator={validator}
           idSeparator="."
           // NOTE: the evaluation manager can access and evaluate any prop in `entity.rawValues`.
           // but this form trying to describe only one of the nested objects inside `rawValues` which will destroy the paths while evaluation manager trying to access them

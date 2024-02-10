@@ -50,10 +50,8 @@ export class AJV8ProxyValidator<
     transformErrors?: ErrorTransformer<T, S, F>,
     uiSchema?: UiSchema<T, S, F>,
   ): ValidationData<T> {
-    return {
-      errors: [],
-      errorSchema: {},
-    };
+    //get errors from store
+    //transform errors with processRawValidationErrors
   }
 
   isValid(schema: S, formData: T | undefined, rootSchema: S) {
