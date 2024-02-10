@@ -32,17 +32,14 @@ export class AuthService {
       console.log(u.password);
       const jwt = await this.jwtService.signAsync(
         {
-          sub: 1,
-          username: user.username,
+          sub: u.id,
+          username: u.username,
         } satisfies PayloadUser,
         { expiresIn: '1d' },
       );
       this.emailService.sendEmail(user.email, jwt);
       return {
-        access_token: await this.jwtService.signAsync({
-          sub: u.id,
-          username: u.username,
-        } satisfies PayloadUser),
+        access_token: jwt,
       } satisfies JwtToken;
     } catch (err) {
       console.log(err);
@@ -80,7 +77,11 @@ export class AuthService {
   }
 
   async confirm(email: string, token: string) {
-    await this.jwtService.verifyAsync(token);
+    const res = await this.jwtService.verifyAsync(token);
+
+    if (res.sub !== email) {
+      throw new BadRequestException('Token Not Valid');
+    }
     const user = await this.usersService.findOne(email);
     if (!user) {
       throw new NotFoundException('User Not Found');

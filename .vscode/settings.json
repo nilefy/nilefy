@@ -7,5 +7,7 @@
   },
   "prettier.tabWidth": 2,
   "prettier.useTabs": false,
-  "typescript.tsdk": "node_modules\\typescript\\lib"
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "window.zoomLevel": -0.7,
+  "editor.fontSize": 16.5
 }
