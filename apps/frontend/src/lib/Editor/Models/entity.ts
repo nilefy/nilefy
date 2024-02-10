@@ -11,10 +11,10 @@ import {
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { RuntimeEvaluable } from './interfaces';
-import { debounce, get, set, unset } from 'lodash';
+import { debounce, get, merge, set, unset } from 'lodash';
 import { isObject } from '../utils';
 import { ajv } from '@/lib/validations';
-import { toErrorList, toErrorSchema } from '@rjsf/utils';
+import { toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
@@ -118,6 +118,16 @@ export class Entity implements RuntimeEvaluable {
     this.codePaths = new Set<string>();
     if (schema?.dataSchema) {
       this.validator = ajv.compile(schema.dataSchema);
+    }
+    if (schema?.uiSchema) {
+      const additionalUISchema = {
+        'ui:options': {
+          submitButtonOptions: {
+            norender: true,
+          },
+        },
+      };
+      schema.uiSchema = merge({}, schema.uiSchema, additionalUISchema);
     }
     this.dispoables.push(
       reaction(

@@ -26,13 +26,13 @@ import clsx from 'clsx';
 import { Input } from '../../../components/ui/input';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import FormT from '@rjsf/core';
-import { RJSFShadcn } from '../../../components/rjsf_shad';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, runInAction, toJS } from 'mobx';
+import { computed, runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
+import EntityForm from '@/components/rjsf_shad/entityForm';
 
 const QueryItem = observer(function QueryItem({
   query,
@@ -136,22 +136,10 @@ const QueryItem = observer(function QueryItem({
             </SelectContent>
           </Select>
         </Label>
-        <RJSFShadcn
+        <EntityForm
           ref={rjsfRef}
-          formContext={{
-            // TODO: make this typesafe
-            entityId: query.id,
-            editorContext: editorStore.context,
-          }}
-          schema={query.dataSource.dataSource.queryConfig.schema}
-          uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          validator={validator}
-          idSeparator="."
-          // NOTE: the evaluation manager can access and evaluate any prop in `entity.rawValues`.
-          // but this form trying to describe only one of the nested objects inside `rawValues` which will destroy the paths while evaluation manager trying to access them
-          // to overcome this problem we supply the `idPrefix` with the name of the nested field the form describing to provide complete and full path to the evaluation manager
-          formData={query.rawConfig}
-          idPrefix="root.config"
+          entityId={query.id}
+          nestedPath="config"
           onSubmit={({ formData }) => {
             if (!workspaceId || !appId)
               throw new Error(
@@ -171,7 +159,7 @@ const QueryItem = observer(function QueryItem({
         >
           {/*to remove submit button*/}
           <></>
-        </RJSFShadcn>
+        </EntityForm>
       </ScrollArea>
     </div>
   );
