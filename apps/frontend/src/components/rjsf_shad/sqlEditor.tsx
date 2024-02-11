@@ -1,5 +1,4 @@
 import { SQLEditor } from '@/pages/Editor/Components/CodeEditor/index';
-import { useCallback } from 'react';
 
 import {
   ariaDescribedByIds,
@@ -11,27 +10,7 @@ import {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 import { Label } from '../ui/label';
-import { debounce } from 'lodash';
-import { EditorState } from '@/lib/Editor/Models/editor';
-import { analyzeDependancies } from '@/lib/Editor/dependancyUtils';
-import { editorStore } from '@/lib/Editor/Models';
 
-const debouncedAnalyzeDependancies = debounce(
-  (
-    newValue: string,
-    toProperty: string,
-    entityId: string,
-    context: EditorState['context'],
-  ) => {
-    const res = analyzeDependancies(newValue, toProperty, entityId, context);
-    const entity = editorStore.getEntityById(entityId);
-    if (entity) {
-      entity.setPropIsCode(toProperty, res.isCode);
-      entity.addDependencies(res.dependencies);
-    }
-  },
-  2000,
-);
 export default function SQLRJSFWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
