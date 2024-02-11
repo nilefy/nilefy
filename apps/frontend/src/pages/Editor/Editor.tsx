@@ -132,6 +132,7 @@ export const Editor = observer(() => {
           (mousePos.current.y - editorRef.current!.scrollTop) / gridrow,
           gridrow,
         );
+        console.log('overfd', e.over?.id);
 
         commandManager.executeCommand(
           DragAction.start({
@@ -153,6 +154,7 @@ export const Editor = observer(() => {
   const handleDragMove = useCallback(
     (e: DragMoveEvent) => {
       if (draggedNode !== null) {
+        console.log('overMove', e.over?.id);
         commandManager.executeCommand(
           DragAction.move(mousePos.current, e.delta, e.over?.id as string),
         );
@@ -223,6 +225,7 @@ export const Editor = observer(() => {
                   minSizePercentage={25}
                 >
                   <ScrollArea
+                    data-scroll={true}
                     ref={editorRef}
                     className="h-full w-full"
                     scrollAreaViewPortClassName="bg-primary/20 relative touch-none"

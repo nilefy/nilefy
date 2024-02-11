@@ -2,7 +2,7 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import { action, comparer, computed, makeObservable, observable, toJS } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -371,8 +371,15 @@ export class WebloomPage {
           },
         };
       } else {
+        const widget = this.getWidgetById(parent.id);
+        if (widget.type === 'WebloomContainer') {
+          const mode = widget.getProp('heightMode');
+          if (mode === 'fixed') {
+            widget.setProp('innerHeight', parent.rowsCount + newParentRowCount);
+          }
+        }
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newParentRowCount,
+          // rowsCount: parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,

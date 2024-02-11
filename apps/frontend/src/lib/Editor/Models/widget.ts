@@ -1,4 +1,4 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, autorun } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { Point, WidgetSnapshot } from '@/types';
@@ -91,7 +91,7 @@ export class WebloomWidget
       values: computed.struct,
       nodes: observable,
       parentId: observable,
-      dom: observable,
+      dom: observable.ref,
       id: observable,
       type: observable,
       col: observable,
@@ -117,6 +117,9 @@ export class WebloomWidget
       addDependencies: action,
       clearDependents: action,
       cleanup: action,
+    });
+    autorun(() => {
+      // console.log(this.dom);
     });
   }
   get columnWidth(): number {
@@ -200,7 +203,7 @@ export class WebloomWidget
       this.canvasParent.pixelDimensions,
     );
   }
-
+  /* returns the outer height  */
   get relativePixelDimensions(): WebloomPixelDimensions {
     if (this.isRoot) return this.pixelDimensions;
     return convertGridToPixel(
