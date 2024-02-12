@@ -1,28 +1,13 @@
-import { convertGridToPixel } from '@/lib/Editor/utils';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { forwardRef, ReactNode, CSSProperties, useEffect, useRef } from 'react';
+import { forwardRef, ReactNode } from 'react';
 
 type ContainerProps = {
   children?: ReactNode;
   color: string;
-  heightMode: 'auto' | 'fixed' | 'limited';
-  innerHeight: number;
-  dynamicMinHeight?: number;
-  dynamicMaxHeight?: number;
+  height: number;
 };
 
 const Container = forwardRef<HTMLDivElement, ContainerProps>(
-  (
-    {
-      children,
-      color,
-      heightMode,
-      innerHeight,
-      dynamicMinHeight,
-      dynamicMaxHeight,
-    },
-    ref,
-  ) => {
+  ({ children, color, height }, ref) => {
     // let heightStyle: CSSProperties;
     // switch (dynamicHeight) {
     //   case 'fixed':
@@ -63,14 +48,13 @@ const Container = forwardRef<HTMLDivElement, ContainerProps>(
     //     observer.disconnect();
     //   };
     // }, []);
-    console.log('innerHeight', innerHeight);
     return (
       <div
         ref={ref}
         style={{
           width: '100%',
           backgroundColor: color,
-          height: innerHeight,
+          height,
           overflowY: 'auto',
         }}
       >

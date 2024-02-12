@@ -33,7 +33,7 @@ class DragAction {
     let scroll = 0;
     let parent = editorStore.currentPage.getWidgetById(overId);
     while (!parent.isRoot) {
-      const elm = parent.dom?.querySelector('[data-scroll="true"]')
+      const elm = parent.dom?.querySelector('[data-scroll="true"]');
       if (!elm) break;
       scroll += elm.scrollTop;
       console.log(parent.dom?.querySelector('[data-scroll="true"]')?.scrollTop);

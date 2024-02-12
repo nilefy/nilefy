@@ -154,7 +154,7 @@ export const Editor = observer(() => {
   const handleDragMove = useCallback(
     (e: DragMoveEvent) => {
       if (draggedNode !== null) {
-        console.log('overMove', e.over?.id);
+        console.log('overMove', e.delta.x, e.delta.y);
         commandManager.executeCommand(
           DragAction.move(mousePos.current, e.delta, e.over?.id as string),
         );
@@ -209,7 +209,7 @@ export const Editor = observer(() => {
           onDragEnd={handleDragEnd}
           onDragMove={handleDragMove}
           onDragCancel={handleCancel}
-          autoScroll={{ layoutShiftCompensation: false }}
+          autoScroll={{ layoutShiftCompensation: false, acceleration: 1 }}
         >
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel

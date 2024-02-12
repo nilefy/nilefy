@@ -109,11 +109,13 @@ export type WebloomPixelDimensions = {
   height: number;
 };
 
+export type LayoutMode = 'auto' | 'fixed' | 'limited';
 export interface LayoutConfig {
   minColumns?: number;
   minRows?: number;
   colsCount: number;
   rowsCount: number;
+  layoutMode?: LayoutMode;
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {

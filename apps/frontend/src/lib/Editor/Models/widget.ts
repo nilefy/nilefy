@@ -4,7 +4,11 @@ import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { Point, WidgetSnapshot } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
+import {
+  LayoutMode,
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+} from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -39,6 +43,7 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
+  layout?: LayoutMode;
   constructor({
     type,
     parentId,
@@ -71,6 +76,7 @@ export class WebloomWidget
     this.page = page;
     this.type = type;
     const { config, defaultProps } = WebloomWidgets[type];
+    this.layout = config.layoutConfig.layoutMode;
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
@@ -117,6 +123,11 @@ export class WebloomWidget
       addDependencies: action,
       clearDependents: action,
       cleanup: action,
+      innerRowsCount: computed,
+      actualRowsCount: computed,
+      layout: observable,
+      innerContainerDimensions: computed,
+      innerContainerPixelDimensions: computed,
     });
     autorun(() => {
       // console.log(this.dom);
@@ -134,6 +145,26 @@ export class WebloomWidget
   }
   get gridBoundingRect() {
     return getGridBoundingRect(this.gridDimensions);
+  }
+  get innerRowsCount() {
+    if (this.isRoot) return this.page.height;
+    let min = 0;
+    if (this.layout === 'auto') {
+      min = 20;
+    } else {
+      min = this.rowsCount;
+    }
+    return this.nodes.reduce((prev, cur) => {
+      return Math.max(
+        prev,
+        this.page.widgets[cur].row + this.page.widgets[cur].rowsCount,
+      );
+    }, min);
+  }
+  get actualRowsCount() {
+    if (this.layout === 'auto') {
+      return this.innerRowsCount;
+    } else return this.rowsCount;
   }
   setDom(dom: HTMLElement) {
     this.dom = dom;
@@ -218,8 +249,24 @@ export class WebloomWidget
       row: this.row,
       col: this.col,
       columnsCount: this.columnsCount,
-      rowsCount: this.rowsCount,
+      rowsCount: this.actualRowsCount,
     };
+  }
+  get innerContainerDimensions() {
+    return {
+      row: this.row,
+      col: this.col,
+      columnsCount: this.columnsCount,
+      rowsCount: this.innerRowsCount,
+    };
+  }
+
+  get innerContainerPixelDimensions() {
+    return convertGridToPixel(
+      this.innerContainerDimensions,
+      this.gridSize as [number, number],
+      this.canvasParent.pixelDimensions,
+    );
   }
 
   setProp(key: string, value: unknown) {

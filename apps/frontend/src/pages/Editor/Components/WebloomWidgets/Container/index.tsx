@@ -9,8 +9,6 @@ import { observer } from 'mobx-react-lite';
 import { ComponentPropsWithoutRef, useContext, useRef } from 'react';
 import { WidgetContext } from '../..';
 import { Container } from '../../_Components/Container';
-import { convertGridToPixel } from '@/lib/Editor/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container> & {
   heightMode: 'auto' | 'fixed' | 'limited';
@@ -21,9 +19,8 @@ type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container> & {
 const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
-    const props = editorStore.currentPage.getWidgetById(id)
-      .values as WebloomContainerProps;
-    const widget = editorStore.currentPage.getWidgetById(id);
+    const entity = editorStore.currentPage.getWidgetById(id);
+    const props = entity.values as WebloomContainerProps;
     // let tallestChildHeight = editorStore.currentPage.getWidgetById(
     //   children[0].props.id,
     // ).rowsCount;
@@ -49,25 +46,13 @@ const WebloomContainer = observer(
     //       return false;
     //   }
     // }, [props.dynamicHeight]);
-    const pixelHeight = convertGridToPixel(
-      {
-        col: widget.col,
-        row: widget.row,
-        columnsCount: widget.columnsCount,
-        rowsCount: props.innerHeight,
-      },
-      widget.parent.gridSize,
-      widget.parent.pixelDimensions,
-    ).height;
-    const wrapperRef = useRef(null);
-    console.log('warpper', wrapperRef.current?.scrollTop);
+
     return (
-      <div
-        className="relative h-full w-full overflow-auto"
-        ref={wrapperRef}
-        data-scroll="true"
-      >
-        <Container {...props} innerHeight={pixelHeight}>
+      <div className="relative h-full w-full overflow-auto" data-scroll="true">
+        <Container
+          {...props}
+          height={entity.innerContainerPixelDimensions.height}
+        >
           {children}
         </Container>
       </div>
@@ -119,6 +104,7 @@ export const config: WidgetConfig = {
     rowsCount: 4,
     minColumns: 1,
     minRows: 4,
+    layoutMode: 'fixed',
   },
   resizingDirection: 'Both',
 };
