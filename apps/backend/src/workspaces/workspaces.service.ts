@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider, DatabaseI } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
+  CreateWorkspaceDto,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
@@ -36,5 +37,32 @@ export class WorkspacesService {
       )
       .returning();
     return workspace[0];
+  }
+
+  async findOneAndConvertToJson(id: number): Promise<string> {
+    const workspace = await this.db.query.workspaces.findFirst({
+      where: and(
+        eq(schema.workspaces.id, id),
+        isNull(schema.workspaces.deletedAt),
+      ),
+    });
+
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+
+    return JSON.stringify(workspace);
+  }
+
+  async createFromJson(file: Express.Multer.File): Promise<WorkspaceDto> {
+    let workspace: CreateWorkspaceDto = JSON.parse(file.buffer.toString());
+    workspace = await this.db
+      .insert(schema.workspaces)
+      .values(workspace)
+      .execute()
+      .returning();
+    workspace;
+
+    return workspace;
   }
 }

@@ -2,12 +2,18 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Param,
   ParseIntPipe,
   Post,
   Put,
   Request,
+  // Res,
+  // Response,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
@@ -20,8 +26,11 @@ import {
 } from '../dto/workspace.dto';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
+import { Readable } from 'node:stream';
+import { FileInterceptor, MulterModule } from '@nestjs/platform-express';
+import { MulterField } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 
-@UseGuards(JwtGuard)
+// @UseGuards(JwtGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
@@ -54,5 +63,26 @@ export class WorkspacesController {
       updatedById: req.user.userId,
       ...updateWorkspaceDto,
     });
+  }
+  @Get('export/:id')
+  @Header('Content-Type', 'text/csv')
+  @Header('Content-Disposition', 'attachment; filename=workspace.json')
+  async exportOne(
+    // @Res() res: Response,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<StreamableFile> {
+    const workspace: string =
+      await this.workspaceService.findOneAndConvertToJson(id);
+
+    const stream = Readable.from([workspace]);
+    return new StreamableFile(stream);
+  }
+  // make the import endpoint
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  async importWorkspace(@UploadedFile() file: Express.Multer.File) {
+    file;
+    return await this.workspaceService.createFromJson(file);
   }
 }
