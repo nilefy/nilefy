@@ -59,7 +59,7 @@ export class WorkspacesService {
     workspace = await this.db
       .insert(schema.workspaces)
       .values(workspace)
-      .execute()
+      //todo: fix this (returning doesn't exist)
       .returning();
     workspace;
 
