@@ -6,7 +6,8 @@ export const userSchema = createSelectSchema(usersDrizzle, {
   username: (schema) => schema.username.min(3).max(255),
   email: (schema) => schema.email.email(),
   password: (schema) => schema.password.min(6).max(255),
-  conformationToken: (schema) => schema.conformationToken.max(255),
+  emailConformationToken: (schema) => schema.emailConformationToken.max(255),
+  resetPasswordToken: (schema) => schema.resetPasswordToken.max(255),
 });
 
 export const updateUserSchema = userSchema
@@ -14,6 +15,7 @@ export const updateUserSchema = userSchema
     username: true,
     password: true,
     isConfirmed: true,
+    resetPasswordToken: true,
   })
   .partial();
 

@@ -37,4 +37,19 @@ export class WorkspacesService {
       .returning();
     return workspace[0];
   }
+  async export(id: number) {
+    // export workspace into downloadable format
+    const workspace = await this.db.query.workspaces.findFirst({
+      where: and(
+        eq(schema.workspaces.id, id),
+        isNull(schema.workspaces.deletedAt),
+      ),
+    });
+
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+    const serialized = JSON.stringify(workspace);
+    return serialized;
+  }
 }

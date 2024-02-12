@@ -22,9 +22,10 @@ export const userSeeder: SeederI<UserDto[]> = async (db) => {
       .values({
         email: 'admin@admin.com',
         username: 'admin',
-        conformationToken: await hash('admin', salt),
         isConfirmed: true,
         password: await hash('superadmin', salt),
+        emailConformationToken: 'admin',
+        resetPasswordToken: 'admin',
       })
       .returning()
       .onConflictDoNothing()

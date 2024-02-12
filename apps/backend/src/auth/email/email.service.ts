@@ -6,7 +6,7 @@ import { Resend } from 'resend';
 @Injectable()
 export class EmailService {
   constructor(private jwtService: JwtService) {}
-  async sendEmail(email: string, jwt: string) {
+  async sendConformationEmail(email: string, jwt: string) {
     configDotenv();
     const isDev = (process.env.NODE_ENV as string) === 'development';
     const KEY = process.env.RESEND_API_KEY as string;
@@ -33,6 +33,38 @@ export class EmailService {
     The Webloom Team</p>
   `,
     });
+    return { error };
+  }
+  async sendResetPasswordEmail(email: string, token: string) {
+    configDotenv();
+    const isDev = (process.env.NODE_ENV as string) === 'development';
+    const KEY = process.env.RESEND_API_KEY as string;
+    const resend = new Resend(KEY);
+    const baseUrl = isDev ? 'http://localhost:5173/' : 'https://weblloom.com/';
+
+    // is there a safer way to send the token than to just imbed it in the url?
+    const url = baseUrl + 'auth/reset-password' + '/' + email + '/' + token;
+    const { error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: isDev ? (process.env.SEND_TO as string) : email,
+      subject: 'WebLoom - Reset Your Password',
+      html:
+        `
+<p>Dear ` +
+        email +
+        ` ,</p>
+<p>We received a request to reset the password for your WebLoom account.</p>
+<p>Please click the following link to reset your password:</p>
+<a href="` +
+        url +
+        ` ">Reset Password</a>
+<p>If you did not request a password reset, please disregard this email.</p>
+<p>Thank you for choosing WebLoom!</p>
+<p>Best Regards,<br/>
+The Webloom Team</p>
+`,
+    });
+
     return { error };
   }
 }

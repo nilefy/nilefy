@@ -29,10 +29,15 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
     username: faker.internet.userName({ firstName, lastName }),
     email: faker.internet.email({ firstName, lastName }),
     password: userPassword,
-    conformationToken: token,
+    emailConformationToken: token,
     isConfirmed: faker.datatype.boolean(0.8),
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
     deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
+    resetPasswordToken: faker.helpers.arrayElement([
+      null,
+      null,
+      faker.internet.password(),
+    ]),
   };
 }

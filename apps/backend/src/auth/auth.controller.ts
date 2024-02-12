@@ -63,6 +63,20 @@ export class AuthController {
     return await this.authService.confirm(email, token);
   }
 
+  @Post('reset-password-request/:email')
+  async resetPasswordRequest(@Param('email') email: string) {
+    return await this.authService.resetPasswordRequest(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body('email') email: string,
+    @Body('token') token: string,
+    @Body('new_password') newPassword: string,
+  ) {
+    return await this.authService.resetPassword(email, token, newPassword);
+  }
+
   @UseGuards(JwtGuard)
   @Get('main')
   main(@Req() req: ExpressAuthedRequest) {

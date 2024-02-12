@@ -37,7 +37,7 @@ export class AuthService {
         } satisfies PayloadUser,
         { expiresIn: '1d' },
       );
-      this.emailService.sendEmail(user.email, jwt);
+      this.emailService.sendConformationEmail(user.email, jwt);
       return {
         access_token: jwt,
       } satisfies JwtToken;
@@ -96,5 +96,40 @@ export class AuthService {
         username: user.username,
       } satisfies PayloadUser),
     } satisfies JwtToken;
+  }
+  async resetPasswordRequest(email: string) {
+    const user = await this.usersService.findOne(email);
+
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+    const token = await this.jwtService.signAsync(
+      { sub: email },
+      {
+        expiresIn: '1d',
+      },
+    );
+
+    await this.usersService.update(user.id, { resetPasswordToken: token });
+
+    await this.emailService.sendResetPasswordEmail(email, token);
+    return { message: "Please check you're email." };
+  }
+
+  async resetPassword(email: string, token: string, newPassword: string) {
+    const user = await this.usersService.findOne(email);
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+    const res = await this.jwtService.verifyAsync(token);
+    if (res.sub !== email) {
+      throw new BadRequestException('Token Not Valid');
+    }
+    const salt = await genSalt(10);
+    const hashed = await hash(newPassword, salt);
+    await this.usersService.update(user.id, {
+      password: hashed,
+    });
+    return { message: 'Password Reset successfully.' };
   }
 }

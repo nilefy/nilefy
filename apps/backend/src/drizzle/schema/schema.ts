@@ -43,10 +43,12 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 256 }).notNull(),
   email: varchar('email', { length: 256 }).unique().notNull(),
   password: varchar('password').notNull(),
-  conformationToken: varchar('conformation_token', {
+  emailConformationToken: varchar('conformation_token', {
     length: 256,
   }),
-
+  resetPasswordToken: varchar('reset_password_token', {
+    length: 256,
+  }).default(''),
   isConfirmed: boolean('is_confirmed').default(false).notNull(),
   ...timeStamps,
   ...softDelete,
