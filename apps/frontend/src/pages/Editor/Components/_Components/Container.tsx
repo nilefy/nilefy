@@ -1,11 +1,5 @@
 import { forwardRef, ReactNode } from 'react';
 
-type ContainerProps = {
-  children?: ReactNode;
-  color: string;
-  height: number;
-};
-
 const Container = forwardRef<HTMLDivElement, ContainerProps>(
   ({ children, color, height }, ref) => {
     // let heightStyle: CSSProperties;

@@ -2,6 +2,9 @@ import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
 
 type BaseControlProps = {
+  /**
+   * form control id
+   */
   id: string;
   label: string;
   defaultValue?: string | number | boolean;
@@ -44,6 +47,9 @@ type FormControlOptions = {
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
   inlineCodeInput: InlineCodeInputProps;
+  heightMode: {
+    label: string;
+  };
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
