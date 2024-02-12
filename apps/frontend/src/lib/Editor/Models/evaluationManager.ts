@@ -1,14 +1,25 @@
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import {
+  action,
+  computed,
+  makeObservable,
+  observable,
+  reaction,
+  toJS,
+} from 'mobx';
 import toposort from 'toposort';
 import invariant from 'invariant';
-import { get, set } from 'lodash';
+import { debounce, get, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
-
+const worker = new Worker(
+  new URL('../workers/evaluation.worker.ts', import.meta.url),
+  { type: 'module' },
+);
 export class EvaluationManager {
   editor: EditorState;
   codeRawValues: Set<string>;
-
+  evaluationWorker: Worker;
+  disposables: Array<() => void> = [];
   constructor(editor: EditorState) {
     makeObservable(this, {
       editor: observable,
@@ -18,9 +29,23 @@ export class EvaluationManager {
         requiresReaction: false,
       }),
       setRawValueIsCode: action,
+      evaluationWorkerPayload: computed,
+      callWorker: action.bound,
+      debouncedCallWorker: action.bound,
     });
     this.codeRawValues = new Set();
     this.editor = editor;
+    this.evaluationWorker = worker;
+    this.disposables.push(
+      () => this.evaluationWorker.terminate(),
+      reaction(() => this.evaluationWorkerPayload, this.debouncedCallWorker),
+    );
+    this.evaluationWorker.onmessage = (event) => {
+      console.log('event', event);
+    };
+    this.evaluationWorker.addEventListener('message', (e) => {
+      console.log('data from worker', e);
+    });
   }
 
   /**
@@ -33,11 +58,30 @@ export class EvaluationManager {
       this.codeRawValues.delete(`${entityId}.${path}`);
     }
   }
-
+  callWorker() {
+    if (!this.evaluationWorker) return;
+    this.evaluationWorker.postMessage(this.evaluationWorkerPayload);
+  }
+  debouncedCallWorker = debounce(this.callWorker, 500);
   isRawValueCode(entityId: string, path: string) {
     return this.codeRawValues.has(`${entityId}.${path}`);
   }
-
+  get evaluationWorkerPayload() {
+    return {
+      code: 'update',
+      body: {
+        dependencies: toJS(this.editor.dependencyManager.dependencies),
+        unevalNodes: Object.entries(this.editor.entities).reduce(
+          (prev, cur) => {
+            prev[cur[0]] = toJS(cur[1].rawValues);
+            return prev;
+          },
+          {},
+        ),
+        codeRawValues: toJS(this.codeRawValues),
+      },
+    };
+  }
   get evaluatedForest(): Record<string, unknown> {
     // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
     const sortedGraph = toposort(this.editor.dependencyManager.graph).reverse();

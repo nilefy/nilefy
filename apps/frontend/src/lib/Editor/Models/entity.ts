@@ -6,57 +6,63 @@ import {
   observable,
   reaction,
   toJS,
-  when,
 } from 'mobx';
 
-import { DependencyManager, DependencyRelation } from './dependencyManager';
+import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { RuntimeEvaluable } from './interfaces';
-import { debounce, get, merge, set, unset } from 'lodash';
-import { isObject } from '../utils';
+import {
+  debounce,
+  get,
+  isPlainObject,
+  memoize,
+  merge,
+  set,
+  unset,
+} from 'lodash';
 import { ajv } from '@/lib/validations';
 import { toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
+import { analyzeDependancies } from '../dependancyUtils';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
 const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
-const getEvaluablePathsFromSchema = (
-  schema: Record<string, unknown> | undefined,
-  nestedPathPrefix?: string,
-) => {
-  if (!schema) return [];
-  const stack: string[] = [];
-  const result: string[] = [];
-  // the actual function that do the recursion
-  const helper = (
-    obj: Record<string, unknown>,
-    stack: string[],
-    result: string[],
-  ) => {
-    const isLastLevel = Object.keys(obj).every((k) => !isObject(obj[k]));
-    if (isLastLevel) {
-      if (evaluationFormControls.has(obj['ui:widget'] as string)) {
-        let path = createPathFromStack(stack);
-        if (nestedPathPrefix) {
-          path = nestedPathPrefix + '.' + path;
+const getEvaluablePathsFromSchema = memoize(
+  (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
+    if (!schema) return [];
+    const stack: string[] = [];
+    const result: string[] = [];
+    // the actual function that do the recursion
+    const helper = (
+      obj: Record<string, unknown>,
+      stack: string[],
+      result: string[],
+    ) => {
+      const isLastLevel = Object.keys(obj).every((k) => !isPlainObject(obj[k]));
+      if (isLastLevel) {
+        if (evaluationFormControls.has(obj['ui:widget'] as string)) {
+          let path = createPathFromStack(stack);
+          if (nestedPathPrefix) {
+            path = nestedPathPrefix + '.' + path;
+          }
+          result.push(path);
         }
-        result.push(path);
+        return;
       }
-      return;
-    }
-    for (const k in obj) {
-      stack.push(k);
-      const item = obj[k];
-      if (isObject(item)) {
-        helper(item, stack, result);
+      for (const k in obj) {
+        stack.push(k);
+        const item = obj[k];
+        if (isPlainObject(item)) {
+          helper(item, stack, result);
+        }
+        stack.pop();
       }
-      stack.pop();
-    }
-  };
-  helper(schema, stack, result);
-  return result;
-};
+    };
+    helper(schema, stack, result);
+    return result;
+  },
+);
 
 export type EntitySchema = {
   uiSchema?: Record<string, unknown>;
@@ -147,23 +153,35 @@ export class Entity implements RuntimeEvaluable {
         this.applyEvaluationUpdates,
         { fireImmediately: true },
       ),
-      autorun(() => {
-        console.log(
-          `-------------------------- ${this.id} start --------------------------`,
-        );
-        console.log('this.evaluablePaths', toJS(this.evaluablePaths));
-        console.log('this.values', toJS(this.values));
-        console.log('this.rawValues', toJS(this.rawValues));
-        console.log('this.codePaths', toJS(this.codePaths));
-        console.log('this.finalValues', toJS(this.finalValues));
-        console.log('this.validationErrors', toJS(this.validationErrors));
-        console.log('this.schema', toJS(this.schema));
-        console.log(
-          `-------------------------- ${this.id} end --------------------------`,
-        );
-      }),
+      // autorun(() => {
+      //   console.log(
+      //     `-------------------------- ${this.id} start --------------------------`,
+      //   );
+      //   console.log('this.evaluablePaths', toJS(this.evaluablePaths));
+      //   console.log('this.values', toJS(this.values));
+      //   console.log('this.rawValues', toJS(this.rawValues));
+      //   console.log('this.codePaths', toJS(this.codePaths));
+      //   console.log('this.finalValues', toJS(this.finalValues));
+      //   console.log('this.errors', toJS(this.errors));
+
+      //   console.log(
+      //     `-------------------------- ${this.id} end --------------------------`,
+      //   );
+      // }),
     );
   }
+
+  initDependecies() {
+    const relations = this.analyzeDependencies();
+    for (const relation of relations) {
+      this.setValueIsCode(relation.toProperty, relation.isCode);
+    }
+    this.dependencyManager.addDependenciesForEntity(
+      relations.flatMap((i) => i.dependencies),
+      this.id,
+    );
+  }
+
   analyzeDependencies() {
     const relations: ReturnType<
       (typeof this.dependencyManager)['analyzeDependencies']
@@ -190,7 +208,7 @@ export class Entity implements RuntimeEvaluable {
   ) {
     for (const relation of relations) {
       this.setValueIsCode(relation.toProperty, relation.isCode);
-      this.addDependencies(relation.dependencies);
+      this.addDependencies(relation);
     }
   }
 
@@ -205,7 +223,6 @@ export class Entity implements RuntimeEvaluable {
   );
 
   applyEvaluationUpdates() {
-    console.log('applyEvaluationUpdates');
     for (const path of this.codePaths) {
       set(
         this.values,
@@ -225,8 +242,11 @@ export class Entity implements RuntimeEvaluable {
     unset(this.values, key);
   }
 
-  addDependencies(relations: Array<DependencyRelation>) {
-    this.dependencyManager.addDependenciesForEntity(relations, this.id);
+  addDependencies(relations: ReturnType<typeof analyzeDependancies>) {
+    this.dependencyManager.addDepenciesForProperty({
+      ...relations,
+      entityId: this.id,
+    });
   }
 
   clearDependents() {

@@ -182,7 +182,7 @@ export class EditorState {
       currentPageId: this.currentPageId,
     };
   }
-  get entites() {
+  get entities() {
     return {
       ...this.currentPage.widgets,
       ...this.queries,
