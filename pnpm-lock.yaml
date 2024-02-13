@@ -529,6 +529,9 @@ importers:
       vitest:
         specifier: ^0.34.6
         version: 0.34.6(@vitest/ui@0.34.6)(happy-dom@12.2.2)
+      vitest-websocket-mock:
+        specifier: ^0.3.0
+        version: 0.3.0(vitest@0.34.6)
 
   packages/constants:
     devDependencies:
@@ -9845,6 +9848,11 @@ packages:
     resolution: {integrity: sha512-Mn6CN6meXEnMa0a5u6a5+RKrqRedHBhZGd15AWLk9O6uFY4KYHzImdt8JI8WODo1bjTSRnwXhJox+FCUZhCKCQ==}
     dev: false
 
+  /mock-socket@9.3.1:
+    resolution: {integrity: sha512-qxBgB7Qa2sEQgHFjj0dSigq7fX4k6Saisd5Nelwp2q8mlbAFh5dHV9JTTlF8viYJLSSWgMCZFUom8PJcMNBoJw==}
+    engines: {node: '>= 8'}
+    dev: true
+
   /morgan@1.10.0:
     resolution: {integrity: sha512-AbegBVI4sh6El+1gNwvD5YIck7nSA36weD7xvIxG4in80j/UoK8AEGaWnnz8v1GxonMCltmlNs5ZKbGvl9b1XQ==}
     engines: {node: '>= 0.8.0'}
@@ -12895,6 +12903,16 @@ packages:
       rollup: 3.29.4
     optionalDependencies:
       fsevents: 2.3.3
+    dev: true
+
+  /vitest-websocket-mock@0.3.0(vitest@0.34.6):
+    resolution: {integrity: sha512-kTEFtfHIUDiiiEBj/CR6WajugqObjnuNdolGRJA3vo3Xt+fmfd1Ghwe+NpJytG6OE57noHOCUXzs2R9XUF0cwg==}
+    peerDependencies:
+      vitest: '>=1 <2'
+    dependencies:
+      jest-diff: 29.7.0
+      mock-socket: 9.3.1
+      vitest: 0.34.6(@vitest/ui@0.34.6)(happy-dom@12.2.2)
     dev: true
 
   /vitest@0.34.6(@vitest/ui@0.34.6)(happy-dom@12.2.2):
