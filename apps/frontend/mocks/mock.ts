@@ -6,7 +6,6 @@
 /* tslint:disable */
 import { HttpResponse, http } from 'msw';
 import { faker } from '@faker-js/faker';
-import { setupWorker } from 'msw/browser';
 
 faker.seed(1);
 
@@ -907,9 +906,3 @@ export function getDataQueriesControllerUpdateQuery201Response() {
     updatedAt: null,
   };
 }
-
-// This configures a Service Worker with the given request handlers.
-export const startWorker = () => {
-  const worker = setupWorker(...handlers);
-  worker.start();
-};

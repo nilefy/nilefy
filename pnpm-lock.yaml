@@ -502,6 +502,9 @@ importers:
       happy-dom:
         specifier: ^12.2.2
         version: 12.2.2
+      msw:
+        specifier: ^2.2.0
+        version: 2.2.0(typescript@5.3.3)
       msw-auto-mock:
         specifier: ^0.18.0
         version: 0.18.0(@faker-js/faker@8.3.1)(msw@2.2.0)(openapi-types@12.1.3)

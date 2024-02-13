@@ -113,6 +113,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-tailwindcss": "^3.13.0",
     "happy-dom": "^12.2.2",
+    "msw": "^2.2.0",
     "msw-auto-mock": "^0.18.0",
     "postcss": "^8.4.31",
     "prettier": "3.0.3",
@@ -121,5 +122,10 @@
     "vite": "^4.5.0",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^0.34.6"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
