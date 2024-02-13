@@ -4,6 +4,8 @@ import {
   WsDataSourceDto,
   UpdateWsDataSourceDto,
   WsDataSourceP,
+  DataSourceConnectionDto,
+  WsDataSourcesDto,
 } from '../dto/data_sources.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
@@ -39,7 +41,7 @@ export class DataSourcesService {
 
   async getWsDataSources(
     workspaceId: WsDataSourceDto['workspaceId'],
-  ): Promise<WsDataSourceP[]> {
+  ): Promise<WsDataSourcesDto[]> {
     const ds = await this.db.query.workspaceDataSources.findMany({
       columns: {
         id: true,
@@ -64,7 +66,7 @@ export class DataSourcesService {
   async getOne(
     workspaceId: WsDataSourceDto['workspaceId'],
     datasourceId: WsDataSourceDto['id'],
-  ) {
+  ): Promise<DataSourceConnectionDto> {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
         id: true,
@@ -91,7 +93,7 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    return ds;
+    return ds as DataSourceConnectionDto;
   }
 
   async deleteConnections({
