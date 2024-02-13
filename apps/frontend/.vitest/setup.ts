@@ -4,7 +4,7 @@ import { server } from '../mocks/server';
 import { ws } from '../mocks/ws';
 import '@testing-library/jest-dom/vitest';
 
-beforeAll(async () => server.listen());
+beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
   cleanup();
