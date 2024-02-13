@@ -41,7 +41,7 @@ export class AppsController {
     @Req() req: ExpressAuthedRequest,
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Body(new ZodValidationPipe(createAppSchema)) createAppDto: CreateAppDto,
-  ): Promise<AppRetDto> {
+  ): Promise<CreateAppRetDto> {
     return await this.appsService.create({
       createdById: req.user.userId,
       workspaceId,
