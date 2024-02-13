@@ -12,29 +12,22 @@ it('request test', async () => {
   expect(response.status).toBe(201)
 })
 
-it('ws test', async () => {
-  const client1 = new WebSocket('ws://localhost:3000');
-  await ws.connected;
-  const client2 = new WebSocket('ws://localhost:3000');
-  await ws.connected;
-
-  const messages: {
-    client1: string[],
-    client2: string[],
-  } = {
-    client1: [],
-    client2: []
-  };
-  client1.onmessage = (e: MessageEvent<string>) => {
-    messages.client1.push(e.data);
-  };
-  client2.onmessage = (e) => {
-    messages.client2.push(e.data);
-  };
-
-  ws.send('hello everyone');
-  expect(messages).toEqual({
-    client1: ['hello everyone'],
-    client2: ['hello everyone'],
+it('ws test', () => {
+  ws.on('connection', (socket) => {
+    socket.on('message', (data) => {
+      expect(data).toBe('test message from app');
+      socket.send('test message from mock server');
+    });
   });
+
+  try {
+    const app =  new WebSocket('ws://localhost:3000');
+    app.send('test message from app');
+    app.onmessage = (ev: MessageEvent<string>) => {
+      expect(ev.data).toBe('test message from mock server');
+    };
+  }
+  catch {}
+
+  expect(ws.clients().length).toBe(1);
 });

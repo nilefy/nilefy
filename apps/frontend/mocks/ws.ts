@@ -1,3 +1,3 @@
-import WS from 'vitest-websocket-mock';
+import { Server } from 'mock-socket';
 
-export const ws = new WS('ws://localhost:3000');
+export const ws = new Server('ws://localhost:3000');
