@@ -1,5 +1,6 @@
 import {
   action,
+  autorun,
   computed,
   makeObservable,
   observable,
@@ -11,6 +12,8 @@ import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { RuntimeEvaluable } from './interfaces';
 import {
+  clone,
+  cloneDeep,
   debounce,
   get,
   isPlainObject,
@@ -23,12 +26,11 @@ import { ajv } from '@/lib/validations';
 import { toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
 import { analyzeDependancies } from '../dependancyUtils';
-
+import { observer } from 'mobx-react-lite';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
 const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
-
 const getEvaluablePathsFromSchema = memoize(
   (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
     if (!schema) return [];
@@ -54,7 +56,6 @@ const getEvaluablePathsFromSchema = memoize(
       for (const k in obj) {
         stack.push(k);
         const item = obj[k];
-        // TODO: use isPlainObject as typeguard
         if (isPlainObject(item)) {
           helper(item, stack, result);
         }
@@ -71,7 +72,6 @@ export type EntitySchema = {
   dataSchema?: Record<string, unknown>;
   metaSchema?: Record<string, unknown>;
 };
-
 export class Entity implements RuntimeEvaluable {
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
@@ -79,15 +79,13 @@ export class Entity implements RuntimeEvaluable {
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
+  public finalValues: Record<string, unknown>;
+
   public dependencyManager: DependencyManager;
   public evaluationManger: EvaluationManager;
   public codePaths: Set<string>;
   public validator?: ReturnType<typeof ajv.compile>;
-  /**
-   * if set that means the entity don't want to pass the `rawValues` to `ConfigForm` but part of `rawValues` with the name `nestedPathPrefix`
-   */
   private readonly nestedPathPrefix?: string;
-
   constructor({
     id,
     dependencyManager,
@@ -114,7 +112,7 @@ export class Entity implements RuntimeEvaluable {
       rawValues: observable,
       values: observable,
       codePaths: observable,
-      finalValues: computed,
+      finalValues: observable,
       applyEvaluationUpdates: action.bound,
       setValue: action,
       setValueIsCode: action,
@@ -131,6 +129,7 @@ export class Entity implements RuntimeEvaluable {
     this.dependencyManager = dependencyManager;
     this.evaluationManger = evaluationManger;
     this.rawValues = rawValues;
+    this.finalValues = cloneDeep(rawValues);
     this.values = {};
     if (tempRemoveMeFast) {
       evaluablePaths = Object.keys(rawValues);
@@ -142,7 +141,6 @@ export class Entity implements RuntimeEvaluable {
     this.codePaths = new Set<string>();
     this.schema = schema;
     if (schema?.dataSchema) {
-      // TODO: if ajv.compile is costly operation we should hoist all schemas validators to common place for all entities types
       this.validator = ajv.compile(schema.dataSchema);
     }
     if (schema?.uiSchema) {
@@ -237,6 +235,11 @@ export class Entity implements RuntimeEvaluable {
         path,
         get(this.evaluationManger.evaluatedForest, this.id + '.' + path),
       );
+      set(
+        this.finalValues,
+        path,
+        get(this.values, path, get(this.rawValues, path)),
+      );
     }
   }
 
@@ -284,14 +287,9 @@ export class Entity implements RuntimeEvaluable {
   getRawValue(key: string) {
     return get(this.rawValues, key);
   }
-
-  /**
-   * if set that means the entity don't want to pass the `rawValues` to `ConfigForm` but part of `rawValues` with the name `nestedPathPrefix`
-   */
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
   }
-
   get validationErrors() {
     if (!this.validator) return;
     let values = this.finalValues;
@@ -312,18 +310,6 @@ export class Entity implements RuntimeEvaluable {
     );
   }
 
-  get finalValues() {
-    const res = { ...this.rawValues };
-    for (const key of this.codePaths) {
-      set(res, key, get(this.values, key, get(this.rawValues, key)));
-    }
-    return res;
-  }
-
-  /**
-   * get the rawValues(the props that will be displayed in the ConfigForm and used in the evaluation process)
-   * could be the whole rawValues, or part of it
-   */
   get prefixedRawValues() {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)
