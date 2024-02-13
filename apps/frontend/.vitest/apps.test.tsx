@@ -16,9 +16,5 @@ it('create app', async () => {
   screen.getByPlaceholderText('App name').textContent = 'created app name';
   await userEvent.click(screen.getByRole('button', { name: 'Create App' }));
 
-  const res = await fetch(`http://localhost:3000/workspaces/1/apps`, {
-    method: 'POST',
-  });
-
   expect(screen.getByText('created app name')).toBeDefined();
 })
