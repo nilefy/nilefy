@@ -129,7 +129,7 @@ export class WebloomQuery
   }
 
   get config() {
-    return this.values.config;
+    return this.finalValues.config;
   }
 
   get rawConfig() {

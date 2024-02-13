@@ -313,7 +313,11 @@ export class Entity implements RuntimeEvaluable {
   }
 
   get finalValues() {
-    return merge({}, this.rawValues, this.values);
+    const res = { ...this.rawValues };
+    for (const key of this.codePaths) {
+      set(res, key, get(this.values, key, get(this.rawValues, key)));
+    }
+    return res;
   }
 
   /**

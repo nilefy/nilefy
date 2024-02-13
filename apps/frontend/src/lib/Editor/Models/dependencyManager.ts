@@ -4,13 +4,13 @@ import {
   action,
   computed,
   autorun,
-  when,
   toJS,
 } from 'mobx';
 import invariant from 'invariant';
 import { analyzeDependancies, hasCyclicDependencies } from '../dependancyUtils';
-import { concat, forEach, has } from 'lodash';
+import { forEach, has } from 'lodash';
 import { EditorState } from './editor';
+
 // please note that path is something like "a.b.c"
 type Path = string;
 type EntityId = string;

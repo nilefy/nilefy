@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
+import { autorun, toJS } from 'mobx';
 //Types
 type RowData = Record<string, unknown>;
 
@@ -45,7 +46,7 @@ export type WebLoomTableColumn = {
   type: 'Default' | 'String' | 'Number' | 'Boolean';
 };
 export type WebloomTableProps = {
-  columns: WebLoomTableColumn[];
+  columns?: WebLoomTableColumn[];
   data: RowData[];
   isRowSelectionEnabled: boolean;
   isSearchEnabled?: boolean;
@@ -75,11 +76,12 @@ const WebloomTable = observer(() => {
     .finalValues as WebloomTableProps;
   const {
     data = [],
-    columns,
+    columns = [],
     isRowSelectionEnabled,
     isSearchEnabled,
     isPaginationEnabled,
   } = props;
+
   //  to run only once when the component is mounted
   React.useEffect(() => {
     // merging predefined cols and cols generated from data
@@ -93,7 +95,7 @@ const WebloomTable = observer(() => {
 
     onPropChange({ key: 'columns', value: cols });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [onPropChange, data]);
 
   // pagination options
   const [{ pageIndex }, setPagination] = React.useState<PaginationState>({
@@ -297,36 +299,8 @@ const config: WidgetConfig = {
 };
 
 const defaultProps: WebloomTableProps = {
-  columns: [
-    {
-      id: '1',
-      accessorKey: 'id',
-      header: 'ID',
-      name: 'ID',
-      type: 'Number',
-    },
-    {
-      id: '2',
-      accessorKey: 'name',
-      header: 'Name',
-      name: 'Name',
-      type: 'String',
-    },
-    {
-      id: '3',
-      accessorKey: 'email',
-      header: 'Email',
-      name: 'Email',
-      type: 'String',
-    },
-    {
-      id: '4',
-      accessorKey: 'link',
-      header: 'Link',
-      name: 'Link',
-      type: 'String',
-    },
-  ],
+  data: [],
+  columns: [],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
   isPaginationEnabled: false,
