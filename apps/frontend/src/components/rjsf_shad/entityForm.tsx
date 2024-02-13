@@ -7,6 +7,7 @@ import { RJSFSchema } from '@rjsf/utils';
 import { get } from 'lodash';
 import { editorStore } from '@/lib/Editor/Models';
 import invariant from 'invariant';
+
 export type EntityFormProps = Omit<
   FormProps<any, RJSFSchema, any>,
   | 'idPrefix'
@@ -41,6 +42,7 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
           if (!id) {
             return;
           }
+          // function to get complete prop path from rjsf form control id
           const path = id!.split('.').slice(1).join('.');
           entity.setValue(path, get(form.formData, path));
         } else {
@@ -62,11 +64,14 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
         schema={entity.schema.dataSchema}
         formData={entity.prefixedRawValues}
         focusOnFirstError={false}
+        // TODO: if you don't want this create validator class that all it do is pull errors from the entity class, and i would prefer this for approach to come over this //"these are non-blocking errors, meaning that you can
+        //still submit the form when these are the only errors displayed to the user."
         // These are not really extra, they are the actual errors since we disabled the default validation these are the only errors we will get
         // The things rjsf made me do :(
         extraErrors={entity.validationErrors}
         showErrorList={false}
         onChange={onEntityChange}
+        {...props}
       />
     );
   },

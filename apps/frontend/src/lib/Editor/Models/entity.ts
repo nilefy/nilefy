@@ -1,6 +1,5 @@
 import {
   action,
-  autorun,
   computed,
   makeObservable,
   observable,
@@ -24,10 +23,12 @@ import { ajv } from '@/lib/validations';
 import { toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
 import { analyzeDependancies } from '../dependancyUtils';
+
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
 const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
+
 const getEvaluablePathsFromSchema = memoize(
   (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
     if (!schema) return [];
@@ -53,6 +54,7 @@ const getEvaluablePathsFromSchema = memoize(
       for (const k in obj) {
         stack.push(k);
         const item = obj[k];
+        // TODO: use isPlainObject as typeguard
         if (isPlainObject(item)) {
           helper(item, stack, result);
         }
@@ -69,6 +71,7 @@ export type EntitySchema = {
   dataSchema?: Record<string, unknown>;
   metaSchema?: Record<string, unknown>;
 };
+
 export class Entity implements RuntimeEvaluable {
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
@@ -80,7 +83,11 @@ export class Entity implements RuntimeEvaluable {
   public evaluationManger: EvaluationManager;
   public codePaths: Set<string>;
   public validator?: ReturnType<typeof ajv.compile>;
+  /**
+   * if set that means the entity don't want to pass the `rawValues` to `ConfigForm` but part of `rawValues` with the name `nestedPathPrefix`
+   */
   private readonly nestedPathPrefix?: string;
+
   constructor({
     id,
     dependencyManager,
@@ -135,6 +142,7 @@ export class Entity implements RuntimeEvaluable {
     this.codePaths = new Set<string>();
     this.schema = schema;
     if (schema?.dataSchema) {
+      // TODO: if ajv.compile is costly operation we should hoist all schemas validators to common place for all entities types
       this.validator = ajv.compile(schema.dataSchema);
     }
     if (schema?.uiSchema) {
@@ -276,9 +284,14 @@ export class Entity implements RuntimeEvaluable {
   getRawValue(key: string) {
     return get(this.rawValues, key);
   }
+
+  /**
+   * if set that means the entity don't want to pass the `rawValues` to `ConfigForm` but part of `rawValues` with the name `nestedPathPrefix`
+   */
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
   }
+
   get validationErrors() {
     if (!this.validator) return;
     let values = this.finalValues;
@@ -298,9 +311,15 @@ export class Entity implements RuntimeEvaluable {
       ),
     );
   }
+
   get finalValues() {
     return merge({}, this.rawValues, this.values);
   }
+
+  /**
+   * get the rawValues(the props that will be displayed in the ConfigForm and used in the evaluation process)
+   * could be the whole rawValues, or part of it
+   */
   get prefixedRawValues() {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)

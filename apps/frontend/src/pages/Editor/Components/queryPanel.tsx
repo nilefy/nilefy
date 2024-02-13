@@ -73,7 +73,11 @@ const QueryItem = observer(function QueryItem({
       <div className="flex h-10 flex-row items-center justify-end gap-5 border-b border-gray-300">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input defaultValue={query.id} />
-        <Button className="mr-auto" onClick={() => rjsfRef.current?.submit()}>
+        <Button
+          type="button"
+          className="mr-auto"
+          onClick={() => rjsfRef.current?.submit()}
+        >
           {isSubmitting ? (
             <>
               Saving... <SaveIcon />{' '}
