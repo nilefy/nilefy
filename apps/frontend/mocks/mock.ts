@@ -9,7 +9,7 @@ import { faker } from '@faker-js/faker';
 
 faker.seed(1);
 
-const baseURL = '';
+const baseURL = 'http://localhost:3000';
 const MAX_ARRAY_LENGTH = 20;
 
 let i = 0;
