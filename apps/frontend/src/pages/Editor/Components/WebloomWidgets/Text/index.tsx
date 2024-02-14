@@ -5,15 +5,21 @@ import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
-export type WebloomTextProps = {
-  text: string;
-};
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
+
+const webloomTextProps = z.object({
+  text: z.string(),
+});
+export type WebloomTextProps = z.infer<typeof webloomTextProps>;
+
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTextProps;
   return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
 });
+
 const config: WidgetConfig = {
   name: 'Text',
   icon: <Type />,
@@ -30,30 +36,22 @@ const config: WidgetConfig = {
 const defaultProps: WebloomTextProps = {
   text: 'Text',
 };
-const widgetName = 'WebloomText';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomTextProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'text',
-        label: 'Text',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter text',
-          label: 'Text',
-        },
-      },
-    ],
+const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomTextProps),
+  uiSchema: {
+    text: {
+      'ui:widget': 'inlinceCodeInput',
+      'ui:placeholder': 'Enter text',
+      'ui:title': 'Text',
+    },
   },
-];
+};
 export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomText };

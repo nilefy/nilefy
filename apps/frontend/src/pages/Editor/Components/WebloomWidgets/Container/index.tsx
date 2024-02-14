@@ -1,41 +1,51 @@
+import zodToJsonSchema from 'zod-to-json-schema';
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { ComponentPropsWithoutRef, useContext } from 'react';
+import { useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { WidgetContext } from '../..';
+import z from 'zod';
+import { RJSFSchema } from '@rjsf/utils';
 
-type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
+const webloomContainerProps = z.object({
+  color: z.string(),
+});
+type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+
 const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
     const props = editorStore.currentPage.getWidgetById(id)
       .finalValues as WebloomContainerProps;
-    return <Container {...props}>{children}</Container>;
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundColor: props.color,
+        }}
+      >
+        {children}
+      </div>
+    );
   },
 );
-const widgetName = 'WebloomContainer';
+
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
 };
-export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
-  {
-    sectionName: 'Color',
-    children: [
-      {
-        id: `${widgetName}-color`,
-        key: 'color',
-        label: 'Color',
-        type: 'color',
-        options: {
-          color: '#a883f2',
-        },
-      },
-    ],
+
+export const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomContainerProps) as RJSFSchema,
+  uiSchema: {
+    color: {
+      'ui:widget': 'colorPicker',
+      'ui:title': 'Color',
+    },
   },
-];
+};
 
 export const config: WidgetConfig = {
   name: 'Container',
@@ -52,7 +62,7 @@ export const config: WidgetConfig = {
 export const WebloomContainerWidget: Widget<WebloomContainerProps> = {
   component: WebloomContainer,
   defaultProps,
-  inspectorConfig,
+  schema,
   config,
 };
 export { WebloomContainer };

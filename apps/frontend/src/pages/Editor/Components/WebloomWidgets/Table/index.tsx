@@ -34,25 +34,32 @@ import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import { autorun, toJS } from 'mobx';
+import { z } from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
+
 //Types
 type RowData = Record<string, unknown>;
+export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
+export const webLoomTableColumn = z.object({
+  id: z.string(),
+  accessorKey: z.string(),
+  header: z.string(),
+  name: z.string(),
+  type: z.enum(columnTypes),
+});
 
-export type WebLoomTableColumn = {
-  id: string;
-  accessorKey: string;
-  header: string;
-  name: string;
-  type: 'Default' | 'String' | 'Number' | 'Boolean';
-};
-export type WebloomTableProps = {
-  columns?: WebLoomTableColumn[];
-  data: RowData[];
-  isRowSelectionEnabled: boolean;
-  isSearchEnabled?: boolean;
-  isPaginationEnabled?: boolean;
-  pageSize?: number;
-};
+export type WebLoomTableColumn = z.infer<typeof webLoomTableColumn>;
+
+const webloomTableProps = z.object({
+  data: z.array(z.record(z.string(), z.unknown())),
+  columns: z.array(webLoomTableColumn).optional(),
+  isRowSelectionEnabled: z.boolean(),
+  isSearchEnabled: z.boolean(),
+  isPaginationEnabled: z.boolean(),
+  pageSize: z.number().optional(),
+});
+
+export type WebloomTableProps = z.infer<typeof webloomTableProps>;
 
 // Helper function to generate columns from data
 const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
@@ -307,94 +314,23 @@ const defaultProps: WebloomTableProps = {
   pageSize: 3,
 };
 
-const widgetName = 'WebloomTable';
-
-const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
-  {
-    sectionName: 'Columns',
-    children: [
-      {
-        id: `${widgetName}-Columns`,
-        key: 'columns',
-        label: 'Columns',
-        type: 'list',
-        options: {},
-      },
-    ],
+const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomTableProps),
+  uiSchema: {
+    columns: {
+      'ui:widget': 'sortableList',
+    },
+    data: {
+      'ui:widget': 'inlineCodeInput',
+    },
   },
-  {
-    sectionName: 'Row Selection',
-    children: [
-      {
-        id: `${widgetName}-RowSelection`,
-        key: 'isRowSelectionEnabled',
-        label: 'Allow Selection',
-        type: 'checkbox',
-        // defaultValue: ,
-        // value: isRowSelectionEnabled,
-        options: {
-          label: 'Allow Selection',
-        },
-      },
-    ],
-  },
-  {
-    sectionName: 'Search',
-    children: [
-      {
-        id: `${widgetName}-Search`,
-        key: 'isSearchEnabled',
-        label: 'Enable Search',
-        type: 'checkbox',
-        options: {
-          label: 'Enable Search',
-        },
-      },
-    ],
-  },
-  {
-    sectionName: 'Pagination',
-    children: [
-      {
-        id: `${widgetName}-Pagination`,
-        key: 'isPaginationEnabled',
-        label: 'Enable Pagination',
-        type: 'checkbox',
-        options: {
-          label: 'Enable Pagination',
-        },
-      },
-      {
-        id: `${widgetName}-PageSize`,
-        key: 'pageSize',
-        label: 'Page Size',
-        type: 'input',
-        options: {},
-      },
-    ],
-  },
-  {
-    sectionName: 'Data',
-    children: [
-      {
-        id: `${widgetName}-Data`,
-        key: 'data',
-        label: 'Data',
-        type: 'inlineCodeInput',
-        options: {
-          label: 'Data',
-        },
-        defaultValue: ' ',
-      },
-    ],
-  },
-];
+};
 
 const WebloomTableWidget: Widget<WebloomTableProps> = {
   component: WebloomTable,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomTableWidget };

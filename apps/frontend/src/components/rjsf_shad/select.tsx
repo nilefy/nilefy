@@ -1,10 +1,8 @@
-import { FocusEvent } from 'react';
 import {
   ariaDescribedByIds,
   EnumOptionsType,
   enumOptionsIndexForValue,
   enumOptionsValueForIndex,
-  labelValue,
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,
@@ -18,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '../ui/label';
 
 export default function SelectWidget<
   T = any,
@@ -80,7 +77,7 @@ export default function SelectWidget<
         name={id}
         aria-describedby={ariaDescribedByIds<T>(id)}
         onValueChange={_onChange}
-        defaultValue={String(value)}
+        value={formValue.selectedIndex?.toString()}
       >
         <SelectTrigger className="w-full">
           <SelectValue

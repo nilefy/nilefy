@@ -53,12 +53,12 @@ export const queryConfigForm = {
     query: {
       'ui:widget': 'sql',
       'ui:placeholder': 'select * from table;',
-      'ui:title': 'query.query1',
+      'ui:title': 'SQL Query',
     },
     options: {
       'ui:widget': 'sql',
       'ui:placeholder': 'select * from table;',
-      'ui:title': 'query.query1',
+      'ui:title': 'Options',
     },
   },
 };

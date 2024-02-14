@@ -1,29 +1,52 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { ComponentPropsWithoutRef, useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
 
-export type WebloomInputProps = Pick<
-  ComponentPropsWithoutRef<typeof Input>,
-  'placeholder' | 'value'
-> & {
-  label: string;
-  type: 'text' | 'password';
+/**
+ * fields that you want to be on the configForm
+ */
+const webloomInputProps = z.object({
+  placeholder: z.string().optional(),
+  label: z.string(),
+  type: z.union([
+    z.literal('text'),
+    z.literal('password'),
+    z.literal('number'),
+  ]),
+});
+
+/**
+ * fields that your widget will add to the editorStore but won't have configForm control describing them
+ */
+type RuntimeInputFields = {
+  value?: string | number;
 };
+
+export type WebloomInputProps = z.infer<typeof webloomInputProps> &
+  RuntimeInputFields;
 
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-  const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
+  const { label, type, ...rest } = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
+  useEffect(() => {
+    if (type === 'password' || type === 'text')
+      onPropChange({ value: '', key: 'value' });
+    if (type === 'number') onPropChange({ value: 0, key: 'value' });
+  }, [type, onPropChange]);
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
       <Input
+        type={type}
         {...rest}
         onChange={(e) => {
           onPropChange({
@@ -35,6 +58,7 @@ const WebloomInput = observer(() => {
     </div>
   );
 });
+
 const config: WidgetConfig = {
   name: 'Input',
   icon: <TextCursorInput />,
@@ -55,68 +79,31 @@ const defaultProps: WebloomInputProps = {
   type: 'text',
 };
 
-const widgetName = 'WebloomInput';
+const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomInputProps),
+  uiSchema: {
+    type: {
+      'ui:placeholder': 'Select type',
+      'ui:title': 'Type',
+    },
+    placeholder: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:title': 'Placeholder',
+      'ui:placeholder': 'Enter placeholder',
+    },
+    label: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:title': 'Label',
+      'ui:placeholder': 'Enter label',
+    },
+  },
+};
 
-const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
-  {
-    sectionName: 'Basic',
-    children: [
-      {
-        id: `${widgetName}-Type`,
-        key: 'type',
-        label: 'Type',
-        type: 'select',
-        options: {
-          items: [
-            {
-              label: 'Text',
-              value: 'text',
-            },
-            {
-              label: 'Number',
-              value: 'number',
-            },
-            {
-              label: 'Password',
-              value: 'password',
-            },
-          ],
-          placeholder: 'Select type',
-        },
-      },
-      {
-        id: `${widgetName}-placeholder`,
-        key: 'placeholder',
-        label: 'Placeholder',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter placeholder',
-          label: 'Placeholder',
-        },
-      },
-    ],
-  },
-  {
-    sectionName: 'Label',
-    children: [
-      {
-        id: `${widgetName}-label`,
-        key: 'label',
-        label: 'Label',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter label',
-          label: 'Label',
-        },
-      },
-    ],
-  },
-];
 const WebloomInputWidget: Widget<WebloomInputProps> = {
   component: WebloomInput,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomInputWidget };

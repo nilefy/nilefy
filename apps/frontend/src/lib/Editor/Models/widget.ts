@@ -77,9 +77,8 @@ export class WebloomWidget
       dependencyManager,
       evaluationManger,
       id,
-      tempRemoveMeFast: true,
       rawValues: props ?? {},
-      schema: WebloomWidgets[type].schema ?? {},
+      schema: WebloomWidgets[type].schema,
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;

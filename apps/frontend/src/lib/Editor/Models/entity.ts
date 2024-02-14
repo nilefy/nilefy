@@ -7,7 +7,6 @@ import {
   reaction,
   toJS,
 } from 'mobx';
-
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { RuntimeEvaluable } from './interfaces';
@@ -27,11 +26,11 @@ import { ajv } from '@/lib/validations';
 import { toErrorSchema } from '@rjsf/utils';
 import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
 import { analyzeDependancies } from '../dependancyUtils';
-import { observer } from 'mobx-react-lite';
+
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
-const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
+const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
 const getEvaluablePathsFromSchema = memoize(
   (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
     if (!schema) return [];
@@ -73,6 +72,7 @@ export type EntitySchema = {
   dataSchema?: Record<string, unknown>;
   metaSchema?: Record<string, unknown>;
 };
+
 export class Entity implements RuntimeEvaluable {
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
@@ -80,6 +80,10 @@ export class Entity implements RuntimeEvaluable {
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
+  /**
+   * merged rawVales and values(contains all props evaluated and not-evaluated)
+   * use it to get the real values of some entity
+   */
   public finalValues: Record<string, unknown>;
 
   public dependencyManager: DependencyManager;
@@ -87,13 +91,13 @@ export class Entity implements RuntimeEvaluable {
   public codePaths: Set<string>;
   public validator?: ReturnType<typeof ajv.compile>;
   private readonly nestedPathPrefix?: string;
+
   constructor({
     id,
     dependencyManager,
     evaluationManger,
     rawValues,
     schema = {},
-    tempRemoveMeFast,
     evaluablePaths = [],
     nestedPathPrefix,
   }: {
@@ -102,7 +106,6 @@ export class Entity implements RuntimeEvaluable {
     evaluationManger: EvaluationManager;
     rawValues: Record<string, unknown>;
     schema?: EntitySchema;
-    tempRemoveMeFast?: boolean;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
   }) {
@@ -132,9 +135,6 @@ export class Entity implements RuntimeEvaluable {
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
-    if (tempRemoveMeFast) {
-      evaluablePaths = Object.keys(rawValues);
-    }
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
       ...getEvaluablePathsFromSchema(schema?.uiSchema || {}, nestedPathPrefix),
@@ -275,7 +275,7 @@ export class Entity implements RuntimeEvaluable {
       path = this.nestedPathPrefix + '.' + path;
     }
     set(this.rawValues, path, value);
-    if (get(this.values, path) !== undefined) {
+    if (get(this.values, path) === undefined) {
       set(this.finalValues, path, value);
     }
     if (this.evaluablePaths.has(path)) {
