@@ -33,7 +33,7 @@ type RuntimeInputFields = {
 export type WebloomInputProps = z.infer<typeof webloomInputProps> &
   RuntimeInputFields;
 
-const WebloomInput = observer(() => {
+const WebloomInput = observer(function WebloomInput() {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, type, ...rest } = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;

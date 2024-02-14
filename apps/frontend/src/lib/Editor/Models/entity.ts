@@ -85,7 +85,6 @@ export class Entity implements RuntimeEvaluable {
    * use it to get the real values of some entity
    */
   public finalValues: Record<string, unknown>;
-
   public dependencyManager: DependencyManager;
   public evaluationManger: EvaluationManager;
   public codePaths: Set<string>;
