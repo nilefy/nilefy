@@ -1,10 +1,12 @@
-import { SketchPicker } from 'react-color';
+import { Label } from '@/components/ui/label';
 import { BaseControlProps, InspectorColorProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
+import { SketchPicker } from 'react-color';
 import { FormControlContext } from '..';
-import { Label } from '@/components/ui/label';
 
-const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
+export const InspectorColor = (
+  props: InspectorColorProps & BaseControlProps,
+) => {
   const { onChange } = useContext(FormControlContext);
   return (
     <>
@@ -18,5 +20,3 @@ const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
     </>
   );
 };
-
-export default InspectorColor;

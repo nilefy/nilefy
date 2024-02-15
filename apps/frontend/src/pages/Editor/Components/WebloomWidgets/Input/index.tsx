@@ -14,6 +14,12 @@ export type WebloomInputProps = Pick<
 > & {
   label: string;
   type: 'text' | 'password';
+  labelColor: string;
+  textColor: string;
+  borderRadius: string;
+  fontSize: string;
+  textAlignment: string;
+  boxShadow: string;
 };
 
 const WebloomInput = observer(() => {
@@ -23,9 +29,12 @@ const WebloomInput = observer(() => {
 
   return (
     <div className="flex w-full items-center justify-center gap-2">
-      <Label>{label}</Label>
+      <Label className={`${rest.fontSize} color-[${rest.labelColor}]`}>
+        {label}
+      </Label>
       <Input
         {...rest}
+        className={`${rest.textAlignment} ${rest.boxShadow} ${rest.borderRadius}`}
         onChange={(e) => {
           onPropChange({
             key: 'value',
@@ -54,6 +63,12 @@ const defaultProps: WebloomInputProps = {
   value: '',
   label: 'Label',
   type: 'text',
+  labelColor: 'black',
+  textColor: 'white',
+  borderRadius: 'rounded-none',
+  fontSize: 'text-base',
+  textAlignment: 'text-left',
+  boxShadow: 'shadow-none',
 };
 
 const widgetName = 'WebloomInput';
@@ -108,6 +123,120 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
         options: {
           placeholder: 'Enter label',
           label: 'Label',
+        },
+      },
+    ],
+  },
+  {
+    sectionName: 'Style',
+    children: [
+      {
+        id: `${widgetName}-color`,
+        key: 'labelColor',
+        label: 'Font Color',
+        type: 'color',
+        options: {
+          color: '#fff',
+        },
+      },
+      {
+        id: `${widgetName}-borderRadius`,
+        key: 'borderRadius',
+        label: 'Border Radius',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'None',
+              value: 'rounded-none',
+            },
+            {
+              label: 'Small',
+              value: 'rounded-sm',
+            },
+            {
+              label: 'Medium',
+              value: 'rounded-md',
+            },
+            {
+              label: 'Large',
+              value: 'rounded-lg',
+            },
+            {
+              label: 'Full',
+              value: 'rounded-full',
+            },
+          ],
+        },
+      },
+      {
+        id: `${widgetName}-fontSize`,
+        key: 'fontSize',
+        label: 'Font Size',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Small',
+              value: 'text-sm',
+            },
+            {
+              label: 'Medium',
+              value: 'text-base',
+            },
+            {
+              label: 'Large',
+              value: 'text-lg',
+            },
+          ],
+        },
+      },
+      {
+        id: `${widgetName}-textAlignment`,
+        key: 'textAlignment',
+        label: 'Text Alignment',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Left',
+              value: 'text-left',
+            },
+            {
+              label: 'Center',
+              value: 'text-center',
+            },
+            {
+              label: 'Right',
+              value: 'text-right',
+            },
+          ],
+        },
+      },
+      {
+        id: `${widgetName}-boxShadow`,
+        key: 'boxShadow',
+        label: 'Box Shadow',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'None',
+              value: 'shadow-none',
+            },
+            {
+              label: 'Small',
+              value: 'shadow-sm',
+            },
+            {
+              label: 'Medium',
+              value: 'shadow-md',
+            },
+            {
+              label: 'Large',
+              value: 'shadow-lg',
+            },
+          ],
         },
       },
     ],

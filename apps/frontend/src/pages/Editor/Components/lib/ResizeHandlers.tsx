@@ -79,7 +79,12 @@ const Handles = observer(function Handles({ id }: { id: string }) {
   const componentHandles = useMemo(
     () =>
       Object.entries(handlePositions).filter(([key]) => {
-        if (direction === 'Both') return true;
+        if (direction === 'Both') {
+          if (node.layoutMode === 'auto') {
+            return key === 'left' || key === 'right';
+          }
+          return true;
+        }
         if (direction === 'Horizontal') {
           return key === 'left' || key === 'right';
         }
@@ -88,7 +93,7 @@ const Handles = observer(function Handles({ id }: { id: string }) {
         }
         return false;
       }),
-    [direction],
+    [direction, node.layoutMode],
   );
   const isDragging = editorStore.currentPage.draggedWidgetId === id;
   const handleSize = 8;
