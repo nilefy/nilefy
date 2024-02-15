@@ -7,7 +7,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
-import { UpdateNodesPayload } from '../types';
+// import { UpdateNodesPayload } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =

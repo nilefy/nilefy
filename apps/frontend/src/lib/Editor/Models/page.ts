@@ -20,6 +20,7 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
 export class WebloomPage {
@@ -371,8 +372,12 @@ export class WebloomPage {
           },
         };
       } else {
+        const entity = this.getWidgetById(parent.id);
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newParentRowCount,
+          rowsCount:
+            entity.layoutMode === 'fixed'
+              ? undefined
+              : parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,

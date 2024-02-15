@@ -29,6 +29,20 @@ class DragAction {
   private static mouseCurrentPosition: Point;
   private static moved = false;
 
+  private static cumulativeScroll(overId: string): number {
+    let scroll = 0;
+    let parent = editorStore.currentPage.getWidgetById(overId);
+    while (!parent.isRoot) {
+      const elm = parent.dom?.querySelector('[data-scroll="true"]');
+      if (!elm) break;
+      scroll += elm.scrollTop;
+      console.log(parent.dom?.querySelector('[data-scroll="true"]')?.scrollTop);
+      parent = parent.parent;
+      console.log('scroll', scroll, parent.id);
+    }
+    return scroll;
+  }
+
   private static _start(args: {
     new?: {
       type: string;
@@ -119,7 +133,7 @@ class DragAction {
       x: this.mouseStartPosition.x + delta.x,
       y: this.mouseStartPosition.y + delta.y,
     };
-
+    delta.y -= this.cumulativeScroll(overId);
     this.delta = delta;
     if (
       this.mouseStartPosition.x !== this.mouseCurrentPosition.x ||

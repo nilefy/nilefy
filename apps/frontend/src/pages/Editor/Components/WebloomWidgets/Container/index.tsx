@@ -1,24 +1,47 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { Container } from '../../_Components/Container';
-import { BoxSelect } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { ComponentPropsWithoutRef, useContext } from 'react';
-import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
+import {
+  Widget,
+  WidgetConfig,
+  WidgetInspectorConfig,
+} from '@/lib/Editor/interface';
+import { BoxSelect } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import { ReactNode, useContext } from 'react';
 import { WidgetContext } from '../..';
 
-type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
+type WebloomContainerProps = {
+  children?: ReactNode;
+  color: string;
+  DONTUSE: number;
+};
+
 const WebloomContainer = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { id } = useContext(WidgetContext);
-    const props = editorStore.currentPage.getWidgetById(id)
-      .values as WebloomContainerProps;
-    return <Container {...props}>{children}</Container>;
+    const entity = editorStore.currentPage.getWidgetById(id);
+    const props = entity.values as WebloomContainerProps;
+
+    return (
+      <div className="relative h-full w-full overflow-auto" data-scroll="true">
+        <div
+          style={{
+            width: '100%',
+            backgroundColor: props.color,
+            height: entity.innerContainerPixelDimensions.height,
+            overflowY: 'auto',
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
   },
 );
+
 const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
+  DONTUSE: Infinity,
 };
 export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
   {
@@ -27,10 +50,19 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
       {
         id: `${widgetName}-color`,
         key: 'color',
-        label: 'Color',
+        label: 'Color2',
         type: 'color',
         options: {
           color: '#a883f2',
+        },
+      },
+      {
+        id: `${widgetName}-dynamicHeight`,
+        key: 'DONTUSE',
+        label: 'Height Mode',
+        type: 'heightMode',
+        options: {
+          label: 'Height Mode',
         },
       },
     ],
@@ -42,10 +74,11 @@ export const config: WidgetConfig = {
   icon: <BoxSelect />,
   isCanvas: true,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 10,
+    rowsCount: 30,
     minColumns: 1,
     minRows: 4,
+    layoutMode: 'fixed',
   },
   resizingDirection: 'Both',
 };

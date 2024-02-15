@@ -2,6 +2,9 @@ import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
 
 type BaseControlProps = {
+  /**
+   * form control id
+   */
   id: string;
   label: string;
   defaultValue?: string | number | boolean;
@@ -44,6 +47,9 @@ type FormControlOptions = {
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
   inlineCodeInput: InlineCodeInputProps;
+  heightMode: {
+    label: string;
+  };
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -109,11 +115,13 @@ export type WebloomPixelDimensions = {
   height: number;
 };
 
+export type LayoutMode = 'auto' | 'fixed' | 'limited';
 export interface LayoutConfig {
   minColumns?: number;
   minRows?: number;
   colsCount: number;
   rowsCount: number;
+  layoutMode?: LayoutMode;
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
