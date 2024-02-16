@@ -3,14 +3,14 @@ import { ws } from '../mocks/ws';
 
 it('test', () => {
   expect(1 + 1).toBe(2);
-})
+});
 
 it('request test', async () => {
   const response = await fetch('http://localhost:3000/auth/signup', {
-    method: 'POST'
+    method: 'POST',
   });
-  expect(response.status).toBe(201)
-})
+  expect(response.status).toBe(201);
+});
 
 it('ws test', () => {
   ws.on('connection', (socket) => {
@@ -21,13 +21,12 @@ it('ws test', () => {
   });
 
   try {
-    const app =  new WebSocket('ws://localhost:3000');
+    const app = new WebSocket('ws://localhost:3000');
     app.send('test message from app');
     app.onmessage = (ev: MessageEvent<string>) => {
       expect(ev.data).toBe('test message from mock server');
     };
-  }
-  catch {}
+  } catch {}
 
   expect(ws.clients().length).toBe(1);
 });
