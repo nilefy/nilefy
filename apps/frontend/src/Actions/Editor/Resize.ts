@@ -287,13 +287,13 @@ class ResizeAction {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
           editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
-          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot)
+          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot);
         });
-        updates.push(editorStore.currentPage.getWidgetById(id).snapshot)
+        updates.push(editorStore.currentPage.getWidgetById(id).snapshot);
         return {
           event: 'update' as const,
           data: updates,
-        }
+        };
       },
     };
     this.cleanUp();

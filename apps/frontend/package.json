@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint src --fix",
+    "lint": "eslint src .vitest --fix",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
