@@ -51,6 +51,14 @@ export type WebloomTableProps = {
   isSearchEnabled?: boolean;
   isPaginationEnabled?: boolean;
   pageSize?: number;
+  rowHeight: string;
+  fontSize: string;
+  textAlignment: string;
+  textColor: string;
+  backgroundColor: string;
+  borderRadius: string;
+  borderColor: string;
+  borderWidth: string;
 };
 
 // Helper function to generate columns from data
@@ -180,7 +188,7 @@ const WebloomTable = observer(() => {
     getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: setRowSelection,
   });
-
+  console.log(`p-${+props.rowHeight}`);
   return (
     <div className="flex h-full w-full flex-col overflow-auto">
       {isSearchEnabled && (
@@ -193,8 +201,14 @@ const WebloomTable = observer(() => {
           />
         </div>
       )}
-      <div className="h-full w-full rounded-md border shadow-md">
-        <Table className="h-full">
+      <div className={`h-full w-full rounded-md border shadow-md`}>
+        <Table
+          style={{
+            borderColor: props.borderColor,
+            borderWidth: +props.borderWidth,
+          }}
+          className={`h-full`}
+        >
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -217,7 +231,14 @@ const WebloomTable = observer(() => {
             {table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    style={{
+                      backgroundColor: props.backgroundColor,
+                      color: props.textColor,
+                    }}
+                    className={`p-${+props.rowHeight} ${props.fontSize} `}
+                    key={cell.id}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -350,6 +371,14 @@ const defaultProps: WebloomTableProps = {
   isSearchEnabled: false,
   isPaginationEnabled: false,
   pageSize: 3,
+  rowHeight: 'Default',
+  fontSize: 'M',
+  backgroundColor: '',
+  borderRadius: 'rounded-none',
+  borderColor: '#000',
+  borderWidth: '0',
+  textAlignment: 'text-center',
+  textColor: '',
 };
 
 const widgetName = 'WebloomTable';
@@ -415,6 +444,127 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
         label: 'Page Size',
         type: 'input',
         options: {},
+      },
+    ],
+  },
+  {
+    sectionName: 'Style',
+    children: [
+      {
+        id: `${widgetName}-RowHeight`,
+        key: 'rowHeight',
+        label: 'Row Height',
+        type: 'select',
+        defaultValue: 'Default',
+        options: {
+          items: [
+            {
+              label: 'Short',
+              value: '2',
+            },
+            {
+              label: 'Default',
+              value: '4',
+            },
+            {
+              label: 'Tall',
+              value: '6',
+            },
+          ],
+        },
+      },
+      {
+        id: `${widgetName}-fontSize`,
+        key: 'fontSize',
+        label: 'Font Size',
+        type: 'select',
+        defaultValue: 'M',
+        options: {
+          items: [
+            {
+              label: 'S',
+              value: 'text-md',
+            },
+            {
+              label: 'M',
+              value: 'text-base',
+            },
+            {
+              label: 'L',
+              value: 'text-lg',
+            },
+            {
+              label: 'XL',
+              value: 'text-xl',
+            },
+          ],
+        },
+      },
+      {
+        id: `${widgetName}-color`,
+        key: 'textColor',
+        label: 'Color',
+        type: 'color',
+        options: {
+          color: '#000',
+        },
+      },
+      {
+        id: `${widgetName}-color`,
+        key: 'backgroundColor',
+        label: 'Background Color',
+        type: 'color',
+        options: {
+          color: '#fff',
+        },
+      },
+      // {
+      //   id: `${widgetName}-borderRadius`,
+      //   key: 'borderRadius',
+      //   label: 'Border Radius',
+      //   type: 'select',
+      //   options: {
+      //     items: [
+      //       {
+      //         label: 'None',
+      //         value: 'rounded-none',
+      //       },
+      //       {
+      //         label: 'Small',
+      //         value: 'rounded-sm',
+      //       },
+      //       {
+      //         label: 'Medium',
+      //         value: 'rounded-md',
+      //       },
+      //       {
+      //         label: 'Large',
+      //         value: 'rounded-lg',
+      //       },
+      //       {
+      //         label: 'Full',
+      //         value: 'rounded-full',
+      //       },
+      //     ],
+      //   },
+      // },
+      {
+        id: `${widgetName}-borderColor`,
+        key: 'borderColor',
+        label: 'Border Color',
+        type: 'color',
+        options: {
+          color: '#000',
+        },
+      },
+      {
+        id: `${widgetName}-borderWidth`,
+        key: 'borderWidth',
+        label: 'Border Width',
+        type: 'input',
+        options: {
+          placeholder: 'Enter border width in pixels',
+        },
       },
     ],
   },
