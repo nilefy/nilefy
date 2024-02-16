@@ -93,7 +93,7 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    return ds as DataSourceConnectionDto;
+    return ds;
   }
 
   async deleteConnections({

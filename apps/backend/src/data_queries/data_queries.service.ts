@@ -71,7 +71,7 @@ export class DataQueriesService {
         },
       },
     });
-    return q as AppQueriesDto[];
+    return q;
   }
 
   async getQuery(
