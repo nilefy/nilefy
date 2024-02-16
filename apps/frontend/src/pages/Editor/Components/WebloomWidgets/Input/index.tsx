@@ -26,10 +26,16 @@ const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
     .values as WebloomInputProps;
+  console.log(`text-[${rest.labelColor}]`);
 
   return (
     <div className="flex w-full items-center justify-center gap-2">
-      <Label className={`${rest.fontSize} color-[${rest.labelColor}]`}>
+      <Label
+        style={{
+          color: rest.labelColor,
+        }}
+        className={`${rest.fontSize}`}
+      >
         {label}
       </Label>
       <Input
