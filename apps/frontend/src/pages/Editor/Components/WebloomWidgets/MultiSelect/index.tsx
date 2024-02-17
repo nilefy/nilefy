@@ -5,20 +5,19 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import SelectComponent from '../../_Components/Select';
 import { Label } from '@radix-ui/react-label';
 import MultipleSelect from '../../_Components/MultiSelect';
 export type WebloomSelectProps = {
   options: selectOptions[];
-  lable: string;
+  label: string;
 };
 const WebloomMultiSelect = observer(() => {
   const { id } = useContext(WidgetContext);
-  const { lable, ...rest } = editorStore.currentPage.getWidgetById(id)
+  const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
     .values as WebloomSelectProps;
   return (
     <div className="absolute">
-      <Label>{lable}</Label>
+      <Label>{label}</Label>
       <MultipleSelect {...rest}></MultipleSelect>
     </div>
   );
@@ -42,7 +41,7 @@ const defaultProps: WebloomSelectProps = {
     { value: 'Option 2', label: 'Option 2' },
     { value: 'Option 3', label: 'Option 3' },
   ],
-  lable: 'Select',
+  label: 'Select',
 };
 const widgetName = 'WebloomMultiSelect';
 
@@ -52,7 +51,7 @@ const inspectorConfig: WidgetInspectorConfig<WebloomSelectProps> = [
     children: [
       {
         id: `${widgetName}-text`,
-        key: 'lable',
+        key: 'label',
         label: 'Name',
         type: 'inlineCodeInput',
         options: {

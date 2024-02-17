@@ -31,6 +31,9 @@ type InspectorListProps = {
 type InspectorCheckboxProps = {
   //  label: string;
 };
+type InspectorDatePickerProps = {
+  date: Date;
+};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -44,6 +47,7 @@ type FormControlOptions = {
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
   inlineCodeInput: InlineCodeInputProps;
+  datePicker: InspectorDatePickerProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -161,6 +165,7 @@ export type {
   InspectorFormControls,
   InlineCodeInputProps,
   InspectorColorProps,
+  InspectorDatePickerProps,
 };
 
 export type selectOptions = {

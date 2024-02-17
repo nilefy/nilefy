@@ -3,10 +3,7 @@ import React from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { selectOptions } from '@/lib/Editor/interface';
 
-const MultipleSelect = (props: {
-  className: string;
-  options: selectOptions[];
-}) => {
+const MultipleSelect = (props: { options: selectOptions[] }) => {
   const [value, setValue] = React.useState<selectOptions[]>([]);
   return (
     <div className="flex w-full flex-col">

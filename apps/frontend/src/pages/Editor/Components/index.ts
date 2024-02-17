@@ -7,6 +7,7 @@ import { WebloomTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
 import { WebloomSelectWidget } from './WebloomWidgets/Select';
 import { WebloomMultiSelectWidget } from './WebloomWidgets/MultiSelect';
+import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -17,6 +18,7 @@ export const WebloomWidgets = {
   Table: WebloomTableWidget,
   WebloomSelect: WebloomSelectWidget,
   WebloomMultiSelect: WebloomMultiSelectWidget,
+  WebloomDatePicker: WebloomDatePickerWidget,
 } as const;
 
 export const WidgetContext = createContext<{
