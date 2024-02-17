@@ -17,9 +17,7 @@ import {
   handleParentCollisions,
 } from '../collisions';
 import { Snapshotable } from './interfaces';
-import { DependencyManager } from './dependencyManager';
 import { cloneDeep } from 'lodash';
-import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 
 export class WebloomWidget
@@ -56,8 +54,6 @@ export class WebloomWidget
     rowsCount,
     columnsCount,
     props,
-    evaluationManger,
-    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -70,18 +66,17 @@ export class WebloomWidget
     columnsCount?: number;
     props?: Record<string, unknown>;
     dependents?: Set<string>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
   }) {
     super({
-      dependencyManager,
-      evaluationManger,
+      workerBroker: page.workerBroker,
       id,
       rawValues: props ?? {},
       schema: WebloomWidgets[type].schema,
+      entityType: 'widget',
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
+
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
@@ -310,8 +305,6 @@ export class WebloomWidget
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
     });
   }
 

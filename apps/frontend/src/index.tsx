@@ -141,13 +141,11 @@ const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
 
 root.render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Toaster />
-        <RouterProvider router={router} />
-      </ThemeProvider>
-      <ReactQueryDevtools buttonPosition="bottom-right" />
-    </QueryClientProvider>
-  </React.StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <Toaster />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+    <ReactQueryDevtools buttonPosition="bottom-right" />
+  </QueryClientProvider>,
 );

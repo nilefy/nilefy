@@ -1,25 +1,32 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  toJS,
+} from 'mobx';
+
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
-import { DependencyManager } from './dependencyManager';
-import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
+import { WorkerRequest } from '../workers/common/interface';
+import { WorkerBroker } from './workerBroker';
+import { WebloomDisposable } from './interfaces';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
-export class EditorState {
+export class EditorState implements WebloomDisposable {
   /**
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery> = {};
+  workerBroker: WorkerBroker;
   currentPageId: string = '';
-  dependencyManager: DependencyManager = new DependencyManager({
-    editor: this,
-  });
-  evaluationManger: EvaluationManager = new EvaluationManager(this);
+  initting = false;
   /**
    * application name
    */
@@ -43,16 +50,17 @@ export class EditorState {
       removePage: action,
       init: action,
     });
+    this.workerBroker = new WorkerBroker();
   }
 
-  cleanUp() {
+  dispose() {
+    Object.values(this.pages).forEach((page) => page.dispose());
+    Object.values(this.queries).forEach((query) => query.dispose());
+    // react strict mode causes this to be called twice
+    process.env.NODE_ENV === 'production' ? this.workerBroker.dispose() : null;
     this.pages = {};
     this.queries = {};
     this.currentPageId = '';
-    this.dependencyManager = new DependencyManager({
-      editor: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
   }
 
   init({
@@ -75,7 +83,7 @@ export class EditorState {
       'dependencyManager' | 'evaluationManger'
     >[];
   }) {
-    this.cleanUp();
+    this.dispose();
     this.name = name;
     seedNameMap([
       ...Object.values(pages[0].widgets || {}).map((w) => w.type),
@@ -87,8 +95,8 @@ export class EditorState {
       if (index !== 0) return;
       this.pages[page.id] = new WebloomPage({
         ...page,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
+        workerBroker: this.workerBroker,
+        evalForest: this.evalForest,
         // Todo fix this
         widgets: page.widgets || {},
       });
@@ -105,11 +113,33 @@ export class EditorState {
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
         ...q,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
       });
     });
-    this.dependencyManager.initAnalysis();
+    this.workerBroker.postMessege({
+      event: 'init',
+      body: {
+        currentPageId: this.currentPageId,
+        queries: queries.reduce((acc, query) => {
+          acc[query.id] = {
+            unevalValues: query.query,
+            id: query.id,
+          };
+          return acc;
+        }, {}),
+        pages: {
+          [currentPageId]: Object.entries(this.currentPage.widgets).reduce(
+            (acc, [id, widget]) => {
+              acc[id] = {
+                id: widget.id,
+                unevalValues: toJS(widget.rawValues),
+              };
+              return acc;
+            },
+            {},
+          ),
+        },
+      },
+    });
   }
 
   /**
@@ -142,6 +172,12 @@ export class EditorState {
     } else {
       this.currentPageId = id;
     }
+    this.workerBroker.postMessege({
+      event: 'changePage',
+      body: {
+        currentPageId: this.currentPageId,
+      },
+    } as WorkerRequest);
   }
 
   addPage(id: string, name: string, handle: string) {
@@ -149,8 +185,7 @@ export class EditorState {
       id,
       name,
       handle,
-      dependencyManager: this.dependencyManager,
-      evaluationManger: this.evaluationManger,
+      workerBroker: this.workerBroker,
       widgets: {},
     });
   }
@@ -163,8 +198,6 @@ export class EditorState {
   ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
-      dependencyManager: this.dependencyManager,
-      evaluationManger: this.evaluationManger,
     });
   }
 

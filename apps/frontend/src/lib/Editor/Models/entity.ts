@@ -1,31 +1,25 @@
 import {
   action,
-  autorun,
   computed,
   makeObservable,
   observable,
   reaction,
   toJS,
 } from 'mobx';
-import { DependencyManager } from './dependencyManager';
-import { EvaluationManager } from './evaluationManager';
-import { RuntimeEvaluable } from './interfaces';
+
+import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
 import {
-  clone,
   cloneDeep,
   debounce,
   get,
-  has,
   isPlainObject,
   memoize,
   merge,
   set,
-  unset,
 } from 'lodash';
 import { ajv } from '@/lib/validations';
-import { toErrorSchema } from '@rjsf/utils';
-import { transformRJSFValidationErrors } from '@rjsf/validator-ajv8/lib/processRawValidationErrors';
-import { analyzeDependancies } from '../dependancyUtils';
+import { WorkerRequest } from '../workers/common/interface';
+import { WorkerBroker } from './workerBroker';
 
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
@@ -73,7 +67,8 @@ export type EntitySchema = {
   metaSchema?: Record<string, unknown>;
 };
 
-export class Entity implements RuntimeEvaluable {
+export class Entity implements RuntimeEvaluable, WebloomDisposable {
+  readonly entityType: string;
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
   public readonly schema: EntitySchema;
@@ -85,52 +80,43 @@ export class Entity implements RuntimeEvaluable {
    * use it to get the real values of some entity
    */
   public finalValues: Record<string, unknown>;
-  public dependencyManager: DependencyManager;
-  public evaluationManger: EvaluationManager;
+
   public codePaths: Set<string>;
   public validator?: ReturnType<typeof ajv.compile>;
   private readonly nestedPathPrefix?: string;
-
+  protected readonly workerBroker: WorkerBroker;
   constructor({
     id,
-    dependencyManager,
-    evaluationManger,
+    workerBroker,
     rawValues,
     schema = {},
     evaluablePaths = [],
     nestedPathPrefix,
+    entityType: entityType,
   }: {
     id: string;
-    dependencyManager: DependencyManager;
-    evaluationManger: EvaluationManager;
+    entityType: string;
     rawValues: Record<string, unknown>;
     schema?: EntitySchema;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
+    workerBroker: WorkerBroker;
   }) {
     makeObservable(this, {
       id: observable,
-      dependencyManager: observable,
-      evaluationManger: observable,
       rawValues: observable,
       values: observable,
       codePaths: observable,
       finalValues: observable,
       applyEvaluationUpdates: action.bound,
       setValue: action,
-      setValueIsCode: action,
-      addDependencies: action,
-      clearDependents: action,
-      cleanup: action,
-      analyzeAndApplyDependencyUpdate: action,
-      debouncedAnalyzeAndApplyDependencyUpdate: action,
-      applyDependencyUpdate: action,
+      dispose: action,
       prefixedRawValues: computed,
     });
     this.id = id;
+    this.entityType = entityType;
     this.nestedPathPrefix = nestedPathPrefix;
-    this.dependencyManager = dependencyManager;
-    this.evaluationManger = evaluationManger;
+    this.workerBroker = workerBroker;
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
@@ -154,86 +140,43 @@ export class Entity implements RuntimeEvaluable {
       schema.uiSchema = merge({}, schema.uiSchema, additionalUISchema);
     }
     this.dispoables.push(
-      reaction(
-        () => evaluationManger.evaluatedForest,
-        this.applyEvaluationUpdates,
-        { fireImmediately: true },
-      ),
-      // autorun(() => {
-      //   console.log(
-      //     `-------------------------- ${this.id} start --------------------------`,
-      //   );
-      //   console.log('this.evaluablePaths', toJS(this.evaluablePaths));
-      //   console.log('this.values', toJS(this.values));
-      //   console.log('this.rawValues', toJS(this.rawValues));
-      //   console.log('this.codePaths', toJS(this.codePaths));
-      //   console.log('this.finalValues', toJS(this.finalValues));
-      //   console.log('this.errors', toJS(this.errors));
-
-      //   console.log(
-      //     `-------------------------- ${this.id} end --------------------------`,
-      //   );
-      // }),
+      ...[
+        reaction(() => this.rawValues, this.syncRawValuesWithEvaluationWorker),
+        reaction(() => {
+          for (const path of this.evaluablePaths) {
+            const possiblyNewValue = get(
+              this.workerBroker.evalForest,
+              this.id + '.' + path,
+            );
+            if (possiblyNewValue === undefined) continue;
+            if (get(this.finalValues, path) !== possiblyNewValue) {
+              return true;
+            }
+          }
+          return false;
+        }, this.applyEvaluationUpdates),
+      ],
     );
-  }
-
-  initDependecies() {
-    const relations = this.analyzeDependencies();
-    for (const relation of relations) {
-      this.setValueIsCode(relation.toProperty, relation.isCode);
-    }
-    this.dependencyManager.addDependenciesForEntity(
-      relations.flatMap((i) => i.dependencies),
-      this.id,
-    );
-  }
-
-  analyzeDependencies() {
-    const relations: ReturnType<
-      (typeof this.dependencyManager)['analyzeDependencies']
-    >[] = [];
-    for (const path of this.evaluablePaths) {
-      relations.push(this.analyzeDependcyForPath(path));
-    }
-    return relations;
-  }
-
-  analyzeDependcyForPath(path: string) {
-    const value = get(this.rawValues, path) as string;
-    return this.dependencyManager.analyzeDependencies({
-      code: value,
-      entityId: this.id,
-      toProperty: path,
+    this.workerBroker.postMessege({
+      event: 'addEntity',
+      body: {
+        entityType: this.entityType,
+        config: {
+          unevalValues: toJS(this.rawValues),
+          config: [],
+          id: this.id,
+          nestedPathPrefix: this.nestedPathPrefix,
+        },
+      },
     });
   }
 
-  applyDependencyUpdate(
-    relations: ReturnType<
-      (typeof this.dependencyManager)['analyzeDependencies']
-    >[],
-  ) {
-    for (const relation of relations) {
-      this.setValueIsCode(relation.toProperty, relation.isCode);
-      this.addDependencies(relation);
-    }
-  }
-
-  analyzeAndApplyDependencyUpdate(path: string) {
-    const relations = this.analyzeDependcyForPath(path);
-    this.applyDependencyUpdate([relations]);
-  }
-
-  debouncedAnalyzeAndApplyDependencyUpdate = debounce(
-    this.analyzeAndApplyDependencyUpdate,
-    2000,
-  );
-
   applyEvaluationUpdates() {
-    for (const path of this.codePaths) {
+    for (const path of this.evaluablePaths) {
       set(
         this.values,
         path,
-        get(this.evaluationManger.evaluatedForest, this.id + '.' + path),
+        get(this.workerBroker.evalForest, this.id + '.' + path),
       );
       set(
         this.finalValues,
@@ -243,43 +186,41 @@ export class Entity implements RuntimeEvaluable {
     }
   }
 
-  setValueIsCode(key: string, isCode: boolean) {
-    this.evaluationManger.setRawValueIsCode(this.id, key, isCode);
-    if (isCode) {
-      this.codePaths.add(key);
-      return;
-    }
-    this.codePaths.delete(key);
-    unset(this.values, key);
-  }
-
-  addDependencies(relations: ReturnType<typeof analyzeDependancies>) {
-    this.dependencyManager.addDepenciesForProperty({
-      ...relations,
-      entityId: this.id,
-    });
-  }
-
-  clearDependents() {
-    this.dependencyManager.removeRelationshipsForEntity(this.id);
-  }
-
-  cleanup() {
-    this.clearDependents();
+  dispose() {
     this.dispoables.forEach((dispose) => dispose());
+    this.workerBroker.postMessege({
+      event: 'removeEntity',
+      body: {
+        id: this.id,
+      },
+    } as WorkerRequest);
   }
 
+  syncRawValuesWithEvaluationWorker() {
+    this.workerBroker.postMessege({
+      event: 'updateEntity',
+      body: {
+        unevalValues: toJS(this.rawValues),
+        id: this.id,
+        entityType: this.entityType,
+      },
+    } as WorkerRequest);
+  }
+
+  debouncedSyncRawValuesWithEvaluationWorker = debounce(
+    this.syncRawValuesWithEvaluationWorker,
+    500,
+  );
   setValue(path: string, value: unknown) {
     if (this.isPrefixed()) {
       path = this.nestedPathPrefix + '.' + path;
     }
+    if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
     if (get(this.values, path) === undefined) {
       set(this.finalValues, path, value);
     }
-    if (this.evaluablePaths.has(path)) {
-      this.analyzeAndApplyDependencyUpdate(path);
-    }
+    this.debouncedSyncRawValuesWithEvaluationWorker();
   }
 
   getValue(key: string) {
@@ -293,23 +234,7 @@ export class Entity implements RuntimeEvaluable {
     return this.nestedPathPrefix !== undefined;
   }
   get validationErrors() {
-    if (!this.validator) return;
-    let values = this.finalValues;
-    if (this.isPrefixed()) {
-      values = get(values, this.nestedPathPrefix as string) as Record<
-        string,
-        unknown
-      >;
-    }
-    console.log('values', toJS(values));
-    const isValid = this.validator(values);
-    if (isValid) return;
-    return toErrorSchema(
-      transformRJSFValidationErrors(
-        this.validator.errors || [],
-        this.schema.uiSchema,
-      ),
-    );
+    return [];
   }
 
   get prefixedRawValues() {

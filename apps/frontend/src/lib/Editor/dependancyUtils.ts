@@ -2,10 +2,14 @@ import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
 import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
-import { DependencyRelation } from './Models/dependencyManager';
 import { has } from 'lodash';
 import { bindingRegexGlobal } from '../utils';
-
+export type DependencyRelation = {
+  // from is the dependent
+  dependent: { entityId: string; path: string };
+  // to is the dependency
+  dependency: { entityId: string; path: string };
+};
 export const analyzeDependancies = ({
   code,
   toProperty,
@@ -33,6 +37,7 @@ export const analyzeDependancies = ({
         const dependancyName = dependancyParts[0];
         const path = dependancyParts.slice(1).join('.');
         if (keysSet.has(dependancyName) && has(keys[dependancyName], path)) {
+          console.log('has');
           dependencies.push({
             dependent: {
               entityId,

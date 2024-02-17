@@ -1,70 +1,78 @@
-import toposort from 'toposort';
-import { get, set } from 'lodash';
-import { DependencyMap } from '../Models/dependencyManager';
-import { evaluate } from '../evaluation';
-type Path = string;
-type DependentPath = Path;
-type DependencyPath = Path;
-self.addEventListener('message', (event) => {
-  const { data } = event;
-  const { code, body } = data;
-  const data1 = evalForest(
-    body.dependencies,
-    body.unevalNodes,
-    body.codeRawValues,
-  );
-  self.postMessage(data1);
-});
+import { EditorState } from './editor';
+import { WorkerRequest, WorkerResponse } from './common/interface';
+import { autorun, runInAction, toJS } from 'mobx';
+import { compare } from 'fast-json-patch';
 
-function getDirectDependencies(dependencies: DependencyMap, entityId: string) {
-  return dependencies.get(entityId) || null;
+const editorState = new EditorState();
+
+function receiveMessage(req: WorkerRequest) {
+  if (req.event === 'batch') {
+    req.body.forEach(eventSwitch);
+  } else {
+    eventSwitch(req);
+  }
 }
-const transformToGraph = (dependencies: DependencyMap) => {
-  const graph: [DependentPath, DependencyPath][] = [];
-  for (const [dependent, dependencyMap] of dependencies.entries()) {
-    for (const [dependency, dependentMap] of dependencyMap.entries()) {
-      for (const [dependentPath, dependencyPathSet] of dependentMap.entries()) {
-        for (const dependencyPath of dependencyPathSet) {
-          graph.push([
-            dependent + '.' + dependentPath,
-            dependency + '.' + dependencyPath,
-          ]);
-        }
+function eventSwitch(req: WorkerRequest) {
+  const { event, body } = req as WorkerRequest;
+  console.log('worker received', event, body);
+  switch (event) {
+    case 'init':
+      try {
+        editorState.init(body);
+      } catch (error) {
+        console.error('Error in init:', error);
       }
-    }
+      break;
+    case 'updateEntity':
+      try {
+        editorState.getEntityById(body.id).setValues(body.unevalValues);
+      } catch (error) {
+        console.error('Error in updateEntity:', error);
+      }
+      break;
+    case 'removeEntity':
+      try {
+        editorState.removeEntity(body.id);
+      } catch (error) {
+        console.error('Error in removeEntity:', error);
+      }
+      break;
+    case 'addEntity':
+      try {
+        editorState.addEntity(body);
+      } catch (error) {
+        console.error('Error in addEntity:', error);
+      }
+      break;
+    case 'changePage':
+      try {
+        editorState.changePage(body.currentPageId);
+      } catch (error) {
+        console.error('Error in changePage:', error);
+      }
+      break;
   }
-  return graph;
-};
-
-const evalForest = (
-  dependencyMap: DependencyMap,
-  unevalNodes: Record<string, unknown>,
-  codeRawValues: Set<string>,
-) => {
-  const graph = transformToGraph(dependencyMap);
-  const sortedGraph = toposort(graph).reverse();
-  const evalTree: Record<string, unknown> = {};
-  const evaluatedInGraph = new Set<string>();
-  for (const fullPath of sortedGraph) {
-    const [entityId] = fullPath.split('.');
-    evaluatedInGraph.add(fullPath);
-    if (
-      getDirectDependencies(dependencyMap, entityId) &&
-      !codeRawValues.has(fullPath)
-    ) {
-      set(evalTree, fullPath, get(unevalNodes, fullPath));
-      continue;
-    }
-    const gottenValue = get(unevalNodes, fullPath);
-
-    set(evalTree, fullPath, evaluate((gottenValue || '') as string, evalTree));
-  }
-  // will hit this loop with code without deps
-  // example: {{[{name: "dsa"}]}}
-  for (const fullPath of codeRawValues) {
-    if (evaluatedInGraph.has(fullPath)) continue;
-    const gottenValue = get(unevalNodes, fullPath);
-    set(evalTree, fullPath, evaluate((gottenValue || '') as string, evalTree));
-  }
-  return evalTree;
-};
+}
+self.addEventListener('message', (e) => {
+  const { data } = e;
+  const { event, body } = data as WorkerRequest;
+  console.log('worker received', event, body);
+  runInAction(() => {
+    receiveMessage(data);
+  });
+});
+self.addEventListener('messageerror', (e) => {
+  console.error('worker error', e);
+});
+self.addEventListener('error', (e) => {
+  console.error('worker error', e);
+});
+let lastEvaluatedForest = {};
+autorun(() => {
+  const serialized = toJS(editorState.evaluationManager.evaluatedForest);
+  self.postMessage({
+    event: 'EvaluationUpdate',
+    body: compare(lastEvaluatedForest, serialized),
+  } as WorkerResponse);
+  lastEvaluatedForest = serialized;
+});

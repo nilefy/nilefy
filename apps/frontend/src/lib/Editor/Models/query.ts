@@ -1,9 +1,9 @@
 import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI } from '@/api/queries.api';
-import { EvaluationManager } from './evaluationManager';
-import { DependencyManager } from './dependencyManager';
+
 import { Entity } from './entity';
+import { WorkerBroker } from './workerBroker';
 
 type QueryRawValues = {
   isLoading: boolean;
@@ -50,16 +50,12 @@ export class WebloomQuery
     dataSourceId,
     createdAt,
     updatedAt,
-    evaluationManger,
-    dependencyManager,
+    workerBroker,
   }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
+    workerBroker: WorkerBroker;
   }) {
     super({
       id,
-      dependencyManager,
-      evaluationManger,
       rawValues: {
         config: query,
         data: undefined,
@@ -68,11 +64,13 @@ export class WebloomQuery
         status: undefined,
         error: undefined,
       },
+      workerBroker,
       schema: {
         dataSchema: dataSource.dataSource.queryConfig.schema,
         uiSchema: dataSource.dataSource.queryConfig.uiSchema,
       },
       nestedPathPrefix: 'config',
+      entityType: 'query',
     });
 
     this.appId = appId;

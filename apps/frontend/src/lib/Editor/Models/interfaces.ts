@@ -17,3 +17,6 @@ export interface RuntimeEvaluable {
 export type RuntimeValues = Record<string, unknown>;
 export type EvaluatedRunTimeValues = SnapshotValues;
 export type SnapshotValues = Record<string, unknown>;
+export interface WebloomDisposable {
+  dispose(): void;
+}
