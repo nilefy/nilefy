@@ -1,11 +1,11 @@
 import { InputProps } from '@/components/ui/input';
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { ReactNode } from 'react';
+import { EntitySchema } from './Models/entity';
 
 type BaseControlProps = {
   id: string;
   label: string;
-  defaultValue?: string | number | boolean;
-  value?: string | number | boolean;
 };
 
 // each widget props
@@ -46,20 +46,24 @@ type FormControlOptions = {
   inlineCodeInput: InlineCodeInputProps;
 };
 
+type WidgetInspectorConfig = EntitySchema;
+
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-type WidgetInspectorConfig<TProps> = {
-  sectionName: string;
-  children: MappedTypeToArray<{
-    [key in keyof TProps]: {
-      [key2 in InspectorFormControls]: {
-        type: key2;
-        key: key;
-        options: FormControlOptions[key2];
-        label: string;
-      } & BaseControlProps;
-    }[InspectorFormControls];
-  }>;
-}[];
+// type WidgetInspectorConfig<TProps> = {
+//   sectionName: string;
+//   hidden?: (props: TProps) => boolean;
+//   children: MappedTypeToArray<{
+//     [key in keyof Omit<TProps, 'value'>]: {
+//       [key2 in InspectorFormControls]: {
+//         type: key2;
+//         key: key;
+//         options: Omit<FormControlOptions[key2], 'value'>;
+//         hidden?: (props: key) => boolean;
+//         label: string;
+//       } & BaseControlProps;
+//     }[InspectorFormControls];
+//   }>;
+// }[];
 
 type InspectorFormControls = keyof FormControlOptions;
 
@@ -128,26 +132,12 @@ export interface WidgetConfig {
  * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
  */
 export type EntityDependancy = Record<string, Record<string, Set<string>>>;
-// export type WebloomNode = {
-//   id: string;
-//
-//   dom: HTMLElement | null;
-//   nodes: string[];
-//   parent: string;
-//   isCanvas?: boolean;
-//   props: Record<string, unknown>;
-//   dynamicProps: Record<string, unknown>;
-//   dependants: EntityDependancy;
-//   dependancies: EntityDependancy;
-//   toBeEvaluatedProps: Set<string>;
-//   type: WidgetTypes;
-// } & WebloomGridDimensions;
 
 export type Widget<WidgetProps> = {
   component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
-  inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+  schema: WidgetInspectorConfig;
 };
 
 // inspector types

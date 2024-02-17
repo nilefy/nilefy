@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentType } from 'react';
 import { withTheme, FormProps } from '@rjsf/core';
 import { generateTheme } from './theme';

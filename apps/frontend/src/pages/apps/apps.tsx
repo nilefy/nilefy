@@ -352,7 +352,7 @@ function ApplicationsViewResolved() {
           setAppsQuery(value.toString());
         }}
       />
-      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-wrap gap-8 overflow-y-auto">
         {filteredApps.map((app) => (
           <Card
             key={app.id}
@@ -414,7 +414,7 @@ export function ApplicationsLayout() {
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />

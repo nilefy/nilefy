@@ -6,15 +6,19 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-export type WebloomButtonProps = {
-  text: string;
-  color: string;
-  event: string;
-};
-const WebloomButton = observer(() => {
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
+
+export const webloomButtonProps = z.object({
+  text: z.string(),
+  color: z.string(),
+});
+export type WebloomButtonProps = z.infer<typeof webloomButtonProps>;
+
+const WebloomButton = observer(function WebloomButton() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomButtonProps;
+    .finalValues as WebloomButtonProps;
   return (
     <Button
       {...props}
@@ -25,6 +29,7 @@ const WebloomButton = observer(() => {
     </Button>
   );
 });
+
 const config: WidgetConfig = {
   name: 'Button',
   icon: <MousePointerSquare />,
@@ -41,58 +46,26 @@ const config: WidgetConfig = {
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
   color: 'black',
-  event: 'onclick',
 };
-const widgetName = 'WebloomButton';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'text',
-        label: 'Text',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter text',
-          label: 'Text',
-        },
-      },
-    ],
+const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomButtonProps),
+  uiSchema: {
+    text: {
+      'ui:label': 'Text',
+      'ui:widget': 'inlineCodeInput',
+      'ui:placeholder': 'Enter text',
+    },
+    color: {
+      'ui:widget': 'colorPicker',
+    },
   },
-  {
-    sectionName: 'Interactions',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'event',
-        label: 'Event',
-        type: 'event',
-        options: {},
-      },
-    ],
-  },
-  {
-    sectionName: 'Color',
-    children: [
-      {
-        id: `${widgetName}-color`,
-        key: 'color',
-        label: 'Color',
-        type: 'color',
-        options: {
-          color: '#fff',
-        },
-      },
-    ],
-  },
-];
+};
 export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   component: WebloomButton,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomButton };

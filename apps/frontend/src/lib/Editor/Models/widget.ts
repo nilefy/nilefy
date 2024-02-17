@@ -1,6 +1,6 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewWidgetName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Point, WidgetSnapshot } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -16,40 +16,48 @@ import {
   handleLateralCollisions,
   handleParentCollisions,
 } from '../collisions';
-import { RuntimeEvaluable, Snapshotable } from './interfaces';
-import { DependencyRelation } from './dependencyManager';
-import { cloneDeep, get } from 'lodash';
-
-export type RuntimeProps = Record<string, unknown>;
-type EvaluatedRunTimeProps = SnapshotProps;
-export type SnapshotProps = Record<string, unknown>;
+import { Snapshotable } from './interfaces';
+import { DependencyManager } from './dependencyManager';
+import { cloneDeep } from 'lodash';
+import { EvaluationManager } from './evaluationManager';
+import { Entity } from './entity';
 
 export class WebloomWidget
-  implements Snapshotable<WidgetSnapshot>, RuntimeEvaluable
+  extends Entity
+  implements
+    Snapshotable<
+      Omit<
+        ConstructorParameters<typeof WebloomWidget>[0],
+        'page' | 'evaluationManger' | 'dependencyManager'
+      > & {
+        pageId: string;
+      }
+    >
 {
   isRoot = false;
-  id: string;
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
-  rawValues: RuntimeProps;
   type: WidgetTypes;
   col: number;
   row: number;
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
+
   constructor({
     type,
     parentId,
     row,
     col,
     page,
-    id = getNewWidgetName(type),
+    id = getNewEntityName(type),
     nodes = [],
     rowsCount,
     columnsCount,
     props,
+    evaluationManger,
+    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -62,43 +70,37 @@ export class WebloomWidget
     columnsCount?: number;
     props?: Record<string, unknown>;
     dependents?: Set<string>;
+    evaluationManger: EvaluationManager;
+    dependencyManager: DependencyManager;
   }) {
-    this.id = id;
+    super({
+      dependencyManager,
+      evaluationManger,
+      id,
+      rawValues: props ?? {},
+      schema: WebloomWidgets[type].schema,
+    });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const { config, defaultProps } = WebloomWidgets[type];
+    const { config } = WebloomWidgets[type];
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-    this.rawValues = {};
-    if (!props) {
-      props = {};
-    }
-    if (props) {
-      Object.keys(props).forEach((key) => {
-        this.rawValues[key] =
-          props[key] ?? defaultProps[key as keyof typeof defaultProps];
-      });
-    }
 
     makeObservable(this, {
-      rawValues: observable,
-      values: computed.struct,
       nodes: observable,
       parentId: observable,
       dom: observable,
-      id: observable,
       type: observable,
       col: observable,
       row: observable,
       columnsCount: observable,
       rowsCount: observable,
-      setProp: action,
       setDimensions: action,
       gridSize: computed.struct,
       boundingRect: computed.struct,
@@ -114,9 +116,6 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
-      addDependencies: action,
-      clearDependents: action,
-      cleanup: action,
     });
   }
   get columnWidth(): number {
@@ -136,29 +135,10 @@ export class WebloomWidget
     this.dom = dom;
   }
 
-  getProp(key: string) {
-    return this.values[key] ?? this.rawValues[key];
-  }
-  get values(): EvaluatedRunTimeProps {
-    const evaluatedProps: EvaluatedRunTimeProps = {};
-    for (const key in this.rawValues) {
-      const path = this.id + '.' + key;
-      const evaluatedValue = get(
-        this.page.evaluationManger.evaluatedForest,
-        path,
-      );
-      if (evaluatedValue !== undefined) {
-        evaluatedProps[key] = evaluatedValue;
-      }
-    }
-    return {
-      ...this.rawValues,
-      ...evaluatedProps,
-    };
-  }
   /**
    *
-   * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
+   * @description a snapshot of the widget that can be used to recreate the widget,
+   * all computed properties are omitted. this can also be sent to the server to save the widget
    */
   get snapshot() {
     return {
@@ -217,14 +197,6 @@ export class WebloomWidget
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
     };
-  }
-
-  setProp(key: string, value: unknown) {
-    if (key === 'id') {
-      this.page.widgets[value as string] = this;
-      delete this.page.widgets[this.id];
-    }
-    this.rawValues[key] = value;
   }
 
   get parent() {
@@ -334,27 +306,16 @@ export class WebloomWidget
 
   clone() {
     const snapshot = this.snapshot;
-    snapshot.id = getNewWidgetName(snapshot.type);
-    return new WebloomWidget({ ...snapshot, page: this.page });
+    snapshot.id = getNewEntityName(snapshot.type);
+    return new WebloomWidget({
+      ...snapshot,
+      page: this.page,
+      evaluationManger: this.evaluationManger,
+      dependencyManager: this.dependencyManager,
+    });
   }
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
-  }
-
-  setPropIsCode(key: string, isCode: boolean) {
-    this.page.evaluationManger.setRawValueIsCode(this.id, key, isCode);
-  }
-
-  addDependencies(relations: Array<DependencyRelation>) {
-    this.page.dependencyManager.addDependenciesForEntity(relations, this.id);
-  }
-
-  clearDependents() {
-    this.page.dependencyManager.removeRelationshipsForEntity(this.id);
-  }
-
-  cleanup() {
-    this.clearDependents();
   }
 }

@@ -154,18 +154,13 @@ function useApps(...rest: Parameters<typeof useAppsQuery>) {
 export const useAppQuery = ({
   workspaceId,
   appId,
-  onSuccess,
 }: {
   workspaceId: number;
   appId: number;
-  onSuccess?: (data: AppCompleteT) => void;
 }): UndefinedInitialDataOptions<AppCompleteT, Error, AppCompleteT> => ({
-  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }, onSuccess],
+  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
   queryFn: async () => {
     const data = await one({ workspaceId, appId });
-    if (onSuccess) {
-      onSuccess(data);
-    }
     return data;
   },
   staleTime: 0,
