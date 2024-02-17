@@ -162,3 +162,8 @@ export type {
   InlineCodeInputProps,
   InspectorColorProps,
 };
+
+export type selectOptions = {
+  value: string;
+  label: string;
+};
