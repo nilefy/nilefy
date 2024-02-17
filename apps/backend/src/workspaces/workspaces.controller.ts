@@ -27,10 +27,9 @@ import {
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { Readable } from 'node:stream';
-import { FileInterceptor, MulterModule } from '@nestjs/platform-express';
-import { MulterField } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
 
-// @UseGuards(JwtGuard)
+@UseGuards(JwtGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
@@ -81,7 +80,11 @@ export class WorkspacesController {
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async importWorkspace(@UploadedFile() file: Express.Multer.File) {
+  async importWorkspace(
+    @UploadedFile() file: Express.Multer.File,
+    // Need access to express authed request
+    //    @Request() req: ExpressAuthedRequest,
+  ) {
     file;
     return await this.workspaceService.createFromJson(file);
   }

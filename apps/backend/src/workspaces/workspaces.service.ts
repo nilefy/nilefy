@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider, DatabaseI } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
-  CreateWorkspaceDto,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
@@ -55,14 +54,13 @@ export class WorkspacesService {
   }
 
   async createFromJson(file: Express.Multer.File): Promise<WorkspaceDto> {
-    let workspace: CreateWorkspaceDto = JSON.parse(file.buffer.toString());
-    workspace = await this.db
+    const workspace = JSON.parse(file.buffer.toString());
+    const createdWorkspaces = await this.db
       .insert(schema.workspaces)
       .values(workspace)
-      //todo: fix this (returning doesn't exist)
       .returning();
-    workspace;
+    createdWorkspaces;
 
-    return workspace;
+    return createdWorkspaces[0];
   }
 }
