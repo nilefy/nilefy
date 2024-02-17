@@ -41,6 +41,7 @@ import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
 
 import { EditorHeader } from './editorHeader';
+import { DebugPanel } from './Components/debugPanel';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -249,6 +250,7 @@ export const Editor = observer(() => {
                   collapsible
                 >
                   <QueryPanel />
+                  {/* <DebugPanel /> */}
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>

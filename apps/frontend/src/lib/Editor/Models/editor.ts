@@ -1,4 +1,12 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  autorun,
+  toJS,
+} from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -6,6 +14,7 @@ import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
+import { ErrorSchema } from '@rjsf/utils';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -42,6 +51,7 @@ export class EditorState {
       removeQuery: action,
       removePage: action,
       init: action,
+      currentPageErrors: computed,
     });
   }
 
@@ -110,6 +120,25 @@ export class EditorState {
       });
     });
     this.dependencyManager.initAnalysis();
+  }
+
+  // TODO: add support for queries
+  get currentPageErrors() {
+    const res: { entityId: string; path: string; error: string }[] = [];
+    for (const w in this.currentPage.widgets) {
+      const widget = this.currentPage.getWidgetById(w);
+      if (!widget || widget.isRoot) continue;
+      const errors = widget.validationErrors;
+      if (!errors) continue;
+      Object.entries(errors).map(([key, err]) => {
+        res.push({
+          entityId: widget.id,
+          path: key,
+          error: (err as ErrorSchema).__errors?.join(' '),
+        });
+      });
+    }
+    return res;
   }
 
   /**

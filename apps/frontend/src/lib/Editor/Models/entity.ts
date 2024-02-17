@@ -292,6 +292,7 @@ export class Entity implements RuntimeEvaluable {
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
   }
+
   get validationErrors() {
     if (!this.validator) return;
     let values = this.finalValues;

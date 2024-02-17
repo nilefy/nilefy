@@ -41,7 +41,7 @@ const schema: WidgetInspectorConfig = {
   dataSchema: zodToJsonSchema(webloomTextProps),
   uiSchema: {
     text: {
-      'ui:widget': 'inlinceCodeInput',
+      'ui:widget': 'inlineCodeInput',
       'ui:placeholder': 'Enter text',
       'ui:title': 'Text',
     },
