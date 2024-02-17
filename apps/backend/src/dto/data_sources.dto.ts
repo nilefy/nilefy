@@ -10,22 +10,27 @@ export const workspaceDataSourcesSelect = createSelectSchema(
   {
     name: z.string().min(1).max(100),
     config: z.record(z.string(), z.any()),
+    env: z.string().min(1).max(100),
   },
 );
 export const workspaceDataSourcesInsert = createInsertSchema(
-  workspaceDataSources,
+  workspaceDataSources, // d3
   {
     name: z.string().min(1).max(100),
     config: z.record(z.string(), z.any()),
+    env: z.string().min(1).max(100), // d4
   },
 );
 export const createWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100),
   config: z.record(z.string(), z.any()),
+  env: z.string().min(1).max(100), // d6
 });
+
 export const updateWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   config: z.record(z.string(), z.any()).optional(),
+  env: z.string().min(1).max(100).optional(), // d5
 });
 
 export const dataSourceSelect = createSelectSchema(dataSources);

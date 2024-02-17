@@ -15,8 +15,8 @@ export class DataSourcesService {
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
     const [dataSource] = await this.db
-      .insert(workspaceDataSources)
-      .values(dataSourceDto)
+      .insert(workspaceDataSources) // d1
+      .values(dataSourceDto) // d2
       .returning();
     return dataSource;
   }
@@ -44,6 +44,7 @@ export class DataSourcesService {
       columns: {
         id: true,
         name: true,
+        env: true, // d6
         workspaceId: true,
       },
       with: {

@@ -34,31 +34,33 @@ export const dataSources = pgTable('data_sources', {
    */
   queryConfig: json('query_config').notNull(),
 });
+const workspaceDatasourceBody = {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  env: varchar('env', { length: 100 }).notNull(),
+  workspaceId: integer('workspace_id')
+    .references(() => workspaces.id)
+    .notNull(),
+  dataSourceId: integer('data_source_id')
+    .references(() => dataSources.id)
+    .notNull(),
+  /**
+   * datasource configuration(evaluated, there will be no expressions in datasource config)
+   */
+  config: json('config')
+    .$type<Record<string, unknown>>()
+    .default(sql`'{}'::json`)
+    .notNull(),
+  ...timeStamps,
+  createdById: integer('created_by_id')
+    .references(() => users.id)
+    .notNull(),
+  updatedById: integer('updated_by_id').references(() => users.id),
+};
 
 export const workspaceDataSources = pgTable(
   'workspace_data_sources',
-  {
-    id: serial('id').primaryKey(),
-    name: varchar('name', { length: 100 }).notNull(),
-    workspaceId: integer('workspace_id')
-      .references(() => workspaces.id)
-      .notNull(),
-    dataSourceId: integer('data_source_id')
-      .references(() => dataSources.id)
-      .notNull(),
-    /**
-     * datasource configuration(evaluated, there will be no expressions in datasource config)
-     */
-    config: json('config')
-      .$type<Record<string, unknown>>()
-      .default(sql`'{}'::json`)
-      .notNull(),
-    ...timeStamps,
-    createdById: integer('created_by_id')
-      .references(() => users.id)
-      .notNull(),
-    updatedById: integer('updated_by_id').references(() => users.id),
-  },
+  workspaceDatasourceBody,
   (t) => {
     return {
       unq: unique().on(t.workspaceId, t.dataSourceId, t.name),
