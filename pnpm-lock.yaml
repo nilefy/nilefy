@@ -339,6 +339,9 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
+      ajv-formats:
+        specifier: ^2.1.1
+        version: 2.1.1(ajv@8.12.0)
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0

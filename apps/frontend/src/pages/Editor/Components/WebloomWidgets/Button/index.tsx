@@ -8,15 +8,19 @@ import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import z from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
+import { widgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 
 export const webloomButtonProps = z.object({
   text: z.string(),
   color: z.string(),
+  events: widgetsEventHandler,
 });
 export type WebloomButtonProps = z.infer<typeof webloomButtonProps>;
 
 const WebloomButton = observer(function WebloomButton() {
   const { id } = useContext(WidgetContext);
+  const actionExecuter =
+    editorStore.currentPage.getWidgetById(id).executeActions;
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomButtonProps;
   return (
@@ -24,6 +28,7 @@ const WebloomButton = observer(function WebloomButton() {
       {...props}
       className={`block h-full w-full active:bg-primary/20`}
       style={{ backgroundColor: props.color }}
+      onClick={() => actionExecuter('click')}
     >
       {props.text}
     </Button>
@@ -46,6 +51,7 @@ const config: WidgetConfig = {
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
   color: 'black',
+  events: [],
 };
 
 const schema: WidgetInspectorConfig = {
@@ -58,6 +64,12 @@ const schema: WidgetInspectorConfig = {
     },
     color: {
       'ui:widget': 'colorPicker',
+    },
+    events: {
+      'ui:widget': 'eventManager',
+      'ui:options': {
+        click: 'Click',
+      },
     },
   },
 };

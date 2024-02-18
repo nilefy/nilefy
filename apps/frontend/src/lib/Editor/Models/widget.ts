@@ -1,3 +1,4 @@
+import { toast } from '@/components/ui/use-toast';
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
@@ -21,6 +22,10 @@ import { DependencyManager } from './dependencyManager';
 import { cloneDeep } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
+import {
+  WidgetsEventHandler,
+  eventConfig,
+} from '@/components/rjsf_shad/eventHandler';
 
 export class WebloomWidget
   extends Entity
@@ -116,6 +121,7 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      executeActions: action.bound,
     });
   }
   get columnWidth(): number {
@@ -317,5 +323,35 @@ export class WebloomWidget
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
+  }
+
+  /**
+   * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
+   * @param key where to get the handlers configuration
+   * @default 'events'
+   */
+  executeActions(type: string, key: string = 'events') {
+    const eventHandlers = this.finalValues[key] as WidgetsEventHandler;
+    if (!eventHandlers) return;
+    eventHandlers.forEach((handler) => {
+      if (handler.type === type) {
+        this.executeActionHelper(handler.config);
+      }
+    });
+  }
+
+  private executeActionHelper(actionConfig: WidgetsEventHandler[0]['config']) {
+    switch (actionConfig.type) {
+      case 'alert':
+        toast({
+          description: actionConfig.message,
+          variant:
+            actionConfig.messageType === 'failure' ? 'destructive' : 'default',
+        });
+        break;
+      case 'openWebPage':
+        window.open(actionConfig.link, '_blank');
+        break;
+    }
   }
 }
