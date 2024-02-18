@@ -4,7 +4,7 @@ import { useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
-import { ConfigPanel } from '../configPanel/index';
+import { ConfigPanel } from '../entityForm/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';

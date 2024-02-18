@@ -218,7 +218,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
-    if (get(this.values, path) !== undefined) {
+    if (get(this.values, path) === undefined) {
       set(this.finalValues, path, value);
     }
     this.debouncedSyncRawValuesWithEvaluationWorker();

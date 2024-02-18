@@ -20,6 +20,7 @@ const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
+  console.log('WebloomInput -> rest', label);
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
