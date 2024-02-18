@@ -24,7 +24,7 @@ import { WorkerBroker } from './workerBroker';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
-const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
+const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
 const getEvaluablePathsFromSchema = memoize(
   (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
     if (!schema) return [];
@@ -75,10 +75,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
-  /**
-   * merged rawVales and values(contains all props evaluated and not-evaluated)
-   * use it to get the real values of some entity
-   */
   public finalValues: Record<string, unknown>;
 
   public codePaths: Set<string>;
@@ -90,6 +86,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     workerBroker,
     rawValues,
     schema = {},
+    tempRemoveMeFast,
     evaluablePaths = [],
     nestedPathPrefix,
     entityType: entityType,
@@ -98,6 +95,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     entityType: string;
     rawValues: Record<string, unknown>;
     schema?: EntitySchema;
+    tempRemoveMeFast?: boolean;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
     workerBroker: WorkerBroker;
@@ -120,6 +118,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
+    if (tempRemoveMeFast) {
+      evaluablePaths = Object.keys(rawValues);
+    }
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
       ...getEvaluablePathsFromSchema(schema?.uiSchema || {}, nestedPathPrefix),
@@ -217,7 +218,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
-    if (get(this.values, path) === undefined) {
+    if (get(this.values, path) !== undefined) {
       set(this.finalValues, path, value);
     }
     this.debouncedSyncRawValuesWithEvaluationWorker();

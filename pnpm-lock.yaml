@@ -429,9 +429,6 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
-      zod-to-json-schema:
-        specifier: ^3.22.3
-        version: 3.22.3(zod@3.22.4)
       zustand:
         specifier: ^4.4.4
         version: 4.4.7(@types/react@18.2.31)(immer@10.0.3)(react@18.2.0)
@@ -532,6 +529,12 @@ importers:
       tsup:
         specifier: ^8.0.1
         version: 8.0.1(typescript@5.2.2)
+
+  packages/data_sources:
+    dependencies:
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/permissions:
     dependencies:

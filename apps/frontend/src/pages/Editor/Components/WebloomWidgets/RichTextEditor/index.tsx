@@ -39,16 +39,11 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import { z } from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 
-const webloomTextEditorProps = z.object({
-  label: z.string(),
-});
-type WebloomTextEditorProps = z.infer<typeof webloomTextEditorProps> & {
+type WebloomTextEditorProps = {
+  label: string;
   value: string;
 };
-
 type EditorOnChange = NonNullable<typeof Editor.prototype.props.onEditorChange>;
 const toolbarConfig =
   'insertfile undo redo | formatselect | bold italic underline backcolor forecolor | lineheight | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | table | print preview media | emoticons | code | help';
@@ -110,7 +105,7 @@ export const WebloomTextEditor = observer(() => {
         }
       }}
     >
-      <Label className="text-sm font-medium">{label}</Label>
+      <Label className="text-sm font-medium text-gray-700">{label}</Label>
       <Editor
         init={{
           skin: false,
@@ -185,20 +180,28 @@ const defaultProps: WebloomTextEditorProps = {
   label: 'Text Editor',
   value: '',
 };
+const widgetName = 'WebloomTextEditor';
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomTextEditorProps),
-  uiSchema: {
-    label: {
-      'ui:placeholder': 'Enter text',
-      'ui:widget': 'inlineCodeInput',
-    },
+const inspectorConfig: WidgetInspectorConfig<WebloomTextEditorProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        id: `${widgetName}-text`,
+        key: 'label',
+        label: 'Text',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter text',
+          label: 'Text',
+        },
+      },
+    ],
   },
-};
-
+];
 export const WebloomTextEditorWidget: Widget<WebloomTextEditorProps> = {
   component: WebloomTextEditor,
   config,
   defaultProps,
-  schema,
+  inspectorConfig,
 };

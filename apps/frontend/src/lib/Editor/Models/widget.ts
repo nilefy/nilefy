@@ -70,8 +70,9 @@ export class WebloomWidget
     super({
       workerBroker: page.workerBroker,
       id,
+      tempRemoveMeFast: true,
       rawValues: props ?? {},
-      schema: WebloomWidgets[type].schema,
+      schema: WebloomWidgets[type].schema ?? {},
       entityType: 'widget',
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
