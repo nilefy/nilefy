@@ -96,7 +96,6 @@ export class EditorState implements WebloomDisposable {
       this.pages[page.id] = new WebloomPage({
         ...page,
         workerBroker: this.workerBroker,
-        evalForest: this.evalForest,
         // Todo fix this
         widgets: page.widgets || {},
       });

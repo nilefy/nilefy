@@ -78,7 +78,7 @@ export class WorkerBroker implements WebloomDisposable {
     applyPatch(this.evalForest, patch, false, true);
   }
 
-  private debouncePostMessege = debounce(this._postMessege, 250);
+  private debouncePostMessege = debounce(this._postMessege, 500);
 
   dispose() {
     this.disposables.forEach((fn) => fn());
