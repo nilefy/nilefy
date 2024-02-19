@@ -1,18 +1,15 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomWidgets, WidgetTypes } from '..';
 
 import {
-  ChangeEvent,
   createContext,
   useCallback,
-  useEffect,
+  useContext,
   useMemo,
   useState,
 } from 'react';
 import { commandManager } from '@/Actions/CommandManager';
 import { ChangePropAction } from '@/Actions/Editor/changeProps';
-import { Input } from '@/components/ui/input';
-import { WebloomWidget } from '@/lib/Editor/Models/widget';
+
 import { observer } from 'mobx-react-lite';
 import { Collapsible } from '@radix-ui/react-collapsible';
 import {
@@ -28,12 +25,16 @@ import {
   InspectorFormControlsTypes,
 } from '@/lib/Editor/interface';
 import { InspectorFormControls } from './formControls';
+import { ErrorPopover } from './formControls/errorPopover';
 
-export const FormControlContext = createContext<{
+export const EntityFormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
+  entityId: string;
   id: string;
-  toProperty: string;
+  path: string;
   value: unknown;
+  onFocus: () => void;
+  onBlur: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }>({} as any);
 export const FormSectionView = (props: {
@@ -62,84 +63,42 @@ export const FormSectionView = (props: {
     </Collapsible>
   );
 };
-
-function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
-  const [value, setValue] = useState(node.id);
-  const onChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setValue(e.target.value);
-    },
-    [setValue],
-  );
-  useEffect(() => {
-    setValue(node.id);
-  }, [node.id]);
-  if (!node) return null;
-  return (
-    <div className="flex items-center justify-center">
-      <Input
-        value={value}
-        onChange={onChange}
-        onBlur={(e) => {
-          // commandManager.executeCommand(
-          //   new ChangePropAction(node.id, true, 'name', e.currentTarget.value),
-          // );
-        }}
-      />
-    </div>
-  );
-}
-
-export const WidgetConfigPanel = observer(() => {
-  const selectedId = editorStore.currentPage.firstSelectedWidget;
-  const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
-  const inspectorConfig = WebloomWidgets[selectedNode.type]
-    .inspectorConfig as EntityInspectorConfig;
-
-  return (
-    <div>
-      <ConfigPanelHeader node={selectedNode} />
-      {inspectorConfig.map((section) => {
-        return (
-          <InspectorSection
-            key={section.sectionName}
-            section={section}
-            selectedId={selectedId}
-          />
-        );
-      })}
-    </div>
-  );
-});
-
-const InspectorSection = observer(
-  (props: { section: EntityInspectorConfig[number]; selectedId: string }) => {
-    const { section, selectedId } = props;
+export const EntityFormContext = createContext<{
+  focusedPath: string | null;
+  onFocus: (path: string) => void;
+  onBlur: () => void;
+}>({} as any);
+export const EntityForm = observer(
+  ({ children }: { children: React.ReactNode }) => {
+    const [focusedPath, setFocusedPath] = useState<string | null>(null);
+    const onBlur = useCallback(() => {
+      setFocusedPath(null);
+    }, []);
+    const contextValue = useMemo(
+      () => ({
+        focusedPath,
+        onFocus: setFocusedPath,
+        onBlur,
+      }),
+      [focusedPath, onBlur],
+    );
     return (
-      <FormSectionView sectionName={section.sectionName}>
-        {section.children.map((control) => {
-          const id = `${selectedId}-${control.type}`;
-          return (
-            <FormControl
-              key={id}
-              id={id}
-              control={control}
-              selectedId={selectedId}
-            />
-          );
-        })}
-      </FormSectionView>
+      <EntityFormContext.Provider value={contextValue}>
+        {children}
+      </EntityFormContext.Provider>
     );
   },
 );
 
-const FormControl = observer(
+export const EntityFormControl = observer(
   (props: {
     control: EntityInspectorConfig[number]['children'][number];
-    id: string;
-    selectedId: string;
+    entityId: string;
   }) => {
-    const { control, selectedId } = props;
+    const { onFocus: _onFocus, onBlur } = useContext(EntityFormContext);
+    const { control, entityId } = props;
+    const id = entityId + control.path;
+
     const Component = InspectorFormControls[control.type];
     const options = useMemo(
       () => ({
@@ -148,33 +107,40 @@ const FormControl = observer(
       }),
       [control],
     );
+    const onFocus = useCallback(() => {
+      _onFocus(control.path);
+    }, [_onFocus, control.path]);
+
     const onChange = useCallback(
       (newValue: unknown) => {
         commandManager.executeCommand(
-          new ChangePropAction(selectedId, control.key, newValue),
+          new ChangePropAction(entityId, control.path, newValue),
         );
       },
-      [control.key, selectedId],
+      [control.path, entityId],
     );
     const contextValue = {
       onChange,
-      id: props.id,
-      toProperty: control.key,
+      id,
+      entityId,
+      path: control.path,
       value: editorStore.currentPage
-        .getWidgetById(selectedId)
-        .getRawValue(control.key),
+        .getWidgetById(entityId)
+        .getRawValue(control.path),
+      onFocus,
+      onBlur,
     };
     return (
-      <FormControlContext.Provider value={contextValue}>
+      <EntityFormControlContext.Provider value={contextValue}>
         <FormControlWrapper
           type={options.type as InspectorFormControlsTypes}
-          id={props.id}
+          id={id}
           label={control.label}
         >
           {/* @ts-expect-error ignore */}
           <Component {...options} key={control.id} />
         </FormControlWrapper>
-      </FormControlContext.Provider>
+      </EntityFormControlContext.Provider>
     );
   },
 );
@@ -191,6 +157,7 @@ const FormControlWrapper = observer(
       <div>
         <Label htmlFor={props.id}>{props.label}</Label>
         {props.children}
+        <ErrorPopover />
       </div>
     );
   },

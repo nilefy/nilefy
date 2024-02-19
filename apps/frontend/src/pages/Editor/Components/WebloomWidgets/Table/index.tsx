@@ -313,7 +313,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Columns',
     children: [
       {
-        key: 'columns',
+        path: 'columns',
         label: 'Columns',
         type: 'list',
       },
@@ -323,7 +323,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Row Selection',
     children: [
       {
-        key: 'isRowSelectionEnabled',
+        path: 'isRowSelectionEnabled',
         label: 'Allow Selection',
         type: 'checkbox',
         // defaultValue: ,
@@ -338,7 +338,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Search',
     children: [
       {
-        key: 'isSearchEnabled',
+        path: 'isSearchEnabled',
         label: 'Enable Search',
         type: 'checkbox',
         options: {
@@ -351,7 +351,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Pagination',
     children: [
       {
-        key: 'isPaginationEnabled',
+        path: 'isPaginationEnabled',
         label: 'Enable Pagination',
         type: 'checkbox',
         options: {
@@ -359,7 +359,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
         },
       },
       {
-        key: 'pageSize',
+        path: 'pageSize',
         label: 'Page Size',
         type: 'input',
         options: {},
@@ -370,7 +370,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Data',
     children: [
       {
-        key: 'data',
+        path: 'data',
         label: 'Data',
         type: 'inlineCodeInput',
         options: {

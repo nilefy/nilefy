@@ -1,11 +1,13 @@
 import { InlineCodeInputProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { WebloomInlineEditor } from '@/pages/Editor/Components/CodeEditor/inlineEditor';
 
 const InlineCodeInput = (props: InlineCodeInputProps) => {
-  const { onChange, value } = useContext(FormControlContext);
+  const { onChange, value, onFocus, onBlur } = useContext(
+    EntityFormControlContext,
+  );
 
   // TODO: we convert non string value to js template, until the validation code could handle this case
   const correctValue =
@@ -18,6 +20,8 @@ const InlineCodeInput = (props: InlineCodeInputProps) => {
           placeholder={props.placeholder}
           value={correctValue}
           onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
         <ScrollBar orientation="horizontal" />
       </ScrollArea>

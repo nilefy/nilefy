@@ -73,7 +73,7 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     for (const section of config) {
       for (const control of section.children) {
         if (evaluationFormControls.has(control.type)) {
-          let path = control.key;
+          let path = control.path;
           if (nestedPathPrefix) {
             path = nestedPathPrefix + '.' + path;
           }

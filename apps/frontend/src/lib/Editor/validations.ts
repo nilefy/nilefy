@@ -24,7 +24,7 @@ export const extractValidators = memoize(
     for (const section of config) {
       for (const control of section.children) {
         if (control.validation) {
-          schemas[control.key] = control.validation;
+          schemas[control.path] = control.validation;
         }
       }
     }

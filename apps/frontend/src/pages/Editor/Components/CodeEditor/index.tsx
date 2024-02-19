@@ -106,6 +106,8 @@ export type WebloomCodeEditorProps = {
   templateAutocompletionOnly?: boolean;
   setup: Extension;
   id?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 /**
  *
@@ -137,12 +139,15 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     onChange,
     autoFocus = false,
     value = '',
+    onFocus,
+    onBlur,
     setup,
   } = props;
   const editor = useRef<HTMLDivElement>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<EditorView>();
   const [state, setState] = useState<EditorState>();
+  const hasFocus = useRef(false);
   useEffect(() => {
     if (editor.current) {
       setContainer(editor.current);
@@ -163,9 +168,20 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
         onChange(value, viewUpdate);
       }
+
       // onStatistics && onStatistics(getStatistics(vu));
     },
   );
+  const focusListener = EditorView.focusChangeEffect.of((state, focusing) => {
+    if (focusing) {
+      hasFocus.current = true;
+      onFocus && onFocus();
+    } else {
+      hasFocus.current = false;
+      onBlur && onBlur();
+    }
+    return null;
+  });
   const extensions = useMemo(() => {
     const extensions = [setup, webLoomContext, javascript(), xcodeDark];
     if (props.templateAutocompletionOnly) {
@@ -175,7 +191,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     }
     return extensions;
   }, [setup, props.templateAutocompletionOnly]);
-  const getExtensions = [...extensions, updateListener];
+  const getExtensions = [...extensions, updateListener, focusListener];
   useEffect(
     () => () => {
       if (view) {

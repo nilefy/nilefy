@@ -10,10 +10,10 @@ import {
 
 import { BaseControlProps, InspectorSelectProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 
 const InspectorSelect = (props: InspectorSelectProps & BaseControlProps) => {
-  const { onChange, value, id } = useContext(FormControlContext);
+  const { onChange, value, id } = useContext(EntityFormControlContext);
   return (
     <div className="flex flex-col space-y-3">
       <Select

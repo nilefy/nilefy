@@ -4,7 +4,7 @@ import { get, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
 import { bindingRegexGlobal } from '@/lib/utils';
-import { EntityErrors, EntityErrorsRecord } from '../interface';
+import { EntityErrorsRecord } from '../interface';
 
 export class EvaluationManager {
   editor: EditorState;

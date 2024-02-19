@@ -1,10 +1,10 @@
 import { Input } from '@/components/ui/input';
 import { BaseControlProps, InspectorInputProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 
 const InspectorInput = (props: InspectorInputProps & BaseControlProps) => {
-  const { onChange, value, id } = useContext(FormControlContext);
+  const { onChange, value, id } = useContext(EntityFormControlContext);
   return (
     <div className="flex flex-col space-y-3">
       <Input

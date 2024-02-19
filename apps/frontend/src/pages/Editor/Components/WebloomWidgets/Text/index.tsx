@@ -39,7 +39,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
     sectionName: 'General',
     children: [
       {
-        key: 'text',
+        path: 'text',
         label: 'Text',
         type: 'inlineCodeInput',
         options: {

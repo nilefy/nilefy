@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Grip, MoreVertical } from 'lucide-react';
 import { WebLoomTableColumn } from '@/pages/Editor/Components/WebloomWidgets/Table/index';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 
 const columnsTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 // export type columnsTypes = typeof columnsTypes;
@@ -198,7 +198,7 @@ function ColumnDialog({
 }
 
 const InspectorList = () => {
-  const { onChange, value } = useContext(FormControlContext) as {
+  const { onChange, value } = useContext(EntityFormControlContext) as {
     onChange: (value: WebLoomTableColumn[]) => void;
     value: WebLoomTableColumn[];
   };

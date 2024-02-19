@@ -4,10 +4,10 @@ import { useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
-import { WidgetConfigPanel } from '../entityForm/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
+import { WidgetConfigPanel } from './configInspector';
 
 function InsertTab() {
   return (

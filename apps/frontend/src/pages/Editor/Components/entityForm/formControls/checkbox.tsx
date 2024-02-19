@@ -1,10 +1,10 @@
 import { Checkbox } from '@/components/ui/checkbox';
 
 import { useContext } from 'react';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 
 const InspectorCheckBox = () => {
-  const { onChange, value } = useContext(FormControlContext);
+  const { onChange, value } = useContext(EntityFormControlContext);
   return (
     <div className="flex flex-row gap-2">
       <Checkbox

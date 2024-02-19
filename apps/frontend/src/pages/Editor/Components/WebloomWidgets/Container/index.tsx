@@ -27,7 +27,7 @@ export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
     sectionName: 'Color',
     children: [
       {
-        key: 'color',
+        path: 'color',
         label: 'Color',
         type: 'color',
         options: {

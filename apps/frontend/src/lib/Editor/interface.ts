@@ -56,7 +56,7 @@ export type FormControl<
   Key extends keyof TProps = keyof TProps,
 > = {
   type: FormControlType;
-  key: Key;
+  path: Key;
   options: FormControlOptions[FormControlType];
   hidden?(props: TProps): boolean;
   deps?: keyof TProps[];
@@ -145,14 +145,17 @@ export type {
 
 export type EntityTypes = 'query' | 'widget';
 
-export type EntityErrors = {
+export type EntityPathErrors = {
   /**
    * key is the path of the property
    */
-  validationErrors?: Record<string, string[]>;
-  evaluationErrors?: Record<string, string[]>;
+  validationErrors?: string[];
+  evaluationErrors?: string[];
 };
 /**
  * key is the entityId
  */
-export type EntityErrorsRecord = Record<string, EntityErrors>;
+export type EntityErrorsRecord = Record<
+  string,
+  Record<string, EntityPathErrors>
+>;

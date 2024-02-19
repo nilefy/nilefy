@@ -1,6 +1,5 @@
 import {
   action,
-  autorun,
   makeObservable,
   observable,
   reaction,
@@ -11,14 +10,14 @@ import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
 import { debounce } from 'lodash';
 import { Operation, applyPatch } from 'fast-json-patch';
 import { WebloomDisposable } from './interfaces';
-import { EntityErrors } from '../interface';
+import { EntityErrorsRecord } from '../interface';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
   public evalForest: Record<string, unknown> = {};
-  public errors: Record<string, EntityErrors> = {};
+  public errors: EntityErrorsRecord = {};
   constructor() {
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),

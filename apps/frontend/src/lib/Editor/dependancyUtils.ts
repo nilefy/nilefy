@@ -54,7 +54,7 @@ export const analyzeDependancies = ({
       errors.push(e);
     }
   }
-  console.log('errors in analysis', errors);
+  // console.log('errors in analysis', errors);
   // todo return errors and do something with them
   return { toProperty, dependencies, isCode };
 };

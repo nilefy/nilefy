@@ -1,5 +1,6 @@
 import {
   action,
+  autorun,
   computed,
   makeObservable,
   observable,
@@ -11,7 +12,11 @@ import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
 import { cloneDeep, debounce, get, set } from 'lodash';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-import { EntityErrors, EntityInspectorConfig, EntityTypes } from '../interface';
+import {
+  EntityInspectorConfig,
+  EntityTypes,
+  EntityErrorsRecord,
+} from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
@@ -54,6 +59,8 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       setValue: action,
       dispose: action,
       prefixedRawValues: computed,
+      hasErrors: computed,
+
       errors: computed({
         requiresReaction: false,
       }),
@@ -167,16 +174,30 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   get errors() {
-    const errors: Record<string, EntityErrors> = {};
+    const errors: EntityErrorsRecord[string] = {};
+    const entityErrors = this.workerBroker.errors[this.id];
+    if (!entityErrors) return {};
     for (const path of this.evaluablePaths) {
-      const fullpath = this.id + '.' + path;
-      const pathErrors = get(this.workerBroker.errors, fullpath);
+      const pathErrors = entityErrors[path];
       if (pathErrors) {
-        set(errors, fullpath, pathErrors);
+        errors[path] = pathErrors;
       }
     }
     return errors;
   }
+
+  get hasErrors() {
+    return Object.keys(this.errors).length > 0;
+  }
+
+  pathErrors(path: string) {
+    return this.errors[path];
+  }
+
+  pathHasErrors(path: string) {
+    return !!this.errors[path];
+  }
+
   get prefixedRawValues() {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)

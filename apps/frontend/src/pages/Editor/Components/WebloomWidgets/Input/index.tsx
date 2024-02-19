@@ -63,7 +63,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
     sectionName: 'Basic',
     children: [
       {
-        key: 'type',
+        path: 'type',
         label: 'Type',
         type: 'select',
         options: {
@@ -85,7 +85,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         },
       },
       {
-        key: 'placeholder',
+        path: 'placeholder',
         label: 'Placeholder',
         type: 'inlineCodeInput',
         options: {
@@ -100,7 +100,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
     sectionName: 'Label',
     children: [
       {
-        key: 'label',
+        path: 'label',
         label: 'Label',
         type: 'inlineCodeInput',
         options: {

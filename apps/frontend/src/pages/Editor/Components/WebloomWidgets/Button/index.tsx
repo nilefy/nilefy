@@ -52,7 +52,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
     sectionName: 'General',
     children: [
       {
-        key: 'text',
+        path: 'text',
         label: 'Text',
         type: 'inlineCodeInput',
         options: {
@@ -66,7 +66,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
     sectionName: 'Interactions',
     children: [
       {
-        key: 'event',
+        path: 'event',
         label: 'Event',
         type: 'event',
         options: {},
@@ -77,7 +77,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
     sectionName: 'Color',
     children: [
       {
-        key: 'color',
+        path: 'color',
         label: 'Color',
         type: 'color',
         options: {
