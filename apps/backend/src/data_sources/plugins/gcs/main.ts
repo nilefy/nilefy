@@ -10,7 +10,7 @@ import {
   uploadFile,
 } from './operations';
 
-export default class PostgresqlQueryService
+export default class GoogleCloudStorageQueryService
   implements QueryRunnerI<ConfigT, QueryT>
 {
   async run(
