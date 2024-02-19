@@ -2,7 +2,7 @@ import { EditorState } from './editor';
 import { WorkerRequest, WorkerResponse } from './common/interface';
 import { autorun, runInAction, toJS } from 'mobx';
 import { compare } from 'fast-json-patch';
-import { EntityErrors } from '../interface';
+import { EntityErrorsRecord } from '../interface';
 
 const editorState = new EditorState();
 
@@ -68,7 +68,7 @@ self.addEventListener('error', (e) => {
   console.error('worker error', e);
 });
 let lastEvaluatedForest = {};
-let lastErrors: Record<string, EntityErrors> = {};
+let lastErrors: EntityErrorsRecord = {};
 autorun(() => {
   const serializedEvalForest = toJS(
     editorState.evaluationManager.evaluatedForest.evalTree,
