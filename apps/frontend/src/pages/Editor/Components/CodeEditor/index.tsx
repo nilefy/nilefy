@@ -8,7 +8,7 @@ import {
   ViewUpdate,
   placeholder,
 } from '@codemirror/view';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
 
@@ -147,7 +147,6 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<EditorView>();
   const [state, setState] = useState<EditorState>();
-  const hasFocus = useRef(false);
   useEffect(() => {
     if (editor.current) {
       setContainer(editor.current);
@@ -172,16 +171,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       // onStatistics && onStatistics(getStatistics(vu));
     },
   );
-  const focusListener = EditorView.focusChangeEffect.of((state, focusing) => {
-    if (focusing) {
-      hasFocus.current = true;
-      onFocus && onFocus();
-    } else {
-      hasFocus.current = false;
-      onBlur && onBlur();
-    }
-    return null;
-  });
+
   const extensions = useMemo(() => {
     const extensions = [setup, webLoomContext, javascript(), xcodeDark];
     if (props.templateAutocompletionOnly) {
@@ -191,7 +181,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     }
     return extensions;
   }, [setup, props.templateAutocompletionOnly]);
-  const getExtensions = [...extensions, updateListener, focusListener];
+  const getExtensions = [...extensions, updateListener];
   useEffect(
     () => () => {
       if (view) {
@@ -204,9 +194,14 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
   useEffect(() => {
     if (container && !state) {
+      const focusListner = EditorView.domEventObservers({
+        focus: onFocus,
+        blur: onBlur,
+      });
+
       const config: EditorStateConfig = {
         doc: value,
-        extensions: getExtensions,
+        extensions: [...getExtensions, focusListner],
       };
       const stateCurrent = initialState
         ? EditorState.fromJSON(initialState.json, config, initialState.fields)
@@ -228,7 +223,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, container]);
+  }, [state, container, onFocus, onBlur]);
 
   useEffect(() => {
     if (autoFocus && view) {

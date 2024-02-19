@@ -41,7 +41,6 @@ const InspectorSection = observer(
           return (
             <EntityFormControl
               key={id}
-              id={id}
               control={control}
               entityId={selectedId}
             />

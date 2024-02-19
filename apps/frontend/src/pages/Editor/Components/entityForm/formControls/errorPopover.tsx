@@ -20,7 +20,12 @@ export const ErrorPopover = observer(
     return (
       <Popover open={popOverOpen} defaultOpen={false}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
-        <PopoverContent asChild>
+        <PopoverContent
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+          }}
+          asChild
+        >
           <div className="bg-red-100">
             <header className="flex items-center justify-between p-2">
               <h2 className="flex items-center justify-between gap-2 text-red-800">
