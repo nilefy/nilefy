@@ -5,6 +5,7 @@ import {
   computed,
   comparer,
   toJS,
+  reaction,
 } from 'mobx';
 
 import { WebloomPage } from './page';
@@ -15,6 +16,7 @@ import { seedNameMap } from '../widgetName';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
+import { Operation } from 'fast-json-patch';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -49,10 +51,22 @@ export class EditorState implements WebloomDisposable {
       removeQuery: action,
       removePage: action,
       init: action,
+      applyEvalForestPatch: action.bound,
     });
     this.workerBroker = new WorkerBroker();
+    reaction(
+      () => this.workerBroker.lastEvalUpdates,
+      this.applyEvalForestPatch,
+    );
   }
-
+  applyEvalForestPatch() {
+    Object.entries(this.workerBroker.lastEvalUpdates).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyEvalationUpdatePatch(op);
+      }
+    });
+  }
   dispose() {
     Object.values(this.pages).forEach((page) => page.dispose());
     Object.values(this.queries).forEach((query) => query.dispose());

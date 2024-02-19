@@ -1,8 +1,8 @@
 import { EditorState } from './editor';
 import { WorkerRequest, WorkerResponse } from './common/interface';
 import { autorun, runInAction, toJS } from 'mobx';
-import { compare } from 'fast-json-patch';
-import { EntityErrorsRecord } from '../interface';
+import { Operation, compare } from 'fast-json-patch';
+import { EntityErrors, EntityErrorsRecord } from '../interface';
 
 const editorState = new EditorState();
 
@@ -67,7 +67,7 @@ self.addEventListener('messageerror', (e) => {
 self.addEventListener('error', (e) => {
   console.error('worker error', e);
 });
-let lastEvaluatedForest = {};
+let lastEvaluatedForest: Record<string, unknown> = {};
 let lastErrors: EntityErrorsRecord = {};
 autorun(() => {
   const serializedEvalForest = toJS(
@@ -76,10 +76,23 @@ autorun(() => {
   const serializedErrors = toJS(
     editorState.evaluationManager.evaluatedForest.errors,
   );
+  const lastEvalTreeWithDefault: Record<string, unknown> = {};
+  for (const key in editorState.entities) {
+    lastEvalTreeWithDefault[key] = lastEvaluatedForest[key] || {};
+  }
+  const evaluationOps: Record<string, Operation[]> = {};
+
+  for (const key in lastEvalTreeWithDefault) {
+    const lastEval = lastEvalTreeWithDefault[key];
+    const ops = compare(lastEval as any, serializedEvalForest[key] || {});
+    if (ops.length === 0) continue;
+    evaluationOps[key] = ops;
+  }
+
   self.postMessage({
     event: 'EvaluationUpdate',
     body: {
-      evaluationUpdates: compare(lastEvaluatedForest, serializedEvalForest),
+      evaluationUpdates: evaluationOps,
       errorUpdates: compare(lastErrors, serializedErrors),
     },
   } as WorkerResponse);

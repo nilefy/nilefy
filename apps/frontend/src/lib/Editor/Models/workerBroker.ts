@@ -16,7 +16,7 @@ export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
-  public evalForest: Record<string, unknown> = {};
+  public lastEvalUpdates: Record<string, Operation[]> = {};
   public errors: EntityErrorsRecord = {};
   constructor() {
     this.worker = new Worker(
@@ -27,10 +27,9 @@ export class WorkerBroker implements WebloomDisposable {
     makeObservable(this, {
       // @ts-expect-error mobx decorators please
       queue: observable,
+      lastEvalUpdates: observable.ref,
       debouncePostMessege: action.bound,
-      evalForest: observable,
       receiveMessage: action,
-      applyEvalForestPatch: action,
       applyErrorPatch: action,
       postMessege: action,
       errors: observable,
@@ -71,16 +70,12 @@ export class WorkerBroker implements WebloomDisposable {
     console.log('worker sent', event, body);
     switch (event) {
       case 'EvaluationUpdate':
-        this.applyEvalForestPatch(body.evaluationUpdates);
+        this.lastEvalUpdates = body.evaluationUpdates;
         this.applyErrorPatch(body.errorUpdates);
         break;
       default:
         break;
     }
-  }
-
-  private applyEvalForestPatch(patch: Operation[]) {
-    applyPatch(this.evalForest, patch, false, true);
   }
 
   private applyErrorPatch(patch: Operation[]) {

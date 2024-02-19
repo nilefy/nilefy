@@ -1,5 +1,6 @@
 import {
   action,
+  autorun,
   computed,
   makeObservable,
   observable,
@@ -22,6 +23,7 @@ import {
   extractValidators,
   transformErrorToMessage,
 } from '../validations';
+import { Operation, applyPatch } from 'fast-json-patch';
 
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
@@ -60,11 +62,11 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       values: observable,
       codePaths: observable,
       finalValues: observable,
-      applyEvaluationUpdates: action.bound,
       setValue: action,
       dispose: action,
       prefixedRawValues: computed,
       hasErrors: computed,
+      applyEvalationUpdatePatch: action,
       errors: observable,
     });
     this.id = id;
@@ -85,18 +87,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.dispoables.push(
       ...[
         reaction(() => this.rawValues, this.syncRawValuesWithEvaluationWorker),
-        reaction(() => {
-          for (const path of this.evaluablePaths) {
-            const possiblyNewValue = get(
-              this.workerBroker.evalForest,
-              this.id + '.' + path,
-            );
-            if (get(this.values, path) !== possiblyNewValue) {
-              return true;
-            }
-          }
-          return false;
-        }, this.applyEvaluationUpdates),
       ],
     );
     this.workerBroker.postMessege({
@@ -111,27 +101,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         },
       },
     });
+    autorun(() => {
+      console.log('errors', toJS(this.errors));
+    });
   }
 
-  applyEvaluationUpdates() {
-    for (const path of this.evaluablePaths) {
-      let value = get(this.workerBroker.evalForest, this.id + '.' + path);
-      const res = this.validatePath(path, value);
-      if (res) {
-        this.addValidationErrors(path, res.errors);
-        value = res.value;
-      }
-      set(
-        this.values,
-        path,
-        get(this.workerBroker.evalForest, this.id + '.' + path),
-      );
-      set(
-        this.finalValues,
-        path,
-        get(this.values, path, get(this.rawValues, path)),
-      );
-    }
+  applyEvalationUpdatePatch(ops: Operation[]) {
+    applyPatch(this.values, ops, false, true);
+    applyPatch(this.finalValues, ops, false, true);
   }
 
   dispose() {

@@ -12,7 +12,7 @@ export type WorkerRequest =
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
-    evaluationUpdates: Operation[];
+    evaluationUpdates: Record<string, Operation[]>;
     errorUpdates: Operation[];
   };
   event: 'EvaluationUpdate';
