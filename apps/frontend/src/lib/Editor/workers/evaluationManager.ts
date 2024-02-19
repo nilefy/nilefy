@@ -56,18 +56,7 @@ export class EvaluationManager {
             'evaluationErrors',
           );
         }
-        const res = entity.validatePath(path, evaluatedValue);
-        if (res) {
-          const { value, errors: validationErrors } = res;
-          evaluatedValue = value;
-          addErrorsToEntity(
-            errors,
-            entityId,
-            path,
-            validationErrors,
-            'validationErrors',
-          );
-        }
+
         set(evalTree, item, evaluatedValue);
         continue;
       }
@@ -97,18 +86,7 @@ export class EvaluationManager {
           'evaluationErrors',
         );
       }
-      const res = entity.validatePath(path, evaluatedValue);
-      if (res) {
-        const { value, errors: validationErrors } = res;
-        evaluatedValue = value;
-        merge(errors, {
-          [entityId]: {
-            [path]: {
-              validationErrors: validationErrors,
-            },
-          },
-        });
-      }
+
       set(evalTree, item, evaluatedValue);
     }
     performance.mark('end-evaluatedForest');

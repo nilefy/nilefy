@@ -37,6 +37,8 @@ import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 type RowData = Record<string, unknown>;
 
 export type WebLoomTableColumn = {
@@ -300,7 +302,7 @@ const config: WidgetConfig = {
 };
 
 const defaultProps: WebloomTableProps = {
-  data: [],
+  data: 'dsds',
   columns: [],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
@@ -376,6 +378,11 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
         options: {
           label: 'Data',
         },
+        validation: zodToJsonSchema(
+          z
+            .array(z.record(z.string(), z.any()))
+            .default([{ id: '1', name: 'John', age: 23 }]),
+        ),
       },
     ],
   },

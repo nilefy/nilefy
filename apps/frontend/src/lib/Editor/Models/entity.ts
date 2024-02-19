@@ -1,6 +1,5 @@
 import {
   action,
-  autorun,
   computed,
   makeObservable,
   observable,
@@ -18,6 +17,11 @@ import {
   EntityErrorsRecord,
 } from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
+import {
+  ajv,
+  extractValidators,
+  transformErrorToMessage,
+} from '../validations';
 
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
@@ -28,10 +32,11 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   rawValues: Record<string, unknown>;
   public id: string;
   public finalValues: Record<string, unknown>;
-
+  public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public codePaths: Set<string>;
   private readonly nestedPathPrefix?: string;
   protected readonly workerBroker: WorkerBroker;
+  public errors: EntityErrorsRecord[string] = {};
   constructor({
     id,
     workerBroker,
@@ -60,10 +65,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       dispose: action,
       prefixedRawValues: computed,
       hasErrors: computed,
-
-      errors: computed({
-        requiresReaction: false,
-      }),
+      errors: observable,
     });
     this.id = id;
     this.entityType = entityType;
@@ -72,6 +74,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
+    this.validators = extractValidators(inspectorConfig);
 
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
@@ -112,6 +115,12 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
 
   applyEvaluationUpdates() {
     for (const path of this.evaluablePaths) {
+      let value = get(this.workerBroker.evalForest, this.id + '.' + path);
+      const res = this.validatePath(path, value);
+      if (res) {
+        this.addValidationErrors(path, res.errors);
+        value = res.value;
+      }
       set(
         this.values,
         path,
@@ -157,6 +166,11 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
     if (get(this.values, path) === undefined) {
+      const res = this.validatePath(path, value);
+      if (res) {
+        this.addValidationErrors(path, res.errors);
+        value = res.value;
+      }
       set(this.finalValues, path, value);
     }
     this.debouncedSyncRawValuesWithEvaluationWorker();
@@ -165,25 +179,18 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   getValue(key: string) {
     return get(this.values, key, get(this.rawValues, key));
   }
+  addValidationErrors(path: string, errors: string[]) {
+    if (!this.errors[path]) {
+      this.errors[path] = { validationErrors: [] };
+    }
+    this.errors[path].validationErrors = errors;
+  }
 
   getRawValue(key: string) {
     return get(this.rawValues, key);
   }
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
-  }
-
-  get errors() {
-    const errors: EntityErrorsRecord[string] = {};
-    const entityErrors = this.workerBroker.errors[this.id];
-    if (!entityErrors) return {};
-    for (const path of this.evaluablePaths) {
-      const pathErrors = entityErrors[path];
-      if (pathErrors) {
-        errors[path] = pathErrors;
-      }
-    }
-    return errors;
   }
 
   get hasErrors() {
@@ -202,5 +209,21 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)
       : this.rawValues;
+  }
+
+  validatePath(path: string, value: unknown) {
+    const validate = this.validators[path];
+    if (!validate) return null;
+    validate(value);
+
+    if (validate.errors) {
+      // @ts-expect-error default is not defined in the type
+      value = validate.schema.default;
+      return {
+        value,
+        errors: validate.errors.map((error) => transformErrorToMessage(error)),
+      };
+    }
+    return null;
   }
 }
