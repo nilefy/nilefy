@@ -12,7 +12,7 @@ import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
-import { WorkerRequest } from '../workers/common/interface';
+import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
 
@@ -118,23 +118,28 @@ export class EditorState implements WebloomDisposable {
       event: 'init',
       body: {
         currentPageId: this.currentPageId,
-        queries: queries.reduce((acc, query) => {
-          acc[query.id] = {
-            unevalValues: query.query,
-            id: query.id,
-          };
-          return acc;
-        }, {}),
+        queries: queries.reduce(
+          (acc, query) => {
+            acc[query.id as string] = {
+              unevalValues: query.query,
+              id: query.id,
+              inspectorConfig: [], // TODO: fix this
+            };
+            return acc;
+          },
+          {} as Record<string, EntityConfigBody>,
+        ),
         pages: {
           [currentPageId]: Object.entries(this.currentPage.widgets).reduce(
             (acc, [id, widget]) => {
               acc[id] = {
                 id: widget.id,
                 unevalValues: toJS(widget.rawValues),
+                inspectorConfig: widget.inspectorConfig,
               };
               return acc;
             },
-            {},
+            {} as Record<string, EntityConfigBody>,
           ),
         },
       },

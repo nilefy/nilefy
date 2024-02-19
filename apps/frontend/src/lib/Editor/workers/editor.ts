@@ -1,11 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  action,
-  computed,
-  comparer,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, action, computed, comparer } from 'mobx';
 import { Entity } from './entity';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';

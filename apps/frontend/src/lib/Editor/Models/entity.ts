@@ -8,70 +8,18 @@ import {
 } from 'mobx';
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
-import {
-  cloneDeep,
-  debounce,
-  get,
-  isPlainObject,
-  memoize,
-  merge,
-  set,
-} from 'lodash';
+import { cloneDeep, debounce, get, set } from 'lodash';
 import { ajv } from '@/lib/validations';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-
-function createPathFromStack(stack: string[]) {
-  return stack.join('.');
-}
-const evaluationFormControls = new Set(['sql', 'inlinceCodeInput']);
-const getEvaluablePathsFromSchema = memoize(
-  (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
-    if (!schema) return [];
-    const stack: string[] = [];
-    const result: string[] = [];
-    // the actual function that do the recursion
-    const helper = (
-      obj: Record<string, unknown>,
-      stack: string[],
-      result: string[],
-    ) => {
-      const isLastLevel = Object.keys(obj).every((k) => !isPlainObject(obj[k]));
-      if (isLastLevel) {
-        if (evaluationFormControls.has(obj['ui:widget'] as string)) {
-          let path = createPathFromStack(stack);
-          if (nestedPathPrefix) {
-            path = nestedPathPrefix + '.' + path;
-          }
-          result.push(path);
-        }
-        return;
-      }
-      for (const k in obj) {
-        stack.push(k);
-        const item = obj[k];
-        if (isPlainObject(item)) {
-          helper(item, stack, result);
-        }
-        stack.pop();
-      }
-    };
-    helper(schema, stack, result);
-    return result;
-  },
-);
-
-export type EntitySchema = {
-  uiSchema?: Record<string, unknown>;
-  dataSchema?: Record<string, unknown>;
-  metaSchema?: Record<string, unknown>;
-};
+import { EntityErrors, EntityInspectorConfig, EntityTypes } from '../interface';
+import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
-  readonly entityType: string;
+  readonly entityType: EntityTypes;
   private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
-  public readonly schema: EntitySchema;
+  public readonly inspectorConfig: EntityInspectorConfig;
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
@@ -85,17 +33,15 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     id,
     workerBroker,
     rawValues,
-    schema = {},
-    tempRemoveMeFast,
+    inspectorConfig = [],
     evaluablePaths = [],
     nestedPathPrefix,
     entityType: entityType,
   }: {
     id: string;
-    entityType: string;
+    entityType: EntityTypes;
     rawValues: Record<string, unknown>;
-    schema?: EntitySchema;
-    tempRemoveMeFast?: boolean;
+    inspectorConfig?: EntityInspectorConfig;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
     workerBroker: WorkerBroker;
@@ -110,6 +56,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       setValue: action,
       dispose: action,
       prefixedRawValues: computed,
+      errors: computed({
+        requiresReaction: false,
+      }),
     });
     this.id = id;
     this.entityType = entityType;
@@ -118,28 +67,13 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
-    if (tempRemoveMeFast) {
-      evaluablePaths = Object.keys(rawValues);
-    }
+
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
-      ...getEvaluablePathsFromSchema(schema?.uiSchema || {}, nestedPathPrefix),
+      ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
     ]);
     this.codePaths = new Set<string>();
-    this.schema = schema;
-    if (schema?.dataSchema) {
-      this.validator = ajv.compile(schema.dataSchema);
-    }
-    if (schema?.uiSchema) {
-      const additionalUISchema = {
-        'ui:options': {
-          submitButtonOptions: {
-            norender: true,
-          },
-        },
-      };
-      schema.uiSchema = merge({}, schema.uiSchema, additionalUISchema);
-    }
+    this.inspectorConfig = inspectorConfig;
     this.dispoables.push(
       ...[
         reaction(() => this.rawValues, this.syncRawValuesWithEvaluationWorker),
@@ -149,8 +83,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
               this.workerBroker.evalForest,
               this.id + '.' + path,
             );
-            if (possiblyNewValue === undefined) continue;
-            if (get(this.finalValues, path) !== possiblyNewValue) {
+            if (get(this.values, path) !== possiblyNewValue) {
               return true;
             }
           }
@@ -164,7 +97,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         entityType: this.entityType,
         config: {
           unevalValues: toJS(this.rawValues),
-          config: [],
+          inspectorConfig: this.inspectorConfig,
           id: this.id,
           nestedPathPrefix: this.nestedPathPrefix,
         },
@@ -173,12 +106,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   applyEvaluationUpdates() {
+    console.log('applying updates', this.id, this.evaluablePaths);
     for (const path of this.evaluablePaths) {
       set(
         this.values,
         path,
         get(this.workerBroker.evalForest, this.id + '.' + path),
       );
+      console.log('applying', this.id, path, get(this.values, path));
       set(
         this.finalValues,
         path,
@@ -234,10 +169,20 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
   }
-  get validationErrors() {
-    return [];
-  }
 
+  get errors() {
+    console.log('getting errors', this.id);
+    const errors: Record<string, EntityErrors> = {};
+    for (const path of this.evaluablePaths) {
+      const fullpath = this.id + '.' + path;
+      const pathErrors = get(this.workerBroker.errors, fullpath);
+      if (pathErrors) {
+        set(errors, fullpath, pathErrors);
+      }
+    }
+    console.log('errors', errors, this.id);
+    return errors;
+  }
   get prefixedRawValues() {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)

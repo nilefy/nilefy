@@ -1,4 +1,8 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import {
   ArrowUpDown,
   ChevronsLeft,
@@ -26,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
 import React, { useContext } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,8 +37,6 @@ import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import { autorun, toJS } from 'mobx';
-//Types
 type RowData = Record<string, unknown>;
 
 export type WebLoomTableColumn = {
@@ -307,18 +308,14 @@ const defaultProps: WebloomTableProps = {
   pageSize: 3,
 };
 
-const widgetName = 'WebloomTable';
-
-const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
+const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
   {
     sectionName: 'Columns',
     children: [
       {
-        id: `${widgetName}-Columns`,
         key: 'columns',
         label: 'Columns',
         type: 'list',
-        options: {},
       },
     ],
   },
@@ -326,7 +323,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
     sectionName: 'Row Selection',
     children: [
       {
-        id: `${widgetName}-RowSelection`,
         key: 'isRowSelectionEnabled',
         label: 'Allow Selection',
         type: 'checkbox',
@@ -342,7 +338,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
     sectionName: 'Search',
     children: [
       {
-        id: `${widgetName}-Search`,
         key: 'isSearchEnabled',
         label: 'Enable Search',
         type: 'checkbox',
@@ -356,7 +351,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
     sectionName: 'Pagination',
     children: [
       {
-        id: `${widgetName}-Pagination`,
         key: 'isPaginationEnabled',
         label: 'Enable Pagination',
         type: 'checkbox',
@@ -365,7 +359,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
         },
       },
       {
-        id: `${widgetName}-PageSize`,
         key: 'pageSize',
         label: 'Page Size',
         type: 'input',
@@ -377,14 +370,12 @@ const inspectorConfig: WidgetInspectorConfig<WebloomTableProps> = [
     sectionName: 'Data',
     children: [
       {
-        id: `${widgetName}-Data`,
         key: 'data',
         label: 'Data',
         type: 'inlineCodeInput',
         options: {
           label: 'Data',
         },
-        defaultValue: ' ',
       },
     ],
   },

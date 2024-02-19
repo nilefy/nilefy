@@ -1,64 +1,19 @@
 import { action, makeObservable, observable } from 'mobx';
 import { DependencyManager } from './dependencyManager';
 
-import { get, memoize, set } from 'lodash';
-// import { ajv } from '@/lib/validations';
+import { get, set } from 'lodash';
+import {
+  ajv,
+  extractValidators,
+  transformErrorToMessage,
+} from '@/lib/validations';
 import { analyzeDependancies } from '../dependancyUtils';
-
-const getEvaluablePathsFromSchema = memoize(
-  (
-    config: Record<string, unknown>[] | undefined,
-    nestedPathPrefix?: string,
-  ) => {
-    if (!config) return [];
-    const paths: string[] = [];
-    for (const section of config) {
-      for (const control of section.children) {
-        if (evaluationFormControls.has(control.type)) {
-          let path = control.key;
-          if (nestedPathPrefix) {
-            path = nestedPathPrefix + '.' + path;
-          }
-          paths.push(path);
-        }
-      }
-    }
-    return paths;
-  },
-);
-
-const extractValidators = memoize(
-  (config: Record<string, unknown>[] | undefined) => {
-    if (!config) return {};
-    const schemas: Record<string, unknown> = {};
-    for (const section of config) {
-      for (const control of section.children) {
-        if (control.validation) {
-          schemas[control.key] = control.validation;
-        }
-      }
-    }
-    const compiledValidators: Record<
-      string,
-      ReturnType<typeof ajv.compile>
-    > = {};
-    for (const key in schemas) {
-      compiledValidators[key] = ajv.compile(schemas[key]);
-    }
-    return compiledValidators;
-  },
-);
-const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
-
-export type EntitySchema = {
-  uiSchema?: Record<string, unknown>;
-  dataSchema?: Record<string, unknown>;
-  metaSchema?: Record<string, unknown>;
-};
+import { EntityInspectorConfig } from '../interface';
+import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 
 export class Entity {
   private readonly evaluablePaths: Set<string>;
-  public validations: Record<string, ReturnType<typeof ajv.compile>>;
+  public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public unevalValues: Record<string, unknown>;
   public id: string;
   /**
@@ -68,19 +23,19 @@ export class Entity {
   public dependencyManager: DependencyManager;
   public validator?: ReturnType<typeof ajv.compile>;
   private readonly nestedPathPrefix?: string;
-  public config: Record<string, unknown>[] | undefined;
+  public inspectorConfig: Record<string, unknown>[] | undefined;
   constructor({
     id,
     dependencyManager,
     unevalValues,
     evaluablePaths = [],
     nestedPathPrefix,
-    config = [],
+    inspectorConfig = [],
   }: {
     id: string;
     dependencyManager: DependencyManager;
     unevalValues: Record<string, unknown>;
-    config: any;
+    inspectorConfig: EntityInspectorConfig;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
   }) {
@@ -95,28 +50,28 @@ export class Entity {
       analyzeAndApplyDependencyUpdate: action,
       applyDependencyUpdate: action,
       setValues: action,
+      validatePath: action,
+      initDependecies: action,
     });
     this.id = id;
     this.nestedPathPrefix = nestedPathPrefix;
     this.dependencyManager = dependencyManager;
-    this.config = config;
+    this.inspectorConfig = inspectorConfig;
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
-      ...getEvaluablePathsFromSchema(config, nestedPathPrefix),
-      // !remove me
+      ...getEvaluablePathsFromInspectorConfig(
+        inspectorConfig,
+        nestedPathPrefix,
+      ),
       ...Object.keys(unevalValues),
     ]);
-
-    this.validations = extractValidators(config);
+    this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
   }
 
   initDependecies() {
     const relations = this.analyzeDependencies();
-    this.dependencyManager.addDependenciesForEntity(
-      relations.flatMap((i) => i.dependencies),
-      this.id,
-    );
+    this.applyDependencyUpdate(relations);
   }
 
   analyzeDependencies() {
@@ -185,5 +140,20 @@ export class Entity {
   }
   isPrefixed() {
     return this.nestedPathPrefix !== undefined;
+  }
+
+  validatePath(path: string, value: unknown) {
+    const validate = this.validators[path];
+    if (!validate) return null;
+    validate(value);
+    if (validate.errors) {
+      // @ts-expect-error default is not defined in the type
+      value = validate.schema.default;
+      return {
+        value,
+        errors: validate.errors.map((error) => transformErrorToMessage(error)),
+      };
+    }
+    return null;
   }
 }

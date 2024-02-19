@@ -1,7 +1,10 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { ComponentPropsWithoutRef, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
@@ -16,16 +19,14 @@ const WebloomContainer = observer(
     return <Container {...props}>{children}</Container>;
   },
 );
-const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
 };
-export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
+export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
   {
     sectionName: 'Color',
     children: [
       {
-        id: `${widgetName}-color`,
         key: 'color',
         label: 'Color',
         type: 'color',

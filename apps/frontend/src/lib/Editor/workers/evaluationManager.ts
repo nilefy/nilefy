@@ -1,9 +1,10 @@
 import { computed, makeObservable, observable } from 'mobx';
 import invariant from 'invariant';
-import { get, set } from 'lodash';
+import { get, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
 import { bindingRegexGlobal } from '@/lib/utils';
+import { EntityErrors } from '../interface';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -27,9 +28,11 @@ export class EvaluationManager {
     }
     return false;
   }
-  get evaluatedForest(): Record<string, unknown> {
+  get evaluatedForest() {
     const sortedGraph = this.editor.dependencyManager.graph;
     const evalTree: Record<string, unknown> = {};
+    const errors: Record<string, EntityErrors> = {};
+
     const alreadyEvaluated = new Set<string>();
     for (const item of this.editor.dependencyManager.leaves) {
       const [entityId, ...pathArr] = item.split('.');
@@ -38,7 +41,14 @@ export class EvaluationManager {
       const entity = this.editor.getEntityById(entityId);
       const unevalValue = get(entity.unevalValues, path);
       if (EvaluationManager.isCode(unevalValue)) {
-        set(evalTree, item, evaluate(unevalValue, evalTree));
+        let evaluatedValue = evaluate(unevalValue, evalTree);
+        const res = entity.validatePath(path, evaluatedValue);
+        if (res) {
+          const { value, errors: validationErrors } = res;
+          evaluatedValue = value;
+          merge(errors, { [item]: { validationErrors } });
+        }
+        set(evalTree, item, evaluatedValue);
         continue;
       }
       set(evalTree, item, unevalValue);
@@ -53,8 +63,18 @@ export class EvaluationManager {
         `entity with id ${entityId} not found while evaluating ${item}`,
       );
       const unevalValue = get(entity.unevalValues, path);
-      set(evalTree, item, evaluate(unevalValue as string, evalTree));
+      let evaluatedValue = evaluate(unevalValue as string, evalTree);
+      const res = entity.validatePath(path, evaluatedValue);
+      if (res) {
+        const { value, errors: validationErrors } = res;
+        evaluatedValue = value;
+        merge(errors, { [item]: { validationErrors } });
+      }
+      set(evalTree, item, evaluatedValue);
     }
-    return evalTree;
+    return {
+      evalTree,
+      errors,
+    };
   }
 }

@@ -197,8 +197,11 @@ function ColumnDialog({
   );
 }
 
-const InspectorList = (props: InspectorListProps & BaseControlProps) => {
-  const { onChange } = useContext(FormControlContext);
+const InspectorList = () => {
+  const { onChange, value } = useContext(FormControlContext) as {
+    onChange: (value: WebLoomTableColumn[]) => void;
+    value: WebLoomTableColumn[];
+  };
 
   const [isCreateColumnDialogOpen, setIsCreateColumDialogOpen] =
     useState(false);
@@ -228,10 +231,10 @@ const InspectorList = (props: InspectorListProps & BaseControlProps) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={props.value || []}
+          items={value || []}
           strategy={verticalListSortingStrategy}
         >
-          {props.value?.map((item) => (
+          {value?.map((item) => (
             <div
               key={item.id}
               className=" flex h-10 w-full flex-row items-center justify-between rounded-md border-2 border-zinc-700 p-2 "
@@ -270,7 +273,7 @@ const InspectorList = (props: InspectorListProps & BaseControlProps) => {
         </Button>
       </div>
       <ColumnDialog
-        columns={props.value ?? []}
+        columns={value ?? []}
         onChange={onChange}
         open={isCreateColumnDialogOpen}
         onOpen={(value) => setIsCreateColumDialogOpen(value)}
@@ -278,7 +281,7 @@ const InspectorList = (props: InspectorListProps & BaseControlProps) => {
       />
       {isEditColumnDialogOpen && (
         <ColumnDialog
-          columns={props.value ?? []}
+          columns={value ?? []}
           onChange={onChange}
           initialValues={editableColumn}
           open={isEditColumnDialogOpen}
@@ -291,19 +294,19 @@ const InspectorList = (props: InspectorListProps & BaseControlProps) => {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (active.id !== over?.id && props.value) {
-      const oldIndex = props.value.findIndex((item) => item.id === active.id);
-      const newIndex = props.value.findIndex((item) => item.id === over?.id);
+    if (active.id !== over?.id && value) {
+      const oldIndex = value.findIndex((item) => item.id === active.id);
+      const newIndex = value.findIndex((item) => item.id === over?.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         // Update the state with the new order of columns
-        onChange(arrayMove(props.value, oldIndex, newIndex));
+        onChange(arrayMove(value, oldIndex, newIndex));
       }
     }
   }
 
   function handleRemove(id: string) {
-    const newCols = props.value?.filter((col) => col.id !== id);
+    const newCols = value?.filter((col) => col.id !== id);
     onChange(newCols);
   }
 };

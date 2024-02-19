@@ -1,5 +1,6 @@
 import {
   action,
+  autorun,
   makeObservable,
   observable,
   reaction,
@@ -10,12 +11,14 @@ import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
 import { debounce } from 'lodash';
 import { Operation, applyPatch } from 'fast-json-patch';
 import { WebloomDisposable } from './interfaces';
+import { EntityErrors } from '../interface';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
   public evalForest: Record<string, unknown> = {};
+  public errors: Record<string, EntityErrors> = {};
   constructor() {
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),
@@ -29,7 +32,9 @@ export class WorkerBroker implements WebloomDisposable {
       evalForest: observable,
       receiveMessage: action,
       applyEvalForestPatch: action,
+      applyErrorPatch: action,
       postMessege: action,
+      errors: observable,
     });
 
     this.queue = [];
@@ -64,10 +69,11 @@ export class WorkerBroker implements WebloomDisposable {
 
   receiveMessage(res: WorkerResponse) {
     const { event, body } = res;
-    console.log('worker received', event, body);
+    console.log('worker sent', event, body);
     switch (event) {
       case 'EvaluationUpdate':
-        this.applyEvalForestPatch(body);
+        this.applyEvalForestPatch(body.evaluationUpdates);
+        this.applyErrorPatch(body.errorUpdates);
         break;
       default:
         break;
@@ -78,6 +84,9 @@ export class WorkerBroker implements WebloomDisposable {
     applyPatch(this.evalForest, patch, false, true);
   }
 
+  private applyErrorPatch(patch: Operation[]) {
+    applyPatch(this.errors, patch, false, true);
+  }
   private debouncePostMessege = debounce(this._postMessege, 500);
 
   dispose() {

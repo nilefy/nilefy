@@ -1,6 +1,9 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
@@ -30,14 +33,12 @@ const config: WidgetConfig = {
 const defaultProps: WebloomTextProps = {
   text: 'Text',
 };
-const widgetName = 'WebloomText';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomTextProps> = [
+const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
   {
     sectionName: 'General',
     children: [
       {
-        id: `${widgetName}-text`,
         key: 'text',
         label: 'Text',
         type: 'inlineCodeInput',

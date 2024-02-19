@@ -4,7 +4,7 @@ import { useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
-import { ConfigPanel } from '../entityForm/index';
+import { WidgetConfigPanel } from '../entityForm/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
@@ -45,7 +45,7 @@ const InspectTab = observer(() => {
   } else if (selectedIdsSize === 1) {
     return (
       <TabsContent value="inspect">
-        <ConfigPanel />
+        <WidgetConfigPanel />
       </TabsContent>
     );
   } else if (selectedIdsSize > 1) {

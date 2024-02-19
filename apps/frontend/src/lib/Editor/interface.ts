@@ -1,8 +1,8 @@
 import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
+import { JsonSchema7Type } from 'zod-to-json-schema';
 
 type BaseControlProps = {
-  id: string;
   label: string;
 };
 
@@ -21,13 +21,6 @@ type InspectorColorProps = {
 
 type InspectorEvents = Record<string, never>;
 
-type InspectorListProps = {
-  value?: unknown[];
-};
-
-type InspectorCheckboxProps = {
-  //  label: string;
-};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -38,29 +31,38 @@ type FormControlOptions = {
     value?: string;
     placeholder?: string;
   };
-  list: InspectorListProps;
-  checkbox: InspectorCheckboxProps;
+  list: undefined;
+  checkbox: undefined;
   inlineCodeInput: InlineCodeInputProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-type WidgetInspectorConfig<TProps> = {
+type EntityInspectorConfig<
+  TProps extends Record<string, unknown> = Record<string, unknown>,
+> = {
   sectionName: string;
   hidden?: (props: TProps) => boolean;
+  deps?: TProps[];
   children: MappedTypeToArray<{
-    [key in keyof Omit<TProps, 'value'>]: {
-      [key2 in InspectorFormControls]: {
-        type: key2;
-        key: key;
-        options: Omit<FormControlOptions[key2], 'value'>;
-        hidden?: (props: key) => boolean;
-        label: string;
-      } & BaseControlProps;
-    }[InspectorFormControls];
+    [key in keyof TProps]: {
+      [key2 in InspectorFormControlsTypes]: FormControl<key2, TProps, key>;
+    }[InspectorFormControlsTypes];
   }>;
 }[];
 
-type InspectorFormControls = keyof FormControlOptions;
+export type FormControl<
+  FormControlType extends InspectorFormControlsTypes,
+  TProps extends Record<string, unknown> = Record<string, unknown>,
+  Key extends keyof TProps = keyof TProps,
+> = {
+  type: FormControlType;
+  key: Key;
+  options: FormControlOptions[FormControlType];
+  hidden?(props: TProps): boolean;
+  deps?: keyof TProps[];
+  validation?: JsonSchema7Type;
+} & BaseControlProps;
+type InspectorFormControlsTypes = keyof FormControlOptions;
 
 type InlineCodeInputProps = {
   label: string;
@@ -122,31 +124,12 @@ export interface WidgetConfig {
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
 }
-// key is the id of the node and the array are keys of props
-/**
- * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
- */
-export type EntityDependancy = Record<string, Record<string, Set<string>>>;
-// export type WebloomNode = {
-//   id: string;
-//
-//   dom: HTMLElement | null;
-//   nodes: string[];
-//   parent: string;
-//   isCanvas?: boolean;
-//   props: Record<string, unknown>;
-//   dynamicProps: Record<string, unknown>;
-//   dependants: EntityDependancy;
-//   dependancies: EntityDependancy;
-//   toBeEvaluatedProps: Set<string>;
-//   type: WidgetTypes;
-// } & WebloomGridDimensions;
 
-export type Widget<WidgetProps> = {
+export type Widget<WidgetProps extends Record<string, unknown>> = {
   component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
-  inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+  inspectorConfig: EntityInspectorConfig<WidgetProps>;
 };
 
 // inspector types
@@ -154,10 +137,15 @@ export type {
   BaseControlProps,
   InspectorInputProps,
   InspectorSelectProps,
-  InspectorListProps,
-  InspectorCheckboxProps,
-  WidgetInspectorConfig,
-  InspectorFormControls,
+  EntityInspectorConfig,
+  InspectorFormControlsTypes,
   InlineCodeInputProps,
   InspectorColorProps,
+};
+
+export type EntityTypes = 'query' | 'widget';
+
+export type EntityErrors = {
+  validationErrors?: Record<string, string[]>;
+  evaluationErrors?: Record<string, string[]>;
 };

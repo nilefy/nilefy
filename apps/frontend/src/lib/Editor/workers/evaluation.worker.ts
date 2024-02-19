@@ -2,6 +2,7 @@ import { EditorState } from './editor';
 import { WorkerRequest, WorkerResponse } from './common/interface';
 import { autorun, runInAction, toJS } from 'mobx';
 import { compare } from 'fast-json-patch';
+import { EntityErrors } from '../interface';
 
 const editorState = new EditorState();
 
@@ -14,7 +15,6 @@ function receiveMessage(req: WorkerRequest) {
 }
 function eventSwitch(req: WorkerRequest) {
   const { event, body } = req as WorkerRequest;
-  console.log('worker received', event, body);
   switch (event) {
     case 'init':
       try {
@@ -68,11 +68,21 @@ self.addEventListener('error', (e) => {
   console.error('worker error', e);
 });
 let lastEvaluatedForest = {};
+let lastErrors: Record<string, EntityErrors> = {};
 autorun(() => {
-  const serialized = toJS(editorState.evaluationManager.evaluatedForest);
+  const serializedEvalForest = toJS(
+    editorState.evaluationManager.evaluatedForest.evalTree,
+  );
+  const serializedErrors = toJS(
+    editorState.evaluationManager.evaluatedForest.errors,
+  );
   self.postMessage({
     event: 'EvaluationUpdate',
-    body: compare(lastEvaluatedForest, serialized),
+    body: {
+      evaluationUpdates: compare(lastEvaluatedForest, serializedEvalForest),
+      errorUpdates: compare(lastErrors, serializedErrors),
+    },
   } as WorkerResponse);
-  lastEvaluatedForest = serialized;
+  lastEvaluatedForest = serializedEvalForest;
+  lastErrors = serializedErrors;
 });

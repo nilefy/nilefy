@@ -14,7 +14,6 @@ import { ChangePropAction } from '@/Actions/Editor/changeProps';
 import { Input } from '@/components/ui/input';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { observer } from 'mobx-react-lite';
-import { InspectorFormControls } from './formControls';
 import { Collapsible } from '@radix-ui/react-collapsible';
 import {
   CollapsibleContent,
@@ -22,14 +21,19 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  BaseControlProps,
+  EntityInspectorConfig,
+  InspectorFormControlsTypes,
+} from '@/lib/Editor/interface';
+import { InspectorFormControls } from './formControls';
 
 export const FormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
-  /*
-   * entityId
-   */
-  id?: string;
-  toProperty?: string;
+  id: string;
+  toProperty: string;
+  value: unknown;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }>({} as any);
 export const FormSectionView = (props: {
@@ -86,10 +90,11 @@ function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   );
 }
 
-export const ConfigPanel = observer(() => {
+export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
-  const inspectorConfig = WebloomWidgets[selectedNode.type].inspectorConfig;
+  const inspectorConfig = WebloomWidgets[selectedNode.type]
+    .inspectorConfig as EntityInspectorConfig;
 
   return (
     <div>
@@ -108,17 +113,16 @@ export const ConfigPanel = observer(() => {
 });
 
 const InspectorSection = observer(
-  (props: {
-    section: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number];
-    selectedId: string;
-  }) => {
+  (props: { section: EntityInspectorConfig[number]; selectedId: string }) => {
     const { section, selectedId } = props;
     return (
       <FormSectionView sectionName={section.sectionName}>
         {section.children.map((control) => {
+          const id = `${selectedId}-${control.type}`;
           return (
             <FormControl
-              key={control.id}
+              key={id}
+              id={id}
               control={control}
               selectedId={selectedId}
             />
@@ -131,43 +135,63 @@ const InspectorSection = observer(
 
 const FormControl = observer(
   (props: {
-    control: (typeof WebloomWidgets)[WidgetTypes]['inspectorConfig'][number]['children'][number];
+    control: EntityInspectorConfig[number]['children'][number];
+    id: string;
     selectedId: string;
   }) => {
     const { control, selectedId } = props;
     const Component = InspectorFormControls[control.type];
-    const prop = editorStore.currentPage
-      .getWidgetById(selectedId)
-      .getRawValue(control.key);
     const options = useMemo(
       () => ({
         ...control,
         ...control.options,
-        value: prop,
       }),
-      [control, prop],
+      [control],
     );
     const onChange = useCallback(
       (newValue: unknown) => {
-        console.log('onChange', newValue);
         commandManager.executeCommand(
           new ChangePropAction(selectedId, control.key, newValue),
         );
       },
       [control.key, selectedId],
     );
-    const contextValue = useMemo(
-      () => ({ onChange, id: selectedId, toProperty: control.key }),
-      [onChange, selectedId, control.key],
-    );
+    const contextValue = {
+      onChange,
+      id: props.id,
+      toProperty: control.key,
+      value: editorStore.currentPage
+        .getWidgetById(selectedId)
+        .getRawValue(control.key),
+    };
     return (
       <FormControlContext.Provider value={contextValue}>
-        {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          //@ts-ignore
+        <FormControlWrapper
+          type={options.type as InspectorFormControlsTypes}
+          id={props.id}
+          label={control.label}
+        >
+          {/* @ts-expect-error ignore */}
           <Component {...options} key={control.id} />
-        }
+        </FormControlWrapper>
       </FormControlContext.Provider>
+    );
+  },
+);
+
+const FormControlWrapper = observer(
+  (
+    props: {
+      children: React.ReactNode;
+      type: InspectorFormControlsTypes;
+      id: string;
+    } & BaseControlProps,
+  ) => {
+    return (
+      <div>
+        <Label htmlFor={props.id}>{props.label}</Label>
+        {props.children}
+      </div>
     );
   },
 );

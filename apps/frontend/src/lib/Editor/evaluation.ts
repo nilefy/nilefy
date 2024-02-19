@@ -1,4 +1,6 @@
+import { memoize } from 'lodash';
 import { bindingRegexGlobal } from '../utils';
+import { EntityInspectorConfig } from './interface';
 
 export type EvaluationContext = Record<string, unknown>;
 
@@ -47,3 +49,24 @@ export const evaluate = (
   });
   return final;
 };
+
+const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
+
+export const getEvaluablePathsFromInspectorConfig = memoize(
+  (config: EntityInspectorConfig | undefined, nestedPathPrefix?: string) => {
+    if (!config) return [];
+    const paths: string[] = [];
+    for (const section of config) {
+      for (const control of section.children) {
+        if (evaluationFormControls.has(control.type)) {
+          let path = control.key;
+          if (nestedPathPrefix) {
+            path = nestedPathPrefix + '.' + path;
+          }
+          paths.push(path);
+        }
+      }
+    }
+    return paths;
+  },
+);

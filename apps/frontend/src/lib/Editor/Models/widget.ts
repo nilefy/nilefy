@@ -4,7 +4,11 @@ import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
+import {
+  EntityInspectorConfig,
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+} from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -70,9 +74,9 @@ export class WebloomWidget
     super({
       workerBroker: page.workerBroker,
       id,
-      tempRemoveMeFast: true,
       rawValues: props ?? {},
-      schema: WebloomWidgets[type].schema ?? {},
+      inspectorConfig: WebloomWidgets[type]
+        .inspectorConfig as EntityInspectorConfig,
       entityType: 'widget',
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;

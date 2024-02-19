@@ -1,4 +1,11 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import {
+  observable,
+  makeObservable,
+  action,
+  computed,
+  autorun,
+  toJS,
+} from 'mobx';
 import { analyzeDependancies } from '../dependancyUtils';
 import { forEach } from 'lodash';
 import { EditorState } from './editor';
@@ -6,8 +13,9 @@ import invariant from 'invariant';
 
 export class DepGraph {
   paths = new Set<string>();
-  outgoingPathsEdges = new Map<string, string[]>(); // Node -> [Dependency Node]
-  incomingPathsEdges = new Map<string, string[]>(); // Node -> [Dependant Node]
+  outgoingPathsEdges = new Map<string, string[]>();
+
+  incomingPathsEdges = new Map<string, string[]>();
   circular: boolean;
 
   /**
@@ -93,7 +101,7 @@ export class DepGraph {
       overAllOrderAllNodes: computed,
       entryNodes: computed,
       removeEntity: action,
-      // while this is technically a getter, it's marked as an actions because it does some mutation (which it reverts)
+      // while this is technically a getter, it's marked as an action because it does some mutation (which it reverts)
       // but I want mobx to not cause reactions to run when this is called
       willCauseCycle: action,
       clearIncomingEdgesForEntity: action,
@@ -101,13 +109,26 @@ export class DepGraph {
       clearIncomingEdgesForPath: action,
       clearOutgoingEdgesForPath: action,
     });
+    autorun(() => {
+      console.log('outgoing:', toJS(this.outgoingPathsEdges));
+      console.log('incoming:', toJS(this.incomingPathsEdges));
+      console.log('paths:', toJS(this.paths));
+    });
   }
 
   clearIncomingEdgesForPath(path: string) {
+    if (!this.incomingPathsEdges.has(path)) return;
     this.incomingPathsEdges.set(path, []);
+    if (this.directDependentsOfPath(path).length === 0) {
+      this.removePath(path);
+    }
   }
   clearOutgoingEdgesForPath(path: string) {
+    if (!this.incomingPathsEdges.has(path)) return;
     this.outgoingPathsEdges.set(path, []);
+    if (this.directDependenciesOfPath(path).length === 0) {
+      this.removePath(path);
+    }
   }
 
   clearIncomingEdgesForEntity(entityId: string) {
@@ -176,20 +197,20 @@ export class DepGraph {
    * Add a dependency between two nodes. If either of the nodes does not exist,
    * an Error will be thrown.
    */
-  addDependency(from: string, to: string) {
-    if (!this.hasNode(from)) {
-      throw new Error('Node does not exist: ' + from);
+  addDependency(dependency: string, dependent: string) {
+    if (!this.hasNode(dependency)) {
+      throw new Error('Node does not exist: ' + dependency);
     }
-    if (!this.hasNode(to)) {
-      throw new Error('Node does not exist: ' + to);
+    if (!this.hasNode(dependent)) {
+      throw new Error('Node does not exist: ' + dependent);
     }
-    if (this.outgoingPathsEdges.get(from)?.indexOf(to) === -1) {
+    if (this.outgoingPathsEdges.get(dependency)?.indexOf(dependent) === -1) {
       // @ts-expect-error we are sure that the key exists
-      this.outgoingPathsEdges.get(from).push(to);
+      this.outgoingPathsEdges.get(dependency).push(dependent);
     }
-    if (this.incomingPathsEdges.get(to)?.indexOf(from) === -1) {
+    if (this.incomingPathsEdges.get(dependent)?.indexOf(dependency) === -1) {
       // @ts-expect-error we are sure that the key exists
-      this.incomingPathsEdges.get(to).push(from);
+      this.incomingPathsEdges.get(dependent).push(dependency);
     }
     return true;
   }
@@ -197,30 +218,23 @@ export class DepGraph {
   /**
    * Remove a dependency between two nodes.
    */
-  removeDependency(from: string, to: string) {
+  removeDependency(dependency: string, dependent: string) {
     let idx;
-    if (this.hasNode(from)) {
-      idx = this.outgoingPathsEdges.get(from)!.indexOf(to);
+    if (this.hasNode(dependency)) {
+      idx = this.outgoingPathsEdges.get(dependency)!.indexOf(dependent);
       if (idx >= 0) {
-        this.outgoingPathsEdges.get(from)!.splice(idx, 1);
+        this.outgoingPathsEdges.get(dependency)!.splice(idx, 1);
       }
     }
 
-    if (this.hasNode(to)) {
-      idx = this.incomingPathsEdges.get(to)!.indexOf(from);
+    if (this.hasNode(dependent)) {
+      idx = this.incomingPathsEdges.get(dependent)!.indexOf(dependency);
       if (idx >= 0) {
-        this.incomingPathsEdges.get(to)!.splice(idx, 1);
+        this.incomingPathsEdges.get(dependent)!.splice(idx, 1);
       }
     }
   }
 
-  directDependenciesOfPath(node: string): string[] {
-    if (this.hasNode(node)) {
-      return this.outgoingPathsEdges.get(node)!;
-    } else {
-      throw new Error('Node does not exist: ' + node);
-    }
-  }
   willCauseCycle(from: string, to: string) {
     const hadFrom = this.hasNode(from);
     const hadTo = this.hasNode(to);
@@ -242,7 +256,7 @@ export class DepGraph {
       }
     }
   }
-  directDepenciesOfEntity(entityId: string) {
+  directDependentsOfEntity(entityId: string) {
     const result: string[] = [];
     for (const path of this.outgoingPathsEdges.keys()) {
       const [id] = path.split('.');
@@ -251,7 +265,7 @@ export class DepGraph {
       }
     }
   }
-  directDependentsOfEntity(entityId: string) {
+  directDepenciesOfEntity(entityId: string) {
     const result: string[] = [];
     for (const path of this.incomingPathsEdges.keys()) {
       const [id] = path.split('.');
@@ -271,12 +285,18 @@ export class DepGraph {
 
   directDependentsOfPath(node: string): string[] {
     if (this.hasNode(node)) {
+      return this.outgoingPathsEdges.get(node)!;
+    } else {
+      throw new Error('Node does not exist: ' + node);
+    }
+  }
+  directDependenciesOfPath(node: string): string[] {
+    if (this.hasNode(node)) {
       return this.incomingPathsEdges.get(node)!;
     } else {
       throw new Error('Node does not exist: ' + node);
     }
   }
-
   /**
    * Get an array containing the nodes that the specified node depends on (transitively).
    *
@@ -289,7 +309,7 @@ export class DepGraph {
     if (this.hasNode(node)) {
       const result: string[] = [];
       const DFS = DepGraph.createDFS(
-        this.outgoingPathsEdges,
+        this.incomingPathsEdges,
         leavesOnly,
         result,
         this.circular,
@@ -315,7 +335,7 @@ export class DepGraph {
     if (this.hasNode(node)) {
       const result: string[] = [];
       const DFS = DepGraph.createDFS(
-        this.incomingPathsEdges,
+        this.outgoingPathsEdges,
         leavesOnly,
         result,
         this.circular,
@@ -341,13 +361,11 @@ export class DepGraph {
     const result: string[] = [];
     const keys = Array.from(this.paths.keys());
     if (keys.length === 0) {
-      return result; // Empty graph
+      return result;
     } else {
       if (!this.circular) {
-        // Look for cycles - we run the DFS starting at all the nodes in case there
-        // are several disconnected subgraphs inside this dependency graph.
         const CycleDFS = DepGraph.createDFS(
-          this.outgoingPathsEdges,
+          this.incomingPathsEdges,
           false,
           [],
           this.circular,
@@ -358,24 +376,20 @@ export class DepGraph {
       }
 
       const DFS = DepGraph.createDFS(
-        this.outgoingPathsEdges,
+        this.incomingPathsEdges,
         leavesOnly,
         result,
         this.circular,
       );
-      // Find all potential starting points (nodes with nothing depending on them) an
-      // run a DFS starting at these points to get the order
+
       keys
         .filter((node: string) => {
-          return this.incomingPathsEdges.get(node)!.length === 0;
+          return this.outgoingPathsEdges.get(node)!.length === 0;
         })
         .forEach((n: string) => {
           DFS(n);
         });
 
-      // If we're allowing cycles - we need to run the DFS against any remaining
-      // nodes that did not end up in the initial result (as they are part of a
-      // subgraph that does not have a clear starting point)
       if (this.circular) {
         keys
           .filter(function (node) {
@@ -399,7 +413,7 @@ export class DepGraph {
   }
 
   /**
-   * Get an array of nodes that have no dependants (i.e. nothing depends on them).
+   * Get an array of nodes that have no dependencies
    */
   get entryNodes() {
     return Array.from(this.paths.keys()).filter((node) => {
@@ -456,6 +470,21 @@ export class DependencyManager {
       editor: observable,
       initAnalysis: action,
     });
+    autorun(() => {
+      console.log('graph:', toJS(this.graph));
+      console.log('leaves:', toJS(this.leaves));
+      this.dependencyGraph.paths.forEach((path) => {
+        console.log('path:', path);
+        console.log(
+          `directDependents:`,
+          toJS(this.dependencyGraph.dependantsOfPath(path)),
+        );
+        console.log(
+          'directDependencies:',
+          toJS(this.dependencyGraph.dependenciesOfPath(path)),
+        );
+      });
+    });
   }
   initAnalysis() {
     forEach(this.editor.entities, (entity) => {
@@ -468,24 +497,6 @@ export class DependencyManager {
     return analyzeDependancies({ ...args, keys: this.editor.context });
   }
 
-  /**
-   * Add multiple dependencies for a single entity
-   * @param relations the dependent entity id in all relations must be the same and match caller or it will throw
-   */
-  addDependenciesForEntity(
-    relations: Array<DependencyRelation>,
-    caller: string,
-  ): void {
-    const dependentId = caller;
-    if (relations.length === 0) return;
-    for (const relation of relations) {
-      invariant(
-        relation.dependent.entityId === dependentId,
-        'entity id mismatch, all relations must have the same dependent entity id. if you want to add multiple dependencies for different entities, use addDependencies',
-      );
-      this.addDependency(relation);
-    }
-  }
   get leaves() {
     return this.dependencyGraph.entryNodes;
   }
@@ -502,7 +513,7 @@ export class DependencyManager {
     entityId: string;
   }) {
     const toPath = entityId + '.' + toProperty;
-
+    // clear dependencies for the path
     this.dependencyGraph.clearIncomingEdgesForPath(toPath);
     for (const relation of dependencies) {
       this.addDependency(relation);
@@ -536,6 +547,6 @@ export class DependencyManager {
     this.dependencyGraph.removeEntity(entityId);
   }
   get graph() {
-    return this.dependencyGraph.overAllOrderAllNodes.reverse();
+    return this.dependencyGraph.overAllOrderAllNodes;
   }
 }

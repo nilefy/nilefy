@@ -1,26 +1,28 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { ComponentPropsWithoutRef, useContext } from 'react';
+import { useContext } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
+import { StringSchema } from '@/lib/validations';
 
-export type WebloomInputProps = Pick<
-  ComponentPropsWithoutRef<typeof Input>,
-  'placeholder' | 'value'
-> & {
+export type WebloomInputProps = {
   label: string;
   type: 'text' | 'password';
+  placeholder: string;
+  value: string;
 };
 
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
-  console.log('WebloomInput -> rest', label);
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
@@ -56,14 +58,11 @@ const defaultProps: WebloomInputProps = {
   type: 'text',
 };
 
-const widgetName = 'WebloomInput';
-
-const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
+const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
   {
     sectionName: 'Basic',
     children: [
       {
-        id: `${widgetName}-Type`,
         key: 'type',
         label: 'Type',
         type: 'select',
@@ -86,7 +85,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
         },
       },
       {
-        id: `${widgetName}-placeholder`,
         key: 'placeholder',
         label: 'Placeholder',
         type: 'inlineCodeInput',
@@ -94,6 +92,7 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
           placeholder: 'Enter placeholder',
           label: 'Placeholder',
         },
+        validation: StringSchema('Write something'),
       },
     ],
   },
@@ -101,7 +100,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
     sectionName: 'Label',
     children: [
       {
-        id: `${widgetName}-label`,
         key: 'label',
         label: 'Label',
         type: 'inlineCodeInput',
@@ -109,6 +107,7 @@ const inspectorConfig: WidgetInspectorConfig<WebloomInputProps> = [
           placeholder: 'Enter label',
           label: 'Label',
         },
+        validation: StringSchema('Label'),
       },
     ],
   },

@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
-import validator from '@rjsf/validator-ajv8';
 
 import {
   DropdownMenu,

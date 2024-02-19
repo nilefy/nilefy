@@ -1,6 +1,9 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { MousePointerSquare } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
@@ -43,14 +46,12 @@ const defaultProps: WebloomButtonProps = {
   color: 'black',
   event: 'onclick',
 };
-const widgetName = 'WebloomButton';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
+const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
   {
     sectionName: 'General',
     children: [
       {
-        id: `${widgetName}-text`,
         key: 'text',
         label: 'Text',
         type: 'inlineCodeInput',
@@ -65,7 +66,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
     sectionName: 'Interactions',
     children: [
       {
-        id: `${widgetName}-text`,
         key: 'event',
         label: 'Event',
         type: 'event',
@@ -77,7 +77,6 @@ const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
     sectionName: 'Color',
     children: [
       {
-        id: `${widgetName}-color`,
         key: 'color',
         label: 'Color',
         type: 'color',

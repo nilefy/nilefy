@@ -32,7 +32,11 @@ export class WebloomQuery
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
-        'editor' | 'dataSource' | 'evaluationManger' | 'dependencyManager'
+        | 'editor'
+        | 'dataSource'
+        | 'evaluationManger'
+        | 'dependencyManager'
+        | keyof ConstructorParameters<typeof Entity>[0]
       >
     >
 {
@@ -65,10 +69,7 @@ export class WebloomQuery
         error: undefined,
       },
       workerBroker,
-      schema: {
-        dataSchema: dataSource.dataSource.queryConfig.schema,
-        uiSchema: dataSource.dataSource.queryConfig.uiSchema,
-      },
+
       nestedPathPrefix: 'config',
       entityType: 'query',
     });

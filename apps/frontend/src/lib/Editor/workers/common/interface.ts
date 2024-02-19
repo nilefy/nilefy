@@ -1,3 +1,4 @@
+import { EntityTypes } from '../../interface';
 import { EntityConfig } from '../editor';
 import { Operation } from 'fast-json-patch';
 export type WorkerResponse = EvaluationUpdateResponse;
@@ -10,13 +11,16 @@ export type WorkerRequest =
   | ChangePageRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
-  body: Operation[];
+  body: {
+    evaluationUpdates: Operation[];
+    errorUpdates: Operation[];
+  };
   event: 'EvaluationUpdate';
 };
 export type AddEntityRequest = {
   event: 'addEntity';
   body: {
-    entityType: 'query' | 'widget';
+    entityType: EntityTypes;
     config: EntityConfigBody;
   };
 };
