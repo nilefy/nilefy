@@ -6,7 +6,6 @@ import { EntityInspectorConfig } from './interface';
 
 export const ajv = new Ajv({
   allErrors: true,
-  useDefaults: true,
   strict: false,
 });
 

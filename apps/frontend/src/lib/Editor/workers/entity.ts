@@ -2,7 +2,11 @@ import { action, makeObservable, observable } from 'mobx';
 import { DependencyManager } from './dependencyManager';
 
 import { get, set } from 'lodash';
-import { ajv } from '@/lib/Editor/validations';
+import {
+  ajv,
+  extractValidators,
+  transformErrorToMessage,
+} from '@/lib/Editor/validations';
 import { analyzeDependancies } from '../dependancyUtils';
 import { EntityInspectorConfig } from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
@@ -19,6 +23,8 @@ export class Entity {
   public validator?: ReturnType<typeof ajv.compile>;
   private readonly nestedPathPrefix?: string;
   public inspectorConfig: Record<string, unknown>[] | undefined;
+  public validators: Record<string, ReturnType<typeof ajv.compile>>;
+
   constructor({
     id,
     dependencyManager,
@@ -59,6 +65,7 @@ export class Entity {
       ),
       ...Object.keys(unevalValues),
     ]);
+    this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
   }
 
@@ -84,6 +91,21 @@ export class Entity {
       entityId: this.id,
       toProperty: path,
     });
+  }
+  validatePath(path: string, value: unknown) {
+    const validate = this.validators[path];
+    if (!validate) return null;
+    validate(value);
+
+    if (validate.errors) {
+      // @ts-expect-error default is not defined in the type
+      value = validate.schema.default;
+      return {
+        value,
+        errors: validate.errors.map((error) => transformErrorToMessage(error)),
+      };
+    }
+    return null;
   }
 
   applyDependencyUpdate(
