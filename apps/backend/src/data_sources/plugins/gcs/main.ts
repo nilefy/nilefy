@@ -6,8 +6,7 @@ import {
   bucketFiles,
   listBuckets,
   readFile,
-  signForDownload,
-  signForUpload,
+  downloadFile,
   uploadFile,
 } from './operations';
 
@@ -19,8 +18,8 @@ export default class PostgresqlQueryService
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
     try {
-      this.connect(dataSourceConfig);
-      const data = await this.runQuery(query.query.query);
+      const storage = this.connect(dataSourceConfig);
+      const data = await this.runQuery(query.query.query, storage);
       return {
         status: 200,
         data,
@@ -34,20 +33,18 @@ export default class PostgresqlQueryService
     }
   }
 
-  async runQuery(query: QueryT['query']) {
+  async runQuery(query: QueryT['query'], storage: Storage) {
     switch (query.operation) {
       case 'Read file':
-        return await readFile();
+        return await readFile(query, storage);
       case 'Upload file':
-        return await uploadFile();
+        return await uploadFile(query, storage);
       case 'List buckets':
-        return await listBuckets();
+        return await listBuckets(storage);
       case 'List files in a bucket':
-        return await bucketFiles();
-      case 'Signed url for download':
-        return await signForDownload();
-      case 'Signed url for upload':
-        return await signForUpload();
+        return await bucketFiles(query, storage);
+      case 'Download file':
+        return await downloadFile(query, storage);
     }
   }
 

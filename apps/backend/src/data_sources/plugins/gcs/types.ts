@@ -31,7 +31,7 @@ const query = z.discriminatedUnion('operation', [
   z.object({
     operation: z.literal('Upload file'),
     bucket: z.string(),
-    file: z.string(),
+    filePath: z.string(),
   }),
   z.object({ operation: z.literal('List buckets') }),
   z.object({
@@ -40,17 +40,10 @@ const query = z.discriminatedUnion('operation', [
     prefix: z.string().optional(),
   }),
   z.object({
-    operation: z.literal('Signed url for download'),
+    operation: z.literal('Download file'),
     bucket: z.string(),
     file: z.string(),
-    expiresIn: z.number().optional(),
-  }),
-  z.object({
-    operation: z.literal('Signed url for upload'),
-    bucket: z.string(),
-    file: z.string(),
-    expiresIn: z.number().optional(),
-    contentType: z.string().optional(),
+    destination: z.string().optional(),
   }),
 ]);
 export const querySchema = z.object({
