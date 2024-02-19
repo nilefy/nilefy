@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import { StringSchema } from '@/lib/validations';
+import { StringSchema } from '@/lib/Editor/validations';
 
 export type WebloomInputProps = {
   label: string;

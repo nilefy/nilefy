@@ -2,7 +2,7 @@ import Ajv, { ErrorObject } from 'ajv';
 import { JsonSchema7Type, zodToJsonSchema } from 'zod-to-json-schema';
 import * as Zod from 'zod';
 import { memoize } from 'lodash';
-import { EntityInspectorConfig } from './Editor/interface';
+import { EntityInspectorConfig } from './interface';
 
 export const ajv = new Ajv({
   allErrors: true,

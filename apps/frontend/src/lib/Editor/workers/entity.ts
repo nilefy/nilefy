@@ -6,7 +6,7 @@ import {
   ajv,
   extractValidators,
   transformErrorToMessage,
-} from '@/lib/validations';
+} from '@/lib/Editor/validations';
 import { analyzeDependancies } from '../dependancyUtils';
 import { EntityInspectorConfig } from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';

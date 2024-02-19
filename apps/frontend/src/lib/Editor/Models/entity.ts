@@ -9,7 +9,6 @@ import {
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
 import { cloneDeep, debounce, get, set } from 'lodash';
-import { ajv } from '@/lib/validations';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { EntityErrors, EntityInspectorConfig, EntityTypes } from '../interface';
@@ -26,7 +25,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public finalValues: Record<string, unknown>;
 
   public codePaths: Set<string>;
-  public validator?: ReturnType<typeof ajv.compile>;
   private readonly nestedPathPrefix?: string;
   protected readonly workerBroker: WorkerBroker;
   constructor({
@@ -106,14 +104,12 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   applyEvaluationUpdates() {
-    console.log('applying updates', this.id, this.evaluablePaths);
     for (const path of this.evaluablePaths) {
       set(
         this.values,
         path,
         get(this.workerBroker.evalForest, this.id + '.' + path),
       );
-      console.log('applying', this.id, path, get(this.values, path));
       set(
         this.finalValues,
         path,
@@ -171,7 +167,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   get errors() {
-    console.log('getting errors', this.id);
     const errors: Record<string, EntityErrors> = {};
     for (const path of this.evaluablePaths) {
       const fullpath = this.id + '.' + path;
@@ -180,7 +175,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         set(errors, fullpath, pathErrors);
       }
     }
-    console.log('errors', errors, this.id);
     return errors;
   }
   get prefixedRawValues() {

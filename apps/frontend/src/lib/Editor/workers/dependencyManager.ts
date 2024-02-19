@@ -109,11 +109,6 @@ export class DepGraph {
       clearIncomingEdgesForPath: action,
       clearOutgoingEdgesForPath: action,
     });
-    autorun(() => {
-      console.log('outgoing:', toJS(this.outgoingPathsEdges));
-      console.log('incoming:', toJS(this.incomingPathsEdges));
-      console.log('paths:', toJS(this.paths));
-    });
   }
 
   clearIncomingEdgesForPath(path: string) {
@@ -469,21 +464,6 @@ export class DependencyManager {
       graph: computed,
       editor: observable,
       initAnalysis: action,
-    });
-    autorun(() => {
-      console.log('graph:', toJS(this.graph));
-      console.log('leaves:', toJS(this.leaves));
-      this.dependencyGraph.paths.forEach((path) => {
-        console.log('path:', path);
-        console.log(
-          `directDependents:`,
-          toJS(this.dependencyGraph.dependantsOfPath(path)),
-        );
-        console.log(
-          'directDependencies:',
-          toJS(this.dependencyGraph.dependenciesOfPath(path)),
-        );
-      });
     });
   }
   initAnalysis() {

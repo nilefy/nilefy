@@ -29,6 +29,7 @@ export class EvaluationManager {
     return false;
   }
   get evaluatedForest() {
+    performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
     const evalTree: Record<string, unknown> = {};
     const errors: Record<string, EntityErrors> = {};
@@ -72,6 +73,13 @@ export class EvaluationManager {
       }
       set(evalTree, item, evaluatedValue);
     }
+    performance.mark('end-evaluatedForest');
+    const duration = performance.measure(
+      'evaluatedForest',
+      'start-evaluatedForest',
+      'end-evaluatedForest',
+    );
+    console.log('evaluatedForest', duration.duration);
     return {
       evalTree,
       errors,
