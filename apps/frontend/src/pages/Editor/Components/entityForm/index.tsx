@@ -154,11 +154,12 @@ const FormControlWrapper = observer(
     } & BaseControlProps,
   ) => {
     return (
-      <div>
-        <Label htmlFor={props.id}>{props.label}</Label>
-        {props.children}
-        <ErrorPopover />
-      </div>
+      <ErrorPopover>
+        <div>
+          <Label htmlFor={props.id}>{props.label}</Label>
+          {props.children}
+        </div>
+      </ErrorPopover>
     );
   },
 );
