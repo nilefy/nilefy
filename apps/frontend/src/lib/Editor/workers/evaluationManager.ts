@@ -33,7 +33,7 @@ export class EvaluationManager {
     const sortedGraph = this.editor.dependencyManager.graph;
     const evalTree: Record<string, unknown> = {};
     const errors: EntityErrorsRecord = {};
-
+    const toBeRemoved = new Set<string>();
     const alreadyEvaluated = new Set<string>();
     for (const item of this.editor.dependencyManager.leaves) {
       const [entityId, ...pathArr] = item.split('.');
@@ -71,6 +71,7 @@ export class EvaluationManager {
         continue;
       }
       set(evalTree, item, unevalValue);
+      toBeRemoved.add(item);
     }
     for (const item of sortedGraph) {
       if (alreadyEvaluated.has(item)) continue;
@@ -109,6 +110,9 @@ export class EvaluationManager {
       }
       set(evalTree, item, evaluatedValue);
     }
+    toBeRemoved.forEach((item) => {
+      set(evalTree, item, undefined);
+    });
     performance.mark('end-evaluatedForest');
     const duration = performance.measure(
       'evaluatedForest',
