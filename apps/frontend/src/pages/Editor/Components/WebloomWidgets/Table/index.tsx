@@ -78,7 +78,7 @@ const WebloomTable = observer(() => {
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTableProps;
   const {
-    data = [],
+    data,
     columns = [],
     isRowSelectionEnabled,
     isSearchEnabled,

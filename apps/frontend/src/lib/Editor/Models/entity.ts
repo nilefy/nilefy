@@ -101,9 +101,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         },
       },
     });
-    autorun(() => {
-      console.log('errors', toJS(this.errors));
-    });
   }
 
   applyEvalationUpdatePatch(ops: Operation[]) {

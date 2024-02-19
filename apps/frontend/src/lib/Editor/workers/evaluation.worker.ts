@@ -2,7 +2,7 @@ import { EditorState } from './editor';
 import { WorkerRequest, WorkerResponse } from './common/interface';
 import { autorun, runInAction, toJS } from 'mobx';
 import { Operation, compare } from 'fast-json-patch';
-import { EntityErrors, EntityErrorsRecord } from '../interface';
+import { EntityErrorsRecord } from '../interface';
 
 const editorState = new EditorState();
 
