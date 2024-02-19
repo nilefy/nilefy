@@ -146,6 +146,7 @@ export class Entity {
     const validate = this.validators[path];
     if (!validate) return null;
     validate(value);
+
     if (validate.errors) {
       // @ts-expect-error default is not defined in the type
       value = validate.schema.default;

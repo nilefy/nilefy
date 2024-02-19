@@ -1,6 +1,5 @@
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
-import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
 import { has } from 'lodash';
 import { bindingRegexGlobal } from '../utils';
@@ -26,6 +25,7 @@ export const analyzeDependancies = ({
   const keysSet = new Set(Object.keys(keys));
   const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(bindingRegexGlobal);
+  const errors: unknown[] = [];
   let isCode = false;
   for (const match of matches) {
     isCode = true;
@@ -50,10 +50,12 @@ export const analyzeDependancies = ({
           });
         }
       }
-    } catch (_) {
-      //todo handle field validation
+    } catch (e: unknown) {
+      errors.push(e);
     }
   }
+  console.log('errors in analysis', errors);
+  // todo return errors and do something with them
   return { toProperty, dependencies, isCode };
 };
 
@@ -82,24 +84,4 @@ function extractMemberExpression(code: string) {
     },
   });
   return memberExpressions;
-}
-export type CycleResult =
-  | {
-      hasCycle: true;
-      cycle: Array<string>;
-    }
-  | {
-      hasCycle: false;
-    };
-
-export function hasCyclicDependencies(
-  graph: Array<[string, string]>,
-): CycleResult {
-  try {
-    toposort(graph);
-    return { hasCycle: false };
-  } catch (e) {
-    // @ts-expect-error toposort returns a string
-    return { hasCycle: true, cycle: e.message };
-  }
 }

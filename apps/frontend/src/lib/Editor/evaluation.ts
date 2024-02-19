@@ -7,10 +7,17 @@ export type EvaluationContext = Record<string, unknown>;
 export const evaluate = (
   code: string,
   evaluationContext: Record<string, unknown>,
-) => {
-  if (!code) return code;
-
-  if (!code.includes('{{')) return code;
+): {
+  value: unknown;
+  errors: string[] | null;
+} => {
+  if (!code)
+    return {
+      value: code,
+      errors: null,
+    };
+  // does this branch ever get hit?
+  if (!code.includes('{{')) return { value: code, errors: null };
   const matches = code.matchAll(bindingRegexGlobal);
   const expressions: string[] = [];
   let firstMatchLength = 0;
@@ -21,33 +28,40 @@ export const evaluate = (
     }
     expressions.push(expression);
   }
+  const errors: string[] = [];
   const evalInContext = (expression: string) => {
     try {
       return new Function('context', `with(context) { return ${expression} }`)(
         evaluationContext,
       );
-    } catch (e) {
+    } catch (e: unknown) {
+      const error = e as Error;
+      errors.push(error.name + ': ' + error.message);
       return undefined;
     }
   };
-  const evaluatedExpressions = expressions
-    .map((expression) => {
-      try {
-        return evalInContext(expression);
-      } catch (e) {
-        return undefined;
-      }
-    })
-    .filter((e) => e !== undefined);
-  // TODO: This is temporary fix until we implement type validation
+  const evaluatedExpressions = expressions.map((expression) => {
+    try {
+      return evalInContext(expression);
+    } catch (e) {
+      return undefined;
+    }
+  });
+
   if (evaluatedExpressions.length === 1 && firstMatchLength === code.length) {
-    return evaluatedExpressions[0];
+    return {
+      value: evaluatedExpressions[0],
+      errors: errors.length ? errors : null,
+    };
   }
   const final = code.replace(bindingRegexGlobal, (_, p1) => {
     const index = expressions.indexOf(p1);
     return evaluatedExpressions[index];
   });
-  return final;
+  return {
+    value: final,
+    errors: errors.length ? errors : null,
+  };
 };
 
 const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);

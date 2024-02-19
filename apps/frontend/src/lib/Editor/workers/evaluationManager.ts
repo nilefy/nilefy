@@ -4,7 +4,7 @@ import { get, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
 import { bindingRegexGlobal } from '@/lib/utils';
-import { EntityErrors } from '../interface';
+import { EntityErrors, EntityErrorsRecord } from '../interface';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -32,7 +32,7 @@ export class EvaluationManager {
     performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
     const evalTree: Record<string, unknown> = {};
-    const errors: Record<string, EntityErrors> = {};
+    const errors: EntityErrorsRecord = {};
 
     const alreadyEvaluated = new Set<string>();
     for (const item of this.editor.dependencyManager.leaves) {
@@ -42,12 +42,31 @@ export class EvaluationManager {
       const entity = this.editor.getEntityById(entityId);
       const unevalValue = get(entity.unevalValues, path);
       if (EvaluationManager.isCode(unevalValue)) {
-        let evaluatedValue = evaluate(unevalValue, evalTree);
+        // eslint-disable-next-line
+        let { value: evaluatedValue, errors: evaluationErrors } = evaluate(
+          unevalValue as string,
+          evalTree,
+        );
+        if (evaluationErrors) {
+          addErrorsToEntity(
+            errors,
+            entityId,
+            path,
+            evaluationErrors,
+            'evaluationErrors',
+          );
+        }
         const res = entity.validatePath(path, evaluatedValue);
         if (res) {
           const { value, errors: validationErrors } = res;
           evaluatedValue = value;
-          merge(errors, { [item]: { validationErrors } });
+          addErrorsToEntity(
+            errors,
+            entityId,
+            path,
+            validationErrors,
+            'validationErrors',
+          );
         }
         set(evalTree, item, evaluatedValue);
         continue;
@@ -64,12 +83,31 @@ export class EvaluationManager {
         `entity with id ${entityId} not found while evaluating ${item}`,
       );
       const unevalValue = get(entity.unevalValues, path);
-      let evaluatedValue = evaluate(unevalValue as string, evalTree);
+      // eslint-disable-next-line
+      let { value: evaluatedValue, errors: evaluationErrors } = evaluate(
+        unevalValue as string,
+        evalTree,
+      );
+      if (evaluationErrors) {
+        addErrorsToEntity(
+          errors,
+          entityId,
+          path,
+          evaluationErrors,
+          'evaluationErrors',
+        );
+      }
       const res = entity.validatePath(path, evaluatedValue);
       if (res) {
         const { value, errors: validationErrors } = res;
         evaluatedValue = value;
-        merge(errors, { [item]: { validationErrors } });
+        merge(errors, {
+          [entityId]: {
+            [path]: {
+              validationErrors: validationErrors,
+            },
+          },
+        });
       }
       set(evalTree, item, evaluatedValue);
     }
@@ -79,10 +117,27 @@ export class EvaluationManager {
       'start-evaluatedForest',
       'end-evaluatedForest',
     );
-    console.log('evaluatedForest', duration.duration);
+    console.log('perf eval', duration.duration);
+
     return {
       evalTree,
       errors,
     };
   }
+}
+
+function addErrorsToEntity(
+  errorsRecord: EntityErrorsRecord,
+  entityId: string,
+  path: string,
+  errors: string[],
+  errorsKey: 'validationErrors' | 'evaluationErrors',
+) {
+  merge(errorsRecord, {
+    [entityId]: {
+      [path]: {
+        [errorsKey]: errors,
+      },
+    },
+  });
 }

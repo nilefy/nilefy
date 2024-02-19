@@ -146,6 +146,13 @@ export type {
 export type EntityTypes = 'query' | 'widget';
 
 export type EntityErrors = {
+  /**
+   * key is the path of the property
+   */
   validationErrors?: Record<string, string[]>;
   evaluationErrors?: Record<string, string[]>;
 };
+/**
+ * key is the entityId
+ */
+export type EntityErrorsRecord = Record<string, EntityErrors>;
