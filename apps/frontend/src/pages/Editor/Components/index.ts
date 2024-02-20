@@ -5,6 +5,7 @@ import { WebloomInputWidget } from './WebloomWidgets/Input';
 import { WebloomTextEditorWidget } from './WebloomWidgets/RichTextEditor';
 import { WebloomTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
+import { WebloomImageWidget } from './WebloomWidgets/Image';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -13,6 +14,7 @@ export const WebloomWidgets = {
   WebloomText: WebloomTextWidget,
   TextEditor: WebloomTextEditorWidget,
   Table: WebloomTableWidget,
+  Image: WebloomImageWidget,
 } as const;
 
 export const WidgetContext = createContext<{
