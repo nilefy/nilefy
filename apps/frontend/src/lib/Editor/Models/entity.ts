@@ -28,6 +28,7 @@ import { Operation, applyPatch } from 'fast-json-patch';
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
   private readonly evaluablePaths: Set<string>;
+  public readonly publicAPI: Set<string>;
   private dispoables: Array<() => void> = [];
   public readonly inspectorConfig: EntityInspectorConfig;
   public values: Record<string, unknown>;
@@ -45,6 +46,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     rawValues,
     inspectorConfig = [],
     evaluablePaths = [],
+    publicAPI = new Set(),
     nestedPathPrefix,
     entityType: entityType,
   }: {
@@ -53,6 +55,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     rawValues: Record<string, unknown>;
     inspectorConfig?: EntityInspectorConfig;
     evaluablePaths?: string[];
+    publicAPI?: Set<string>;
     nestedPathPrefix?: string;
     workerBroker: WorkerBroker;
   }) {
@@ -70,6 +73,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       applyErrorUpdatePatch: action,
       errors: observable,
     });
+    this.publicAPI = publicAPI;
     this.id = id;
     this.entityType = entityType;
     this.nestedPathPrefix = nestedPathPrefix;
@@ -104,6 +108,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         config: {
           unevalValues: toJS(this.rawValues),
           inspectorConfig: this.inspectorConfig,
+          publicAPI: this.publicAPI,
           id: this.id,
           nestedPathPrefix: this.nestedPathPrefix,
         },

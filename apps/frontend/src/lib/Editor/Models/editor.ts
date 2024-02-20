@@ -153,6 +153,7 @@ export class EditorState implements WebloomDisposable {
                 id: widget.id,
                 unevalValues: toJS(widget.rawValues),
                 inspectorConfig: widget.inspectorConfig,
+                publicAPI: widget.publicAPI,
               };
               return acc;
             },

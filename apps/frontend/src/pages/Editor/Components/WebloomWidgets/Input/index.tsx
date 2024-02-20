@@ -116,6 +116,7 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   component: WebloomInput,
   config,
   defaultProps,
+  publicAPI: new Set(['value']),
   inspectorConfig,
 };
 

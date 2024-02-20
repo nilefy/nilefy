@@ -54,6 +54,7 @@ export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
   defaultProps,
+  publicAPI: new Set(['text']),
   inspectorConfig,
 };
 

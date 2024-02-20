@@ -24,7 +24,7 @@ export class Entity {
   private readonly nestedPathPrefix?: string;
   public inspectorConfig: Record<string, unknown>[] | undefined;
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
-
+  public readonly publicAPI: Set<string>;
   constructor({
     id,
     dependencyManager,
@@ -32,6 +32,7 @@ export class Entity {
     evaluablePaths = [],
     nestedPathPrefix,
     inspectorConfig = [],
+    publicAPI = new Set(),
   }: {
     id: string;
     dependencyManager: DependencyManager;
@@ -39,6 +40,7 @@ export class Entity {
     inspectorConfig: EntityInspectorConfig;
     evaluablePaths?: string[];
     nestedPathPrefix?: string;
+    publicAPI?: Set<string>;
   }) {
     makeObservable(this, {
       id: observable,
@@ -53,6 +55,7 @@ export class Entity {
       setValues: action,
       initDependecies: action,
     });
+    this.publicAPI = publicAPI;
     this.id = id;
     this.nestedPathPrefix = nestedPathPrefix;
     this.dependencyManager = dependencyManager;

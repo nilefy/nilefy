@@ -129,6 +129,7 @@ export type Widget<WidgetProps extends Record<string, unknown>> = {
   component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
+  publicAPI?: Set<string>;
   inspectorConfig: EntityInspectorConfig<WidgetProps>;
 };
 

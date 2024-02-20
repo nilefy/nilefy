@@ -5,6 +5,7 @@ import { EvaluationManager } from './evaluationManager';
 import { AddEntityRequest, EntityConfigBody } from './common/interface';
 import { EvaluationContext } from '../evaluation';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { AnalysisContext } from '../dependancyUtils';
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
 export class EditorState {
@@ -71,12 +72,9 @@ export class EditorState {
   }
 
   get context() {
-    const context: EvaluationContext = {};
-    Object.values(this.currentPage).forEach((widget) => {
-      context[widget.id] = widget.unevalValues;
-    });
-    Object.values(this.queries).forEach((query) => {
-      context[query.id] = query.unevalValues;
+    const context: AnalysisContext = {};
+    Object.entries(this.entities).forEach(([id, entity]) => {
+      context[id] = entity.publicAPI;
     });
     return context;
   }

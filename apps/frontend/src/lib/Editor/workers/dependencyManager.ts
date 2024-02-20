@@ -1,15 +1,7 @@
-import {
-  observable,
-  makeObservable,
-  action,
-  computed,
-  autorun,
-  toJS,
-} from 'mobx';
+import { observable, makeObservable, action, computed } from 'mobx';
 import { analyzeDependancies } from '../dependancyUtils';
 import { forEach } from 'lodash';
 import { EditorState } from './editor';
-import invariant from 'invariant';
 
 export class DepGraph {
   paths = new Set<string>();

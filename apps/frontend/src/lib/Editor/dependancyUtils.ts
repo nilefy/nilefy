@@ -1,7 +1,5 @@
 import { Identifier, MemberExpression, parse } from 'acorn';
 import { ancestor } from 'acorn-walk';
-import { EvaluationContext } from './evaluation';
-import { has } from 'lodash';
 import { bindingRegexGlobal } from '../utils';
 export type DependencyRelation = {
   // from is the dependent
@@ -9,6 +7,7 @@ export type DependencyRelation = {
   // to is the dependency
   dependency: { entityId: string; path: string };
 };
+export type AnalysisContext = Record<string, Set<string>>;
 export const analyzeDependancies = ({
   code,
   toProperty,
@@ -18,11 +17,12 @@ export const analyzeDependancies = ({
   code: unknown;
   toProperty: string;
   entityId: string;
-  keys: EvaluationContext;
+  keys: AnalysisContext;
 }) => {
   if (typeof code !== 'string')
     return { toProperty, dependencies: [], isCode: false };
-  const keysSet = new Set(Object.keys(keys));
+  const entityNames = new Set(Object.keys(keys));
+
   const dependencies: Array<DependencyRelation> = [];
   const matches = code.matchAll(bindingRegexGlobal);
   const errors: unknown[] = [];
@@ -36,7 +36,8 @@ export const analyzeDependancies = ({
         const dependancyParts = dependancy.split('.');
         const dependancyName = dependancyParts[0];
         const path = dependancyParts.slice(1).join('.');
-        if (keysSet.has(dependancyName) && has(keys[dependancyName], path)) {
+
+        if (entityNames.has(dependancyName) && keys[dependancyName].has(path)) {
           dependencies.push({
             dependent: {
               entityId,

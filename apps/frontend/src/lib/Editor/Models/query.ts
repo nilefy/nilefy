@@ -69,7 +69,7 @@ export class WebloomQuery
         error: undefined,
       },
       workerBroker,
-
+      publicAPI: new Set(['data', 'queryState']),
       nestedPathPrefix: 'config',
       entityType: 'query',
     });

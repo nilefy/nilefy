@@ -78,6 +78,7 @@ export class WebloomWidget
       inspectorConfig: WebloomWidgets[type]
         .inspectorConfig as EntityInspectorConfig,
       entityType: 'widget',
+      publicAPI: WebloomWidgets[type].publicAPI,
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
