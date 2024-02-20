@@ -1,3 +1,4 @@
+import ChartDynamicXValueWidget from './chartDynamicXValue';
 import SortableListWidget from './sortableList';
 import InlineCodeInputWidget from './inlineCodeInput';
 import ColorPickerWidget from './color';
@@ -31,6 +32,7 @@ export function generateWidgets<
     colorPicker: ColorPickerWidget,
     inlineCodeInput: InlineCodeInputWidget,
     sortableList: SortableListWidget,
+    chartDynamicXValue: ChartDynamicXValueWidget,
   };
 }
 
