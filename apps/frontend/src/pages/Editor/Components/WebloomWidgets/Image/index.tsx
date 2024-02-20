@@ -1,38 +1,13 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { Image } from 'lucide-react';
-import { ReactNode, useContext } from 'react';
+import { useContext } from 'react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import z from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-
-function ToolTipWrapper({
-  children,
-  text,
-}: {
-  text?: string;
-  children: ReactNode;
-}) {
-  if (!text) return <>{children}</>;
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger className="h-full w-full">{children}</TooltipTrigger>
-        <TooltipContent>
-          <p>{text}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
+import { ToolTipWrapper } from '../tooltipWrapper';
 
 /**
  * fields that you want to be on the configForm
