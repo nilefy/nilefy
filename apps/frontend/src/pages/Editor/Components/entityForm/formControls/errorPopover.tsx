@@ -15,8 +15,9 @@ export const ErrorPopover = observer(
   ({ children }: { children: React.ReactNode }) => {
     const { focusedPath } = useContext(EntityFormContext);
     const { entityId, path } = useContext(EntityFormControlContext);
-    const errors = editorStore.getEntityById(entityId)!.errors[path];
-    const popOverOpen = focusedPath === path && !!errors;
+    const entity = editorStore.getEntityById(entityId);
+    const errors = entity!.errors[path];
+    const popOverOpen = focusedPath === path && entity?.pathHasErrors(path);
     return (
       <Popover open={popOverOpen} defaultOpen={false}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>

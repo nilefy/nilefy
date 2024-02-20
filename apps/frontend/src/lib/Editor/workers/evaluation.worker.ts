@@ -67,6 +67,7 @@ self.addEventListener('messageerror', (e) => {
 self.addEventListener('error', (e) => {
   console.error('worker error', e);
 });
+
 let lastEvaluatedForest: Record<string, unknown> = {};
 let lastErrors: EntityErrorsRecord = {};
 autorun(() => {
@@ -77,23 +78,31 @@ autorun(() => {
     editorState.evaluationManager.evaluatedForest.errors,
   );
   const lastEvalTreeWithDefault: Record<string, unknown> = {};
+  const lastErrorsWithDefault: EntityErrorsRecord = {};
   for (const key in editorState.entities) {
     lastEvalTreeWithDefault[key] = lastEvaluatedForest[key] || {};
+    lastErrorsWithDefault[key] = lastErrors[key] || {};
   }
   const evaluationOps: Record<string, Operation[]> = {};
-
+  const errorsOps: Record<string, Operation[]> = {};
   for (const key in lastEvalTreeWithDefault) {
     const lastEval = lastEvalTreeWithDefault[key];
     const ops = compare(lastEval as any, serializedEvalForest[key] || {});
     if (ops.length === 0) continue;
     evaluationOps[key] = ops;
   }
+  for (const key in lastErrorsWithDefault) {
+    const lastErr = lastErrorsWithDefault[key];
+    const ops = compare(lastErr, serializedErrors[key] || {});
+    if (ops.length === 0) continue;
+    errorsOps[key] = ops;
+  }
 
   self.postMessage({
     event: 'EvaluationUpdate',
     body: {
       evaluationUpdates: evaluationOps,
-      errorUpdates: compare(lastErrors, serializedErrors),
+      errorUpdates: errorsOps,
     },
   } as WorkerResponse);
   lastEvaluatedForest = serializedEvalForest;

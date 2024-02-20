@@ -67,6 +67,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       prefixedRawValues: computed,
       hasErrors: computed,
       applyEvalationUpdatePatch: action,
+      applyErrorUpdatePatch: action,
       errors: observable,
     });
     this.id = id;
@@ -75,9 +76,16 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.workerBroker = workerBroker;
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
+
     this.values = {};
     this.validators = extractValidators(inspectorConfig);
-
+    for (const path in this.validators) {
+      const res = this.validatePath(path, get(this.finalValues, path));
+      if (res) {
+        this.addValidationErrors(path, res.errors);
+        set(this.finalValues, path, res.value);
+      }
+    }
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
       ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
@@ -106,8 +114,30 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   applyEvalationUpdatePatch(ops: Operation[]) {
     applyPatch(this.values, ops, false, true);
     applyPatch(this.finalValues, ops, false, true);
+    // TODO: Can we move this to the worker?
+    for (const path in this.validators) {
+      const res = this.validatePath(path, get(this.values, path));
+      if (res) {
+        this.addValidationErrors(path, res.errors);
+        set(this.finalValues, path, res.value);
+        set(this.values, path, res.value);
+      } else {
+        this.clearValidationErrorsForPath(path);
+      }
+    }
+  }
+  applyErrorUpdatePatch(ops: Operation[]) {
+    // applyPatch(this.errors, ops, false, true);
   }
 
+  clearValidationErrorsForPath(path: string) {
+    if (!this.errors[path]) return;
+    if (!this.errors[path].validationErrors) return;
+    this.errors[path].validationErrors = [];
+  }
+  clearErrorsForPath(path: string) {
+    this.errors[path] = {};
+  }
   dispose() {
     this.dispoables.forEach((dispose) => dispose());
     this.workerBroker.postMessege({
@@ -168,7 +198,11 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   get hasErrors() {
-    return Object.keys(this.errors).length > 0;
+    for (const key in this.errors) {
+      if (this.errors[key]?.validationErrors?.length) return true;
+      if (this.errors[key]?.evaluationErrors?.length) return true;
+    }
+    return false;
   }
 
   pathErrors(path: string) {
@@ -176,7 +210,12 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   pathHasErrors(path: string) {
-    return !!this.errors[path];
+    if (!this.errors[path]) return false;
+    const validationErrors = this.errors[path].validationErrors;
+    const evaluationErrors = this.errors[path].evaluationErrors;
+    if (validationErrors && validationErrors.length > 0) return true;
+    if (evaluationErrors && evaluationErrors.length > 0) return true;
+    return false;
   }
 
   get prefixedRawValues() {

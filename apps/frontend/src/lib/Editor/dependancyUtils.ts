@@ -37,7 +37,6 @@ export const analyzeDependancies = ({
         const dependancyName = dependancyParts[0];
         const path = dependancyParts.slice(1).join('.');
         if (keysSet.has(dependancyName) && has(keys[dependancyName], path)) {
-          console.log('has');
           dependencies.push({
             dependent: {
               entityId,

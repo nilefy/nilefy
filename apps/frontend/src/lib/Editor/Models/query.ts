@@ -86,7 +86,6 @@ export class WebloomQuery
       updateQuery: action,
       setQueryState: action,
     });
-    autorun(() => console.log('rawvalues', toJS(this.rawValues)));
   }
 
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {

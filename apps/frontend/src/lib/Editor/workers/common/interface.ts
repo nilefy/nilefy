@@ -13,7 +13,7 @@ export type WorkerRequest =
 export type EvaluationUpdateResponse = {
   body: {
     evaluationUpdates: Record<string, Operation[]>;
-    errorUpdates: Operation[];
+    errorUpdates: Record<string, Operation[]>;
   };
   event: 'EvaluationUpdate';
 };

@@ -8,16 +8,15 @@ import {
 } from 'mobx';
 import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
 import { debounce } from 'lodash';
-import { Operation, applyPatch } from 'fast-json-patch';
+import { Operation } from 'fast-json-patch';
 import { WebloomDisposable } from './interfaces';
-import { EntityErrorsRecord } from '../interface';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
   public lastEvalUpdates: Record<string, Operation[]> = {};
-  public errors: EntityErrorsRecord = {};
+  public lastErrorUpdates: Record<string, Operation[]> = {};
   constructor() {
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),
@@ -28,11 +27,10 @@ export class WorkerBroker implements WebloomDisposable {
       // @ts-expect-error mobx decorators please
       queue: observable,
       lastEvalUpdates: observable.ref,
+      lastErrorUpdates: observable.ref,
       debouncePostMessege: action.bound,
       receiveMessage: action,
-      applyErrorPatch: action,
       postMessege: action,
-      errors: observable,
     });
 
     this.queue = [];
@@ -71,16 +69,13 @@ export class WorkerBroker implements WebloomDisposable {
     switch (event) {
       case 'EvaluationUpdate':
         this.lastEvalUpdates = body.evaluationUpdates;
-        this.applyErrorPatch(body.errorUpdates);
+        this.lastErrorUpdates = body.errorUpdates;
         break;
       default:
         break;
     }
   }
 
-  private applyErrorPatch(patch: Operation[]) {
-    applyPatch(this.errors, patch, false, true);
-  }
   private debouncePostMessege = debounce(this._postMessege, 500);
 
   dispose() {

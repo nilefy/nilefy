@@ -16,7 +16,6 @@ import { seedNameMap } from '../widgetName';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
-import { Operation } from 'fast-json-patch';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -64,6 +63,10 @@ export class EditorState implements WebloomDisposable {
       const entity = this.getEntityById(id);
       if (entity) {
         entity.applyEvalationUpdatePatch(op);
+        const errors = this.workerBroker.lastErrorUpdates[id];
+        if (errors) {
+          entity.applyErrorUpdatePatch(errors);
+        }
       }
     });
   }
