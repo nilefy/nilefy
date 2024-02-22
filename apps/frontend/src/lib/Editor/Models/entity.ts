@@ -114,19 +114,12 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     applyPatch(this.finalValues, ops, false, true);
     // TODO: Can we move this to the worker?
     for (const path in this.validators) {
-      const value = get(this.values, path);
       const res = this.validatePath(
         path,
         get(this.values, path, get(this.rawValues, path)),
       );
       if (res) {
         this.addValidationErrors(path, res.errors);
-        if (value === undefined) {
-          if (get(this.rawValues, path) === undefined) {
-            set(this.rawValues, path, this.validators[path].schema.default);
-          }
-          continue;
-        }
         set(this.finalValues, path, res.value);
         set(this.values, path, res.value);
       } else {
@@ -169,7 +162,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
 
   debouncedSyncRawValuesWithEvaluationWorker = debounce(
     this.syncRawValuesWithEvaluationWorker,
-    500,
+    200,
   );
   setValue(path: string, value: unknown) {
     if (get(this.rawValues, path) === value) return;
