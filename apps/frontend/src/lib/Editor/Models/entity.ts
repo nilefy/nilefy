@@ -121,7 +121,12 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       );
       if (res) {
         this.addValidationErrors(path, res.errors);
-        if (value === undefined) continue;
+        if (value === undefined) {
+          if (get(this.rawValues, path) === undefined) {
+            set(this.rawValues, path, this.validators[path].schema.default);
+          }
+          continue;
+        }
         set(this.finalValues, path, res.value);
         set(this.values, path, res.value);
       } else {
