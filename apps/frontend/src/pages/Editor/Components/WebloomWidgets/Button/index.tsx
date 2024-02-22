@@ -8,7 +8,11 @@ import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import z from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
-import { widgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
+import {
+  EventTypes,
+  widgetsEventHandler,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
 
 export const webloomButtonProps = z.object({
   text: z.string(),
@@ -48,6 +52,11 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
+const webloomButtonEvents: EventTypes = {
+  click: 'Click',
+  hover: 'Hover',
+};
+
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
   color: 'black',
@@ -55,7 +64,20 @@ const defaultProps: WebloomButtonProps = {
 };
 
 const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomButtonProps),
+  dataSchema: {
+    type: 'object',
+
+    properties: {
+      text: {
+        type: 'string',
+      },
+      color: {
+        type: 'string',
+      },
+      events: widgetsEventHandlerJsonSchema,
+    },
+    required: ['events', 'text', 'color'],
+  },
   uiSchema: {
     text: {
       'ui:label': 'Text',
@@ -66,9 +88,24 @@ const schema: WidgetInspectorConfig = {
       'ui:widget': 'colorPicker',
     },
     events: {
-      'ui:widget': 'eventManager',
       'ui:options': {
-        click: 'Click',
+        orderable: false,
+      },
+      items: {
+        type: {
+          'ui:widget': 'eventManagerTypeSelect',
+          'ui:options': webloomButtonEvents,
+        },
+        config: {
+          message: {
+            'ui:widget': 'inlineCodeInput',
+            'ui:placeholder': 'message',
+          },
+          link: {
+            'ui:widget': 'inlineCodeInput',
+            'ui:placeholder': 'URL',
+          },
+        },
       },
     },
   },

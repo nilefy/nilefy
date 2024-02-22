@@ -25,20 +25,22 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ReactNode } from 'react';
 
-type EventConfigTypes = 'alert' | 'openWebPage';
-const eventConfigTypes: EventConfigTypes[] = ['alert', 'openWebPage'];
+type EventConfigTypes = 'alert' | 'openLink';
+const eventConfigTypes: EventConfigTypes[] = ['alert', 'openLink'];
 const alertMessagesType = ['info', 'alert', 'success', 'failure'] as const;
-export const eventConfig = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('alert'),
-    message: z.string(),
-    messageType: z.enum(alertMessagesType),
-  }),
-  z.object({
-    type: z.literal('openWebPage'),
-    link: z.string().url(),
-  }),
-]);
+export const eventConfig = z
+  .discriminatedUnion('type', [
+    z.object({
+      type: z.literal('alert'),
+      message: z.string(),
+      messageType: z.enum(alertMessagesType),
+    }),
+    z.object({
+      type: z.literal('openLink'),
+      link: z.string().url(),
+    }),
+  ])
+  .default({ type: 'alert', message: 'hi', messageType: 'info' });
 
 export type EventConfig = z.infer<typeof eventConfig>;
 export const widgetsEventHandler = z.array(
@@ -50,6 +52,68 @@ export const widgetsEventHandler = z.array(
     config: eventConfig,
   }),
 );
+
+const eventConfigJsonSchema: RJSFSchema = {
+  title: 'Config',
+  type: 'object',
+  properties: {
+    type: {
+      type: 'string',
+      enum: ['alert', 'openLink'],
+      default: 'alert',
+    },
+  },
+  required: ['type'],
+  dependencies: {
+    type: {
+      oneOf: [
+        {
+          properties: {
+            type: {
+              enum: ['alert'],
+            },
+            message: {
+              type: 'string',
+              default: 'alert',
+            },
+            messageType: {
+              type: 'string',
+              enum: alertMessagesType,
+              default: alertMessagesType[0],
+            },
+          },
+          required: ['message', 'messageType'],
+        },
+        {
+          properties: {
+            type: {
+              enum: ['openLink'],
+            },
+            link: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          required: ['link'],
+        },
+      ],
+    },
+  },
+};
+export const widgetsEventHandlerJsonSchema: RJSFSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      // click, hover, ...
+      type: {
+        type: 'string',
+      },
+      config: eventConfigJsonSchema,
+    },
+    required: ['type', 'config'],
+  },
+};
 
 export type WidgetsEventHandler = z.infer<typeof widgetsEventHandler>;
 
@@ -213,7 +277,7 @@ function EventHandlerArrayItem({
             </EventHandlerArrayItemFormItem>
           </>
         );
-      case 'openWebPage':
+      case 'openLink':
         return (
           <EventHandlerArrayItemFormItem>
             <Label>URL</Label>
@@ -320,7 +384,7 @@ function EventHandlerArrayItem({
  * value: label
  * }
  */
-type EventTypes = {
+export type EventTypes = {
   [v: string]: string;
 };
 type EventHandlerArrayProps = {
@@ -399,5 +463,36 @@ export default function EventHandlerWidget<
       eventTypes={options as EventTypes}
       key={id}
     />
+  );
+}
+
+export function EventHandlerTypeSelect<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any,
+>(props: WidgetProps<T, S, F>) {
+  const { options, value, onChange } = props;
+  // NOTE:
+  // options suppose to be the events names and the component expect them to be {value: label}
+  // for example button should include event like the following
+  // {"ui:options": {
+  // click: "Click"
+  // }}
+
+  if (Object.keys(options).length === 0)
+    throw new Error("don't use eventHandler if you won't handle any events");
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Event" />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(options as EventTypes).map(([value, label]) => (
+          <SelectItem key={value} value={value}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

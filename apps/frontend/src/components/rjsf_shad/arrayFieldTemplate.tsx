@@ -29,6 +29,7 @@ export default function ArrayFieldTemplate<
     required,
     schema,
     title,
+    formData,
   } = props;
   const uiOptions = getUiOptions(uiSchema);
   const ArrayFieldDescriptionTemplate = getTemplate<
@@ -72,9 +73,15 @@ export default function ArrayFieldTemplate<
       />
       {items &&
         items.map(
-          ({ key, ...itemProps }: ArrayFieldTemplateItemType<T, S, F>) => (
-            <ArrayFieldItemTemplate key={key} {...itemProps} />
-          ),
+          ({ key, ...itemProps }: ArrayFieldTemplateItemType<T, S, F>) => {
+            return (
+              <ArrayFieldItemTemplate
+                itemValue={formData[itemProps.index]}
+                key={key}
+                {...itemProps}
+              />
+            );
+          },
         )}
       {canAdd && (
         <div className="ml-auto mt-2">

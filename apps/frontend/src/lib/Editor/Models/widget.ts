@@ -2,7 +2,7 @@ import { toast } from '@/components/ui/use-toast';
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
-import { Point, WidgetSnapshot } from '@/types';
+import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
@@ -22,10 +22,7 @@ import { DependencyManager } from './dependencyManager';
 import { cloneDeep } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
-import {
-  WidgetsEventHandler,
-  eventConfig,
-} from '@/components/rjsf_shad/eventHandler';
+import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 
 export class WebloomWidget
   extends Entity
@@ -349,7 +346,7 @@ export class WebloomWidget
             actionConfig.messageType === 'failure' ? 'destructive' : 'default',
         });
         break;
-      case 'openWebPage':
+      case 'openLink':
         window.open(actionConfig.link, '_blank');
         break;
     }
