@@ -37,14 +37,14 @@ export const evaluate = (
     } catch (e: unknown) {
       const error = e as Error;
       errors.push(error.name + ': ' + error.message);
-      return undefined;
+      return null;
     }
   };
   const evaluatedExpressions = expressions.map((expression) => {
     try {
       return evalInContext(expression);
     } catch (e) {
-      return undefined;
+      return null;
     }
   });
 
@@ -67,16 +67,13 @@ export const evaluate = (
 const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
 
 export const getEvaluablePathsFromInspectorConfig = memoize(
-  (config: EntityInspectorConfig | undefined, nestedPathPrefix?: string) => {
+  (config: EntityInspectorConfig | undefined) => {
     if (!config) return [];
     const paths: string[] = [];
     for (const section of config) {
       for (const control of section.children) {
         if (evaluationFormControls.has(control.type)) {
-          let path = control.path;
-          if (nestedPathPrefix) {
-            path = nestedPathPrefix + '.' + path;
-          }
+          const path = control.path;
           paths.push(path);
         }
       }

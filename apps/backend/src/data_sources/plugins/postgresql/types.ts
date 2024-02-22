@@ -12,11 +12,9 @@ export const configSchema = z.object({
   connectionOptions: z.string().optional(),
 });
 
+const query = z.string().default('select * from table');
 export const querySchema = z.object({
-  query: z.string(),
-  options: z
-    .array(z.object({ name: z.string(), value: z.string() }))
-    .optional(),
+  query,
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
@@ -48,17 +46,21 @@ export const pluginConfigForm = {
 };
 
 export const queryConfigForm = {
-  schema: zodToJsonSchema(querySchema, 'querySchema'),
-  uiSchema: {
-    query: {
-      'ui:widget': 'sql',
-      'ui:placeholder': 'select * from table;',
-      'ui:title': 'query.query1',
+  formConfig: [
+    {
+      sectionName: 'Basic',
+      children: [
+        {
+          path: 'config.query',
+          label: 'Query',
+          type: 'inlineCodeInput',
+          options: {
+            placeholder: 'select * from table;',
+            label: 'Query',
+          },
+          validation: zodToJsonSchema(query),
+        },
+      ],
     },
-    options: {
-      'ui:widget': 'sql',
-      'ui:placeholder': 'select * from table;',
-      'ui:title': 'query.query1',
-    },
-  },
+  ],
 };

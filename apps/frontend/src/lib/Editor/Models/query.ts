@@ -1,9 +1,12 @@
 import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
-import { CompleteQueryI } from '@/api/queries.api';
+import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
+import { QueryClient } from '@tanstack/query-core';
+import { MobxMutation } from 'mobbing-query';
+import { FetchXError } from '@/utils/fetch';
 
 type QueryRawValues = {
   isLoading: boolean;
@@ -32,11 +35,9 @@ export class WebloomQuery
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
-        | 'editor'
         | 'dataSource'
-        | 'evaluationManger'
-        | 'dependencyManager'
         | keyof ConstructorParameters<typeof Entity>[0]
+        | 'queryClient'
       >
     >
 {
@@ -45,7 +46,13 @@ export class WebloomQuery
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
-
+  private readonly queryClient: QueryClient;
+  runQuery: MobxMutation<
+    Awaited<ReturnType<typeof runQueryApi>>,
+    FetchXError,
+    Parameters<typeof runQueryApi>[0],
+    void
+  >;
   constructor({
     query,
     id,
@@ -55,8 +62,10 @@ export class WebloomQuery
     createdAt,
     updatedAt,
     workerBroker,
+    queryClient,
   }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
     workerBroker: WorkerBroker;
+    queryClient: QueryClient;
   }) {
     super({
       id,
@@ -70,9 +79,29 @@ export class WebloomQuery
       },
       workerBroker,
       publicAPI: new Set(['data', 'queryState']),
-      nestedPathPrefix: 'config',
       entityType: 'query',
+      inspectorConfig: dataSource.dataSource.queryConfig.formConfig as any,
     });
+    this.queryClient = queryClient;
+    this.runQuery = new MobxMutation(this.queryClient, () => ({
+      mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
+        return runQueryApi(vars);
+      },
+      onMutate: () => {
+        this.setValue('queryState', 'loading');
+      },
+      onError: (error) => {
+        this.setValue('queryState', 'error');
+        this.setValue('error', error.message);
+        this.setValue('status', 505);
+      },
+      onSuccess: (data) => {
+        this.setValue('data', data.data);
+        this.setValue('status', data.status);
+        this.setValue('error', data.error);
+        this.setValue('queryState', 'success');
+      },
+    }));
 
     this.appId = appId;
     this.dataSourceId = dataSourceId;
@@ -103,11 +132,6 @@ export class WebloomQuery
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
-    if (dto.rawValues)
-      this.rawValues = {
-        ...this.rawValues,
-        ...dto.rawValues,
-      };
   }
 
   // TODO: call server to get actual data
@@ -119,7 +143,7 @@ export class WebloomQuery
     return {
       id: this.id,
       dataSourceId: this.dataSourceId,
-      query: this.rawValues,
+      query: this.rawValues.config,
       appId: this.appId,
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,

@@ -7,8 +7,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { commandManager } from '@/Actions/CommandManager';
-import { ChangePropAction } from '@/Actions/Editor/changeProps';
 
 import { observer } from 'mobx-react-lite';
 import { Collapsible } from '@radix-ui/react-collapsible';
@@ -98,7 +96,6 @@ export const EntityFormControl = observer(
     const { onFocus: _onFocus, onBlur } = useContext(EntityFormContext);
     const { control, entityId } = props;
     const id = entityId + control.path;
-
     const Component = InspectorFormControls[control.type];
     const options = useMemo(
       () => ({
@@ -113,26 +110,24 @@ export const EntityFormControl = observer(
 
     const onChange = useCallback(
       (newValue: unknown) => {
-        commandManager.executeCommand(
-          new ChangePropAction(entityId, control.path, newValue),
-        );
+        editorStore.getEntityById(entityId)!.setValue(control.path, newValue);
       },
       [control.path, entityId],
     );
+
     const contextValue = {
       onChange,
       id,
       entityId,
       path: control.path,
-      value: editorStore.currentPage
-        .getWidgetById(entityId)
-        .getRawValue(control.path),
+      value: editorStore.getEntityById(entityId)!.getRawValue(control.path),
       onFocus,
       onBlur,
     };
     return (
       <EntityFormControlContext.Provider value={contextValue}>
         <FormControlWrapper
+          entityId={entityId}
           type={options.type as InspectorFormControlsTypes}
           id={id}
           label={control.label}
@@ -144,15 +139,40 @@ export const EntityFormControl = observer(
     );
   },
 );
-
+export const DefaultSection = observer(
+  (props: { section: EntityInspectorConfig[number]; selectedId: string }) => {
+    const { section, selectedId } = props;
+    return (
+      <FormSectionView sectionName={section.sectionName}>
+        {section.children.map((control) => {
+          const id = `${selectedId}-${control.path}`;
+          return (
+            <EntityFormControl
+              key={id}
+              control={control}
+              entityId={selectedId}
+            />
+          );
+        })}
+      </FormSectionView>
+    );
+  },
+);
 const FormControlWrapper = observer(
   (
     props: {
       children: React.ReactNode;
       type: InspectorFormControlsTypes;
       id: string;
+      entityId: string;
+      hidden?: (props: Record<string, unknown>) => boolean;
     } & BaseControlProps,
   ) => {
+    if (
+      props.hidden &&
+      props.hidden(editorStore.getEntityById(props.entityId)!.finalValues)
+    )
+      return null;
     return (
       <ErrorPopover>
         <div>

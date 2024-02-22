@@ -1,4 +1,4 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Point } from '@/types';
@@ -21,8 +21,10 @@ import {
   handleParentCollisions,
 } from '../collisions';
 import { Snapshotable } from './interfaces';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 import { Entity } from './entity';
+import { commandManager } from '@/Actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
 
 export class WebloomWidget
   extends Entity
@@ -117,6 +119,7 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      setValue: override,
     });
   }
   get columnWidth(): number {
@@ -126,6 +129,17 @@ export class WebloomWidget
       return this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
     return 0;
   }
+  setValue(path: string, value: unknown): void {
+    this.debouncedSyncRawValuesWithServer();
+    super.setValue(path, value);
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new ChangePropAction(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }

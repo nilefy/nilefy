@@ -1,6 +1,5 @@
 import {
   action,
-  autorun,
   computed,
   makeObservable,
   observable,
@@ -37,7 +36,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public finalValues: Record<string, unknown>;
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public codePaths: Set<string>;
-  private readonly nestedPathPrefix?: string;
   protected readonly workerBroker: WorkerBroker;
   public errors: EntityErrorsRecord[string] = {};
   constructor({
@@ -47,7 +45,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     inspectorConfig = [],
     evaluablePaths = [],
     publicAPI = new Set(),
-    nestedPathPrefix,
     entityType: entityType,
   }: {
     id: string;
@@ -56,7 +53,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     inspectorConfig?: EntityInspectorConfig;
     evaluablePaths?: string[];
     publicAPI?: Set<string>;
-    nestedPathPrefix?: string;
     workerBroker: WorkerBroker;
   }) {
     makeObservable(this, {
@@ -67,7 +63,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       finalValues: observable,
       setValue: action,
       dispose: action,
-      prefixedRawValues: computed,
       hasErrors: computed,
       applyEvalationUpdatePatch: action,
       applyErrorUpdatePatch: action,
@@ -76,7 +71,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.publicAPI = publicAPI;
     this.id = id;
     this.entityType = entityType;
-    this.nestedPathPrefix = nestedPathPrefix;
     this.workerBroker = workerBroker;
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
@@ -110,7 +104,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
           inspectorConfig: this.inspectorConfig,
           publicAPI: this.publicAPI,
           id: this.id,
-          nestedPathPrefix: this.nestedPathPrefix,
         },
       },
     });
@@ -121,9 +114,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     applyPatch(this.finalValues, ops, false, true);
     // TODO: Can we move this to the worker?
     for (const path in this.validators) {
-      const res = this.validatePath(path, get(this.values, path));
+      const value = get(this.values, path);
+      const res = this.validatePath(
+        path,
+        get(this.values, path, get(this.rawValues, path)),
+      );
       if (res) {
         this.addValidationErrors(path, res.errors);
+        if (value === undefined) continue;
         set(this.finalValues, path, res.value);
         set(this.values, path, res.value);
       } else {
@@ -169,9 +167,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     500,
   );
   setValue(path: string, value: unknown) {
-    if (this.isPrefixed()) {
-      path = this.nestedPathPrefix + '.' + path;
-    }
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
     if (get(this.values, path) === undefined) {
@@ -198,9 +193,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   getRawValue(key: string) {
     return get(this.rawValues, key);
   }
-  isPrefixed() {
-    return this.nestedPathPrefix !== undefined;
-  }
 
   get hasErrors() {
     for (const key in this.errors) {
@@ -221,12 +213,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     if (validationErrors && validationErrors.length > 0) return true;
     if (evaluationErrors && evaluationErrors.length > 0) return true;
     return false;
-  }
-
-  get prefixedRawValues() {
-    return this.isPrefixed()
-      ? get(this.rawValues, this.nestedPathPrefix as string)
-      : this.rawValues;
   }
 
   validatePath(path: string, value: unknown) {

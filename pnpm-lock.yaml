@@ -312,6 +312,9 @@ importers:
       '@tanstack/match-sorter-utils':
         specifier: ^8.8.4
         version: 8.8.4
+      '@tanstack/query-core':
+        specifier: ^5.22.2
+        version: 5.22.2
       '@tanstack/react-query':
         specifier: ^5.0.5
         version: 5.9.0(react-dom@18.2.0)(react@18.2.0)
@@ -372,6 +375,9 @@ importers:
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
+      mobbing-query:
+        specifier: ^1.0.4
+        version: 1.0.4(@tanstack/query-core@5.22.2)(mobx@6.12.0)
       mobx:
         specifier: ^6.12.0
         version: 6.12.0
@@ -4060,6 +4066,10 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       remove-accents: 0.4.2
+    dev: false
+
+  /@tanstack/query-core@5.22.2:
+    resolution: {integrity: sha512-z3PwKFUFACMUqe1eyesCIKg3Jv1mysSrYfrEW5ww5DCDUD4zlpTKBvUDaEjsfZzL3ULrFLDM9yVUxI/fega1Qg==}
     dev: false
 
   /@tanstack/query-core@5.8.7:
@@ -9658,6 +9668,16 @@ packages:
     resolution: {integrity: sha512-FPUtkhtJ0efmEFGpU14x7jGbTB+s18LrzRL2KgoWz9YvcY3cPomz8tih01GbHwnGk/OmkOKfqd/RAQoc8Lm7DQ==}
     dependencies:
       obliterator: 2.0.4
+    dev: false
+
+  /mobbing-query@1.0.4(@tanstack/query-core@5.22.2)(mobx@6.12.0):
+    resolution: {integrity: sha512-VlXIjVL+WfBNPhQrTNN0TrIm2VwWR7uWmWSnPfiH4ThpJm1PqDfQW+AYFSZ1v+aVSzDvU8fFNWaIZ72N1wdW/A==}
+    peerDependencies:
+      '@tanstack/query-core': ^5.0.0
+      mobx: ^6.0.0
+    dependencies:
+      '@tanstack/query-core': 5.22.2
+      mobx: 6.12.0
     dev: false
 
   /mobx-react-lite@4.0.5(mobx@6.12.0)(react-dom@18.2.0)(react@18.2.0):

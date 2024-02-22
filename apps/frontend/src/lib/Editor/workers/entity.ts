@@ -21,7 +21,6 @@ export class Entity {
    */
   public dependencyManager: DependencyManager;
   public validator?: ReturnType<typeof ajv.compile>;
-  private readonly nestedPathPrefix?: string;
   public inspectorConfig: Record<string, unknown>[] | undefined;
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public readonly publicAPI: Set<string>;
@@ -30,7 +29,6 @@ export class Entity {
     dependencyManager,
     unevalValues,
     evaluablePaths = [],
-    nestedPathPrefix,
     inspectorConfig = [],
     publicAPI = new Set(),
   }: {
@@ -39,7 +37,6 @@ export class Entity {
     unevalValues: Record<string, unknown>;
     inspectorConfig: EntityInspectorConfig;
     evaluablePaths?: string[];
-    nestedPathPrefix?: string;
     publicAPI?: Set<string>;
   }) {
     makeObservable(this, {
@@ -57,16 +54,11 @@ export class Entity {
     });
     this.publicAPI = publicAPI;
     this.id = id;
-    this.nestedPathPrefix = nestedPathPrefix;
     this.dependencyManager = dependencyManager;
     this.inspectorConfig = inspectorConfig;
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
-      ...getEvaluablePathsFromInspectorConfig(
-        inspectorConfig,
-        nestedPathPrefix,
-      ),
-      ...Object.keys(unevalValues),
+      ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
     ]);
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
@@ -81,6 +73,7 @@ export class Entity {
     const relations: ReturnType<
       (typeof this.dependencyManager)['analyzeDependencies']
     >[] = [];
+
     for (const path of this.evaluablePaths) {
       relations.push(this.analyzeDependcyForPath(path));
     }
@@ -142,21 +135,14 @@ export class Entity {
   }
 
   setValue(path: string, value: unknown) {
-    if (this.isPrefixed()) {
-      path = this.nestedPathPrefix + '.' + path;
-    }
     set(this.unevalValues, path, value);
-
-    if (this.evaluablePaths.has(path)) {
-      this.analyzeAndApplyDependencyUpdate(path);
-    }
   }
   setValues(values: Record<string, unknown>) {
     for (const path in values) {
       this.setValue(path, values[path]);
     }
-  }
-  isPrefixed() {
-    return this.nestedPathPrefix !== undefined;
+    for (const path of this.evaluablePaths) {
+      this.analyzeAndApplyDependencyUpdate(path);
+    }
   }
 }

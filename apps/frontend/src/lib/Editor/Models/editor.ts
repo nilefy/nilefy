@@ -7,7 +7,6 @@ import {
   toJS,
   reaction,
 } from 'mobx';
-
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
@@ -16,6 +15,8 @@ import { seedNameMap } from '../widgetName';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
+import { QueryClient } from '@tanstack/query-core';
+import { QueriesManager } from './queriesManager';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -28,6 +29,8 @@ export class EditorState implements WebloomDisposable {
   workerBroker: WorkerBroker;
   currentPageId: string = '';
   initting = false;
+  queryClient!: QueryClient;
+  queriesManager!: QueriesManager;
   /**
    * application name
    */
@@ -78,6 +81,7 @@ export class EditorState implements WebloomDisposable {
     this.pages = {};
     this.queries = {};
     this.currentPageId = '';
+    this.queryClient?.clear();
   }
 
   init({
@@ -102,6 +106,8 @@ export class EditorState implements WebloomDisposable {
   }) {
     this.dispose();
     this.name = name;
+    this.queryClient = new QueryClient();
+    this.queriesManager = new QueriesManager(this.queryClient, this);
     seedNameMap([
       ...Object.values(pages[0].widgets || {}).map((w) => w.type),
       ...queries.map((q) => q.dataSource.name),
@@ -129,6 +135,8 @@ export class EditorState implements WebloomDisposable {
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
         ...q,
+        queryClient: this.queryClient,
+        workerBroker: this.workerBroker,
       });
     });
     this.workerBroker.postMessege({
@@ -140,7 +148,9 @@ export class EditorState implements WebloomDisposable {
             acc[query.id as string] = {
               unevalValues: query.query,
               id: query.id,
-              inspectorConfig: [], // TODO: fix this
+              inspectorConfig:
+                query.dataSource.dataSource.queryConfig.formConfig,
+              publicAPI: new Set(['data', 'queryState']),
             };
             return acc;
           },
@@ -211,15 +221,19 @@ export class EditorState implements WebloomDisposable {
       widgets: {},
     });
   }
-
+  getQueryById(id: string) {
+    return this.queries[id];
+  }
   addQuery(
     query: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger'
+      'workerBroker' | 'queryClient'
     >,
   ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
+      workerBroker: this.workerBroker,
+      queryClient: this.queryClient,
     });
   }
 

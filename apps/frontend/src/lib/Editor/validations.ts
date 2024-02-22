@@ -39,5 +39,5 @@ export const extractValidators = memoize(
 );
 
 export const transformErrorToMessage = (error: ErrorObject) => {
-  return `${error.keyword}: ${error.message}`;
+  return `${error.instancePath} ${error.keyword}: ${error.message}`;
 };

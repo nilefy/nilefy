@@ -2,7 +2,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { EntityInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { WebloomWidgets } from '..';
-import { EntityForm, EntityFormControl, FormSectionView } from '../entityForm';
+import { DefaultSection, EntityForm } from '../entityForm';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,7 @@ export const WidgetConfigPanel = observer(() => {
       <EntityForm>
         {inspectorConfig.map((section) => {
           return (
-            <InspectorSection
+            <DefaultSection
               key={section.sectionName}
               section={section}
               selectedId={selectedId}
@@ -30,26 +30,6 @@ export const WidgetConfigPanel = observer(() => {
     </div>
   );
 });
-
-const InspectorSection = observer(
-  (props: { section: EntityInspectorConfig[number]; selectedId: string }) => {
-    const { section, selectedId } = props;
-    return (
-      <FormSectionView sectionName={section.sectionName}>
-        {section.children.map((control) => {
-          const id = `${selectedId}-${control.path}`;
-          return (
-            <EntityFormControl
-              key={id}
-              control={control}
-              entityId={selectedId}
-            />
-          );
-        })}
-      </FormSectionView>
-    );
-  },
-);
 
 function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   const [value, setValue] = useState(node.id);

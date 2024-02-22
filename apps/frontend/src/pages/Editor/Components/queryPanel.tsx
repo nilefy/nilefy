@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,21 +23,36 @@ import { DebouncedInput } from '../../../components/debouncedInput';
 import clsx from 'clsx';
 import { Input } from '../../../components/ui/input';
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import FormT from '@rjsf/core';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, runInAction } from 'mobx';
+import { computed } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
-import EntityForm from '@/components/rjsf_shad/entityForm';
-
+import { DefaultSection, EntityForm } from './entityForm';
+export const QueryConfigPanel = observer(({ id }: { id: string }) => {
+  const query = editorStore.getEntityById(id)!;
+  return (
+    <div>
+      <EntityForm>
+        {query.inspectorConfig.map((section) => {
+          return (
+            <DefaultSection
+              key={section.sectionName}
+              section={section}
+              selectedId={id}
+            />
+          );
+        })}
+      </EntityForm>
+    </div>
+  );
+});
 const QueryItem = observer(function QueryItem({
   query,
 }: {
   query: WebloomQuery;
 }) {
-  const rjsfRef = useRef<FormT>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery(
     +(workspaceId as string),
@@ -46,25 +60,6 @@ const QueryItem = observer(function QueryItem({
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
-  const { mutate: updateMutation, isPending: isSubmitting } =
-    api.queries.update.useMutation({
-      onSuccess(data) {
-        runInAction(() => {
-          query.setQueryState('success');
-          query.updateQuery(data);
-        });
-      },
-    });
-  const { mutate: run } = api.queries.run.useMutation({
-    onSuccess(data) {
-      query.setQueryState('success');
-      query.updateQuery({
-        rawValues: {
-          ...data,
-        },
-      });
-    },
-  });
 
   return (
     <div className="h-full w-full">
@@ -75,9 +70,19 @@ const QueryItem = observer(function QueryItem({
         <Button
           type="button"
           className="mr-auto"
-          onClick={() => rjsfRef.current?.submit()}
+          onClick={() => {
+            editorStore.queriesManager.updateQuery.mutate({
+              workspaceId: +workspaceId!,
+              appId: +appId!,
+              queryId: query.id,
+              dto: {
+                query: query.config as Record<string, unknown>,
+                dataSourceId: +curDataSource,
+              },
+            });
+          }}
         >
-          {isSubmitting ? (
+          {editorStore.queriesManager.updateQuery.state.isPending ? (
             <>
               Saving... <SaveIcon />{' '}
             </>
@@ -93,14 +98,12 @@ const QueryItem = observer(function QueryItem({
               throw new Error('workspaceId or appId is not defined!');
             }
             const evaluatedConfig = query.config;
-
-            query.setQueryState('loading');
-            run({
+            query.runQuery.mutate({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
               body: {
-                evaluatedConfig,
+                evaluatedConfig: evaluatedConfig as Record<string, unknown>,
               },
             });
           }}
@@ -139,26 +142,7 @@ const QueryItem = observer(function QueryItem({
             </SelectContent>
           </Select>
         </Label>
-        <EntityForm
-          ref={rjsfRef}
-          entityId={query.id}
-          onSubmit={({ formData }) => {
-            if (!workspaceId || !appId)
-              throw new Error(
-                "that's weird this function should run under workspaceId, appId",
-              );
-
-            updateMutation({
-              workspaceId: +workspaceId,
-              appId: +appId,
-              queryId: query.id,
-              dto: {
-                query: formData,
-                dataSourceId: +curDataSource,
-              },
-            });
-          }}
-        />
+        <QueryConfigPanel id={query.id} />
       </ScrollArea>
     </div>
   );
@@ -181,17 +165,6 @@ export const QueryPanel = observer(function QueryPanel() {
     +(workspaceId as string),
   );
   const queries = editorStore.queries;
-  const { mutate: addMutation } = api.queries.insert.useMutation({
-    onSuccess: (data) => {
-      editorStore.addQuery(data);
-    },
-  });
-  const { mutate: deleteMutation } = api.queries.delete.useMutation({
-    onSuccess: ({ id }) => {
-      setSelectedItemId(null);
-      editorStore.removeQuery(id);
-    },
-  });
 
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
@@ -393,7 +366,7 @@ export const QueryPanel = observer(function QueryPanel() {
                   key={item.dataSource.type}
                   onClick={() => {
                     if (!workspaceId || !appId) throw new Error();
-                    addMutation({
+                    editorStore.queriesManager.addQuery.mutate({
                       workspaceId: +workspaceId,
                       appId: +appId,
                       dto: {
@@ -479,7 +452,7 @@ export const QueryPanel = observer(function QueryPanel() {
                       variant={'ghost'}
                       onClick={() => {
                         if (!workspaceId || !appId) throw new Error();
-                        deleteMutation({
+                        editorStore.queriesManager.deleteQuery.mutate({
                           workspaceId: +workspaceId,
                           appId: +appId,
                           queryId: item.id,
