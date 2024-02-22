@@ -76,7 +76,7 @@ const QueryItem = observer(function QueryItem({
               appId: +appId!,
               queryId: query.id,
               dto: {
-                query: query.config as Record<string, unknown>,
+                query: query.rawConfig as Record<string, unknown>,
                 dataSourceId: +curDataSource,
               },
             });
