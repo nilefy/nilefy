@@ -1,4 +1,4 @@
-import { computed, makeObservable, observable } from 'mobx';
+import { computed, makeObservable, observable, toJS } from 'mobx';
 import invariant from 'invariant';
 import { get, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
@@ -39,7 +39,7 @@ export class EvaluationManager {
     for (const item of this.editor.dependencyManager.leaves) {
       const [entityId, ...pathArr] = item.split('.');
       const path = pathArr.join('.');
-      alreadyEvaluated.add(path);
+      alreadyEvaluated.add(item);
       const entity = this.editor.getEntityById(entityId);
       const unevalValue = get(entity.unevalValues, path);
       if (EvaluationManager.isCode(unevalValue)) {
@@ -64,6 +64,7 @@ export class EvaluationManager {
       set(evalTree, item, unevalValue);
       toBeRemoved.add(item);
     }
+
     for (const item of sortedGraph) {
       if (alreadyEvaluated.has(item)) continue;
       const [entityId, ...pathArr] = item.split('.');
