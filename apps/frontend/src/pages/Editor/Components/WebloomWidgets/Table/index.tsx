@@ -31,7 +31,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -63,7 +63,6 @@ const generateColumnsFromData = (
   data: RowData | undefined,
 ): WebLoomTableColumn[] => {
   if (!data) return [];
-
   return Object.keys(data).map((key, index) => {
     return {
       id: (index + 1).toString(),
@@ -76,6 +75,7 @@ const generateColumnsFromData = (
 };
 
 const WebloomTable = observer(() => {
+  const [tableData, setTableData] = useState<RowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTableProps;
@@ -84,7 +84,7 @@ const WebloomTable = observer(() => {
   React.useEffect(
     () =>
       autorun(() => {
-        console.log('autorun');
+        setTableData(toJS(props.data));
         const columns = generateColumnsFromData(props.data[0]);
         onPropChange({
           key: 'columns',
@@ -143,7 +143,7 @@ const WebloomTable = observer(() => {
     }) || [];
 
   const table = useReactTable({
-    data: props.data,
+    data: tableData,
     columns: props.isRowSelectionEnabled
       ? [
           {
