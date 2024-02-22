@@ -9,7 +9,7 @@ import {
 import toposort from 'toposort';
 import invariant from 'invariant';
 import { debounce, get, set } from 'lodash';
-import { evaluate } from '../evaluation';
+import { evaluateExpressions } from '../evaluation';
 import { EditorState } from './editor';
 const worker = new Worker(
   new URL('../workers/evaluation.worker.ts', import.meta.url),
@@ -62,10 +62,13 @@ export class EvaluationManager {
     if (!this.evaluationWorker) return;
     this.evaluationWorker.postMessage(this.evaluationWorkerPayload);
   }
+
   debouncedCallWorker = debounce(this.callWorker, 500);
+
   isRawValueCode(entityId: string, path: string) {
     return this.codeRawValues.has(`${entityId}.${path}`);
   }
+
   get evaluationWorkerPayload() {
     return {
       code: 'update',
@@ -82,6 +85,7 @@ export class EvaluationManager {
       },
     };
   }
+
   get evaluatedForest(): Record<string, unknown> {
     // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
     const sortedGraph = toposort(this.editor.dependencyManager.graph).reverse();
@@ -108,7 +112,7 @@ export class EvaluationManager {
         typeof gottenValue === 'string' || gottenValue === undefined,
         `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
       );
-      set(evalTree, node, evaluate(gottenValue || '', evalTree));
+      set(evalTree, node, evaluateExpressions(gottenValue || '', evalTree));
     }
     // will hit this loop with code without deps
     // example: {{[{name: "dsa"}]}}
@@ -126,7 +130,7 @@ export class EvaluationManager {
         typeof gottenValue === 'string' || gottenValue === undefined,
         `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
       );
-      set(evalTree, node, evaluate(gottenValue || '', evalTree));
+      set(evalTree, node, evaluateExpressions(gottenValue || '', evalTree));
     }
     return evalTree;
   }

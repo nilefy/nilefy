@@ -1,11 +1,14 @@
-import { toast } from '@/components/ui/use-toast';
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
+import {
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+  WidgetSetters,
+} from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -46,6 +49,7 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
+  setters: Record<string, (arg: unknown) => void>;
 
   constructor({
     type,
@@ -88,6 +92,8 @@ export class WebloomWidget
     this.parentId = parentId;
     this.page = page;
     this.type = type;
+    const baseWidget = WebloomWidgets[this.type as WidgetTypes];
+    this.setters = this.genSetters(baseWidget.setters);
     const { config } = WebloomWidgets[type];
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
@@ -118,7 +124,6 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
-      executeActions: action.bound,
     });
   }
   get columnWidth(): number {
@@ -322,33 +327,14 @@ export class WebloomWidget
     return WebloomWidgets[this.type].config.isCanvas;
   }
 
-  /**
-   * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
-   * @param key where to get the handlers configuration
-   * @default 'events'
-   */
-  executeActions(type: string, key: string = 'events') {
-    const eventHandlers = this.finalValues[key] as WidgetsEventHandler;
-    if (!eventHandlers) return;
-    eventHandlers.forEach((handler) => {
-      if (handler.type === type) {
-        this.executeActionHelper(handler.config);
-      }
-    });
-  }
-
-  private executeActionHelper(actionConfig: WidgetsEventHandler[0]['config']) {
-    switch (actionConfig.type) {
-      case 'alert':
-        toast({
-          description: actionConfig.message,
-          variant:
-            actionConfig.messageType === 'failure' ? 'destructive' : 'default',
-        });
-        break;
-      case 'openLink':
-        window.open(actionConfig.link, '_blank');
-        break;
+  private genSetters(
+    settersConfig?: WidgetSetters,
+  ): Record<string, (arg: unknown) => void> {
+    const res: Record<string, (arg: unknown) => void> = {};
+    if (!settersConfig) return res;
+    for (const k in settersConfig) {
+      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
     }
+    return res;
   }
 }

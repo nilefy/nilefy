@@ -52,6 +52,12 @@ export const WebloomTextWidget: Widget<WebloomTextProps> = {
   config,
   defaultProps,
   schema,
+  setters: {
+    setText: {
+      path: 'text',
+      type: 'string',
+    },
+  },
 };
 
 export { WebloomText };

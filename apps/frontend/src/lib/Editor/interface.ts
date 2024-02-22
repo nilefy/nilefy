@@ -1,5 +1,4 @@
 import { InputProps } from '@/components/ui/input';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { ReactNode } from 'react';
 import { EntitySchema } from './Models/entity';
 
@@ -133,11 +132,38 @@ export interface WidgetConfig {
  */
 export type EntityDependancy = Record<string, Record<string, Set<string>>>;
 
+/**
+ * the setters for those paths will be automatically genertaed and put on the execution context when needed
+ * @example
+ * setVisibility: {
+          path: "isVisible",
+          type: "string",
+        },
+ */
+type WidgetSetters = {
+  [
+    /**
+     * setter key
+     */
+    k: string
+  ]: {
+    /**
+     * use lodash path syntax
+     */
+    path: string;
+    /**
+     * only used for type completation WON'T BE VALIDATED
+     */
+    type: string;
+  };
+};
+
 export type Widget<WidgetProps> = {
   component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
   schema: WidgetInspectorConfig;
+  setters?: WidgetSetters;
 };
 
 // inspector types
@@ -151,4 +177,5 @@ export type {
   InspectorFormControls,
   InlineCodeInputProps,
   InspectorColorProps,
+  WidgetSetters,
 };

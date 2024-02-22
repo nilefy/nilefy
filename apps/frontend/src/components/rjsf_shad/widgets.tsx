@@ -1,4 +1,5 @@
-import EventHandlerWidget from './eventHandler';
+import CodeInputWidget from './codeInput'
+import EventHandlerWidget, { EventHandlerTypeSelect } from './eventHandler';
 import SortableListWidget from './sortableList';
 import InlineCodeInputWidget from './inlineCodeInput';
 import ColorPickerWidget from './color';
@@ -33,6 +34,8 @@ export function generateWidgets<
     inlineCodeInput: InlineCodeInputWidget,
     sortableList: SortableListWidget,
     eventManager: EventHandlerWidget,
+    eventManagerTypeSelect: EventHandlerTypeSelect,
+    codeInput: CodeInputWidget
   };
 }
 

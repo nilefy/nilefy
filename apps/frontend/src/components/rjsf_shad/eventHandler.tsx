@@ -25,7 +25,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ReactNode } from 'react';
 
-type EventConfigTypes = 'alert' | 'openLink';
+type EventConfigTypes = 'alert' | 'openLink' | 'runScript';
 const eventConfigTypes: EventConfigTypes[] = ['alert', 'openLink'];
 const alertMessagesType = ['info', 'alert', 'success', 'failure'] as const;
 export const eventConfig = z
@@ -38,6 +38,10 @@ export const eventConfig = z
     z.object({
       type: z.literal('openLink'),
       link: z.string().url(),
+    }),
+    z.object({
+      type: z.literal('runScript'),
+      script: z.string(),
     }),
   ])
   .default({ type: 'alert', message: 'hi', messageType: 'info' });
@@ -59,7 +63,7 @@ const eventConfigJsonSchema: RJSFSchema = {
   properties: {
     type: {
       type: 'string',
-      enum: ['alert', 'openLink'],
+      enum: ['alert', 'openLink', 'runScript'],
       default: 'alert',
     },
   },
@@ -96,10 +100,22 @@ const eventConfigJsonSchema: RJSFSchema = {
           },
           required: ['link'],
         },
+        {
+          properties: {
+            type: {
+              enum: ['runScript'],
+            },
+            script: {
+              type: 'string',
+            },
+          },
+          required: ['script'],
+        },
       ],
     },
   },
 };
+
 export const widgetsEventHandlerJsonSchema: RJSFSchema = {
   type: 'array',
   items: {

@@ -21,27 +21,20 @@ const webloomInputProps = z.object({
     z.literal('password'),
     z.literal('number'),
   ]),
+  value: z.union([z.string(), z.number()]).optional(),
 });
 
-/**
- * fields that your widget will add to the editorStore but won't have configForm control describing them
- */
-type RuntimeInputFields = {
-  value?: string | number;
-};
-
-export type WebloomInputProps = z.infer<typeof webloomInputProps> &
-  RuntimeInputFields;
+export type WebloomInputProps = z.infer<typeof webloomInputProps>;
 
 const WebloomInput = observer(function WebloomInput() {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, type, ...rest } = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
-  useEffect(() => {
-    if (type === 'password' || type === 'text')
-      onPropChange({ value: '', key: 'value' });
-    if (type === 'number') onPropChange({ value: 0, key: 'value' });
-  }, [type, onPropChange]);
+  // useEffect(() => {
+  //   if (type === 'password' || type === 'text')
+  //     onPropChange({ value: '', key: 'value' });
+  //   if (type === 'number') onPropChange({ value: 0, key: 'value' });
+  // }, [type, onPropChange]);
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{label}</Label>
@@ -82,6 +75,7 @@ const defaultProps: WebloomInputProps = {
 const schema: WidgetInspectorConfig = {
   dataSchema: zodToJsonSchema(webloomInputProps),
   uiSchema: {
+    value: { 'ui:widget': 'hidden' },
     type: {
       'ui:placeholder': 'Select type',
       'ui:title': 'Type',
@@ -104,6 +98,12 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   config,
   defaultProps,
   schema,
+  setters: {
+    setValue: {
+      path: 'value',
+      type: 'string',
+    },
+  },
 };
 
 export { WebloomInputWidget };
