@@ -11,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import {
   EventTypes,
   WidgetsEventHandler,
+  genEventHandlerUiSchema,
   // widgetsEventHandler,
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
@@ -89,30 +90,7 @@ const schema: WidgetInspectorConfig = {
     color: {
       'ui:widget': 'colorPicker',
     },
-    events: {
-      'ui:options': {
-        orderable: false,
-      },
-      items: {
-        type: {
-          'ui:widget': 'eventManagerTypeSelect',
-          'ui:options': webloomButtonEvents,
-        },
-        config: {
-          message: {
-            'ui:widget': 'inlineCodeInput',
-            'ui:placeholder': 'message',
-          },
-          link: {
-            'ui:widget': 'inlineCodeInput',
-            'ui:placeholder': 'URL',
-          },
-          script: {
-            'ui:widget': 'codeInput',
-          },
-        },
-      },
-    },
+    events: genEventHandlerUiSchema(webloomButtonEvents),
   },
 };
 export const WebloomButtonWidget: Widget<WebloomButtonProps> = {

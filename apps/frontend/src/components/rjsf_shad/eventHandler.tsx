@@ -131,6 +131,33 @@ export const widgetsEventHandlerJsonSchema: RJSFSchema = {
   },
 };
 
+export function genEventHandlerUiSchema(entityEvents: EventTypes) {
+  return {
+    'ui:options': {
+      orderable: false,
+    },
+    items: {
+      type: {
+        'ui:widget': 'eventManagerTypeSelect',
+        'ui:options': entityEvents,
+      },
+      config: {
+        message: {
+          'ui:widget': 'inlineCodeInput',
+          'ui:placeholder': 'message',
+        },
+        link: {
+          'ui:widget': 'inlineCodeInput',
+          'ui:placeholder': 'URL',
+        },
+        script: {
+          'ui:widget': 'codeInput',
+        },
+      },
+    },
+  };
+}
+
 export type WidgetsEventHandler = z.infer<typeof widgetsEventHandler>;
 
 type EventHandlerArrayItemProps = {

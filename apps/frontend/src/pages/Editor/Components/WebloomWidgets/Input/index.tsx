@@ -7,46 +7,79 @@ import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
+// import z from 'zod';
+// import zodToJsonSchema from 'zod-to-json-schema';
+import { autorun } from 'mobx';
+import {
+  EventTypes,
+  WidgetsEventHandler,
+  genEventHandlerUiSchema,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
 
 /**
  * fields that you want to be on the configForm
  */
-const webloomInputProps = z.object({
-  placeholder: z.string().optional(),
-  label: z.string(),
-  type: z.union([
-    z.literal('text'),
-    z.literal('password'),
-    z.literal('number'),
-  ]),
-  value: z.union([z.string(), z.number()]).optional(),
-});
+// const webloomInputProps = z.object({
+//   placeholder: z.string().optional(),
+//   label: z.string(),
+//   type: z.union([
+//     z.literal('text'),
+//     z.literal('password'),
+//     z.literal('number'),
+//   ]),
+//   disabled: z.boolean().default(false).optional(),
+//   autoFocus: z.boolean().default(false).optional(),
+//   value: z.union([z.string(), z.number()]).optional(),
+//   events: widgetsEventHandler,
+// });
 
-export type WebloomInputProps = z.infer<typeof webloomInputProps>;
+export type WebloomInputProps = {
+  label: string;
+  type: 'number' | 'text' | 'password';
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  autoFocus?: boolean | undefined;
+  value?: string | number | undefined;
+  events: WidgetsEventHandler;
+};
 
 const WebloomInput = observer(function WebloomInput() {
   const { onPropChange, id } = useContext(WidgetContext);
-  const { label, type, ...rest } = editorStore.currentPage.getWidgetById(id)
+  const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
-  // useEffect(() => {
-  //   if (type === 'password' || type === 'text')
-  //     onPropChange({ value: '', key: 'value' });
-  //   if (type === 'number') onPropChange({ value: 0, key: 'value' });
-  // }, [type, onPropChange]);
+  useEffect(
+    () =>
+      autorun(() => {
+        if (props.type === 'password' || props.type === 'text')
+          onPropChange({ value: '', key: 'value' });
+        if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
+      }),
+    [onPropChange],
+  );
+
   return (
     <div className="flex w-full items-center justify-center gap-2">
-      <Label>{label}</Label>
+      <Label>{props.label}</Label>
       <Input
-        type={type}
-        {...rest}
+        placeholder={props.placeholder}
+        type={props.type}
+        value={props.value}
+        disabled={props.disabled}
+        autoFocus={props.autoFocus}
         onChange={(e) => {
           onPropChange({
             key: 'value',
             value: e.target.value,
           });
+          editorStore.executeActions(id, webloomInputEvents['onTextChanged']);
         }}
+        onFocus={() =>
+          editorStore.executeActions(id, webloomInputEvents['onFocus'])
+        }
+        onBlur={() =>
+          editorStore.executeActions(id, webloomInputEvents['onBlur'])
+        }
       />
     </div>
   );
@@ -70,10 +103,48 @@ const defaultProps: WebloomInputProps = {
   value: '',
   label: 'Label',
   type: 'text',
+  disabled: false,
+  events: [],
 };
 
+const webloomInputEvents: EventTypes = {
+  onTextChanged: 'onTextChanged',
+  onFocus: 'onFocus',
+  onBlur: 'onBlur',
+} as const;
+
 const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomInputProps),
+  dataSchema: {
+    type: 'object',
+    properties: {
+      placeholder: {
+        type: 'string',
+      },
+      label: {
+        type: 'string',
+      },
+      type: {
+        type: 'string',
+        enum: ['text', 'password', 'number', 'email'],
+      },
+      color: {
+        type: 'string',
+      },
+      disabled: {
+        type: 'boolean',
+        default: false,
+      },
+      autoFocus: {
+        type: 'boolean',
+        default: false,
+      },
+      events: widgetsEventHandlerJsonSchema,
+      value: {
+        anyOf: [{ type: 'string' }, { type: 'number' }],
+      },
+    },
+    required: ['events', 'label'],
+  },
   uiSchema: {
     value: { 'ui:widget': 'hidden' },
     type: {
@@ -90,6 +161,7 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
     },
+    events: genEventHandlerUiSchema(webloomInputEvents),
   },
 };
 
@@ -102,6 +174,10 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
     setValue: {
       path: 'value',
       type: 'string',
+    },
+    setDisabled: {
+      path: 'disabled',
+      type: 'boolean',
     },
   },
 };
