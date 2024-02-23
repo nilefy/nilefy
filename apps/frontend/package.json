@@ -90,6 +90,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tinymce": "^5.10.9",
     "toposort": "^2.0.2",
+    "unescape-js": "^1.1.4",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.3",
     "zustand": "^4.4.4"
