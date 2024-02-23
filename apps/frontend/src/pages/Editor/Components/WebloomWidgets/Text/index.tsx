@@ -10,6 +10,7 @@ import zodToJsonSchema from 'zod-to-json-schema';
 
 const webloomTextProps = z.object({
   text: z.string(),
+  textColor: z.string(),
 });
 export type WebloomTextProps = z.infer<typeof webloomTextProps>;
 
@@ -17,7 +18,16 @@ const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTextProps;
-  return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
+  return (
+    <span
+      className="h-full w-full break-all text-4xl"
+      style={{
+        color: props.textColor,
+      }}
+    >
+      {props.text}
+    </span>
+  );
 });
 
 const config: WidgetConfig = {
@@ -35,6 +45,7 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomTextProps = {
   text: 'Text',
+  textColor: '#FFF',
 };
 
 const schema: WidgetInspectorConfig = {
@@ -44,6 +55,9 @@ const schema: WidgetInspectorConfig = {
       'ui:widget': 'inlineCodeInput',
       'ui:placeholder': 'Enter text',
       'ui:title': 'Text',
+    },
+    textColor: {
+      'ui:widget': 'colorPicker',
     },
   },
 };
@@ -55,6 +69,10 @@ export const WebloomTextWidget: Widget<WebloomTextProps> = {
   setters: {
     setText: {
       path: 'text',
+      type: 'string',
+    },
+    setTextColor: {
+      path: 'textColor',
       type: 'string',
     },
   },

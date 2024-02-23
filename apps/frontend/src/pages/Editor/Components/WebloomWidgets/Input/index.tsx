@@ -27,6 +27,7 @@ import {
 //     z.literal('text'),
 //     z.literal('password'),
 //     z.literal('number'),
+//     z.literal('email'),
 //   ]),
 //   disabled: z.boolean().default(false).optional(),
 //   autoFocus: z.boolean().default(false).optional(),
