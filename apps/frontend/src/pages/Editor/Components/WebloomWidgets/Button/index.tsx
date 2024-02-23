@@ -1,7 +1,7 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { MousePointerSquare } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
@@ -18,13 +18,12 @@ import {
 
 // export const webloomButtonProps = z.object({
 //   text: z.string(),
-//   color: z.string(),
 //   events: widgetsEventHandler,
 // });
 export type WebloomButtonProps = {
   text: string;
-  color: string;
   events: WidgetsEventHandler;
+  variant: ButtonProps['variant'];
 };
 
 const WebloomButton = observer(function WebloomButton() {
@@ -35,7 +34,6 @@ const WebloomButton = observer(function WebloomButton() {
     <Button
       {...props}
       className={`block h-full w-full active:bg-primary/20`}
-      style={{ backgroundColor: props.color }}
       onClick={() => editorStore.executeActions(id, 'click')}
     >
       {props.text}
@@ -63,8 +61,8 @@ const webloomButtonEvents: EventTypes = {
 
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
-  color: 'black',
   events: [],
+  variant: 'default',
 };
 
 const schema: WidgetInspectorConfig = {
@@ -74,12 +72,21 @@ const schema: WidgetInspectorConfig = {
       text: {
         type: 'string',
       },
-      color: {
+      variant: {
         type: 'string',
+        enum: [
+          'default',
+          'destructive',
+          'outline',
+          'secondary',
+          'ghost',
+          'link',
+        ],
+        default: defaultProps.variant,
       },
       events: widgetsEventHandlerJsonSchema,
     },
-    required: ['events', 'text', 'color'],
+    required: ['events', 'text'],
   },
   uiSchema: {
     text: {
