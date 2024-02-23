@@ -2,6 +2,10 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { queries } from '../drizzle/schema/data_sources.schema';
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import {
+  dataSourceSelect,
+  workspaceDataSourcesSelect,
+} from './data_sources.dto';
 
 export const querySchema = createSelectSchema(queries).extend({
   query: z.record(z.string(), z.unknown()),
@@ -40,3 +44,34 @@ export const deleteDatasourceQueriesSchema = z.object({
 export class DeleteDatasourceQueriesDto extends createZodDto(
   deleteDatasourceQueriesSchema,
 ) {}
+
+export const appQueriesSchema = querySchema
+  .pick({
+    id: true,
+    name: true,
+    query: true,
+  })
+  .extend({
+    dataSource: workspaceDataSourcesSelect
+      .pick({
+        id: true,
+        name: true,
+      })
+      .extend({
+        dataSource: dataSourceSelect
+          .pick({
+            id: true,
+            type: true,
+            name: true,
+            queryConfig: true,
+          })
+          .extend({
+            queryConfig: z.object({
+              schema: z.record(z.string(), z.unknown()),
+              uiSchema: z.record(z.string(), z.unknown()).optional(),
+            }),
+          }),
+      }),
+  });
+
+export class AppQueriesDto extends createZodDto(appQueriesSchema) {}

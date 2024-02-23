@@ -26,6 +26,7 @@ import {
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
+import { startWorker } from '../mocks/browser';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +141,13 @@ const router = createBrowserRouter([
 const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
 
+async function enableMocking() {
+  if (process.env.NODE_ENV == 'development') {
+    return startWorker();
+  }
+}
+
+// enableMocking().then(() => {
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -151,3 +159,4 @@ root.render(
     </QueryClientProvider>
   </React.StrictMode>,
 );
+// });
