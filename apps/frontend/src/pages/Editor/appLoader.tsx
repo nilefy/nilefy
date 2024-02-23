@@ -8,7 +8,7 @@ import { getToken, removeToken } from '@/lib/token.localstorage';
 import { JwtPayload } from '@/types/auth.types';
 import { QueryClient } from '@tanstack/react-query';
 import { jwtDecode } from 'jwt-decode';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect } from 'react';
 import {
   Await,
   defer,
@@ -45,10 +45,30 @@ export const appLoader =
         workspaceId: +(params.workspaceId as string),
         appId: +(params.appId as string),
       });
-      const values = Promise.all([
+      const values = await Promise.all([
         queryClient.fetchQuery(appQuery),
         queryClient.fetchQuery(queriesQuery),
       ]);
+      const [app, queries] = values;
+      const tree = app.defaultPage.tree;
+      editorStore.init({
+        name: app.name,
+        queries,
+        currentPageId: app.defaultPage.id.toString(),
+        pages: [
+          {
+            id: app.defaultPage.id.toString(),
+            name: app.defaultPage.name,
+            handle: app.defaultPage.handle,
+            widgets: tree,
+          },
+          ...app.pages.map((p) => ({
+            id: p.id.toString(),
+            name: p.name,
+            handle: p.handle,
+          })),
+        ],
+      });
       return defer({
         values,
       });
@@ -64,34 +84,11 @@ type AppLoaderProps = {
 };
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
-  const [app, queries] = useAsyncValue() as [
+  const [app] = useAsyncValue() as [
     app: AppCompleteT,
     queries: Awaited<ReturnType<typeof getQueries>>,
   ];
-  const tree = app.defaultPage.tree;
-  // todo : put the init state inside the editor store itself
-  const inited = useRef(false);
-  if (!inited.current) {
-    editorStore.init({
-      name: app.name,
-      queries,
-      currentPageId: app.defaultPage.id.toString(),
-      pages: [
-        {
-          id: app.defaultPage.id.toString(),
-          name: app.defaultPage.name,
-          handle: app.defaultPage.handle,
-          widgets: tree,
-        },
-        ...app.pages.map((p) => ({
-          id: p.id.toString(),
-          name: p.name,
-          handle: p.handle,
-        })),
-      ],
-    });
-    inited.current = true;
-  }
+
   useEffect(() => {
     if (initWs) commandManager.connectToEditor(app.id, app.defaultPage.id);
     return () => {

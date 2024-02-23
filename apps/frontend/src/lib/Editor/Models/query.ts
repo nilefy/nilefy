@@ -1,4 +1,4 @@
-import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
+import { makeObservable, observable, action, toJS, autorun } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 
@@ -82,6 +82,7 @@ export class WebloomQuery
       entityType: 'query',
       inspectorConfig: dataSource.dataSource.queryConfig.formConfig as any,
     });
+
     this.queryClient = queryClient;
     this.runQuery = new MobxMutation(this.queryClient, () => ({
       mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
@@ -109,7 +110,6 @@ export class WebloomQuery
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     makeObservable(this, {
-      fetchValue: flow,
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
@@ -134,16 +134,11 @@ export class WebloomQuery
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
   }
 
-  // TODO: call server to get actual data
-  fetchValue() {
-    // this.value = {};
-  }
-
   get snapshot() {
     return {
       id: this.id,
       dataSourceId: this.dataSourceId,
-      query: this.rawValues.config,
+      query: this.rawValues.config as Record<string, unknown>,
       appId: this.appId,
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,

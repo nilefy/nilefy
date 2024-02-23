@@ -1,11 +1,4 @@
-import {
-  observable,
-  makeObservable,
-  action,
-  computed,
-  autorun,
-  toJS,
-} from 'mobx';
+import { observable, makeObservable, action, computed } from 'mobx';
 import { analyzeDependancies } from '../dependancyUtils';
 import { forEach } from 'lodash';
 import { EditorState } from './editor';
@@ -463,9 +456,6 @@ export class DependencyManager {
       graph: computed,
       editor: observable,
       initAnalysis: action,
-    });
-    autorun(() => {
-      console.log(toJS(this.graph));
     });
   }
   initAnalysis() {

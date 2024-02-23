@@ -92,16 +92,13 @@ export class EditorState implements WebloomDisposable {
   }: {
     name: string;
     pages: Optional<
-      Omit<
-        ConstructorParameters<typeof WebloomPage>[0],
-        'dependencyManager' | 'evaluationManger'
-      >,
+      Omit<ConstructorParameters<typeof WebloomPage>[0], 'workerBroker'>,
       'widgets'
     >[];
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger'
+      'workerBroker' | 'queryClient'
     >[];
   }) {
     this.dispose();
@@ -143,14 +140,13 @@ export class EditorState implements WebloomDisposable {
       event: 'init',
       body: {
         currentPageId: this.currentPageId,
-        queries: queries.reduce(
+        queries: Object.values(this.queries).reduce(
           (acc, query) => {
             acc[query.id as string] = {
-              unevalValues: query.query,
+              unevalValues: query.rawValues,
               id: query.id,
-              inspectorConfig:
-                query.dataSource.dataSource.queryConfig.formConfig,
-              publicAPI: new Set(['data', 'queryState']),
+              inspectorConfig: query.inspectorConfig,
+              publicAPI: query.publicAPI,
             };
             return acc;
           },

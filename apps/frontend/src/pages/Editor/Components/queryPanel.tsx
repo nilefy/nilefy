@@ -26,7 +26,7 @@ import { ScrollArea } from '../../../components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed } from 'mobx';
+import { computed, toJS } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from './entityForm';
@@ -97,13 +97,12 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.config;
             query.runQuery.mutate({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
               body: {
-                evaluatedConfig: evaluatedConfig as Record<string, unknown>,
+                evaluatedConfig: toJS(query.config) as Record<string, unknown>,
               },
             });
           }}
