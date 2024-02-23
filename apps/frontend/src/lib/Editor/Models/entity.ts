@@ -80,7 +80,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     for (const path in this.validators) {
       const res = this.validatePath(path, get(this.finalValues, path));
       if (res) {
-        this.addValidationErrors(path, res.errors);
         set(this.finalValues, path, res.value);
       }
     }
