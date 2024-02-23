@@ -76,6 +76,8 @@ export default function ArrayFieldTemplate<
           ({ key, ...itemProps }: ArrayFieldTemplateItemType<T, S, F>) => {
             return (
               <ArrayFieldItemTemplate
+                // TODO:
+                // @ts-expect-error too lazy to update ts types for the component
                 itemValue={formData[itemProps.index]}
                 key={key}
                 {...itemProps}

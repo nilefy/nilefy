@@ -13,6 +13,10 @@ import {
 import { WidgetsEventHandler } from './eventHandler';
 import { ReactElement } from 'react';
 
+export enum ArrayFieldItemType {
+  'EventHandlerItem' = 1,
+}
+
 function EventHandlerItemView({
   event,
   children,
@@ -39,6 +43,32 @@ function EventHandlerItemView({
   );
 }
 
+/**
+ * note it will fallback for default with undefined or if it didn't know the type
+ */
+function Item({
+  itemType,
+  itemValue,
+  children,
+}: {
+  itemValue: any;
+  children: ReactElement;
+  itemType?: ArrayFieldItemType;
+}) {
+  switch (itemType) {
+    case ArrayFieldItemType.EventHandlerItem: {
+      return (
+        <EventHandlerItemView event={itemValue}>
+          {children}
+        </EventHandlerItemView>
+      );
+    }
+    default: {
+      return <div className="h-fit w-full overflow-auto">{children}</div>;
+    }
+  }
+}
+
 /** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
  *
  * @param props - The `ArrayFieldTemplateItemType` props for the component
@@ -49,7 +79,7 @@ export default function ArrayFieldItemTemplate<
   F extends FormContextType = any,
 >(
   props: ArrayFieldTemplateItemType<T, S, F> & {
-    itemValue: WidgetsEventHandler[0];
+    itemValue: unknown;
   },
 ) {
   const {
@@ -67,14 +97,20 @@ export default function ArrayFieldItemTemplate<
     readonly,
     uiSchema,
     registry,
-    itemValue,
+    itemValue: temp,
   } = props;
   const { CopyButton, MoveDownButton, MoveUpButton, RemoveButton } =
     registry.templates.ButtonTemplates;
+  const itemValue = temp as WidgetsEventHandler[0];
+  const customItemType = uiSchema?.['ui:options']?.['ui:itemType'] as
+    | ArrayFieldItemType
+    | undefined;
+
   return (
     <div className="flex h-full w-full items-center gap-2">
-      {/* <div className="h-fit w-full overflow-auto">{children}</div> */}
-      <EventHandlerItemView event={itemValue}>{children}</EventHandlerItemView>
+      <Item itemValue={itemValue} itemType={customItemType}>
+        {children}
+      </Item>
       {hasToolbar && (
         <div className="ml-auto flex items-center gap-3">
           {(hasMoveUp || hasMoveDown) && (

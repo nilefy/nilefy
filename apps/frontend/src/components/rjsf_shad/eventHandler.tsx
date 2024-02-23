@@ -17,6 +17,7 @@ import {
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,
+  UiSchema,
   WidgetProps,
 } from '@rjsf/utils';
 import { PlusSquare, Trash2 } from 'lucide-react';
@@ -24,6 +25,7 @@ import z from 'zod';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ReactNode } from 'react';
+import { ArrayFieldItemType } from './arrayFieldItemTemplate';
 
 type EventConfigTypes = 'alert' | 'openLink' | 'runScript';
 const eventConfigTypes: EventConfigTypes[] = ['alert', 'openLink'];
@@ -131,12 +133,15 @@ export const widgetsEventHandlerJsonSchema: RJSFSchema = {
   },
 };
 
-export function genEventHandlerUiSchema(entityEvents: EventTypes) {
+export function genEventHandlerUiSchema(entityEvents: EventTypes): UiSchema {
   return {
     'ui:options': {
       orderable: false,
     },
     items: {
+      'ui:options': {
+        'ui:itemType': ArrayFieldItemType.EventHandlerItem,
+      },
       type: {
         'ui:widget': 'eventManagerTypeSelect',
         'ui:options': entityEvents,
