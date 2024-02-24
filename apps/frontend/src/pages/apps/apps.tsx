@@ -253,7 +253,7 @@ function AppDropDown(props: { app: AppI }) {
   );
 }
 
-function CreateAppDialog() {
+export function CreateAppDialog() {
   const [open, setOpen] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { workspaceId } = useParams();
