@@ -1,5 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import {
+  LayoutMode,
   Widget,
   WidgetConfig,
   WidgetInspectorConfig,
@@ -12,7 +13,7 @@ import { WidgetContext } from '../..';
 type WebloomContainerProps = {
   children?: ReactNode;
   color: string;
-  DONTUSE: number;
+  layoutMode: LayoutMode;
 };
 
 const WebloomContainer = observer(
@@ -41,7 +42,7 @@ const WebloomContainer = observer(
 const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
-  DONTUSE: Infinity,
+  layoutMode: 'fixed',
 };
 export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
   {
@@ -58,11 +59,14 @@ export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
       },
       {
         id: `${widgetName}-dynamicHeight`,
-        key: 'DONTUSE',
+        key: 'layoutMode',
         label: 'Height Mode',
-        type: 'heightMode',
+        type: 'select',
         options: {
-          label: 'Height Mode',
+          items: [
+            { label: 'Fixed', value: 'fixed' },
+            { label: 'Auto', value: 'auto' },
+          ],
         },
       },
     ],

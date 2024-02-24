@@ -43,7 +43,6 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
-  layoutMode?: LayoutMode;
   constructor({
     type,
     parentId,
@@ -76,12 +75,12 @@ export class WebloomWidget
     this.page = page;
     this.type = type;
     const { config, defaultProps } = WebloomWidgets[type];
-    this.layoutMode = config.layoutConfig.layoutMode;
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
     this.rawValues = {};
+    this.rawValues['layoutMode'] = config.layoutConfig.layoutMode;
     if (!props) {
       props = {};
     }
@@ -125,15 +124,9 @@ export class WebloomWidget
       cleanup: action,
       innerRowsCount: computed,
       actualRowsCount: computed,
-      layoutMode: observable,
       innerContainerDimensions: computed,
       innerContainerPixelDimensions: computed,
-      setLayout: action,
     });
-  }
-
-  setLayout(layout: LayoutMode) {
-    this.layoutMode = layout;
   }
 
   get columnWidth(): number {
@@ -177,6 +170,10 @@ export class WebloomWidget
 
   getProp(key: string) {
     return this.values[key] ?? this.rawValues[key];
+  }
+
+  get layoutMode() {
+    return this.getProp('layoutMode') as LayoutMode;
   }
   get values(): EvaluatedRunTimeProps {
     const evaluatedProps: EvaluatedRunTimeProps = {};
