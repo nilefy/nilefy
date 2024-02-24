@@ -11,6 +11,7 @@ import {
   readBlob,
   uploadBlob,
 } from './operations';
+import { AZURE_BLOB_STORAGE } from '../common/operations';
 
 export default class AzureBlobStorageQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -37,19 +38,19 @@ export default class AzureBlobStorageQueryService
 
   async runQuery(query: QueryT['query'], client: BlobServiceClient) {
     switch (query.operation) {
-      case 'List containers':
+      case AZURE_BLOB_STORAGE.LIST_CONTAINERS:
         return await listContainers(client);
-      case 'List blobs':
+      case AZURE_BLOB_STORAGE.LIST_BLOBS:
         return await listBlobs(query, client);
-      case 'Create container':
+      case AZURE_BLOB_STORAGE.CREATE_CONTAINER:
         return await createContainer(client);
-      case 'Upload blob':
+      case AZURE_BLOB_STORAGE.UPLOAD_BLOB:
         return await uploadBlob(query, client);
-      case 'Delete container':
+      case AZURE_BLOB_STORAGE.DELETE_CONTAINER:
         return await deleteContainer(query, client);
-      case 'Delete blob':
+      case AZURE_BLOB_STORAGE.DELETE_BLOB:
         return await deleteBlob(query, client);
-      case 'Read blob':
+      case AZURE_BLOB_STORAGE.READ_BLOB:
         return await readBlob(query, client);
     }
   }
