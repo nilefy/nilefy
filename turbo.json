@@ -27,6 +27,10 @@
     },
     "typecheck": {
       "cache": false
+    },
+    "test": {},
+    "test:watch": {
+      "cache": false
     }
   }
 }

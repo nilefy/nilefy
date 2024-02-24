@@ -9,7 +9,12 @@ import {
   DrizzleAsyncProvider,
   PgTrans,
 } from '../drizzle/drizzle.provider';
-import { CreatePageDb, PageDto, UpdatePageDb } from '../dto/pages.dto';
+import {
+  CreatePageDb,
+  CreatePageRetDto,
+  PageDto,
+  UpdatePageDb,
+} from '../dto/pages.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
@@ -36,7 +41,7 @@ export class PagesService {
     options?: {
       tx?: PgTrans;
     },
-  ) {
+  ): Promise<CreatePageRetDto> {
     const [p] = await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values({
@@ -84,7 +89,7 @@ export class PagesService {
     appId,
     id: pageId,
     createdById,
-  }: Pick<PageDto, 'id' | 'createdById' | 'appId'>) {
+  }: Pick<PageDto, 'id' | 'createdById' | 'appId'>): Promise<PageDto[]> {
     // TODO: clone the tree state as well
     const origin = await this.db.query.pages.findFirst({
       columns: {
@@ -107,14 +112,14 @@ export class PagesService {
       .returning();
   }
 
-  async index(appId: number) {
+  async index(appId: number): Promise<PageDto[]> {
     return await this.db.query.pages.findMany({
       where: and(eq(pages.appId, appId), isNull(pages.deletedAt)),
       orderBy: asc(pages.index),
     });
   }
 
-  async findOne(appId: number, pageId: number) {
+  async findOne(appId: number, pageId: number): Promise<CreatePageRetDto> {
     const p = await this.db.query.pages.findFirst({
       where: and(
         eq(pages.appId, appId),
@@ -134,7 +139,7 @@ export class PagesService {
     appId: AppDto['id'],
     pageId: PageDto['id'],
     pageDto: UpdatePageDb,
-  ) {
+  ): Promise<PageDto[]> {
     // if the user updated page index, it has side effects of all pages of this app
     if (pageDto.index !== undefined) {
       const oldIndex = await this.db.query.pages.findFirst({
@@ -207,7 +212,7 @@ export class PagesService {
     appId: AppDto['id'];
     pageId: PageDto['id'];
     deletedById: UserDto['id'];
-  }) {
+  }): Promise<PageDto[]> {
     const [{ count }] = await this.db
       .select({
         count: sql<number>`cast(count(${pages.id}) as int)`,
