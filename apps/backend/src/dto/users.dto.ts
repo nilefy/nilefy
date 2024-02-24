@@ -42,3 +42,12 @@ export class UserDto extends createZodDto(userSchema) {}
 export class CreateUserDto extends createZodDto(signUpSchema) {}
 export class LoginUserDto extends createZodDto(signInSchema) {}
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
+
+export const updateUserRetSchema = userSchema.pick({
+  id: true,
+  username: true,
+  email: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export class UpdateUserRetDto extends createZodDto(updateUserRetSchema) {}

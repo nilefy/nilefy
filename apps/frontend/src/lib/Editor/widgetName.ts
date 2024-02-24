@@ -1,24 +1,16 @@
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { WebloomWidget } from './Models/widget';
+export let entityNames: Record<string, number> = {};
 
-let widgetNames: Record<
-  (typeof WebloomWidgets)[WidgetTypes]['config']['name'],
-  number
-> = {};
-
-export function getNewWidgetName(type: WidgetTypes): string {
-  const name = WebloomWidgets[type].config.name;
-  widgetNames[name] = (widgetNames[name] ?? 0) + 1;
-  return `${name}${widgetNames[name]}`;
+export function getNewEntityName(type: string): string {
+  entityNames[type] = (entityNames[type] ?? 0) + 1;
+  return `${type}${entityNames[type]}`;
 }
 
 /**
  * init map when start a new app, from old existing data
  */
-export function seedNameMap(nodes: WebloomWidget['snapshot'][]) {
-  widgetNames = {};
-  nodes.forEach(({ type }) => {
-    const name = WebloomWidgets[type].config.name;
-    widgetNames[name] = (widgetNames[name] ?? 0) + 1;
+export function seedNameMap(entiteTypes: string[]) {
+  entityNames = {};
+  entiteTypes.forEach((type) => {
+    entityNames[type] = (entityNames[type] ?? 0) + 1;
   });
 }

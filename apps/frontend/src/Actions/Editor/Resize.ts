@@ -7,7 +7,6 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
-import { UpdateNodesPayload } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -287,13 +286,13 @@ class ResizeAction {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
           editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
-          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot)
+          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot);
         });
-        updates.push(editorStore.currentPage.getWidgetById(id).snapshot)
+        updates.push(editorStore.currentPage.getWidgetById(id).snapshot);
         return {
           event: 'update' as const,
           data: updates,
-        }
+        };
       },
     };
     this.cleanUp();

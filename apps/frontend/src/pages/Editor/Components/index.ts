@@ -5,6 +5,7 @@ import { WebloomInputWidget } from './WebloomWidgets/Input';
 import { WebloomTextEditorWidget } from './WebloomWidgets/RichTextEditor';
 import { WebloomTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
+import { WebloomImageWidget } from './WebloomWidgets/Image';
 import { WebloomSelectWidget } from './WebloomWidgets/Select';
 import { WebloomMultiSelectWidget } from './WebloomWidgets/MultiSelect';
 import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
@@ -17,6 +18,7 @@ export const WebloomWidgets = {
   WebloomText: WebloomTextWidget,
   TextEditor: WebloomTextEditorWidget,
   Table: WebloomTableWidget,
+  Image: WebloomImageWidget,
   WebloomSelect: WebloomSelectWidget,
   WebloomMultiSelect: WebloomMultiSelectWidget,
   WebloomDatePicker: WebloomDatePickerWidget,

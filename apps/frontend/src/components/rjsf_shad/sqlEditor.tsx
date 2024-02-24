@@ -1,5 +1,4 @@
 import { SQLEditor } from '@/pages/Editor/Components/CodeEditor/index';
-import { useCallback } from 'react';
 
 import {
   ariaDescribedByIds,
@@ -24,7 +23,7 @@ export default function SQLRJSFWidget<
     label,
     hideLabel,
     schema,
-    onChange: _onChange,
+    onChange,
     options,
     rawErrors,
     autofocus,
@@ -32,32 +31,19 @@ export default function SQLRJSFWidget<
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
 
-  const onChange = useCallback(
-    (newValue: string) => {
-      // if (id && toProperty) {
-      //   const res = debouncedAnalyzeDependancies(
-      //     newValue,
-      //     toProperty,
-      //     editorStore.currentPage.context,
-      //   );
-      //   if (res) {
-      //     const widget = editorStore.currentPage.getWidgetById(id);
-      //     widget.setIsPropCode(toProperty, res.isCode);
-      //     widget.addDependencies(res.dependencies);
-      //   }
-      // }
-      _onChange(newValue === '' ? options.emptyValue : newValue);
-    },
-    [_onChange, options.emptyValue],
-  );
-
   return (
     <div id={`${id}-label`}>
       {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
       <SQLEditor
         aria-invalid={rawErrors && rawErrors.length > 0}
         id={id}
-        value={value ? value : ''}
+        value={
+          value === undefined
+            ? ''
+            : typeof value === 'string'
+            ? value
+            : `{{${JSON.stringify(value)}}}`
+        }
         onChange={onChange}
         autoFocus={autofocus}
         placeholder={placeholder}

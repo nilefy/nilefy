@@ -1,12 +1,36 @@
-import { makeObservable, observable, action, computed } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  autorun,
+  toJS,
+} from 'mobx';
 import { WebloomPage } from './page';
+import { WebloomQuery } from './query';
+import { EvaluationContext, evaluateCode } from '../evaluation';
+import { DependencyManager } from './dependencyManager';
+import { EvaluationManager } from './evaluationManager';
+import { Entity } from './entity';
+import { seedNameMap } from '../widgetName';
+import { ErrorSchema } from '@rjsf/utils';
+import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
+import { toast } from '@/components/ui/use-toast';
+
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export class EditorState {
   /**
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
+  queries: Record<string, WebloomQuery> = {};
   currentPageId: string = '';
+  dependencyManager: DependencyManager = new DependencyManager({
+    editor: this,
+  });
+  evaluationManger: EvaluationManager = new EvaluationManager(this);
   /**
    * application name
    */
@@ -15,27 +39,71 @@ export class EditorState {
   constructor() {
     makeObservable(this, {
       pages: observable,
+      queries: observable,
       currentPageId: observable,
+      context: computed({
+        keepAlive: true,
+        equals: comparer.shallow,
+      }),
       name: observable,
       currentPage: computed,
       changePage: action,
       addPage: action,
+      addQuery: action,
+      removeQuery: action,
       removePage: action,
       init: action,
+      currentPageErrors: computed,
     });
   }
+
+  cleanUp() {
+    this.pages = {};
+    this.queries = {};
+    this.currentPageId = '';
+    this.dependencyManager = new DependencyManager({
+      editor: this,
+    });
+    this.evaluationManger = new EvaluationManager(this);
+  }
+
   init({
     name = 'New Application',
     pages: pages = [],
     currentPageId = '',
-  }: Partial<{
+    queries = [],
+  }: {
     name: string;
-    pages: WebloomPage[];
+    pages: Optional<
+      Omit<
+        ConstructorParameters<typeof WebloomPage>[0],
+        'dependencyManager' | 'evaluationManger'
+      >,
+      'widgets'
+    >[];
     currentPageId: string;
-  }>) {
+    queries: Omit<
+      ConstructorParameters<typeof WebloomQuery>[0],
+      'dependencyManager' | 'evaluationManger'
+    >[];
+  }) {
+    this.cleanUp();
     this.name = name;
-    pages.forEach((page) => {
-      this.pages[page.id] = page;
+    seedNameMap([
+      ...Object.values(pages[0].widgets || {}).map((w) => w.type),
+      ...queries.map((q) => q.dataSource.name),
+    ]);
+    // create resources needed for the editor
+    pages.forEach((page, index) => {
+      // TODO: remove this check
+      if (index !== 0) return;
+      this.pages[page.id] = new WebloomPage({
+        ...page,
+        evaluationManger: this.evaluationManger,
+        dependencyManager: this.dependencyManager,
+        // Todo fix this
+        widgets: page.widgets || {},
+      });
     });
     this.currentPageId = currentPageId;
     // NOTE: backend should create page by default
@@ -46,7 +114,54 @@ export class EditorState {
     if (!this.currentPageId) {
       this.currentPageId = Object.keys(this.pages)[0];
     }
+    queries.forEach((q) => {
+      this.queries[q.id] = new WebloomQuery({
+        ...q,
+        evaluationManger: this.evaluationManger,
+        dependencyManager: this.dependencyManager,
+      });
+    });
+    this.dependencyManager.initAnalysis();
   }
+
+  // TODO: add support for queries
+  get currentPageErrors() {
+    const res: { entityId: string; path: string; error: string }[] = [];
+    for (const w in this.currentPage.widgets) {
+      const widget = this.currentPage.getWidgetById(w);
+      if (!widget || widget.isRoot) continue;
+      const errors = widget.validationErrors;
+      if (!errors) continue;
+      Object.entries(errors).map(([key, err]) => {
+        res.push({
+          entityId: widget.id,
+          path: key,
+          error: (err as ErrorSchema).__errors?.join(' '),
+        });
+      });
+    }
+    return res;
+  }
+
+  /**
+   * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
+   */
+  get context() {
+    const context: EvaluationContext = {};
+    Object.values(this.currentPage.widgets).forEach((widget) => {
+      if (widget.isRoot) return;
+      context[widget.id] = widget.rawValues;
+    });
+    Object.values(this.queries).forEach((query) => {
+      context[query.id] = query.rawValues;
+    });
+    return context;
+  }
+
+  getEntityById(id: string): Entity | undefined {
+    return this.currentPage.widgets[id] || this.queries[id];
+  }
+
   get currentPage() {
     return this.pages[this.currentPageId];
   }
@@ -59,17 +174,37 @@ export class EditorState {
       this.currentPageId = id;
     }
   }
+
   addPage(id: string, name: string, handle: string) {
     this.pages[id] = new WebloomPage({
       id,
       name,
       handle,
+      dependencyManager: this.dependencyManager,
+      evaluationManger: this.evaluationManger,
       widgets: {},
-      queries: {},
     });
   }
+
+  addQuery(
+    query: Omit<
+      ConstructorParameters<typeof WebloomQuery>[0],
+      'dependencyManager' | 'evaluationManger'
+    >,
+  ) {
+    this.queries[query.id] = new WebloomQuery({
+      ...query,
+      dependencyManager: this.dependencyManager,
+      evaluationManger: this.evaluationManger,
+    });
+  }
+
   removePage(id: string) {
     delete this.pages[id];
+  }
+
+  removeQuery(id: string) {
+    delete this.queries[id];
   }
 
   snapshot() {
@@ -77,5 +212,66 @@ export class EditorState {
       pages: Object.values(this.pages).map((page) => page.snapshot),
       currentPageId: this.currentPageId,
     };
+  }
+  get entities() {
+    return {
+      ...this.currentPage.widgets,
+      ...this.queries,
+    };
+  }
+
+  /**
+   * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
+   * @param key where to get the handlers configuration
+   * @default 'events'
+   */
+  executeActions(widgetId: string, type: string, key: string = 'events') {
+    const eventHandlers = this.currentPage.getWidgetById(widgetId).finalValues[
+      key
+    ] as WidgetsEventHandler;
+    if (!eventHandlers) return;
+    eventHandlers.forEach((handler) => {
+      if (handler.type === type) {
+        this.executeActionHelper(handler.config);
+      }
+    });
+  }
+
+  private executeActionHelper(actionConfig: WidgetsEventHandler[0]['config']) {
+    switch (actionConfig.type) {
+      case 'alert':
+        {
+          toast({
+            description: actionConfig.message,
+            variant:
+              actionConfig.messageType === 'failure'
+                ? 'destructive'
+                : 'default',
+          });
+        }
+        break;
+      case 'openLink':
+        {
+          window.open(actionConfig.link, '_blank');
+        }
+        break;
+      case 'runScript':
+        {
+          // TODO: i don't think this way to create context is too performant, try improving it
+          const evaluationContext: EvaluationContext = {};
+          Object.entries(this.currentPage.widgets).forEach(
+            ([widgetName, widget]) => {
+              evaluationContext[widgetName] = {
+                ...widget.finalValues,
+                ...widget.setters,
+              };
+            },
+          );
+          evaluateCode(actionConfig.script, evaluationContext);
+        }
+        break;
+      default:
+        throw new Error("don't know this type");
+    }
   }
 }

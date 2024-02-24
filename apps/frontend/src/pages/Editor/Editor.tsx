@@ -35,7 +35,7 @@ import { RightSidebar } from './Components/Rightsidebar/index';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
-import { QueryPanel } from '@/components/queryPanel';
+import { QueryPanel } from '@/pages/Editor/Components/queryPanel';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
@@ -44,6 +44,7 @@ import { CopyAction } from '@/Actions/Editor/Copy';
 import { CutAction } from '@/Actions/Editor/Cut';
 import { PasteAction } from '@/Actions/Editor/Paste';
 import { ClipboardDataT } from '@/Actions/types';
+import { DebugPanel } from './Components/debugPanel';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -281,6 +282,7 @@ export const Editor = observer(() => {
                   collapsible
                 >
                   <QueryPanel />
+                  {/* <DebugPanel /> */}
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>

@@ -1,5 +1,6 @@
 import { FetchXError, fetchX } from '@/utils/fetch';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -7,13 +8,17 @@ import {
 import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
 
 export type QueryI = {
-  id: number;
-  name: string;
+  id: string;
+  /**
+   * un-evaluated config
+   */
   query: Record<string, unknown>;
   dataSourceId: number;
   appId: number;
   createdById: number;
   updatedById: number;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 export type QueryReturnT = {
@@ -26,7 +31,7 @@ type RunQueryBody = {
   evaluatedConfig: Record<string, unknown>;
 };
 
-export type CompeleteQueryI = QueryI & {
+export type CompleteQueryI = QueryI & {
   dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
     dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
   };
@@ -42,7 +47,7 @@ export async function getQueries({
   const res = await fetchX(`workspaces/${workspaceId}/apps/${appId}/queries`, {
     method: 'GET',
   });
-  return (await res.json()) as CompeleteQueryI[];
+  return (await res.json()) as CompleteQueryI[];
 }
 
 export async function getQuery({
@@ -60,7 +65,7 @@ export async function getQuery({
       method: 'GET',
     },
   );
-  return (await res.json()) as QueryI;
+  return (await res.json()) as CompleteQueryI;
 }
 
 export async function addQuery({
@@ -72,7 +77,7 @@ export async function addQuery({
   appId: number;
   dto: {
     dataSourceId: number;
-    name: QueryI['name'];
+    id: QueryI['id'];
     query: QueryI['query'];
   };
 }) {
@@ -84,7 +89,7 @@ export async function addQuery({
       body: JSON.stringify(dto),
     },
   );
-  return (await res.json()) as Partial<QueryI>;
+  return (await res.json()) as CompleteQueryI;
 }
 
 async function runQuery({
@@ -94,8 +99,8 @@ async function runQuery({
   body,
 }: {
   workspaceId: number;
-  queryId: number;
-  appId: number;
+  queryId: QueryI['id'];
+  appId: QueryI['appId'];
   body: RunQueryBody;
 }) {
   const res = await fetchX(
@@ -116,11 +121,11 @@ export async function updateQuery({
   dto,
 }: {
   workspaceId: number;
-  appId: number;
-  queryId: number;
+  appId: QueryI['appId'];
+  queryId: QueryI['id'];
   dto: Partial<{
-    datasourceId: number;
-    name: QueryI['name'];
+    dataSourceId: QueryI['dataSourceId'];
+    id: QueryI['id'];
     query: QueryI['query'];
   }>;
 }) {
@@ -132,7 +137,7 @@ export async function updateQuery({
       body: JSON.stringify(dto),
     },
   );
-  return await res.json();
+  return (await res.json()) as CompleteQueryI;
 }
 
 export async function deleteQuery({
@@ -141,8 +146,8 @@ export async function deleteQuery({
   queryId,
 }: {
   workspaceId: number;
-  appId: number;
-  queryId: number;
+  appId: QueryI['appId'];
+  queryId: QueryI['id'];
 }) {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/queries/${queryId}`,
@@ -152,18 +157,26 @@ export async function deleteQuery({
     },
   );
   return (await res.json()) as {
-    dataSourceId: number;
-    deletedById: number;
-    workspaceId: number;
+    id: string;
+  };
+}
+
+export function useQueriesQuery(
+  workspaceId: number,
+  appId: number,
+): UndefinedInitialDataOptions<CompleteQueryI[], Error, CompleteQueryI[]> {
+  return {
+    queryKey: ['queries', { workspaceId, appId }],
+    queryFn: async () => {
+      const data = await getQueries({ workspaceId, appId });
+      return data;
+    },
+    staleTime: 0,
   };
 }
 
 function useQuries(workspaceId: number, appId: number) {
-  return useQuery({
-    queryKey: ['queries', { workspaceId, appId }],
-    queryFn: () => getQueries({ workspaceId, appId }),
-    staleTime: 0,
-  });
+  return useQuery(useQueriesQuery(workspaceId, appId));
 }
 
 function useGetQuery(

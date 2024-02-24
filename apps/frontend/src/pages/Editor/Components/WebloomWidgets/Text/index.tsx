@@ -5,15 +5,31 @@ import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
-export type WebloomTextProps = {
-  text: string;
-};
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
+
+const webloomTextProps = z.object({
+  text: z.string(),
+  textColor: z.string(),
+});
+export type WebloomTextProps = z.infer<typeof webloomTextProps>;
+
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomTextProps;
-  return <span className="h-full w-full break-all">{props.text}</span>;
+    .finalValues as WebloomTextProps;
+  return (
+    <span
+      className="h-full w-full break-all text-4xl"
+      style={{
+        color: props.textColor,
+      }}
+    >
+      {props.text}
+    </span>
+  );
 });
+
 const config: WidgetConfig = {
   name: 'Text',
   icon: <Type />,
@@ -29,31 +45,37 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomTextProps = {
   text: 'Text',
+  textColor: '#FFF',
 };
-const widgetName = 'WebloomText';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomTextProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'text',
-        label: 'Text',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter text',
-          label: 'Text',
-        },
-      },
-    ],
+const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomTextProps),
+  uiSchema: {
+    text: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:placeholder': 'Enter text',
+      'ui:title': 'Text',
+    },
+    textColor: {
+      'ui:widget': 'colorPicker',
+    },
   },
-];
+};
 export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
+  setters: {
+    setText: {
+      path: 'text',
+      type: 'string',
+    },
+    setTextColor: {
+      path: 'textColor',
+      type: 'string',
+    },
+  },
 };
 
 export { WebloomText };

@@ -4,7 +4,14 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { AppDto, CreateAppDb, UpdateAppDb } from '../dto/apps.dto';
+import {
+  AppDto,
+  AppRetDto,
+  AppsRetDto,
+  CreateAppDb,
+  CreateAppRetDto,
+  UpdateAppDb,
+} from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
@@ -28,7 +35,7 @@ export class AppsService {
     createdById: UserDto['id'];
     workspaceId: AppDto['workspaceId'];
     appId: AppDto['id'];
-  }) {
+  }): Promise<CreateAppRetDto> {
     const app = await this.findOne(workspaceId, appId);
     const newApp = await this.create({
       name: app.name + '(copy)',
@@ -39,7 +46,7 @@ export class AppsService {
     return newApp;
   }
 
-  async create(createAppDto: CreateAppDb) {
+  async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
     const app = await this.db.transaction(async (tx) => {
       const [app] = await tx.insert(apps).values(createAppDto).returning();
       // create default page for the app
@@ -61,7 +68,7 @@ export class AppsService {
     return app;
   }
 
-  async findAll(workspaceId: AppDto['workspaceId']) {
+  async findAll(workspaceId: AppDto['workspaceId']): Promise<AppsRetDto[]> {
     const workspaceApps = await this.db.query.apps.findMany({
       where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
       orderBy: asc(apps.createdAt),
@@ -83,7 +90,10 @@ export class AppsService {
     return workspaceApps;
   }
 
-  async findOne(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
+  async findOne(
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+  ): Promise<AppRetDto> {
     const app = await this.db.query.apps.findFirst({
       where: and(
         eq(apps.id, appId),
