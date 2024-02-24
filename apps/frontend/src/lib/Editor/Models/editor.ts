@@ -9,12 +9,14 @@ import {
 } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
-import { EvaluationContext } from '../evaluation';
+import { EvaluationContext, evaluateCode } from '../evaluation';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
+import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
+import { toast } from '@/components/ui/use-toast';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -216,5 +218,60 @@ export class EditorState {
       ...this.currentPage.widgets,
       ...this.queries,
     };
+  }
+
+  /**
+   * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
+   * @param key where to get the handlers configuration
+   * @default 'events'
+   */
+  executeActions(widgetId: string, type: string, key: string = 'events') {
+    const eventHandlers = this.currentPage.getWidgetById(widgetId).finalValues[
+      key
+    ] as WidgetsEventHandler;
+    if (!eventHandlers) return;
+    eventHandlers.forEach((handler) => {
+      if (handler.type === type) {
+        this.executeActionHelper(handler.config);
+      }
+    });
+  }
+
+  private executeActionHelper(actionConfig: WidgetsEventHandler[0]['config']) {
+    switch (actionConfig.type) {
+      case 'alert':
+        {
+          toast({
+            description: actionConfig.message,
+            variant:
+              actionConfig.messageType === 'failure'
+                ? 'destructive'
+                : 'default',
+          });
+        }
+        break;
+      case 'openLink':
+        {
+          window.open(actionConfig.link, '_blank');
+        }
+        break;
+      case 'runScript':
+        {
+          // TODO: i don't think this way to create context is too performant, try improving it
+          const evaluationContext: EvaluationContext = {};
+          Object.entries(this.currentPage.widgets).forEach(
+            ([widgetName, widget]) => {
+              evaluationContext[widgetName] = {
+                ...widget.finalValues,
+                ...widget.setters,
+              };
+            },
+          );
+          evaluateCode(actionConfig.script, evaluationContext);
+        }
+        break;
+      default:
+        throw new Error("don't know this type");
+    }
   }
 }
