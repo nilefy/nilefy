@@ -8,29 +8,39 @@ import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
 import { WidgetConfigPanel } from './configInspector';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 function InsertTab() {
   return (
-    <TabsContent value="insert">
-      <div className="grid w-full  grid-cols-2 gap-2">
-        {Object.entries(WebloomWidgets).map(([name]) => {
-          const config =
-            WebloomWidgets[name as keyof typeof WebloomWidgets].config;
-          return (
-            <NewNodeAdapter type={name} key={name}>
-              <div>
-                <div className="flex h-full w-full items-center justify-center">
-                  {config.icon}
-                </div>
-                <div className="flex h-full w-full items-center justify-center">
-                  {config.name}
-                </div>
+    <ScrollArea>
+      <TabsContent value="insert">
+        <div
+          className="grid min-w-full gap-2"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+          }}
+        >
+          {Object.entries(WebloomWidgets).map(([name]) => {
+            const config =
+              WebloomWidgets[name as keyof typeof WebloomWidgets].config;
+            return (
+              <div key={name} className=" flex items-center justify-center  ">
+                <NewNodeAdapter type={name} key={name}>
+                  <div className=" hover:bg-secondary flex w-24 flex-col items-center justify-center gap-2 rounded-sm p-4 ">
+                    <div className="flex h-full w-full items-center justify-center">
+                      {config.icon}
+                    </div>
+                    <div className="flex h-full w-full items-center justify-center overflow-visible text-ellipsis whitespace-nowrap font-medium leading-3 text-gray-500">
+                      {config.name}
+                    </div>
+                  </div>
+                </NewNodeAdapter>
               </div>
-            </NewNodeAdapter>
-          );
-        })}
-      </div>
-    </TabsContent>
+            );
+          })}
+        </div>
+      </TabsContent>
+    </ScrollArea>
   );
 }
 
@@ -83,11 +93,14 @@ export const RightSidebar = observer(() => {
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}
         className="w-full"
       >
-        <TabsList className="w-full">
-          <TabsTrigger value="page">Page</TabsTrigger>
-          <TabsTrigger value="inspect">Inspect</TabsTrigger>
-          <TabsTrigger value="insert">Insert</TabsTrigger>
-        </TabsList>
+        <ScrollArea>
+          <ScrollBar orientation="horizontal" />
+          <TabsList className="flex w-full justify-start gap-2 p-6 leading-4">
+            <TabsTrigger value="page">Page</TabsTrigger>
+            <TabsTrigger value="inspect">Inspect</TabsTrigger>
+            <TabsTrigger value="insert">Insert</TabsTrigger>
+          </TabsList>
+        </ScrollArea>
         <div className="p-2">
           <InsertTab />
           <InspectTab />

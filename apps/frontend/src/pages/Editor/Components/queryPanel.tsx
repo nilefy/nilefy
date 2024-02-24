@@ -27,7 +27,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
 import { computed, toJS } from 'mobx';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from './entityForm';
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {

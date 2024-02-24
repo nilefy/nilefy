@@ -6,6 +6,8 @@ import { DefaultSection, EntityForm } from '../entityForm';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
@@ -17,15 +19,21 @@ export const WidgetConfigPanel = observer(() => {
     <div>
       <ConfigPanelHeader node={selectedNode} />
       <EntityForm>
-        {inspectorConfig.map((section) => {
-          return (
-            <DefaultSection
-              key={section.sectionName}
-              section={section}
-              selectedId={selectedId}
-            />
-          );
-        })}
+        <div className="flex flex-col gap-2 ">
+          <ScrollArea>
+            <div className="divide-y-2 divide-gray-200 border-black">
+              {inspectorConfig.map((section) => {
+                return (
+                  <DefaultSection
+                    key={section.sectionName}
+                    section={section}
+                    selectedId={selectedId}
+                  />
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
       </EntityForm>
     </div>
   );
@@ -44,7 +52,10 @@ function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
   }, [node.id]);
   if (!node) return null;
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex flex-col items-start justify-center gap-1">
+      <Label className="text-sm font-medium text-gray-600" htmlFor="name">
+        Name
+      </Label>
       <Input
         value={value}
         onChange={onChange}

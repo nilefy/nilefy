@@ -5,7 +5,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { convertGridToPixel } from '@/lib/Editor/utils';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 

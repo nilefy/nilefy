@@ -9,8 +9,8 @@ import {
 } from 'react';
 
 import { observer } from 'mobx-react-lite';
-import { Collapsible } from '@radix-ui/react-collapsible';
 import {
+  Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
@@ -47,17 +47,22 @@ export const FormSectionView = (props: {
       onOpenChange={setOpened}
       className="h-full w-full space-y-2"
       key={sectionName}
+      asChild
     >
-      <div className="flex items-center justify-between space-x-4">
-        <h4 className="text-sm font-semibold">{sectionName}</h4>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-9 p-0">
-            {opened ? <ChevronDown /> : <ChevronUp />}
-            <span className="sr-only">Toggle</span>
-          </Button>
-        </CollapsibleTrigger>
+      <div className="pb-5 pt-3">
+        <div className="flex items-center justify-between space-x-4">
+          <h3 className="text-lg font-semibold text-gray-800">{sectionName}</h3>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-9 p-0">
+              {opened ? <ChevronDown /> : <ChevronUp />}
+              <span className="sr-only">Toggle</span>
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="space-y-5">
+          {children}
+        </CollapsibleContent>
       </div>
-      <CollapsibleContent className="space-y-5">{children}</CollapsibleContent>
     </Collapsible>
   );
 };
@@ -175,8 +180,13 @@ const FormControlWrapper = observer(
       return null;
     return (
       <ErrorPopover>
-        <div>
-          <Label htmlFor={props.id}>{props.label}</Label>
+        <div className="flex w-full flex-col  gap-1">
+          <Label
+            className="text-sm font-medium text-gray-600"
+            htmlFor={props.id}
+          >
+            {props.label}
+          </Label>
           {props.children}
         </div>
       </ErrorPopover>

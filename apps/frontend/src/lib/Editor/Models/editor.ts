@@ -11,7 +11,7 @@ import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext } from '../evaluation';
 import { Entity } from './entity';
-import { seedNameMap } from '../widgetName';
+import { seedNameMap } from '../entitiesNameSeed';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';

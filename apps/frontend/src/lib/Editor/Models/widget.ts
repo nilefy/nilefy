@@ -1,6 +1,6 @@
 import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
