@@ -8,11 +8,12 @@ export const configSchema = z.object({
 const query = z.discriminatedUnion('operation', [
   z.object({
     operation: z.literal('List containers'),
+    includeDeleted: z.boolean().optional(),
   }),
   z.object({
     operation: z.literal('List blobs'),
     container: z.string(),
-    pageSize: z.string(),
+    pageSize: z.number(),
     prefix: z.string().optional(),
     continuationToken: z.string().optional(),
   }),
@@ -33,6 +34,7 @@ const query = z.discriminatedUnion('operation', [
   }),
   z.object({
     operation: z.literal('Delete blob'),
+    container: z.string(),
     blob: z.string(),
   }),
   z.object({
