@@ -7,9 +7,21 @@ import {
 } from '@/components/ui/select';
 import { selectOptions } from '@/lib/Editor/interface';
 
-function SelectComponent(props: { options: selectOptions[] }) {
+function SelectComponent(props: {
+  options: selectOptions[];
+  onPropChange: ({ value, key }: { value: string; key: string }) => void;
+  value: string;
+}) {
   return (
-    <Select>
+    <Select
+      value={props.value}
+      onValueChange={(e) => {
+        props.onPropChange({
+          key: 'value',
+          value: e,
+        });
+      }}
+    >
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="Select Option" />
       </SelectTrigger>

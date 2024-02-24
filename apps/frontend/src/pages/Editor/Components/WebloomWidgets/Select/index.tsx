@@ -5,20 +5,22 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import SelectComponent from '../../_Components/Select';
-import { Label } from '@radix-ui/react-label';
+import SelectComponent from './Select';
+import { Label } from '@/components/ui/label';
+
 export type WebloomSelectProps = {
   options: selectOptions[];
   lable: string;
+  value: string;
 };
 const WebloomSelect = observer(() => {
-  const { id } = useContext(WidgetContext);
+  const { id, onPropChange } = useContext(WidgetContext);
   const { lable, ...rest } = editorStore.currentPage.getWidgetById(id)
     .values as WebloomSelectProps;
   return (
     <div>
       <Label>{lable}</Label>
-      <SelectComponent {...rest}></SelectComponent>
+      <SelectComponent {...rest} onPropChange={onPropChange}></SelectComponent>
     </div>
   );
 });
@@ -42,6 +44,7 @@ const defaultProps: WebloomSelectProps = {
     { value: 'Option 3', label: 'Option 3' },
   ],
   lable: 'Select',
+  value: 'Option 1',
 };
 const widgetName = 'WebloomSelect';
 

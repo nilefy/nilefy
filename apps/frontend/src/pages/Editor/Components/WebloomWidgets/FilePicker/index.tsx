@@ -13,7 +13,6 @@ export type WebloomFilePickerProps = Pick<
   'value'
 > & {
   label: string;
-  type: 'file';
 };
 
 const WebloomFilePicker = observer(() => {
@@ -26,6 +25,7 @@ const WebloomFilePicker = observer(() => {
       <Label>{label}</Label>
       <Input
         {...rest}
+        type="file"
         onChange={(e) => {
           onPropChange({
             key: 'value',

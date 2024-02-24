@@ -26,11 +26,10 @@ export type WebloomDatePickerProps = {
   label: string;
   dateFormat: string;
 };
-const WebloomDatePicker = observer(() => {
+const WebloomDatePicker = observer(function WebloomDatePicker() {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, date, dateFormat } = editorStore.currentPage.getWidgetById(id)
     .values as WebloomDatePickerProps;
-  console.log('date', getDefaultOptions());
   return (
     <div>
       <Label>{label}</Label>
@@ -55,7 +54,7 @@ const WebloomDatePicker = observer(() => {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(e) => onPropChange({ key: 'date', value: e })}
+            onSelect={(e: Date) => onPropChange({ key: 'date', value: e })}
             initialFocus
           />
         </PopoverContent>

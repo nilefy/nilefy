@@ -3,13 +3,24 @@ import React from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { selectOptions } from '@/lib/Editor/interface';
 
-const MultipleSelect = (props: { options: selectOptions[] }) => {
-  const [value, setValue] = React.useState<selectOptions[]>([]);
+const MultipleSelect = (props: {
+  options: selectOptions[];
+  onPropChange: ({
+    value,
+    key,
+  }: {
+    value: selectOptions[];
+    key: string;
+  }) => void;
+  value: selectOptions[];
+}) => {
   return (
     <div className="flex w-full flex-col">
       <MultipleSelector
-        value={value}
-        onChange={setValue}
+        value={props.value}
+        onChange={(e) => {
+          props.onPropChange({ key: 'value', value: e });
+        }}
         defaultOptions={props.options}
         placeholder="Select Option"
         emptyIndicator={
