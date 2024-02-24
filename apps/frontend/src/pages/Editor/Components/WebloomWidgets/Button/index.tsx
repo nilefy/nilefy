@@ -39,7 +39,7 @@ const WebloomButton = observer(function WebloomButton() {
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomButtonProps;
   return (
-    <ToolTipWrapper text={props.text}>
+    <ToolTipWrapper text={props.tooltip}>
       <Button
         {...props}
         disabled={props.isLoading || props.isDisabled}
