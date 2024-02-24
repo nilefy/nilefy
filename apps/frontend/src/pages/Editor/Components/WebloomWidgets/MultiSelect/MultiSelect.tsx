@@ -1,6 +1,4 @@
-'use client';
-import React from 'react';
-import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
+import MultipleSelector from '@/components/ui/multiple-selector';
 import { selectOptions } from '@/lib/Editor/interface';
 
 const MultipleSelect = (props: {
