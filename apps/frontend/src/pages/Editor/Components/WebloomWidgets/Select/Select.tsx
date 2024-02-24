@@ -22,7 +22,7 @@ function SelectComponent(props: {
         });
       }}
     >
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-full">
         <SelectValue placeholder="Select Option" />
       </SelectTrigger>
       <SelectContent>

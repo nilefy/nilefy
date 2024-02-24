@@ -10,20 +10,26 @@ import { Label } from '@/components/ui/label';
 
 export type WebloomSelectProps = {
   options: selectOptions[];
-  lable: string;
+  label: string;
   value: string;
 };
+
 const WebloomSelect = observer(() => {
   const { id, onPropChange } = useContext(WidgetContext);
-  const { lable, ...rest } = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomSelectProps;
+  const props = editorStore.currentPage.getWidgetById(id)
+    .finalValues as WebloomSelectProps;
   return (
-    <div>
-      <Label>{lable}</Label>
-      <SelectComponent {...rest} onPropChange={onPropChange}></SelectComponent>
+    <div className="w-full">
+      <Label>{props.label}</Label>
+      <SelectComponent
+        value={props.value}
+        options={props.options}
+        onPropChange={onPropChange}
+      />
     </div>
   );
 });
+
 const config: WidgetConfig = {
   name: 'Select',
   icon: <CheckSquare />,
@@ -43,43 +49,56 @@ const defaultProps: WebloomSelectProps = {
     { value: 'Option 2', label: 'Option 2' },
     { value: 'Option 3', label: 'Option 3' },
   ],
-  lable: 'Select',
+  label: 'Select',
   value: 'Option 1',
 };
-const widgetName = 'WebloomSelect';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomSelectProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'lable',
-        label: 'Name',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter A Name',
-          label: 'Lable',
-          value: 'slkslk',
+const schema: WidgetInspectorConfig = {
+  dataSchema: {
+    type: 'object',
+    properties: {
+      label: {
+        type: 'string',
+        default: defaultProps.label,
+      },
+      options: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            value: {
+              type: 'string',
+            },
+            label: {
+              type: 'string',
+            },
+          },
         },
       },
-      {
-        id: `${widgetName}-options`,
-        key: 'options',
-        label: 'options',
-        type: 'inlineCodeInput',
-        options: {
-          label: 'Options',
-        },
+      value: {
+        type: 'string',
       },
-    ],
+    },
+    required: ['label', 'options'],
   },
-];
+  uiSchema: {
+    value: { 'ui:widget': 'hidden' },
+    label: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:title': 'Label',
+      'ui:placeholder': 'Enter label',
+    },
+    options: {
+      'ui:widget': 'inlineCodeInput',
+    },
+  },
+};
+
 export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomSelect,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomSelect };
