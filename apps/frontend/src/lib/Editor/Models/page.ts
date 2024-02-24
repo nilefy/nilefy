@@ -203,7 +203,11 @@ export class WebloomPage {
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    widget.bluePrint.map((child) => {child.parentId=widget.id; editorStore.currentPage.addWidget(child);widget.addChild(child.id)});
+    widget.bluePrint.forEach((child) => {
+      child.parentId = widget.id;
+      editorStore.currentPage.addWidget(child);
+      widget.addChild(child.id);
+    });
   }
   getWidgetById(id: string) {
     return this.widgets[id];
