@@ -14,6 +14,10 @@ import {
   pluginConfigForm as restApiConfigForm,
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
+import {
+  pluginConfigForm as azureBlobStorageConfigForm,
+  queryConfigForm as azureBlobStorageQueryConfigForm,
+} from '../../data_sources/plugins/azure_blob_storage/types';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -35,6 +39,12 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           {
             dataSourceConfig = restApiConfigForm;
             queryConfig = restApiQueryConfigForm;
+          }
+          break;
+        case 'azure blob storage':
+          {
+            dataSourceConfig = azureBlobStorageConfigForm;
+            queryConfig = azureBlobStorageQueryConfigForm;
           }
           break;
         default: {
