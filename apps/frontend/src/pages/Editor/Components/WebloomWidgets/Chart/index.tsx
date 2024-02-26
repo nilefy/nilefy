@@ -21,6 +21,10 @@ import z from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { BarChartBig } from 'lucide-react';
 import { ToolTipWrapper } from '../tooltipWrapper';
+import {
+  ArrayFieldItemType,
+  chartDatasets,
+} from '@/components/rjsf_shad/arrayFieldItemTemplate';
 
 ChartJS.register(
   LinearScale,
@@ -51,6 +55,7 @@ const webloomChartProps = z.object({
      * @note: y-axis data is configured through datasets
      */
     xAxisValue: z.string(),
+    datasets: chartDatasets,
   }),
   tooltip: z.string().optional(),
   layout: z.object({
@@ -125,12 +130,12 @@ const WebloomChart = observer(function WebloomChart() {
             (row) => row[props.data.xAxisValue],
           ),
           // TODO:
-          datasets: [
-            {
-              label: 'Acquisitions by year',
-              data: props.data.dataSource.map((row) => row.count),
-            },
-          ],
+          datasets: props.data.datasets.map((ds) => ({
+            type: ds.chartType,
+            label: ds.name,
+            data: props.data.dataSource.map((d) => d[ds.yValue] ?? 0),
+            backgroundColor: ds.color,
+          })),
         }}
       />
     </ToolTipWrapper>
@@ -161,6 +166,15 @@ const defaultProps: WebloomChartProps = {
       { year: 2015, count: 30 },
       { year: 2016, count: 28 },
     ],
+    datasets: [
+      {
+        name: 'dataset 1',
+        yValue: 'count',
+        aggMethod: 'sum',
+        chartType: 'bar',
+        color: '#165DFF',
+      },
+    ],
     chartType: 'bar',
     direction: 'vertical',
     xAxisValue: 'year',
@@ -178,6 +192,23 @@ const schema: WidgetInspectorConfig = {
     data: {
       dataSource: {
         'ui:widget': 'inlineCodeInput',
+      },
+      datasets: {
+        items: {
+          'ui:options': {
+            'ui:itemType': ArrayFieldItemType.ChartItem,
+          },
+          name: {
+            'ui:widget': 'inlineCodeInput',
+          },
+          // TODO: use custom component
+          yValue: {
+            'ui:label': 'Dataset values',
+          },
+          color: {
+            'ui:widget': 'colorPicker',
+          },
+        },
       },
       xAxisValue: {
         'ui:widget': 'chartDynamicXValue',
