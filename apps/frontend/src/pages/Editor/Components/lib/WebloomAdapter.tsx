@@ -80,6 +80,7 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
         ref={ref}
         className="target relative touch-none overflow-hidden outline-none"
         data-id={id}
+        data-testid={id}
       >
         {props.children}
       </div>

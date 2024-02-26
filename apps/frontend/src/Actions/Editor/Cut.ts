@@ -21,6 +21,9 @@ export class CutAction implements Command {
   }
 
   execute() {
+    const text = window.getSelection()?.toString();
+    if (text) return;
+
     if (this.clipboard.selected.length === 0) return;
 
     for (const node of this.clipboard.selected) {

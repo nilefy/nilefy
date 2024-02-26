@@ -17,7 +17,7 @@ function InsertTab() {
           const config =
             WebloomWidgets[name as keyof typeof WebloomWidgets].config;
           return (
-            <NewNodeAdapter type={name} key={name}>
+            <NewNodeAdapter type={name} key={name} data-testid={config.name}>
               <div>
                 <div className="flex h-full w-full items-center justify-center">
                   {config.icon}
@@ -77,7 +77,10 @@ export const RightSidebar = observer(() => {
   }, [size]);
 
   return (
-    <div className="h-full w-full overflow-y-auto" key="right-sidebar">
+    <div
+      className="right-sidebar h-full w-full overflow-y-auto"
+      key="right-sidebar"
+    >
       <Tabs
         value={openedTab}
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}

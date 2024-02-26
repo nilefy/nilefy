@@ -20,7 +20,7 @@ import {
 } from '../dto/workspace.dto';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -29,11 +29,19 @@ export class WorkspacesController {
   constructor(private workspaceService: WorkspacesService) {}
 
   @Get()
+  @ApiCreatedResponse({
+    description: 'get workspaces',
+    type: Array<WorkspaceDto>,
+  })
   async index(): Promise<WorkspaceDto[]> {
     return await this.workspaceService.index(false);
   }
 
   @Post()
+  @ApiCreatedResponse({
+    description: 'create workspace',
+    type: WorkspaceDto,
+  })
   async create(
     @Request() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(createWorkspaceSchema))
@@ -46,6 +54,10 @@ export class WorkspacesController {
   }
 
   @Put(':id')
+  @ApiCreatedResponse({
+    description: 'update workspace',
+    type: WorkspaceDto,
+  })
   async update(
     @Request() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(updateWorkspaceSchema))

@@ -1,7 +1,7 @@
 import toposort from 'toposort';
 import { get, set } from 'lodash';
 import { DependencyMap } from '../Models/dependencyManager';
-import { evaluate } from '../evaluation';
+import { evaluateExpressions } from '../evaluation';
 type Path = string;
 type DependentPath = Path;
 type DependencyPath = Path;
@@ -57,14 +57,22 @@ const evalForest = (
     }
     const gottenValue = get(unevalNodes, fullPath);
 
-    set(evalTree, fullPath, evaluate((gottenValue || '') as string, evalTree));
+    set(
+      evalTree,
+      fullPath,
+      evaluateExpressions((gottenValue || '') as string, evalTree),
+    );
   }
   // will hit this loop with code without deps
   // example: {{[{name: "dsa"}]}}
   for (const fullPath of codeRawValues) {
     if (evaluatedInGraph.has(fullPath)) continue;
     const gottenValue = get(unevalNodes, fullPath);
-    set(evalTree, fullPath, evaluate((gottenValue || '') as string, evalTree));
+    set(
+      evalTree,
+      fullPath,
+      evaluateExpressions((gottenValue || '') as string, evalTree),
+    );
   }
   return evalTree;
 };

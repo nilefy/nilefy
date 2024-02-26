@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint src --fix",
+    "lint": "eslint src .vitest --fix",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -59,6 +60,7 @@
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.1",
     "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
     "chart.js": "^4.4.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -72,6 +74,7 @@
     "mobx": "^6.12.0",
     "mobx-react-lite": "^4.0.5",
     "mobx-utils": "^6.0.8",
+    "mock-socket": "^9.3.1",
     "nanoid": "^5.0.2",
     "re-resizable": "^6.9.11",
     "react": "^18.2.0",
@@ -94,10 +97,12 @@
     "zustand": "^4.4.4"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.2.0",
     "@tanstack/eslint-plugin-query": "^5.0.5",
     "@tanstack/react-query-devtools": "^5.0.5",
     "@testing-library/jest-dom": "^6.1.3",
     "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/invariant": "^2.2.37",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.8.7",
@@ -117,6 +122,8 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-tailwindcss": "^3.13.0",
     "happy-dom": "^12.2.2",
+    "msw": "^2.2.0",
+    "msw-auto-mock": "^0.18.0",
     "postcss": "^8.4.31",
     "prettier": "3.0.3",
     "tailwind-scrollbar": "^3.0.5",
@@ -124,5 +131,10 @@
     "vite": "^4.5.0",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^0.34.6"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

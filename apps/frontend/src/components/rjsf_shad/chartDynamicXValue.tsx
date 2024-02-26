@@ -13,11 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { observer } from 'mobx-react-lite';
 import { EntityFormContextT } from './entityForm';
 import { editorStore } from '@/lib/Editor/Models';
 import { WebloomChartProps } from '@/pages/Editor/Components/WebloomWidgets/Chart';
-import { toJS } from 'mobx';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
 const ChartDynamicXValueWidget = function ChartDynamicXValueWidget<
