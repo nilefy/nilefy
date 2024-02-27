@@ -7,6 +7,7 @@ import { WebloomTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
 import { WebloomImageWidget } from './WebloomWidgets/Image';
 import { WebloomRadioWidget } from './WebloomWidgets/radioGroup';
+import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -17,6 +18,7 @@ export const WebloomWidgets = {
   Table: WebloomTableWidget,
   Image: WebloomImageWidget,
   WebloomRadioGroup: WebloomRadioWidget,
+  WebloomCheckBox: WebloomCheckBoxWidget,
 } as const;
 
 export const WidgetContext = createContext<{
