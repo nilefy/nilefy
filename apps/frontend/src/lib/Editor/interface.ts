@@ -179,3 +179,8 @@ export type {
   InspectorColorProps,
   WidgetSetters,
 };
+
+export type selectOptions = {
+  value: string;
+  label: string;
+};
