@@ -47,13 +47,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api } from '@/api';
-import { index as getAllApps } from '@/api/apps.api';
 import {
   Await,
   Link,
   defer,
   redirect,
-  useAsyncValue,
   useLoaderData,
   useParams,
 } from 'react-router-dom';
@@ -73,6 +71,7 @@ import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
 import { WebloomLoader } from '@/components/loader';
 import { DebouncedInput } from '@/components/debouncedInput';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const appsLoader =
   (queryClient: QueryClient) =>
@@ -259,12 +258,6 @@ export function CreateAppDialog() {
   const [open, setOpen] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { workspaceId } = useParams();
-  const { mutate, isPending } = api.apps.insert.useMutation({
-    async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
-      setOpen(false);
-    },
-  });
 
   const form = useForm<AppMetaT>({
     resolver: zodResolver(appMetaSchema),
@@ -275,6 +268,13 @@ export function CreateAppDialog() {
     },
   });
 
+  const { mutate, isPending } = api.apps.insert.useMutation({
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+      form.reset();
+      setOpen(false);
+    },
+  });
   function onSubmit(data: AppMetaT) {
     if (!workspaceId) throw new Error('must have workspaceid');
     mutate({
@@ -333,7 +333,11 @@ export function CreateAppDialog() {
 
 function ApplicationsViewResolved() {
   const [appsQuery, setAppsQuery] = useState('');
-  const apps = useAsyncValue() as Awaited<ReturnType<typeof getAllApps>>;
+  const { workspaceId } = useParams();
+  const { data } = api.apps.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
+  const apps = data as NonNullable<typeof data>;
   const filteredApps = useMemo(() => {
     return matchSorter(apps, appsQuery, {
       keys: ['name'],
@@ -341,7 +345,7 @@ function ApplicationsViewResolved() {
   }, [apps, appsQuery]);
 
   return (
-    <div className="flex h-full w-full flex-col gap-6 overflow-y-auto p-4 scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+    <div className="flex h-full w-full flex-col gap-6  p-4 ">
       <DebouncedInput
         className="w-full"
         value={appsQuery}
@@ -371,49 +375,51 @@ function ApplicationsViewResolved() {
           </div>
         </div>
       ) : (
-        <ul className="grid  max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
-          {/*APPS CARDS*/}
-          {filteredApps.map((app) => (
-            <Card
-              key={app.id}
-              className="flex h-full w-full flex-col hover:border hover:border-blue-400"
-            >
-              <CardHeader className="flex flex-col">
-                <div className="flex w-full justify-between">
-                  <CardTitle className="line-clamp-1 md:line-clamp-2">
-                    {app.name}
-                  </CardTitle>
-                  <AppDropDown app={app} />
-                </div>
-                <CardDescription className="line-clamp-1">
-                  Edited{' '}
-                  {getLastUpdatedInfo(
-                    new Date(app.updatedAt ?? app.createdAt),
-                    false,
-                  )}{' '}
-                  by {app.updatedBy?.username || app.createdBy.username}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="line-clamp-3 ">{app.description}</p>
-              </CardContent>
-              <CardFooter className="mt-auto flex justify-end gap-5">
-                <Link
-                  to={`apps/edit/${app.id}`}
-                  className={buttonVariants({ variant: 'default' })}
-                >
-                  Edit
-                </Link>
-                <Link
-                  to={`apps/${app.id}`}
-                  className={buttonVariants({ variant: 'default' })}
-                >
-                  Launch
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </ul>
+        <ScrollArea>
+          <ul className="grid max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
+            {/*APPS CARDS*/}
+            {filteredApps.map((app) => (
+              <Card
+                key={app.id}
+                className="flex h-full w-full flex-col hover:border hover:border-blue-400"
+              >
+                <CardHeader className="flex flex-col">
+                  <div className="flex w-full justify-between">
+                    <CardTitle className="line-clamp-1 md:line-clamp-2">
+                      {app.name}
+                    </CardTitle>
+                    <AppDropDown app={app} />
+                  </div>
+                  <CardDescription className="line-clamp-1">
+                    Edited{' '}
+                    {getLastUpdatedInfo(
+                      new Date(app.updatedAt ?? app.createdAt),
+                      false,
+                    )}{' '}
+                    by {app.updatedBy?.username || app.createdBy.username}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="line-clamp-3 ">{app.description}</p>
+                </CardContent>
+                <CardFooter className="mt-auto flex justify-end gap-5">
+                  <Link
+                    to={`apps/edit/${app.id}`}
+                    className={buttonVariants({ variant: 'default' })}
+                  >
+                    Edit
+                  </Link>
+                  <Link
+                    to={`apps/${app.id}`}
+                    className={buttonVariants({ variant: 'default' })}
+                  >
+                    Launch
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+          </ul>
+        </ScrollArea>
       )}
     </div>
   );

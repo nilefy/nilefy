@@ -50,6 +50,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
 import FormT from '@rjsf/core';
 import { WebloomLoader } from '@/components/loader';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from '@/components/ui/card';
 
 function CreatePluginForm({
   workspaceId,
@@ -158,8 +164,9 @@ function DataSourcesView() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 p-3">
+    <div className="flex h-full w-full flex-col gap-6  p-4 ">
       <DebouncedInput
+        className="w-full"
         value={searchParams.get('gsearch') ?? ''}
         placeholder="Search"
         type="search"
@@ -174,28 +181,36 @@ function DataSourcesView() {
           );
         }}
       />
-      <ScrollArea className="h-full w-full">
-        <div className="flex flex-wrap justify-between gap-6 ">
+      <ScrollArea>
+        <ul className="grid max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
           {filteredDataSources?.map((ds) => {
             return (
-              <div
+              <Card
                 key={ds.id}
-                className="flex w-[30%] flex-col items-center justify-center gap-4 border p-2"
+                className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
               >
-                <Avatar className="mr-2">
-                  <AvatarImage src={ds.image ?? undefined} />
-                  <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
-                </Avatar>
-                <p className="line-clamp-1">{ds.name}</p>
-                <p className="line-clamp-2 h-12">{ds.description}</p>
-                <CreatePluginForm
-                  globalDataSourceId={ds.id}
-                  workspaceId={+(workspaceId as string)}
-                />
-              </div>
+                <CardHeader className="flex flex-col items-center justify-center gap-4">
+                  <Avatar>
+                    <AvatarImage src={ds.image ?? undefined} />
+                    <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
+                  </Avatar>
+                  <p className="line-clamp-1">{ds.name}</p>
+                </CardHeader>
+
+                <CardContent>
+                  <p className="line-clamp-1">{ds.description}</p>
+                </CardContent>
+
+                <CardFooter className="mt-auto flex justify-end gap-5">
+                  <CreatePluginForm
+                    globalDataSourceId={ds.id}
+                    workspaceId={+(workspaceId as string)}
+                  />
+                </CardFooter>
+              </Card>
             );
           })}
-        </div>
+        </ul>
       </ScrollArea>
     </div>
   );
