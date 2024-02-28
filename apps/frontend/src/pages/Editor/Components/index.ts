@@ -10,6 +10,9 @@ import { WebloomSelectWidget } from './WebloomWidgets/Select';
 import { WebloomMultiSelectWidget } from './WebloomWidgets/MultiSelect';
 // import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
 import { WebloomFilePickerWidget } from './WebloomWidgets/FilePicker';
+import { WebloomRadioWidget } from './WebloomWidgets/radioGroup';
+import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
+import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -23,6 +26,9 @@ export const WebloomWidgets = {
   WebloomMultiSelect: WebloomMultiSelectWidget,
   // WebloomDatePicker: WebloomDatePickerWidget,
   WebloomFilePicker: WebloomFilePickerWidget,
+  WebloomRadioGroup: WebloomRadioWidget,
+  WebloomCheckBox: WebloomCheckBoxWidget,
+  WebloomCheckBoxGroup: WebloomCheckBoxGroupWidget,
 } as const;
 
 export const WidgetContext = createContext<{
