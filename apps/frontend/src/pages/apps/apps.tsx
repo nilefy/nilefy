@@ -47,11 +47,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api } from '@/api';
+import { index as getAllApps } from '@/api/apps.api';
 import {
   Await,
   Link,
   defer,
   redirect,
+  useAsyncValue,
   useLoaderData,
   useParams,
 } from 'react-router-dom';
@@ -330,12 +332,8 @@ export function CreateAppDialog() {
 }
 
 function ApplicationsViewResolved() {
-  const { workspaceId } = useParams();
   const [appsQuery, setAppsQuery] = useState('');
-  const { data } = api.apps.index.useQuery({
-    workspaceId: +(workspaceId as string),
-  });
-  const apps = data as NonNullable<typeof data>;
+  const apps = useAsyncValue() as Awaited<ReturnType<typeof getAllApps>>;
   const filteredApps = useMemo(() => {
     return matchSorter(apps, appsQuery, {
       keys: ['name'],
@@ -353,47 +351,70 @@ function ApplicationsViewResolved() {
           setAppsQuery(value.toString());
         }}
       />
-      <ul className="mx-auto grid  max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
-        {/*APPS CARDS*/}
-        {filteredApps.map((app) => (
-          <Card
-            key={app.id}
-            className="flex h-full w-full flex-col hover:border hover:border-blue-400"
-          >
-            <CardHeader className="flex flex-col">
-              <div className="flex w-full justify-between">
-                <CardTitle className="line-clamp-1">{app.name}</CardTitle>
-                <AppDropDown app={app} />
-              </div>
-              <CardDescription className="line-clamp-1">
-                Edited{' '}
-                {getLastUpdatedInfo(
-                  new Date(app.updatedAt ?? app.createdAt),
-                  false,
-                )}{' '}
-                by {app.updatedBy?.username || app.createdBy.username}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="line-clamp-3 ">{app.description}</p>
-            </CardContent>
-            <CardFooter className="mt-auto flex justify-end gap-5">
-              <Link
-                to={`apps/edit/${app.id}`}
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Edit
-              </Link>
-              <Link
-                to={`apps/${app.id}`}
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Launch
-              </Link>
-            </CardFooter>
-          </Card>
-        ))}
-      </ul>
+      {apps.length === 0 ? (
+        <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-5">
+          <p>
+            looks like you do not have any apps try creating one, happy hacking!
+          </p>
+          <div className="w-fit">
+            <CreateAppDialog />
+          </div>
+        </div>
+      ) : filteredApps.length === 0 ? (
+        <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-5">
+          <p>
+            No apps matching your search query try changing the search, or
+            create new app
+          </p>
+          <div className="w-fit">
+            <CreateAppDialog />
+          </div>
+        </div>
+      ) : (
+        <ul className="grid  max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
+          {/*APPS CARDS*/}
+          {filteredApps.map((app) => (
+            <Card
+              key={app.id}
+              className="flex h-full w-full flex-col hover:border hover:border-blue-400"
+            >
+              <CardHeader className="flex flex-col">
+                <div className="flex w-full justify-between">
+                  <CardTitle className="line-clamp-1 md:line-clamp-2">
+                    {app.name}
+                  </CardTitle>
+                  <AppDropDown app={app} />
+                </div>
+                <CardDescription className="line-clamp-1">
+                  Edited{' '}
+                  {getLastUpdatedInfo(
+                    new Date(app.updatedAt ?? app.createdAt),
+                    false,
+                  )}{' '}
+                  by {app.updatedBy?.username || app.createdBy.username}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="line-clamp-3 ">{app.description}</p>
+              </CardContent>
+              <CardFooter className="mt-auto flex justify-end gap-5">
+                <Link
+                  to={`apps/edit/${app.id}`}
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Edit
+                </Link>
+                <Link
+                  to={`apps/${app.id}`}
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Launch
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
