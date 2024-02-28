@@ -17,14 +17,14 @@ export type WebloomFilePickerProps = Pick<
 
 const WebloomFilePicker = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-  const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomFilePickerProps;
+  const props = editorStore.currentPage.getWidgetById(id)
+    .finalValues as WebloomFilePickerProps;
 
   return (
     <div className="flex w-full items-center justify-center gap-2">
-      <Label>{label}</Label>
+      <Label>{props.label}</Label>
       <Input
-        {...rest}
+        value={props.value}
         type="file"
         onChange={(e) => {
           onPropChange({
@@ -50,35 +50,38 @@ const config: WidgetConfig = {
 };
 
 const defaultProps: WebloomFilePickerProps = {
-  value: '',
+  value: undefined,
   label: 'Label',
-  type: 'file',
 };
 
-const widgetName = 'WebloomInput';
-
-const inspectorConfig: WidgetInspectorConfig<WebloomFilePickerProps> = [
-  {
-    sectionName: 'Label',
-    children: [
-      {
-        id: `${widgetName}-label`,
-        key: 'label',
-        label: 'Label',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter label',
-          label: 'Label',
-        },
+const schema: WidgetInspectorConfig = {
+  dataSchema: {
+    type: 'object',
+    properties: {
+      label: {
+        type: 'string',
+        default: '',
       },
-    ],
+      value: {
+        type: 'string',
+      },
+    },
+    required: ['label'],
   },
-];
+  uiSchema: {
+    label: {
+      'ui:label': 'Label',
+      'ui:widget': 'inlineCodeInput',
+    },
+    value: { 'ui:widget': 'hidden' },
+  },
+};
+
 const WebloomFilePickerWidget: Widget<WebloomFilePickerProps> = {
   component: WebloomFilePicker,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
 };
 
 export { WebloomFilePickerWidget };

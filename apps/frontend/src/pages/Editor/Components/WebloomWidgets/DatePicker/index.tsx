@@ -1,9 +1,5 @@
-'use client';
-
-import * as React from 'react';
-import { format, getDefaultOptions } from 'date-fns';
+import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,7 +11,7 @@ import {
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { CalendarDays } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
@@ -26,10 +22,12 @@ export type WebloomDatePickerProps = {
   label: string;
   dateFormat: string;
 };
+
 const WebloomDatePicker = observer(function WebloomDatePicker() {
   const { onPropChange, id } = useContext(WidgetContext);
   const { label, date, dateFormat } = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomDatePickerProps;
+    .finalValues as WebloomDatePickerProps;
+
   return (
     <div>
       <Label>{label}</Label>
@@ -54,7 +52,7 @@ const WebloomDatePicker = observer(function WebloomDatePicker() {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(e: Date) => onPropChange({ key: 'date', value: e })}
+            onSelect={(e) => onPropChange({ key: 'date', value: e })}
             initialFocus
           />
         </PopoverContent>
@@ -82,53 +80,54 @@ const defaultProps: WebloomDatePickerProps = {
 };
 const widgetName = 'WebloomDatePicker';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomDatePickerProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'label',
-        label: 'Name',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter A Name',
-          label: 'Lable',
-        },
-      },
-      {
-        id: `${widgetName}-Date`,
-        key: 'date',
-        label: 'Default Date',
-        type: 'datePicker',
-        options: {
-          date: new Date(),
-        },
-      },
-      {
-        id: `${widgetName}-DateFormat`,
-        key: 'dateFormat',
-        label: 'Date Format',
-        type: 'select',
-        options: {
-          items: [
-            { value: 'yyyy-MM-dd', label: ' 2022-01-31' },
-            { value: 'dd/MM/yyyy', label: ' 31/01/2022' },
-            { value: 'MMMM dd, yyyy', label: 'January 31, 2022' },
-            { value: 'MMMM yyyy', label: 'January 2022' },
-            { value: 'E, MMM dd yyyy', label: 'Mon, Jan 31 2022' },
-            { value: 'PPP', label: 'January 29th, 2022' },
-          ],
-        },
-      },
-    ],
-  },
-];
-export const WebloomDatePickerWidget: Widget<WebloomDatePickerProps> = {
-  component: WebloomDatePicker,
-  config,
-  defaultProps,
-  inspectorConfig,
-};
+// const schema: WidgetInspectorConfig<WebloomDatePickerProps> =
+//   [
+//   {
+//     sectionName: 'General',
+//     children: [
+//       {
+//         id: `${widgetName}-text`,
+//         key: 'label',
+//         label: 'Name',
+//         type: 'inlineCodeInput',
+//         options: {
+//           placeholder: 'Enter A Name',
+//           label: 'Lable',
+//         },
+//       },
+//       {
+//         id: `${widgetName}-Date`,
+//         key: 'date',
+//         label: 'Default Date',
+//         type: 'datePicker',
+//         options: {
+//           date: new Date(),
+//         },
+//       },
+//       {
+//         id: `${widgetName}-DateFormat`,
+//         key: 'dateFormat',
+//         label: 'Date Format',
+//         type: 'select',
+//         options: {
+//           items: [
+//             { value: 'yyyy-MM-dd', label: ' 2022-01-31' },
+//             { value: 'dd/MM/yyyy', label: ' 31/01/2022' },
+//             { value: 'MMMM dd, yyyy', label: 'January 31, 2022' },
+//             { value: 'MMMM yyyy', label: 'January 2022' },
+//             { value: 'E, MMM dd yyyy', label: 'Mon, Jan 31 2022' },
+//             { value: 'PPP', label: 'January 29th, 2022' },
+//           ],
+//         },
+//       },
+//     ],
+//   },
+// ];
+// export const WebloomDatePickerWidget: Widget<WebloomDatePickerProps> = {
+//   component: WebloomDatePicker,
+//   config,
+//   defaultProps,
+//   inspectorConfig,
+// };
 
-export { WebloomDatePicker };
+// export { WebloomDatePicker };

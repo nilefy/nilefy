@@ -8,7 +8,7 @@ import { WebloomTableWidget } from './WebloomWidgets/Table';
 import { WebloomImageWidget } from './WebloomWidgets/Image';
 import { WebloomSelectWidget } from './WebloomWidgets/Select';
 import { WebloomMultiSelectWidget } from './WebloomWidgets/MultiSelect';
-import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
+// import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
 import { WebloomFilePickerWidget } from './WebloomWidgets/FilePicker';
 
 export const WebloomWidgets = {
@@ -21,7 +21,7 @@ export const WebloomWidgets = {
   Image: WebloomImageWidget,
   WebloomSelect: WebloomSelectWidget,
   WebloomMultiSelect: WebloomMultiSelectWidget,
-  WebloomDatePicker: WebloomDatePickerWidget,
+  // WebloomDatePicker: WebloomDatePickerWidget,
   WebloomFilePicker: WebloomFilePickerWidget,
 } as const;
 
