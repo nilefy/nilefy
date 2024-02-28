@@ -343,8 +343,9 @@ function ApplicationsViewResolved() {
   }, [apps, appsQuery]);
 
   return (
-    <div className="flex h-full w-full flex-col gap-5 p-6 pr-0">
+    <div className="flex h-full w-full flex-col gap-6 overflow-y-auto p-4 scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
       <DebouncedInput
+        className="w-full"
         value={appsQuery}
         placeholder="Search apps in this workspace"
         type="search"
@@ -352,17 +353,16 @@ function ApplicationsViewResolved() {
           setAppsQuery(value.toString());
         }}
       />
-      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-wrap gap-8 overflow-y-auto">
+      <ul className="mx-auto grid  max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
+        {/*APPS CARDS*/}
         {filteredApps.map((app) => (
           <Card
             key={app.id}
-            className="h-fit min-w-[90%] max-w-[90%]   hover:cursor-pointer hover:border  hover:border-blue-400 md:min-w-[45%]  md:max-w-[45%] lg:min-w-[30%] lg:max-w-[30%]"
+            className="flex h-full w-full flex-col hover:border hover:border-blue-400"
           >
             <CardHeader className="flex flex-col">
               <div className="flex w-full justify-between">
-                <CardTitle className="line-clamp-1 w-11/12">
-                  {app.name}
-                </CardTitle>
+                <CardTitle className="line-clamp-1">{app.name}</CardTitle>
                 <AppDropDown app={app} />
               </div>
               <CardDescription className="line-clamp-1">
@@ -375,9 +375,9 @@ function ApplicationsViewResolved() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="line-clamp-1">{app.description}</p>
+              <p className="line-clamp-3 ">{app.description}</p>
             </CardContent>
-            <CardFooter className="flex justify-end gap-5">
+            <CardFooter className="mt-auto flex justify-end gap-5">
               <Link
                 to={`apps/edit/${app.id}`}
                 className={buttonVariants({ variant: 'default' })}
@@ -393,7 +393,7 @@ function ApplicationsViewResolved() {
             </CardFooter>
           </Card>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -414,7 +414,7 @@ export function ApplicationsLayout() {
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />
