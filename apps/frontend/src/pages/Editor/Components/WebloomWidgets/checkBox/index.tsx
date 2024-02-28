@@ -7,10 +7,17 @@ import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import { Label } from '@/components/ui/label';
+import {
+  EventTypes,
+  WidgetsEventHandler,
+  genEventHandlerUiSchema,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
 
 export type WebloomCheckBoxProps = {
   label: string;
   value: string;
+  events: WidgetsEventHandler;
 };
 
 const WebloomCheckBox = observer(() => {
@@ -26,6 +33,8 @@ const WebloomCheckBox = observer(() => {
               key: 'value',
               value: e,
             });
+            // execute user defined eventhandlers
+            editorStore.executeActions(id, 'change');
           }}
         />
         <Label>{props.label}</Label>
@@ -50,6 +59,11 @@ const config: WidgetConfig = {
 const defaultProps: WebloomCheckBoxProps = {
   label: 'Label',
   value: 'Check Me',
+  events: [],
+};
+
+const webloomCheckBoxEvents: EventTypes = {
+  change: 'Change',
 };
 
 const schema: WidgetInspectorConfig = {
@@ -63,8 +77,9 @@ const schema: WidgetInspectorConfig = {
       value: {
         type: 'string',
       },
+      events: widgetsEventHandlerJsonSchema,
     },
-    required: ['label'],
+    required: ['label', 'events'],
   },
   uiSchema: {
     value: { 'ui:widget': 'hidden' },
@@ -73,6 +88,7 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
     },
+    events: genEventHandlerUiSchema(webloomCheckBoxEvents),
   },
 };
 

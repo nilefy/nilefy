@@ -1,3 +1,4 @@
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Widget, WidgetConfig, selectOptions } from '@/lib/Editor/interface';
 import { CircleDot } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
@@ -6,12 +7,18 @@ import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import { Label } from '@/components/ui/label';
-import { RadioGroupComponent } from './radioGroup';
+import {
+  EventTypes,
+  WidgetsEventHandler,
+  genEventHandlerUiSchema,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
 
 export type WebloomRadioProps = {
   options: selectOptions[];
   label: string;
   value: string;
+  events: WidgetsEventHandler;
 };
 
 const WebloomRadio = observer(() => {
@@ -21,11 +28,24 @@ const WebloomRadio = observer(() => {
   return (
     <div className="w-full">
       <Label>{props.label}</Label>
-      <RadioGroupComponent
+      <RadioGroup
         value={props.value}
-        options={props.options}
-        onPropChange={onPropChange}
-      />
+        onValueChange={(e) => {
+          onPropChange({
+            key: 'value',
+            value: e,
+          });
+          // execute user defined actions
+          editorStore.executeActions(id, 'change');
+        }}
+      >
+        {props.options.map((option: selectOptions) => (
+          <div className="flex items-center space-x-2" key={option.value}>
+            <RadioGroupItem id={option.value} value={option.value} />
+            <Label htmlFor={option.value}>{option.label}</Label>
+          </div>
+        ))}
+      </RadioGroup>
     </div>
   );
 });
@@ -51,6 +71,11 @@ const defaultProps: WebloomRadioProps = {
   ],
   label: 'Radio',
   value: 'Option 1',
+  events: [],
+};
+
+const Events: EventTypes = {
+  change: 'Change',
 };
 
 const schema: WidgetInspectorConfig = {
@@ -78,11 +103,13 @@ const schema: WidgetInspectorConfig = {
       value: {
         type: 'string',
       },
+      events: widgetsEventHandlerJsonSchema,
     },
-    required: ['label', 'options'],
+    required: ['events', 'label', 'options'],
   },
   uiSchema: {
     value: { 'ui:widget': 'hidden' },
+    events: genEventHandlerUiSchema(Events),
     label: {
       'ui:widget': 'inlineCodeInput',
       'ui:title': 'Label',

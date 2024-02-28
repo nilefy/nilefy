@@ -13,12 +13,11 @@ export function CheckBoxGroup(props: {
   }) => void;
   value: selectOptions[];
 }) {
-  console.log(props.value, 'value');
   return (
     <>
       {props.options.map((option: selectOptions) => (
         <div
-          className="flex items-center space-x-2 m-2 align-middle"
+          className="m-2 flex items-center space-x-2 align-middle"
           key={option.value}
         >
           <Checkbox

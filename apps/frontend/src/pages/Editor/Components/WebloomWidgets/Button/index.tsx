@@ -43,7 +43,7 @@ const WebloomButton = observer(function WebloomButton() {
       <Button
         {...props}
         disabled={props.isLoading || props.isDisabled}
-        className={`active:bg-primary/20 h-full w-full`}
+        className={`h-full w-full active:bg-primary/20`}
         onClick={() => editorStore.executeActions(id, 'click')}
       >
         {props.isLoading ? (
