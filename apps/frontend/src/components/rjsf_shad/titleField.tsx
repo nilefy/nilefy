@@ -5,6 +5,7 @@ import {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 import { Separator } from '@/components/ui/separator';
+
 // TODO: remove this after PR https://github.com/z-grad-pr-sh/frontend/pull/90
 export function TypographyH2({ title }: { title: string }) {
   return (
@@ -24,9 +25,9 @@ export default function TitleField<
   F extends FormContextType = any,
 >({ id, title }: TitleFieldProps<T, S, F>) {
   return (
-    <div id={id}>
+    <div id={id} className="my-1">
       <TypographyH2 title={title} />
-      <Separator className="mb-8" />
+      <Separator />
     </div>
   );
 }

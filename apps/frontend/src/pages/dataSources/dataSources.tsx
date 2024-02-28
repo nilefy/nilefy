@@ -49,6 +49,7 @@ import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
 import FormT from '@rjsf/core';
+import { WebloomLoader } from '@/components/loader';
 
 function CreatePluginForm({
   workspaceId,
@@ -386,54 +387,54 @@ export function DataSourceView() {
     api.dataSources.update.useMutation();
 
   if (isPending) {
-    return <>loading ....</>;
+    // TODO: make the loader inside the template
+    return <WebloomLoader />;
   } else if (isError) {
     throw error;
   }
+
   return (
     <div className="flex h-full w-full">
       <DataSourcesSidebar />
-      <ScrollArea className="h-full w-full">
+      <ScrollArea className="h-full w-full p-4">
         <div className="flex w-full flex-col gap-5">
           <div className="flex gap-5">
+            {/*TODO: enable chaning ds name*/}
             <Input defaultValue={data.name} />
           </div>
-          <div className="p-4">
-            <RJSFShadcn
-              ref={rjsfRef}
-              // formContext={{ isSubmitting: isSubmitting }}
-              schema={data.dataSource.config.schema}
-              uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config}
-              validator={validator}
-              onSubmit={({ formData }) => {
-                console.log('submit', formData);
-                if (!workspaceId || !datasourceId)
-                  throw new Error(
-                    "that's weird this function should run under workspaceId, datasourceId",
-                  );
-                updateMutate({
-                  workspaceId: +workspaceId,
-                  dataSourceId: +datasourceId,
-                  dto: {
-                    config: formData,
-                  },
-                });
-              }}
-            >
-              <Button className="mt-4" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    Saving... <SaveIcon />{' '}
-                  </>
-                ) : (
-                  <>
-                    Save <SaveIcon />
-                  </>
-                )}
-              </Button>
-            </RJSFShadcn>
-          </div>
+          <RJSFShadcn
+            ref={rjsfRef}
+            schema={data.dataSource.config.schema}
+            uiSchema={data.dataSource.config.uiSchema}
+            formData={data.config}
+            validator={validator}
+            onSubmit={({ formData }) => {
+              console.log('submit', formData);
+              if (!workspaceId || !datasourceId)
+                throw new Error(
+                  "that's weird this function should run under workspaceId, datasourceId",
+                );
+              updateMutate({
+                workspaceId: +workspaceId,
+                dataSourceId: +datasourceId,
+                dto: {
+                  config: formData,
+                },
+              });
+            }}
+          >
+            <Button className="mt-4" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <SaveIcon /> Saving...
+                </>
+              ) : (
+                <>
+                  <SaveIcon /> Save
+                </>
+              )}
+            </Button>
+          </RJSFShadcn>
         </div>
       </ScrollArea>
     </div>

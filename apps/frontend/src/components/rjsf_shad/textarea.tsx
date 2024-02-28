@@ -8,7 +8,8 @@ import {
 } from '@rjsf/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { ChangeEvent, FocusEvent } from 'react';
-import { FormItem, FormLabel } from '../ui/form';
+import { FormItem } from '../ui/form';
+import { Label } from '../ui/label';
 
 /** The `TextareaWidget` is a widget for rendering input fields as textarea.
  *
@@ -44,10 +45,7 @@ export default function TextareaWidget<
 
   return (
     <FormItem>
-      {/* {labelValue( */}
-      {/*   <FormLabel htmlFor={id}>{label}</FormLabel>, */}
-      {/*   hideLabel || !label, */}
-      {/* )} */}
+      {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
       <Textarea
         id={id}
         name={id}
