@@ -211,7 +211,7 @@ export function SelectWorkSpace() {
   }
   const currentWorkspce = workspaces.find((i) => i.id === +workspaceId);
   if (currentWorkspce === undefined) {
-    throw new Error('Not Found');
+    throw new Error('Workspace Not Found');
   }
 
   return (
