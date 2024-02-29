@@ -185,45 +185,54 @@ export const WebloomElement = observer(function WebloomElement({
   );
 });
 
-const WidgetWrapper = forwardRef<
-  HTMLDivElement,
-  {
-    id: string;
-    children: React.ReactNode;
-    isVisible: boolean;
-    dimensions: WebloomPixelDimensions;
-  }
->(({ id, children, isVisible, dimensions }, ref) => {
-  return (
-    <div
-      style={{
-        top: dimensions.y,
-        left: dimensions.x,
-        width: dimensions.width,
-        height: dimensions.height,
-        visibility: isVisible ? 'visible' : 'hidden',
-        position: 'absolute',
-      }}
-      className="target touch-none overflow-hidden outline-none"
-      data-id={id}
-      ref={ref}
-    >
+const WidgetWrapper = observer(
+  // eslint-disable-next-line react/display-name
+  forwardRef<
+    HTMLDivElement,
+    {
+      id: string;
+      children: React.ReactNode;
+      isVisible: boolean;
+      dimensions: WebloomPixelDimensions;
+    }
+  >(({ id, children, isVisible, dimensions }, ref) => {
+    return (
       <div
-        key={id}
-        className={cn(
-          {
-            hidden: !isVisible,
-          },
-          {
-            flex: isVisible,
-          },
-          'w-full h-full',
-        )}
+        style={{
+          top: dimensions.y,
+          left: dimensions.x,
+          width: dimensions.width,
+          height: dimensions.height,
+          visibility: isVisible ? 'visible' : 'hidden',
+          position: 'absolute',
+        }}
+        className="target touch-none overflow-hidden outline-none"
+        data-id={id}
+        ref={ref}
       >
-        {children}
+        {
+          //this is to prevent widgets from capturing focus when drag is happening
+          editorStore.currentPage.isDragging && (
+            <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+          )
+        }
+        <div
+          key={id}
+          className={cn(
+            {
+              hidden: !isVisible,
+            },
+            {
+              flex: isVisible,
+            },
+            'w-full h-full',
+          )}
+        >
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }),
+);
 
 WidgetWrapper.displayName = 'WidgetWrapper';
