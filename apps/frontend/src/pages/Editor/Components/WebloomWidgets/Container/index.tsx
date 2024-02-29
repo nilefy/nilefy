@@ -7,7 +7,7 @@ import {
 } from '@/lib/Editor/interface';
 import { BoxSelect } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { CSSProperties, ReactNode, Ref, forwardRef, useContext } from 'react';
+import { ReactNode, Ref, forwardRef, useContext } from 'react';
 import { WidgetContext } from '../..';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Grid } from '../../lib';
@@ -49,7 +49,10 @@ const WebloomContainer = observer(
       return (
         <ScrollArea
           className="absolute h-full w-full"
-          scrollAreaViewPortClassName={cn('absolute', { hidden: !isVisibile })}
+          scrollAreaViewPortClassName={cn('absolute', {
+            hidden: !isVisibile,
+            'rounded-md': !entity.isRoot,
+          })}
           style={{
             ...outerContainerStyle,
             position: 'absolute',
