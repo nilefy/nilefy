@@ -174,7 +174,13 @@ export class WebloomWidget
   setDom(dom: HTMLElement) {
     this.dom = dom;
   }
-
+  get scrollableContainer(): HTMLDivElement | undefined {
+    if (this.isCanvas)
+      // this is an implementation detail, the scrollable container is the parent of the parent of the canvas
+      // in radix scrollable areas
+      return this.dom?.parentElement?.parentElement as HTMLDivElement;
+    return this.canvasParent.scrollableContainer as HTMLDivElement;
+  }
   getProp(key: string) {
     return this.values[key] ?? this.rawValues[key];
   }

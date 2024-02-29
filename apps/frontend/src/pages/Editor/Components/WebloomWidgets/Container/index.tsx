@@ -62,6 +62,7 @@ const WebloomContainer = observer(
           <div
             ref={ref}
             className="relative  bg-gray-300"
+            data-id={id}
             style={{
               ...innerContainerStyle,
               visibility: isVisibile ? 'visible' : 'hidden',
