@@ -6,14 +6,14 @@ import { CopyAction } from '@/Actions/Editor/Copy';
 import { CutAction } from '@/Actions/Editor/Cut';
 import { ClipboardDataT } from '@/Actions/types';
 import { PasteAction } from '@/Actions/Editor/Paste';
-import { useMousePosition } from './useMousePosition';
 import ResizeAction from '@/Actions/Editor/Resize';
+import { useEditorMousePosition } from './useEditorMousePosition';
 
 export const useEditorHotKeys = (
   editorStore: EditorState,
   commandManager: CommandManager,
 ) => {
-  const mousePos = useMousePosition();
+  const mousePos = useEditorMousePosition();
   useHotkeys('esc', () => {
     commandManager.executeCommand(ResizeAction.cancel());
   });
@@ -44,7 +44,7 @@ export const useEditorHotKeys = (
       commandManager.executeCommand(
         new PasteAction({
           data,
-          mousePos: mousePos,
+          mousePos: mousePos.current,
         }),
       );
     } catch (ig) {

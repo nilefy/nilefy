@@ -1,15 +1,13 @@
 import { useEffect, useRef } from 'react';
-/**
- *
- * @returns the current mouse position as a react ref (does not trigger rerender)
- */
-export const useMousePosition = () => {
+import { getMousePositionRelativeToEditor } from '../utils';
+
+export const useEditorMousePosition = () => {
   const mousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { x, y } = e;
-      mousePos.current = { x, y };
+      mousePos.current = getMousePositionRelativeToEditor({ x, y });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
