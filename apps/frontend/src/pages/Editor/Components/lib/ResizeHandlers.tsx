@@ -2,7 +2,6 @@ import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
 import { useMemo } from 'react';
-import { createPortal } from 'react-dom';
 
 import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';

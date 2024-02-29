@@ -132,6 +132,7 @@ const MultiSelect = observer(() => {
         onDragEnd={onDragEndHandler}
         onDrag={onDragHandler}
         onDragStart={onDragStartHandler}
+        preventClickEventOnDrag={true}
       />
     </div>
   );
