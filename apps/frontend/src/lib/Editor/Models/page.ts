@@ -99,6 +99,7 @@ export class WebloomPage {
       snapshot: computed,
       isDragging: computed,
       isResizing: computed,
+      clearSelectedNodes: action,
     });
     this.id = id;
     this.name = name;
@@ -139,6 +140,10 @@ export class WebloomPage {
       }
     });
     this.dependencyManager.addDependencies(allDependencies);
+  }
+
+  clearSelectedNodes() {
+    this.selectedNodeIds.clear();
   }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;

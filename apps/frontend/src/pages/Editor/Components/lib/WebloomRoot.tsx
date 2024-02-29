@@ -9,7 +9,11 @@ import {
   useRef,
 } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useSetDom, useWebloomDrop } from '@/lib/Editor/hooks';
+import {
+  useInitSelection,
+  useSetDom,
+  useWebloomDrop,
+} from '@/lib/Editor/hooks';
 import { WebloomContainer } from '../WebloomWidgets/Container';
 import { WidgetContext } from '..';
 import { MultiSelect } from './MultiSelect';
@@ -78,6 +82,7 @@ export const WebloomRoot = observer(function WebloomRoot({
       id,
     };
   }, [onPropChange, id]);
+  useInitSelection(ref, null);
   return (
     <WidgetContext.Provider value={contextValue}>
       <WebloomContainer

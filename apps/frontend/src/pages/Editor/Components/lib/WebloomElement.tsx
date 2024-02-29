@@ -1,7 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import {
   ElementType,
-  RefObject,
   forwardRef,
   useCallback,
   useEffect,
@@ -22,31 +21,14 @@ import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
 import { WebloomPixelDimensions } from '@/lib/Editor/interface';
 import { WebloomContainer } from '../WebloomWidgets/Container';
-import { useSetDom, useWebloomDrag, useWebloomDrop } from '@/lib/Editor/hooks';
+import {
+  useInitSelection,
+  useSetDom,
+  useWebloomDrag,
+  useWebloomDrop,
+} from '@/lib/Editor/hooks';
 import { ResizeHandles } from './ResizeHandlers';
-import { SelectionAction } from '@/Actions/Editor/selection';
 
-const useInitSelection = (ref: RefObject<HTMLDivElement>, id: string) => {
-  const select = useCallback(
-    (e: MouseEvent) => {
-      e.stopPropagation();
-      commandManager.executeCommand(new SelectionAction(id, false));
-    },
-    [id],
-  );
-  useEffect(() => {
-    const curRef = ref.current;
-    if (curRef) {
-      curRef.addEventListener('click', select);
-    }
-    return () => {
-      if (curRef) {
-        curRef.removeEventListener('click', select);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref.current, select]);
-};
 const RenderedElement = observer(
   // eslint-disable-next-line react/display-name
   forwardRef<
