@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useRef, Suspense } from 'react';
-import throttle from 'lodash/throttle';
+import { useRef, Suspense, useCallback } from 'react';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -22,16 +21,8 @@ import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
 import { useInitResizing } from '@/lib/Editor/hooks';
+import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 
-const throttledResizeCanvas = throttle(
-  (width: number) => {
-    editorStore.currentPage.setPageDimensions({ width: Math.round(width) });
-  },
-  100,
-  {
-    leading: true,
-  },
-);
 const DndOptions: Partial<TouchBackendOptions> = {
   enableMouseEvents: true,
 };
@@ -40,6 +31,13 @@ export const Editor = observer(() => {
   useSetPageDimensions(editorRef);
   useEditorHotKeys(editorStore, commandManager);
   useInitResizing();
+  const handleResize = useCallback(() => {
+    if (!editorRef.current) return;
+    const width = editorRef.current?.clientWidth;
+    const height = editorRef.current?.clientHeight;
+    editorStore.currentPage.setPageDimensions({ width, height });
+  }, [editorRef]);
+  const throttledResize = useThrottle(handleResize, 100);
   return (
     <div className=" flex h-full max-h-full w-full flex-col bg-transparent">
       <div className="h-fit w-full">
@@ -50,15 +48,19 @@ export const Editor = observer(() => {
         <DndProvider backend={TouchBackend} options={DndOptions}>
           <WebloomElementShadow />
 
-          <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel
-              defaultSizePercentage={70}
-              minSizePercentage={50}
-              onResize={(sizes) => {
-                throttledResizeCanvas(sizes.sizePixels);
-              }}
-            >
-              <ResizablePanelGroup direction="vertical">
+          <ResizablePanelGroup
+            onLayout={() => {
+              throttledResize();
+            }}
+            direction="horizontal"
+          >
+            <ResizablePanel defaultSizePercentage={70} minSizePercentage={50}>
+              <ResizablePanelGroup
+                onLayout={() => {
+                  throttledResize();
+                }}
+                direction="vertical"
+              >
                 <ResizablePanel
                   defaultSizePercentage={65}
                   minSizePercentage={25}
