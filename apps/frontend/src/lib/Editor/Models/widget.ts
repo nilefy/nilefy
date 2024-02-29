@@ -150,7 +150,6 @@ export class WebloomWidget
     return getGridBoundingRect(this.gridDimensions);
   }
   get innerRowsCount() {
-    if (this.isRoot) return this.page.height;
     let min = 0;
     if (this.layoutMode === 'auto') {
       min = 20;

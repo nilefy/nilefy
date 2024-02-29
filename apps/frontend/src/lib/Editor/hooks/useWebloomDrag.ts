@@ -15,6 +15,7 @@ export const useWebloomDrag = (item: DraggedItem) => {
     },
     end: () => {
       editorStore.currentPage.setDraggedWidgetId(null);
+      editorStore.currentPage.setShadowElement(null);
     },
   }));
   return [{ isDragging }, drag] as const;
