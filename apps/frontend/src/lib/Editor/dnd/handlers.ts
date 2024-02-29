@@ -205,9 +205,12 @@ const getDropPositionWithCollisions = (
   let dimensions = {
     ...gridPosition,
   };
-
+  let shouldHandleLateralCollisions = true;
   if (overId !== EDITOR_CONSTANTS.ROOT_NODE_ID && overId !== draggedId) {
-    dimensions = handleHoverCollision(
+    const {
+      dims,
+      shouldHandleLateralCollisions: _shouldHandleLateralCollisions,
+    } = handleHoverCollision(
       dimensions,
       parent.pixelDimensions,
       overEl.boundingRect,
@@ -216,15 +219,19 @@ const getDropPositionWithCollisions = (
       mousePos,
       forShadow,
     );
+    dimensions = dims;
+    shouldHandleLateralCollisions = _shouldHandleLateralCollisions;
   }
-  dimensions = handleLateralCollisions(
-    id,
-    overId,
-    draggedId,
-    parent.nodes,
-    dimensions,
-    mousePos,
-  );
+  if (shouldHandleLateralCollisions) {
+    dimensions = handleLateralCollisions(
+      id,
+      overId,
+      draggedId,
+      parent.nodes,
+      dimensions,
+      mousePos,
+    );
+  }
   dimensions = handleParentCollisions(
     dimensions,
     parent.innerContainerPixelDimensions,

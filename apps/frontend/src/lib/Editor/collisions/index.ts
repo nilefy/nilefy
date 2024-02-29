@@ -19,13 +19,14 @@ export function handleHoverCollision(
   isCanvas: boolean,
   mousePos: Point,
   forShadow = false,
-): WebloomGridDimensions {
+): { dims: WebloomGridDimensions; shouldHandleLateralCollisions: boolean } {
   const nodePixelDims = convertGridToPixel(dimensions, grid, parentPixelDims);
-
+  let shouldHandleLateralCollisions = true;
   if (!isCanvas) {
     const { top, bottom } = overBoundingRect;
     const middle = top + (bottom - top) / 2;
     if (mousePos.y <= middle - 5) {
+      shouldHandleLateralCollisions = false;
       if (forShadow) {
         nodePixelDims.y = top - 10;
         nodePixelDims.height = 10;
@@ -33,6 +34,7 @@ export function handleHoverCollision(
         nodePixelDims.y = top;
       }
     } else {
+      shouldHandleLateralCollisions = false;
       if (forShadow) {
         nodePixelDims.height = 10;
         nodePixelDims.y = bottom - 10;
@@ -41,7 +43,10 @@ export function handleHoverCollision(
       }
     }
   }
-  return convertPixelToGrid(nodePixelDims, grid, parentPixelDims);
+  return {
+    dims: convertPixelToGrid(nodePixelDims, grid, parentPixelDims),
+    shouldHandleLateralCollisions,
+  };
 }
 /**
  *
