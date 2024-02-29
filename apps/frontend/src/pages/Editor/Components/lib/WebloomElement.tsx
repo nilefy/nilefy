@@ -1,7 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import {
   ElementType,
-  Ref,
   RefObject,
   forwardRef,
   useCallback,
@@ -48,7 +47,68 @@ const useInitSelection = (ref: RefObject<HTMLDivElement>, id: string) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref.current, select]);
 };
+const RenderedElement = observer(
+  // eslint-disable-next-line react/display-name
+  forwardRef<
+    HTMLDivElement,
+    {
+      id: string;
+      isVisible: boolean;
+      isPreview: boolean;
+    }
+  >(({ id, isVisible, isPreview }, ref) => {
+    const widget = editorStore.currentPage.getWidgetById(id);
+    if (widget.type === 'WebloomContainer') {
+      const innerContainerStyle = {
+        width: widget.innerContainerPixelDimensions.width + 'px',
+        height: widget.innerContainerPixelDimensions.height + 'px',
+      } as const;
+      const outerContainerStyle = {
+        top: widget.relativePixelDimensions.y + 'px',
+        left: widget.relativePixelDimensions.x + 'px',
+        width: widget.relativePixelDimensions.width + 'px',
+        height: widget.relativePixelDimensions.height + 'px',
+      } as const;
 
+      return (
+        <>
+          <ResizeHandles id={id} />
+
+          <WebloomContainer
+            innerContainerStyle={innerContainerStyle}
+            outerContainerStyle={outerContainerStyle}
+            isVisibile={isVisible}
+            ref={ref}
+          >
+            {widget.nodes.map((nodeId) => (
+              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+            ))}
+          </WebloomContainer>
+        </>
+      );
+    }
+    const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
+    return (
+      <>
+        <ResizeHandles id={id} />
+
+        <WidgetWrapper
+          dimensions={widget.relativePixelDimensions}
+          id={id}
+          isVisible={isVisible}
+          ref={ref}
+        >
+          <WebloomWidget>
+            {widget.nodes.map((nodeId) => (
+              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+            ))}
+          </WebloomWidget>
+        </WidgetWrapper>
+      </>
+    );
+  }),
+);
+RenderedElement.displayName = 'RenderedElement';
 export const WebloomElement = observer(function WebloomElement({
   id,
   isPreview,
@@ -70,7 +130,6 @@ export const WebloomElement = observer(function WebloomElement({
       id,
     };
   }, [onPropChange, id]);
-  const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
   const [{ isDragging }, drag] = useWebloomDrag({
     id,
     isNew: false,
@@ -89,62 +148,27 @@ export const WebloomElement = observer(function WebloomElement({
   const isVisible = !isDragging;
   useSetDom(ref, id);
   useInitSelection(ref, id);
-  const RenderedElement = observer(() => {
-    if (widget.type === 'WebloomContainer') {
-      const innerContainerStyle = {
-        width: widget.innerContainerPixelDimensions.width + 'px',
-        height: widget.innerContainerPixelDimensions.height + 'px',
-      } as const;
-      const outerContainerStyle = {
-        top: widget.relativePixelDimensions.y + 'px',
-        left: widget.relativePixelDimensions.x + 'px',
-        width: widget.relativePixelDimensions.width + 'px',
-        height: widget.relativePixelDimensions.height + 'px',
-      } as const;
 
-      return (
-        <WidgetContext.Provider value={contextValue}>
-          <ResizeHandles id={id} />
-
-          <WebloomContainer
-            innerContainerStyle={innerContainerStyle}
-            outerContainerStyle={outerContainerStyle}
-            isVisibile={isVisible}
-            ref={ref}
-          >
-            {widget.nodes.map((nodeId) => (
-              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
-            ))}
-          </WebloomContainer>
-        </WidgetContext.Provider>
-      );
-    }
-
+  if (isPreview)
     return (
-      <WidgetContext.Provider value={contextValue}>
-        <ResizeHandles id={id} />
-
-        <WidgetWrapper
-          dimensions={widget.relativePixelDimensions}
-          id={id}
-          isVisible={isVisible}
-          ref={ref}
-        >
-          <WebloomWidget>
-            {widget.nodes.map((nodeId) => (
-              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
-            ))}
-          </WebloomWidget>
-        </WidgetWrapper>
-      </WidgetContext.Provider>
+      <RenderedElement
+        id={id}
+        isPreview={false}
+        isVisible={isVisible}
+        ref={ref}
+      />
     );
-  });
-
-  if (isPreview) return <RenderedElement />;
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <RenderedElement />
+        <WidgetContext.Provider value={contextValue}>
+          <RenderedElement
+            id={id}
+            isPreview={false}
+            isVisible={isVisible}
+            ref={ref}
+          />
+        </WidgetContext.Provider>
       </ContextMenuTrigger>
       <ContextMenuPortal>
         <ContextMenuContent>

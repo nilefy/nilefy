@@ -10,7 +10,7 @@ export const useWebloomDrag = (item: DraggedItem) => {
       isDragging: monitor.isDragging(),
     }),
     canDrag: () => {
-      if (editorStore.currentPage.resizedWidgetId !== null) return false;
+      if (editorStore.currentPage.isResizing) return false;
       return true;
     },
     end: () => {

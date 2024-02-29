@@ -13,7 +13,7 @@ export const useWebloomDrop = (id: string) => {
       handleDrop(item as DraggedItem, monitor, id);
     },
     canDrop() {
-      if (editorStore.currentPage.resizedWidgetId !== null) return false;
+      if (editorStore.currentPage.isResizing) return false;
       return true;
     },
   }));

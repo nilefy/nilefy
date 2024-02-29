@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useRef, Suspense, useCallback } from 'react';
+import { useRef, Suspense } from 'react';
 import throttle from 'lodash/throttle';
 import {
   ResizableHandle,
@@ -7,12 +7,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
 
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import {
-  MultiSelectBounding,
-  WebloomElementShadow,
-  WebloomRoot,
-} from './Components/lib';
+import { WebloomElementShadow, WebloomRoot } from './Components/lib';
 import { commandManager } from '@/Actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { EditorLeftSidebar } from './editorLeftSideBar';
@@ -25,9 +20,7 @@ import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
-import { useMousePosition } from '@/lib/Editor/hooks/useMousePosition';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
-import { MultiSelect } from './Components/lib/MultiSelect';
 import { useInitResizing } from '@/lib/Editor/hooks';
 
 const throttledResizeCanvas = throttle(
@@ -77,9 +70,6 @@ export const Editor = observer(() => {
                     >
                       {/* <MultiSelectBounding /> */}
                       <WebloomRoot isPreview={false} />
-                      {/* <ResizeHandlers /> */}
-                      {/* <MultiSelect/> */}
-                      {/** todo: maybe only use the overlay instead of also having drop shadow in the future but for now this'll do */}
                     </div>
                   </div>
                 </ResizablePanel>
