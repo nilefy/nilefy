@@ -11,12 +11,14 @@ import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { EmailSignUpService } from '../email/email-sign-up/email-sign-up.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
+    private emailSignUpService: EmailSignUpService,
     @Inject(DrizzleAsyncProvider) private readonly db: DatabaseI,
   ) {}
 
@@ -75,7 +77,14 @@ export class AuthService {
 
     try {
       const u = await this.userService.create({ ...user, password: hashed });
-
+      const jwt = await this.jwtService.signAsync(
+        {
+          sub: 1,
+          username: user.username,
+        } satisfies PayloadUser,
+        { expiresIn: '1d' },
+      );
+      this.emailSignUpService.sendEmail(user.email, jwt);
       return {
         access_token: await this.jwtService.signAsync({
           sub: u.id,
