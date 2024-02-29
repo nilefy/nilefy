@@ -10,7 +10,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 export class SelectionAction implements Command {
   constructor(
     private id: string,
-    private shiftKey: boolean = true,
+    private shiftKey: boolean = false,
   ) {}
 
   execute(): void {

@@ -21,21 +21,24 @@ export function handleHoverCollision(
   forShadow = false,
 ): WebloomGridDimensions {
   const nodePixelDims = convertGridToPixel(dimensions, grid, parentPixelDims);
+
   if (!isCanvas) {
-    if (
-      mousePos.y <=
-      overBoundingRect.top +
-        (overBoundingRect.bottom - overBoundingRect.top) / 2 -
-        5
-    ) {
+    const { top, bottom } = overBoundingRect;
+    const middle = top + (bottom - top) / 2;
+    if (mousePos.y <= middle - 5) {
       if (forShadow) {
-        nodePixelDims.y = overBoundingRect.top - 10;
+        nodePixelDims.y = top - 10;
         nodePixelDims.height = 10;
       } else {
-        nodePixelDims.y = overBoundingRect.top;
+        nodePixelDims.y = top;
       }
     } else {
-      nodePixelDims.y = overBoundingRect.bottom;
+      if (forShadow) {
+        nodePixelDims.height = 10;
+        nodePixelDims.y = bottom - 10;
+      } else {
+        nodePixelDims.y = bottom;
+      }
     }
   }
   return convertPixelToGrid(nodePixelDims, grid, parentPixelDims);
@@ -89,7 +92,7 @@ export function handleLateralCollisions(
       } else if (
         mouseLeftOfElement &&
         left < otherLeft &&
-        left + colCount > otherLeft
+        left + colCount >= otherLeft
       ) {
         colCount = Math.min(colCount, otherLeft - left);
         if (colCount < 2) {
@@ -120,11 +123,11 @@ export function handleLateralCollisions(
 export function handleParentCollisions(
   dimensions: WebloomGridDimensions,
   parentDims: WebloomPixelDimensions,
-  parentBoundingRect: BoundingRect,
   grid: [number, number],
   clipBottom = false,
 ) {
   const [gridrow, gridcol] = grid;
+  const parentBoundingRect = getBoundingRect(parentDims);
   const boundingRect = getBoundingRect(
     convertGridToPixel(dimensions, [gridrow, gridcol], parentDims),
   );

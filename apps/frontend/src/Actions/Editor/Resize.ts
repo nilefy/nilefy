@@ -63,9 +63,6 @@ class ResizeAction {
       editorStore.currentPage.getWidgetById(id).gridDimensions;
     this.initialDimensions = dimensions;
     editorStore.currentPage.setResizedWidgetId(id);
-    editorStore.currentPage.setShadowElement(
-      editorStore.currentPage.getWidgetById(id).pixelDimensions,
-    );
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -177,9 +174,6 @@ class ResizeAction {
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
     const newCollisions = this._resize(this.id, dims);
-    editorStore.currentPage.setShadowElement(
-      editorStore.currentPage.getWidgetById(this.id).pixelDimensions,
-    );
 
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
@@ -264,7 +258,6 @@ class ResizeAction {
       key,
     );
     editorStore.currentPage.setResizedWidgetId(null);
-    editorStore.currentPage.setShadowElement(null);
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
@@ -287,13 +280,13 @@ class ResizeAction {
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
           editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
-          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot)
+          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot);
         });
-        updates.push(editorStore.currentPage.getWidgetById(id).snapshot)
+        updates.push(editorStore.currentPage.getWidgetById(id).snapshot);
         return {
           event: 'update' as const,
           data: updates,
-        }
+        };
       },
     };
     this.cleanUp();
@@ -332,30 +325,10 @@ class ResizeAction {
       columnsCount: dimensions.columnsCount ?? node.columnsCount,
       rowsCount: dimensions.rowsCount ?? node.rowsCount,
     };
-    // const children = node.nodes;
-    // const lowestChildId = children[children.length - 1];
-    // const lowestChild = tree[lowestChildId];
-    // if (lowestChild) {
-    //   const lowestChildBoundRect = getBoundingRect(lowestChildId);
-    //   const grid = getGridSize(id);
-    //   const nodeBoundingRect = convertGridToPixel(
-    //     dims,
-    //     grid,
-    //     getPixelDimensions(node.parent),
-    //   );
-    //   const bottom = nodeBoundingRect.y + nodeBoundingRect.height;
 
-    //   if (lowestChildBoundRect.bottom > bottom) {
-    //     dims.rowsCount = normalize(
-    //       (lowestChildBoundRect.bottom - nodeBoundingRect.y) / grid[0],
-    //       grid[0],
-    //     );
-    //   }
-    // }
     dims = handleParentCollisions(
       dims,
       node.parent.pixelDimensions,
-      node.parent.boundingRect,
       editorStore.currentPage.getWidgetById(id).gridSize,
       false,
     );
@@ -364,7 +337,7 @@ class ResizeAction {
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }
-  private static throttledMove = throttle(ResizeAction._move, 10);
+  private static throttledMove = throttle(ResizeAction._move, 30);
 }
 
 export default ResizeAction;

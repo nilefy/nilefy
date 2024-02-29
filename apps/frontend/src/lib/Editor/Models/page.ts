@@ -14,7 +14,6 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  isSameCoords,
   normalizeCoords,
 } from '../utils';
 import { analyzeDependancies } from '../dependancyUtils';
@@ -98,6 +97,8 @@ export class WebloomPage {
       setPageDimensions: action,
       adjustDimensions: action,
       snapshot: computed,
+      isDragging: computed,
+      isResizing: computed,
     });
     this.id = id;
     this.name = name;
@@ -239,7 +240,12 @@ export class WebloomPage {
   setNewNode(node: WebloomWidget | null) {
     this.newNode = node;
   }
-
+  get isDragging() {
+    return this.draggedWidgetId !== null;
+  }
+  get isResizing() {
+    return this.resizedWidgetId !== null;
+  }
   /**
    *
    * @param id

@@ -1,9 +1,34 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { Grid, WebloomAdapter, WebloomElement } from '.';
+import { Grid, WebloomElement } from '.';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { useSetDom } from '@/hooks';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { observer } from 'mobx-react-lite';
+import { useSetDom, useWebloomDrop } from '@/lib/Editor/hooks';
+import { WebloomContainer } from '../WebloomWidgets/Container';
+import { WidgetContext } from '..';
+import { MultiSelect } from './MultiSelect';
+const useInitRootDimensions = () => {
+  const root = editorStore.currentPage.rootWidget;
+  const page = editorStore.currentPage;
+  const width = editorStore.currentPage.width;
+  const height = editorStore.currentPage.height;
+  useLayoutEffect(() => {
+    const rowsCount = Math.max(
+      root.rowsCount,
+      Math.round(page.height / EDITOR_CONSTANTS.ROW_HEIGHT),
+    );
+    page.rootWidget.setDimensions({
+      rowsCount,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height, width]);
+};
 
 export const WebloomRoot = observer(function WebloomRoot({
   isPreview,
@@ -14,55 +39,60 @@ export const WebloomRoot = observer(function WebloomRoot({
   isPreview: boolean;
 }) {
   const root = editorStore.currentPage.rootWidget;
+  const id = root.id;
+  const page = editorStore.currentPage;
   const nodes = root.nodes;
   const ref = useRef<HTMLDivElement>(null);
   const width = editorStore.currentPage.width;
-  const height = editorStore.currentPage.height;
+  const pixelDimensions = root.relativePixelDimensions;
+  const left = width - root.innerContainerPixelDimensions.width;
+  const outerContainerStyle = {
+    top: pixelDimensions.y + 'px',
+    left: pixelDimensions.x + left / 2 + 'px',
+    width: pixelDimensions.width + 'px',
+    height: page.height + 'px',
+  } as const;
+  const innerContainerStyle = {
+    width: root.innerContainerPixelDimensions.width + 'px',
+    height: root.innerContainerPixelDimensions.height + 'px',
+  } as const;
 
-  useLayoutEffect(() => {
-    const columnWidth = Math.round(width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
-    let rowsCount = editorStore.currentPage.rootWidget.rowsCount;
-    if (rowsCount === 0) {
-      editorStore.currentPage.setPageDimensions({
-        height: ref.current?.clientHeight,
-      });
-      rowsCount = Math.round(
-        ref.current!.clientHeight / EDITOR_CONSTANTS.ROW_HEIGHT,
-      );
-    }
-
-    editorStore.currentPage.rootWidget.setDimensions({
-      columnWidth,
-      rowsCount,
-    });
-  }, [height, width]);
-
+  const drop = useWebloomDrop(root.id);
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
+    drop(ref.current);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      drop(null);
     };
-  }, []);
+  }, [drop, ref]);
+  useInitRootDimensions();
   useSetDom(ref, EDITOR_CONSTANTS.ROOT_NODE_ID);
-  const handleResize = () => {
-    if (!ref.current) return;
-    const width = ref.current?.clientWidth;
-    const height = ref.current?.clientHeight;
-    editorStore.currentPage.setPageDimensions({ width, height });
-  };
-
+  const onPropChange = useCallback(
+    ({ value, key }: { value: unknown; key: string }) => {
+      root.setProp(key, value);
+    },
+    [root],
+  );
+  const contextValue = useMemo(() => {
+    return {
+      onPropChange,
+      id,
+    };
+  }, [onPropChange, id]);
   return (
-    <div id="webloom-root" className="relative h-screen w-full" ref={ref}>
-      <WebloomAdapter
-        droppable={!isPreview}
-        id={EDITOR_CONSTANTS.ROOT_NODE_ID}
-        isPreview={isPreview}
+    <WidgetContext.Provider value={contextValue}>
+      <WebloomContainer
+        ref={ref}
+        innerContainerStyle={innerContainerStyle}
+        outerContainerStyle={outerContainerStyle}
+        isVisibile={true}
       >
         <Grid id={EDITOR_CONSTANTS.ROOT_NODE_ID} />
+        <MultiSelect />
+
         {nodes.map((nodeId) => (
           <WebloomElement isPreview={isPreview} id={nodeId} key={nodeId} />
         ))}
-      </WebloomAdapter>
-    </div>
+      </WebloomContainer>
+    </WidgetContext.Provider>
   );
 });

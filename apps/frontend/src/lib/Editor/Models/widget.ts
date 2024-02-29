@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { Point, WidgetSnapshot } from '@/types';
+import { WidgetSnapshot } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
@@ -13,13 +13,8 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  normalize,
 } from '../utils';
-import {
-  handleHoverCollision,
-  handleLateralCollisions,
-  handleParentCollisions,
-} from '../collisions';
+
 import { RuntimeEvaluable, Snapshotable } from './interfaces';
 import { DependencyRelation } from './dependencyManager';
 import { cloneDeep, get } from 'lodash';
@@ -80,7 +75,9 @@ export class WebloomWidget
     this.row = row;
     this.col = col;
     this.rawValues = {};
-    this.rawValues['layoutMode'] = config.layoutConfig.layoutMode;
+    if (config.layoutConfig.layoutMode) {
+      this.rawValues['layoutMode'] = config.layoutConfig.layoutMode;
+    }
     if (!props) {
       props = {};
     }
@@ -106,6 +103,7 @@ export class WebloomWidget
       setProp: action,
       setDimensions: action,
       gridSize: computed.struct,
+      selfGridSize: computed.struct,
       boundingRect: computed.struct,
       setDom: action,
       pixelDimensions: computed.struct,
@@ -126,14 +124,23 @@ export class WebloomWidget
       actualRowsCount: computed,
       innerContainerDimensions: computed,
       innerContainerPixelDimensions: computed,
+      isSelected: computed,
+      isDragging: computed,
+      isResizing: computed,
     });
   }
 
   get columnWidth(): number {
     if (this.isRoot)
-      return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+      // flooring to avoid floating point errors and because integers are just nice
+      return Math.floor(this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
     if (this.isCanvas)
-      return this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+      return Math.max(
+        Math.floor(
+          this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+        ),
+        2,
+      );
     return 0;
   }
   get boundingRect() {
@@ -175,6 +182,16 @@ export class WebloomWidget
   get layoutMode() {
     return this.getProp('layoutMode') as LayoutMode;
   }
+  get isSelected() {
+    return this.page.selectedNodeIds.has(this.id);
+  }
+  get isDragging() {
+    return this.page.draggedWidgetId === this.id;
+  }
+  get isResizing() {
+    return this.page.resizedWidgetId === this.id;
+  }
+
   get values(): EvaluatedRunTimeProps {
     const evaluatedProps: EvaluatedRunTimeProps = {};
     for (const key in this.rawValues) {
@@ -304,78 +321,10 @@ export class WebloomWidget
   }
 
   get gridSize(): [number, number] {
-    const parent = this.canvasParent;
-    return [EDITOR_CONSTANTS.ROW_HEIGHT, parent.columnWidth!];
+    return this.canvasParent.selfGridSize;
   }
-
-  getDropCoordinates(
-    startPosition: Point,
-    delta: Point,
-    overId: string,
-    draggedId: string,
-    forShadow = false,
-  ) {
-    const mousePos = this.page.mousePosition;
-    const [gridrow, gridcol] = this.gridSize as [number, number];
-    const normalizedDelta = {
-      x: normalize(delta.x, gridcol),
-      y: normalize(delta.y, gridrow),
-    };
-    const newPosition = {
-      x: startPosition.x + normalizedDelta.x,
-      y: startPosition.y + normalizedDelta.y,
-    }; // -> this is the absolute position in pixels (normalized to the grid)
-    const overEl = this.page.getWidgetById(overId);
-    const parent = this.canvasParent;
-    const parentBoundingRect = parent.boundingRect;
-    const position = {
-      x: newPosition.x - parentBoundingRect.left,
-      y: newPosition.y - parentBoundingRect.top,
-    }; // -> this is the position in pixels relative to the parent (normalized to the grid)
-    // Transform the postion to grid units (columns and rows)
-    const gridPosition = {
-      x: Math.round(position.x / gridcol),
-      y: Math.round(position.y / gridrow),
-    }; // -> this is the position in grid units (columns and rows)
-    let dimensions = {
-      col: gridPosition.x,
-      row: gridPosition.y,
-      columnsCount: this.columnsCount,
-      rowsCount: this.rowsCount,
-    };
-
-    if (overId !== EDITOR_CONSTANTS.ROOT_NODE_ID && overId !== draggedId) {
-      dimensions = handleHoverCollision(
-        dimensions,
-        parent.pixelDimensions,
-        overEl.boundingRect,
-        [gridrow, gridcol],
-        !!overEl.isCanvas,
-        mousePos,
-        forShadow,
-      );
-    }
-    dimensions = handleLateralCollisions(
-      this.id,
-      overId,
-      draggedId,
-      parent.nodes,
-      dimensions,
-      mousePos,
-    );
-    dimensions = handleParentCollisions(
-      dimensions,
-      parent.pixelDimensions,
-      parentBoundingRect,
-      [gridrow, gridcol],
-      forShadow,
-    );
-    dimensions.columnsCount = Math.min(
-      EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
-      dimensions.columnsCount,
-    );
-    dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
-    return dimensions;
+  get selfGridSize(): [number, number] {
+    return [EDITOR_CONSTANTS.ROW_HEIGHT, this.columnWidth];
   }
 
   removeSelf() {

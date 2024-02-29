@@ -1,8 +1,9 @@
 import ResizeAction from '@/Actions/Editor/Resize';
 import { commandManager } from '@/Actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
-import { useEffect, useMemo } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useMemo } from 'react';
+import { createPortal } from 'react-dom';
+
 import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';
 
@@ -28,54 +29,10 @@ const cursors = {
   right: 'ew-resize',
 } as const;
 
-export const ResizeHandlers = observer(function ResizeHandlers() {
-  const selectedIds = editorStore.currentPage.selectedNodeIds;
-  const selectedIdsArray = Array.from(selectedIds);
-  useHotkeys('esc', () => {
-    commandManager.executeCommand(ResizeAction.cancel());
-  });
-  useEffect(() => {
-    const resizeHandler = (e: MouseEvent) => {
-      if (ResizeAction.resizingKey === null) return;
-      e.stopPropagation();
-      commandManager.executeCommand(
-        ResizeAction.move({
-          x: e.clientX,
-          y: e.clientY,
-        }),
-      );
-    };
-    const resizeEndHandler = (e: MouseEvent) => {
-      e.stopPropagation();
-      commandManager.executeCommand(
-        ResizeAction.end({
-          x: e.clientX,
-          y: e.clientY,
-        }),
-      );
-    };
-
-    window.addEventListener('pointermove', resizeHandler);
-    window.addEventListener('pointerup', resizeEndHandler);
-    return () => {
-      window.removeEventListener('pointermove', resizeHandler);
-      window.removeEventListener('pointerup', resizeEndHandler);
-    };
-  }, []);
-  return (
-    <>
-      {selectedIdsArray.map((id) => (
-        <Handles key={id} id={id} />
-      ))}
-    </>
-  );
-});
-
-const Handles = observer(function Handles({ id }: { id: string }) {
-  const node = editorStore.currentPage.getWidgetById(id);
-  const dims = node.pixelDimensions;
-
-  const direction = WebloomWidgets[node.type].config.resizingDirection;
+export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const dims = widget.relativePixelDimensions;
+  const direction = WebloomWidgets[widget.type].config.resizingDirection;
   const componentHandles = useMemo(
     () =>
       Object.entries(handlePositions).filter(([key]) => {
@@ -90,7 +47,9 @@ const Handles = observer(function Handles({ id }: { id: string }) {
       }),
     [direction],
   );
-  const isDragging = editorStore.currentPage.draggedWidgetId === id;
+  const isDragging = widget.isDragging;
+  const isSelected = widget.isSelected;
+  const isVisible = !isDragging && isSelected;
   const handleSize = 8;
   const handleStyle: React.CSSProperties = {
     position: 'absolute',
@@ -99,10 +58,12 @@ const Handles = observer(function Handles({ id }: { id: string }) {
     backgroundColor: 'white',
     border: '1px solid black',
     borderRadius: '50%',
+    zIndex: 50,
   };
   const padding = 3;
+
   return (
-    !isDragging && (
+    isVisible && (
       <div
         className="touch-none select-none"
         style={{
@@ -140,8 +101,9 @@ const Handles = observer(function Handles({ id }: { id: string }) {
                 left,
                 cursor: cursors[key as keyof typeof cursors],
               }}
-              onPointerDown={(e) => {
+              onMouseDown={(e) => {
                 e.stopPropagation();
+                const dims = widget.pixelDimensions;
                 commandManager.executeCommand(
                   ResizeAction.start(id, key as keyof typeof cursors, {
                     width: dims.width,
@@ -151,7 +113,7 @@ const Handles = observer(function Handles({ id }: { id: string }) {
                   }),
                 );
               }}
-              onPointerUp={(e) =>
+              onMouseUp={(e) =>
                 commandManager.executeCommand(
                   ResizeAction.end({
                     x: e.clientX,

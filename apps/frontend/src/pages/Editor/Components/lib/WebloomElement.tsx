@@ -1,7 +1,15 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { ElementType, useCallback, useMemo } from 'react';
+import {
+  ElementType,
+  Ref,
+  RefObject,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { WebloomWidgets, WidgetContext } from '..';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,10 +17,37 @@ import {
   ContextMenuPortal,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Grid, WebloomAdapter } from '.';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
+import { cn } from '@/lib/cn';
+import { WebloomPixelDimensions } from '@/lib/Editor/interface';
+import { WebloomContainer } from '../WebloomWidgets/Container';
+import { useSetDom, useWebloomDrag, useWebloomDrop } from '@/lib/Editor/hooks';
+import { ResizeHandles } from './ResizeHandlers';
+import { SelectionAction } from '@/Actions/Editor/selection';
+
+const useInitSelection = (ref: RefObject<HTMLDivElement>, id: string) => {
+  const select = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      commandManager.executeCommand(new SelectionAction(id, false));
+    },
+    [id],
+  );
+  useEffect(() => {
+    const curRef = ref.current;
+    if (curRef) {
+      curRef.addEventListener('click', select);
+    }
+    return () => {
+      if (curRef) {
+        curRef.removeEventListener('click', select);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref.current, select]);
+};
 
 export const WebloomElement = observer(function WebloomElement({
   id,
@@ -21,41 +56,87 @@ export const WebloomElement = observer(function WebloomElement({
   id: string;
   isPreview: boolean;
 }) {
-  const tree = editorStore.currentPage.getWidgetById(id);
+  const ref = useRef<HTMLDivElement>(null);
+  const widget = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      tree.setProp(key, value);
+      widget.setProp(key, value);
     },
-    [tree],
+    [widget],
   );
-
   const contextValue = useMemo(() => {
     return {
       onPropChange,
       id,
     };
   }, [onPropChange, id]);
-  const WebloomWidget = WebloomWidgets[tree.type].component as ElementType;
-  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
+  const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
+  const [{ isDragging }, drag] = useWebloomDrag({
+    id,
+    isNew: false,
+  });
+  const drop = useWebloomDrop(id);
+  useEffect(() => {
+    if (ref.current) {
+      drag(drop(ref.current));
+    }
+    return () => {
+      drag(null);
+      drop(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drop, drag, ref, ref.current]);
+  const isVisible = !isDragging;
+  useSetDom(ref, id);
+  useInitSelection(ref, id);
   const RenderedElement = observer(() => {
-    return (
-      <WebloomAdapter
-        draggable={!isPreview}
-        droppable={!isPreview}
-        resizable={!isPreview}
-        isPreview={isPreview}
-        key={id}
-        id={id}
-      >
-        {tree.isCanvas && <Grid id={id} />}
+    if (widget.type === 'WebloomContainer') {
+      const innerContainerStyle = {
+        width: widget.innerContainerPixelDimensions.width + 'px',
+        height: widget.innerContainerPixelDimensions.height + 'px',
+      } as const;
+      const outerContainerStyle = {
+        top: widget.relativePixelDimensions.y + 'px',
+        left: widget.relativePixelDimensions.x + 'px',
+        width: widget.relativePixelDimensions.width + 'px',
+        height: widget.relativePixelDimensions.height + 'px',
+      } as const;
+
+      return (
         <WidgetContext.Provider value={contextValue}>
+          <ResizeHandles id={id} />
+
+          <WebloomContainer
+            innerContainerStyle={innerContainerStyle}
+            outerContainerStyle={outerContainerStyle}
+            isVisibile={isVisible}
+            ref={ref}
+          >
+            {widget.nodes.map((nodeId) => (
+              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+            ))}
+          </WebloomContainer>
+        </WidgetContext.Provider>
+      );
+    }
+
+    return (
+      <WidgetContext.Provider value={contextValue}>
+        <ResizeHandles id={id} />
+
+        <WidgetWrapper
+          dimensions={widget.relativePixelDimensions}
+          id={id}
+          isVisible={isVisible}
+          ref={ref}
+        >
           <WebloomWidget>
-            {tree.nodes.map((nodeId) => (
+            {widget.nodes.map((nodeId) => (
               <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
             ))}
           </WebloomWidget>
-        </WidgetContext.Provider>
-      </WebloomAdapter>
+        </WidgetWrapper>
+      </WidgetContext.Provider>
     );
   });
 
@@ -79,3 +160,46 @@ export const WebloomElement = observer(function WebloomElement({
     </ContextMenu>
   );
 });
+
+const WidgetWrapper = forwardRef<
+  HTMLDivElement,
+  {
+    id: string;
+    children: React.ReactNode;
+    isVisible: boolean;
+    dimensions: WebloomPixelDimensions;
+  }
+>(({ id, children, isVisible, dimensions }, ref) => {
+  return (
+    <div
+      style={{
+        top: dimensions.y,
+        left: dimensions.x,
+        width: dimensions.width,
+        height: dimensions.height,
+        visibility: isVisible ? 'visible' : 'hidden',
+        position: 'absolute',
+      }}
+      className="target touch-none overflow-hidden outline-none"
+      data-id={id}
+      ref={ref}
+    >
+      <div
+        key={id}
+        className={cn(
+          {
+            hidden: !isVisible,
+          },
+          {
+            flex: isVisible,
+          },
+          'w-full h-full',
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+});
+
+WidgetWrapper.displayName = 'WidgetWrapper';

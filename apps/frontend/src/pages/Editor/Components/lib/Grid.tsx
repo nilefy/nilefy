@@ -1,14 +1,12 @@
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { observer } from 'mobx-react-lite';
-import { useDndContext } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
 
 const Grid = observer(({ id }: { id: string }) => {
   const gridSize = editorStore.currentPage.getWidgetById(id).columnWidth;
-  const { active } = useDndContext();
-  const resized = editorStore.currentPage.resizedWidgetId;
-  const shown = !!active || !!resized;
+  const shown =
+    editorStore.currentPage.isDragging || editorStore.currentPage.isResizing;
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

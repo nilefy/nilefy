@@ -7,36 +7,71 @@ import {
 } from '@/lib/Editor/interface';
 import { BoxSelect } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { ReactNode, useContext } from 'react';
+import { CSSProperties, ReactNode, Ref, forwardRef, useContext } from 'react';
 import { WidgetContext } from '../..';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Grid } from '../../lib';
+import { cn } from '@/lib/cn';
 
 type WebloomContainerProps = {
   children?: ReactNode;
   color: string;
   layoutMode: LayoutMode;
 };
-
 const WebloomContainer = observer(
-  ({ children }: { children: React.ReactNode }) => {
-    const { id } = useContext(WidgetContext);
-    const entity = editorStore.currentPage.getWidgetById(id);
-    const props = entity.values as WebloomContainerProps;
-
-    return (
-      <div className="relative h-full w-full overflow-auto" data-scroll="true">
-        <div
+  // eslint-disable-next-line react/display-name
+  forwardRef(
+    (
+      {
+        children,
+        innerContainerStyle,
+        outerContainerStyle,
+        isVisibile = true,
+      }: {
+        children: React.ReactNode;
+        innerContainerStyle: {
+          width: string;
+          height: string;
+        };
+        outerContainerStyle: {
+          top: string;
+          left: string;
+          width: string;
+          height: string;
+        };
+        isVisibile: boolean;
+      },
+      ref: Ref<HTMLDivElement>,
+    ) => {
+      const { id } = useContext(WidgetContext);
+      const entity = editorStore.currentPage.getWidgetById(id);
+      const props = entity.values as WebloomContainerProps;
+      return (
+        <ScrollArea
+          className="absolute h-full w-full"
+          scrollAreaViewPortClassName={cn('absolute', { hidden: !isVisibile })}
           style={{
-            width: '100%',
-            backgroundColor: props.color,
-            height: entity.innerContainerPixelDimensions.height,
-            overflowY: 'auto',
+            ...outerContainerStyle,
+            position: 'absolute',
+            visibility: isVisibile ? 'visible' : 'hidden',
           }}
         >
-          {children}
-        </div>
-      </div>
-    );
-  },
+          <div
+            ref={ref}
+            className="relative  bg-gray-300"
+            style={{
+              ...innerContainerStyle,
+              visibility: isVisibile ? 'visible' : 'hidden',
+              backgroundColor: props.color,
+            }}
+          >
+            <Grid id={id} />
+            {children}
+          </div>
+        </ScrollArea>
+      );
+    },
+  ),
 );
 
 const widgetName = 'WebloomContainer';

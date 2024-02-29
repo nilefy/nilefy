@@ -1,3 +1,5 @@
+import { Point } from '@/types';
+import { editorStore } from './Models';
 import {
   BoundingRect,
   WebloomGridDimensions,
@@ -157,3 +159,13 @@ export function normalizeCoords(
     rowsCount: newCoords.rowsCount ?? node.rowsCount,
   };
 }
+
+export const getMousePositionRelativeToEditor = (clientOffset: Point) => {
+  if (!editorStore.currentPage.rootWidget.dom) return clientOffset;
+  const boundingRect =
+    editorStore.currentPage.rootWidget.dom.getBoundingClientRect();
+  return {
+    x: clientOffset.x - boundingRect.x,
+    y: clientOffset.y - boundingRect.y,
+  };
+};
