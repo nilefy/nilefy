@@ -9,7 +9,6 @@ export const useInitSelection = (
 ) => {
   const select = useCallback(
     (e: MouseEvent) => {
-      console.log('here');
       e.stopPropagation();
       if (id === null) {
         return editorStore.currentPage.clearSelectedNodes();
