@@ -52,7 +52,6 @@ const MultiSelect = observer(() => {
       x: e.clientX,
       y: e.clientY,
     });
-    position.y += scrollTop;
     prevContainerScrollTop.current = scrollTop;
     startScrollTop.current = scrollTop;
     startPosition.current = position;
@@ -73,12 +72,14 @@ const MultiSelect = observer(() => {
       x: e.clientX,
       y: e.clientY,
     });
+
+    const currentY = position.y;
+    const startAndDraggingDiff = currentY - startPosition.current.y;
     const dir = scrollTop - startScrollTop.current > 0 ? 1 : -1;
     const diff = scrollTop - startScrollTop.current!;
-    const currentY = position.y + (dir === -1 ? diff : 0);
     const currentHeight =
       Math.abs(currentY - startPosition.current.y) + (dir === -1 ? -diff : 0);
-    const startAndDraggingDiff = currentY - startPosition.current.y;
+
     let currentXOrigin = startPosition.current.x;
     let currentYOrigin = startPosition.current.y;
     if (distX < 0) {
