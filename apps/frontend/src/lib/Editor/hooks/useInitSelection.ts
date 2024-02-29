@@ -7,25 +7,21 @@ export const useInitSelection = (
   ref: RefObject<HTMLDivElement>,
   id: string | null,
 ) => {
-  const select = useCallback(
-    (e: MouseEvent) => {
-      if (id === null) {
-        return editorStore.currentPage.clearSelectedNodes();
-      }
-      // stop the event from bubbling up so the parent element doesn't get selected as well
-      e.stopPropagation();
-      commandManager.executeCommand(new SelectionAction(id, false));
-    },
-    [id],
-  );
+  const select = useCallback(() => {
+    if (id === null) {
+      return editorStore.currentPage.clearSelectedNodes();
+    }
+
+    commandManager.executeCommand(new SelectionAction(id, false));
+  }, [id]);
   useEffect(() => {
     const curRef = ref.current;
     if (curRef) {
-      curRef.addEventListener('mousedown', select);
+      curRef.addEventListener('mousedown', select, true);
     }
     return () => {
       if (curRef) {
-        curRef.removeEventListener('mousedown', select);
+        curRef.removeEventListener('mousedown', select, true);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
