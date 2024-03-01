@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo dev",
+    "docs:start": "cd apps/docs && pnpm start",
     "dev:docs": "cd apps/docs && pnpm start",
     "lint": "turbo lint",
     "db:push": "cd apps/backend && pnpm db:push",
