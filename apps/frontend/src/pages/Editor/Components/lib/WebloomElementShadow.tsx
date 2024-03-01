@@ -6,7 +6,7 @@ export const WebloomElementShadow = observer(() => {
   if (!shadow) return null;
   return (
     <div
-      className="pointer-events-none select-none bg-gray-500 opacity-50"
+      className="pointer-events-none box-border select-none border-t-[3px] border-t-blue-500 bg-black bg-opacity-10"
       style={{
         position: 'fixed',
         zIndex: '100',

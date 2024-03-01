@@ -29,16 +29,16 @@ export function handleHoverCollision(
     if (mousePos.y <= middle - 5) {
       shouldHandleLateralCollisions = false;
       if (forShadow) {
-        nodePixelDims.y = top - 10;
-        nodePixelDims.height = 10;
+        nodePixelDims.y = top - 2;
+        nodePixelDims.height = 2;
       } else {
         nodePixelDims.y = top;
       }
     } else {
       shouldHandleLateralCollisions = false;
       if (forShadow) {
-        nodePixelDims.height = 10;
-        nodePixelDims.y = bottom - 10;
+        nodePixelDims.height = 2;
+        nodePixelDims.y = bottom + 2;
       } else {
         nodePixelDims.y = bottom;
       }
