@@ -30,6 +30,9 @@ type InspectorListProps = {
 type InspectorCheckboxProps = {
   //  label: string;
 };
+type InspectorDatePickerProps = {
+  date: Date;
+};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -43,6 +46,7 @@ type FormControlOptions = {
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
   inlineCodeInput: InlineCodeInputProps;
+  datePicker: InspectorDatePickerProps;
 };
 
 type WidgetInspectorConfig = EntitySchema;
@@ -177,5 +181,11 @@ export type {
   InspectorFormControls,
   InlineCodeInputProps,
   InspectorColorProps,
+  InspectorDatePickerProps,
   WidgetSetters,
+};
+
+export type selectOptions = {
+  value: string;
+  label: string;
 };

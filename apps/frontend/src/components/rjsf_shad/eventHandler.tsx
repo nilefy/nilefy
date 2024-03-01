@@ -531,7 +531,7 @@ export function EventHandlerTypeSelect<
     throw new Error("don't use eventHandler if you won't handle any events");
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-full">
         <SelectValue placeholder="Event" />
       </SelectTrigger>
       <SelectContent>
