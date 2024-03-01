@@ -28,7 +28,7 @@ export default function InlineCodeInputWidget<
   return (
     <div id={`${id}-label`} className="flex flex-col space-y-3">
       {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
-      <ScrollArea className="min-h-10 w-full overflow-auto rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <ScrollArea className="min-h-10 max-h-72 w-full overflow-auto rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
         <WebloomInlineEditor
           id={id}
           placeholder={props.placeholder}

@@ -4,7 +4,6 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +13,57 @@ import {
 import { WidgetsEventHandler } from './eventHandler';
 import { ReactElement } from 'react';
 import { Copy, MoreVertical, Trash } from 'lucide-react';
+import z from 'zod';
 
 export enum ArrayFieldItemType {
   'EventHandlerItem' = 1,
+  'ChartItem' = 2,
 }
 
 type EventHandlerItemUtilsProps = {
   onCopyCB: () => void;
   onDeleteCB: () => void;
 };
+
+export const chartDatasets = z.array(
+  z.object({
+    name: z.string().default(''),
+    yValue: z.string(),
+    /**
+     *@link https://docs.retool.com/apps/web/guides/components/charts#transformation-types
+     * @description none
+     * @description count	Returns the quantity of items for each group.
+     * @description sum	Returns the summation of all numeric values.
+     * @description avg	Returns the average of all numeric values.
+     * @description median	Returns the median of all numeric values.
+     * @description mode	Returns the mode of all numeric values.
+     * @description rms	Returns the rms of all numeric values.
+     * @description stddev	Returns the standard deviation of all numeric values.
+     * @description min	Returns the minimum numeric value for each group.
+     * @description max	Returns the maximum numeric value for each group.
+     * @description first	Returns the first numeric value for each group.
+     * @description last	Returns the last numeric value for each group.
+     */
+    aggMethod: z.enum([
+      'none',
+      'count',
+      'sum',
+      'avg',
+      'median',
+      // 'mode',
+      'rms',
+      'stddev',
+      'min',
+      'max',
+      'first',
+      'last',
+    ]),
+    chartType: z.enum(['bar', 'line', 'scatter']),
+    // TODO: make it auto generated from existing datasets
+    color: z.string(),
+  }),
+);
+type ChartDatasetsT = z.infer<typeof chartDatasets>;
 
 function EventHandlerItemUtils({
   onCopyCB,
@@ -39,7 +80,6 @@ function EventHandlerItemUtils({
           */}
         <DropdownMenuItem
           onClick={() => {
-            console.log('here');
             onCopyCB();
           }}
         >
@@ -87,6 +127,40 @@ function EventHandlerItemView({
   );
 }
 
+function ChartDatasetItemView({
+  dataset,
+  children,
+  onDeleteCB,
+  onCopyCB,
+}: {
+  dataset: ChartDatasetsT[0];
+  children: ReactElement;
+} & EventHandlerItemUtilsProps) {
+  return (
+    <DropdownMenu>
+      <div className="flex h-full w-full justify-between rounded-2xl  border-2 p-3">
+        <DropdownMenuTrigger className="h-full w-full ">
+          <p className="line-clamp-3 flex min-h-full w-full min-w-full items-center gap-3 ">
+            <span
+              className="h-9 w-9 rounded-full"
+              style={{ backgroundColor: dataset.color }}
+            ></span>
+            <span className="w-fit rounded-2xl bg-secondary p-3">
+              {dataset.name ?? 'unconfigured'}
+            </span>
+            <span className="">{dataset.aggMethod ?? 'unconfigured'}</span>
+          </p>
+        </DropdownMenuTrigger>
+        <EventHandlerItemUtils onCopyCB={onCopyCB} onDeleteCB={onDeleteCB} />
+      </div>
+
+      <DropdownMenuContent side="left" className="space-y-4 p-4">
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /**
  * note it will fallback for default with undefined or if it didn't know the type
  */
@@ -113,6 +187,17 @@ function Item({
         </EventHandlerItemView>
       );
     }
+    case ArrayFieldItemType.ChartItem: {
+      return (
+        <ChartDatasetItemView
+          dataset={itemValue}
+          onDeleteCB={onDeleteCB}
+          onCopyCB={onCopyCB}
+        >
+          {children}
+        </ChartDatasetItemView>
+      );
+    }
     default: {
       return <div className="h-fit w-full overflow-auto">{children}</div>;
     }
@@ -122,6 +207,19 @@ function Item({
 /** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
  *
  * @param props - The `ArrayFieldTemplateItemType` props for the component
+ * set custom type with: uiSchema.['ui:options'].['ui:itemType']
+ * @example
+ *
+      datasets: {
+        items: {
+          'ui:options': {
+            'ui:itemType': ArrayFieldItemType.EventHandlerItem,
+          },
+          name: {
+            'ui:widget': 'inlineCodeInput',
+          },
+        },
+      },
  */
 export default function ArrayFieldItemTemplate<
   T = any,
