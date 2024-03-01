@@ -63,10 +63,11 @@ export const handleDrop = (
       ? undefined
       : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
   );
-  const newMousePos = getMousePositionRelativeToEditor(clientOffset);
+  const editorRelativeMousePosition =
+    getMousePositionRelativeToEditor(clientOffset);
   const dimensions = getDropPositionWithCollisions(
     grid,
-    newMousePos,
+    editorRelativeMousePosition,
     item.isNew ? getNewWidgetName(item.type) : item.id,
     overId,
     droppableId,
@@ -89,7 +90,7 @@ export const handleHover = (
   overId: string,
 ) => {
   if (overId === editorStore.currentPage.draggedWidgetId) return;
-  if (!monitor.isOver({ shallow: true })) return;
+  if (overId !== editorStore.currentPage.hoveredWidgetId) return;
   if (editorStore.currentPage.draggedWidgetId === null) {
     if (item.isNew) {
       editorStore.currentPage.setDraggedWidgetId(getNewWidgetName(item.type));

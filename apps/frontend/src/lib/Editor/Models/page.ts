@@ -2,7 +2,14 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import {
+  action,
+  autorun,
+  comparer,
+  computed,
+  makeObservable,
+  observable,
+} from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -28,7 +35,7 @@ export class WebloomPage {
   handle: string;
   widgets: Record<string, WebloomWidget> = {};
   queries: Record<string, WebloomQuery> = {};
-  mouseOverWidgetId: string | null = null;
+  hoveredWidgetId: string | null = null;
   /**
    * please note that those node always in the same level in the widgets tree
    */
@@ -62,7 +69,7 @@ export class WebloomPage {
     makeObservable(this, {
       widgets: observable,
       queries: observable,
-      mouseOverWidgetId: observable,
+      hoveredWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
       firstSelectedWidget: computed,
@@ -81,7 +88,6 @@ export class WebloomPage {
       setResizedWidgetId: action,
       setNewNode: action,
       setNewNodeTranslate: action,
-      setOverWidgetId: action,
       setSelectedNodeIds: action,
       setShadowElement: action,
       moveWidgetIntoGrid: action,
@@ -100,7 +106,9 @@ export class WebloomPage {
       isDragging: computed,
       isResizing: computed,
       clearSelectedNodes: action,
+      setHoveredWidgetId: action,
     });
+
     this.id = id;
     this.name = name;
     this.handle = handle;
@@ -145,6 +153,9 @@ export class WebloomPage {
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
+  setHoveredWidgetId(id: string | null) {
+    this.hoveredWidgetId = id;
+  }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -188,9 +199,7 @@ export class WebloomPage {
   setNewNodeTranslate(point: Point | null) {
     this.newNodeTranslate = point;
   }
-  setOverWidgetId(id: string | null) {
-    this.mouseOverWidgetId = id;
-  }
+
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }

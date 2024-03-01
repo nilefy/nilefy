@@ -70,7 +70,6 @@ export const Editor = observer(() => {
                       ref={editorRef}
                       className="relative h-full w-full bg-white"
                     >
-                      {/* <MultiSelectBounding /> */}
                       <WebloomRoot isPreview={false} />
                     </div>
                   </div>

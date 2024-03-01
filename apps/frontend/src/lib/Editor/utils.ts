@@ -160,12 +160,31 @@ export function normalizeCoords(
   };
 }
 
+export function isPointInsideBoundingRect(
+  point: Point,
+  boundingRect: BoundingRect,
+) {
+  return (
+    point.x > boundingRect.left &&
+    point.x < boundingRect.right &&
+    point.y > boundingRect.top &&
+    point.y < boundingRect.bottom
+  );
+}
+
 export const getMousePositionRelativeToEditor = (clientOffset: Point) => {
   if (!editorStore.currentPage.rootWidget.dom) return clientOffset;
   const boundingRect =
     editorStore.currentPage.rootWidget.dom.getBoundingClientRect();
+  return getMousePositionRelativeToBoundingRect(clientOffset, boundingRect);
+};
+
+export const getMousePositionRelativeToBoundingRect = (
+  clientOffset: Point,
+  boundingRect: BoundingRect,
+) => {
   return {
-    x: clientOffset.x - boundingRect.x,
-    y: clientOffset.y - boundingRect.y,
+    x: clientOffset.x - boundingRect.left,
+    y: clientOffset.y - boundingRect.top,
   };
 };

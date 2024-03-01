@@ -10,6 +10,7 @@ import {
   convertPixelToGrid,
   getBoundingRect,
 } from '../utils';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export function handleHoverCollision(
   dimensions: WebloomGridDimensions,
@@ -83,15 +84,21 @@ export function handleLateralCollisions(
     const otherTop = otherNode.row;
     const otherLeft = otherNode.col;
     const otherRight = otherNode.col + otherNode.columnsCount;
+
+    top < otherBottom && top > otherTop;
     const mouseLeftOfElement = mousePos.x < otherBoundingRect.left;
     const mouseRightOfElement = mousePos.x > otherBoundingRect.right;
-    const mouseUnderElementOrExactlyOnBorder =
-      mousePos.y >= otherBoundingRect.bottom;
-    const mouseWithinElement =
+    const mouseUnderElementWithThreshold =
+      mousePos.y - otherBoundingRect.bottom > -EDITOR_CONSTANTS.ROW_HEIGHT;
+    const mouseWithinElementHorizontalBounds =
       mousePos.x > otherBoundingRect.left &&
       mousePos.x < otherBoundingRect.right;
+
     if (top < otherBottom && top >= otherTop) {
-      if (mouseWithinElement && mouseUnderElementOrExactlyOnBorder) {
+      if (
+        mouseWithinElementHorizontalBounds &&
+        mouseUnderElementWithThreshold
+      ) {
         // mouse under other element and between its left and right
         top = otherBottom;
       } else if (

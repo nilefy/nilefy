@@ -22,10 +22,11 @@ import { cn } from '@/lib/cn';
 import { WebloomPixelDimensions } from '@/lib/Editor/interface';
 import { WebloomContainer } from '../WebloomWidgets/Container';
 import {
-  useInitSelection,
   useSetDom,
   useWebloomDrag,
   useWebloomDrop,
+  useWebloomHover,
+  useWebloomSelection,
 } from '@/lib/Editor/hooks';
 import { ResizeHandles } from './ResizeHandlers';
 
@@ -129,8 +130,8 @@ export const WebloomElement = observer(function WebloomElement({
   }, [drop, drag, ref, ref.current]);
   const isVisible = !isDragging;
   useSetDom(ref, id);
-  useInitSelection(ref, id);
-
+  useWebloomSelection(ref, id);
+  useWebloomHover(ref, id);
   if (isPreview)
     return (
       <RenderedElement

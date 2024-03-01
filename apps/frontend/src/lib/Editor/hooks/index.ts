@@ -6,4 +6,5 @@ export { useWebloomDrop } from './useWebloomDrop';
 export { useWebloomDrag } from './useWebloomDrag';
 export { useInitResizing } from './useInitResizing';
 export { useEditorMousePosition } from './useEditorMousePosition';
-export { useInitSelection } from './useInitSelection';
+export { useWebloomSelection } from './useWebloomSelection';
+export { useWebloomHover } from './useWebloomHover';

@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewWidgetName } from '@/lib/Editor/widgetName';
-import { WidgetSnapshot } from '@/types';
+import { Point, WidgetSnapshot } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
@@ -13,6 +13,7 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
+  isPointInsideBoundingRect,
 } from '../utils';
 
 import { RuntimeEvaluable, Snapshotable } from './interfaces';
@@ -127,9 +128,55 @@ export class WebloomWidget
       isSelected: computed,
       isDragging: computed,
       isResizing: computed,
+      isHovered: computed,
     });
   }
-
+  /**
+   *
+   * @param mousePos
+   * @returns true if the mouse is inside the widget and does not collide with any of its children and the widget is not being dragged
+   */
+  checkMouseCollisionShallow(mousePos: Point) {
+    if (this.isDragging) return false;
+    if (!this.isCanvas) {
+      const mouseWithScroll = {
+        x: mousePos.x,
+        y: mousePos.y + this.cumlativScrollTop - this.page.rootWidget.scrollTop,
+      };
+      if (isPointInsideBoundingRect(mouseWithScroll, this.boundingRect)) {
+        console.log('collided with', this.id);
+        return true;
+      }
+    }
+    const boundingRect = this.boundingRect;
+    if (isPointInsideBoundingRect(mousePos, boundingRect)) {
+      const mousePosWithScroll = {
+        x: mousePos.x,
+        y: mousePos.y + this.cumlativScrollTop - this.page.rootWidget.scrollTop,
+      };
+      for (const node of this.nodes) {
+        const child = this.page.widgets[node];
+        if (child.isDragging) continue;
+        const childBoundingRect = child.boundingRect;
+        if (isPointInsideBoundingRect(mousePosWithScroll, childBoundingRect)) {
+          console.log(this.id, child.id, 'collided');
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+  get scrollTop() {
+    return this.scrollableContainer?.scrollTop ?? 0;
+  }
+  get isHovered() {
+    return this.page.hoveredWidgetId === this.id;
+  }
+  get cumlativScrollTop(): number {
+    if (this.isRoot) return this.scrollTop;
+    return this.scrollTop + this.canvasParent.cumlativScrollTop;
+  }
   get columnWidth(): number {
     if (this.isRoot)
       // flooring to avoid floating point errors and because integers are just nice
