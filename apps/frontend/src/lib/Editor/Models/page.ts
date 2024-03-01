@@ -1,8 +1,6 @@
 import { Point } from '@/types';
-import { EvaluationContext } from '../evaluation';
-import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -17,42 +15,53 @@ import {
   isSameCoords,
   normalizeCoords,
 } from '../utils';
-import { analyzeDependancies } from '../dependancyUtils';
-import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
-type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-export type WebloomEntity = WebloomWidget | WebloomQuery;
+import { DependencyManager } from './dependencyManager';
+
+export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
+
 export class WebloomPage {
   id: string;
+  name: string;
+  handle: string;
   widgets: Record<string, WebloomWidget> = {};
-  queries: Record<string, WebloomQuery> = {};
   mouseOverWidgetId: string | null = null;
+  /**
+   * please note that those node always in the same level in the widgets tree
+   */
   selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  dependencyManager: DependencyManager;
-  evaluationManger: EvaluationManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
   };
   width: number = 0;
   height: number = 0;
+  // drilled from the editor
+  evaluationManger: EvaluationManager;
+  dependencyManager: DependencyManager;
+
   constructor({
     id,
+    name,
+    handle,
     widgets,
-    queries,
+    evaluationManger,
+    dependencyManager,
   }: {
     id: string;
+    name: string;
+    handle: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
-    queries: Record<string, WebloomQuery>;
+    evaluationManger: EvaluationManager;
+    dependencyManager: DependencyManager;
   }) {
     makeObservable(this, {
       widgets: observable,
-      queries: observable,
       mouseOverWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
@@ -62,10 +71,6 @@ export class WebloomPage {
       newNode: observable,
       newNodeTranslate: observable,
       shadowElement: observable,
-      context: computed({
-        keepAlive: true,
-        equals: comparer.shallow,
-      }),
       removeWidget: action,
       addWidget: action,
       setDraggedWidgetId: action,
@@ -78,6 +83,8 @@ export class WebloomPage {
       moveWidgetIntoGrid: action,
       moveWidget: action,
       id: observable,
+      name: observable,
+      handle: observable,
       mousePosition: observable,
       setMousePosition: action,
       rootWidget: computed,
@@ -88,43 +95,27 @@ export class WebloomPage {
       snapshot: computed,
     });
     this.id = id;
+    this.evaluationManger = evaluationManger;
+    this.dependencyManager = dependencyManager;
+    this.name = name;
+    this.handle = handle;
     const widgetMap: Record<string, WebloomWidget> = {};
-    this.queries = queries;
     this.selectedNodeIds = new Set();
     Object.values(widgets).forEach((widget) => {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
+        evaluationManger: this.evaluationManger,
+        dependencyManager: this.dependencyManager,
       });
     });
-    this.dependencyManager = new DependencyManager({
-      page: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
     this.widgets = widgetMap;
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-    // analyze dependancies
-    const allDependencies: Array<DependencyRelation> = [];
-    Object.values(widgetMap).forEach((widget) => {
-      for (const prop in widget.rawValues) {
-        const value = widget.rawValues[prop];
-        const { dependencies, isCode } = analyzeDependancies(
-          value,
-          prop,
-          widget.id,
-          this.context,
-        );
-        if (isCode) {
-          this.evaluationManger.setRawValueIsCode(widget.id, prop, true);
-          allDependencies.push(...dependencies);
-        }
-      }
-    });
-    this.dependencyManager.addDependencies(allDependencies);
   }
+
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -174,20 +165,6 @@ export class WebloomPage {
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }
-  /**
-   * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
-   */
-  get context() {
-    const context: EvaluationContext = {};
-    Object.values(this.widgets).forEach((widget) => {
-      if (widget.isRoot) return;
-      context[widget.id] = widget.rawValues;
-    });
-    Object.values(this.queries).forEach((query) => {
-      context[query.id] = query.rawValues;
-    });
-    return context;
-  }
 
   /**
    *
@@ -195,11 +172,16 @@ export class WebloomPage {
    * @description adds a widget to the page.
    */
   addWidget(
-    widgetArgs: Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'>,
+    widgetArgs: Omit<
+      ConstructorParameters<typeof WebloomWidget>[0],
+      'page' | 'evaluationManger' | 'dependencyManager'
+    >,
   ) {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
+      evaluationManger: this.evaluationManger,
+      dependencyManager: this.dependencyManager,
     });
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
@@ -210,9 +192,6 @@ export class WebloomPage {
   }
   get rootWidget() {
     return this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID];
-  }
-  getEntityById(id: string): WebloomEntity | undefined {
-    return this.widgets[id] || this.queries[id];
   }
   setDraggedWidgetId(id: string | null) {
     this.draggedWidgetId = id;
@@ -240,19 +219,20 @@ export class WebloomPage {
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) return [];
     if (!(id in this.widgets)) return [];
     const stack = [];
-    const widget = this.widgets[id];
-    const toBeDeletedNodes = [widget.id];
+    const toBeDeletedNodes: string[] = [id];
+    // just collect ids of the nodes to be deleted
     function recurse(this: WebloomPage, id: string) {
       const node = this.widgets[id];
       if (!node) return;
       toBeDeletedNodes.push(node.id);
-      const children = node.nodes;
-      for (const child of children) {
-        recurse.call(this, child);
+      const childrenIds = node.nodes;
+      for (const childId of childrenIds) {
+        recurse.call(this, childId);
       }
     }
     if (recursive) recurse.call(this, id);
-    for (const nodeId of toBeDeletedNodes) {
+    while (toBeDeletedNodes.length > 0) {
+      const nodeId = toBeDeletedNodes.pop() as string;
       const node = this.widgets[nodeId];
       if (!node) continue;
       stack.push(node.snapshot);
@@ -344,14 +324,21 @@ export class WebloomPage {
     if (nodePixelBoundingRect.bottom > parentBoundingRect.bottom) {
       const verticalExpansion =
         nodePixelBoundingRect.bottom - parentBoundingRect.bottom + 100;
-      const newRowCount = Math.floor(verticalExpansion / gridrow);
+      const newParentRowCount = Math.floor(verticalExpansion / gridrow);
       if (parent.isRoot) {
         parent.setDimensions({
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
+        return {
+          ...changedNodesOriginalCoords,
+          [parent.id]: {
+            ...parent.gridDimensions,
+            rowsCount: parent.rowsCount - newParentRowCount,
+          },
+        };
       } else {
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newRowCount,
+          rowsCount: parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,
@@ -388,7 +375,7 @@ export class WebloomPage {
       const gridDimensions = node.gridDimensions;
       const newCoords = normalizeCoords(_newCoords, gridDimensions);
       // if the node is the same as the newCoords, return
-      if (isSameCoords(newCoords, gridDimensions)) return;
+      // if (isSameCoords(newCoords, gridDimensions)) return;
       const nodeGridBoundingRect = getGridBoundingRect(newCoords);
       const overlappingNodesToMove = this.findOverlappingNodesToMove(
         nodeGridBoundingRect,
@@ -433,15 +420,10 @@ export class WebloomPage {
     return {
       id: this.id,
       widgets: this.snapshotWidgets(),
-      queries: this.snapshotQueries(),
     };
   }
 
   snapshotWidgets() {
     return Object.values(this.widgets).map((widget) => widget.snapshot);
-  }
-
-  snapshotQueries() {
-    return Object.values(this.queries).map((query) => query.snapshot);
   }
 }

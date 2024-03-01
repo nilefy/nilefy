@@ -1,24 +1,38 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { BoundingRect } from '@/lib/Editor/interface';
+import { WidgetSnapshot } from '@/types';
 
-type UpdateNodePayload = (Partial<WebloomWidget['snapshot']> & {
+export type ClipboardDataT = {
+  action: 'copy' | 'cut';
+  selected: {
+    id: string;
+    boundingRect: BoundingRect;
+  }[];
+  nodes: Map<string, WidgetSnapshot>;
+};
+
+export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
 })[];
 
-type RemoteTypes =
+export type RemoteTypes =
   | {
       event: 'insert';
       data: {
-        node: WebloomWidget['snapshot'];
-        sideEffects: UpdateNodePayload;
+        nodes: WebloomWidget['snapshot'][];
+        sideEffects: UpdateNodesPayload;
       };
     }
   | {
       event: 'update';
-      data: UpdateNodePayload;
+      data: UpdateNodesPayload;
     }
   | {
       event: 'delete';
-      data: WebloomWidget['id'][];
+      data: {
+        nodesId: WebloomWidget['id'][];
+        sideEffects: UpdateNodesPayload;
+      };
     };
 
 export abstract class Command {
@@ -26,7 +40,7 @@ export abstract class Command {
 }
 
 export abstract class UndoableCommand extends Command {
-  abstract undo(): void;
+  abstract undo(): void | RemoteTypes;
 }
 
 export function isUndoableCommand(cmd: Command): cmd is UndoableCommand {

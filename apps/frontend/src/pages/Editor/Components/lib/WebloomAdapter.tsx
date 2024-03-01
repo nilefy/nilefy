@@ -16,6 +16,7 @@ type WebloomAdapterProps = {
   draggable?: boolean;
   droppable?: boolean;
   resizable?: boolean;
+  isPreview: boolean;
 };
 
 export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
@@ -79,6 +80,7 @@ export const WebloomAdapter = observer((props: WebloomAdapterProps) => {
         ref={ref}
         className="target relative touch-none overflow-hidden outline-none"
         data-id={id}
+        data-testid={id}
       >
         {props.children}
       </div>

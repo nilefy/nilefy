@@ -52,20 +52,15 @@ import {
   Link,
   defer,
   redirect,
-  useAsyncError,
-  useAsyncValue,
   useLoaderData,
   useParams,
-  useSearchParams,
 } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import {
   APPS_QUERY_KEY,
   AppI,
   AppMetaT,
-  AppsIndexRet,
   appMetaSchema,
-  useAppQuery,
   useAppsQuery,
 } from '@/api/apps.api';
 import { Suspense, useMemo, useState } from 'react';
@@ -75,7 +70,6 @@ import { getToken, removeToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
 import { WebloomLoader } from '@/components/loader';
-import { FetchXError } from '@/utils/fetch';
 import { DebouncedInput } from '@/components/debouncedInput';
 
 export const appsLoader =
@@ -259,7 +253,7 @@ function AppDropDown(props: { app: AppI }) {
   );
 }
 
-function CreateAppDialog() {
+export function CreateAppDialog() {
   const [open, setOpen] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { workspaceId } = useParams();
@@ -335,15 +329,6 @@ function CreateAppDialog() {
   );
 }
 
-function AppsLoadError() {
-  const error = useAsyncError() as FetchXError;
-  return (
-    <div className="h-screen w-screen content-center items-center text-red-500">
-      errors while loading app &quot;{error.message}&quot;
-    </div>
-  );
-}
-
 function ApplicationsViewResolved() {
   const { workspaceId } = useParams();
   const [appsQuery, setAppsQuery] = useState('');
@@ -367,7 +352,7 @@ function ApplicationsViewResolved() {
           setAppsQuery(value.toString());
         }}
       />
-      <div className="flex h-full w-full flex-wrap gap-8 overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-wrap gap-8 overflow-y-auto">
         {filteredApps.map((app) => (
           <Card
             key={app.id}
@@ -394,12 +379,17 @@ function ApplicationsViewResolved() {
             </CardContent>
             <CardFooter className="flex justify-end gap-5">
               <Link
-                to={`apps/${app.id}`}
+                to={`apps/edit/${app.id}`}
                 className={buttonVariants({ variant: 'default' })}
               >
                 Edit
               </Link>
-              <Button>Launch</Button>
+              <Link
+                to={`apps/${app.id}`}
+                className={buttonVariants({ variant: 'default' })}
+              >
+                Launch
+              </Link>
             </CardFooter>
           </Card>
         ))}
@@ -413,7 +403,7 @@ function ApplicationsView() {
 
   return (
     <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={apps} errorElement={<AppsLoadError />}>
+      <Await resolve={apps}>
         <ApplicationsViewResolved />
       </Await>
     </Suspense>
@@ -424,7 +414,7 @@ export function ApplicationsLayout() {
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />

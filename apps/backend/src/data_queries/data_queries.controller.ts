@@ -22,21 +22,29 @@ import {
   UpdateQueryDto,
   runQueryBody,
   RunQueryBody,
+  deleteDatasourceQueriesSchema,
+  DeleteDatasourceQueriesDto,
+  AppQueriesDto,
 } from '../dto/data_queries.dto';
 import { QueryRet } from './query.types';
-import { WorkspaceDto } from '../dto/workspace.dto';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/queries')
 export class DataQueriesController {
   constructor(private dataQueriesService: DataQueriesService) {}
 
   @Post('run/:queryId')
+  @ApiCreatedResponse({
+    description: 'query return type',
+    type: QueryRet,
+  })
   async runQuery(
     @Param('workspaceId', ParseIntPipe)
-    workspaceId: WorkspaceDto['id'],
+    workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('queryId', ParseIntPipe) queryId: number,
+    @Param('queryId') queryId: string,
     // any query should send its evaluated config
     @Body(new ZodValidationPipe(runQueryBody)) query: RunQueryBody,
   ): Promise<QueryRet> {
@@ -49,7 +57,13 @@ export class DataQueriesController {
   }
 
   @Post('add')
+  @ApiCreatedResponse({
+    description: 'to create new query in application',
+    type: QueryDto,
+  })
   async addQuery(
+    @Param('workspaceId', ParseIntPipe)
+    _workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
@@ -62,40 +76,67 @@ export class DataQueriesController {
   }
 
   @Get()
-  async getAppQueries(@Param('appId', ParseIntPipe) appId: number) {
+  @ApiCreatedResponse({
+    description: 'get app queries',
+    type: Array<AppQueriesDto>,
+  })
+  async getAppQueries(
+    @Param('appId', ParseIntPipe) appId: number,
+  ): Promise<AppQueriesDto[]> {
     return await this.dataQueriesService.getAppQueries(appId);
   }
 
-  @Get(':id')
+  @Get(':queryId')
+  @ApiCreatedResponse({
+    description: 'get app query',
+    type: QueryDto,
+  })
   async getQuery(
-    @Param('id', ParseIntPipe) queryId: number,
+    @Param('queryId') queryId: string,
     @Param('appId', ParseIntPipe) appId: number,
   ): Promise<QueryDto> {
     return await this.dataQueriesService.getQuery(appId, queryId);
   }
 
-  @Delete(':id')
+  @Delete(':queryId')
+  @ApiCreatedResponse({
+    description: 'delete app query',
+    type: QueryDto,
+  })
   async deleteQuery(
     @Param('appId', ParseIntPipe) appId: number,
-    @Param('id', ParseIntPipe) queryId: number,
-  ): Promise<QueryDto> {
+    @Param('queryId') queryId: string,
+  ) {
     return await this.dataQueriesService.deleteQuery(appId, queryId);
   }
 
   @Delete()
+  @ApiCreatedResponse({
+    description: 'delete data source queries',
+    type: Array<QueryDto>,
+  })
   async deleteDataSourceQueries(
-    @Param('dataSourceId', ParseIntPipe) dataSourceId: number,
+    @Body(deleteDatasourceQueriesSchema)
+    body: DeleteDatasourceQueriesDto,
   ): Promise<QueryDto[]> {
-    return await this.dataQueriesService.deleteDataSourceQueries(dataSourceId);
+    return await this.dataQueriesService.deleteDataSourceQueries(
+      body.dataSourceId,
+    );
   }
 
-  @Put(':id')
+  @Put(':queryId')
+  @ApiCreatedResponse({
+    description: 'update app query',
+    type: QueryDto,
+  })
   async updateQuery(
-    @Param('id', ParseIntPipe) queryId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('queryId') queryId: string,
     @Body(new ZodValidationPipe(updateQuerySchema)) query: UpdateQueryDto,
     @Req() req: ExpressAuthedRequest,
-  ): Promise<QueryDto> {
+  ) {
     return await this.dataQueriesService.updateQuery({
+      appId,
       queryId,
       updatedById: req.user.userId,
       query,

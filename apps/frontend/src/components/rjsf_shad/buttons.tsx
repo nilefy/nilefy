@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 
 export function SubmitButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >({ uiSchema, registry }: SubmitButtonProps<T, S, F>) {
   const {
     submitText,
@@ -45,9 +45,9 @@ export function SubmitButton<
 }
 
 export function CopyButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
@@ -62,9 +62,9 @@ export function CopyButton<
 }
 
 export function MoveDownButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
@@ -79,9 +79,9 @@ export function MoveDownButton<
 }
 
 export function MoveUpButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
@@ -96,9 +96,9 @@ export function MoveUpButton<
 }
 
 export function RemoveButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >(props: IconButtonProps<T, S, F>) {
   const {
     registry: { translateString },
@@ -113,9 +113,9 @@ export function RemoveButton<
 }
 
 export function AddButton<
-  T = any,
+  T,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType,
 >({ uiSchema, registry, ...props }: IconButtonProps<T, S, F>) {
   const { translateString } = registry;
   return (

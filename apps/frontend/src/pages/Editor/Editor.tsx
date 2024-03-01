@@ -3,7 +3,11 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, Suspense, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
 import {
   DndContext,
   DragEndEvent,
@@ -29,27 +33,18 @@ import { normalize } from '@/lib/Editor/utils';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Await,
-  defer,
-  redirect,
-  useAsyncError,
-  useAsyncValue,
-  useLoaderData,
-} from 'react-router-dom';
-import { QueryClient } from '@tanstack/react-query';
-import { getToken, removeToken } from '@/lib/token.localstorage';
-import { jwtDecode } from 'jwt-decode';
-import { JwtPayload } from '@/types/auth.types';
-import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { EditorLeftSidebar } from './editorLeftSideBar';
-import { QueryPanel } from '@/components/queryPanel';
-import { seedNameMap } from '@/lib/Editor/widgetName';
-import { WebloomPage } from '@/lib/Editor/Models/page';
+import { QueryPanel } from '@/pages/Editor/Components/queryPanel';
 import { editorStore } from '@/lib/Editor/Models';
-import { FetchXError } from '@/utils/fetch';
+import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
+import { EditorHeader } from './editorHeader';
+import { CopyAction } from '@/Actions/Editor/Copy';
+import { CutAction } from '@/Actions/Editor/Cut';
+import { PasteAction } from '@/Actions/Editor/Paste';
+import { ClipboardDataT } from '@/Actions/types';
+import { DebugPanel } from './Components/debugPanel';
 
 const throttledResizeCanvas = throttle(
   (width: number) => {
@@ -61,59 +56,42 @@ const throttledResizeCanvas = throttle(
   },
 );
 
-const CustomPanelResizeHandle = () => {
-  return (
-    <PanelResizeHandle className="group relative flex shrink-0 grow-0 basis-1 items-stretch justify-stretch overflow-visible outline-none">
-      <div
-        className="relative
-        flex-1
-        transition-colors
-        after:absolute
-        after:left-[calc(50%-0.5rem)]
-        after:top-[calc(50%-.5rem)]
-        after:flex after:h-1
-        after:w-1
-        after:items-center
-        after:justify-center
-      group-data-[resize-handle-active]:bg-sky-500"
-      ></div>
-    </PanelResizeHandle>
-  );
-};
-
-export const appLoader =
-  (queryClient: QueryClient) =>
-  async ({ params }: { params: Record<string, string | undefined> }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const query = useAppQuery({
-        workspaceId: +(params.workspaceId as string),
-        appId: +(params.appId as string),
-      });
-      return defer({
-        app: queryClient.fetchQuery(query),
-      });
-    }
-  };
-
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
+
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
   });
-
   useHotkeys('delete', () => {
-    commandManager.executeCommand(new DeleteAction());
+    if (editorStore.currentPage.selectedNodeIds.size > 0) {
+      commandManager.executeCommand(new DeleteAction());
+    }
+  });
+
+  useHotkeys(['ctrl+c', 'ctrl+x'], (_, handlers) => {
+    if (editorStore.currentPage.selectedNodeIds.size === 0) return;
+
+    if (handlers.keys?.join('') === 'c') {
+      commandManager.executeCommand(new CopyAction());
+    } else {
+      commandManager.executeCommand(new CutAction());
+    }
+  });
+
+  useHotkeys('ctrl+v', async () => {
+    try {
+      const data: ClipboardDataT = JSON.parse(
+        await navigator.clipboard.readText(),
+      );
+      commandManager.executeCommand(
+        new PasteAction({
+          data,
+          mousePos: mousePos.current,
+        }),
+      );
+    } catch (ig) {
+      console.log(ig);
+    }
   });
 
   const draggedNode = editorStore.currentPage.draggedWidgetId;
@@ -212,9 +190,13 @@ export const Editor = observer(() => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
   }, [draggedNode]);
+
   return (
-    <>
-      <div className="isolate flex h-full max-h-full w-full bg-transparent">
+    <div className="isolate flex h-full max-h-full w-full flex-col bg-transparent">
+      <div className="h-fit w-full">
+        <EditorHeader />
+      </div>
+      <div className="flex h-full w-full">
         <EditorLeftSidebar />
         {/*sidebar*/}
         <DndContext
@@ -228,16 +210,19 @@ export const Editor = observer(() => {
           onDragCancel={handleCancel}
           autoScroll={{ layoutShiftCompensation: false }}
         >
-          <PanelGroup direction="horizontal">
-            <Panel
+          <ResizablePanelGroup direction="horizontal">
+            <ResizablePanel
               defaultSizePercentage={70}
               minSizePercentage={50}
               onResize={(sizes) => {
                 throttledResizeCanvas(sizes.sizePixels);
               }}
             >
-              <PanelGroup direction="vertical">
-                <Panel defaultSizePercentage={70} minSizePercentage={25}>
+              <ResizablePanelGroup direction="vertical">
+                <ResizablePanel
+                  defaultSizePercentage={65}
+                  minSizePercentage={25}
+                >
                   <ScrollArea
                     ref={editorRef}
                     className="h-full w-full"
@@ -245,7 +230,7 @@ export const Editor = observer(() => {
                   >
                     <WebloomElementShadow />
                     <MultiSelectBounding />
-                    <WebloomRoot />
+                    <WebloomRoot isPreview={false} />
                     <ResizeHandlers />
                     <Selecto
                       // The container to add a selection element
@@ -289,75 +274,35 @@ export const Editor = observer(() => {
                       dropAnimation={{ duration: 0 }}
                     />
                   </ScrollArea>
-                </Panel>
-                <CustomPanelResizeHandle />
-                <Panel
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
                   maxSizePercentage={75}
-                  defaultSizePercentage={30}
+                  defaultSizePercentage={35}
                   collapsible
                 >
                   <QueryPanel />
-                </Panel>
-              </PanelGroup>
-            </Panel>
-            <CustomPanelResizeHandle />
-            <Panel maxSizePercentage={25} minSizePercentage={10}>
-              <Suspense fallback={<div>Loading...</div>}>
+                  {/* <DebugPanel /> */}
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
+              <Suspense fallback={<WebloomLoader />}>
                 <RightSidebar />
               </Suspense>
-            </Panel>
-          </PanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </DndContext>
       </div>
-    </>
+    </div>
   );
 });
 
-function AppLoadError() {
-  const error = useAsyncError() as FetchXError;
-  return (
-    <div className="h-screen w-screen content-center items-center text-red-500">
-      errors while loading app &quot;{error.message}&quot;
-    </div>
-  );
-}
-
-const AppResolved = function AppResolved() {
-  const app = useAsyncValue() as AppCompleteT;
-  const tree = app.defaultPage.tree;
-  // todo : put the init state inside the editor store itself
-  const inited = useRef(false);
-  if (!inited.current) {
-    seedNameMap(Object.values(tree));
-    editorStore.init({
-      currentPageId: app.defaultPage.id.toString(),
-      pages: [
-        new WebloomPage({
-          id: app.defaultPage.id.toString(),
-          widgets: tree,
-          queries: {},
-        }),
-      ],
-    });
-    inited.current = true;
-  }
-  useEffect(() => {
-    commandManager.connectToEditor(app.id, app.defaultPage.id);
-    return () => {
-      commandManager.disconnectFromConnectedEditor();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return <Editor />;
-};
 export function App() {
-  const { app } = useLoaderData();
-
   return (
-    <Suspense fallback={<WebloomLoader />}>
-      <Await resolve={app} errorElement={<AppLoadError />}>
-        <AppResolved />
-      </Await>
-    </Suspense>
+    <AppLoader initWs={true}>
+      <Editor />
+    </AppLoader>
   );
 }

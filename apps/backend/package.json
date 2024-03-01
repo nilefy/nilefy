@@ -23,7 +23,8 @@
     "db:studio": "dotenv drizzle-kit studio --verbose",
     "db:generate": "dotenv drizzle-kit generate:pg",
     "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate",
-    "db:seed": "ts-node ./src/scripts/seeder"
+    "db:seed": "ts-node ./src/scripts/seeder",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "^10.2.9",
@@ -37,7 +38,6 @@
     "@nestjs/swagger": "^7.1.16",
     "@nestjs/websockets": "^10.2.10",
     "@webloom/constants": "workspace:^",
-    "@webloom/data-sources": "workspace:*",
     "@webloom/permissions": "workspace:*",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
@@ -47,6 +47,7 @@
     "lodash": "4.17.21",
     "morgan": "^1.10.0",
     "nanoid": "3",
+    "nestjs-zod": "^3.0.0",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",

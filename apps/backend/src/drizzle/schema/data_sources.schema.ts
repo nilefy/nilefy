@@ -7,6 +7,8 @@ import {
   serial,
   varchar,
   unique,
+  text,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { workspaces, users, timeStamps, apps } from './schema';
 
@@ -69,8 +71,10 @@ export const workspaceDataSources = pgTable(
 export const queries = pgTable(
   'workspace_app_queries',
   {
-    id: serial('id').primaryKey(),
-    name: varchar('query_name', { length: 100 }).notNull(),
+    /**
+     * id now act as name as well as id
+     */
+    id: text('id').notNull(),
     /**
      * query **un-evaluated** configuration(cannot run query with this config, needs to get the evaluated config the from front-end)
      */
@@ -88,6 +92,6 @@ export const queries = pgTable(
     ...timeStamps,
   },
   (t) => ({
-    nameUnique: unique().on(t.name, t.appId),
+    pk: primaryKey({ columns: [t.id, t.appId] }),
   }),
 );

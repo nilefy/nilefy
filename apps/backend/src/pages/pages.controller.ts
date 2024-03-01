@@ -13,27 +13,33 @@ import {
 import { PagesService } from './pages.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import { AppDto } from '../dto/apps.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import {
   CreatePageDto,
+  CreatePageRetDto,
   PageDto,
   UpdatePageDto,
   createPageSchema,
   updatePageSchema,
 } from '../dto/pages.dto';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps/:appId/pages')
 export class PagesController {
   constructor(private readonly pagesService: PagesService) {}
 
   @Post()
+  @ApiCreatedResponse({
+    description: 'create app page',
+    type: CreatePageRetDto,
+  })
   async create(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(createPageSchema)) pageDto: CreatePageDto,
-  ) {
+  ): Promise<CreatePageRetDto> {
     return await this.pagesService.create({
       createdById: req.user.userId,
       appId,
@@ -42,11 +48,15 @@ export class PagesController {
   }
 
   @Post(':pageId/clone')
+  @ApiCreatedResponse({
+    description: 'clone app page',
+    type: Array<PageDto>,
+  })
   async clone(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
-  ) {
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
+  ): Promise<PageDto[]> {
     return await this.pagesService.clone({
       appId,
       id: pageId,
@@ -55,25 +65,37 @@ export class PagesController {
   }
 
   @Get()
-  async index(@Param('appId', ParseIntPipe) appId: AppDto['id']) {
+  @ApiCreatedResponse({
+    description: 'get app pages',
+    type: Array<PageDto>,
+  })
+  async index(@Param('appId', ParseIntPipe) appId: number): Promise<PageDto[]> {
     return await this.pagesService.index(appId);
   }
 
   @Get(':pageId')
+  @ApiCreatedResponse({
+    description: 'get app page',
+    type: CreatePageRetDto,
+  })
   async findOne(
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
-  ) {
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
+  ): Promise<CreatePageRetDto> {
     return await this.pagesService.findOne(appId, pageId);
   }
 
   @Put(':pageId')
+  @ApiCreatedResponse({
+    description: 'update app page',
+    type: Array<PageDto>,
+  })
   async update(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
     @Body(new ZodValidationPipe(updatePageSchema)) pageDto: UpdatePageDto,
-  ) {
+  ): Promise<PageDto[]> {
     return await this.pagesService.update(appId, pageId, {
       updatedById: req.user.userId,
       ...pageDto,
@@ -81,11 +103,15 @@ export class PagesController {
   }
 
   @Delete(':pageId')
+  @ApiCreatedResponse({
+    description: 'delete app page',
+    type: Array<PageDto>,
+  })
   async delete(
     @Req() req: ExpressAuthedRequest,
-    @Param('appId', ParseIntPipe) appId: AppDto['id'],
-    @Param('pageId', ParseIntPipe) pageId: PageDto['id'],
-  ) {
+    @Param('appId', ParseIntPipe) appId: number,
+    @Param('pageId', ParseIntPipe) pageId: number,
+  ): Promise<PageDto[]> {
     return await this.pagesService.delete({
       appId,
       pageId,

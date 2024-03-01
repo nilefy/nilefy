@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { apps as appsDrizzle } from '../drizzle/schema/schema';
+import { createZodDto } from 'nestjs-zod';
+import { pageSchema } from './pages.dto';
+import { userSchema } from './users.dto';
 
 export const appSchema = createSelectSchema(appsDrizzle);
 
@@ -24,7 +27,7 @@ export const updateAppDb = createAppDb
 
 export const updateAppSchema = createAppSchema.partial();
 
-export type AppDto = z.infer<typeof appSchema>;
+// export type AppDto = z.infer<typeof appSchema>;
 /**
  * insert in the db interface
  */
@@ -32,6 +35,64 @@ export type CreateAppDb = z.infer<typeof createAppDb>;
 /**
  * API insert interface
  */
-export type CreateAppDto = z.infer<typeof createAppSchema>;
+// export type CreateAppDto = z.infer<typeof createAppSchema>;
 export type UpdateAppDb = z.infer<typeof updateAppDb>;
-export type UpdateAppDto = z.infer<typeof updateAppSchema>;
+// export type UpdateAppDto = z.infer<typeof updateAppSchema>;
+
+export class AppDto extends createZodDto(appSchema) {}
+export class CreateAppDto extends createZodDto(createAppSchema) {}
+export class UpdateAppDto extends createZodDto(updateAppSchema) {}
+
+export const createAppRetSchema = appSchema.extend({
+  pages: z.array(
+    pageSchema.extend({
+      tree: z.record(z.string(), z.unknown()),
+    }),
+  ),
+});
+export class CreateAppRetDto extends createZodDto(createAppRetSchema) {}
+
+export const appRetSchema = appSchema.extend({
+  pages: z.array(
+    pageSchema.pick({
+      id: true,
+      name: true,
+      handle: true,
+      index: true,
+      enabled: true,
+      visible: true,
+    }),
+  ),
+  defaultPage: pageSchema.extend({
+    tree: z.record(z.string(), z.unknown()),
+  }),
+  createdBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+  updatedBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+});
+export class AppRetDto extends createZodDto(appRetSchema) {}
+
+export const appsRetSchema = appSchema.extend({
+  createdBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+  updatedBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+});
+export class AppsRetDto extends createZodDto(appsRetSchema) {}

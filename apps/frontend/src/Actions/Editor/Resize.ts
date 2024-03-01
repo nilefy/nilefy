@@ -6,7 +6,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
-import { Command, UndoableCommand } from '../types';
+import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -268,24 +268,31 @@ class ResizeAction {
     const command: UndoableCommand = {
       execute: () => {
         this._resize(id, dims!);
-        // return means data will be send to the server
-        const updates = [
+        const updates: UpdateNodesPayload = [
           editorStore.currentPage.getWidgetById(id).snapshot,
           ...undoData
             .filter((test) => test.id !== id)
             .map((k) => editorStore.currentPage.getWidgetById(k.id).snapshot),
         ];
 
+        // return means data will be send to the server
         return {
           event: 'update' as const,
           data: updates,
         };
       },
       undo: () => {
+        const updates: UpdateNodesPayload = [];
         this.returnToInitialDimensions(initialGridPosition, id);
         undoData.forEach((data) => {
           editorStore.currentPage.getWidgetById(data.id).setDimensions(data);
+          updates.push(editorStore.currentPage.getWidgetById(data.id).snapshot);
         });
+        updates.push(editorStore.currentPage.getWidgetById(id).snapshot);
+        return {
+          event: 'update' as const,
+          data: updates,
+        };
       },
     };
     this.cleanUp();

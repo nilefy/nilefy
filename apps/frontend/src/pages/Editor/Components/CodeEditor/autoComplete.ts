@@ -84,7 +84,7 @@ function webloomCompletions(context: CompletionContext) {
   // is no word before the cursor, don't open completions.
   if (!context.explicit && !before) return null;
   // very naive implementation of the completion till we implement the real one
-  const autoCompleteObject = editorStore.currentPage.context;
+  const autoCompleteObject = editorStore.context;
 
   const result = scopeCompletionSource(autoCompleteObject)(context);
   return result;

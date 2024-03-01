@@ -5,10 +5,14 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo dev",
+    "dev:docs": "cd apps/docs && pnpm start",
     "lint": "turbo lint",
-    "db:push": "turbo db:push",
-    "db:studio": "turbo db:studio",
-    "db:seed": "turbo db:seed"
+    "db:push": "cd apps/backend && pnpm db:push",
+    "db:studio": "cd apps/backend && pnpm db:studio",
+    "db:seed": "turbo db:seed",
+    "typecheck": "turbo typecheck",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -18,7 +22,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "turbo": "^1.10.15",
+    "turbo": "^1.12.4",
     "typescript": "^5.2.2"
   },
   "packageManager": "pnpm@^8.6.12"

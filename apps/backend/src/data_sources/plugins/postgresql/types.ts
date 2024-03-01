@@ -13,7 +13,10 @@ export const configSchema = z.object({
 });
 
 export const querySchema = z.object({
-  query: z.string().min(1),
+  query: z.string(),
+  options: z
+    .array(z.object({ name: z.string(), value: z.string() }))
+    .optional(),
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
@@ -50,7 +53,12 @@ export const queryConfigForm = {
     query: {
       'ui:widget': 'sql',
       'ui:placeholder': 'select * from table;',
-      'ui:title': 'SQL',
+      'ui:title': 'SQL Query',
+    },
+    options: {
+      'ui:widget': 'sql',
+      'ui:placeholder': 'select * from table;',
+      'ui:title': 'Options',
     },
   },
 };

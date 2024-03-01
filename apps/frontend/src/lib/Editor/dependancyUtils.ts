@@ -4,16 +4,24 @@ import toposort from 'toposort';
 import { EvaluationContext } from './evaluation';
 import { DependencyRelation } from './Models/dependencyManager';
 import { has } from 'lodash';
-export const analyzeDependancies = (
-  code: unknown,
-  toProperty: string,
-  entityId: string,
-  keys: EvaluationContext,
-) => {
-  if (typeof code !== 'string') return { dependencies: [], isCode: false };
+import { bindingRegexGlobal } from '../utils';
+
+export const analyzeDependancies = ({
+  code,
+  toProperty,
+  entityId,
+  keys,
+}: {
+  code: unknown;
+  toProperty: string;
+  entityId: string;
+  keys: EvaluationContext;
+}) => {
+  if (typeof code !== 'string')
+    return { toProperty, dependencies: [], isCode: false };
   const keysSet = new Set(Object.keys(keys));
   const dependencies: Array<DependencyRelation> = [];
-  const matches = code.matchAll(/{{([^}]*)}}/g);
+  const matches = code.matchAll(bindingRegexGlobal);
   let isCode = false;
   for (const match of matches) {
     isCode = true;
@@ -41,7 +49,7 @@ export const analyzeDependancies = (
       //todo handle field validation
     }
   }
-  return { dependencies, isCode };
+  return { toProperty, dependencies, isCode };
 };
 
 /**
@@ -86,6 +94,7 @@ export function hasCyclicDependencies(
     toposort(graph);
     return { hasCycle: false };
   } catch (e) {
-    return { hasCycle: true, cycle: e.message.split(' -> ') };
+    // @ts-expect-error toposort returns a string
+    return { hasCycle: true, cycle: e.message };
   }
 }
