@@ -47,3 +47,30 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
   const data = await response.json();
   return data;
 };
+export const confirmEmail = async (
+  confirmationData: EmailConfirmationData,
+): Promise<ConfirmationResponse> => {
+  console.log('right before the call');
+  const response = await fetchX(
+    `auth/confirm/${confirmationData.email}/${confirmationData.jwt}`,
+    {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      // body: JSON.stringify(confirmationData),
+    },
+  );
+
+  console.log('Right after the call');
+  const data = await response.json();
+  console.log(data);
+  return data;
+};
+export interface EmailConfirmationData {
+  email: string | undefined;
+  jwt: string | undefined;
+}
+
+interface ConfirmationResponse {
+  message: string; // You can adjust this according to the response structure from your backend
+  // You can add more fields here based on the actual response structure from your backend
+}

@@ -13,7 +13,14 @@ export class EmailSignUpService {
     const resend = new Resend(KEY);
     const baseUrl = isDev ? 'http://localhost:5173/' : 'https://weblloom.com/';
 
-    const url = baseUrl + 'confirm' + '/' + email + '/' + jwt;
+    const url =
+      baseUrl +
+      'confirm' +
+      '/' +
+      encodeURIComponent(email) +
+      '/' +
+      encodeURIComponent(jwt) +
+      '/';
 
     const { error } = await resend.emails.send({
       from: 'onboarding@resend.dev',

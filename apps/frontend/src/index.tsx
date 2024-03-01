@@ -138,11 +138,11 @@ const router = createBrowserRouter([
     children: [{ path: ':pageId', element: <PagePreview /> }],
   },
   {
-    path: '/confirm',
+    path: '/confirm/:email/:token',
     element: (
-      <NonAuthRoute>
-        <EmailConfirmation />
-      </NonAuthRoute>
+      // <NonAuthRoute>
+      <EmailConfirmation />
+      // </NonAuthRoute>
     ),
     errorElement: <ErrorPage />,
   },
