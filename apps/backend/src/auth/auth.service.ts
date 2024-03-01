@@ -125,4 +125,27 @@ export class AuthService {
       } satisfies PayloadUser),
     };
   }
+
+  async confirm(email: string, token: string) {
+    try {
+      await this.jwtService.verifyAsync(token);
+      const user = await this.userService.findOne(email);
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      }
+      user.isConfirmed = true;
+      await this.userService.update(user.id, { isConfirmed: true });
+      // const accessToken = await this.generateAccessToken(user);
+      // return { access_token: accessToken };
+      // todo decide if we're going to return access token or not
+      return { message: 'Email Confirmed' };
+    } catch (error) {
+      throw new Error('Failed to confirm email');
+    }
+  }
+
+  // private async generateAccessToken(user: User): Promise<string> {
+  //   const payload = { sub: user.id, username: user.username };
+  //   return this.jwtService.signAsync(payload);
+  // }
 }

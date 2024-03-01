@@ -9,6 +9,7 @@ import {
   varchar,
   unique,
   primaryKey,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import { permissionTypes } from '../../dto/permissionsTypes';
 
@@ -44,6 +45,10 @@ export const users = pgTable('users', {
   emailVerified: timestamp('emailVerified', { mode: 'date' }),
   password: varchar('password', { length: 256 }),
   avatar: text('avatar'),
+  conformationToken: varchar('conformation_token', {
+    length: 256,
+  }),
+  isConfirmed: boolean('is_confirmed').default(false).notNull(),
   ...timeStamps,
   ...softDelete,
 });

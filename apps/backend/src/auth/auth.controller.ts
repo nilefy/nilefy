@@ -7,6 +7,7 @@ import {
   Req,
   UsePipes,
   Res,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInGoogleOAuthGuard } from './google.guard';
@@ -53,5 +54,9 @@ export class AuthController {
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
     response.redirect(302, frontURL.toString());
+  }
+  @Get('confirm/:email/:token')
+  async confirm(@Param('email') email: string, @Param('token') token: string) {
+    return await this.authService.confirm(email, token);
   }
 }

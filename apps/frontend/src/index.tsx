@@ -27,6 +27,7 @@ import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { startWorker } from '../mocks/browser';
+import { EmailConfirmation } from './pages/auth/email_confirmation';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,6 +136,15 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId', element: <PagePreview /> }],
+  },
+  {
+    path: '/confirm',
+    element: (
+      <NonAuthRoute>
+        <EmailConfirmation />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
   },
 ]);
 

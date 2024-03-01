@@ -12,6 +12,7 @@ export const updateUserSchema = userSchema
   .pick({
     username: true,
     password: true,
+    isConfirmed: true,
   })
   .partial();
 

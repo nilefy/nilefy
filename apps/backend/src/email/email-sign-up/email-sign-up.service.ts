@@ -11,9 +11,9 @@ export class EmailSignUpService {
     const isDev = (process.env.NODE_ENV as string) === 'development';
     const KEY = process.env.RESEND_API_KEY as string;
     const resend = new Resend(KEY);
-    const baseUrl = isDev ? 'http://localhost:3000/' : 'https://weblloom.com/';
+    const baseUrl = isDev ? 'http://localhost:5173/' : 'https://weblloom.com/';
 
-    const url = baseUrl + 'auth/confirm' + '/' + email + '/' + jwt;
+    const url = baseUrl + 'confirm' + '/' + email + '/' + jwt;
 
     const { error } = await resend.emails.send({
       from: 'onboarding@resend.dev',
