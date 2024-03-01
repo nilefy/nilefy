@@ -31,6 +31,7 @@ export const chartDatasets = z.array(
     yValue: z.string(),
     /**
      *@link https://docs.retool.com/apps/web/guides/components/charts#transformation-types
+     * @description none
      * @description count	Returns the quantity of items for each group.
      * @description sum	Returns the summation of all numeric values.
      * @description avg	Returns the average of all numeric values.
@@ -44,11 +45,12 @@ export const chartDatasets = z.array(
      * @description last	Returns the last numeric value for each group.
      */
     aggMethod: z.enum([
+      'none',
       'count',
       'sum',
       'avg',
       'median',
-      'mode',
+      // 'mode',
       'rms',
       'stddev',
       'min',

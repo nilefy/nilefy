@@ -25,6 +25,7 @@ import {
   ArrayFieldItemType,
   chartDatasets,
 } from '@/components/rjsf_shad/arrayFieldItemTemplate';
+import { agg } from './agg';
 
 ChartJS.register(
   LinearScale,
@@ -49,7 +50,7 @@ const webloomChartProps = z.object({
       'line',
       'scatter' /**'pie', 'doughnut', 'radar'**/,
     ]),
-    direction: z.enum(['vertical', 'horizontal']),
+    // direction: z.enum(['vertical', 'horizontal']),
     /**
      * which column user wants to be in x-axis
      * @note: y-axis data is configured through datasets
@@ -76,68 +77,77 @@ const webloomChartProps = z.object({
 export type WebloomChartProps = z.infer<typeof webloomChartProps>;
 
 // TODO: direction
-// TODO: dataSets
 const WebloomChart = observer(function WebloomChart() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomChartProps;
   return (
     <ToolTipWrapper text={props.tooltip}>
-      <Chart
-        type={props.data.chartType}
-        options={{
-          // labeling
-          // @link https://www.chartjs.org/docs/latest/axes/labelling.html
-          scales: {
-            x: {
+      <div className="relative h-full w-full">
+        <Chart
+          type={props.data.chartType}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            // labeling
+            // @link https://www.chartjs.org/docs/latest/axes/labelling.html
+            scales: {
+              x: {
+                title: {
+                  display: props.layout.xAxisName !== undefined,
+                  text: props.layout.xAxisName,
+                },
+              },
+              y: {
+                title: {
+                  display: props.layout.yAxisName !== undefined,
+                  text: props.layout.yAxisName,
+                },
+              },
+            },
+            plugins: {
+              /**
+               * @link https://www.chartjs.org/docs/latest/configuration/legend.html#configuration-options
+               */
+              legend: {
+                display: props.layout.legendPosition !== 'none',
+                position:
+                  props.layout.legendPosition === 'none'
+                    ? 'top'
+                    : props.layout.legendPosition,
+              },
+              // title configuration
+              // @link https://www.chartjs.org/docs/latest/configuration/title.html
               title: {
-                display: props.layout.xAxisName !== undefined,
-                text: props.layout.xAxisName,
+                display: props.layout.title !== undefined,
+                text: props.layout.title,
+                font: {
+                  size: 18,
+                },
               },
             },
-            y: {
-              title: {
-                display: props.layout.yAxisName !== undefined,
-                text: props.layout.yAxisName,
-              },
-            },
-          },
-          plugins: {
-            /**
-             * @link https://www.chartjs.org/docs/latest/configuration/legend.html#configuration-options
-             */
-            legend: {
-              display: props.layout.legendPosition !== 'none',
-              position:
-                props.layout.legendPosition === 'none'
-                  ? 'top'
-                  : props.layout.legendPosition,
-            },
-            // title configuration
-            // @link https://www.chartjs.org/docs/latest/configuration/title.html
-            title: {
-              display: props.layout.title !== undefined,
-              text: props.layout.title,
-              font: {
-                size: 18,
-              },
-            },
-          },
-        }}
-        data={{
-          // x-axis-value
-          labels: props.data.dataSource.map(
-            (row) => row[props.data.xAxisValue],
-          ),
-          // TODO:
-          datasets: props.data.datasets.map((ds) => ({
-            type: ds.chartType,
-            label: ds.name,
-            data: props.data.dataSource.map((d) => d[ds.yValue] ?? 0),
-            backgroundColor: ds.color,
-          })),
-        }}
-      />
+          }}
+          data={{
+            // x-axis-value
+            labels: [
+              ...new Set(
+                props.data.dataSource.map((row) => row[props.data.xAxisValue]),
+              ),
+            ],
+            datasets: props.data.datasets.map((ds) => ({
+              type: ds.chartType,
+              label: ds.name,
+              data: agg(
+                props.data.dataSource,
+                props.data.xAxisValue,
+                ds.yValue,
+                ds.aggMethod,
+              ),
+              backgroundColor: ds.color,
+            })),
+          }}
+        />
+      </div>
     </ToolTipWrapper>
   );
 });
@@ -176,7 +186,7 @@ const defaultProps: WebloomChartProps = {
       },
     ],
     chartType: 'bar',
-    direction: 'vertical',
+    // direction: 'vertical',
     xAxisValue: 'year',
   },
   tooltip: '',

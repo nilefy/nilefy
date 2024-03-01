@@ -21,8 +21,7 @@ export default function CodeInputWidget<
     props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
   // TODO: we convert non string value to js template, until the validation code could handle this case
-  const correctValue =
-     props.value??''
+  const correctValue = props.value ?? '';
 
   return (
     <div id={`${id}-label`} className="flex flex-col space-y-3">
@@ -31,9 +30,7 @@ export default function CodeInputWidget<
         <WebloomCodeEditor
           id={id}
           // placeholder={props.placeholder}
-          setup={[
-            basicSetup,
-          ]}
+          setup={[basicSetup]}
           value={correctValue}
           onChange={onChange}
           autoFocus={autofocus}
