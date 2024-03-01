@@ -111,10 +111,7 @@ export function handleLateralCollisions(
           left = otherLeft - 2;
           colCount = 2;
         }
-      } else if (
-        (left >= otherLeft && left < otherRight) ||
-        (mouseRightOfElement && left < otherLeft)
-      ) {
+      } else if (mouseRightOfElement && left > otherLeft && left < otherRight) {
         const temp = left;
         left = otherRight;
         colCount += temp - left;
