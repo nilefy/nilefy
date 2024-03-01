@@ -5,7 +5,7 @@ import { EvaluationManager } from './evaluationManager';
 import { DependencyManager } from './dependencyManager';
 import { Entity } from './entity';
 
-type QueryRawValues = {
+export type QueryRawValues = {
   isLoading: boolean;
   /**
    * @description data returned from the query

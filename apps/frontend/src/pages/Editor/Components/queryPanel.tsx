@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
-
+import ReactJson from 'react-json-view';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,12 +26,56 @@ import { Input } from '../../../components/ui/input';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import FormT from '@rjsf/core';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomQuery } from '@/lib/Editor/Models/query';
+import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
 import { computed, runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 import EntityForm from '@/components/rjsf_shad/entityForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
+  function QueryPreview(props, ref) {
+    return (
+      <Tabs
+        ref={ref}
+        defaultValue="json"
+        className="max-w-full overflow-x-hidden"
+      >
+        <TabsList className="w-full space-x-8 p-2">
+          <TabsTrigger value="json">JSON</TabsTrigger>
+          <TabsTrigger value="raw">Raw</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="json"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+        >
+          <ReactJson
+            theme={'twilight'}
+            src={
+              props.queryValues.error
+                ? { error: props.queryValues.error }
+                : (props.queryValues.data as object)
+            }
+          />
+        </TabsContent>
+        <TabsContent
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          value="raw"
+        >
+          {JSON.stringify(
+            props.queryValues.error ?? props.queryValues.data,
+            null,
+            3,
+          )}
+        </TabsContent>
+      </Tabs>
+    );
+  },
+  {
+    forwardRef: true,
+  },
+);
 
 const QueryItem = observer(function QueryItem({
   query,
@@ -39,6 +83,7 @@ const QueryItem = observer(function QueryItem({
   query: WebloomQuery;
 }) {
   const rjsfRef = useRef<FormT>(null);
+  const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery(
     +(workspaceId as string),
@@ -55,7 +100,7 @@ const QueryItem = observer(function QueryItem({
         });
       },
     });
-  const { mutate: run } = api.queries.run.useMutation({
+  const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
     onSuccess(data) {
       query.setQueryState('success');
       query.updateQuery({
@@ -63,6 +108,7 @@ const QueryItem = observer(function QueryItem({
           ...data,
         },
       });
+      jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
     },
   });
 
@@ -88,6 +134,7 @@ const QueryItem = observer(function QueryItem({
           )}
         </Button>
         <Button
+          disabled={isRunPending}
           onClick={() => {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
@@ -109,56 +156,63 @@ const QueryItem = observer(function QueryItem({
         </Button>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
-        <Label className="flex items-center gap-4">
-          Data Source
-          <Select
-            value={curDataSource}
-            onValueChange={(e) => {
-              setCurDataSource(e);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={query?.dataSource.name} />
-            </SelectTrigger>
-            <SelectContent>
-              {dataSources
-                ?.filter(
-                  (dataSource) =>
-                    dataSource.dataSource.name ===
-                    query.dataSource.dataSource.name,
-                )
-                .map((dataSource) => (
-                  <SelectItem
-                    key={dataSource.name}
-                    value={dataSource.id.toString()}
-                  >
-                    {dataSource.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </Label>
-        <EntityForm
-          ref={rjsfRef}
-          entityId={query.id}
-          onSubmit={({ formData }) => {
-            if (!workspaceId || !appId)
-              throw new Error(
-                "that's weird this function should run under workspaceId, appId",
-              );
+      <ScrollArea className=" h-[calc(100%-3rem)] w-full">
+        <div className="flex flex-col gap-4 p-4">
+          <Label className="flex items-center gap-4">
+            Data Source
+            <Select
+              value={curDataSource}
+              onValueChange={(e) => {
+                setCurDataSource(e);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={query?.dataSource.name} />
+              </SelectTrigger>
+              <SelectContent>
+                {dataSources
+                  ?.filter(
+                    (dataSource) =>
+                      dataSource.dataSource.name ===
+                      query.dataSource.dataSource.name,
+                  )
+                  .map((dataSource) => (
+                    <SelectItem
+                      key={dataSource.name}
+                      value={dataSource.id.toString()}
+                    >
+                      {dataSource.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </Label>
+          <EntityForm
+            ref={rjsfRef}
+            entityId={query.id}
+            onSubmit={({ formData }) => {
+              if (!workspaceId || !appId)
+                throw new Error(
+                  "that's weird this function should run under workspaceId, appId",
+                );
 
-            updateMutation({
-              workspaceId: +workspaceId,
-              appId: +appId,
-              queryId: query.id,
-              dto: {
-                query: formData,
-                dataSourceId: +curDataSource,
-              },
-            });
-          }}
-        />
+              updateMutation({
+                workspaceId: +workspaceId,
+                appId: +appId,
+                queryId: query.id,
+                dto: {
+                  query: formData,
+                  dataSourceId: +curDataSource,
+                },
+              });
+            }}
+          />
+          <QueryPreview
+            ref={jsonResultRef}
+            key={query.id + 'preview'}
+            queryValues={query.rawValues as QueryRawValues}
+          />
+        </div>
       </ScrollArea>
     </div>
   );
