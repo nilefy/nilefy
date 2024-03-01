@@ -1,6 +1,6 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName, getNewEntityOrder } from '@/lib/Editor/widgetName';
 import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -57,6 +57,7 @@ export class WebloomWidget
     row,
     col,
     page,
+    order = getNewEntityOrder(type),
     id = getNewEntityName(type),
     nodes = [],
     rowsCount,
@@ -70,6 +71,7 @@ export class WebloomWidget
     page: WebloomPage;
     row: number;
     col: number;
+    order?: number,
     id?: string;
     nodes?: string[];
     rowsCount?: number;
@@ -83,6 +85,7 @@ export class WebloomWidget
       dependencyManager,
       evaluationManger,
       id,
+      order,
       rawValues: props ?? {},
       schema: WebloomWidgets[type].schema,
     });
@@ -161,6 +164,7 @@ export class WebloomWidget
       row: this.row,
       columnsCount: this.columnsCount,
       rowsCount: this.rowsCount,
+      order: this.order,
     };
   }
 

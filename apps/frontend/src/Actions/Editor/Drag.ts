@@ -5,7 +5,7 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { convertGridToPixel } from '@/lib/Editor/utils';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName, getNewEntityOrder } from '@/lib/Editor/widgetName';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
@@ -28,6 +28,7 @@ class DragAction {
   private static mouseStartPosition: Point;
   private static mouseCurrentPosition: Point;
   private static moved = false;
+  private static order = 0;
 
   private static _start(args: {
     new?: {
@@ -43,6 +44,7 @@ class DragAction {
     this.mouseStartPosition = args.mouseStartPosition;
     if (this.isNew) {
       this.initialDelta = args.new!.initialDelta;
+      this.order = getNewEntityOrder(args.new!.type as WidgetTypes);
       this.id = getNewEntityName(args.new!.type as WidgetTypes);
       const parent = editorStore.currentPage.getWidgetById(args.new!.parent);
       const colWidth = parent.columnWidth;
@@ -56,6 +58,7 @@ class DragAction {
       const widget = WebloomWidgets[this.newType as WidgetTypes];
       const node: AddWidgetPayload = {
         id: this.previewId,
+        order: this.order,
         nodes: [],
         parentId: args.new!.parent,
         col: args.new!.startPosition.x,

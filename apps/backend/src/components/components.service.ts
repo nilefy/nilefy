@@ -120,6 +120,7 @@ export class ComponentsService {
     rows.forEach((row) => {
       tree[row.id] = {
         id: row.id,
+        order: row.order,
         nodes: [],
         // set root node as parent of itself
         parentId: row.parentId ?? row.id,

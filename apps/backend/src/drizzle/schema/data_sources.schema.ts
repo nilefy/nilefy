@@ -75,6 +75,7 @@ export const queries = pgTable(
      * id now act as name as well as id
      */
     id: text('id').notNull(),
+    order: integer('order').notNull(),
     /**
      * query **un-evaluated** configuration(cannot run query with this config, needs to get the evaluated config the from front-end)
      */

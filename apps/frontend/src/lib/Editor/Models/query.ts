@@ -45,6 +45,7 @@ export class WebloomQuery
   constructor({
     query,
     id,
+    order,
     appId,
     dataSource,
     dataSourceId,
@@ -58,6 +59,7 @@ export class WebloomQuery
   }) {
     super({
       id,
+      order,
       dependencyManager,
       evaluationManger,
       rawValues: {
@@ -74,7 +76,6 @@ export class WebloomQuery
       },
       nestedPathPrefix: 'config',
     });
-
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
@@ -120,6 +121,7 @@ export class WebloomQuery
   get snapshot() {
     return {
       id: this.id,
+      order: this.order,
       dataSourceId: this.dataSourceId,
       query: this.rawValues,
       appId: this.appId,
