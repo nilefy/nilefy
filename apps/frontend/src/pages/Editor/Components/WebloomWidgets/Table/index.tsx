@@ -14,7 +14,6 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
-  PaginationState,
   getFilteredRowModel,
   Column,
 } from '@tanstack/react-table';
@@ -37,11 +36,11 @@ import { observer } from 'mobx-react-lite';
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 import {
-  EventTypes,
   genEventHandlerUiSchema,
   widgetsEventHandler,
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
+import { runInAction } from 'mobx';
 
 //Types
 type RowData = Record<string, unknown>;
@@ -71,6 +70,7 @@ const webloomTableProps = z.object({
   isSearchEnabled: z.boolean(),
   isPaginationEnabled: z.boolean(),
   pageSize: z.number().optional(),
+  pageIndex: z.number().optional(),
   appearance: z.object({
     emptyState: z.string().default('No rows found'),
     showHeaders: z.boolean().default(true),
@@ -104,13 +104,7 @@ const WebloomTable = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTableProps;
-  const {
-    data = [],
-    columns = [],
-    isRowSelectionEnabled,
-    isSearchEnabled,
-    isPaginationEnabled,
-  } = props;
+  const { data = [], columns = [] } = props;
 
   //  to run only once when the component is mounted
   React.useEffect(() => {
@@ -126,19 +120,6 @@ const WebloomTable = observer(() => {
     onPropChange({ key: 'columns', value: cols });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onPropChange, data]);
-
-  // pagination options
-  const [{ pageIndex }, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: isPaginationEnabled ? props.pageSize ?? 3 : data.length,
-  });
-  const pagination = React.useMemo(
-    () => ({
-      pageIndex,
-      pageSize: isPaginationEnabled ? props.pageSize ?? 3 : data.length,
-    }),
-    [pageIndex, isPaginationEnabled, props.pageSize, data.length],
-  );
 
   // sorting options
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -167,7 +148,7 @@ const WebloomTable = observer(() => {
 
   const table = useReactTable({
     data,
-    columns: isRowSelectionEnabled
+    columns: props.isRowSelectionEnabled
       ? [
           {
             id: 'select',
@@ -197,7 +178,12 @@ const WebloomTable = observer(() => {
         ]
       : tableCols,
     state: {
-      pagination,
+      pagination: {
+        pageIndex: props.pageIndex ?? 0,
+        pageSize: props.isPaginationEnabled
+          ? props.pageSize ?? 3
+          : props.data.length,
+      },
       rowSelection: props.rowSelection,
       sorting,
       globalFilter,
@@ -206,13 +192,34 @@ const WebloomTable = observer(() => {
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      const v =
+        typeof updater === 'function'
+          ? updater({
+              pageIndex: props.pageIndex ?? 0,
+              pageSize: props.pageSize ?? props.data.length,
+            })
+          : updater;
+      runInAction(() => {
+        onPropChange({
+          key: 'pageIndex',
+          value: v.pageIndex,
+        });
+        onPropChange({
+          key: 'pageSize',
+          value: v.pageSize,
+        });
+      });
+      // execute user event
+      editorStore.executeActions<typeof webloomTableEvents>(id, 'onPageChange');
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onRowSelectionChange: (value) => {
+    onRowSelectionChange: (updater) => {
       onPropChange({
         key: 'rowSelection',
-        value: typeof value === 'function' ? value(props.rowSelection) : value,
+        value:
+          typeof updater === 'function' ? updater(props.rowSelection) : updater,
       });
       // execute user event
       editorStore.executeActions<typeof webloomTableEvents>(
@@ -224,7 +231,7 @@ const WebloomTable = observer(() => {
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto">
-      {isSearchEnabled && (
+      {props.isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
           <Input
             value={globalFilter ?? ''}
@@ -276,7 +283,7 @@ const WebloomTable = observer(() => {
           </TableBody>
         </Table>
       </div>
-      {isPaginationEnabled && (
+      {props.isPaginationEnabled && (
         <div className="flex items-center justify-center space-x-2 py-4">
           <Button
             variant="ghost"
@@ -388,6 +395,9 @@ const schema: WidgetInspectorConfig = {
       pageSize: { type: 'number' },
       events: widgetsEventHandlerJsonSchema,
       rowSelection: zodToJsonSchema(webloomTableProps.shape.rowSelection),
+      pageIndex: {
+        type: 'number',
+      },
     },
     required: [
       'data',
@@ -401,6 +411,7 @@ const schema: WidgetInspectorConfig = {
   },
   uiSchema: {
     rowSelection: { 'ui:widget': 'hidden' },
+    pageIndex: { 'ui:widget': 'hidden' },
     columns: {
       'ui:widget': 'sortableList',
     },
