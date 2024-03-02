@@ -1,6 +1,5 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { RemoteTypes, UndoableCommand, UpdateNodesPayload } from '../types';
-import { Point } from '@/types';
 
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { DraggedItem } from '@/lib/Editor/dnd/interface';
@@ -8,6 +7,7 @@ import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { runInAction } from 'mobx';
 
 export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
@@ -46,20 +46,21 @@ class DragAction implements UndoableCommand {
   execute(): void | RemoteTypes {
     const endDims = this.endPosition;
     if (this.isNew) {
-      editorStore.currentPage.addWidget({
-        parentId: this.parentId,
-        type: this.newType,
-        id: this.id,
-        col: 0,
-        row: 0,
-        props: WebloomWidgets[this.newType].defaultProps,
+      runInAction(() => {
+        editorStore.currentPage.addWidget({
+          parentId: this.parentId,
+          type: this.newType,
+          id: this.id,
+          col: 0,
+          row: 0,
+          props: WebloomWidgets[this.newType].defaultProps,
+        });
+        this.undoData = editorStore.currentPage.moveWidgetIntoGrid(
+          this.id,
+          endDims,
+        );
       });
-      const undoData = editorStore.currentPage.moveWidgetIntoGrid(
-        this.id,
-        endDims,
-      );
-      this.undoData = undoData;
-      const affectedNodes = Object.keys(undoData)
+      const affectedNodes = Object.keys(this.undoData)
         .filter((test) => test !== this.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
@@ -71,13 +72,15 @@ class DragAction implements UndoableCommand {
         },
       };
     }
-    if (this.oldParentId !== this.parentId) {
-      editorStore.currentPage.moveWidget(this.id, this.parentId);
-    }
-    this.undoData = editorStore.currentPage.moveWidgetIntoGrid(
-      this.id,
-      this.endPosition,
-    );
+    runInAction(() => {
+      if (this.oldParentId !== this.parentId) {
+        editorStore.currentPage.moveWidget(this.id, this.parentId);
+      }
+      this.undoData = editorStore.currentPage.moveWidgetIntoGrid(
+        this.id,
+        this.endPosition,
+      );
+    });
     const remoteData = [
       editorStore.currentPage.getWidgetById(this.id).snapshot,
       ...Object.keys(this.undoData)
@@ -99,13 +102,17 @@ class DragAction implements UndoableCommand {
         return newIds;
       });
       const sideEffects: WebloomWidget['snapshot'][] = [];
-      editorStore.currentPage.removeWidget(this.id);
-      Object.entries(this.undoData)
-        .filter(([key]) => key !== this.id)
-        .forEach(([id, coords]) => {
-          editorStore.currentPage.getWidgetById(id).setDimensions(coords);
-          sideEffects.push(editorStore.currentPage.getWidgetById(id).snapshot);
-        });
+      runInAction(() => {
+        editorStore.currentPage.removeWidget(this.id);
+        Object.entries(this.undoData)
+          .filter(([key]) => key !== this.id)
+          .forEach(([id, coords]) => {
+            editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+            sideEffects.push(
+              editorStore.currentPage.getWidgetById(id).snapshot,
+            );
+          });
+      });
       return {
         event: 'delete' as const,
         data: {
@@ -116,17 +123,15 @@ class DragAction implements UndoableCommand {
     }
 
     const serverData: UpdateNodesPayload = [];
-    Object.entries(this.undoData).forEach(([id, coords]) => {
-      editorStore.currentPage.getWidgetById(id).setDimensions(coords);
-      serverData.push(editorStore.currentPage.getWidgetById(id).snapshot);
-    });
+    runInAction(() => {
+      Object.entries(this.undoData).forEach(([id, coords]) => {
+        editorStore.currentPage.getWidgetById(id).setDimensions(coords);
+        serverData.push(editorStore.currentPage.getWidgetById(id).snapshot);
+      });
 
-    if (this.oldParentId !== this.parentId) {
-      editorStore.currentPage.moveWidget(this.id, this.oldParentId!);
-    }
-    editorStore.currentPage.getWidgetById(this.id).setDimensions({
-      col: this.oldPosition.col,
-      row: this.oldPosition.row,
+      if (this.oldParentId !== this.parentId) {
+        editorStore.currentPage.moveWidget(this.id, this.oldParentId!);
+      }
     });
     serverData.push(editorStore.currentPage.getWidgetById(this.id).snapshot);
     return {

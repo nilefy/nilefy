@@ -46,7 +46,6 @@ class ResizeAction {
     const positionsSnapshot = editorStore.currentPage
       .snapshotWidgets()
       .reduce((acc, node) => {
-        if (node.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
         return {
           ...acc,
           [node.id]: {
@@ -178,6 +177,8 @@ class ResizeAction {
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
+    console.log(this.collidingNodes);
+    console.log(this.orginalPositions);
     // filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
       const tempWidget = editorStore.currentPage.getWidgetById(id);
