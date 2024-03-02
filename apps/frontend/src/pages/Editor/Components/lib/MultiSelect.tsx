@@ -8,8 +8,31 @@ import {
   getMousePositionRelativeToEditor,
 } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
+import { BoundingRect } from '@/lib/Editor/interface';
 // TODO: Custom implementation since we're tearing selecto's api for our use case
-
+const clipDimsToBoundingRect = (
+  dims: { top: number; left: number; width: number; height: number },
+  boundingRect: BoundingRect,
+) => {
+  if (!boundingRect) return dims;
+  const { top, left, right, bottom } = boundingRect;
+  const newDims = { ...dims };
+  if (dims.top < top) {
+    newDims.height -= top - dims.top;
+    newDims.top = top;
+  }
+  if (dims.left < left) {
+    newDims.width -= left - dims.left;
+    newDims.left = left;
+  }
+  if (dims.top + dims.height > bottom) {
+    newDims.height = bottom - dims.top;
+  }
+  if (dims.left + dims.width > right) {
+    newDims.width = right - dims.left;
+  }
+  return newDims;
+};
 const selectWidgetsInArea = (area: {
   top: number;
   left: number;
@@ -88,12 +111,17 @@ const MultiSelect = observer(() => {
     if (startAndDraggingDiff < 0) {
       currentYOrigin = currentY;
     }
-    const currentSelectAreaDims = {
-      top: currentYOrigin,
-      left: currentXOrigin,
-      width: rect.width,
-      height: currentHeight,
-    };
+
+    const currentSelectAreaDims = clipDimsToBoundingRect(
+      {
+        top: currentYOrigin,
+        left: currentXOrigin,
+        width: rect.width,
+        height: currentHeight,
+      },
+      editorStore.currentPage.rootWidget.boundingRect,
+    );
+
     setSelectAreaDims(currentSelectAreaDims);
     throttledSelectWidgetsInArea(currentSelectAreaDims);
   }, []);
@@ -114,7 +142,7 @@ const MultiSelect = observer(() => {
     editorStore.currentPage.rootWidget.scrollableContainer;
   if (!scrollContainer) return null;
   return (
-    <div style={style}>
+    <div style={style} data-type="MULTI_SELECT">
       <Selecto
         className="!pointer-events-none !absolute !left-[var(--select-area-left)] !top-[var(--select-area-top)] !h-[var(--select-area-height)] !w-[var(--select-area-width)] !transform-none"
         ref={selectoRef}
@@ -127,7 +155,7 @@ const MultiSelect = observer(() => {
         hitRate={0}
         dragCondition={(e) => {
           const triggerTarget = e.inputEvent.target;
-          return triggerTarget === editorStore.currentPage.rootWidget.dom;
+          return triggerTarget === editorStore.currentPage.rootWidget.canvas;
         }}
         onDragEnd={onDragEndHandler}
         onDrag={onDragHandler}
