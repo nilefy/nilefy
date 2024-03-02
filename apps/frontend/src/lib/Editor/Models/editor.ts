@@ -13,7 +13,7 @@ import { EvaluationContext, evaluateCode } from '../evaluation';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
-import { seedOrderMap } from '../widgetName';
+import { seedOrderMap, updateOrderMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
 import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 import { toast } from '@/components/ui/use-toast';
@@ -214,6 +214,15 @@ export class EditorState {
   }
 
   removeQuery(id: string) {
+    updateOrderMap(
+      [
+        {
+          type: this.queries[id].dataSource.name,
+          name: id,
+        },
+      ],
+      true,
+    );
     delete this.queries[id];
   }
 

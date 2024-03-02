@@ -1,8 +1,13 @@
-let entityOrder: Record<string, number> = {};
+let entityOrder: Record<string, Set<number>> = {};
 
 export function getNewEntityName(type: string): string {
-  entityOrder[type] = (entityOrder[type] ?? 0) + 1;
-  return `${type}${entityOrder[type]}`;
+  if (!entityOrder[type]) {
+    entityOrder[type] = new Set();
+  }
+  const order =
+    (entityOrder[type].size ? Math.max(...entityOrder[type]) : 0) + 1;
+  entityOrder[type].add(order);
+  return `${type}${order}`;
 }
 
 /**
@@ -20,6 +25,35 @@ export function seedOrderMap(entities: { type: string; name: string }[]) {
         order += +name[pos++];
       }
     }
-    entityOrder[type] = Math.max(entityOrder[type] ?? 0, order);
+    if (!entityOrder[type]) {
+      entityOrder[type] = new Set();
+    }
+    entityOrder[type].add(order);
+  });
+}
+
+export function updateOrderMap(
+  entities: { type: string; name: string }[],
+  deleted: boolean,
+) {
+  entities.forEach(({ type, name }) => {
+    const nameRe = new RegExp(`${type}\\d+`);
+
+    if (!nameRe.test(name)) return;
+
+    let order = 0;
+    if (nameRe.test(name)) {
+      let pos = type.length;
+      while (pos < name.length) {
+        order *= 10;
+        order += +name[pos++];
+      }
+    }
+
+    if (deleted) {
+      entityOrder[type].delete(order);
+    } else {
+      entityOrder[type].add(order);
+    }
   });
 }
