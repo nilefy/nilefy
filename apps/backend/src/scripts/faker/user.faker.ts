@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { UserDto } from 'src/dto/users.dto';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import { configDotenv } from 'dotenv';
 import { PayloadUser } from 'src/auth/auth.types';
 
 /**
@@ -15,7 +14,6 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
     sub: lastName.length,
     username: firstName + lastName,
   };
-  configDotenv();
   const secret = process.env.JWT_SECRET;
   const fakeOptions: JwtSignOptions = {
     secret: secret,
