@@ -2,7 +2,7 @@ import { bindingRegexGlobal } from '../utils';
 
 export type EvaluationContext = Record<string, unknown>;
 
-export const evaluate = (
+export const evaluateExpressions = (
   code: string,
   evaluationContext: Record<string, unknown>,
 ) => {
@@ -19,20 +19,12 @@ export const evaluate = (
     }
     expressions.push(expression);
   }
-  const evalInContext = (expression: string) => {
-    try {
-      return new Function('context', `with(context) { return ${expression} }`)(
-        evaluationContext,
-      );
-    } catch (e) {
-      return undefined;
-    }
-  };
   const evaluatedExpressions = expressions
     .map((expression) => {
       try {
-        return evalInContext(expression);
+        return evalInContext(expression, evaluationContext);
       } catch (e) {
+        // TODO: use errors to close https://github.com/z-grad-pr-sh/frontend/issues/250
         return undefined;
       }
     })
@@ -47,3 +39,26 @@ export const evaluate = (
   });
   return final;
 };
+
+function evalInContext(
+  expression: string,
+  evaluationContext: Record<string, unknown>,
+) {
+  try {
+    return new Function('context', `with(context) { return ${expression} }`)(
+      evaluationContext,
+    );
+  } catch (e) {
+    console.error('DEBUGPRINT[4]: evaluation.ts:51: e=', e);
+    // TODO: use errors to close https://github.com/z-grad-pr-sh/frontend/issues/250
+    return undefined;
+  }
+}
+
+export function evaluateCode(
+  code: string,
+  evaluationContext: Record<string, unknown>,
+) {
+  if (!code) return code;
+  return evalInContext(code, evaluationContext);
+}

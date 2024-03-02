@@ -1,10 +1,14 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
-import { Point, WidgetSnapshot } from '@/types';
+import { Point } from '@/types';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
+import {
+  WebloomGridDimensions,
+  WebloomPixelDimensions,
+  WidgetSetters,
+} from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
@@ -21,6 +25,7 @@ import { DependencyManager } from './dependencyManager';
 import { cloneDeep } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
+import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 
 export class WebloomWidget
   extends Entity
@@ -44,6 +49,7 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
+  setters: Record<string, (arg: unknown) => void>;
 
   constructor({
     type,
@@ -86,6 +92,8 @@ export class WebloomWidget
     this.parentId = parentId;
     this.page = page;
     this.type = type;
+    const baseWidget = WebloomWidgets[this.type as WidgetTypes];
+    this.setters = this.genSetters(baseWidget.setters);
     const { config } = WebloomWidgets[type];
     this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
     this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
@@ -317,5 +325,16 @@ export class WebloomWidget
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
+  }
+
+  private genSetters(
+    settersConfig?: WidgetSetters,
+  ): Record<string, (arg: unknown) => void> {
+    const res: Record<string, (arg: unknown) => void> = {};
+    if (!settersConfig) return res;
+    for (const k in settersConfig) {
+      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
+    }
+    return res;
   }
 }
