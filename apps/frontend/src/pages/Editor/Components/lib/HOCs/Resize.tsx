@@ -6,7 +6,10 @@ export const WithResize = <P extends { id: string }>(
 ) => {
   const ResizableComponent: React.FC<P> = (props) => {
     return (
-      <div className="relative" data-type={WIDGET_SECTIONS.RESIZER}>
+      <div
+        className="relative h-full w-full"
+        data-type={WIDGET_SECTIONS.RESIZER}
+      >
         <ResizeHandles id={props.id} />
         <WrappedComponent {...props} />
       </div>

@@ -126,7 +126,7 @@ const WidgetWrapper = observer(
         style={{
           visibility: isVisible ? 'visible' : 'hidden',
         }}
-        className="target relative touch-none overflow-hidden outline-none"
+        className="target relative h-full w-full touch-none overflow-hidden outline-none"
         data-id={id}
         data-type={WIDGET_SECTIONS.CANVAS}
       >
