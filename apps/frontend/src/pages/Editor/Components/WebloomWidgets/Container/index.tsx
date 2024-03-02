@@ -52,8 +52,8 @@ export const config: WidgetConfig = {
   icon: <BoxSelect />,
   isCanvas: true,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 10,
+    rowsCount: 25,
     minColumns: 1,
     minRows: 4,
   },
