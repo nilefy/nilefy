@@ -9,6 +9,7 @@ import {
   downloadFile,
   uploadFile,
 } from './operations';
+import { GCS as OPERATIONS } from '../common/operations';
 
 export default class GoogleCloudStorageQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -35,15 +36,15 @@ export default class GoogleCloudStorageQueryService
 
   async runQuery(query: QueryT['query'], storage: Storage) {
     switch (query.operation) {
-      case 'Read file':
+      case OPERATIONS.READ_FILE:
         return await readFile(query, storage);
-      case 'Upload file':
+      case OPERATIONS.UPLOAD_FILE:
         return await uploadFile(query, storage);
-      case 'List buckets':
+      case OPERATIONS.LIST_BUCKETS:
         return await listBuckets(storage);
-      case 'List files in a bucket':
+      case OPERATIONS.LIST_FILES:
         return await bucketFiles(query, storage);
-      case 'Download file':
+      case OPERATIONS.DOWNLOAD_FILE:
         return await downloadFile(query, storage);
     }
   }

@@ -1,11 +1,12 @@
 import { QueryT } from './types';
 import { Bucket, Storage } from '@google-cloud/storage';
+import { GCS as OPERATIONS } from '../common/operations';
 
 /**
  * TODO: add an option to pipe the file's content to a local file
  */
 export const readFile = async (
-  query: Extract<QueryT['query'], { operation: 'Read file' }>,
+  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.READ_FILE }>,
   storage: Storage,
 ): Promise<Buffer> => {
   const { bucket, file } = query;
@@ -27,7 +28,7 @@ export const readFile = async (
  * TODO: overwrite it if exists
  */
 export const uploadFile = async (
-  query: Extract<QueryT['query'], { operation: 'Upload file' }>,
+  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.UPLOAD_FILE }>,
   storage: Storage,
 ): Promise<File['name']> => {
   const { bucket, filePath } = query;
@@ -51,7 +52,7 @@ export const listBuckets = async (
 };
 
 export const bucketFiles = async (
-  query: Extract<QueryT['query'], { operation: 'List files in a bucket' }>,
+  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.LIST_FILES }>,
   storage: Storage,
 ): Promise<File['name'][]> => {
   try {
@@ -65,7 +66,10 @@ export const bucketFiles = async (
 };
 
 export const downloadFile = async (
-  query: Extract<QueryT['query'], { operation: 'Download file' }>,
+  query: Extract<
+    QueryT['query'],
+    { operation: typeof OPERATIONS.DOWNLOAD_FILE }
+  >,
   storage: Storage,
 ): Promise<Buffer> => {
   const { bucket, file, destination } = query;
