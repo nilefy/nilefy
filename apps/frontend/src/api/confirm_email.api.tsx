@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 export const confirmEmail = async (
   confirmationData: EmailConfirmationData,
 ): Promise<ConfirmationResponse> => {
-  console.log('right before the call');
   const response = await fetchX(
     `auth/confirm/${confirmationData.email}/${confirmationData.jwt}`,
     {
@@ -12,10 +11,7 @@ export const confirmEmail = async (
       headers: { 'Content-Type': 'application/json' },
     },
   );
-
-  console.log('Right after the call');
   const data = await response.json();
-  console.log(data);
   return data;
 };
 export interface EmailConfirmationData {
