@@ -16,10 +16,12 @@ export class EmailSignUpService {
     const isDev: boolean = this.configService.get('NODE_ENV') === 'development';
     const KEY: string = this.configService.get('RESEND_API_KEY');
     const resend = new Resend(KEY);
-    const baseUrl: string = this.configService.get('BASE_URL_FE');
+    const baseUrl: string = this.configService.get('BASE_URL_BE');
 
     const url =
       baseUrl +
+      'auth' +
+      '/' +
       'confirm' +
       '/' +
       encodeURIComponent(email) +

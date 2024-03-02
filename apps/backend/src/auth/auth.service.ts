@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -12,6 +13,8 @@ import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { EmailSignUpService } from '../email/email-sign-up/email-sign-up.service';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from '../evn.validation';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +22,7 @@ export class AuthService {
     private userService: UsersService,
     private jwtService: JwtService,
     private emailSignUpService: EmailSignUpService,
+    private configService: ConfigService<EnvSchema, true>,
     @Inject(DrizzleAsyncProvider) private readonly db: DatabaseI,
   ) {}
 
@@ -92,6 +96,7 @@ export class AuthService {
         } satisfies PayloadUser),
       };
     } catch (err) {
+      Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
       //TODO: return database error
       throw new BadRequestException();
     }
@@ -135,12 +140,9 @@ export class AuthService {
       }
       user.isConfirmed = true;
       await this.userService.update(user.id, { isConfirmed: true });
-      // const accessToken = await this.generateAccessToken(user);
-      // return { access_token: accessToken };
-      // todo decide if we're going to return access token or not
-      return { message: 'Email Confirmed' };
+      return 'email verified successfully, try sign-in';
     } catch (error) {
-      throw new Error('Failed to confirm email');
+      throw new BadRequestException('Failed to confirm email');
     }
   }
 }

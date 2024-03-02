@@ -8,6 +8,7 @@ import {
   UsePipes,
   Res,
   Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInGoogleOAuthGuard } from './google.guard';
@@ -20,10 +21,15 @@ import {
 } from '../dto/users.dto';
 import { GoogleAuthedRequest } from './auth.types';
 import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from '../evn.validation';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService<EnvSchema, true>,
+  ) {}
 
   @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
@@ -48,15 +54,30 @@ export class AuthController {
     @Req() req: GoogleAuthedRequest,
     @Res() response: Response,
   ) {
-    const frontURL = new URL('http://localhost:5173/signin');
+    const frontURL = new URL('/signin', this.configService.get('BASE_URL_FE'));
     frontURL.searchParams.set(
       'token',
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
     response.redirect(302, frontURL.toString());
   }
+
   @Get('confirm/:email/:token')
-  async confirm(@Param('email') email: string, @Param('token') token: string) {
-    return await this.authService.confirm(email, token);
+  async confirm(
+    @Res() response: Response,
+    @Param('email') email: string,
+    @Param('token') token: string,
+  ) {
+    const frontURL = new URL('/signin', this.configService.get('BASE_URL_FE'));
+    try {
+      const msg = await this.authService.confirm(email, token);
+      frontURL.searchParams.set('msg', msg);
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        frontURL.searchParams.set('errorMsg', err.message);
+      }
+    }
+    response.redirect(302, frontURL.toString());
+    return;
   }
 }
