@@ -41,6 +41,7 @@ import {
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
 import { runInAction } from 'mobx';
+import { DebouncedInput } from '@/components/debouncedInput';
 
 //Types
 type RowData = Record<string, unknown>;
@@ -188,9 +189,15 @@ const WebloomTable = observer(() => {
       sorting,
       globalFilter,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (updater) => {
+      setGlobalFilter(updater);
+    },
     getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      setSorting(updater);
+      // execute user event
+      editorStore.executeActions<typeof webloomTableEvents>(id, 'onSortChange');
+    },
     getSortedRowModel: getSortedRowModel(),
     onPaginationChange: (updater) => {
       const v =
@@ -233,9 +240,16 @@ const WebloomTable = observer(() => {
     <div className="flex h-full w-full flex-col overflow-auto">
       {props.isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
-          <Input
+          <DebouncedInput
             value={globalFilter ?? ''}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={(value) => {
+              setGlobalFilter(String(value));
+              // execute user event
+              editorStore.executeActions<typeof webloomTableEvents>(
+                id,
+                'onSearchChange',
+              );
+            }}
             className=" border p-2 shadow"
             placeholder="Search"
           />
