@@ -237,7 +237,7 @@ const WebloomTable = observer(() => {
   });
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto">
+    <div className="flex h-full w-full flex-col overflow-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
       {props.isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
           <DebouncedInput

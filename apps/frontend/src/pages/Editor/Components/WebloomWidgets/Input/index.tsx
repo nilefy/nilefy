@@ -11,7 +11,6 @@ import { editorStore } from '@/lib/Editor/Models';
 // import zodToJsonSchema from 'zod-to-json-schema';
 import { autorun } from 'mobx';
 import {
-  EventTypes,
   WidgetsEventHandler,
   genEventHandlerUiSchema,
   widgetsEventHandlerJsonSchema,
@@ -45,6 +44,12 @@ export type WebloomInputProps = {
   events: WidgetsEventHandler;
 };
 
+const webloomInputEvents = {
+  onTextChanged: 'onTextChanged',
+  onFocus: 'onFocus',
+  onBlur: 'onBlur',
+} as const;
+
 const WebloomInput = observer(function WebloomInput() {
   const { onPropChange, id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
@@ -73,13 +78,16 @@ const WebloomInput = observer(function WebloomInput() {
             key: 'value',
             value: e.target.value,
           });
-          editorStore.executeActions(id, webloomInputEvents['onTextChanged']);
+          editorStore.executeActions<typeof webloomInputEvents>(
+            id,
+            'onTextChanged',
+          );
         }}
         onFocus={() =>
-          editorStore.executeActions(id, webloomInputEvents['onFocus'])
+          editorStore.executeActions<typeof webloomInputEvents>(id, 'onFocus')
         }
         onBlur={() =>
-          editorStore.executeActions(id, webloomInputEvents['onBlur'])
+          editorStore.executeActions<typeof webloomInputEvents>(id, 'onBlur')
         }
       />
     </div>
@@ -108,12 +116,6 @@ const defaultProps: WebloomInputProps = {
   events: [],
 };
 
-const webloomInputEvents: EventTypes = {
-  onTextChanged: 'onTextChanged',
-  onFocus: 'onFocus',
-  onBlur: 'onBlur',
-} as const;
-
 const schema: WidgetInspectorConfig = {
   dataSchema: {
     type: 'object',
@@ -127,9 +129,6 @@ const schema: WidgetInspectorConfig = {
       type: {
         type: 'string',
         enum: ['text', 'password', 'number', 'email'],
-      },
-      color: {
-        type: 'string',
       },
       disabled: {
         type: 'boolean',
