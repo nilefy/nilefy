@@ -1,32 +1,22 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ElementType, useCallback, useMemo } from 'react';
 import { WebloomWidgets, WidgetContext } from '..';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuPortal,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { commandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
 import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
 import { WebloomContainer } from '../WebloomWidgets/Container';
-import { flowRight } from 'lodash';
-import { WithDnd, WithLayout, WithResize, WithSelection } from './HOCs';
+import { flow, flowRight } from 'lodash';
+import {
+  WithDeletePopover,
+  WithDnd,
+  WithLayout,
+  WithResize,
+  WithSelection,
+} from './HOCs';
 
 const RenderedElement = observer(
-  ({
-    id,
-    isVisible,
-    isPreview,
-  }: {
-    id: string;
-    isVisible: boolean;
-    isPreview: boolean;
-  }) => {
+  ({ id, isVisible }: { id: string; isVisible: boolean }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
     if (widget.type === 'WebloomContainer') {
       const innerContainerStyle = {
@@ -45,7 +35,7 @@ const RenderedElement = observer(
           isVisibile={isVisible}
         >
           {widget.nodes.map((nodeId) => (
-            <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+            <WebloomElement id={nodeId} key={nodeId} />
           ))}
         </WebloomContainer>
       );
@@ -55,7 +45,7 @@ const RenderedElement = observer(
       <WidgetWrapper id={id} isVisible={isVisible}>
         <WebloomWidget>
           {widget.nodes.map((nodeId) => (
-            <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+            <WebloomElement id={nodeId} key={nodeId} />
           ))}
         </WebloomWidget>
       </WidgetWrapper>
@@ -65,10 +55,8 @@ const RenderedElement = observer(
 
 export const WebloomElementBase = observer(function WebloomElement({
   id,
-  isPreview,
 }: {
   id: string;
-  isPreview: boolean;
 }) {
   const widget = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
@@ -86,27 +74,10 @@ export const WebloomElementBase = observer(function WebloomElement({
 
   const isVisible = widget.isVisible;
 
-  if (isPreview)
-    return <RenderedElement id={id} isPreview={false} isVisible={isVisible} />;
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <WidgetContext.Provider value={contextValue}>
-          <RenderedElement id={id} isPreview={false} isVisible={isVisible} />
-        </WidgetContext.Provider>
-      </ContextMenuTrigger>
-      <ContextMenuPortal>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onMouseDown={() => {
-              commandManager.executeCommand(new DeleteAction());
-            }}
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenuPortal>
-    </ContextMenu>
+    <WidgetContext.Provider value={contextValue}>
+      <RenderedElement id={id} isVisible={isVisible} />
+    </WidgetContext.Provider>
   );
 });
 
@@ -154,10 +125,13 @@ const WidgetWrapper = observer(
     );
   },
 );
+export const ProductionWebloomElement: React.FC<{ id: string }> =
+  flow(WithLayout)(WebloomElementBase);
 
-export const WebloomElement = flowRight(
+export const WebloomElement: React.FC<{ id: string }> = flowRight(
   WithLayout,
+  WithResize,
   WithDnd,
   WithSelection,
-  WithResize,
+  WithDeletePopover,
 )(WebloomElementBase);

@@ -93,7 +93,7 @@ export const handleHover = (
   if (overId !== editorStore.currentPage.hoveredWidgetId) return;
   if (editorStore.currentPage.draggedWidgetId === null) {
     if (item.isNew) {
-      editorStore.currentPage.setDraggedWidgetId(getNewWidgetName(item.type));
+      editorStore.currentPage.setDraggedWidgetId(item.type);
     } else {
       editorStore.currentPage.setDraggedWidgetId(item.id);
     }

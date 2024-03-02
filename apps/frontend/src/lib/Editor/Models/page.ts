@@ -2,14 +2,7 @@ import { Point } from '@/types';
 import { EvaluationContext } from '../evaluation';
 import { WebloomQuery } from './query';
 import { WebloomWidget } from './widget';
-import {
-  action,
-  autorun,
-  comparer,
-  computed,
-  makeObservable,
-  observable,
-} from 'mobx';
+import { action, comparer, computed, makeObservable, observable } from 'mobx';
 import {
   BoundingRect,
   ShadowElement,
@@ -109,6 +102,7 @@ export class WebloomPage {
       isResizing: computed,
       clearSelectedNodes: action,
       setHoveredWidgetId: action,
+      removeSelectedNode: action,
     });
 
     this.id = id;
@@ -173,7 +167,9 @@ export class WebloomPage {
     this.selectedNodeIds.clear();
     tempIds.forEach((id) => this.selectedNodeIds.add(id));
   }
-
+  removeSelectedNode(id: string) {
+    this.selectedNodeIds.delete(id);
+  }
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }

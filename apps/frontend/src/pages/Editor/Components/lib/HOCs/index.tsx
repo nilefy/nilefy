@@ -1,3 +1,12 @@
+import { commandManager } from '@/Actions/CommandManager';
+import { DeleteAction } from '@/Actions/Editor/Delete';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuPortal,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { editorStore } from '@/lib/Editor/Models';
 import { useSetDom, useWebloomHover } from '@/lib/Editor/hooks';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -46,4 +55,30 @@ export const WithNoTextSelection = <P extends { id: string }>(
     );
   };
   return NoTextSelectionComponent;
+};
+
+export const WithDeletePopover = <P extends { id: string }>(
+  WrappedComponent: React.FC<P>,
+) => {
+  const DeletePopoverComponent: React.FC<P> = (props) => {
+    return (
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <WrappedComponent {...props} />
+        </ContextMenuTrigger>
+        <ContextMenuPortal>
+          <ContextMenuContent>
+            <ContextMenuItem
+              onMouseDown={() => {
+                commandManager.executeCommand(new DeleteAction(props.id));
+              }}
+            >
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenuPortal>
+      </ContextMenu>
+    );
+  };
+  return DeletePopoverComponent;
 };

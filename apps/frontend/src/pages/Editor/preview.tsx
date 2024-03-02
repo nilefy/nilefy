@@ -8,12 +8,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { AppLoader } from './appLoader';
-import { WebloomRoot } from './Components/lib';
-import { useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Edit } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { useSetPageDimensions } from '@/lib/Editor/hooks';
+import { WebloomRootProduction } from './Components/lib/WebloomRoot';
 
 /*
  * should take full width of the screen
@@ -61,16 +61,8 @@ export function PagePreview() {
   const ref = useRef<HTMLDivElement>(null);
   useSetPageDimensions(ref);
   return (
-    <div
-      className="isolate flex h-full max-h-full w-full bg-transparent"
-      ref={ref}
-    >
-      <ScrollArea
-        className="h-full w-full"
-        scrollAreaViewPortClassName="bg-primary/20 relative touch-none"
-      >
-        <WebloomRoot isPreview={true} />
-      </ScrollArea>
+    <div ref={ref} className="relative h-full w-full bg-white">
+      <WebloomRootProduction isProduction={true} />
     </div>
   );
 }

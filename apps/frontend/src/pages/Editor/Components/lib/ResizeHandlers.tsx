@@ -46,9 +46,11 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
     if (direction === 'Both') {
       return Object.keys(handlePositions);
     }
-    return Object.keys(handlePositions).filter((key) => {
-      return key === direction;
-    });
+    if (direction === 'Horizontal') {
+      return ['left', 'right'];
+    }
+
+    return ['top', 'bottom'];
   }, [direction]);
   const resizeHandlesPoints = useMemo(
     () =>
@@ -92,7 +94,7 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
       } else {
         top = height / 2 - handleSize / 2;
       }
-      const mainDirection = isMainDirection(key);
+      // const mainDirection = isMainDirection(key);
       return (
         <div
           key={key}
@@ -102,8 +104,8 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
             top,
             left,
             cursor: cursors[key],
-            backgroundColor: mainDirection ? 'white' : 'transparent',
-            border: `4px solid ${mainDirection ? 'white' : 'transparent'}`,
+            backgroundColor: 'white',
+            border: `4px solid white`,
           }}
           onMouseDown={(e) => {
             e.stopPropagation();

@@ -428,5 +428,6 @@ export class WebloomWidget
 
   cleanup() {
     this.clearDependents();
+    this.page.removeSelectedNode(this.id);
   }
 }
