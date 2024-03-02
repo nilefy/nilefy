@@ -41,12 +41,14 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
       NonNullable<FormProps<any, RJSFSchema, any>['onChange']>
     >(
       (form, id) => {
+        console.log('DEBUGPRINT[6]: entityForm.tsx:43: id=', id);
         if (!props.onChange) {
           if (!id) {
             return;
           }
           // function to get complete prop path from rjsf form control id
           const path = id!.split('.').slice(1).join('.');
+          console.log('DEBUGPRINT[7]: entityForm.tsx:50: path=', path);
           const newValue = get(form.formData, path);
           if (entity instanceof WebloomWidget) {
             // just to integrate the ws in

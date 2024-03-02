@@ -23,7 +23,7 @@ export default function InlineCodeInputWidget<
   const correctValue =
     typeof props.value === 'string'
       ? props.value
-      : `{{${JSON.stringify(props.value ?? '')}}}`;
+      : `{{${JSON.stringify(props.value ?? '', null, 2)}}}`;
 
   return (
     <div id={`${id}-label`} className="flex flex-col space-y-3">

@@ -16,6 +16,7 @@ import {
   debounce,
   get,
   has,
+  isObjectLike,
   isPlainObject,
   memoize,
   merge,
@@ -67,6 +68,31 @@ const getEvaluablePathsFromSchema = memoize(
   },
 );
 
+function getEvaluablePathsDyn(obj: Record<string, unknown>): string[] {
+  const stack: string[] = [];
+  const result: string[] = [];
+  // the actual function that do the recursion
+  const helper = (
+    obj: Record<string, unknown>,
+    stack: string[],
+    result: string[],
+  ) => {
+    for (const k in obj) {
+      stack.push(k);
+      const item = obj[k];
+      if (typeof item === 'string') {
+        result.push(createPathFromStack(stack));
+      }
+      // note we also recerse on arrays not only hash maps
+      if (isObjectLike(item)) {
+        helper(item, stack, result);
+      }
+      stack.pop();
+    }
+  };
+  helper(obj, stack, result);
+  return result;
+}
 export type EntitySchema = {
   uiSchema?: Record<string, unknown>;
   dataSchema?: Record<string, unknown>;
@@ -159,21 +185,21 @@ export class Entity implements RuntimeEvaluable {
         this.applyEvaluationUpdates,
         { fireImmediately: true },
       ),
-      // autorun(() => {
-      //   console.log(
-      //     `-------------------------- ${this.id} start --------------------------`,
-      //   );
-      //   console.log('this.evaluablePaths', toJS(this.evaluablePaths));
-      //   console.log('this.values', toJS(this.values));
-      //   console.log('this.rawValues', toJS(this.rawValues));
-      //   console.log('this.codePaths', toJS(this.codePaths));
-      //   console.log('this.finalValues', toJS(this.finalValues));
-      //   console.log('this.errors', toJS(this.errors));
+      autorun(() => {
+        console.log(
+          `-------------------------- ${this.id} start --------------------------`,
+        );
+        console.log('this.evaluablePaths', toJS(this.evaluablePaths));
+        console.log('this.values', toJS(this.values));
+        console.log('this.rawValues', toJS(this.rawValues));
+        console.log('this.codePaths', toJS(this.codePaths));
+        console.log('this.finalValues', toJS(this.finalValues));
+        // console.log('this.errors', toJS(this.errors));
 
-      //   console.log(
-      //     `-------------------------- ${this.id} end --------------------------`,
-      //   );
-      // }),
+        console.log(
+          `-------------------------- ${this.id} end --------------------------`,
+        );
+      }),
     );
   }
 
@@ -192,7 +218,9 @@ export class Entity implements RuntimeEvaluable {
     const relations: ReturnType<
       (typeof this.dependencyManager)['analyzeDependencies']
     >[] = [];
-    for (const path of this.evaluablePaths) {
+    // cannot depend on statically known keys, because before runtime we cannot know how many items in an array for example
+    const evaluablePaths = getEvaluablePathsDyn(this.rawValues);
+    for (const path of evaluablePaths) {
       relations.push(this.analyzeDependcyForPath(path));
     }
     return relations;
@@ -277,9 +305,9 @@ export class Entity implements RuntimeEvaluable {
     if (get(this.values, path) === undefined) {
       set(this.finalValues, path, value);
     }
-    if (this.evaluablePaths.has(path)) {
-      this.analyzeAndApplyDependencyUpdate(path);
-    }
+    // if (this.evaluablePaths.has(path)) {
+    this.analyzeAndApplyDependencyUpdate(path);
+    // }
   }
 
   getValue(key: string) {
