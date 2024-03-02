@@ -3,9 +3,15 @@ import z from 'zod';
 
 const envSchema = z.object({
   JWT_SECRET: z.string().min(8),
+  RESEND_API_KEY: z.string(),
   DB_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  NODE_ENV: z.string(),
+  SEND_TO: z.string(),
+  ENCRYPTION_KEY: z.string(),
+  BASE_URL_FE: z.string(),
+  BASE_URL_BE: z.string(),
 });
 
 export type EnvSchema = z.infer<typeof envSchema>;

@@ -24,7 +24,7 @@ export interface EmailConfirmationData {
 }
 
 interface ConfirmationResponse {
-  message: string; // You can adjust this according to the response structure from your backend
+  message: string;
 }
 
 export function useConfirmEmail(email: string, token: string) {

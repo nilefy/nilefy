@@ -2,16 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { configDotenv } from 'dotenv';
 import { JwtService } from '@nestjs/jwt';
 import { Resend } from 'resend';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from 'src/evn.validation';
 
 @Injectable()
 export class EmailSignUpService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private configService: ConfigService<EnvSchema, true>,
+  ) {}
   async sendEmail(email: string, jwt: string) {
     configDotenv();
-    const isDev = (process.env.NODE_ENV as string) === 'development';
-    const KEY = process.env.RESEND_API_KEY as string;
+    const isDev: boolean = this.configService.get('NODE_ENV') === 'development';
+    const KEY: string = this.configService.get('RESEND_API_KEY');
     const resend = new Resend(KEY);
-    const baseUrl = isDev ? 'http://localhost:5173/' : 'https://weblloom.com/';
+    const baseUrl: string = this.configService.get('BASE_URL_FE');
 
     const url =
       baseUrl +
