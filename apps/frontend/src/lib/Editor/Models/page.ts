@@ -26,6 +26,7 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { DependencyManager, DependencyRelation } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
+import { CursorManager } from './cursorManager';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type WebloomEntity = WebloomWidget | WebloomQuery;
@@ -47,6 +48,7 @@ export class WebloomPage {
   shadowElement: ShadowElement | null = null;
   dependencyManager: DependencyManager;
   evaluationManger: EvaluationManager;
+  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -148,6 +150,7 @@ export class WebloomPage {
       }
     });
     this.dependencyManager.addDependencies(allDependencies);
+    this.cursorManager = new CursorManager(this);
   }
 
   clearSelectedNodes() {

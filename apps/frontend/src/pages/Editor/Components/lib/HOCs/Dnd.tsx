@@ -10,7 +10,11 @@ export const WithDrag = <P extends { id: string }>(
       isNew: false,
     });
 
-    return <WrappedComponent {...props} />;
+    return (
+      <div className="relative h-full w-full cursor-grab">
+        <WrappedComponent {...props} />
+      </div>
+    );
   };
   return DraggableComponent;
 };
