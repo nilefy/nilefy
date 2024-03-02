@@ -106,7 +106,6 @@ export class Entity implements RuntimeEvaluable {
   public values: Record<string, unknown>;
   rawValues: Record<string, unknown>;
   public id: string;
-  public order: number;
   /**
    * merged rawVales and values(contains all props evaluated and not-evaluated)
    * use it to get the real values of some entity
@@ -120,7 +119,6 @@ export class Entity implements RuntimeEvaluable {
 
   constructor({
     id,
-    order,
     dependencyManager,
     evaluationManger,
     rawValues,
@@ -129,7 +127,6 @@ export class Entity implements RuntimeEvaluable {
     nestedPathPrefix,
   }: {
     id: string;
-    order: number;
     dependencyManager: DependencyManager;
     evaluationManger: EvaluationManager;
     rawValues: Record<string, unknown>;
@@ -139,7 +136,6 @@ export class Entity implements RuntimeEvaluable {
   }) {
     makeObservable(this, {
       id: observable,
-      order: observable,
       dependencyManager: observable,
       evaluationManger: observable,
       rawValues: observable,
@@ -158,7 +154,6 @@ export class Entity implements RuntimeEvaluable {
       prefixedRawValues: computed,
     });
     this.id = id;
-    this.order = order;
     this.nestedPathPrefix = nestedPathPrefix;
     this.dependencyManager = dependencyManager;
     this.evaluationManger = evaluationManger;

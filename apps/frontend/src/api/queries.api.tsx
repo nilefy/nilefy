@@ -9,7 +9,6 @@ import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
 
 export type QueryI = {
   id: string;
-  order: number;
   /**
    * un-evaluated config
    */
@@ -80,7 +79,6 @@ export async function addQuery({
     dataSourceId: number;
     id: QueryI['id'];
     query: QueryI['query'];
-    order: QueryI['order'];
   };
 }) {
   const res = await fetchX(

@@ -58,7 +58,6 @@ export class DataQueriesService {
       where: eq(queries.appId, appId),
       columns: {
         id: true,
-        order: true,
         query: true,
         updatedAt: true,
         createdAt: true,
@@ -97,7 +96,6 @@ export class DataQueriesService {
       where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
       columns: {
         id: true,
-        order: true,
         query: true,
         updatedAt: true,
         createdAt: true,

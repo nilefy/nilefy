@@ -56,7 +56,6 @@ export const components = pgTable(
      * id now act as name as well as id
      */
     id: text('id').notNull(),
-    order: integer('component_order').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
     props: json('props').$type<WebloomNode['props']>().notNull(),

@@ -41,7 +41,6 @@ export async function appSeeder(
     res2.map((p) =>
       db.insert(components).values({
         id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-        order: 0,
         type: 'WebloomContainer',
         pageId: p[0].id,
         createdById: userIds[0],

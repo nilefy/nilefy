@@ -19,10 +19,9 @@ export const addQuerySchema = queryDb.pick({
   dataSourceId: true,
   id: true,
   query: true,
-  order: true,
 });
 
-export const updateQuerySchema = addQuerySchema.omit({ order: true }).partial();
+export const updateQuerySchema = addQuerySchema.partial();
 
 export const runQueryBody = z.object({
   evaluatedConfig: z.record(z.string(), z.unknown()),

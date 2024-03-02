@@ -93,13 +93,13 @@ export class EditorState {
       ...Object.values(pages[0].widgets || {}).map((w) => {
         return {
           type: w.type,
-          order: w.order,
+          name: w.id,
         };
       }),
       ...queries.map((q) => {
         return {
           type: q.dataSource.name,
-          order: q.order,
+          name: q.id,
         };
       }),
     ]);

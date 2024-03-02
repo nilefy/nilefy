@@ -98,12 +98,12 @@ export class ComponentsService {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
-      SELECT id, parent_id as "parentId",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id, component_order as "order"
+      SELECT id, parent_id as "parentId",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id
         FROM ${components}
        WHERE ${and(isNull(components.parentId), eq(components.pageId, pageId))}
     UNION ALL 
     -- recursive
-      SELECT t.id, t.parent_id as "parentId", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level, t.page_id, t.component_order as "order"
+      SELECT t.id, t.parent_id as "parentId", t.props, t.type, t.col, t.row, t.rows_count as "rowsCount", t.columns_count as "columnsCount", (rectree.level + 1) as level, t.page_id
         FROM components as t
         JOIN rectree
           ON t.parent_id = rectree.id and t.page_id = rectree.page_id
@@ -120,7 +120,6 @@ export class ComponentsService {
     rows.forEach((row) => {
       tree[row.id] = {
         id: row.id,
-        order: row.order,
         nodes: [],
         // set root node as parent of itself
         parentId: row.parentId ?? row.id,

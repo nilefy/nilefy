@@ -54,7 +54,6 @@ export class PagesService {
       [
         {
           id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-          order: 0,
           type: 'WebloomContainer',
           pageId: p.id,
           createdById: pageDto.createdById,

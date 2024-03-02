@@ -2,7 +2,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { ClipboardDataT, UndoableCommand } from '../types';
 import { getWidgetsBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
-import { getNewEntityName, getNewEntityOrder } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';
@@ -45,13 +45,10 @@ export class PasteAction implements UndoableCommand {
     const snapshot = this.data.nodes.get(node)!;
 
     let id: string = snapshot.id!;
-    let order: number = snapshot.order!;
     if (this.data.action === 'copy') {
-      order = getNewEntityOrder(snapshot.type as WidgetTypes);
       id = getNewEntityName(snapshot.type as WidgetTypes);
     }
 
-    snapshot.order = order;
     snapshot.id = id;
     snapshot.parentId = parent;
 
