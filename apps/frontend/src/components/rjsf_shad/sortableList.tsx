@@ -202,7 +202,6 @@ export default function SortableListWidget<
   F extends FormContextType = any,
 >(props: BaseInputTemplateProps<T, S, F>) {
   const { id, label, value, hideLabel, onChange } = props;
-  console.warn('DEBUGPRINT[1]: sortableList.tsx:207: value=', value);
   const [isCreateColumnDialogOpen, setIsCreateColumDialogOpen] =
     useState(false);
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false);

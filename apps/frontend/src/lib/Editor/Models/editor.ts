@@ -15,7 +15,10 @@ import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedNameMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
-import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
+import {
+  EventTypes,
+  WidgetsEventHandler,
+} from '@/components/rjsf_shad/eventHandler';
 import { toast } from '@/components/ui/use-toast';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
@@ -225,7 +228,11 @@ export class EditorState {
    * @param key where to get the handlers configuration
    * @default 'events'
    */
-  executeActions(widgetId: string, type: string, key: string = 'events') {
+  executeActions<Events extends object>(
+    widgetId: string,
+    type: keyof Events,
+    key: string = 'events',
+  ) {
     const eventHandlers = this.currentPage.getWidgetById(widgetId).finalValues[
       key
     ] as WidgetsEventHandler;
