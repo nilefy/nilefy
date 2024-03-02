@@ -1,13 +1,14 @@
 import { editorStore } from '@/lib/Editor/Models';
 import {
   LayoutMode,
+  WIDGET_SECTIONS,
   Widget,
   WidgetConfig,
   WidgetInspectorConfig,
 } from '@/lib/Editor/interface';
 import { BoxSelect } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { ReactNode, Ref, forwardRef, useContext } from 'react';
+import { ReactNode, useContext } from 'react';
 import { WidgetContext } from '../..';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Grid } from '../../lib';
@@ -19,63 +20,61 @@ type WebloomContainerProps = {
   layoutMode: LayoutMode;
 };
 const WebloomContainer = observer(
-  // eslint-disable-next-line react/display-name
-  forwardRef(
-    (
-      {
-        children,
-        innerContainerStyle,
-        outerContainerStyle,
-        isVisibile = true,
-      }: {
-        children: React.ReactNode;
-        innerContainerStyle: {
-          width: string;
-          height: string;
-        };
-        outerContainerStyle: {
-          top: string;
-          left: string;
-          width: string;
-          height: string;
-        };
-        isVisibile: boolean;
-      },
-      ref: Ref<HTMLDivElement>,
-    ) => {
-      const { id } = useContext(WidgetContext);
-      const entity = editorStore.currentPage.getWidgetById(id);
-      const props = entity.values as WebloomContainerProps;
-      return (
-        <ScrollArea
-          className="absolute h-full w-full"
-          scrollAreaViewPortClassName={cn('absolute', {
-            hidden: !isVisibile,
-            'rounded-md': !entity.isRoot,
-          })}
+  ({
+    children,
+    innerContainerStyle,
+    outerContainerStyle,
+    isVisibile = true,
+  }: {
+    children: React.ReactNode;
+    innerContainerStyle: {
+      width: string;
+      height: string;
+    };
+    outerContainerStyle: {
+      width: string;
+      height: string;
+    };
+    isVisibile: boolean;
+  }) => {
+    const { id } = useContext(WidgetContext);
+    const entity = editorStore.currentPage.getWidgetById(id);
+    const props = entity.values as WebloomContainerProps;
+    // TODO: This feels bad but what this basically does is center the root to look pwetty
+    const leftRootShift = entity.isRoot
+      ? editorStore.currentPage.width -
+        entity.innerContainerPixelDimensions.width
+      : 0;
+
+    return (
+      <ScrollArea
+        className="relative h-full w-full"
+        scrollAreaViewPortClassName={cn({
+          hidden: !isVisibile,
+          'rounded-md': !entity.isRoot,
+        })}
+        style={{
+          ...outerContainerStyle,
+          left: leftRootShift / 2,
+          visibility: isVisibile ? 'visible' : 'hidden',
+        }}
+      >
+        <div
+          className="relative bg-gray-300"
+          data-id={id}
+          data-type={WIDGET_SECTIONS.CANVAS}
           style={{
-            ...outerContainerStyle,
-            position: 'absolute',
+            ...innerContainerStyle,
             visibility: isVisibile ? 'visible' : 'hidden',
+            backgroundColor: props.color,
           }}
         >
-          <div
-            ref={ref}
-            className="relative  bg-gray-300"
-            data-id={id}
-            style={{
-              ...innerContainerStyle,
-              visibility: isVisibile ? 'visible' : 'hidden',
-              backgroundColor: props.color,
-            }}
-          >
-            <Grid id={id} />
-            {children}
-          </div>
-        </ScrollArea>
-      );
-    },
-  ),
+          <Grid id={id} />
+          {children}
+        </div>
+      </ScrollArea>
+    );
+  },
 );
 
 const widgetName = 'WebloomContainer';

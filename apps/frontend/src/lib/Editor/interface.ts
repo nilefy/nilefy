@@ -170,3 +170,8 @@ export type {
   InlineCodeInputProps,
   InspectorColorProps,
 };
+export const WIDGET_SECTIONS = {
+  SCROLL_AREA: 'SCROLL_AREA',
+  CANVAS: 'CANVAS',
+  RESIZER: 'RESIZER',
+} as const;

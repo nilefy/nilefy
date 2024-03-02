@@ -1,14 +1,15 @@
-import { RefObject, useEffect } from 'react';
+import { useEffect } from 'react';
 import { editorStore } from '../Models';
 
-export const useWebloomHover = (ref: RefObject<HTMLDivElement>, id: string) => {
+export const useWebloomHover = (id: string) => {
+  const dom = editorStore.currentPage.getWidgetById(id).dom;
   useEffect(() => {
     const onMouseOver = (e: MouseEvent) => {
       e.stopPropagation();
       editorStore.currentPage.setHoveredWidgetId(id);
     };
 
-    const current = ref.current;
+    const current = dom;
     if (current) {
       current.addEventListener('mouseover', onMouseOver);
     }
@@ -17,6 +18,5 @@ export const useWebloomHover = (ref: RefObject<HTMLDivElement>, id: string) => {
         current.removeEventListener('mouseover', onMouseOver);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, ref.current, id]);
+  }, [dom, id]);
 };

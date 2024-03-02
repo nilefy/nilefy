@@ -6,6 +6,7 @@ import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
   LayoutMode,
+  WIDGET_SECTIONS,
   WebloomGridDimensions,
   WebloomPixelDimensions,
 } from '../interface';
@@ -129,6 +130,7 @@ export class WebloomWidget
       isDragging: computed,
       isResizing: computed,
       isHovered: computed,
+      isVisible: computed,
     });
   }
   /**
@@ -170,8 +172,12 @@ export class WebloomWidget
   get scrollTop() {
     return this.scrollableContainer?.scrollTop ?? 0;
   }
+
   get isHovered() {
     return this.page.hoveredWidgetId === this.id;
+  }
+  get isVisible() {
+    return !this.isDragging;
   }
   get cumlativScrollTop(): number {
     if (this.isRoot) return this.scrollTop;
@@ -220,13 +226,24 @@ export class WebloomWidget
   setDom(dom: HTMLElement) {
     this.dom = dom;
   }
-  get scrollableContainer(): HTMLDivElement | undefined {
-    if (this.isCanvas)
-      // this is an implementation detail, the scrollable container is the parent of the parent of the canvas
-      // in radix scrollable areas
-      return this.dom?.parentElement?.parentElement as HTMLDivElement;
-    return this.canvasParent.scrollableContainer as HTMLDivElement;
+  get scrollableContainer(): HTMLDivElement | null {
+    if (this.isCanvas) return this.getDomSection(WIDGET_SECTIONS.SCROLL_AREA);
+    return this.canvasParent.scrollableContainer;
   }
+  get resizer(): HTMLDivElement | null {
+    return this.getDomSection(WIDGET_SECTIONS.RESIZER);
+  }
+
+  get canvas(): HTMLDivElement | null {
+    return this.getDomSection(WIDGET_SECTIONS.CANVAS);
+  }
+
+  getDomSection(section: keyof typeof WIDGET_SECTIONS) {
+    return this.dom?.querySelector(
+      `[data-type="${section}"]`,
+    ) as HTMLDivElement;
+  }
+
   getProp(key: string) {
     return this.values[key] ?? this.rawValues[key];
   }

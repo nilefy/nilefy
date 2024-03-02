@@ -173,9 +173,9 @@ export function isPointInsideBoundingRect(
 }
 
 export const getMousePositionRelativeToEditor = (clientOffset: Point) => {
-  if (!editorStore.currentPage.rootWidget.dom) return clientOffset;
+  if (!editorStore.currentPage.rootWidget.canvas) return clientOffset;
   const boundingRect =
-    editorStore.currentPage.rootWidget.dom.getBoundingClientRect();
+    editorStore.currentPage.rootWidget.canvas.getBoundingClientRect();
   return getMousePositionRelativeToBoundingRect(clientOffset, boundingRect);
 };
 

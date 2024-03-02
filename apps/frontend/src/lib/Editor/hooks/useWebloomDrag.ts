@@ -1,8 +1,9 @@
 import { useDrag } from 'react-dnd';
-import { DraggedItem } from '../dnd/interface';
+import { DraggedItem, ExistingDraggedItem } from '../dnd/interface';
 import { editorStore } from '../Models';
+import { useEffect } from 'react';
 
-export const useWebloomDrag = (item: DraggedItem) => {
+export const useWebloomDragCore = (item: DraggedItem) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'WIDGET',
     item,
@@ -19,4 +20,18 @@ export const useWebloomDrag = (item: DraggedItem) => {
     },
   }));
   return [{ isDragging }, drag] as const;
+};
+
+export const useWebloomDrag = (item: ExistingDraggedItem) => {
+  const [, drag] = useWebloomDragCore(item);
+  const widget = editorStore.currentPage.getWidgetById(item.id);
+  const dom = widget?.dom;
+  useEffect(() => {
+    if (dom) {
+      drag(dom);
+    }
+    return () => {
+      drag(null);
+    };
+  }, [drag, dom]);
 };

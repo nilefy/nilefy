@@ -1,12 +1,5 @@
 import { editorStore } from '@/lib/Editor/Models';
-import {
-  ElementType,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import { ElementType, useCallback, useMemo } from 'react';
 import { WebloomWidgets, WidgetContext } from '..';
 import {
   ContextMenu,
@@ -19,27 +12,21 @@ import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
-import { WebloomPixelDimensions } from '@/lib/Editor/interface';
+import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
 import { WebloomContainer } from '../WebloomWidgets/Container';
-import {
-  useSetDom,
-  useWebloomDrag,
-  useWebloomDrop,
-  useWebloomHover,
-  useWebloomSelection,
-} from '@/lib/Editor/hooks';
-import { ResizeHandles } from './ResizeHandlers';
+import { flowRight } from 'lodash';
+import { WithDnd, WithLayout, WithResize, WithSelection } from './HOCs';
 
 const RenderedElement = observer(
-  // eslint-disable-next-line react/display-name
-  forwardRef<
-    HTMLDivElement,
-    {
-      id: string;
-      isVisible: boolean;
-      isPreview: boolean;
-    }
-  >(({ id, isVisible, isPreview }, ref) => {
+  ({
+    id,
+    isVisible,
+    isPreview,
+  }: {
+    id: string;
+    isVisible: boolean;
+    isPreview: boolean;
+  }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
     if (widget.type === 'WebloomContainer') {
       const innerContainerStyle = {
@@ -47,59 +34,42 @@ const RenderedElement = observer(
         height: widget.innerContainerPixelDimensions.height + 'px',
       } as const;
       const outerContainerStyle = {
-        top: widget.relativePixelDimensions.y + 'px',
-        left: widget.relativePixelDimensions.x + 'px',
         width: widget.relativePixelDimensions.width + 'px',
         height: widget.relativePixelDimensions.height + 'px',
       } as const;
 
       return (
-        <>
-          <ResizeHandles id={id} />
-
-          <WebloomContainer
-            innerContainerStyle={innerContainerStyle}
-            outerContainerStyle={outerContainerStyle}
-            isVisibile={isVisible}
-            ref={ref}
-          >
-            {widget.nodes.map((nodeId) => (
-              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
-            ))}
-          </WebloomContainer>
-        </>
+        <WebloomContainer
+          innerContainerStyle={innerContainerStyle}
+          outerContainerStyle={outerContainerStyle}
+          isVisibile={isVisible}
+        >
+          {widget.nodes.map((nodeId) => (
+            <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+          ))}
+        </WebloomContainer>
       );
     }
     const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
     return (
-      <>
-        <ResizeHandles id={id} />
-
-        <WidgetWrapper
-          dimensions={widget.relativePixelDimensions}
-          id={id}
-          isVisible={isVisible}
-          ref={ref}
-        >
-          <WebloomWidget>
-            {widget.nodes.map((nodeId) => (
-              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
-            ))}
-          </WebloomWidget>
-        </WidgetWrapper>
-      </>
+      <WidgetWrapper id={id} isVisible={isVisible}>
+        <WebloomWidget>
+          {widget.nodes.map((nodeId) => (
+            <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
+          ))}
+        </WebloomWidget>
+      </WidgetWrapper>
     );
-  }),
+  },
 );
-RenderedElement.displayName = 'RenderedElement';
-export const WebloomElement = observer(function WebloomElement({
+
+export const WebloomElementBase = observer(function WebloomElement({
   id,
   isPreview,
 }: {
   id: string;
   isPreview: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   const widget = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
@@ -113,44 +83,16 @@ export const WebloomElement = observer(function WebloomElement({
       id,
     };
   }, [onPropChange, id]);
-  const [{ isDragging }, drag] = useWebloomDrag({
-    id,
-    isNew: false,
-  });
-  const drop = useWebloomDrop(id);
-  useEffect(() => {
-    if (ref.current) {
-      drag(drop(ref.current));
-    }
-    return () => {
-      drag(null);
-      drop(null);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drop, drag, ref, ref.current]);
-  const isVisible = !isDragging;
-  useSetDom(ref, id);
-  useWebloomSelection(ref, id);
-  useWebloomHover(ref, id);
+
+  const isVisible = widget.isVisible;
+
   if (isPreview)
-    return (
-      <RenderedElement
-        id={id}
-        isPreview={false}
-        isVisible={isVisible}
-        ref={ref}
-      />
-    );
+    return <RenderedElement id={id} isPreview={false} isVisible={isVisible} />;
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <WidgetContext.Provider value={contextValue}>
-          <RenderedElement
-            id={id}
-            isPreview={false}
-            isVisible={isVisible}
-            ref={ref}
-          />
+          <RenderedElement id={id} isPreview={false} isVisible={isVisible} />
         </WidgetContext.Provider>
       </ContextMenuTrigger>
       <ContextMenuPortal>
@@ -170,28 +112,23 @@ export const WebloomElement = observer(function WebloomElement({
 
 const WidgetWrapper = observer(
   // eslint-disable-next-line react/display-name
-  forwardRef<
-    HTMLDivElement,
-    {
-      id: string;
-      children: React.ReactNode;
-      isVisible: boolean;
-      dimensions: WebloomPixelDimensions;
-    }
-  >(({ id, children, isVisible, dimensions }, ref) => {
+  ({
+    id,
+    children,
+    isVisible,
+  }: {
+    id: string;
+    children: React.ReactNode;
+    isVisible: boolean;
+  }) => {
     return (
       <div
         style={{
-          top: dimensions.y,
-          left: dimensions.x,
-          width: dimensions.width,
-          height: dimensions.height,
           visibility: isVisible ? 'visible' : 'hidden',
-          position: 'absolute',
         }}
-        className="target touch-none overflow-hidden outline-none"
+        className="target relative touch-none overflow-hidden outline-none"
         data-id={id}
-        ref={ref}
+        data-type={WIDGET_SECTIONS.CANVAS}
       >
         {
           //this is to prevent widgets from capturing focus when drag is happening
@@ -215,7 +152,12 @@ const WidgetWrapper = observer(
         </div>
       </div>
     );
-  }),
+  },
 );
 
-WidgetWrapper.displayName = 'WidgetWrapper';
+export const WebloomElement = flowRight(
+  WithLayout,
+  WithDnd,
+  WithSelection,
+  WithResize,
+)(WebloomElementBase);

@@ -2,12 +2,10 @@ import { editorStore } from '@/lib/Editor/Models';
 import { handleParentCollisions } from '@/lib/Editor/collisions';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
-// import { UpdateNodesPayload } from '../types';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -173,12 +171,9 @@ class ResizeAction {
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
     const newCollisions = this._resize(this.id, dims);
-
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
-    console.log(this.collidingNodes);
-    console.log(this.orginalPositions);
     // filter elements that returned to their original position
     Object.entries(this.orginalPositions).forEach(([id, pos]) => {
       const tempWidget = editorStore.currentPage.getWidgetById(id);

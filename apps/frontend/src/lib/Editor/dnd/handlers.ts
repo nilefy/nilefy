@@ -49,7 +49,7 @@ export const handleDrop = (
 
   const droppableId = getFirstDroppableParent(overId);
   const droppable = editorStore.currentPage.getWidgetById(droppableId);
-  if (!droppable.dom) return;
+  if (!droppable.canvas) return;
 
   const clientOffset = monitor.getClientOffset();
   if (!clientOffset) return;
@@ -58,7 +58,7 @@ export const handleDrop = (
     item,
     [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
     editorStore.currentPage.rootWidget.selfGridSize,
-    droppable.dom.getBoundingClientRect(),
+    droppable.canvas.getBoundingClientRect(),
     item.isNew
       ? undefined
       : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
@@ -94,11 +94,13 @@ export const handleHover = (
   if (editorStore.currentPage.draggedWidgetId === null) {
     if (item.isNew) {
       editorStore.currentPage.setDraggedWidgetId(getNewWidgetName(item.type));
-    } else editorStore.currentPage.setDraggedWidgetId(item.id);
+    } else {
+      editorStore.currentPage.setDraggedWidgetId(item.id);
+    }
   }
   const droppableId = getFirstDroppableParent(overId);
   const droppable = editorStore.currentPage.getWidgetById(droppableId);
-  if (!droppable.dom) return;
+  if (!droppable.canvas) return;
   const clientOffset = monitor.getClientOffset();
   if (!clientOffset) return;
   const { grid } = getDropPosition(
@@ -106,7 +108,7 @@ export const handleHover = (
     item,
     [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
     editorStore.currentPage.rootWidget.selfGridSize,
-    droppable.dom.getBoundingClientRect(),
+    droppable.canvas.getBoundingClientRect(),
     item.isNew
       ? undefined
       : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
@@ -125,8 +127,8 @@ export const handleHover = (
     dimensions,
     [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
     {
-      x: droppable.dom.getBoundingClientRect().x,
-      y: droppable.dom.getBoundingClientRect().y,
+      x: droppable.canvas.getBoundingClientRect().x,
+      y: droppable.canvas.getBoundingClientRect().y,
     },
   );
   editorStore.currentPage.setShadowElement(pixel);

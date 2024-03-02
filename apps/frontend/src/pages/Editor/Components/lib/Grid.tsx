@@ -35,6 +35,7 @@ const Grid = observer(({ id }: { id: string }) => {
     <div
       ref={divRef}
       className="pointer-events-none absolute left-0 top-0 h-full w-full select-none"
+      data-type="GRID"
     >
       {shown && <canvas ref={ref}></canvas>}
     </div>

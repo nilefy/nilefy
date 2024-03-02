@@ -2,6 +2,7 @@ import { useDrop } from 'react-dnd';
 import { DraggedItem } from '../dnd/interface';
 import { handleDrop, handleHover } from '../dnd/handlers';
 import { editorStore } from '../Models';
+import { useEffect } from 'react';
 
 export const useWebloomDrop = (id: string) => {
   const [, drop] = useDrop(() => ({
@@ -17,5 +18,14 @@ export const useWebloomDrop = (id: string) => {
       return true;
     },
   }));
-  return drop;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const canvas = widget?.canvas;
+  useEffect(() => {
+    if (canvas) {
+      drop(canvas);
+    }
+    return () => {
+      drop(null);
+    };
+  }, [canvas, drop, widget.dom]);
 };

@@ -8,3 +8,4 @@ export { useInitResizing } from './useInitResizing';
 export { useEditorMousePosition } from './useEditorMousePosition';
 export { useWebloomSelection } from './useWebloomSelection';
 export { useWebloomHover } from './useWebloomHover';
+export { useWebloomDragCore } from './useWebloomDrag';

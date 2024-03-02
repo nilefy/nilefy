@@ -1,5 +1,5 @@
 import { commandManager } from '@/Actions/CommandManager';
-import { RefObject, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { editorStore } from '../Models';
 import { SelectionAction } from '@/Actions/Editor/selection';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
@@ -8,10 +8,8 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
  * @param ref
  * @param id
  */
-export const useWebloomSelection = (
-  ref: RefObject<HTMLDivElement>,
-  id: string,
-) => {
+export const useWebloomSelection = (id: string) => {
+  const dom = editorStore.currentPage.getWidgetById(id).dom;
   const select = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
@@ -23,7 +21,7 @@ export const useWebloomSelection = (
     [id],
   );
   useEffect(() => {
-    const curRef = ref?.current;
+    const curRef = dom;
     if (curRef) {
       curRef.addEventListener('click', select);
     }
@@ -33,5 +31,5 @@ export const useWebloomSelection = (
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref?.current, select]);
+  }, [dom, select]);
 };
