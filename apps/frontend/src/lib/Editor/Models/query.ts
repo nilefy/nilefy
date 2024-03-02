@@ -74,7 +74,6 @@ export class WebloomQuery
       },
       nestedPathPrefix: 'config',
     });
-
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
