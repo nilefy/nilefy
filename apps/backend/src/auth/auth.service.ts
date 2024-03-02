@@ -1,3 +1,4 @@
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   BadRequestException,
   Inject,
@@ -13,8 +14,7 @@ import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { EmailSignUpService } from '../email/email-sign-up/email-sign-up.service';
-import { ConfigService } from '@nestjs/config';
-import { EnvSchema } from '../evn.validation';
+import { users } from '../drizzle/schema/schema';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +22,6 @@ export class AuthService {
     private userService: UsersService,
     private jwtService: JwtService,
     private emailSignUpService: EmailSignUpService,
-    private configService: ConfigService<EnvSchema, true>,
     @Inject(DrizzleAsyncProvider) private readonly db: DatabaseI,
   ) {}
 
@@ -74,31 +73,33 @@ export class AuthService {
     }
   }
 
-  async signUp(user: CreateUserDto): Promise<JwtToken> {
-    const { password } = user;
-    const salt = await genSalt(10);
-    const hashed = await hash(password, salt);
-
+  /**
+   * return message to send for the user on sign up
+   */
+  async signUp(user: CreateUserDto): Promise<{ msg: string }> {
     try {
-      const u = await this.userService.create({ ...user, password: hashed });
-      const jwt = await this.jwtService.signAsync(
+      const salt = await genSalt(10);
+      const hashed = await hash(user.password, salt);
+      const conformationToken = await this.jwtService.signAsync(
         {
-          sub: u.id,
-          username: user.username,
-        } satisfies PayloadUser,
+          email: user.email,
+        },
         { expiresIn: '1d' },
       );
-      this.emailSignUpService.sendEmail(user.email, jwt);
-      return {
-        access_token: await this.jwtService.signAsync({
-          sub: u.id,
-          username: u.username,
-        } satisfies PayloadUser),
-      };
+      await this.userService.create({
+        username: user.username,
+        email: user.email,
+        password: hashed,
+        conformationToken,
+      });
+      this.emailSignUpService.sendEmail(user.email, conformationToken);
+      return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
       Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
       //TODO: return database error
-      throw new BadRequestException();
+      throw new BadRequestException(
+        'something went wrong on sign up please try again',
+      );
     }
   }
 
@@ -122,7 +123,11 @@ export class AuthService {
       // no password nor account, that's weird how did we create this user
       throw new InternalServerErrorException();
     }
-
+    if (!u.emailVerified) {
+      throw new BadRequestException(
+        `please verify your email then try to sign in`,
+      );
+    }
     return {
       access_token: await this.jwtService.signAsync({
         sub: u.id,
@@ -131,17 +136,33 @@ export class AuthService {
     };
   }
 
+  /**
+   * returns message to be sent to the front
+   */
   async confirm(email: string, token: string) {
     try {
-      await this.jwtService.verifyAsync(token);
-      const user = await this.userService.findOne(email);
+      const user = await this.db.query.users.findFirst({
+        where: and(
+          eq(users.email, email),
+          eq(users.conformationToken, token),
+          isNull(users.deletedAt),
+        ),
+        columns: {
+          id: true,
+          conformationToken: true,
+          email: true,
+        },
+      });
       if (!user) {
-        throw new NotFoundException('User Not Found');
+        throw new BadRequestException('Failed to confirm email');
       }
-      user.isConfirmed = true;
-      await this.userService.update(user.id, { isConfirmed: true });
+      await this.jwtService.verifyAsync(token);
+      await this.userService.update(user.id, {
+        emailVerified: new Date(),
+        conformationToken: null,
+      });
       return 'email verified successfully, try sign-in';
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Failed to confirm email');
     }
   }

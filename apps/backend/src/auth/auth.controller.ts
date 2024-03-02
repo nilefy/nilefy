@@ -31,9 +31,10 @@ export class AuthController {
     private configService: ConfigService<EnvSchema, true>,
   ) {}
 
-  @UsePipes(new ZodValidationPipe(signUpSchema))
   @Post('signup')
-  async signUp(@Body() userDto: CreateUserDto) {
+  async signUp(
+    @Body(new ZodValidationPipe(signUpSchema)) userDto: CreateUserDto,
+  ) {
     return await this.authService.signUp(userDto);
   }
 
