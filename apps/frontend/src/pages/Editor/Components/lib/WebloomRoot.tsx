@@ -8,7 +8,12 @@ import { WebloomContainer } from '../WebloomWidgets/Container';
 import { WidgetContext } from '..';
 import { MultiSelect } from './MultiSelect';
 import { flowRight } from 'lodash';
-import { WithDrop, WithLayout, WithSelection } from './HOCs';
+import {
+  WithDrop,
+  WithLayout,
+  WithNoTextSelection,
+  WithSelection,
+} from './HOCs';
 const useInitRootDimensions = () => {
   const root = editorStore.currentPage.rootWidget;
   const page = editorStore.currentPage;
@@ -84,4 +89,5 @@ export const WebloomRoot = flowRight(
   WithLayout,
   WithDrop,
   WithSelection,
+  WithNoTextSelection,
 )(WebloomRootBase);

@@ -34,3 +34,16 @@ export const WithLayout = <P extends { id: string }>(
   };
   return observer(PositionedComponent);
 };
+
+export const WithNoTextSelection = <P extends { id: string }>(
+  WrappedComponent: React.FC<P>,
+) => {
+  const NoTextSelectionComponent: React.FC<P> = (props) => {
+    return (
+      <div className="relative h-full w-full select-none">
+        <WrappedComponent {...props} />
+      </div>
+    );
+  };
+  return NoTextSelectionComponent;
+};
