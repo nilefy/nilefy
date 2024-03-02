@@ -28,8 +28,8 @@ export class EmailSignUpService {
       '/';
 
     const { error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: isDev ? (process.env.SEND_TO as string) : email,
+      from: this.configService.get('RESEND_SEND_FROM_EMAIL'),
+      to: isDev ? this.configService.get('RESEND_SEND_TO_DEV_EMAIL') : email,
       subject: 'WebLoom - Confirm Your Email Address',
       html:
         `

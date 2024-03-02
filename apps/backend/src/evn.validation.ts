@@ -4,6 +4,8 @@ import z from 'zod';
 const envSchema = z.object({
   JWT_SECRET: z.string().min(8),
   RESEND_API_KEY: z.string(),
+  RESEND_SEND_FROM_EMAIL: z.string(),
+  RESEND_SEND_TO_DEV_EMAIL: z.string(),
   DB_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),

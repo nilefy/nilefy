@@ -79,7 +79,7 @@ export class AuthService {
       const u = await this.userService.create({ ...user, password: hashed });
       const jwt = await this.jwtService.signAsync(
         {
-          sub: 1,
+          sub: u.id,
           username: user.username,
         } satisfies PayloadUser,
         { expiresIn: '1d' },
@@ -143,9 +143,4 @@ export class AuthService {
       throw new Error('Failed to confirm email');
     }
   }
-
-  // private async generateAccessToken(user: User): Promise<string> {
-  //   const payload = { sub: user.id, username: user.username };
-  //   return this.jwtService.signAsync(payload);
-  // }
 }

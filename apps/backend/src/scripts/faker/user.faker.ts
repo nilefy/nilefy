@@ -12,7 +12,7 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
   const lastName = faker.person.lastName();
   const jwt = new JwtService();
   const fakePayload: PayloadUser = {
-    sub: 1,
+    sub: lastName.length,
     username: firstName + lastName,
   };
   configDotenv();
