@@ -441,6 +441,12 @@ const WebloomTableWidget: Widget<WebloomTableProps> = {
   config,
   defaultProps,
   schema,
+  setters: {
+    setData: {
+      path: 'data',
+      type: 'array<object>',
+    },
+  },
 };
 
 export { WebloomTableWidget };
