@@ -24,7 +24,7 @@ export const parsedConfigSchema = z.object({
 
 const query = z.discriminatedUnion('operation', [
   z.object({
-    operation: z.literal('Read file'),
+    operation: z.literal('Delete file'),
     bucket: z.string(),
     file: z.string(),
   }),

@@ -5,7 +5,7 @@ import { Storage } from '@google-cloud/storage';
 import {
   bucketFiles,
   listBuckets,
-  readFile,
+  deleteFile,
   downloadFile,
   uploadFile,
 } from './operations';
@@ -36,8 +36,8 @@ export default class GoogleCloudStorageQueryService
 
   async runQuery(query: QueryT['query'], storage: Storage) {
     switch (query.operation) {
-      case OPERATIONS.READ_FILE:
-        return await readFile(query, storage);
+      case OPERATIONS.DELETE_FILE:
+        return await deleteFile(query, storage);
       case OPERATIONS.UPLOAD_FILE:
         return await uploadFile(query, storage);
       case OPERATIONS.LIST_BUCKETS:

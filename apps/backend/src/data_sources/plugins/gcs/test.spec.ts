@@ -1,4 +1,9 @@
-import { bucketFiles, downloadFile, uploadFile } from './operations';
+import {
+  bucketFiles,
+  deleteFile,
+  downloadFile,
+  uploadFile,
+} from './operations';
 import { MockStorage } from 'mock-gcs';
 import { QueryT } from './types';
 import { GCS as OPERATIONS } from '../common/operations';
@@ -43,13 +48,25 @@ describe('GCS operations', () => {
       operation: 'Download file',
       bucket: 'testBucket',
       file: 'test.txt',
+      // destination: 'output-file-absolute-path'
     };
 
     const ret = await downloadFile(query, storage);
     expect(ret.toString()).toBe('testing mock-gcs');
   });
 
-  // it('Read file', () => {});
+  it('Delete file', async () => {
+    const query: Extract<
+      QueryT['query'],
+      { operation: typeof OPERATIONS.DELETE_FILE }
+    > = {
+      operation: 'Delete file',
+      bucket: 'testBucket',
+      file: 'test.txt',
+    };
+
+    await deleteFile(query, storage);
+  });
 
   // it('List buckets', () => {});
 });

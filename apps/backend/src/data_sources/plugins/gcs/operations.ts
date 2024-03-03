@@ -3,26 +3,16 @@ import { Bucket, Storage } from '@google-cloud/storage';
 import { GCS as OPERATIONS } from '../common/operations';
 import { MockStorage } from 'mock-gcs';
 
-/**
- * TODO: add an option to pipe the file's content to a local file
- */
-export const readFile = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.READ_FILE }>,
-  storage: Storage,
-): Promise<Buffer> => {
+export const deleteFile = async (
+  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.DELETE_FILE }>,
+  storage: Storage | MockStorage,
+) => {
   const { bucket, file } = query;
-  const fileData: Buffer[] = [];
-  storage
-    .bucket(bucket)
-    .file(file)
-    .createReadStream()
-    .on('error', (err) => {
-      throw new Error(err.message);
-    })
-    .on('data', (chunck) => {
-      fileData.push(chunck);
-    });
-  return Buffer.concat(fileData);
+  try {
+    await storage.bucket(bucket).file(file).delete();
+  } catch (err) {
+    throw new Error(err.message);
+  }
 };
 
 /**
