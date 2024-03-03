@@ -13,15 +13,18 @@ import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { EmailSignUpService } from '../email/email-sign-up/email-sign-up.service';
 import { users } from '../drizzle/schema/schema';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from '../evn.validation';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
-    private emailSignUpService: EmailSignUpService,
+    private emailService: EmailService,
+    private configService: ConfigService<EnvSchema, true>,
     @Inject(DrizzleAsyncProvider) private readonly db: DatabaseI,
   ) {}
 
@@ -72,6 +75,38 @@ export class AuthService {
       throw new BadRequestException();
     }
   }
+  private async signUpEmail(email: string, username: string, jwt: string) {
+    const baseUrl: string = this.configService.get('BASE_URL_BE');
+
+    const url =
+      baseUrl +
+      'auth' +
+      '/' +
+      'confirm' +
+      '/' +
+      encodeURIComponent(email) +
+      '/' +
+      encodeURIComponent(jwt) +
+      '/';
+    const html =
+      `
+    <p>Dear ${username},</p>
+    <p>Congratulations on signing up for WebLoom! We're thrilled to have you on board.</p>
+    <p>Please click the following link to confirm your email address and complete the signup process:</p>
+    <a href="` +
+      url +
+      ` ">Confirm Email Address</a>
+    <p>If you did not sign up for WeblLoom, please disregard this email.</p>
+    <p>Thank you for choosing WebLoom!</p>
+    <p>Best Regards,<br/>
+    The Webloom Team</p>
+  `;
+    await this.emailService.sendEmail({
+      to: email,
+      subject: 'WebLoom - Confirm Your Email Address',
+      html,
+    });
+  }
 
   /**
    * return message to send for the user on sign up
@@ -92,7 +127,7 @@ export class AuthService {
         password: hashed,
         conformationToken,
       });
-      this.emailSignUpService.sendEmail(user.email, conformationToken);
+      this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
       Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
