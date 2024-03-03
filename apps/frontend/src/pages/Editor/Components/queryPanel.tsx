@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
 import { DebouncedInput } from '../../../components/debouncedInput';
@@ -48,7 +48,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -60,7 +60,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
@@ -119,21 +119,23 @@ const QueryItem = observer(function QueryItem({
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input defaultValue={query.id} />
         <Button
+          variant={'ghost'}
           type="button"
           className="mr-auto"
           onClick={() => rjsfRef.current?.submit()}
         >
           {isSubmitting ? (
             <>
-              Saving... <SaveIcon />{' '}
+              <SaveIcon /> Saving...
             </>
           ) : (
             <>
-              Save <SaveIcon />
+              <SaveIcon /> Save
             </>
           )}
         </Button>
         <Button
+          variant={'ghost'}
           disabled={isRunPending}
           onClick={() => {
             if (!workspaceId || !appId) {
@@ -152,7 +154,7 @@ const QueryItem = observer(function QueryItem({
             });
           }}
         >
-          run
+          <Play /> run
         </Button>
       </div>
       {/*FORM*/}
