@@ -74,6 +74,9 @@ importers:
       lodash:
         specifier: 4.17.21
         version: 4.17.21
+      mock-gcs:
+        specifier: ^1.2.0
+        version: 1.2.0
       morgan:
         specifier: ^1.10.0
         version: 1.10.0
@@ -15055,6 +15058,12 @@ packages:
     resolution: {integrity: sha512-Mn6CN6meXEnMa0a5u6a5+RKrqRedHBhZGd15AWLk9O6uFY4KYHzImdt8JI8WODo1bjTSRnwXhJox+FCUZhCKCQ==}
     dev: false
 
+  /mock-gcs@1.2.0:
+    resolution: {integrity: sha512-/RsqqS9ZsjFnTNTYjOwW7q0y9Y84idZVNMA+S9kVdbWjPVq92jzxNWqBmOIEFY9D2O1JZw+wyGh9gwuMm3TT+g==}
+    dependencies:
+      stream-buffers: 3.0.2
+    dev: false
+
   /mock-socket@9.3.1:
     resolution: {integrity: sha512-qxBgB7Qa2sEQgHFjj0dSigq7fX4k6Saisd5Nelwp2q8mlbAFh5dHV9JTTlF8viYJLSSWgMCZFUom8PJcMNBoJw==}
     engines: {node: '>= 8'}
@@ -18170,6 +18179,11 @@ packages:
     dependencies:
       internal-slot: 1.0.5
     dev: true
+
+  /stream-buffers@3.0.2:
+    resolution: {integrity: sha512-DQi1h8VEBA/lURbSwFtEHnSTb9s2/pwLEaFuNhXwy1Dx3Sa0lOuYT2yNUr4/j2fs8oCAMANtrZ5OrPZtyVs3MQ==}
+    engines: {node: '>= 0.10.0'}
+    dev: false
 
   /stream-events@1.0.5:
     resolution: {integrity: sha512-E1GUzBSgvct8Jsb3v2X15pjzN1tYebtbLaMg+eBOUOAxgbLoSbT2NS91ckc5lJD1KfLjId+jXJRgo0qnV5Nerg==}

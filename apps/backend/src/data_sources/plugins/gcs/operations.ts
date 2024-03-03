@@ -1,6 +1,7 @@
 import { QueryT } from './types';
 import { Bucket, Storage } from '@google-cloud/storage';
 import { GCS as OPERATIONS } from '../common/operations';
+import { MockStorage } from 'mock-gcs';
 
 /**
  * TODO: add an option to pipe the file's content to a local file
@@ -29,7 +30,7 @@ export const readFile = async (
  */
 export const uploadFile = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.UPLOAD_FILE }>,
-  storage: Storage,
+  storage: Storage | MockStorage,
 ): Promise<File['name']> => {
   const { bucket, filePath } = query;
   try {
@@ -53,7 +54,7 @@ export const listBuckets = async (
 
 export const bucketFiles = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.LIST_FILES }>,
-  storage: Storage,
+  storage: Storage | MockStorage,
 ): Promise<File['name'][]> => {
   try {
     const [files] = await storage.bucket(query.bucket).getFiles({
@@ -70,7 +71,7 @@ export const downloadFile = async (
     QueryT['query'],
     { operation: typeof OPERATIONS.DOWNLOAD_FILE }
   >,
-  storage: Storage,
+  storage: Storage | MockStorage,
 ): Promise<Buffer> => {
   const { bucket, file, destination } = query;
   try {
