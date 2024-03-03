@@ -1,14 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { signUp } from '@/api/auth';
-import { useAuthStore } from './useAuthStore';
-import { JwtPayload } from '@/types/auth.types';
-import { jwtDecode } from 'jwt-decode';
 import { FetchXError } from '@/utils/fetch';
 
 export function useSignUp() {
   const navigate = useNavigate();
-  const { setUser, setToken } = useAuthStore();
   const signUpMuation = useMutation<
     Awaited<ReturnType<typeof signUp>>,
     FetchXError,
@@ -16,17 +12,7 @@ export function useSignUp() {
   >({
     mutationFn: signUp,
     onSuccess: async (data) => {
-      setToken(data.access_token);
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(data.access_token);
-      //Access the user data
-      const userData = {
-        username: decoded.username,
-        id: decoded.sub,
-      };
-      //Store user information in the React Query
-      setUser(userData);
-      navigate('/');
+      navigate({ pathname: '/signin', search: `msg=${data.msg}` });
     },
   });
   return signUpMuation;
