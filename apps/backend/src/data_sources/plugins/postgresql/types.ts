@@ -14,9 +14,6 @@ export const configSchema = z.object({
 
 export const querySchema = z.object({
   query: z.string(),
-  options: z
-    .array(z.object({ name: z.string(), value: z.string() }))
-    .optional(),
 });
 
 export type ConfigT = z.infer<typeof configSchema>;

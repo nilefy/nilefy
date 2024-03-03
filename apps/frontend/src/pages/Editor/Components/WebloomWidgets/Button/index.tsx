@@ -41,7 +41,7 @@ const WebloomButton = observer(function WebloomButton() {
   return (
     <ToolTipWrapper text={props.tooltip}>
       <Button
-        {...props}
+        variant={props.variant}
         disabled={props.isLoading || props.isDisabled}
         className={`h-full w-full active:bg-primary/20`}
         onClick={() => editorStore.executeActions(id, 'click')}

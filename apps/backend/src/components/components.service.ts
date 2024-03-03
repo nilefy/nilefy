@@ -98,7 +98,7 @@ export class ComponentsService {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
-      SELECT id, parent_id as "parentId",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id 
+      SELECT id, parent_id as "parentId",  props, type, col, row, rows_count as "rowsCount", columns_count as "columnsCount", 1 as level, page_id
         FROM ${components}
        WHERE ${and(isNull(components.parentId), eq(components.pageId, pageId))}
     UNION ALL 

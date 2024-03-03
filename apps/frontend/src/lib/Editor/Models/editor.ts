@@ -13,7 +13,7 @@ import { EvaluationContext, evaluateCode } from '../evaluation';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
-import { seedNameMap } from '../widgetName';
+import { seedOrderMap, updateOrderMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
 import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 import { toast } from '@/components/ui/use-toast';
@@ -89,9 +89,19 @@ export class EditorState {
   }) {
     this.cleanUp();
     this.name = name;
-    seedNameMap([
-      ...Object.values(pages[0].widgets || {}).map((w) => w.type),
-      ...queries.map((q) => q.dataSource.name),
+    seedOrderMap([
+      ...Object.values(pages[0].widgets || {}).map((w) => {
+        return {
+          type: w.type,
+          name: w.id,
+        };
+      }),
+      ...queries.map((q) => {
+        return {
+          type: q.dataSource.name,
+          name: q.id,
+        };
+      }),
     ]);
     // create resources needed for the editor
     pages.forEach((page, index) => {
@@ -204,6 +214,15 @@ export class EditorState {
   }
 
   removeQuery(id: string) {
+    updateOrderMap(
+      [
+        {
+          type: this.queries[id].dataSource.name,
+          name: id,
+        },
+      ],
+      true,
+    );
     delete this.queries[id];
   }
 

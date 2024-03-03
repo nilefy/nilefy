@@ -11,6 +11,10 @@ import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { commandManager } from '@/Actions/CommandManager';
 import { ChangePropAction } from '@/Actions/Editor/changeProps';
 
+export type EntityFormContextT = {
+  entityId: string;
+};
+
 export type EntityFormProps = Omit<
   FormProps<any, RJSFSchema, any>,
   | 'idPrefix'
@@ -72,6 +76,11 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
         noValidate
         // despite having explicitly set noValidate, the following line is necessary because rjsf has not yet set the validator prop as optional
         validator={validator}
+        formContext={
+          {
+            entityId: props.entityId,
+          } satisfies EntityFormContextT
+        }
         idSeparator="."
         uiSchema={entity.schema.uiSchema}
         schema={entity.schema.dataSchema}
