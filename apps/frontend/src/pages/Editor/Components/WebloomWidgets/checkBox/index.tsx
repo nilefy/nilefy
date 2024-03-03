@@ -16,9 +16,14 @@ import {
 
 export type WebloomCheckBoxProps = {
   label: string;
-  value: string;
+  value: boolean;
   events: WidgetsEventHandler;
+  disabled: boolean;
 };
+
+const webloomCheckBoxEvents = {
+  onCheckChange: 'onCheckChange',
+} as const;
 
 const WebloomCheckBox = observer(() => {
   const { id, onPropChange } = useContext(WidgetContext);
@@ -28,13 +33,18 @@ const WebloomCheckBox = observer(() => {
     <div className="w-full">
       <div className="flex items-center space-x-2">
         <Checkbox
+          disabled={props.disabled}
+          checked={props.value}
           onCheckedChange={(e) => {
             onPropChange({
               key: 'value',
               value: e,
             });
             // execute user defined eventhandlers
-            editorStore.executeActions(id, 'change');
+            editorStore.executeActions<typeof webloomCheckBoxEvents>(
+              id,
+              'onCheckChange',
+            );
           }}
         />
         <Label>{props.label}</Label>
@@ -58,12 +68,9 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomCheckBoxProps = {
   label: 'Label',
-  value: 'Check Me',
+  value: false,
   events: [],
-};
-
-const webloomCheckBoxEvents: EventTypes = {
-  change: 'Change',
+  disabled: false,
 };
 
 const schema: WidgetInspectorConfig = {
@@ -75,7 +82,10 @@ const schema: WidgetInspectorConfig = {
         default: defaultProps.label,
       },
       value: {
-        type: 'string',
+        type: 'boolean',
+      },
+      disabled: {
+        type: 'boolean',
       },
       events: widgetsEventHandlerJsonSchema,
     },
@@ -88,6 +98,9 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
     },
+    disabled: {
+      'ui:widget': 'inlineCodeInput',
+    },
     events: genEventHandlerUiSchema(webloomCheckBoxEvents),
   },
 };
@@ -97,6 +110,16 @@ export const WebloomCheckBoxWidget: Widget<WebloomCheckBoxProps> = {
   config,
   defaultProps,
   schema,
+  setters: {
+    setValue: {
+      path: 'value',
+      type: 'boolean',
+    },
+    setDisabled: {
+      path: 'disabled',
+      type: 'boolean',
+    },
+  },
 };
 
 export { WebloomCheckBox };

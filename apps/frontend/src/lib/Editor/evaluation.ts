@@ -60,5 +60,14 @@ export function evaluateCode(
   evaluationContext: Record<string, unknown>,
 ) {
   if (!code) return code;
-  return evalInContext(code, evaluationContext);
+
+  try {
+    return new Function('context', `with(context) { ${code} }`)(
+      evaluationContext,
+    );
+  } catch (e) {
+    console.error('DEBUGPRINT[4]: evaluation.ts:51: e=', e);
+    // TODO: use errors to close https://github.com/z-grad-pr-sh/frontend/issues/250
+    return undefined;
+  }
 }
