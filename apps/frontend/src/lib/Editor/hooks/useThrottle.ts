@@ -20,6 +20,6 @@ export const useThrottle = <T extends (...args: any) => any>(
       delay,
       options,
     ),
-    [delay],
+    [delay, fnRef.current],
   );
 };

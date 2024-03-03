@@ -18,7 +18,7 @@ import { EditorHeader } from './editorHeader';
 
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
-import { useInitResizing } from '@/lib/Editor/hooks';
+import { useInitResizing, useMousePosition } from '@/lib/Editor/hooks';
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 
 export const Editor = observer(() => {
@@ -26,6 +26,7 @@ export const Editor = observer(() => {
   useSetPageDimensions(editorRef);
   useEditorHotKeys(editorStore, commandManager);
   useInitResizing();
+  useMousePosition();
   const handleResize = useCallback(() => {
     if (!editorRef.current) return;
     const width = editorRef.current?.clientWidth;

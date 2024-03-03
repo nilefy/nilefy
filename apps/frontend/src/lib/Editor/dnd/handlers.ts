@@ -20,6 +20,7 @@ import {
 } from '../collisions';
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
+import { toJS } from 'mobx';
 function snapCenterToCursor({
   currentMousePos,
   position,
@@ -41,17 +42,17 @@ function snapCenterToCursor({
 export const handleDrop = (
   item: DraggedItem,
   monitor: DropTargetMonitor<unknown, unknown>,
-  overId: string,
 ) => {
+  const overId = editorStore.currentPage.hoveredWidgetId;
+  if (!overId) return;
   if (overId === editorStore.currentPage.draggedWidgetId) return;
 
   if (monitor.didDrop()) return;
-
   const droppableId = getFirstDroppableParent(overId);
   const droppable = editorStore.currentPage.getWidgetById(droppableId);
   if (!droppable.canvas) return;
-
-  const clientOffset = monitor.getClientOffset();
+  // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
+  const clientOffset = toJS(editorStore.currentPage.mousePosition);
   if (!clientOffset) return;
   const { grid } = getDropPosition(
     clientOffset,
@@ -86,7 +87,7 @@ export const handleDrop = (
 
 export const handleHover = (
   item: DraggedItem,
-  monitor: DropTargetMonitor<unknown, unknown>,
+  _: DropTargetMonitor<unknown, unknown>,
   overId: string,
 ) => {
   if (overId === editorStore.currentPage.draggedWidgetId) return;
@@ -101,7 +102,8 @@ export const handleHover = (
   const droppableId = getFirstDroppableParent(overId);
   const droppable = editorStore.currentPage.getWidgetById(droppableId);
   if (!droppable.canvas) return;
-  const clientOffset = monitor.getClientOffset();
+  // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
+  const clientOffset = toJS(editorStore.currentPage.mousePosition);
   if (!clientOffset) return;
   const { grid } = getDropPosition(
     clientOffset,

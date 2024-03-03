@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { editorStore } from '../Models';
 /**
  *
  * @returns the current mouse position as a react ref (does not trigger rerender)
@@ -10,6 +11,7 @@ export const useMousePosition = () => {
     const handleMouseMove = (e: MouseEvent) => {
       const { x, y } = e;
       mousePos.current = { x, y };
+      editorStore.currentPage.setMousePosition({ x, y });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
