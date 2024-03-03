@@ -66,6 +66,9 @@ export const handleDrop = (
   );
   const editorRelativeMousePosition =
     getMousePositionRelativeToEditor(clientOffset);
+  // We need to account for the scroll position of the canvas but also keep in mind that we have already taken the editor's scroll position into account
+  editorRelativeMousePosition.y +=
+    droppable.cumlativScrollTop - editorStore.currentPage.rootWidget.scrollTop;
   const dimensions = getDropPositionWithCollisions(
     grid,
     editorRelativeMousePosition,
@@ -116,6 +119,8 @@ export const handleHover = (
       : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
   );
   const newMousePos = getMousePositionRelativeToEditor(clientOffset);
+  newMousePos.y +=
+    droppable.cumlativScrollTop - editorStore.currentPage.rootWidget.scrollTop;
   const dimensions = getDropPositionWithCollisions(
     grid,
     newMousePos,
