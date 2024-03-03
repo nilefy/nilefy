@@ -15,6 +15,11 @@ import {
 } from '@rjsf/utils';
 import { Label } from '../ui/label';
 
+/** The `CheckboxesWidget` is a widget for rendering checkbox groups.
+ *  It is typically used to represent an array of enums.
+ *
+ * @param props - The `WidgetProps` for this component
+ */
 export default function CheckboxesWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
@@ -55,6 +60,7 @@ export default function CheckboxesWidget<
 
   return (
     <div className="my-4 flex flex-col gap-4">
+      {labelValue(<Label htmlFor={id}>{label || undefined}</Label>, hideLabel)}
       {Array.isArray(enumOptions) &&
         enumOptions.map((option, index: number) => {
           const checked = enumOptionsIsSelected<S>(

@@ -66,10 +66,10 @@ export default function FieldTemplate<
       uiSchema={uiSchema}
       registry={registry}
     >
-      <div>
+      <div className="w-full">
         {children}
         {displayLabel && rawDescription ? (
-          <p className="mt-2">{description}</p>
+          <div className="text-sm text-gray-500">{description}</div>
         ) : null}
         {errors}
         {help}

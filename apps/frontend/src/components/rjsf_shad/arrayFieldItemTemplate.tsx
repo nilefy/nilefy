@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { WidgetsEventHandler } from './eventHandler';
-import { ReactElement } from 'react';
+import { CSSProperties, ReactElement } from 'react';
 import { Copy, MoreVertical, Trash } from 'lucide-react';
 import z from 'zod';
 
@@ -199,7 +199,7 @@ function Item({
       );
     }
     default: {
-      return <div className="h-fit w-full overflow-auto">{children}</div>;
+      return <div className="h-fit w-full ">{children}</div>;
     }
   }
 }
@@ -254,16 +254,26 @@ export default function ArrayFieldItemTemplate<
     | ArrayFieldItemType
     | undefined;
 
+  const btnStyle: CSSProperties = {
+    flex: 1,
+    paddingLeft: 6,
+    paddingRight: 6,
+    fontWeight: 'bold',
+    minWidth: 0,
+  };
+
   return (
-    <div className="flex h-full w-full items-center gap-2">
-      <Item
-        itemValue={itemValue}
-        itemType={customItemType}
-        onDeleteCB={onDropIndexClick(index)}
-        onCopyCB={onCopyIndexClick(index)}
-      >
-        {children}
-      </Item>
+    <div className="flex items-center">
+      <div className="flex-1 p-4">
+        <Item
+          itemValue={itemValue}
+          itemType={customItemType}
+          onDeleteCB={onDropIndexClick(index)}
+          onCopyCB={onCopyIndexClick(index)}
+        >
+          {children}
+        </Item>
+      </div>
 
       {hasToolbar && customItemType === undefined && (
         <div className="ml-auto flex items-center gap-3">
