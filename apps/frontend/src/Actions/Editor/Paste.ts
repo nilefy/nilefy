@@ -44,7 +44,7 @@ export class PasteAction implements UndoableCommand {
   paste(node: string, parent: string, change?: WebloomGridDimensions) {
     const snapshot = this.data.nodes.get(node)!;
 
-    let id = snapshot.id!;
+    let id: string = snapshot.id!;
     if (this.data.action === 'copy') {
       id = getNewEntityName(snapshot.type as WidgetTypes);
     }

@@ -144,7 +144,7 @@ export type EntityDependancy = Record<string, Record<string, Set<string>>>;
           type: "string",
         },
  */
-type WidgetSetters = {
+type WidgetSetters<Props> = {
   [
     /**
      * setter key
@@ -154,7 +154,7 @@ type WidgetSetters = {
     /**
      * use lodash path syntax
      */
-    path: string;
+    path: keyof Props;
     /**
      * only used for type completation WON'T BE VALIDATED
      */
@@ -167,7 +167,7 @@ export type Widget<WidgetProps> = {
   config: WidgetConfig;
   defaultProps: WidgetProps;
   schema: WidgetInspectorConfig;
-  setters?: WidgetSetters;
+  setters?: WidgetSetters<WidgetProps>;
 };
 
 // inspector types

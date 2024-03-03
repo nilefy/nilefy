@@ -44,10 +44,9 @@ export function generateTemplates<
     ArrayFieldItemTemplate,
     ArrayFieldTemplate,
     DescriptionFieldTemplate: DescriptionField,
-    // TODO: fix those components
-    // WrapIfAdditionalTemplate,
-    // FieldTemplate,
-    // ObjectFieldTemplate,
+    WrapIfAdditionalTemplate,
+    FieldTemplate,
+    ObjectFieldTemplate,
   };
 }
 

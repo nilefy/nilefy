@@ -18,5 +18,10 @@ export default function DescriptionField<
   if (!description) {
     return null;
   }
-  return <p id={id}>{description}</p>;
+
+  return (
+    <div id={id} className="text-sm">
+      {description}
+    </div>
+  );
 }

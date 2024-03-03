@@ -32,6 +32,7 @@ import { getInitials } from '@/utils/avatar';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchX } from '@/utils/fetch';
 import { useState } from 'react';
+import { ScrollArea } from './ui/scroll-area';
 
 export type Workspace = { id: number; name: string; imageUrl: string | null };
 export type WorkSpaces = Workspace[];
@@ -137,7 +138,10 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
   return (
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
       <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+        >
           {props.insert ? (
             <>
               <Plus className="mr-2" />
@@ -151,8 +155,10 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
                   {getInitials(props.workspaceMeta.name)}
                 </AvatarFallback>
               </Avatar>
-              <span>{props.workspaceMeta.name}</span>
-              <Edit className="ml-auto" />
+              <span className="line-clamp-1 w-11/12">
+                {props.workspaceMeta.name}
+              </span>
+              <Edit className="ml-auto" size={20} />
             </>
           )}
         </DropdownMenuItem>
@@ -211,29 +217,36 @@ export function SelectWorkSpace() {
   }
   const currentWorkspce = workspaces.find((i) => i.id === +workspaceId);
   if (currentWorkspce === undefined) {
-    throw new Error('Not Found');
+    throw new Error('Workspace Not Found');
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className="w-full">
         <Button>
-          {currentWorkspce.name} <ChevronDown size={20} />
+          <span className="line-clamp-1 w-11/12">{currentWorkspce.name}</span>
+          <ChevronDown size={20} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="DropdownMenuContent">
+      <DropdownMenuContent className="DropdownMenuContent overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
         {/*current workspace*/}
         <WorkspaceMetaDialog insert={false} workspaceMeta={currentWorkspce} />
         <DropdownMenuSeparator />
         {/*all the workspaces links*/}
         {workspaces.map((workspace) => {
           return (
-            <DropdownMenuItem key={workspace.id}>
-              <Avatar className="mr-2">
-                <AvatarImage src={workspace.imageUrl ?? undefined} />
-                <AvatarFallback>{getInitials(workspace.name)}</AvatarFallback>
-              </Avatar>
-              <Link to={`/${workspace.id}`}>{workspace.name}</Link>
+            <DropdownMenuItem
+              key={workspace.id}
+              className="h-full cursor-pointer"
+              asChild
+            >
+              <Link to={`/${workspace.id}`}>
+                <Avatar className="mr-2">
+                  <AvatarImage src={workspace.imageUrl ?? undefined} />
+                  <AvatarFallback>{getInitials(workspace.name)}</AvatarFallback>
+                </Avatar>
+                <span className="line-clamp-1">{workspace.name}</span>
+              </Link>
             </DropdownMenuItem>
           );
         })}

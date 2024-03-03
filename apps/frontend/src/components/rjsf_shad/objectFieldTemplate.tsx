@@ -1,4 +1,3 @@
-import { cn } from '@/lib/cn';
 import {
   canExpand,
   descriptionId,
@@ -11,6 +10,12 @@ import {
   titleId,
 } from '@rjsf/utils';
 
+/** The `ObjectFieldTemplate` is the template to use to render all the inner properties of an object along with the
+ * title and description if available. If the object is expandable, then an `AddButton` is also rendered after all
+ * the properties.
+ *
+ * @param props - The `ObjectFieldTemplateProps` for this component
+ */
 export default function ObjectFieldTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
@@ -48,7 +53,7 @@ export default function ObjectFieldTemplate<
   } = registry.templates;
 
   return (
-    <>
+    <div className="space-y-6">
       {title && (
         <TitleFieldTemplate
           id={titleId<T>(idSchema)}
@@ -68,18 +73,22 @@ export default function ObjectFieldTemplate<
           registry={registry}
         />
       )}
-      <div className={cn('flex mb-4', description ? 'gap-2' : 'gap-6')}>
+
+      <div className={'mt-4 space-y-5'}>
         {properties.map((element, index) =>
           element.hidden ? (
             element.content
           ) : (
-            <div key={`${idSchema.$id}-${element.name}-${index}`}>
+            <div
+              className="mb-4"
+              key={`${idSchema.$id}-${element.name}-${index}`}
+            >
               {element.content}
             </div>
           ),
         )}
         {canExpand<T, S, F>(schema, uiSchema, formData) && (
-          <div className="justify-self-end">
+          <div className="mt-3 flex justify-end">
             <AddButton
               className="object-property-expand"
               onClick={onAddClick(schema)}
@@ -90,6 +99,6 @@ export default function ObjectFieldTemplate<
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

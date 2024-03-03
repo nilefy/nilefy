@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateUserDto, UpdateUserRetDto, UserDto } from '../dto/users.dto';
+import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
 import { accounts, users } from '../drizzle/schema/schema';
@@ -35,7 +35,7 @@ export class UsersService {
 
   async update(
     userId: number,
-    updateDto: UpdateUserDto,
+    updateDto: UpdateUserDb,
   ): Promise<UpdateUserRetDto> {
     if (updateDto.password) {
       const salt = await genSalt(10);

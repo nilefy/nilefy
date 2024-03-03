@@ -28,4 +28,6 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 
 - you can check [swagger](https://swagger.io/) docs in [http://localhost:3000/api#/](http://localhost:3000/api)
 
+- for the docs use `pnpm docs:start`
+
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
