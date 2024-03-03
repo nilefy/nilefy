@@ -103,7 +103,8 @@ const WidgetWrapper = observer(
       >
         {
           //this is to prevent widgets from capturing focus when drag is happening
-          editorStore.currentPage.isDragging && (
+          (editorStore.currentPage.isDragging ||
+            editorStore.currentPage.isResizing) && (
             <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
           )
         }
