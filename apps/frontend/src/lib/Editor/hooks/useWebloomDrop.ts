@@ -2,14 +2,20 @@ import { useDragDropManager, useDrop } from 'react-dnd';
 import { DraggedItem } from '../dnd/interface';
 import { DndHandlers } from '../dnd/handlers';
 import { editorStore } from '../Models';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useThrottle } from './useThrottle';
 
 export const useWebloomDrop = (id: string) => {
+  const isScrolling = useRef(false);
   const [{ handlerId }, drop] = useDrop(() => ({
     accept: 'WIDGET',
     hover(item, monitor) {
-      DndHandlers.handleHover(item as DraggedItem, monitor, id);
+      DndHandlers.handleHover(
+        isScrolling.current,
+        item as DraggedItem,
+        monitor,
+        id,
+      );
     },
     drop(item, monitor) {
       DndHandlers.handleDrop(item as DraggedItem, monitor);
@@ -24,6 +30,7 @@ export const useWebloomDrop = (id: string) => {
   }));
   const hoverAction = useDragDropManager().getActions().hover;
   const hoverActionScrollHandler = useCallback(() => {
+    isScrolling.current = true;
     if (handlerId && editorStore.currentPage.isDragging) {
       hoverAction([handlerId]);
     }
@@ -45,15 +52,20 @@ export const useWebloomDrop = (id: string) => {
   const scrollContainer = widget?.scrollableContainer;
   useEffect(() => {
     if (!scrollContainer) return;
+    const scrollEnd = () => {
+      isScrolling.current = false;
+    };
     scrollContainer.addEventListener(
       'scroll',
       throttledHoverActionScrollHandler,
     );
+    scrollContainer.addEventListener('scrollend', scrollEnd);
     return () => {
       scrollContainer.removeEventListener(
         'scroll',
         throttledHoverActionScrollHandler,
       );
+      scrollContainer.removeEventListener('scrollend', scrollEnd);
     };
   }, [scrollContainer, throttledHoverActionScrollHandler]);
 };

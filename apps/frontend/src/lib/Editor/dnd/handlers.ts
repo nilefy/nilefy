@@ -144,8 +144,13 @@ export class DndHandlers {
     editorStore.currentPage.setShadowElement(pixel);
   };
   static handleHover = (
+    isScroll: boolean,
     ...args: Parameters<typeof DndHandlers._handleHover>
   ) => {
+    if (isScroll) {
+      DndHandlers._handleHover(...args);
+      return;
+    }
     if (DndHandlers.lastAnimationFrameId) {
       cancelAnimationFrame(DndHandlers.lastAnimationFrameId);
     }
