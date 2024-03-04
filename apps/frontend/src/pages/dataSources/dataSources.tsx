@@ -1,5 +1,5 @@
 import validator from '@rjsf/validator-ajv8';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +56,8 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import _ from 'lodash';
+import { dataSourcesTypes } from '@webloom/constants';
 
 function CreatePluginForm({
   workspaceId,
@@ -135,40 +137,35 @@ function CreatePluginForm({
   );
 }
 
-function DataSourcesView() {
+export function GlobalDataSourcesView() {
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isPending, isError, error, data } =
     api.globalDataSource.index.useQuery();
   const filteredDataSources = useMemo(() => {
     if (!data) {
-      return;
+      return {};
     }
-    const filter = searchParams.get('gfilter');
     const globalSearch = searchParams.get('gsearch');
-    let tempData;
-    if (filter === null || filter === '') {
-      tempData = data;
-    } else {
-      tempData = data.filter((d) => d.type === filter);
-    }
-    return matchSorter(tempData, globalSearch ?? '', {
-      keys: ['description', 'name'],
+    const tempData = matchSorter(data, globalSearch ?? '', {
+      keys: ['name', 'description'],
     });
+    return _.groupBy(tempData, 'type');
   }, [searchParams, data]);
 
   if (isPending) {
-    return <div>Loading...</div>;
+    // TODO: move inside the template
+    return <WebloomLoader />;
   } else if (isError) {
     throw error;
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-6  p-4 ">
+    <div className="flex h-full w-full flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 ">
       <DebouncedInput
         className="w-full"
         value={searchParams.get('gsearch') ?? ''}
-        placeholder="Search"
+        placeholder="Search data sources"
         type="search"
         onChange={(value) => {
           setSearchParams(
@@ -181,41 +178,62 @@ function DataSourcesView() {
           );
         }}
       />
-      <ScrollArea>
-        <ul className="grid max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
-          {filteredDataSources?.map((ds) => {
-            return (
-              <Card
-                key={ds.id}
-                className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
-              >
-                <CardHeader className="flex flex-col items-center justify-center gap-4">
-                  <Avatar>
-                    <AvatarImage src={ds.image ?? undefined} />
-                    <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
-                  </Avatar>
-                  <p className="line-clamp-1">{ds.name}</p>
-                </CardHeader>
+      {Object.keys(filteredDataSources).length === 0 ? (
+        <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-5">
+          <p>
+            No Data Sources match your search query try changing the search{' '}
+          </p>
+        </div>
+      ) : (
+        Object.entries(filteredDataSources).map(([type, dss]) => {
+          return (
+            <div
+              key={type}
+              className="flex h-full w-full max-w-full flex-col gap-6"
+            >
+              <h2 id={type}>{type.toUpperCase()}</h2>
+              <ul className="grid w-full max-w-full grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:grid-cols-3 md:gap-y-10 lg:grid-cols-4">
+                {dss.map((ds) => {
+                  return (
+                    <Card
+                      key={ds.id}
+                      className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
+                    >
+                      <CardHeader className="flex flex-col items-center justify-center gap-4">
+                        <Avatar>
+                          <AvatarImage src={ds.image ?? undefined} />
+                          <AvatarFallback>
+                            {getInitials(ds.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="line-clamp-1">{ds.name}</p>
+                      </CardHeader>
 
-                <CardContent>
-                  <p className="line-clamp-1">{ds.description}</p>
-                </CardContent>
+                      <CardContent>
+                        <p className="line-clamp-1">{ds.description}</p>
+                      </CardContent>
 
-                <CardFooter className="mt-auto flex justify-end gap-5">
-                  <CreatePluginForm
-                    globalDataSourceId={ds.id}
-                    workspaceId={+(workspaceId as string)}
-                  />
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </ul>
-      </ScrollArea>
+                      <CardFooter className="mt-auto flex justify-end gap-5">
+                        <CreatePluginForm
+                          globalDataSourceId={ds.id}
+                          workspaceId={+(workspaceId as string)}
+                        />
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
 
+/**
+ * sidebar configured data sources
+ */
 function WorkspaceDataSourcesView() {
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -240,7 +258,7 @@ function WorkspaceDataSourcesView() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4">
+    <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -256,23 +274,25 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <ScrollArea className="w-full">
-        <div className="flex w-full flex-col gap-6">
-          {filteredPlugins?.map((ds) => {
+      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+        {!filteredPlugins ? (
+          <p>No Data Sources match your search query try changing the search</p>
+        ) : (
+          filteredPlugins.map((ds) => {
             return (
               <div
                 key={ds.id}
                 className="flex w-full items-center justify-start gap-2"
               >
                 <Link
-                  className="flex items-center gap-4"
+                  className="flex w-[90%] items-center gap-4 overflow-hidden"
                   to={`/${workspaceId}/datasources/${ds.id}`}
                 >
                   <Avatar className="mr-2">
                     <AvatarImage src={ds.dataSource.image ?? undefined} />
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                   </Avatar>
-                  <p>{ds.name}</p>
+                  <p className="line-clamp-1">{ds.name}</p>
                 </Link>
                 <AlertDialog>
                   <AlertDialogTrigger
@@ -282,7 +302,7 @@ function WorkspaceDataSourcesView() {
                       className: 'ml-auto',
                     })}
                   >
-                    <Trash />
+                    <Trash size={15} />
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -313,77 +333,9 @@ function WorkspaceDataSourcesView() {
                 </AlertDialog>
               </div>
             );
-          })}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
-
-const dataSourceFilter = [
-  {
-    name: 'all',
-    q: '',
-  },
-  {
-    name: 'databases',
-    q: 'database',
-  },
-  {
-    name: 'APIs',
-    q: 'api',
-  },
-  {
-    name: 'Cloud Storage',
-    q: 'cloud storage',
-  },
-  {
-    name: 'Plugin',
-    q: 'plugin',
-  },
-];
-
-function DataSourcesSidebar() {
-  const { workspaceId } = useParams();
-
-  return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
-      <h2 className="ml-2 text-3xl">Data Sources</h2>
-      {/** plugins filter*/}
-      <ScrollArea className="h-full">
-        <h4>Filters</h4>
-        <div className="flex flex-col gap-5">
-          {dataSourceFilter.map((ds, i) => {
-            return (
-              <Link
-                key={ds.q + i}
-                to={{
-                  pathname: `/${workspaceId}/datasources`,
-                  search: `gfilter=${ds.q}`,
-                }}
-              >
-                {ds.name}
-              </Link>
-            );
-          })}
-        </div>
-      </ScrollArea>
-      <Separator />
-      {/** configured plugins*/}
-      <h4>plugins</h4>
-      <WorkspaceDataSourcesView />
-      <div className="mt-auto">
-        <SelectWorkSpace />
+          })
+        )}
       </div>
-    </div>
-  );
-}
-
-export function GlobalDataSourcesView() {
-  return (
-    <div className="flex h-full w-full">
-      <DataSourcesSidebar />
-      <DataSourcesView />
     </div>
   );
 }
@@ -393,7 +345,6 @@ export function DataSourceView() {
   // ref to call the form submit
   const rjsfRef = useRef<FormT>(null);
   const { datasourceId, workspaceId } = useParams();
-  // const queryClient = useQueryClient();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
     +(datasourceId as string),
@@ -409,49 +360,95 @@ export function DataSourceView() {
   }
 
   return (
+    <div className="flex w-full flex-col gap-5 p-4">
+      <div className="flex gap-5">
+        {/*TODO: enable chaning ds name*/}
+        <Input defaultValue={data.name} />
+      </div>
+      <ScrollArea className="h-full w-full ">
+        <RJSFShadcn
+          ref={rjsfRef}
+          schema={data.dataSource.config.schema}
+          uiSchema={data.dataSource.config.uiSchema}
+          formData={data.config}
+          validator={validator}
+          onSubmit={({ formData }) => {
+            console.log('submit', formData);
+            if (!workspaceId || !datasourceId)
+              throw new Error(
+                "that's weird this function should run under workspaceId, datasourceId",
+              );
+            updateMutate({
+              workspaceId: +workspaceId,
+              dataSourceId: +datasourceId,
+              dto: {
+                config: formData,
+              },
+            });
+          }}
+        >
+          <Button className="mt-4" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <SaveIcon /> Saving...
+              </>
+            ) : (
+              <>
+                <SaveIcon /> Save
+              </>
+            )}
+          </Button>
+        </RJSFShadcn>
+      </ScrollArea>
+    </div>
+  );
+}
+
+function DataSourcesSidebar() {
+  const { workspaceId } = useParams();
+
+  return (
+    <div className="flex h-full flex-col gap-4 bg-primary/10 p-4 md:w-[25%] lg:w-[15%]">
+      <h1 className="text-3xl">Data Sources</h1>
+      {/** plugins filter*/}
+      <div className="flex h-fit flex-col gap-3">
+        <h2 className="text-xl">Filters</h2>
+        <div className="flex flex-col gap-5 pl-2">
+          {dataSourcesTypes.map((ds, i) => {
+            return (
+              <Link
+                key={ds + i}
+                to={{
+                  pathname: `/${workspaceId}/datasources`,
+                  // search: `gfilter=${ds.q}`,
+                  hash: ds,
+                }}
+                className="inline-flex h-11 items-center justify-start rounded-md pl-1 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              >
+                {ds.toUpperCase()}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      <Separator />
+      {/** configured plugins*/}
+      <h4>plugins</h4>
+      <WorkspaceDataSourcesView />
+      <div className="mt-auto">
+        <SelectWorkSpace />
+      </div>
+    </div>
+  );
+}
+
+export function DataSourcesTemplate() {
+  return (
     <div className="flex h-full w-full">
       <DataSourcesSidebar />
-      <ScrollArea className="h-full w-full p-4">
-        <div className="flex w-full flex-col gap-5">
-          <div className="flex gap-5">
-            {/*TODO: enable chaning ds name*/}
-            <Input defaultValue={data.name} />
-          </div>
-          <RJSFShadcn
-            ref={rjsfRef}
-            schema={data.dataSource.config.schema}
-            uiSchema={data.dataSource.config.uiSchema}
-            formData={data.config}
-            validator={validator}
-            onSubmit={({ formData }) => {
-              console.log('submit', formData);
-              if (!workspaceId || !datasourceId)
-                throw new Error(
-                  "that's weird this function should run under workspaceId, datasourceId",
-                );
-              updateMutate({
-                workspaceId: +workspaceId,
-                dataSourceId: +datasourceId,
-                dto: {
-                  config: formData,
-                },
-              });
-            }}
-          >
-            <Button className="mt-4" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <SaveIcon /> Saving...
-                </>
-              ) : (
-                <>
-                  <SaveIcon /> Save
-                </>
-              )}
-            </Button>
-          </RJSFShadcn>
-        </div>
-      </ScrollArea>
+      <div className="h-full max-h-full w-full max-w-full overflow-hidden">
+        <Outlet />
+      </div>
     </div>
   );
 }

@@ -6,13 +6,13 @@ import { getInitials } from '@/utils/avatar';
 import { fetchX } from '@/utils/fetch';
 import { WorkSpaces } from '@/components/selectWorkspace';
 import { QueryClient } from '@tanstack/react-query';
-import { Inspector } from '@/components/inspector';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
 import { getToken, removeToken } from '@/lib/token.localstorage';
 import { jwtDecode } from 'jwt-decode';
 import { JwtPayload } from '@/types/auth.types';
+
 const dashboardPaths = [
   {
     name: 'apps',
@@ -24,12 +24,11 @@ const dashboardPaths = [
     path: 'datasources',
     icon: <Braces size={30} />,
   },
-
-  {
-    name: 'builtin-db',
-    path: 'database',
-    icon: <Table size={30} />,
-  },
+  // {
+  //   name: 'builtin-db',
+  //   path: 'database',
+  //   icon: <Table size={30} />,
+  // },
   {
     name: 'workspaceSettings',
     path: 'workspace-settings',
@@ -81,7 +80,7 @@ export function Dashboard() {
   const { user } = useAuthStore();
 
   return (
-    <div className="flex h-screen ">
+    <div className="flex h-screen w-screen overflow-hidden">
       {/*dashbaord nav*/}
       <div className="flex h-full w-max flex-col gap-5 p-3">
         {/*TODO: LOGO*/}
@@ -112,8 +111,9 @@ export function Dashboard() {
           <LogOut />
         </Button>
       </div>
-
-      <Outlet />
+      <div className="h-full max-h-full w-full max-w-full">
+        <Outlet />
+      </div>
     </div>
   );
 }

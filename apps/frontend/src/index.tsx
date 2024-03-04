@@ -22,6 +22,7 @@ import { NonAuthRoute } from '@/components/non-auth-routes';
 import {
   GlobalDataSourcesView,
   DataSourceView,
+  DataSourcesTemplate,
 } from '@/pages/dataSources/dataSources';
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
@@ -78,13 +79,21 @@ const router = createBrowserRouter([
           //     },
           //   ],
           // },
-          {
-            path: 'datasources/:datasourceId',
-            element: <DataSourceView />,
-          },
+
+          {},
           {
             path: 'datasources',
-            element: <GlobalDataSourcesView />,
+            element: <DataSourcesTemplate />,
+            children: [
+              {
+                index: true,
+                element: <GlobalDataSourcesView />,
+              },
+              {
+                path: ':datasourceId',
+                element: <DataSourceView />,
+              },
+            ],
           },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {
