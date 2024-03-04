@@ -44,6 +44,9 @@ export const users = pgTable('users', {
   emailVerified: timestamp('emailVerified', { mode: 'date' }),
   password: varchar('password', { length: 256 }),
   avatar: text('avatar'),
+  conformationToken: varchar('conformation_token', {
+    length: 256,
+  }),
   ...timeStamps,
   ...softDelete,
 });

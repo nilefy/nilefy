@@ -23,8 +23,8 @@ export const FormContext = createContext<{
 }>({} as any);
 export const FormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
-  /**
-   * component id
+  /*
+   * entityId
    */
   id?: string;
   toProperty?: string;

@@ -1,24 +1,24 @@
-import { editorStore } from '@/lib/Editor/Models';
-import {
-  LayoutMode,
-  WIDGET_SECTIONS,
-  Widget,
-  WidgetConfig,
-  WidgetInspectorConfig,
-} from '@/lib/Editor/interface';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { Widget, WidgetConfig, WIDGET_SECTIONS } from '@/lib/Editor/interface';
 import { BoxSelect } from 'lucide-react';
+import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
-import { ReactNode, useContext } from 'react';
+import { editorStore } from '@/lib/Editor/Models';
+
+import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Grid } from '../../lib';
 import { cn } from '@/lib/cn';
 
-type WebloomContainerProps = {
-  children?: ReactNode;
-  color: string;
-  layoutMode: LayoutMode;
-};
+import z from 'zod';
+
+const webloomContainerProps = z.object({
+  color: z.string(),
+  layoutMode: z.enum(['fixed', 'auto']),
+});
+type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+
 const WebloomContainer = observer(
   ({
     children,
@@ -39,7 +39,7 @@ const WebloomContainer = observer(
   }) => {
     const { id } = useContext(WidgetContext);
     const entity = editorStore.currentPage.getWidgetById(id);
-    const props = entity.values as WebloomContainerProps;
+    const props = entity.finalValues as WebloomContainerProps;
     // TODO: This feels bad but what this basically does is center the root to look pwetty
     const leftRootShift = entity.isRoot
       ? editorStore.currentPage.width -
@@ -82,34 +82,16 @@ export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
   layoutMode: 'fixed',
 };
-export const inspectorConfig: WidgetInspectorConfig<WebloomContainerProps> = [
-  {
-    sectionName: 'Color',
-    children: [
-      {
-        id: `${widgetName}-color`,
-        key: 'color',
-        label: 'Color2',
-        type: 'color',
-        options: {
-          color: '#a883f2',
-        },
-      },
-      {
-        id: `${widgetName}-dynamicHeight`,
-        key: 'layoutMode',
-        label: 'Height Mode',
-        type: 'select',
-        options: {
-          items: [
-            { label: 'Fixed', value: 'fixed' },
-            { label: 'Auto', value: 'auto' },
-          ],
-        },
-      },
-    ],
+
+export const schema: WidgetInspectorConfig = {
+  dataSchema: zodToJsonSchema(webloomContainerProps) as RJSFSchema,
+  uiSchema: {
+    color: {
+      'ui:widget': 'colorPicker',
+      'ui:title': 'Color',
+    },
   },
-];
+};
 
 export const config: WidgetConfig = {
   name: 'Container',
@@ -118,6 +100,7 @@ export const config: WidgetConfig = {
   layoutConfig: {
     colsCount: 10,
     rowsCount: 30,
+
     minColumns: 1,
     minRows: 4,
     layoutMode: 'fixed',
@@ -127,7 +110,7 @@ export const config: WidgetConfig = {
 export const WebloomContainerWidget: Widget<WebloomContainerProps> = {
   component: WebloomContainer,
   defaultProps,
-  inspectorConfig,
+  schema,
   config,
 };
 export { WebloomContainer };

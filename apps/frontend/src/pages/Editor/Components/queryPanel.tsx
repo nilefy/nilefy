@@ -1,6 +1,6 @@
-import validator from '@rjsf/validator-ajv8';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
+import ReactJson from 'react-json-view';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,73 +17,133 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
-import { CompeleteQueryI } from '@/api/queries.api';
-import { DebouncedInput } from './debouncedInput';
+import { DebouncedInput } from '../../../components/debouncedInput';
 import clsx from 'clsx';
-import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
-import { useQueryClient } from '@tanstack/react-query';
+import { Input } from '../../../components/ui/input';
+import { ScrollArea } from '../../../components/ui/scroll-area';
 import FormT from '@rjsf/core';
-import { RJSFShadcn } from './rjsf_shad';
+import { editorStore } from '@/lib/Editor/Models';
+import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
+import { observer } from 'mobx-react-lite';
+import { computed, runInAction } from 'mobx';
+import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { Label } from '@/components/ui/label';
+import EntityForm from '@/components/rjsf_shad/entityForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-function QueryItem({ query }: { query?: CompeleteQueryI }) {
+const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
+  function QueryPreview(props, ref) {
+    return (
+      <Tabs
+        ref={ref}
+        defaultValue="json"
+        className="max-w-full overflow-x-hidden"
+      >
+        <TabsList className="w-full space-x-8 p-2">
+          <TabsTrigger value="json">JSON</TabsTrigger>
+          <TabsTrigger value="raw">Raw</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="json"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+        >
+          <ReactJson
+            theme={'twilight'}
+            src={
+              props.queryValues.error
+                ? { error: props.queryValues.error }
+                : (props.queryValues.data as object)
+            }
+          />
+        </TabsContent>
+        <TabsContent
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          value="raw"
+        >
+          {JSON.stringify(
+            props.queryValues.error ?? props.queryValues.data,
+            null,
+            3,
+          )}
+        </TabsContent>
+      </Tabs>
+    );
+  },
+  {
+    forwardRef: true,
+  },
+);
+
+const QueryItem = observer(function QueryItem({
+  query,
+}: {
+  query: WebloomQuery;
+}) {
   const rjsfRef = useRef<FormT>(null);
+  const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
-  const queryClient = useQueryClient();
-
+  const { data: dataSources } = api.dataSources.index.useQuery(
+    +(workspaceId as string),
+  );
+  const [curDataSource, setCurDataSource] = useState<string>(() =>
+    query.dataSource.id.toString(),
+  );
   const { mutate: updateMutation, isPending: isSubmitting } =
     api.queries.update.useMutation({
-      onSuccess() {
-        queryClient.invalidateQueries({ queryKey: ['queries'] });
+      onSuccess(data) {
+        runInAction(() => {
+          query.setQueryState('success');
+          query.updateQuery(data);
+        });
       },
     });
-  const { mutate: run } = api.queries.run.useMutation({
-    onSuccess(data, variables) {
-      console.log(
-        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mvariables\x1b[0m = ',
-        variables,
-      );
-      console.log(
-        '🪵 [queryPanel.tsx:32] ~ token ~ \x1b[0;32mdata\x1b[0m = ',
-        data,
-      );
+  const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
+    onSuccess(data) {
+      query.setQueryState('success');
+      query.updateQuery({
+        rawValues: {
+          ...data,
+        },
+      });
+      jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
     },
   });
-
-  if (!query) {
-    return (
-      <div className="h-full w-full flex-row items-center justify-center border border-gray-300">
-        <p>create new query!</p>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full w-full">
       {/* HEADER */}
-      <div className="flex h-10 flex-row items-center justify-end gap-5 border border-gray-300">
-        <Input defaultValue={query.name} />
-        <Button className="mr-auto" onClick={() => rjsfRef.current?.submit()}>
+      <div className="flex h-10 flex-row items-center justify-end gap-5 border-b border-gray-300">
+        {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
+        <Input defaultValue={query.id} />
+        <Button
+          variant={'ghost'}
+          type="button"
+          className="mr-auto"
+          onClick={() => rjsfRef.current?.submit()}
+        >
           {isSubmitting ? (
             <>
-              Saving... <SaveIcon />{' '}
+              <SaveIcon /> Saving...
             </>
           ) : (
             <>
-              Save <SaveIcon />
+              <SaveIcon /> Save
             </>
           )}
         </Button>
         <Button
+          variant={'ghost'}
+          disabled={isRunPending}
           onClick={() => {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            // TODO: the evaluatedConfige should be eval(query.query, context)
-            const evaluatedConfig = query.query;
+            const evaluatedConfig = query.config;
+
+            query.setQueryState('loading');
             run({
               workspaceId: +workspaceId,
               appId: +appId,
@@ -94,70 +154,98 @@ function QueryItem({ query }: { query?: CompeleteQueryI }) {
             });
           }}
         >
-          run
+          <Play /> run
         </Button>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
-        <RJSFShadcn
-          ref={rjsfRef}
-          // formContext={{ isSubmitting: isSubmitting }}
-          schema={query.dataSource.dataSource.queryConfig.schema}
-          uiSchema={query.dataSource.dataSource.queryConfig.uiSchema}
-          formData={query.query}
-          validator={validator}
-          onSubmit={({ formData }) => {
-            if (!workspaceId || !appId)
-              throw new Error(
-                "that's weird this function should run under workspaceId, appId",
-              );
-            updateMutation({
-              workspaceId: +workspaceId,
-              appId: +appId,
-              queryId: query.id,
-              dto: {
-                query: formData,
-              },
-            });
-          }}
-        >
-          {/*to remove submit button*/}
-          <></>
-        </RJSFShadcn>
+      <ScrollArea className=" h-[calc(100%-3rem)] w-full">
+        <div className="flex flex-col gap-4 p-4">
+          <Label className="flex items-center gap-4">
+            Data Source
+            <Select
+              value={curDataSource}
+              onValueChange={(e) => {
+                setCurDataSource(e);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={query?.dataSource.name} />
+              </SelectTrigger>
+              <SelectContent>
+                {dataSources
+                  ?.filter(
+                    (dataSource) =>
+                      dataSource.dataSource.name ===
+                      query.dataSource.dataSource.name,
+                  )
+                  .map((dataSource) => (
+                    <SelectItem
+                      key={dataSource.name}
+                      value={dataSource.id.toString()}
+                    >
+                      {dataSource.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </Label>
+          <EntityForm
+            ref={rjsfRef}
+            entityId={query.id}
+            onSubmit={({ formData }) => {
+              if (!workspaceId || !appId)
+                throw new Error(
+                  "that's weird this function should run under workspaceId, appId",
+                );
+
+              updateMutation({
+                workspaceId: +workspaceId,
+                appId: +appId,
+                queryId: query.id,
+                dto: {
+                  query: formData,
+                  dataSourceId: +curDataSource,
+                },
+              });
+            }}
+          />
+          <QueryPreview
+            ref={jsonResultRef}
+            key={query.id + 'preview'}
+            queryValues={query.rawValues as QueryRawValues}
+          />
+        </div>
       </ScrollArea>
     </div>
   );
-}
+});
 
-export function QueryPanel() {
-  const [querieNumber, setQueryNumber] = useState(0);
+export const QueryPanel = observer(function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState('all');
   const [sortingCriteria, setSortingCriteria] = useState<
-    'name' | 'source' | 'dateModified'
-  >('name');
+    'id' | 'source' | 'dateModified'
+  >('id');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId, appId } = useParams();
 
   const { data: dataSources } = api.dataSources.index.useQuery(
     +(workspaceId as string),
   );
-  const { data: queries, refetch: refetchQueries } = api.queries.index.useQuery(
-    +(workspaceId as string),
-    +(appId as string),
-  );
+  const queries = editorStore.queries;
   const { mutate: addMutation } = api.queries.insert.useMutation({
-    onSuccess: () => {
-      refetchQueries();
+    onSuccess: (data) => {
+      editorStore.addQuery(data);
     },
   });
   const { mutate: deleteMutation } = api.queries.delete.useMutation({
-    onSuccess: () => {
-      refetchQueries();
+    onSuccess: ({ id }) => {
+      setSelectedItemId(null);
+      editorStore.removeQuery(id);
     },
   });
 
@@ -165,33 +253,10 @@ export function QueryPanel() {
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
   );
 
-  // const renameItem = (item: QueryI, e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const newName = e.target.value;
-  //   updateMutation({
-  //     workspaceId,
-  //     appId,
-  //     queryId: item.dataSource.id,
-  //     id: item.id,
-  //     data: { name: newName, query: item.query },
-  //   });
-  // };
-
-  // const duplicateItem = (item: Query) => {
-  //   if (item) {
-  //     const newItem = {
-  //       name: `Copy of ${item.name}`,
-  //       query: item.query,
-  //     };
-  //     addMutation({
-  //       workspaceId,
-  //       appId,
-  //       dataSourceId: item.dataSource.id,
-  //       query: newItem,
-  //     });
-  //   }
-  // };
-
-  const handleItemClick = (itemId: number) => {
+  /**
+   * toggle the selection
+   */
+  const handleItemClick = (itemId: string) => {
     setSelectedItemId((prevSelectedItemId) =>
       prevSelectedItemId === itemId ? null : itemId,
     );
@@ -199,13 +264,13 @@ export function QueryPanel() {
 
   const sortQueries = useCallback(
     (
-      queries: CompeleteQueryI[],
-      sortingCriteria: 'name' | 'dateModified' | 'source',
+      queries: WebloomQuery[],
+      sortingCriteria: 'id' | 'dateModified' | 'source',
       sortingOrder: 'asc' | 'desc' | null,
     ) => {
       const sortedData = [...queries];
 
-      if (sortingCriteria === 'name') {
+      if (sortingCriteria === 'id') {
         sortedData.sort((a, b) => {
           const aValue = a[sortingCriteria].toLowerCase();
           const bValue = b[sortingCriteria].toLowerCase();
@@ -222,6 +287,7 @@ export function QueryPanel() {
             : bValue.localeCompare(aValue);
         });
       }
+      // TODO:
       //  else if (sortingCriteria === 'dateModified') {
       //   sortedData.sort((a, b) => {
       //     const aValue = a.dateModified.getTime();
@@ -244,29 +310,33 @@ export function QueryPanel() {
     }
   }, [dataSources, dataSourceSearch]);
 
-  const filtredQueries = useMemo(() => {
-    if (queries) {
-      const temp = sortQueries(queries, sortingCriteria, sortingOrder).filter(
-        (item) => {
-          if (
-            selectedSource === 'all' ||
-            item.dataSource.dataSource.type === selectedSource
-          ) {
-            return item;
-          }
-        },
-      );
-      const res = matchSorter(temp, querySearch, {
-        keys: ['name', 'type'],
-      });
-      if (res.length > 0) {
-        setSelectedItemId(res[0].id);
+  // check https://github.com/mobxjs/mobx/discussions/3348
+  const filteredQueries = useMemo(() => {
+    return computed(() => {
+      const tempQ = Object.values(queries);
+      if (tempQ.length > 0) {
+        const temp = sortQueries(tempQ, sortingCriteria, sortingOrder).filter(
+          (item) => {
+            if (
+              selectedSource === 'all' ||
+              item.dataSource.dataSource.type === selectedSource
+            ) {
+              return item;
+            }
+          },
+        );
+        const res = matchSorter(temp, querySearch, {
+          keys: ['id'],
+        });
+        if (res.length > 0) {
+          setSelectedItemId(res[0].id);
+        }
+        return res;
+      } else {
+        setSelectedItemId(null);
+        return [];
       }
-      return res;
-    } else {
-      setSelectedItemId(null);
-      return [];
-    }
+    });
   }, [
     queries,
     selectedSource,
@@ -274,7 +344,7 @@ export function QueryPanel() {
     sortingOrder,
     sortingCriteria,
     sortQueries,
-  ]);
+  ]).get();
 
   return (
     <div className="flex h-full w-full border border-gray-300">
@@ -322,7 +392,7 @@ export function QueryPanel() {
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    setSortingCriteria('name');
+                    setSortingCriteria('id');
                     setSortingOrder('asc');
                   }}
                 >
@@ -331,7 +401,7 @@ export function QueryPanel() {
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    setSortingCriteria('name');
+                    setSortingCriteria('id');
                     setSortingOrder('desc');
                   }}
                 >
@@ -374,18 +444,17 @@ export function QueryPanel() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {filteredDatasources.map((item) => (
+                // ADD NEW QUERY
                 <DropdownMenuItem
                   key={item.dataSource.type}
                   onClick={() => {
-                    // TODO: change to use same logic as widgets in main
-                    setQueryNumber(querieNumber + 1);
                     if (!workspaceId || !appId) throw new Error();
                     addMutation({
                       workspaceId: +workspaceId,
                       appId: +appId,
                       dto: {
                         dataSourceId: item.id,
-                        name: item.name + querieNumber,
+                        id: getNewEntityName(item.name),
                         query: {},
                       },
                     });
@@ -424,18 +493,20 @@ export function QueryPanel() {
                 </Button>
               </div>
             )}
-            {filtredQueries?.map((item) => (
+            {filteredQueries?.map((item) => (
               <li className="flex w-full " key={item.id}>
                 {editingItemId === item.id ? (
                   <Input
                     type="text"
-                    value={item.name}
+                    value={item.id}
+                    // TODO: enable rename
                     // onChange={(e) => renameItem(item, e)}
                     autoFocus
                     onBlur={() => setEditingItemId(null)}
                   />
                 ) : (
                   <>
+                    {/* TOGGLE ITEM SELECTION */}
                     <Button
                       variant="outline"
                       className={clsx({
@@ -445,7 +516,7 @@ export function QueryPanel() {
                       })}
                       onClick={() => handleItemClick(item.id)}
                     >
-                      {item.name}
+                      {item.id}
                     </Button>
                     <Button
                       size={'icon'}
@@ -454,6 +525,7 @@ export function QueryPanel() {
                     >
                       <Pencil size={16} />
                     </Button>
+                    {/* TODO: enable clone*/}
                     {/* <button onClick={() => duplicateItem(item)}>
                               <Copy size={16} />
                             </button> */}
@@ -480,9 +552,15 @@ export function QueryPanel() {
         </ScrollArea>
       </div>
       {/* ITEM */}
-      <div className="h-full w-full">
-        <QueryItem query={queries?.find((q) => q.id === selectedItemId)} />
+      <div className="h-full w-full border border-gray-300">
+        {selectedItemId ? (
+          <QueryItem query={queries[selectedItemId]} />
+        ) : (
+          <div className="h-full w-full flex-row items-center justify-center ">
+            <p>select or create new query</p>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+});

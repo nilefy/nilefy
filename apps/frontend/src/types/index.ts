@@ -4,7 +4,7 @@ export type Point = { x: number; y: number };
 
 export type WidgetSnapshot = Omit<
   ConstructorParameters<typeof WebloomWidget>[0],
-  'page'
+  'page' | 'evaluationManger' | 'dependencyManager'
 > & {
   pageId: string;
 };

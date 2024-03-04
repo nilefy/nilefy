@@ -26,6 +26,7 @@ export function SignUp() {
     },
   });
   const { mutate, isError, error, isPending } = useSignUp();
+  console.log('DEBUGPRINT[1]: up.tsx:28: isError=', isError, error);
   function onSubmit(values: SignUpSchema) {
     mutate(values);
   }

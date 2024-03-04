@@ -57,7 +57,8 @@ export const jsTemplatePlugin = ViewPlugin.fromClass(
       this.decorations = this.getDeco(view);
     }
     getDeco(view: EditorView) {
-      const templateRegexString = '\\{\\{([^}]+)\\}\\}';
+      // TODO: Why do we need two backslashes before the curly braces?
+      const templateRegexString = '\\{\\{([\\s\\S]*?)\\}\\}';
       const { state } = view;
       const decos = [];
       for (const part of view.visibleRanges) {

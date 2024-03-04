@@ -1,30 +1,60 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
-import { MousePointerSquare } from 'lucide-react';
+import { Loader2, MousePointerSquare } from 'lucide-react';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
+// import z from 'zod';
+// import zodToJsonSchema from 'zod-to-json-schema';
+import { ToolTipWrapper } from '../tooltipWrapper';
+import {
+  EventTypes,
+  WidgetsEventHandler,
+  genEventHandlerUiSchema,
+  // widgetsEventHandler,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
+
+// export const webloomButtonProps = z.object({
+//   text: z.string(),
+//   events: widgetsEventHandler,
+//   tooltip: z.string().optional(),
+//   isLoading: z.boolean().default(false),
+//   isDisabled: z.boolean().default(false),
+// });
+
 export type WebloomButtonProps = {
   text: string;
-  color: string;
-  event: string;
+  events: WidgetsEventHandler;
+  tooltip: string;
+  isLoading: boolean;
+  isDisabled: boolean;
+  variant: ButtonProps['variant'];
 };
-const WebloomButton = observer(() => {
+
+const WebloomButton = observer(function WebloomButton() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .values as WebloomButtonProps;
+    .finalValues as WebloomButtonProps;
   return (
-    <Button
-      {...props}
-      className={`block h-full w-full active:bg-primary/20`}
-      style={{ backgroundColor: props.color }}
-    >
-      {props.text}
-    </Button>
+    <ToolTipWrapper text={props.tooltip}>
+      <Button
+        variant={props.variant}
+        disabled={props.isLoading || props.isDisabled}
+        className={`h-full w-full active:bg-primary/20`}
+        onClick={() => editorStore.executeActions(id, 'click')}
+      >
+        {props.isLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : null}
+        {props.text}
+      </Button>
+    </ToolTipWrapper>
   );
 });
+
 const config: WidgetConfig = {
   name: 'Button',
   icon: <MousePointerSquare />,
@@ -38,61 +68,81 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
+const webloomButtonEvents: EventTypes = {
+  click: 'Click',
+  hover: 'Hover',
+};
+
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
-  color: 'black',
-  event: 'onclick',
+  events: [],
+  variant: 'default',
+  isLoading: false,
+  isDisabled: false,
+  tooltip: '',
 };
-const widgetName = 'WebloomButton';
 
-const inspectorConfig: WidgetInspectorConfig<WebloomButtonProps> = [
-  {
-    sectionName: 'General',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'text',
-        label: 'Text',
-        type: 'inlineCodeInput',
-        options: {
-          placeholder: 'Enter text',
-          label: 'Text',
-        },
+const schema: WidgetInspectorConfig = {
+  dataSchema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
       },
-    ],
-  },
-  {
-    sectionName: 'Interactions',
-    children: [
-      {
-        id: `${widgetName}-text`,
-        key: 'event',
-        label: 'Event',
-        type: 'event',
-        options: {},
+      tooltip: { type: 'string', default: '' },
+      isLoading: { type: 'boolean', default: false },
+      isDisabled: { type: 'boolean', default: false },
+      variant: {
+        type: 'string',
+        enum: [
+          'default',
+          'destructive',
+          'outline',
+          'secondary',
+          'ghost',
+          'link',
+        ],
+        default: defaultProps.variant,
       },
-    ],
+      events: widgetsEventHandlerJsonSchema,
+    },
+    required: ['events', 'text'],
   },
-  {
-    sectionName: 'Color',
-    children: [
-      {
-        id: `${widgetName}-color`,
-        key: 'color',
-        label: 'Color',
-        type: 'color',
-        options: {
-          color: '#fff',
-        },
-      },
-    ],
+  uiSchema: {
+    text: {
+      'ui:label': 'Text',
+      'ui:widget': 'inlineCodeInput',
+      'ui:placeholder': 'Enter text',
+    },
+    color: {
+      'ui:widget': 'colorPicker',
+    },
+    isLoading: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:placeholder': '{{false}}',
+    },
+    isDisabled: {
+      'ui:widget': 'inlineCodeInput',
+      'ui:placeholder': '{{false}}',
+    },
+    tooltip: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    events: genEventHandlerUiSchema(webloomButtonEvents),
   },
-];
+};
+
 export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   component: WebloomButton,
   config,
   defaultProps,
-  inspectorConfig,
+  schema,
+  setters: {
+    setText: {
+      path: 'text',
+      type: 'string',
+    },
+  },
 };
 
 export { WebloomButton };

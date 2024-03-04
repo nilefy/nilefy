@@ -1,14 +1,13 @@
-import { FocusEvent } from 'react';
 import {
   ariaDescribedByIds,
   EnumOptionsType,
   enumOptionsIndexForValue,
   enumOptionsValueForIndex,
-  labelValue,
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,
   WidgetProps,
+  labelValue,
 } from '@rjsf/utils';
 
 import {
@@ -19,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '../ui/label';
+import { FormItem } from '../ui/form';
 
 export default function SelectWidget<
   T = any,
@@ -67,20 +67,20 @@ export default function SelectWidget<
   };
 
   return (
-    <div>
-      {/* {labelValue( */}
-      {/*   <Label htmlFor={id} id={`${id}-label`}> */}
-      {/*     {label} */}
-      {/*   </Label>, */}
-      {/*   hideLabel || !label, */}
-      {/* )} */}
+    <FormItem>
+      {labelValue(
+        <Label htmlFor={id} id={`${id}-label`}>
+          {label}
+        </Label>,
+        hideLabel || !label,
+      )}
       <Select
         disabled={disabled || readonly}
         required={required}
         name={id}
         aria-describedby={ariaDescribedByIds<T>(id)}
         onValueChange={_onChange}
-        defaultValue={String(value)}
+        value={formValue.selectedIndex?.toString()}
       >
         <SelectTrigger className="w-full">
           <SelectValue
@@ -103,6 +103,6 @@ export default function SelectWidget<
           })}
         </SelectContent>
       </Select>
-    </div>
+    </FormItem>
   );
 }

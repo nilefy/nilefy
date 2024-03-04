@@ -1,24 +1,59 @@
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { WebloomWidget } from './Models/widget';
+let entityOrder: Record<string, Set<number>> = {};
 
-let widgetNames: Record<
-  (typeof WebloomWidgets)[WidgetTypes]['config']['name'],
-  number
-> = {};
-
-export function getNewWidgetName(type: WidgetTypes): string {
-  const name = WebloomWidgets[type].config.name;
-  widgetNames[name] = (widgetNames[name] ?? 0) + 1;
-  return `${name}${widgetNames[name]}`;
+export function getNewEntityName(type: string): string {
+  if (!entityOrder[type]) {
+    entityOrder[type] = new Set();
+  }
+  const order =
+    (entityOrder[type].size ? Math.max(...entityOrder[type]) : 0) + 1;
+  entityOrder[type].add(order);
+  return `${type}${order}`;
 }
 
 /**
  * init map when start a new app, from old existing data
  */
-export function seedNameMap(nodes: WebloomWidget['snapshot'][]) {
-  widgetNames = {};
-  nodes.forEach(({ type }) => {
-    const name = WebloomWidgets[type].config.name;
-    widgetNames[name] = (widgetNames[name] ?? 0) + 1;
+export function seedOrderMap(entities: { type: string; name: string }[]) {
+  entityOrder = {};
+  entities.forEach(({ type, name }) => {
+    const nameRe = new RegExp(`${type}\\d+`);
+    let order = 0;
+    if (nameRe.test(name)) {
+      let pos = type.length;
+      while (pos < name.length) {
+        order *= 10;
+        order += +name[pos++];
+      }
+    }
+    if (!entityOrder[type]) {
+      entityOrder[type] = new Set();
+    }
+    entityOrder[type].add(order);
+  });
+}
+
+export function updateOrderMap(
+  entities: { type: string; name: string }[],
+  deleted: boolean,
+) {
+  entities.forEach(({ type, name }) => {
+    const nameRe = new RegExp(`${type}\\d+`);
+
+    if (!nameRe.test(name)) return;
+
+    let order = 0;
+    if (nameRe.test(name)) {
+      let pos = type.length;
+      while (pos < name.length) {
+        order *= 10;
+        order += +name[pos++];
+      }
+    }
+
+    if (deleted) {
+      entityOrder[type].delete(order);
+    } else {
+      entityOrder[type].add(order);
+    }
   });
 }

@@ -1,5 +1,6 @@
 import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
+import { EntitySchema } from './Models/entity';
 
 type BaseControlProps = {
   /**
@@ -7,8 +8,6 @@ type BaseControlProps = {
    */
   id: string;
   label: string;
-  defaultValue?: string | number | boolean;
-  value?: string | number | boolean;
 };
 
 // each widget props
@@ -34,6 +33,9 @@ type InspectorListProps = {
 type InspectorCheckboxProps = {
   //  label: string;
 };
+type InspectorDatePickerProps = {
+  date: Date;
+};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -50,22 +52,27 @@ type FormControlOptions = {
   heightMode: {
     label: string;
   };
+  datePicker: InspectorDatePickerProps;
 };
 
+type WidgetInspectorConfig = EntitySchema;
+
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-type WidgetInspectorConfig<TProps> = {
-  sectionName: string;
-  children: MappedTypeToArray<{
-    [key in keyof TProps]: {
-      [key2 in InspectorFormControls]: {
-        type: key2;
-        key: key;
-        options: FormControlOptions[key2];
-        label: string;
-      } & BaseControlProps;
-    }[InspectorFormControls];
-  }>;
-}[];
+// type WidgetInspectorConfig<TProps> = {
+//   sectionName: string;
+//   hidden?: (props: TProps) => boolean;
+//   children: MappedTypeToArray<{
+//     [key in keyof Omit<TProps, 'value'>]: {
+//       [key2 in InspectorFormControls]: {
+//         type: key2;
+//         key: key;
+//         options: Omit<FormControlOptions[key2], 'value'>;
+//         hidden?: (props: key) => boolean;
+//         label: string;
+//       } & BaseControlProps;
+//     }[InspectorFormControls];
+//   }>;
+// }[];
 
 type InspectorFormControls = keyof FormControlOptions;
 
@@ -136,26 +143,39 @@ export interface WidgetConfig {
  * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
  */
 export type EntityDependancy = Record<string, Record<string, Set<string>>>;
-// export type WebloomNode = {
-//   id: string;
-//
-//   dom: HTMLElement | null;
-//   nodes: string[];
-//   parent: string;
-//   isCanvas?: boolean;
-//   props: Record<string, unknown>;
-//   dynamicProps: Record<string, unknown>;
-//   dependants: EntityDependancy;
-//   dependancies: EntityDependancy;
-//   toBeEvaluatedProps: Set<string>;
-//   type: WidgetTypes;
-// } & WebloomGridDimensions;
+
+/**
+ * the setters for those paths will be automatically genertaed and put on the execution context when needed
+ * @example
+ * setVisibility: {
+          path: "isVisible",
+          type: "string",
+        },
+ */
+type WidgetSetters<Props> = {
+  [
+    /**
+     * setter key
+     */
+    k: string
+  ]: {
+    /**
+     * use lodash path syntax
+     */
+    path: keyof Props;
+    /**
+     * only used for type completation WON'T BE VALIDATED
+     */
+    type: string;
+  };
+};
 
 export type Widget<WidgetProps> = {
   component: React.ElementType;
   config: WidgetConfig;
   defaultProps: WidgetProps;
-  inspectorConfig: WidgetInspectorConfig<WidgetProps>;
+  schema: WidgetInspectorConfig;
+  setters?: WidgetSetters<WidgetProps>;
 };
 
 // inspector types

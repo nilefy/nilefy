@@ -1,5 +1,6 @@
 import { Point } from '@/types';
 import { editorStore } from './Models';
+import { isPlainObject } from 'lodash';
 import {
   BoundingRect,
   WebloomGridDimensions,
@@ -188,3 +189,6 @@ export const getMousePositionRelativeToBoundingRect = (
     y: clientOffset.y - boundingRect.top,
   };
 };
+export function isObject(val: unknown): val is Record<string, unknown> {
+  return isPlainObject(val);
+}

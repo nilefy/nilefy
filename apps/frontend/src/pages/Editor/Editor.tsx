@@ -10,7 +10,6 @@ import { WebloomElementShadow, WebloomRoot } from './Components/lib';
 import { commandManager } from '@/Actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { EditorLeftSidebar } from './editorLeftSideBar';
-import { QueryPanel } from '@/components/queryPanel';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
@@ -20,6 +19,7 @@ import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
 import { useInitResizing, useMousePosition } from '@/lib/Editor/hooks';
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
+import { QueryPanel } from './Components/queryPanel';
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);

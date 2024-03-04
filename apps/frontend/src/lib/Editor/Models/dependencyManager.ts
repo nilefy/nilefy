@@ -1,8 +1,16 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import {
+  observable,
+  makeObservable,
+  action,
+  computed,
+  autorun,
+  toJS,
+} from 'mobx';
 import invariant from 'invariant';
-import { hasCyclicDependencies } from '../dependancyUtils';
-import { WebloomPage } from './page';
-import { has } from 'lodash';
+import { analyzeDependancies, hasCyclicDependencies } from '../dependancyUtils';
+import { forEach, has } from 'lodash';
+import { EditorState } from './editor';
+
 // please note that path is something like "a.b.c"
 type Path = string;
 type EntityId = string;
@@ -24,40 +32,34 @@ export type DependencyRelation = {
 export class DependencyManager {
   codeEntites: Set<EntityId> = new Set();
   dependencies: DependencyMap = new Map();
-  page: WebloomPage;
-  constructor({
-    relations,
-    page,
-  }: {
-    relations?: Array<DependencyRelation>;
-    page: WebloomPage;
-  }) {
-    this.page = page;
-    if (relations) {
-      for (const relation of relations) {
-        this.addDependency(relation);
-      }
-    }
+  editor: EditorState;
+  constructor({ editor }: { editor: EditorState }) {
+    this.editor = editor;
+
     makeObservable(this, {
       dependencies: observable,
       addDependency: action,
-      addDependencies: action,
-      removeDependency: action,
       removeRelationshipsForEntity: action,
       // inverseDependencies: computed, // we don't need this for now
       graph: computed,
-      page: observable,
+      editor: observable,
+      initAnalysis: action,
+    });
+    autorun(() => {
+      console.log('dependencies', toJS(this.dependencies));
     });
   }
-
-  /**
-   * Add multiple dependencies (doesn't overwrite so don't use it unless initialising)
-   */
-  addDependencies(relations: Array<DependencyRelation>): void {
-    for (const relation of relations) {
-      this.addDependency(relation);
-    }
+  initAnalysis() {
+    forEach(this.editor.entities, (entity) => {
+      entity.initDependecies();
+    });
   }
+  analyzeDependencies(
+    args: Omit<Parameters<typeof analyzeDependancies>[0], 'keys'>,
+  ) {
+    return analyzeDependancies({ ...args, keys: this.editor.context });
+  }
+
   /**
    * Add multiple dependencies for a single entity, (overwrites existing dependencies)
    * @param relations the dependent entity id in all relations must be the same and match caller or it will throw
@@ -77,14 +79,38 @@ export class DependencyManager {
       this.addDependency(relation);
     }
   }
+  /**
+   *
+   * @description overwrites for a particular toProperty inside a particular entity
+   */
+  addDepenciesForProperty({
+    dependencies,
+    toProperty,
+    entityId,
+  }: Omit<ReturnType<typeof analyzeDependancies>, 'isCode'> & {
+    entityId: string;
+  }) {
+    const dependentId = entityId;
+    if (!this.dependencies.has(dependentId)) {
+      this.dependencies.set(dependentId, new Map());
+    }
+    for (const item of this.dependencies.get(dependentId)!) {
+      const [, relation] = item;
+      relation.delete(toProperty);
+    }
+    for (const relation of dependencies) {
+      this.addDependency(relation);
+    }
+  }
+
   addDependency(relationship: DependencyRelation): void {
     const { dependent, dependency } = relationship;
     const dependentPath = dependent.path;
     const dependencyPath = dependency.path;
     const dependentId = dependent.entityId;
     const dependencyId = dependency.entityId;
-    const dependencyEntity = this.page.getEntityById(dependencyId);
-    const dependentEntity = this.page.getEntityById(dependentId);
+    const dependencyEntity = this.editor.getEntityById(dependencyId);
+    const dependentEntity = this.editor.getEntityById(dependentId);
     invariant(
       dependentEntity,
       `dependent entity "${dependentId}" not found while adding dependency "${dependentId}" -> "${dependencyId}" on path "${dependentPath}"`,
@@ -128,35 +154,7 @@ export class DependencyManager {
   getDirectDependencies(entityId: EntityId) {
     return this.dependencies.get(entityId) || null;
   }
-  removeDependency(relationship: DependencyRelation): void {
-    const { dependent, dependency } = relationship;
-    const dependentPath = dependent.path;
-    const dependencyPath = dependency.path;
-    const dependentId = dependent.entityId;
-    const dependencyId = dependency.entityId;
-    if (!this.dependencies.has(dependentId)) {
-      return;
-    }
-    const dependentMap = this.dependencies.get(dependentId)!;
-    if (!dependentMap.has(dependencyId)) {
-      return;
-    }
-    const dependencyMap = dependentMap.get(dependencyId)!;
-    if (!dependencyMap.has(dependentPath)) {
-      return;
-    }
-    const dependencyPathSet = dependencyMap.get(dependentPath)!;
-    dependencyPathSet.delete(dependencyPath);
-    if (dependencyPathSet.size === 0) {
-      dependencyMap.delete(dependentPath);
-    }
-    if (dependencyMap.size === 0) {
-      dependentMap.delete(dependencyId);
-    }
-    if (dependentMap.size === 0) {
-      this.dependencies.delete(dependentId);
-    }
-  }
+
   removeRelationshipsForEntity(entityId: EntityId) {
     this.dependencies.delete(entityId);
     for (const item of this.dependencies.entries()) {
@@ -196,6 +194,7 @@ export class DependencyManager {
           dependencyPathSet,
         ] of dependentMap.entries()) {
           for (const dependencyPath of dependencyPathSet) {
+            console.log('here');
             graph.push([
               dependent + '.' + dependentPath,
               dependency + '.' + dependencyPath,

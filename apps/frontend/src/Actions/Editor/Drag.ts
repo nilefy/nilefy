@@ -3,11 +3,11 @@ import { RemoteTypes, UndoableCommand, UpdateNodesPayload } from '../types';
 
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { DraggedItem } from '@/lib/Editor/dnd/interface';
-import { getNewWidgetName } from '@/lib/Editor/widgetName';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { runInAction } from 'mobx';
+import { getNewEntityName } from '@/lib/Editor/widgetName';
 
 export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
@@ -38,7 +38,7 @@ class DragAction implements UndoableCommand {
       ).parent.id;
       this.id = options.draggedItem.id;
     } else {
-      this.id = getNewWidgetName(options.draggedItem.type);
+      this.id = getNewEntityName(options.draggedItem.type);
       this.newType = options.draggedItem.type;
     }
   }
