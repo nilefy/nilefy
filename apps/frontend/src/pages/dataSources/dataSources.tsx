@@ -189,7 +189,7 @@ function DataSourcesView() {
                 key={ds.id}
                 className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
               >
-                <CardHeader className="flex flex-col items-center justify-center gap-4">
+                <CardHeader className="flex flex-col items-center justify-center gap-4 font-bold">
                   <Avatar>
                     <AvatarImage src={ds.image ?? undefined} />
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
@@ -198,7 +198,7 @@ function DataSourcesView() {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="line-clamp-1">{ds.description}</p>
+                  <p className="text-center">{ds.description}</p>
                 </CardContent>
 
                 <CardFooter className="mt-auto flex justify-end gap-5">
@@ -347,7 +347,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col">
       <h2 className="ml-2 text-3xl">Data Sources</h2>
       {/** plugins filter*/}
       <ScrollArea className="h-full">
