@@ -1,3 +1,4 @@
+import { ForgotPasswordSchema } from '@/types/auth.types';
 import { fetchX } from '@/utils/fetch';
 import * as z from 'zod';
 
@@ -49,7 +50,10 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
   return data;
 };
 
-export const forgotPassword = async (email: string): Promise<void> => {
+export const forgotPassword = async (
+  values: ForgotPasswordSchema,
+): Promise<void> => {
+  const { email } = values;
   const response = await fetchX('auth/forgot-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -134,6 +134,15 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
+    path: 'auth/reset-password',
+    element: (
+      <NonAuthRoute>
+        <ForgotPassword />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
     path: '/need_help_in',
     element: (
       <NonAuthRoute>
