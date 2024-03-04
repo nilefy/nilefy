@@ -183,7 +183,7 @@ export function GlobalDataSourcesResolved() {
   }, [searchParams, data]);
 
   return (
-    <div className="flex h-full w-full flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 ">
+    <div className="flex h-full w-full flex-col gap-6  p-4 ">
       <DebouncedInput
         className="w-full"
         value={searchParams.get('gsearch') ?? ''}
@@ -462,13 +462,13 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full flex-col gap-4 bg-primary/10 p-4 md:w-[25%] lg:w-[15%] lg:min-w-[15%]  lg:max-w-[15%]">
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,
         }}
       >
-        <h1 className="text-3xl">Data Sources</h1>
+        <h2 className="ml-2 text-3xl">Data Sources</h2>
       </Link>
       {/** plugins filter*/}
       {/* <div className="flex h-fit flex-col gap-3"> */}
@@ -491,7 +491,7 @@ function DataSourcesSidebar() {
       {/*     })} */}
       {/*   </div> */}
       {/* </div> */}
-      <Separator />
+      {/* <Separator /> */}
       {/** configured plugins*/}
       {/* <h4>plugins</h4> */}
       <WorkspaceDataSourcesView />
