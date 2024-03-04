@@ -29,6 +29,7 @@ import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { startWorker } from '../mocks/browser';
 import { ForgotPassword } from './pages/auth/forgot_password';
 import { NeedHelpSigningIn } from './pages/auth/need_help_in';
+import { ResetPassword } from './pages/auth/reset_password';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,10 +135,10 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: 'auth/reset-password',
+    path: 'auth/reset-password/:email/:token',
     element: (
       <NonAuthRoute>
-        <ForgotPassword />
+        <ResetPassword />
       </NonAuthRoute>
     ),
     errorElement: <ErrorPage />,

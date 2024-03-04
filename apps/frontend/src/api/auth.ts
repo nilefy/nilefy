@@ -1,4 +1,4 @@
-import { ForgotPasswordSchema } from '@/types/auth.types';
+import { ForgotPasswordSchema, ResetPasswordSchema } from '@/types/auth.types';
 import { fetchX } from '@/utils/fetch';
 import * as z from 'zod';
 
@@ -58,6 +58,17 @@ export const forgotPassword = async (
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
+  });
+  return response.json();
+};
+
+export const resetPassword = async (
+  values: ResetPasswordSchema,
+): Promise<void> => {
+  const response = await fetchX('auth/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(values),
   });
   return response.json();
 };

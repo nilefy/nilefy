@@ -9,8 +9,12 @@ export const signInSchema = z.object({
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().email(),
+});
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
 export type JwtPayload = {
   exp: number;
   iat: number;
