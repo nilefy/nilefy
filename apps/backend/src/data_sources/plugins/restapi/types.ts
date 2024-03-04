@@ -52,7 +52,84 @@ export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
 
 export const pluginConfigForm = {
-  schema: zodToJsonSchema(configSchema, 'configSchema'),
+  schema: {
+    type: 'object',
+    properties: {
+      base_url: {
+        type: 'string',
+        format: 'uri',
+      },
+      auth: {
+        type: 'object',
+        properties: {
+          auth_type: {
+            type: 'string',
+            enum: ['none', 'basic', 'bearer'],
+            default: 'none',
+          },
+        },
+        required: ['auth_type'],
+        dependencies: {
+          auth_type: {
+            oneOf: [
+              {
+                properties: {
+                  auth_type: {
+                    enum: ['none'],
+                  },
+                },
+              },
+              {
+                properties: {
+                  auth_type: {
+                    enum: ['basic'],
+                  },
+                  username: {
+                    type: 'string',
+                  },
+                  password: {
+                    type: 'string',
+                  },
+                },
+                required: ['username', 'password'],
+              },
+              {
+                properties: {
+                  auth_type: {
+                    enum: ['bearer'],
+                  },
+                  bearer_token: {
+                    type: 'string',
+                  },
+                },
+                required: ['bearer_token'],
+              },
+            ],
+          },
+        },
+      },
+      headers: {
+        type: 'array',
+        items: {
+          type: 'array',
+          minItems: 2,
+          maxItems: 2,
+          items: [
+            {
+              type: 'string',
+              description: 'Key',
+            },
+            {
+              type: 'string',
+              description: 'Value',
+            },
+          ],
+        },
+      },
+    },
+    required: ['base_url', 'auth', 'headers'],
+    additionalProperties: false,
+  },
   uiSchema: {
     base_url: {
       'ui:placeholder': 'https://restapi/',
@@ -60,12 +137,15 @@ export const pluginConfigForm = {
     },
     auth: {
       'ui:title': 'Auth',
-    },
-    auth_type: {
-      'ui:widget': 'select',
+      password: {
+        'ui:widget': 'password',
+      },
     },
     headers: {
       'ui:title': 'Headers',
+      'ui:options': {
+        orderable: false,
+      },
     },
   },
 };
@@ -83,6 +163,9 @@ export const queryConfigForm = {
     },
     headers: {
       'ui:title': 'Headers',
+      'ui:options': {
+        orderable: false,
+      },
     },
     params: {
       'ui:title': 'Params',

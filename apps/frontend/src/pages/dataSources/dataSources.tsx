@@ -379,12 +379,13 @@ export function DataSourceView() {
   }
 
   return (
-    <div key={data.id} className="flex w-full flex-col gap-5 p-4">
+    <div key={data.id} className="flex h-full w-full flex-col gap-5 p-4">
       <div className="flex flex-col gap-2">
         <Label>Data Source Name</Label>
         <Input defaultValue={data.name} ref={nameRef} />
+        <Separator />
       </div>
-      <ScrollArea className="h-full w-full ">
+      <ScrollArea className="h-full w-full">
         <RJSFShadcn
           ref={rjsfRef}
           schema={data.dataSource.config.schema}
