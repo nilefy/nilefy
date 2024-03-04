@@ -1,4 +1,3 @@
-
 const EDITOR_CONSTANTS = {
   GRID_CELL_SIDE: 20,
   NUMBER_OF_COLUMNS: 32,
@@ -12,9 +11,16 @@ const SOCKET_EVENTS = {
   CREATE_NODE: 'createNode',
   NOT_AUTHED: 'notAuthed',  
 } as const;
+const dataSourcesTypes = [
+  'database',
+  'api',
+  'cloud storage',
+  'plugin',
+] as const;
 Object.freeze(EDITOR_CONSTANTS);
 Object.freeze(SOCKET_EVENTS);
 export{
   EDITOR_CONSTANTS,
   SOCKET_EVENTS,
+  dataSourcesTypes,
 }
