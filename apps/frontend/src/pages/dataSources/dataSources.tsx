@@ -1,6 +1,7 @@
 import validator from '@rjsf/validator-ajv8';
 import {
   Await,
+  NavLink,
   Outlet,
   useAsyncValue,
   useLoaderData,
@@ -64,6 +65,8 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import _ from 'lodash';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/cn';
 // import { dataSourcesTypes } from '@webloom/constants';
 
 function CreatePluginForm({
@@ -292,10 +295,16 @@ function WorkspaceDataSourcesView() {
             return (
               <div
                 key={ds.id}
-                className="flex w-full items-center justify-start gap-2"
+                className="flex w-full items-center justify-start"
               >
-                <Link
-                  className="flex w-[90%] items-center gap-4 overflow-hidden"
+                <NavLink
+                  end={true}
+                  className={({ isActive }) => {
+                    return cn(
+                      'flex w-[90%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
+                      isActive ? 'bg-primary/20' : '',
+                    );
+                  }}
                   to={`/${workspaceId}/datasources/${ds.id}`}
                 >
                   <Avatar className="mr-2">
@@ -303,7 +312,7 @@ function WorkspaceDataSourcesView() {
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                   </Avatar>
                   <p className="line-clamp-1">{ds.name}</p>
-                </Link>
+                </NavLink>
                 <AlertDialog>
                   <AlertDialogTrigger
                     className={buttonVariants({
@@ -361,6 +370,7 @@ export function DataSourceView() {
   );
   const { mutate: updateMutate, isPending: isSubmitting } =
     api.dataSources.update.useMutation();
+  const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
     return <WebloomLoader />;
@@ -370,9 +380,9 @@ export function DataSourceView() {
 
   return (
     <div key={data.id} className="flex w-full flex-col gap-5 p-4">
-      <div className="flex gap-5">
-        {/*TODO: enable chaning ds name*/}
-        <Input defaultValue={data.name} />
+      <div className="flex flex-col gap-2">
+        <Label>Data Source Name</Label>
+        <Input defaultValue={data.name} ref={nameRef} />
       </div>
       <ScrollArea className="h-full w-full ">
         <RJSFShadcn
@@ -382,8 +392,7 @@ export function DataSourceView() {
           formData={data.config}
           validator={validator}
           onSubmit={({ formData }) => {
-            console.log('submit', formData);
-            if (!workspaceId || !datasourceId)
+            if (!workspaceId || !datasourceId || !nameRef || !nameRef.current)
               throw new Error(
                 "that's weird this function should run under workspaceId, datasourceId",
               );
@@ -391,6 +400,7 @@ export function DataSourceView() {
               workspaceId: +workspaceId,
               dataSourceId: +datasourceId,
               dto: {
+                name: nameRef.current.value,
                 config: formData,
               },
             });
@@ -414,11 +424,17 @@ export function DataSourceView() {
 }
 
 function DataSourcesSidebar() {
-  // const { workspaceId } = useParams();
+  const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full flex-col gap-4 bg-primary/10 p-4 md:w-[25%] lg:w-[15%]">
-      <h1 className="text-3xl">Data Sources</h1>
+    <div className="flex h-full flex-col gap-4 bg-primary/10 p-4 md:w-[25%] lg:w-[15%] lg:min-w-[15%]  lg:max-w-[15%]">
+      <Link
+        to={{
+          pathname: `/${workspaceId}/datasources`,
+        }}
+      >
+        <h1 className="text-3xl">Data Sources</h1>
+      </Link>
       {/** plugins filter*/}
       {/* <div className="flex h-fit flex-col gap-3"> */}
       {/*   <h2 className="text-xl">Filters</h2> */}
