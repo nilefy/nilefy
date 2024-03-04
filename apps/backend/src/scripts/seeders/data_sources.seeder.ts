@@ -21,9 +21,13 @@ export async function dataSourcesSeeder(db: DatabaseI) {
   const ds: DataSourceT[] = [];
   dataSourcesEnum.options.forEach((type) => {
     dataSources[type].forEach((name) => {
-      let dataSourceConfig; 
+      let dataSourceConfig;
       let queryConfig;
       let image = faker.helpers.arrayElement([faker.image.url(), null]);
+      let description = faker.helpers.arrayElement([
+        faker.commerce.productDescription(),
+        null,
+      ]);
 
       switch (name.toLocaleLowerCase()) {
         case 'postgresql':
@@ -31,6 +35,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = postgresConfigForm;
             queryConfig = postgresQueryConfigForm;
             image = 'https://www.svgrepo.com/show/354200/postgresql.svg';
+            description =
+              'Connect to PostgreSQL databases to read and modify data.';
           }
           break;
         case 'rest api':
@@ -38,6 +44,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = restApiConfigForm;
             queryConfig = restApiQueryConfigForm;
             image = 'https://www.svgrepo.com/show/447473/rest-api.svg';
+            description =
+              'Connect with REST API endpoints and create queries to interact with it.';
           }
           break;
         case 'azure blob storage':
@@ -46,6 +54,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             queryConfig = [];
             image =
               'https://www.svgrepo.com/show/448272/azure-blob-storage.svg';
+            description =
+              'Connect to Azure Blob storage containers to read and manipulate unstructured data.';
           }
           break;
         case 'google cloud storage':
@@ -54,6 +64,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             queryConfig = [];
             image =
               'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
+            description =
+              'Connect to GCS buckets and perform various operations on them.';
           }
           break;
         case 'aws s3':
@@ -61,6 +73,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/353460/aws-s3.svg';
+            description =
+              'Connect to Amazon S3 buckets and perform various operations on them.';
           }
           break;
         case 'slack':
@@ -68,6 +82,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/303151/slack-logo.svg';
+            description = 'Connect to your Slack workspace to send messages.';
           }
           break;
         case 'mongodb':
@@ -75,6 +90,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/373845/mongo.svg';
+            description = 'Connect to MongoDB to read and write data.';
           }
           break;
         case 'mysql':
@@ -82,6 +98,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/354099/mysql.svg';
+            description = 'Connect to MySQL databases to read and write data.';
           }
           break;
         case 'sql server':
@@ -90,6 +107,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             queryConfig = [];
             image =
               'https://www.svgrepo.com/show/303229/microsoft-sql-server-logo.svg';
+            description = 'Connect to SQL Server to read and write data.';
           }
           break;
         case 'bigquery':
@@ -97,6 +115,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/375551/bigquery.svg';
+            description =
+              'Connect to BigQuery databases to run BigQuery queries.';
           }
           break;
         case 'google sheets':
@@ -104,6 +124,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/330570/googlesheets.svg';
+            description = 'Connect with Google Sheet to read and write data.';
           }
           break;
         case 'openapi':
@@ -111,6 +132,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/306505/openapiinitiative.svg';
+            description = 'Generate REST API operations from OpenAPI Specs.';
           }
           break;
         case 'notion':
@@ -118,6 +140,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/452076/notion.svg';
+            description =
+              'Connect to a Notion workspace to do operations on notion pages, databases and blocks.';
           }
           break;
         case 'github':
@@ -139,6 +163,7 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             dataSourceConfig = [];
             queryConfig = [];
             image = 'https://www.svgrepo.com/show/373644/graphql.svg';
+            description = 'Connect with GraphQL endpoints to run queries.';
           }
           break;
         default: {
@@ -150,11 +175,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
       ds.push({
         type,
         name,
-        description: faker.helpers.arrayElement([
-          faker.commerce.productDescription(),
-          null,
-        ]),
         image,
+        description,
         config: dataSourceConfig,
         queryConfig: queryConfig,
       });
