@@ -1,5 +1,11 @@
 import validator from '@rjsf/validator-ajv8';
-import { Outlet, useNavigate } from 'react-router-dom';
+import {
+  Await,
+  Outlet,
+  useAsyncValue,
+  useLoaderData,
+  useNavigate,
+} from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
 import { SaveIcon, Trash } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { Suspense, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
 import { DebouncedInput } from '@/components/debouncedInput';
@@ -34,6 +40,7 @@ import { useForm } from 'react-hook-form';
 import {
   DATASOURCES_QUERY_KEY,
   DataSourceMeta,
+  GlobalDataSourceIndexRet,
   dataSourceMeta,
 } from '@/api/dataSources.api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,7 +64,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import _ from 'lodash';
-import { dataSourcesTypes } from '@webloom/constants';
+// import { dataSourcesTypes } from '@webloom/constants';
 
 function CreatePluginForm({
   workspaceId,
@@ -137,11 +144,24 @@ function CreatePluginForm({
   );
 }
 
+//
+
 export function GlobalDataSourcesView() {
+  const { globalDataSources } = useLoaderData();
+
+  return (
+    <Suspense fallback={<WebloomLoader />}>
+      <Await resolve={globalDataSources}>
+        <GlobalDataSourcesResolved />
+      </Await>
+    </Suspense>
+  );
+}
+
+export function GlobalDataSourcesResolved() {
+  const data = useAsyncValue() as GlobalDataSourceIndexRet;
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isPending, isError, error, data } =
-    api.globalDataSource.index.useQuery();
   const filteredDataSources = useMemo(() => {
     if (!data) {
       return {};
@@ -152,13 +172,6 @@ export function GlobalDataSourcesView() {
     });
     return _.groupBy(tempData, 'type');
   }, [searchParams, data]);
-
-  if (isPending) {
-    // TODO: move inside the template
-    return <WebloomLoader />;
-  } else if (isError) {
-    throw error;
-  }
 
   return (
     <div className="flex h-full w-full flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 ">
@@ -180,9 +193,7 @@ export function GlobalDataSourcesView() {
       />
       {Object.keys(filteredDataSources).length === 0 ? (
         <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-5">
-          <p>
-            No Data Sources match your search query try changing the search{' '}
-          </p>
+          <p>No Data Sources match your search query try changing the search</p>
         </div>
       ) : (
         Object.entries(filteredDataSources).map(([type, dss]) => {
@@ -237,9 +248,9 @@ export function GlobalDataSourcesView() {
 function WorkspaceDataSourcesView() {
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data, isPending, isError, error } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data, isPending, isError, error } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
   const filteredPlugins = useMemo(() => {
     if (!data) {
@@ -251,14 +262,13 @@ function WorkspaceDataSourcesView() {
     });
   }, [searchParams, data]);
 
-  if (isPending) {
-    return <div>Loading...</div>;
-  } else if (isError) {
+  if (isError) {
     throw error;
   }
 
   return (
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
+      {isPending && <WebloomLoader />}
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -353,14 +363,13 @@ export function DataSourceView() {
     api.dataSources.update.useMutation();
 
   if (isPending) {
-    // TODO: make the loader inside the template
     return <WebloomLoader />;
   } else if (isError) {
     throw error;
   }
 
   return (
-    <div className="flex w-full flex-col gap-5 p-4">
+    <div key={data.id} className="flex w-full flex-col gap-5 p-4">
       <div className="flex gap-5">
         {/*TODO: enable chaning ds name*/}
         <Input defaultValue={data.name} />

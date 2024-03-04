@@ -30,6 +30,7 @@ import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { startWorker } from '../mocks/browser';
+import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ const router = createBrowserRouter([
               {
                 index: true,
                 element: <GlobalDataSourcesView />,
+                loader: globalDataSourcesLoader(queryClient),
               },
               {
                 path: ':datasourceId',
