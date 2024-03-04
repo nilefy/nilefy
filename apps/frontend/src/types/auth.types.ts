@@ -6,7 +6,11 @@ export const signInSchema = z.object({
   password: z.string().min(6),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
 export type SignInSchema = z.infer<typeof signInSchema>;
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
 export type JwtPayload = {
   exp: number;
   iat: number;
