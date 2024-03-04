@@ -48,3 +48,12 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
   const data = await response.json();
   return data;
 };
+
+export const forgotPassword = async (email: string): Promise<void> => {
+  const response = await fetchX('auth/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return response.json();
+};
