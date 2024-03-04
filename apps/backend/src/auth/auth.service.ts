@@ -75,7 +75,7 @@ export class AuthService {
       throw new BadRequestException();
     }
   }
-  private async signUpEmail(email: string, username: string, jwt: string) {
+  private async signUpSendEmail(email: string, username: string, jwt: string) {
     const baseUrl: string = this.configService.get('BASE_URL_BE');
 
     const url =
@@ -127,7 +127,7 @@ export class AuthService {
         password: hashed,
         conformationToken,
       });
-      this.signUpEmail(user.email, user.username, conformationToken);
+      this.signUpSendEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
       Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
@@ -200,5 +200,54 @@ export class AuthService {
     } catch {
       throw new BadRequestException('Failed to confirm email');
     }
+  }
+
+  private async forgotPasswordSendEmail(email: string, token: string) {
+    const baseUrl: string = this.configService.get('BASE_URL_FE');
+    const url =
+      baseUrl +
+      'auth' +
+      '/' +
+      'reset-password' +
+      '/' +
+      encodeURIComponent(email) +
+      '/' +
+      encodeURIComponent(token) +
+      '/';
+    const html =
+      `
+    <p>Dear ${email},</p>
+    <p>We received a request to reset your WebLoom password. Please click the following link to reset your password:</p>
+    <a href="` +
+      url +
+      ` ">Reset Password</a>
+    <p>If you did not request a password reset, please disregard this email.</p>
+    <p>Thank you for choosing WebLoom!</p>
+    <p>Best Regards,<br/>
+    The Webloom Team</p>
+  `;
+    await this.emailService.sendEmail({
+      to: email,
+      subject: 'WebLoom - Reset Your Password',
+      html,
+    });
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.userService.findOne(email);
+    if (!user) {
+      throw new NotFoundException('Email Not Found');
+    }
+    const token = await this.jwtService.signAsync(
+      {
+        email: user.email,
+      },
+      { expiresIn: '1d' },
+    );
+    await this.userService.update(user.id, {
+      passwordResetToken: token,
+    });
+
+    this.forgotPasswordSendEmail(email, token);
   }
 }

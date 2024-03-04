@@ -81,4 +81,8 @@ export class AuthController {
     response.redirect(302, frontURL.toString());
     return;
   }
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return await this.authService.forgotPassword(email);
+  }
 }
