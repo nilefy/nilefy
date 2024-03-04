@@ -39,107 +39,121 @@ function snapCenterToCursor({
     height: position.height,
   };
 }
-export const handleDrop = (
-  item: DraggedItem,
-  monitor: DropTargetMonitor<unknown, unknown>,
-) => {
-  const overId = editorStore.currentPage.hoveredWidgetId;
-  if (!overId) return;
-  if (overId === editorStore.currentPage.draggedWidgetId) return;
+export class DndHandlers {
+  private static lastAnimationFrameId: number | null = null;
+  static handleDrop = (
+    item: DraggedItem,
+    monitor: DropTargetMonitor<unknown, unknown>,
+  ) => {
+    const overId = editorStore.currentPage.hoveredWidgetId;
+    if (!overId) return;
+    if (overId === editorStore.currentPage.draggedWidgetId) return;
 
-  if (monitor.didDrop()) return;
-  const droppableId = getFirstDroppableParent(overId);
-  const droppable = editorStore.currentPage.getWidgetById(droppableId);
-  if (!droppable.canvas) return;
-  // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
-  const clientOffset = toJS(editorStore.currentPage.mousePosition);
-  if (!clientOffset) return;
-  const { grid } = getDropPosition(
-    clientOffset,
-    item,
-    [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
-    editorStore.currentPage.rootWidget.selfGridSize,
-    droppable.canvas.getBoundingClientRect(),
-    item.isNew
-      ? undefined
-      : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
-  );
-  const editorRelativeMousePosition =
-    getMousePositionRelativeToEditor(clientOffset);
-  // We need to account for the scroll position of the canvas but also keep in mind that we have already taken the editor's scroll position into account
-  editorRelativeMousePosition.y +=
-    droppable.cumlativScrollTop - editorStore.currentPage.rootWidget.scrollTop;
-  const dimensions = getDropPositionWithCollisions(
-    grid,
-    editorRelativeMousePosition,
-    item.isNew ? getNewWidgetName(item.type) : item.id,
-    overId,
-    droppableId,
-    editorStore.currentPage.draggedWidgetId!,
-    false,
-  );
-  commandManager.executeCommand(
-    new DragAction({
-      draggedItem: item,
-      endPosition: dimensions,
-      parentId: droppableId,
-    }),
-  );
-  editorStore.currentPage.setShadowElement(null);
-};
-
-export const handleHover = (
-  item: DraggedItem,
-  _: DropTargetMonitor<unknown, unknown>,
-  overId: string,
-) => {
-  if (overId === editorStore.currentPage.draggedWidgetId) return;
-  if (overId !== editorStore.currentPage.hoveredWidgetId) return;
-  if (editorStore.currentPage.draggedWidgetId === null) {
-    if (item.isNew) {
-      editorStore.currentPage.setDraggedWidgetId(item.type);
-    } else {
-      editorStore.currentPage.setDraggedWidgetId(item.id);
+    if (monitor.didDrop()) return;
+    const droppableId = getFirstDroppableParent(overId);
+    const droppable = editorStore.currentPage.getWidgetById(droppableId);
+    if (!droppable.canvas) return;
+    // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
+    const clientOffset = toJS(editorStore.currentPage.mousePosition);
+    if (!clientOffset) return;
+    const { grid } = getDropPosition(
+      clientOffset,
+      item,
+      [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
+      editorStore.currentPage.rootWidget.selfGridSize,
+      droppable.canvas.getBoundingClientRect(),
+      item.isNew
+        ? undefined
+        : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
+    );
+    const editorRelativeMousePosition =
+      getMousePositionRelativeToEditor(clientOffset);
+    // We need to account for the scroll position of the canvas but also keep in mind that we have already taken the editor's scroll position into account
+    editorRelativeMousePosition.y +=
+      droppable.cumlativScrollTop -
+      editorStore.currentPage.rootWidget.scrollTop;
+    const dimensions = getDropPositionWithCollisions(
+      grid,
+      editorRelativeMousePosition,
+      item.isNew ? getNewWidgetName(item.type) : item.id,
+      overId,
+      droppableId,
+      editorStore.currentPage.draggedWidgetId!,
+      false,
+    );
+    commandManager.executeCommand(
+      new DragAction({
+        draggedItem: item,
+        endPosition: dimensions,
+        parentId: droppableId,
+      }),
+    );
+    editorStore.currentPage.setShadowElement(null);
+  };
+  private static _handleHover = (
+    item: DraggedItem,
+    _: DropTargetMonitor<unknown, unknown>,
+    overId: string,
+  ) => {
+    if (overId === editorStore.currentPage.draggedWidgetId) return;
+    if (overId !== editorStore.currentPage.hoveredWidgetId) return;
+    if (editorStore.currentPage.draggedWidgetId === null) {
+      if (item.isNew) {
+        editorStore.currentPage.setDraggedWidgetId(item.type);
+      } else {
+        editorStore.currentPage.setDraggedWidgetId(item.id);
+      }
     }
-  }
-  const droppableId = getFirstDroppableParent(overId);
-  const droppable = editorStore.currentPage.getWidgetById(droppableId);
-  if (!droppable.canvas) return;
-  // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
-  const clientOffset = toJS(editorStore.currentPage.mousePosition);
-  if (!clientOffset) return;
-  const { grid } = getDropPosition(
-    clientOffset,
-    item,
-    [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
-    editorStore.currentPage.rootWidget.selfGridSize,
-    droppable.canvas.getBoundingClientRect(),
-    item.isNew
-      ? undefined
-      : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
-  );
-  const newMousePos = getMousePositionRelativeToEditor(clientOffset);
-  newMousePos.y +=
-    droppable.cumlativScrollTop - editorStore.currentPage.rootWidget.scrollTop;
-  const dimensions = getDropPositionWithCollisions(
-    grid,
-    newMousePos,
-    item.isNew ? getNewWidgetName(item.type) : item.id,
-    overId,
-    droppableId,
-    editorStore.currentPage.draggedWidgetId!,
-    true,
-  );
-  const pixel = convertGridToPixel(
-    dimensions,
-    [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
-    {
-      x: droppable.canvas.getBoundingClientRect().x,
-      y: droppable.canvas.getBoundingClientRect().y,
-    },
-  );
-  editorStore.currentPage.setShadowElement(pixel);
-};
+    const droppableId = getFirstDroppableParent(overId);
+    const droppable = editorStore.currentPage.getWidgetById(droppableId);
+    if (!droppable.canvas) return;
+    // We can't rely on monitor.getClientOffset() here because it doesn't get updated on scroll
+    const clientOffset = toJS(editorStore.currentPage.mousePosition);
+    if (!clientOffset) return;
+    const { grid } = getDropPosition(
+      clientOffset,
+      item,
+      [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
+      editorStore.currentPage.rootWidget.selfGridSize,
+      droppable.canvas.getBoundingClientRect(),
+      item.isNew
+        ? undefined
+        : editorStore.currentPage.getWidgetById(item.id).pixelDimensions,
+    );
+    const newMousePos = getMousePositionRelativeToEditor(clientOffset);
+    newMousePos.y +=
+      droppable.cumlativScrollTop -
+      editorStore.currentPage.rootWidget.scrollTop;
+    const dimensions = getDropPositionWithCollisions(
+      grid,
+      newMousePos,
+      item.isNew ? getNewWidgetName(item.type) : item.id,
+      overId,
+      droppableId,
+      editorStore.currentPage.draggedWidgetId!,
+      true,
+    );
+    const pixel = convertGridToPixel(
+      dimensions,
+      [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],
+      {
+        x: droppable.canvas.getBoundingClientRect().x,
+        y: droppable.canvas.getBoundingClientRect().y,
+      },
+    );
+    editorStore.currentPage.setShadowElement(pixel);
+  };
+  static handleHover = (
+    ...args: Parameters<typeof DndHandlers._handleHover>
+  ) => {
+    if (DndHandlers.lastAnimationFrameId) {
+      cancelAnimationFrame(DndHandlers.lastAnimationFrameId);
+    }
+    DndHandlers.lastAnimationFrameId = requestAnimationFrame(() => {
+      DndHandlers._handleHover(...args);
+    });
+  };
+}
 
 export const getDropPosition = (
   mousePosition: Point,

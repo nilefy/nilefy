@@ -1,6 +1,6 @@
 import { useDragDropManager, useDrop } from 'react-dnd';
 import { DraggedItem } from '../dnd/interface';
-import { handleDrop, handleHover } from '../dnd/handlers';
+import { DndHandlers } from '../dnd/handlers';
 import { editorStore } from '../Models';
 import { useCallback, useEffect } from 'react';
 import { useThrottle } from './useThrottle';
@@ -9,10 +9,10 @@ export const useWebloomDrop = (id: string) => {
   const [{ handlerId }, drop] = useDrop(() => ({
     accept: 'WIDGET',
     hover(item, monitor) {
-      handleHover(item as DraggedItem, monitor, id);
+      DndHandlers.handleHover(item as DraggedItem, monitor, id);
     },
     drop(item, monitor) {
-      handleDrop(item as DraggedItem, monitor);
+      DndHandlers.handleDrop(item as DraggedItem, monitor);
     },
     canDrop() {
       if (editorStore.currentPage.isResizing) return false;
