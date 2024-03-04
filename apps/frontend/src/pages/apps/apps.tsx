@@ -47,14 +47,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api } from '@/api';
-import {
-  Await,
-  Link,
-  defer,
-  redirect,
-  useLoaderData,
-  useParams,
-} from 'react-router-dom';
+import { Await, Link, defer, useLoaderData, useParams } from 'react-router-dom';
 import { getLastUpdatedInfo } from '@/utils/date';
 import {
   APPS_QUERY_KEY,
@@ -66,35 +59,24 @@ import {
 import { Suspense, useMemo, useState } from 'react';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { getToken, removeToken } from '@/lib/token.localstorage';
-import { jwtDecode } from 'jwt-decode';
-import { JwtPayload } from '@/types/auth.types';
 import { WebloomLoader } from '@/components/loader';
 import { DebouncedInput } from '@/components/debouncedInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { loaderAuth } from '@/utils/loaders';
 
 export const appsLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const query = useAppsQuery({
-        workspaceId: +(params.workspaceId as string),
-      });
-      return defer({
-        apps: queryClient.fetchQuery(query),
-      });
+    const notAuthed = loaderAuth();
+    if (notAuthed) {
+      return notAuthed;
     }
+    const query = useAppsQuery({
+      workspaceId: +(params.workspaceId as string),
+    });
+    return defer({
+      apps: queryClient.fetchQuery(query),
+    });
   };
 
 function AppDropDown(props: { app: AppI }) {
@@ -441,7 +423,7 @@ export function ApplicationsLayout() {
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
         <div className=" w-full">
           <CreateAppDialog />

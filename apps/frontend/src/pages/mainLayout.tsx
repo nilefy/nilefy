@@ -1,6 +1,6 @@
 import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, redirect, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog, Table, Braces, LogOut } from 'lucide-react';
+import { Wind, Layout, Cog, /*Table,*/ Braces, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { fetchX } from '@/utils/fetch';
@@ -9,9 +9,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
-import { getToken, removeToken } from '@/lib/token.localstorage';
-import { jwtDecode } from 'jwt-decode';
-import { JwtPayload } from '@/types/auth.types';
+import { loaderAuth } from '@/utils/loaders';
 
 const dashboardPaths = [
   {
@@ -52,26 +50,17 @@ const allWorkspacesQuery = () => ({
 export const loader =
   (queryClient: QueryClient) =>
   async ({ request }: { request: Request }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const query = allWorkspacesQuery();
-      // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
-      const workspaces: WorkSpaces =
-        queryClient.getQueryData<WorkSpaces>(['workspaces']) ??
-        (await queryClient.fetchQuery(query));
-      const urlPath = new URL(request.url).pathname;
-      return urlPath === '/' ? redirect(`/${workspaces[0].id}`) : null;
+    const notAuthed = loaderAuth();
+    if (notAuthed) {
+      return notAuthed;
     }
+    const query = allWorkspacesQuery();
+    // we cannot operate on the front without having the data of the workspaces so we are doing it in the loader without returning it as a promise
+    const workspaces: WorkSpaces =
+      queryClient.getQueryData<WorkSpaces>(['workspaces']) ??
+      (await queryClient.fetchQuery(query));
+    const urlPath = new URL(request.url).pathname;
+    return urlPath === '/' ? redirect(`/${workspaces[0].id}`) : null;
   };
 
 export function Dashboard() {
