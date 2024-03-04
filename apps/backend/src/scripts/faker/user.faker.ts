@@ -16,6 +16,7 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
     deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
     avatar: null,
     conformationToken: null,
+    passwordResetToken: null,
     emailVerified: null,
   };
 }

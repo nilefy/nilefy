@@ -47,6 +47,9 @@ export const users = pgTable('users', {
   conformationToken: varchar('conformation_token', {
     length: 256,
   }),
+  passwordResetToken: varchar('password_reset_token', {
+    length: 256,
+  }),
   ...timeStamps,
   ...softDelete,
 });

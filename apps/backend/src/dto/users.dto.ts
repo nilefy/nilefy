@@ -7,6 +7,7 @@ export const userSchema = createSelectSchema(usersDrizzle);
 export const userInsertSchema = createInsertSchema(usersDrizzle, {
   username: (schema) => schema.username.min(3).max(255),
   email: (schema) => schema.email.email(),
+  passwordResetToken: (schema) => schema.passwordResetToken.max(255),
   password: (schema) => schema.password.min(6).max(255),
 });
 
