@@ -182,7 +182,7 @@ function DataSourcesView() {
         }}
       />
       <ScrollArea>
-        <ul className="grid max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-3">
+        <ul className="grid max-w-4xl grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:gap-y-10 lg:max-w-none lg:grid-cols-4">
           {filteredDataSources?.map((ds) => {
             return (
               <Card
