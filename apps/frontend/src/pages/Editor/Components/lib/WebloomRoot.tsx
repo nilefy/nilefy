@@ -52,7 +52,7 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
   useInitRootDimensions();
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      root.setProp(key, value);
+      root.setValue(key, value);
     },
     [root],
   );

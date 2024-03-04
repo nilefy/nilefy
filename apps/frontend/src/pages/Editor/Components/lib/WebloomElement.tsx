@@ -61,7 +61,7 @@ export const WebloomElementBase = observer(function WebloomElement({
   const widget = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      widget.setProp(key, value);
+      widget.setValue(key, value);
     },
     [widget],
   );
