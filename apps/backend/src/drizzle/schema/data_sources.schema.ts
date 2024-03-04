@@ -11,13 +11,9 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { workspaces, users, timeStamps, apps } from './schema';
+import { dataSourcesTypes } from '@webloom/constants';
 
-export const dataSourcesEnum = pgEnum('data_sources_enum', [
-  'database',
-  'api',
-  'cloud storage',
-  'plugin',
-]);
+export const dataSourcesEnum = pgEnum('data_sources_enum', dataSourcesTypes);
 
 export const dataSources = pgTable('data_sources', {
   id: serial('id').primaryKey(),

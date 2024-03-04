@@ -37,7 +37,7 @@ export function generateWidgets<
     eventManager: EventHandlerWidget,
     eventManagerTypeSelect: EventHandlerTypeSelect,
     codeInput: CodeInputWidget,
-    chartDynamicXValue: ChartDynamicXValueWidget,,
+    chartDynamicXValue: ChartDynamicXValueWidget,
   };
 }
 

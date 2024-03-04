@@ -23,7 +23,6 @@ export class PasteAction implements UndoableCommand {
       nodes: new Map(data.nodes),
     };
     this.mousePos = mousePos;
-
     let parent = editorStore.currentPage.rootWidget.id;
     for (const id of editorStore.currentPage.selectedNodeIds) {
       const { x, y, width, height } =
@@ -51,7 +50,6 @@ export class PasteAction implements UndoableCommand {
 
     snapshot.id = id;
     snapshot.parentId = parent;
-
     if (change) {
       snapshot.col = change.col;
       snapshot.row = change.row;
@@ -85,7 +83,6 @@ export class PasteAction implements UndoableCommand {
       const row = normalize((newDims.y - py) / gridrow, gridrow);
       const columnsCount = normalize(oldDims.width, gridCol) / gridCol;
       const rowsCount = normalize(oldDims.height / gridrow, gridrow);
-
       this.paste(widget.id, this.parent, { col, row, columnsCount, rowsCount });
     }
 

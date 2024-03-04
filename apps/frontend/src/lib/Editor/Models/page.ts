@@ -12,10 +12,11 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  isSameCoords,
   normalizeCoords,
 } from '../utils';
 import { EvaluationManager } from './evaluationManager';
+import { CursorManager } from './cursorManager';
+
 import { DependencyManager } from './dependencyManager';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
@@ -25,7 +26,7 @@ export class WebloomPage {
   name: string;
   handle: string;
   widgets: Record<string, WebloomWidget> = {};
-  mouseOverWidgetId: string | null = null;
+  hoveredWidgetId: string | null = null;
   /**
    * please note that those node always in the same level in the widgets tree
    */
@@ -35,6 +36,7 @@ export class WebloomPage {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
+  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -62,7 +64,7 @@ export class WebloomPage {
   }) {
     makeObservable(this, {
       widgets: observable,
-      mouseOverWidgetId: observable,
+      hoveredWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
       firstSelectedWidget: computed,
@@ -77,7 +79,6 @@ export class WebloomPage {
       setResizedWidgetId: action,
       setNewNode: action,
       setNewNodeTranslate: action,
-      setOverWidgetId: action,
       setSelectedNodeIds: action,
       setShadowElement: action,
       moveWidgetIntoGrid: action,
@@ -93,7 +94,13 @@ export class WebloomPage {
       setPageDimensions: action,
       adjustDimensions: action,
       snapshot: computed,
+      isDragging: computed,
+      isResizing: computed,
+      clearSelectedNodes: action,
+      setHoveredWidgetId: action,
+      removeSelectedNode: action,
     });
+
     this.id = id;
     this.evaluationManger = evaluationManger;
     this.dependencyManager = dependencyManager;
@@ -114,8 +121,15 @@ export class WebloomPage {
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-  }
 
+    this.cursorManager = new CursorManager(this);
+  }
+  clearSelectedNodes() {
+    this.selectedNodeIds.clear();
+  }
+  setHoveredWidgetId(id: string | null) {
+    this.hoveredWidgetId = id;
+  }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -130,7 +144,9 @@ export class WebloomPage {
     this.selectedNodeIds.clear();
     tempIds.forEach((id) => this.selectedNodeIds.add(id));
   }
-
+  removeSelectedNode(id: string) {
+    this.selectedNodeIds.delete(id);
+  }
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }
@@ -159,9 +175,7 @@ export class WebloomPage {
   setNewNodeTranslate(point: Point | null) {
     this.newNodeTranslate = point;
   }
-  setOverWidgetId(id: string | null) {
-    this.mouseOverWidgetId = id;
-  }
+
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }
@@ -204,7 +218,12 @@ export class WebloomPage {
   setNewNode(node: WebloomWidget | null) {
     this.newNode = node;
   }
-
+  get isDragging() {
+    return this.draggedWidgetId !== null;
+  }
+  get isResizing() {
+    return this.resizedWidgetId !== null;
+  }
   /**
    *
    * @param id
@@ -337,8 +356,12 @@ export class WebloomPage {
           },
         };
       } else {
+        const entity = this.getWidgetById(parent.id);
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newParentRowCount,
+          rowsCount:
+            entity.layoutMode === 'fixed'
+              ? undefined
+              : parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,

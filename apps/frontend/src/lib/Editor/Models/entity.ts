@@ -11,11 +11,9 @@ import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { RuntimeEvaluable } from './interfaces';
 import {
-  clone,
   cloneDeep,
   debounce,
   get,
-  has,
   isObjectLike,
   isPlainObject,
   memoize,

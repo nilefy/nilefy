@@ -3,6 +3,9 @@ import { ReactNode } from 'react';
 import { EntitySchema } from './Models/entity';
 
 type BaseControlProps = {
+  /**
+   * form control id
+   */
   id: string;
   label: string;
 };
@@ -46,6 +49,9 @@ type FormControlOptions = {
   list: InspectorListProps;
   checkbox: InspectorCheckboxProps;
   inlineCodeInput: InlineCodeInputProps;
+  heightMode: {
+    label: string;
+  };
   datePicker: InspectorDatePickerProps;
 };
 
@@ -116,11 +122,13 @@ export type WebloomPixelDimensions = {
   height: number;
 };
 
+export type LayoutMode = 'auto' | 'fixed' | 'limited';
 export interface LayoutConfig {
   minColumns?: number;
   minRows?: number;
   colsCount: number;
   rowsCount: number;
+  layoutMode?: LayoutMode;
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
@@ -181,11 +189,10 @@ export type {
   InspectorFormControls,
   InlineCodeInputProps,
   InspectorColorProps,
-  InspectorDatePickerProps,
   WidgetSetters,
 };
-
-export type selectOptions = {
-  value: string;
-  label: string;
-};
+export const WIDGET_SECTIONS = {
+  SCROLL_AREA: 'SCROLL_AREA',
+  CANVAS: 'CANVAS',
+  RESIZER: 'RESIZER',
+} as const;

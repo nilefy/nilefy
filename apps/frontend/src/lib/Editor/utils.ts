@@ -1,3 +1,5 @@
+import { Point } from '@/types';
+import { editorStore } from './Models';
 import { isPlainObject } from 'lodash';
 import {
   BoundingRect,
@@ -158,6 +160,35 @@ export function normalizeCoords(
     rowsCount: newCoords.rowsCount ?? node.rowsCount,
   };
 }
+
+export function isPointInsideBoundingRect(
+  point: Point,
+  boundingRect: BoundingRect,
+) {
+  return (
+    point.x > boundingRect.left &&
+    point.x < boundingRect.right &&
+    point.y > boundingRect.top &&
+    point.y < boundingRect.bottom
+  );
+}
+
+export const getMousePositionRelativeToEditor = (clientOffset: Point) => {
+  if (!editorStore.currentPage.rootWidget.canvas) return clientOffset;
+  const boundingRect =
+    editorStore.currentPage.rootWidget.canvas.getBoundingClientRect();
+  return getMousePositionRelativeToBoundingRect(clientOffset, boundingRect);
+};
+
+export const getMousePositionRelativeToBoundingRect = (
+  clientOffset: Point,
+  boundingRect: BoundingRect,
+) => {
+  return {
+    x: clientOffset.x - boundingRect.left,
+    y: clientOffset.y - boundingRect.top,
+  };
+};
 export function isObject(val: unknown): val is Record<string, unknown> {
   return isPlainObject(val);
 }

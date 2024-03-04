@@ -13,10 +13,17 @@ export const dataSourcesEnum = z.enum([
 ]);
 
 export const dataSources = {
+  /**
+   * 
   database: ['postgresql', 'sql server', 'mysql', 'mongodb'],
   api: ['rest api', 'graphql', 'slack', 'notion'],
   'cloud storage': ['aws s3', 'azure blob', 'google cloud storage'],
   plugin: ['github', 'open ai'],
+   */
+  database: ['PostgreSQL'],
+  api: ['REST API'],
+  'cloud storage': ['Azure Blob Storage', 'Google Cloud Storage'],
+  plugin: [],
 };
 
 export type DataSourceT = InferInsertModel<typeof dataSourcesDrizzle>;

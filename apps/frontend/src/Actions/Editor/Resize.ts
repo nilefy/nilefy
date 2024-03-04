@@ -2,7 +2,6 @@ import { editorStore } from '@/lib/Editor/Models';
 import { handleParentCollisions } from '@/lib/Editor/collisions';
 import { Point } from '@/types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
@@ -45,7 +44,6 @@ class ResizeAction {
     const positionsSnapshot = editorStore.currentPage
       .snapshotWidgets()
       .reduce((acc, node) => {
-        if (node.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return acc;
         return {
           ...acc,
           [node.id]: {
@@ -62,9 +60,6 @@ class ResizeAction {
       editorStore.currentPage.getWidgetById(id).gridDimensions;
     this.initialDimensions = dimensions;
     editorStore.currentPage.setResizedWidgetId(id);
-    editorStore.currentPage.setShadowElement(
-      editorStore.currentPage.getWidgetById(id).pixelDimensions,
-    );
   }
   public static start(
     ...args: Parameters<typeof ResizeAction._start>
@@ -90,7 +85,7 @@ class ResizeAction {
   ) {
     if (resizingKey === null) return;
     const root = editorStore.currentPage.rootWidget;
-    if (!root.dom) return;
+    if (!root.canvas) return;
 
     const { width: initialWidth, height: initialHeight } = initialDimensions;
     const { x: initialLeft, y: initialTop } = initialDimensions;
@@ -102,7 +97,8 @@ class ResizeAction {
     let newTop = initialTop;
 
     let { x, y } = mousePosition;
-    const rect = root.dom.getBoundingClientRect();
+    const rect = root.canvas.getBoundingClientRect();
+    if (!rect) return;
     x -= rect.left;
     y -= rect.top; // -> so that we get the mousePos relative to the root element
     const node = editorStore.currentPage.getWidgetById(id);
@@ -176,10 +172,6 @@ class ResizeAction {
     this.returnToOriginalPosition();
     this.returnToInitialDimensions();
     const newCollisions = this._resize(this.id, dims);
-    editorStore.currentPage.setShadowElement(
-      editorStore.currentPage.getWidgetById(this.id).pixelDimensions,
-    );
-
     for (const collison of newCollisions) {
       this.collidingNodes.add(collison);
     }
@@ -263,7 +255,6 @@ class ResizeAction {
       key,
     );
     editorStore.currentPage.setResizedWidgetId(null);
-    editorStore.currentPage.setShadowElement(null);
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
@@ -331,30 +322,10 @@ class ResizeAction {
       columnsCount: dimensions.columnsCount ?? node.columnsCount,
       rowsCount: dimensions.rowsCount ?? node.rowsCount,
     };
-    // const children = node.nodes;
-    // const lowestChildId = children[children.length - 1];
-    // const lowestChild = tree[lowestChildId];
-    // if (lowestChild) {
-    //   const lowestChildBoundRect = getBoundingRect(lowestChildId);
-    //   const grid = getGridSize(id);
-    //   const nodeBoundingRect = convertGridToPixel(
-    //     dims,
-    //     grid,
-    //     getPixelDimensions(node.parent),
-    //   );
-    //   const bottom = nodeBoundingRect.y + nodeBoundingRect.height;
 
-    //   if (lowestChildBoundRect.bottom > bottom) {
-    //     dims.rowsCount = normalize(
-    //       (lowestChildBoundRect.bottom - nodeBoundingRect.y) / grid[0],
-    //       grid[0],
-    //     );
-    //   }
-    // }
     dims = handleParentCollisions(
       dims,
       node.parent.pixelDimensions,
-      node.parent.boundingRect,
       editorStore.currentPage.getWidgetById(id).gridSize,
       false,
     );
@@ -363,7 +334,7 @@ class ResizeAction {
     collidedNodes.push(...Object.keys(orgCoords));
     return collidedNodes;
   }
-  private static throttledMove = throttle(ResizeAction._move, 10);
+  private static throttledMove = throttle(ResizeAction._move, 30);
 }
 
 export default ResizeAction;
