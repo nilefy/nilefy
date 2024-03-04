@@ -27,6 +27,8 @@ import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { startWorker } from '../mocks/browser';
+import { ForgotPassword } from './pages/auth/forgot_password';
+import { NeedHelpSigningIn } from './pages/auth/need_help_in';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -118,6 +120,24 @@ const router = createBrowserRouter([
     element: (
       <NonAuthRoute>
         <SignIn />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <NonAuthRoute>
+        <ForgotPassword />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/need_help_in',
+    element: (
+      <NonAuthRoute>
+        <NeedHelpSigningIn />
       </NonAuthRoute>
     ),
     errorElement: <ErrorPage />,
