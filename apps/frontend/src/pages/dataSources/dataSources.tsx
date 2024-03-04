@@ -257,6 +257,7 @@ export function GlobalDataSourcesResolved() {
  * sidebar configured data sources
  */
 function WorkspaceDataSourcesView() {
+  const navigate = useNavigate();
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isPending, isError, error } = api.dataSources.index.useQuery({
@@ -351,6 +352,7 @@ function WorkspaceDataSourcesView() {
                             workspaceId: +workspaceId,
                             dataSourceId: ds.id,
                           });
+                          navigate(`/${workspaceId}/datasources/`);
                         }}
                       >
                         Delete
