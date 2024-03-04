@@ -297,7 +297,7 @@ function WorkspaceDataSourcesView() {
                 <AlertDialog>
                   <AlertDialogTrigger
                     className={buttonVariants({
-                      variant: 'destructive',
+                      variant: 'ghost',
                       size: 'icon',
                       className: 'ml-auto',
                     })}
@@ -405,35 +405,35 @@ export function DataSourceView() {
 }
 
 function DataSourcesSidebar() {
-  const { workspaceId } = useParams();
+  // const { workspaceId } = useParams();
 
   return (
     <div className="flex h-full flex-col gap-4 bg-primary/10 p-4 md:w-[25%] lg:w-[15%]">
       <h1 className="text-3xl">Data Sources</h1>
       {/** plugins filter*/}
-      <div className="flex h-fit flex-col gap-3">
-        <h2 className="text-xl">Filters</h2>
-        <div className="flex flex-col gap-5 pl-2">
-          {dataSourcesTypes.map((ds, i) => {
-            return (
-              <Link
-                key={ds + i}
-                to={{
-                  pathname: `/${workspaceId}/datasources`,
-                  // search: `gfilter=${ds.q}`,
-                  hash: ds,
-                }}
-                className="inline-flex h-11 items-center justify-start rounded-md pl-1 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-              >
-                {ds.toUpperCase()}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* <div className="flex h-fit flex-col gap-3"> */}
+      {/*   <h2 className="text-xl">Filters</h2> */}
+      {/*   <div className="flex flex-col gap-5 pl-2"> */}
+      {/*     {dataSourcesTypes.map((ds, i) => { */}
+      {/*       return ( */}
+      {/*         <Link */}
+      {/*           key={ds + i} */}
+      {/*           to={{ */}
+      {/*             pathname: `/${workspaceId}/datasources`, */}
+      {/*             // search: `gfilter=${ds.q}`, */}
+      {/*             hash: ds, */}
+      {/*           }} */}
+      {/*           className="inline-flex h-11 items-center justify-start rounded-md pl-1 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" */}
+      {/*         > */}
+      {/*           {ds.toUpperCase()} */}
+      {/*         </Link> */}
+      {/*       ); */}
+      {/*     })} */}
+      {/*   </div> */}
+      {/* </div> */}
       <Separator />
       {/** configured plugins*/}
-      <h4>plugins</h4>
+      {/* <h4>plugins</h4> */}
       <WorkspaceDataSourcesView />
       <div className="mt-auto">
         <SelectWorkSpace />
