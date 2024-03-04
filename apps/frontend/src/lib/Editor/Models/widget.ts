@@ -6,9 +6,9 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
   WebloomGridDimensions,
   WebloomPixelDimensions,
-  WidgetSetters,
   LayoutMode,
   WIDGET_SECTIONS,
+  WidgetSetters,
 } from '../interface';
 import {
   convertGridToPixel,
@@ -21,7 +21,6 @@ import { DependencyManager } from './dependencyManager';
 import { cloneDeep } from 'lodash';
 import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
-import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 
 export class WebloomWidget
   extends Entity
@@ -194,7 +193,7 @@ export class WebloomWidget
   }
 
   get layoutMode() {
-    return this.getProp('layoutMode') as LayoutMode;
+    return this.getValue('layoutMode') as LayoutMode;
   }
   get isSelected() {
     return this.page.selectedNodeIds.has(this.id);
@@ -204,6 +203,12 @@ export class WebloomWidget
   }
   get isResizing() {
     return this.page.resizedWidgetId === this.id;
+  }
+  get isHovered() {
+    return this.page.hoveredWidgetId === this.id;
+  }
+  get isVisible() {
+    return !this.isDragging;
   }
   /**
    *
@@ -230,6 +235,13 @@ export class WebloomWidget
     this.col = dimensions.col ?? this.col;
     this.columnsCount = dimensions.columnsCount ?? this.columnsCount;
     this.rowsCount = dimensions.rowsCount ?? this.rowsCount;
+  }
+  get scrollTop() {
+    return this.scrollableContainer?.scrollTop ?? 0;
+  }
+  get cumlativScrollTop(): number {
+    if (this.isRoot) return this.scrollTop;
+    return this.scrollTop + this.canvasParent.cumlativScrollTop;
   }
 
   get pixelDimensions(): WebloomPixelDimensions {
@@ -268,22 +280,6 @@ export class WebloomWidget
       columnsCount: this.columnsCount,
       rowsCount: this.actualRowsCount,
     };
-  }
-  get innerContainerDimensions() {
-    return {
-      row: this.row,
-      col: this.col,
-      columnsCount: this.columnsCount,
-      rowsCount: this.innerRowsCount,
-    };
-  }
-
-  get innerContainerPixelDimensions() {
-    return convertGridToPixel(
-      this.innerContainerDimensions,
-      this.gridSize as [number, number],
-      this.canvasParent.pixelDimensions,
-    );
   }
   get innerContainerDimensions() {
     return {
@@ -352,5 +348,15 @@ export class WebloomWidget
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
+  }
+  private genSetters(
+    settersConfig?: WidgetSetters,
+  ): Record<string, (arg: unknown) => void> {
+    const res: Record<string, (arg: unknown) => void> = {};
+    if (!settersConfig) return res;
+    for (const k in settersConfig) {
+      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
+    }
+    return res;
   }
 }

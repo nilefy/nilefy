@@ -11,7 +11,6 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { Point } from '@/types';
 import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
 import { WebloomWidgets } from '@/pages/Editor/Components';
-import { getNewWidgetName } from '../widgetName';
 import { WebloomWidget } from '../Models/widget';
 import {
   handleHoverCollision,
@@ -21,6 +20,7 @@ import {
 import { commandManager } from '@/Actions/CommandManager';
 import DragAction from '@/Actions/Editor/Drag';
 import { toJS } from 'mobx';
+import { getNewEntityName } from '../widgetName';
 function snapCenterToCursor({
   currentMousePos,
   position,
@@ -75,7 +75,7 @@ export class DndHandlers {
     const dimensions = getDropPositionWithCollisions(
       grid,
       editorRelativeMousePosition,
-      item.isNew ? getNewWidgetName(item.type) : item.id,
+      item.isNew ? getNewEntityName(item.type) : item.id,
       overId,
       droppableId,
       editorStore.currentPage.draggedWidgetId!,
@@ -127,7 +127,7 @@ export class DndHandlers {
     const dimensions = getDropPositionWithCollisions(
       grid,
       newMousePos,
-      item.isNew ? getNewWidgetName(item.type) : item.id,
+      item.isNew ? getNewEntityName(item.type) : item.id,
       overId,
       droppableId,
       editorStore.currentPage.draggedWidgetId!,

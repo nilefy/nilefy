@@ -189,6 +189,7 @@ export type {
   InspectorFormControls,
   InlineCodeInputProps,
   InspectorColorProps,
+  WidgetSetters,
 };
 export const WIDGET_SECTIONS = {
   SCROLL_AREA: 'SCROLL_AREA',

@@ -12,6 +12,7 @@ import { Grid } from '../../lib';
 import { cn } from '@/lib/cn';
 
 import z from 'zod';
+import { RJSFSchema } from '@rjsf/utils';
 
 const webloomContainerProps = z.object({
   color: z.string(),
@@ -77,7 +78,6 @@ const WebloomContainer = observer(
   },
 );
 
-const widgetName = 'WebloomContainer';
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
   layoutMode: 'fixed',
