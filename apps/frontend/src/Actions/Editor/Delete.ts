@@ -13,17 +13,22 @@ export class DeleteAction implements UndoableCommand {
    * enter children then parents
    */
   private nodes: WebloomWidget['snapshot'][];
-
-  constructor() {
+  private providedNodes: string[];
+  constructor(...providedNodes: string[]) {
+    this.providedNodes = providedNodes;
     this.nodes = [];
   }
 
   execute(): RemoteTypes {
     // those ids are in the same tree levels
-    const selectedIds = toJS(editorStore.currentPage.selectedNodeIds);
-    editorStore.currentPage.setSelectedNodeIds(new Set());
-
-    for (const id of selectedIds) {
+    let targetNodes: string[] = [];
+    if (this.providedNodes.length > 0) {
+      targetNodes = [...this.providedNodes];
+    } else {
+      targetNodes = Array.from(toJS(editorStore.currentPage.selectedNodeIds));
+      editorStore.currentPage.setSelectedNodeIds(new Set());
+    }
+    for (const id of targetNodes) {
       this.nodes = [
         ...this.nodes,
         ...editorStore.currentPage.removeWidget(id, true),
@@ -41,7 +46,7 @@ export class DeleteAction implements UndoableCommand {
     return {
       event: 'delete' as const,
       data: {
-        nodesId: [...selectedIds],
+        nodesId: [...targetNodes],
         sideEffects: [],
       },
     };

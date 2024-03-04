@@ -26,6 +26,8 @@ import {
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
+import { DndProvider } from 'react-dnd';
+import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { startWorker } from '../mocks/browser';
 
 const queryClient = new QueryClient({
@@ -39,7 +41,9 @@ const queryClient = new QueryClient({
     },
   },
 });
-
+const DndOptions: Partial<TouchBackendOptions> = {
+  enableMouseEvents: true,
+};
 // router config
 const router = createBrowserRouter([
   {
@@ -124,14 +128,22 @@ const router = createBrowserRouter([
   },
   {
     path: '/:workspaceId/apps/edit/:appId',
-    element: <App />,
+    element: (
+      <DndProvider backend={TouchBackend} options={DndOptions}>
+        <App />
+      </DndProvider>
+    ),
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId' }],
   },
   {
     path: '/:workspaceId/apps/:appId',
-    element: <AppPreview />,
+    element: (
+      <DndProvider backend={TouchBackend} options={DndOptions}>
+        <AppPreview />
+      </DndProvider>
+    ),
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId', element: <PagePreview /> }],
