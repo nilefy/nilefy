@@ -1,3 +1,10 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import validator from '@rjsf/validator-ajv8';
 import {
   Await,
@@ -360,9 +367,6 @@ function WorkspaceDataSourcesView() {
 }
 
 export function DataSourceView() {
-  // i want to disable the submit  button, but i'm not in the mood to supply submitting state through context to the form and all that so i'll do it the easy way and replace the submit button
-  // ref to call the form submit
-  const rjsfRef = useRef<FormT>(null);
   const { datasourceId, workspaceId } = useParams();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
@@ -385,40 +389,69 @@ export function DataSourceView() {
         <Input defaultValue={data.name} ref={nameRef} />
         <Separator />
       </div>
+
       <ScrollArea className="h-full w-full">
-        <RJSFShadcn
-          ref={rjsfRef}
-          schema={data.dataSource.config.schema}
-          uiSchema={data.dataSource.config.uiSchema}
-          formData={data.config}
-          validator={validator}
-          onSubmit={({ formData }) => {
-            if (!workspaceId || !datasourceId || !nameRef || !nameRef.current)
-              throw new Error(
-                "that's weird this function should run under workspaceId, datasourceId",
-              );
-            updateMutate({
-              workspaceId: +workspaceId,
-              dataSourceId: +datasourceId,
-              dto: {
-                name: nameRef.current.value,
-                config: formData,
-              },
-            });
-          }}
-        >
-          <Button className="mt-4" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <SaveIcon /> Saving...
-              </>
-            ) : (
-              <>
-                <SaveIcon /> Save
-              </>
-            )}
-          </Button>
-        </RJSFShadcn>
+        <Tabs defaultValue="dev">
+          <TabsList className="w-full space-x-3">
+            <TabsTrigger value="dev">Development</TabsTrigger>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  {/*TODO: re-enable when the back is ready  */}
+                  <TabsTrigger value="prod" disabled={true}>
+                    Production
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Soon</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TabsList>
+
+          <TabsContent value="dev" className="h-full w-full ">
+            <RJSFShadcn
+              schema={data.dataSource.config.schema}
+              uiSchema={data.dataSource.config.uiSchema}
+              formData={data.config}
+              validator={validator}
+              onSubmit={({ formData }) => {
+                if (
+                  !workspaceId ||
+                  !datasourceId ||
+                  !nameRef ||
+                  !nameRef.current
+                )
+                  throw new Error(
+                    "that's weird this function should run under workspaceId, datasourceId",
+                  );
+                updateMutate({
+                  workspaceId: +workspaceId,
+                  dataSourceId: +datasourceId,
+                  dto: {
+                    name: nameRef.current.value,
+                    config: formData,
+                  },
+                });
+              }}
+            >
+              <Button className="mt-4" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <SaveIcon /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <SaveIcon /> Save
+                  </>
+                )}
+              </Button>
+            </RJSFShadcn>
+          </TabsContent>
+          {/*TODO:*/}
+          <TabsContent value="prod"></TabsContent>
+        </Tabs>
       </ScrollArea>
     </div>
   );
