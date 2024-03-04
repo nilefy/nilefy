@@ -26,8 +26,8 @@ export function SignIn() {
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      password: '',
       email: '',
+      password: '',
     },
   });
   const { mutate, isError, error, isPending } = useSignIn();
@@ -114,9 +114,17 @@ export function SignIn() {
             )}
           />
           {isError && <p className="text-red-900">{error?.message}</p>}
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending} className="w-full">
             Submit
           </Button>
+          <div>
+            <Link
+              to={'/forgot-password'}
+              className=" underline-offset-3 underline "
+            >
+              Forgot Password?
+            </Link>
+          </div>
         </form>
       </Form>
     </div>

@@ -109,7 +109,7 @@ export function SignUp() {
             )}
           />
           {isError && <p className="text-red-900">{error?.message}</p>}
-          <Button type="submit" disabled={isPending}>
+          <Button className="w-full" type="submit" disabled={isPending}>
             Submit
           </Button>
         </form>
