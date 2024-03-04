@@ -44,6 +44,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
+    "@react-hook/resize-observer": "^1.2.6",
     "@rjsf/core": "^5.16.1",
     "@rjsf/utils": "^5.16.1",
     "@rjsf/validator-ajv8": "^5.16.1",

@@ -1,22 +1,29 @@
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
+import useResizeObserver from '@react-hook/resize-observer';
 
 const Grid = observer(({ id }: { id: string }) => {
+  const [dims, setDims] = useState({ width: 0, height: 0 });
   const gridSize = editorStore.currentPage.getWidgetById(id).columnWidth;
   const shown =
     editorStore.currentPage.isDragging || editorStore.currentPage.isResizing;
   const ref = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
+  useResizeObserver(divRef, (entry) => {
+    setDims({
+      width: entry.contentRect.width,
+      height: entry.contentRect.height,
+    });
+  });
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const divBoundingClientRect = divRef.current!.getBoundingClientRect();
-    canvas.width = divBoundingClientRect.width;
-    canvas.height = divBoundingClientRect.height;
+    canvas.width = dims.width;
+    canvas.height = dims.height;
     const width = canvas.width;
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
@@ -30,7 +37,7 @@ const Grid = observer(({ id }: { id: string }) => {
       ctx.lineTo(i, height);
     }
     ctx.stroke();
-  }, [gridSize, shown]);
+  }, [gridSize, shown, dims.width, dims.height]);
   return (
     <div
       ref={divRef}
