@@ -22,6 +22,7 @@ import { NonAuthRoute } from '@/components/non-auth-routes';
 import {
   GlobalDataSourcesView,
   DataSourceView,
+  DataSourcesTemplate,
 } from '@/pages/dataSources/dataSources';
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
@@ -29,6 +30,7 @@ import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { startWorker } from '../mocks/browser';
+import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,13 +80,22 @@ const router = createBrowserRouter([
           //     },
           //   ],
           // },
-          {
-            path: 'datasources/:datasourceId',
-            element: <DataSourceView />,
-          },
+
+          {},
           {
             path: 'datasources',
-            element: <GlobalDataSourcesView />,
+            element: <DataSourcesTemplate />,
+            children: [
+              {
+                index: true,
+                element: <GlobalDataSourcesView />,
+                loader: globalDataSourcesLoader(queryClient),
+              },
+              {
+                path: ':datasourceId',
+                element: <DataSourceView />,
+              },
+            ],
           },
           { path: 'profile-settings', element: <ProfileSettings /> },
           {
