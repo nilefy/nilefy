@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -35,7 +35,7 @@ import EntityForm from '@/components/rjsf_shad/entityForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
-  function QueryPreview(props, ref) {
+  forwardRef(function QueryPreview(props, ref) {
     return (
       <Tabs
         ref={ref}
@@ -48,7 +48,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -60,7 +60,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
@@ -71,10 +71,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsContent>
       </Tabs>
     );
-  },
-  {
-    forwardRef: true,
-  },
+  }),
 );
 
 const QueryItem = observer(function QueryItem({
@@ -85,9 +82,9 @@ const QueryItem = observer(function QueryItem({
   const rjsfRef = useRef<FormT>(null);
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
@@ -233,9 +230,9 @@ export const QueryPanel = observer(function QueryPanel() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId, appId } = useParams();
 
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const queries = editorStore.queries;
   const { mutate: addMutation } = api.queries.insert.useMutation({
     onSuccess: (data) => {
