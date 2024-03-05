@@ -157,12 +157,6 @@ export class WebloomQuery
       this.rawValues.data = dto.rawValues.data;
       this.rawValues.error = dto.rawValues.error;
       this.rawValues.status = dto.rawValues.status;
-      this.finalValues.data = dto.rawValues.data;
-      this.finalValues.error = dto.rawValues.error;
-      this.finalValues.status = dto.rawValues.status;
-      this.analyzeAndApplyDependencyUpdate('data');
-      this.analyzeAndApplyDependencyUpdate('error');
-      this.analyzeAndApplyDependencyUpdate('status');
     }
   }
 
