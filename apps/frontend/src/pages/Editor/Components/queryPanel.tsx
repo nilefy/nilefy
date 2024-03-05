@@ -28,7 +28,7 @@ import FormT from '@rjsf/core';
 import { editorStore } from '@/lib/Editor/Models';
 import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, runInAction } from 'mobx';
+import { computed, runInAction, toJS } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 import EntityForm from '@/components/rjsf_shad/entityForm';
@@ -48,7 +48,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -60,7 +60,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
@@ -85,9 +85,9 @@ const QueryItem = observer(function QueryItem({
   const rjsfRef = useRef<FormT>(null);
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
@@ -100,17 +100,17 @@ const QueryItem = observer(function QueryItem({
         });
       },
     });
-  const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
-    onSuccess(data) {
-      query.setQueryState('success');
-      query.updateQuery({
-        rawValues: {
-          ...data,
-        },
-      });
-      jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
-    },
-  });
+  // const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
+  //   onSuccess(data) {
+  //     query.setQueryState('success');
+  //     query.updateQuery({
+  //       rawValues: {
+  //         ...data,
+  //       },
+  //     });
+  //     jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
+  //   },
+  // });
 
   return (
     <div className="h-full w-full">
@@ -136,15 +136,18 @@ const QueryItem = observer(function QueryItem({
         </Button>
         <Button
           variant={'ghost'}
-          disabled={isRunPending}
+          disabled={query.runQuery.state.isPending}
           onClick={() => {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            const evaluatedConfig = query.config;
+            const evaluatedConfig = toJS(query.config) as Record<
+              string,
+              unknown
+            >;
 
-            query.setQueryState('loading');
-            run({
+            // query.setQueryState('loading');
+            query.runQuery.mutate({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,
@@ -233,9 +236,9 @@ export const QueryPanel = observer(function QueryPanel() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId, appId } = useParams();
 
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const queries = editorStore.queries;
   const { mutate: addMutation } = api.queries.insert.useMutation({
     onSuccess: (data) => {

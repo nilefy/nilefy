@@ -92,7 +92,7 @@ export async function addQuery({
   return (await res.json()) as CompleteQueryI;
 }
 
-async function runQuery({
+export async function runQuery({
   workspaceId,
   queryId,
   appId,
