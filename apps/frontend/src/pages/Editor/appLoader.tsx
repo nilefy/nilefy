@@ -6,7 +6,14 @@ import { editorStore } from '@/lib/Editor/Models';
 import { loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
 import { Suspense, useEffect, useRef } from 'react';
-import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
+import {
+  Await,
+  defer,
+  useAsyncValue,
+  useLoaderData,
+  useParams,
+} from 'react-router-dom';
+import { queryClient } from '@/index';
 
 export const appLoader =
   (queryClient: QueryClient) =>
@@ -46,6 +53,7 @@ type AppLoaderProps = {
 };
 
 const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
+  const { workspaceId, appId } = useParams();
   const [app, queries] = useAsyncValue() as [
     app: AppCompleteT,
     queries: Awaited<ReturnType<typeof getQueries>>,
@@ -55,6 +63,9 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
   const inited = useRef(false);
   if (!inited.current) {
     editorStore.init({
+      workspaceId: +(workspaceId as string),
+      appId: +(appId as string),
+      queryClient,
       name: app.name,
       queries,
       currentPageId: app.defaultPage.id.toString(),
