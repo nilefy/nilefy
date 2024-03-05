@@ -89,6 +89,10 @@ export class EvaluationManager {
   get evaluatedForest(): Record<string, unknown> {
     // todo: Check if a certain tree in the forest didn't exhibit any change, then don't re-evaluate it
     const sortedGraph = toposort(this.editor.dependencyManager.graph).reverse();
+    console.log(
+      'DEBUGPRINT[2]: evaluationManager.ts:91: sortedGraph=',
+      sortedGraph,
+    );
     const evalTree: Record<string, unknown> = {};
     const evaluatedInGraph = new Set<string>();
     for (const node of sortedGraph) {
@@ -100,6 +104,11 @@ export class EvaluationManager {
         entity,
         `entity with id ${entityId} not found while evaluating ${node}`,
       );
+      console.log(
+        'DEBUGPRINT[1]: evaluationManager.ts:104: this.editor.dependencyManager.getDirectDependencies(entityId)=',
+        entityId,
+        toJS(this.editor.dependencyManager.getDirectDependencies(entityId)),
+      );
       if (
         !this.editor.dependencyManager.getDirectDependencies(entityId) &&
         !this.isRawValueCode(entityId, path)
@@ -107,12 +116,26 @@ export class EvaluationManager {
         set(evalTree, node, toJS(get(entity.rawValues, path)));
         continue;
       }
+      if (!this.isRawValueCode(entityId, path)) {
+        set(evalTree, node, toJS(get(entity.rawValues, path)));
+        continue;
+      }
+      console.log(
+        'DEBUGPRINT[3]: evaluationManager.ts:120: evalTree=',
+        evalTree,
+      );
       const gottenValue = get(entity.rawValues, path);
       invariant(
         typeof gottenValue === 'string' || gottenValue === undefined,
-        `gottenValue should be string but got ${JSON.stringify(gottenValue)}`,
+        `gottenValue should be string but got 113:${path} ${entityId} ${JSON.stringify(
+          gottenValue,
+        )}`,
       );
       set(evalTree, node, evaluateExpressions(gottenValue || '', evalTree));
+      console.log(
+        'DEBUGPRINT[4]: evaluationManager.ts:131: evalTree=',
+        evalTree,
+      );
     }
     // will hit this loop with code without deps
     // example: {{[{name: "dsa"}]}}

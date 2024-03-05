@@ -32,7 +32,7 @@ import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { startWorker } from '../mocks/browser';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,

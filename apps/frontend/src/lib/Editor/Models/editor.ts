@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/query-core';
 import {
   makeObservable,
   observable,
@@ -38,6 +39,8 @@ export class EditorState {
    * application name
    */
   name: string = 'New Application';
+  appId!: number;
+  workspaceId!: number;
 
   constructor() {
     makeObservable(this, {
@@ -75,7 +78,13 @@ export class EditorState {
     pages: pages = [],
     currentPageId = '',
     queries = [],
+    queryClient,
+    appId,
+    workspaceId,
   }: {
+    appId: number;
+    workspaceId: number;
+    queryClient: QueryClient;
     name: string;
     pages: Optional<
       Omit<
@@ -91,7 +100,10 @@ export class EditorState {
     >[];
   }) {
     this.cleanUp();
+    WebloomQuery.queryClient = queryClient;
     this.name = name;
+    this.appId = appId;
+    this.workspaceId = workspaceId;
     seedOrderMap([
       ...Object.values(pages[0].widgets || {}).map((w) => {
         return {
@@ -202,7 +214,7 @@ export class EditorState {
   addQuery(
     query: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger'
+      'dependencyManager' | 'evaluationManger' | 'queryClient'
     >,
   ) {
     this.queries[query.id] = new WebloomQuery({
@@ -293,6 +305,23 @@ export class EditorState {
               };
             },
           );
+          Object.entries(this.queries).forEach(([queryName, query]) => {
+            evaluationContext[queryName] = {
+              ...query.finalValues,
+              run: () =>
+                query.runQuery.mutate({
+                  workspaceId: this.workspaceId,
+                  appId: this.appId,
+                  queryId: query.id,
+                  body: {
+                    evaluatedConfig: toJS(query.config) as Record<
+                      string,
+                      unknown
+                    >,
+                  },
+                }),
+            };
+          });
           evaluateCode(actionConfig.script, evaluationContext);
         }
         break;

@@ -1,9 +1,12 @@
 import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
-import { CompleteQueryI } from '@/api/queries.api';
+import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 import { EvaluationManager } from './evaluationManager';
 import { DependencyManager } from './dependencyManager';
 import { Entity } from './entity';
+import { QueryClient } from '@tanstack/query-core';
+import { MobxMutation } from 'mobbing-query';
+import { FetchXError } from '@/utils/fetch';
 
 export type QueryRawValues = {
   isLoading: boolean;
@@ -32,7 +35,11 @@ export class WebloomQuery
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
-        'editor' | 'dataSource' | 'evaluationManger' | 'dependencyManager'
+        | 'editor'
+        | 'dataSource'
+        | 'evaluationManger'
+        | 'dependencyManager'
+        | 'queryClient'
       >
     >
 {
@@ -41,6 +48,13 @@ export class WebloomQuery
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
+  static queryClient: QueryClient;
+  runQuery: MobxMutation<
+    Awaited<ReturnType<typeof runQueryApi>>,
+    FetchXError,
+    Parameters<typeof runQueryApi>[0],
+    void
+  >;
 
   constructor({
     query,
@@ -79,6 +93,41 @@ export class WebloomQuery
     this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    this.runQuery = new MobxMutation(WebloomQuery.queryClient, () => ({
+      mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
+        return runQueryApi(vars);
+      },
+      onMutate: () => {
+        this.setQueryState('loading');
+      },
+      onError: (error) => {
+        this.setQueryState('error');
+        this.updateQuery({
+          rawValues: {
+            error: error.message,
+            status: error.statusCode,
+          },
+        });
+      },
+      onSuccess: (data) => {
+        console.log('DEBUGPRINT[1]: query.ts:108: data=', data);
+        this.updateQuery({
+          rawValues: {
+            data: data.data,
+            error: data.error,
+            status: data.status,
+          },
+        });
+        console.log('DEBUGPRINT[1]: query.ts:121: data=', data);
+        this.setQueryState('success');
+        console.log(
+          'DEBUGPRINT[1]: query.ts:121: data=',
+          data,
+          toJS(this.rawValues),
+          toJS(this.finalValues),
+        );
+      },
+    }));
     makeObservable(this, {
       fetchValue: flow,
       createdAt: observable,
@@ -104,11 +153,11 @@ export class WebloomQuery
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
-    if (dto.rawValues)
-      this.rawValues = {
-        ...this.rawValues,
-        ...dto.rawValues,
-      };
+    if (dto.rawValues) {
+      this.rawValues.data = dto.rawValues.data;
+      this.rawValues.error = dto.rawValues.error;
+      this.rawValues.status = dto.rawValues.status;
+    }
   }
 
   // TODO: call server to get actual data
