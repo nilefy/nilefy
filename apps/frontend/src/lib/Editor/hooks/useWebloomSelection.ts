@@ -16,7 +16,7 @@ export const useWebloomSelection = (id: string) => {
       if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
         return editorStore.currentPage.clearSelectedNodes();
       }
-      commandManager.executeCommand(new SelectionAction(id, false));
+      commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
     },
     [id],
   );
