@@ -6,6 +6,7 @@ import { WebloomGridDimensions } from '@/lib/Editor/interface';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
+import { WebloomWidgets } from '@/pages/Editor/Components';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -104,8 +105,9 @@ class ResizeAction {
     const node = editorStore.currentPage.getWidgetById(id);
 
     const [gridRow, gridCol] = node.gridSize;
-    const minWidth = gridCol * 2;
-    const minHeight = gridRow * 10;
+    const config = WebloomWidgets[node.type].config.layoutConfig;
+    const minWidth = gridCol * (config.minColumns ?? 2);
+    const minHeight = gridRow * (config.minRows ?? 10);
     if (direction.includes('top')) {
       const diff = initialTop - y;
       const snappedDiff = Math.round(normalize(diff, gridRow));
