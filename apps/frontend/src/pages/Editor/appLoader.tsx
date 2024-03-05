@@ -3,56 +3,38 @@ import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-
-import { getToken, removeToken } from '@/lib/token.localstorage';
-import { JwtPayload } from '@/types/auth.types';
+import { loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
-import { jwtDecode } from 'jwt-decode';
 import { Suspense, useEffect, useRef } from 'react';
-import {
-  Await,
-  defer,
-  redirect,
-  useAsyncValue,
-  useLoaderData,
-} from 'react-router-dom';
+import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
 
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const workspaceId = params.workspaceId;
-      const appId = params.appId;
-      if (!workspaceId || !appId) {
-        throw new Error('use this loader under :workspaceId and :appId');
-      }
-      // Fetch queries
-      const queriesQuery = useQueriesQuery(+workspaceId, +appId);
-
-      // Fetch the app data
-      const appQuery = useAppQuery({
-        workspaceId: +(params.workspaceId as string),
-        appId: +(params.appId as string),
-      });
-      const values = Promise.all([
-        queryClient.fetchQuery(appQuery),
-        queryClient.fetchQuery(queriesQuery),
-      ]);
-      return defer({
-        values,
-      });
+    const notAuthed = loaderAuth();
+    if (notAuthed) {
+      return notAuthed;
     }
+    const workspaceId = params.workspaceId;
+    const appId = params.appId;
+    if (!workspaceId || !appId) {
+      throw new Error('use this loader under :workspaceId and :appId');
+    }
+    // Fetch queries
+    const queriesQuery = useQueriesQuery(+workspaceId, +appId);
+
+    // Fetch the app data
+    const appQuery = useAppQuery({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
+    const values = Promise.all([
+      queryClient.fetchQuery(appQuery),
+      queryClient.fetchQuery(queriesQuery),
+    ]);
+    return defer({
+      values,
+    });
   };
 
 type AppLoaderProps = {
