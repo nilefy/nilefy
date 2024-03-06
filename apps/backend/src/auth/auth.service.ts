@@ -263,6 +263,7 @@ export class AuthService {
           id: true,
           passwordResetToken: true,
           email: true,
+          password: true,
         },
       });
       if (!user) {
@@ -271,6 +272,9 @@ export class AuthService {
       await this.jwtService.verifyAsync(token);
       const salt = await genSalt(10);
       const hashed = await hash(password, salt);
+      if (user.password === hashed) {
+        throw new BadRequestException('use a new password');
+      }
       await this.userService.update(user.id, {
         password: hashed,
         passwordResetToken: null,

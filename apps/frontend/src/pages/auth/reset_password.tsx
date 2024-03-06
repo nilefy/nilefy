@@ -11,16 +11,21 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { resetPasswordSchema } from '@/types/auth.types';
-import { useForgotPassword } from '@/hooks/useForgotPassword';
+import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
+import { useResetPassword } from '@/hooks/useResetPassword';
 
 export function ResetPassword() {
   const { email, token } = useParams();
 
   const form = useForm({
     resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: email || '',
+      password: '',
+      token: token || '',
+    },
   });
-  // const { mutate, isLoading, isSuccess } = useForgotPassword();
+  const { mutate } = useResetPassword();
 
   // const onSubmit = (data) => {
   //   mutate(data, {
@@ -42,8 +47,10 @@ export function ResetPassword() {
   //   });
   // };
 
-  function onsubmit() {
-    console.log('hi from reset pass');
+  function onSubmit(values: ResetPasswordSchema) {
+    // todo check 2 passwords are equal
+
+    mutate(values);
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">
@@ -52,27 +59,31 @@ export function ResetPassword() {
         Please enter your new password below.
       </h4>
       <Form {...form}>
-        {/* <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8"> */}
-        <form onSubmit={onsubmit} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* <form onSubmit={onSubmit} className="space-y-8"> */}
+          <div>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Please Enter your new password"
+                      autoFocus={true}
+                      {...field}
+                    />
+                  </FormControl>
+                  {/* <FormMessage /> */}
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter your new password"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="confirmPassword"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirm New Password</FormLabel>

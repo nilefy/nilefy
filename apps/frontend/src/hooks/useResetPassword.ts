@@ -12,6 +12,8 @@ export function useResetPassword() {
     ResetPasswordSchema
   >({
     mutationFn: (values: ResetPasswordSchema) => {
+      console.log('values from mutate');
+      console.log(values);
       return resetPassword(values);
     },
     onSuccess: async () => {

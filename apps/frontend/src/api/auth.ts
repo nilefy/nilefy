@@ -53,6 +53,8 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
 export const resetPassword = async (
   values: ResetPasswordSchema,
 ): Promise<void> => {
+  console.log('values from api');
+  console.log(values);
   const response = await fetchX('auth/reset-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
