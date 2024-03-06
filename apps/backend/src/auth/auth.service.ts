@@ -250,4 +250,34 @@ export class AuthService {
 
     this.forgotPasswordSendEmail(email, token);
   }
+
+  async resetPassword(email: string, password: string, token: string) {
+    try {
+      const user = await this.db.query.users.findFirst({
+        where: and(
+          eq(users.email, email),
+          eq(users.passwordResetToken, token),
+          isNull(users.deletedAt),
+        ),
+        columns: {
+          id: true,
+          passwordResetToken: true,
+          email: true,
+        },
+      });
+      if (!user) {
+        throw new BadRequestException('Failed to reset password');
+      }
+      await this.jwtService.verifyAsync(token);
+      const salt = await genSalt(10);
+      const hashed = await hash(password, salt);
+      await this.userService.update(user.id, {
+        password: hashed,
+        passwordResetToken: null,
+      });
+      return 'Password reset successfully, try signing in';
+    } catch (e) {
+      throw new BadRequestException('Failed to reset password');
+    }
+  }
 }

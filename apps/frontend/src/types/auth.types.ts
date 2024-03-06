@@ -10,7 +10,10 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 export const resetPasswordSchema = z.object({
-  newPassword: z.string().email(),
+  // email: z.string().email(),
+  // new_password: z.string(),
+  password: z.string(),
+  // token: z.string(),
 });
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;

@@ -55,7 +55,7 @@ export function SignIn() {
       });
       return;
     }
-  }, [err, toast, mutate, token]);
+  }, [err, toast, mutate, token, msg]);
   function onSubmit(values: SignInSchema) {
     mutate(values);
   }
