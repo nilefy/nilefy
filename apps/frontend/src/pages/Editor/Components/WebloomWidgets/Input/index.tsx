@@ -1,6 +1,6 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
@@ -52,8 +52,9 @@ const webloomInputEvents = {
 
 const WebloomInput = observer(function WebloomInput() {
   const { onPropChange, id } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomInputProps;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as WebloomInputProps;
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(
     () =>
       autorun(() => {
@@ -64,13 +65,37 @@ const WebloomInput = observer(function WebloomInput() {
     [onPropChange],
   );
 
+  const clearValue = useCallback(() => {
+    onPropChange({
+      key: 'value',
+      value: '',
+    });
+  }, [onPropChange]);
+
+  useEffect(() => {
+    widget.appendSetters([
+      {
+        key: 'focus',
+        setter: () => {
+          if (!inputRef || !inputRef.current) return;
+          inputRef.current.focus();
+        },
+      },
+      {
+        key: 'clearValue',
+        setter: clearValue,
+      },
+    ]);
+  }, [clearValue]);
+
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{props.label}</Label>
       <Input
+        ref={inputRef}
         placeholder={props.placeholder}
         type={props.type}
-        value={props.value}
+        value={props.value ?? ''}
         disabled={props.disabled}
         autoFocus={props.autoFocus}
         onChange={(e) => {
