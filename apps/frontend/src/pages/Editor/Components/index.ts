@@ -14,11 +14,13 @@ import { WebloomFilePickerWidget } from './WebloomWidgets/FilePicker';
 import { WebloomRadioWidget } from './WebloomWidgets/radioGroup';
 import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
 import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
+import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
   WebloomContainer: WebloomContainerWidget,
   WebloomInput: WebloomInputWidget,
+  WebloomNumberInput: WebloomNumberInputWidget,
   WebloomText: WebloomTextWidget,
   TextEditor: WebloomTextEditorWidget,
   Table: WebloomTableWidget,
