@@ -9,7 +9,6 @@ import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 // import z from 'zod';
 // import zodToJsonSchema from 'zod-to-json-schema';
-import { autorun } from 'mobx';
 import {
   WidgetsEventHandler,
   genEventHandlerUiSchema,
@@ -36,7 +35,7 @@ import {
 
 export type WebloomInputProps = {
   label: string;
-  type: 'number' | 'text' | 'password';
+  type: 'text' | 'password' | 'email';
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
@@ -55,15 +54,6 @@ const WebloomInput = observer(function WebloomInput() {
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomInputProps;
   const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(
-    () =>
-      autorun(() => {
-        if (props.type === 'password' || props.type === 'text')
-          onPropChange({ value: '', key: 'value' });
-        if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
-      }),
-    [onPropChange],
-  );
 
   const clearValue = useCallback(() => {
     onPropChange({
@@ -72,6 +62,7 @@ const WebloomInput = observer(function WebloomInput() {
     });
   }, [onPropChange]);
 
+  // append runtime methods
   useEffect(() => {
     widget.appendSetters([
       {
@@ -153,7 +144,7 @@ const schema: WidgetInspectorConfig = {
       },
       type: {
         type: 'string',
-        enum: ['text', 'password', 'number', 'email'],
+        enum: ['text', 'password', 'email'],
       },
       disabled: {
         type: 'boolean',
