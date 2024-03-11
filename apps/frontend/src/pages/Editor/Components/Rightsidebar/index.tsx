@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
@@ -8,16 +8,32 @@ import { ConfigPanel } from '../configPanel/index';
 import { commandManager } from '@/Actions/CommandManager';
 import { DeleteAction } from '@/Actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
+import { DebouncedInput } from '@/components/debouncedInput';
+import { matchSorter } from 'match-sorter';
 
 function InsertTab() {
+  const [search, setSearch] = useState('');
+  const filteredWidgetsKeys = useMemo(() => {
+    return matchSorter(Object.keys(WebloomWidgets), search);
+  }, [search]);
+
   return (
-    <TabsContent value="insert">
+    <TabsContent value="insert" className="flex flex-col gap-3">
+      <DebouncedInput
+        value={search}
+        onChange={(val) => setSearch(val.toString())}
+        placeholder="Search"
+      />
       <div className="grid w-full  grid-cols-2 gap-2">
-        {Object.entries(WebloomWidgets).map(([name]) => {
+        {filteredWidgetsKeys.map((name) => {
           const config =
             WebloomWidgets[name as keyof typeof WebloomWidgets].config;
           return (
-            <NewNodeAdapter type={name} key={name} data-testid={config.name}>
+            <NewNodeAdapter
+              type={name as keyof typeof WebloomWidgets}
+              key={name}
+              data-testid={config.name}
+            >
               <div>
                 <div className="flex h-full w-full items-center justify-center">
                   {config.icon}
