@@ -153,3 +153,37 @@ we will use `post-checkout` event, follow those steps to enable the hook
     fi
     echo "----------------------------"
     ```
+
+## How to create new Widget
+
+- create new folder with the widget name in `/apps/frontend/src/pages/Editor/Components/WebloomWidgets/`
+    for example `cd apps/frontend/src/pages/Editor/Components/WebloomWidgets/ && mkdir Input && cd Input`
+
+- create `index.tsx` that will contains the widget config and maybe the widget itself, if you want to create any utils or divide your component in files please create the files in the same folder
+
+- the widget is defined through the interface `Widget`(you can import it from `import { Widget } from '@/lib/Editor/interface';`)
+
+    here's a breif description of each field in the interface and how to use it
+
+    > NOTE: the `widget` interface expect generics `Props` to be the type of widget props
+
+    - component 
+        type: `React.ElementType`, required:true, description: the react function component
+    - config 
+        type:`WidgetConfig`, required: true, description: used to describe metadata about the component like
+        - icon: the icon to disblay in the insert tab
+        - name: widget name
+        - layoutConfig: used to describe the widget layout constraints like how many rows/cols the widget will be dropped with
+            ```ts
+            // example from the input widget
+
+              layoutConfig: {
+                colsCount: 5,
+                rowsCount: 8,
+                minColumns: 1,
+                minRows: 4,
+              },
+            ```
+    - defaultProps `WidgetProps`:
+    - schema `WidgetInspectorConfig`:
+    - setters `WidgetSetters<WidgetProps>`:
