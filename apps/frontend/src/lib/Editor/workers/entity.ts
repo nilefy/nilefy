@@ -1,4 +1,6 @@
-import { action, makeObservable, observable } from 'mobx';
+import { action, makeObservable, observable, runInAction } from 'mobx';
+import { deepEqual } from 'fast-equals';
+
 import { DependencyManager } from './dependencyManager';
 
 import { get, set } from 'lodash';
@@ -10,6 +12,8 @@ import {
 import { analyzeDependancies } from '../dependancyUtils';
 import { EntityInspectorConfig } from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
+import { EntityActionRawConfig } from '../evaluation/interface';
+import { MainThreadBroker } from './mainThreadBroker';
 
 export class Entity {
   private readonly evaluablePaths: Set<string>;
@@ -24,25 +28,34 @@ export class Entity {
   public inspectorConfig: Record<string, unknown>[] | undefined;
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public readonly publicAPI: Set<string>;
+  public actions: Record<string, (...args: unknown[]) => void> = {};
+  private mainThreadBroker: MainThreadBroker;
+  // these are the props that are set by the setter, we map the path to the old value.
+  public setterProps: Record<string, unknown> = {};
   constructor({
     id,
     dependencyManager,
+    mainThreadBroker,
     unevalValues,
     evaluablePaths = [],
     inspectorConfig = [],
     publicAPI = new Set(),
+    actionsConfig = {},
   }: {
     id: string;
     dependencyManager: DependencyManager;
+    mainThreadBroker: MainThreadBroker;
     unevalValues: Record<string, unknown>;
     inspectorConfig: EntityInspectorConfig;
     evaluablePaths?: string[];
     publicAPI?: Set<string>;
+    actionsConfig?: EntityActionRawConfig;
   }) {
     makeObservable(this, {
       id: observable,
       dependencyManager: observable,
       unevalValues: observable,
+      setterProps: observable,
       setValue: action,
       addDependencies: action,
       clearDependents: action,
@@ -52,7 +65,13 @@ export class Entity {
       setValues: action,
       initDependecies: action,
     });
+    this.mainThreadBroker = mainThreadBroker;
+    this.actions = this.processActionConfig(actionsConfig);
     this.publicAPI = publicAPI;
+    // add actions to the publicAPI
+    for (const actionName in this.actions) {
+      this.publicAPI.add(actionName);
+    }
     this.id = id;
     this.dependencyManager = dependencyManager;
     this.inspectorConfig = inspectorConfig;
@@ -135,14 +154,49 @@ export class Entity {
   }
 
   setValue(path: string, value: unknown) {
+    if (deepEqual(this.setterProps[path], value)) {
+      return;
+    } else {
+      delete this.setterProps[path];
+    }
     set(this.unevalValues, path, value);
+    if (this.evaluablePaths.has(path)) {
+      this.analyzeAndApplyDependencyUpdate(path);
+    }
   }
   setValues(values: Record<string, unknown>) {
     for (const path in values) {
-      this.setValue(path, values[path]);
+      set(this.unevalValues, path, values[path]);
     }
     for (const path of this.evaluablePaths) {
       this.analyzeAndApplyDependencyUpdate(path);
     }
   }
+  getEvent(eventName: string) {
+    return this.unevalValues[eventName] as string;
+  }
+  processActionConfig = (config: EntityActionRawConfig) => {
+    const actions: Record<string, (...args: unknown[]) => void> = {};
+    for (const key in config) {
+      const configItem = config[key];
+      if (configItem.type === 'SETTER') {
+        actions[key] = (value: unknown) => {
+          runInAction(() => {
+            const path = configItem.path;
+            this.setValue(path, value);
+            this.setterProps[path] = this.unevalValues[path];
+          });
+        };
+      } else if (configItem.type === 'SIDE_EFFECT') {
+        actions[key] = (...args: unknown[]) => {
+          this.mainThreadBroker.addEvent({
+            id: this.id,
+            actionName: key,
+            args,
+          });
+        };
+      }
+    }
+    return actions;
+  };
 }

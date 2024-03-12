@@ -12,15 +12,18 @@ import { observer } from 'mobx-react-lite';
 export type WebloomButtonProps = {
   text: string;
   color: string;
-  event: string;
+  onClick: string;
 };
 const WebloomButton = observer(() => {
   const { id } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomButtonProps;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as WebloomButtonProps;
   return (
     <Button
       {...props}
+      onClick={() => {
+        widget.handleEvent('onClick');
+      }}
       className={`active:bg-primary/20 block h-full w-full`}
       style={{ backgroundColor: props.color }}
     >
@@ -44,7 +47,7 @@ const config: WidgetConfig = {
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
   color: 'black',
-  event: 'onclick',
+  onClick: '',
 };
 
 const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
@@ -66,10 +69,12 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
     sectionName: 'Interactions',
     children: [
       {
-        path: 'event',
-        label: 'Event',
-        type: 'event',
-        options: {},
+        path: 'onClick',
+        label: 'onClick',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onClick',
+        },
       },
     ],
   },

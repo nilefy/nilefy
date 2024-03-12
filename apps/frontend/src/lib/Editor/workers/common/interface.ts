@@ -1,14 +1,31 @@
 import { EntityTypes } from '../../interface';
 import { EntityConfig } from '../editor';
 import { Operation } from 'fast-json-patch';
-export type WorkerResponse = EvaluationUpdateResponse;
-export type EntityConfigBody = Omit<EntityConfig, 'dependencyManager'>;
+
+export type EventExecutionResult = {
+  id: string;
+  actionName: string;
+  args: unknown[];
+};
+
+export type WorkerEventExecutionResponse = {
+  body: EventExecutionResult[];
+  event: 'EventExecution';
+};
+export type WorkerResponse =
+  | EvaluationUpdateResponse
+  | WorkerEventExecutionResponse;
+export type EntityConfigBody = Omit<
+  EntityConfig,
+  'dependencyManager' | 'mainThreadBroker'
+>;
 export type WorkerRequest =
   | InitRequest
   | UpdateEntityRequest
   | RemoveEntityRequest
   | AddEntityRequest
   | ChangePageRequest
+  | EntityEventExecutionRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -43,7 +60,16 @@ export type UpdateEntityRequest = {
   event: 'updateEntity';
   body: {
     id: string;
-    unevalValues: EntityConfigBody['unevalValues'];
+    path: string;
+    value: unknown;
+  };
+};
+
+export type EntityEventExecutionRequest = {
+  event: 'eventExecution';
+  body: {
+    id: string;
+    eventName: string;
   };
 };
 

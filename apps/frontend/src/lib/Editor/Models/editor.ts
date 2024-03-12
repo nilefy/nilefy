@@ -9,7 +9,6 @@ import {
 } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
-import { EvaluationContext } from '../evaluation';
 import { Entity } from './entity';
 import { seedNameMap } from '../entitiesNameSeed';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
@@ -17,6 +16,9 @@ import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
 import { QueryClient } from '@tanstack/query-core';
 import { QueriesManager } from './queriesManager';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EvaluationContext } from '../evaluation/interface';
+import { Operation } from 'fast-json-patch';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -45,6 +47,7 @@ export class EditorState implements WebloomDisposable {
         keepAlive: true,
         equals: comparer.shallow,
       }),
+      entities: computed,
       name: observable,
       currentPage: computed,
       changePage: action,
@@ -55,18 +58,17 @@ export class EditorState implements WebloomDisposable {
       init: action,
       applyEvalForestPatch: action.bound,
     });
-    this.workerBroker = new WorkerBroker();
-    reaction(
-      () => this.workerBroker.lastEvalUpdates,
-      this.applyEvalForestPatch,
-    );
+    this.workerBroker = new WorkerBroker(this);
   }
-  applyEvalForestPatch() {
-    Object.entries(this.workerBroker.lastEvalUpdates).forEach(([id, op]) => {
+  applyEvalForestPatch(
+    lastEvalUpdates: Record<string, Operation[]>,
+    lastErrorUpdates: Record<string, Operation[]>,
+  ) {
+    Object.entries(lastEvalUpdates).forEach(([id, op]) => {
       const entity = this.getEntityById(id);
       if (entity) {
         entity.applyEvalationUpdatePatch(op);
-        const errors = this.workerBroker.lastErrorUpdates[id];
+        const errors = lastErrorUpdates[id];
         if (errors) {
           entity.applyErrorUpdatePatch(errors);
         }
@@ -160,6 +162,7 @@ export class EditorState implements WebloomDisposable {
                 unevalValues: toJS(widget.rawValues),
                 inspectorConfig: widget.inspectorConfig,
                 publicAPI: widget.publicAPI,
+                actionsConfig: widget.rawActionsConfig,
               };
               return acc;
             },
@@ -175,12 +178,9 @@ export class EditorState implements WebloomDisposable {
    */
   get context() {
     const context: EvaluationContext = {};
-    Object.values(this.currentPage.widgets).forEach((widget) => {
-      if (widget.isRoot) return;
-      context[widget.id] = widget.rawValues;
-    });
-    Object.values(this.queries).forEach((query) => {
-      context[query.id] = query.rawValues;
+    Object.values(this.entities).forEach((entity) => {
+      if (entity.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return;
+      context[entity.id] = entity.finalValues;
     });
     return context;
   }

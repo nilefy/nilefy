@@ -73,14 +73,16 @@ export class WebloomWidget
     props?: Record<string, unknown>;
     dependents?: Set<string>;
   }) {
+    const widgetConfig = WebloomWidgets[type];
     super({
       workerBroker: page.workerBroker,
       id,
       rawValues: props ?? {},
-      inspectorConfig: WebloomWidgets[type]
-        .inspectorConfig as EntityInspectorConfig,
+      inspectorConfig: widgetConfig.inspectorConfig as EntityInspectorConfig,
       entityType: 'widget',
-      publicAPI: WebloomWidgets[type].publicAPI,
+      publicAPI: widgetConfig.publicAPI,
+      // @ts-expect-error fda
+      entityActionConfig: widgetConfig.config.widgetActions ?? {},
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
@@ -89,9 +91,9 @@ export class WebloomWidget
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const { config } = WebloomWidgets[type];
-    this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
-    this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
+    this.rowsCount = rowsCount ?? widgetConfig.config.layoutConfig.rowsCount;
+    this.columnsCount =
+      columnsCount ?? widgetConfig.config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
 
@@ -328,6 +330,16 @@ export class WebloomWidget
     });
   }
 
+  handleEvent(event: string) {
+    if (!this.rawValues[event]) return;
+    this.workerBroker.postMessege({
+      event: 'eventExecution',
+      body: {
+        eventName: event,
+        id: this.id,
+      },
+    });
+  }
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }

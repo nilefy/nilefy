@@ -1,4 +1,4 @@
-import { makeObservable, observable, action, toJS, autorun } from 'mobx';
+import { makeObservable, observable, action } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 

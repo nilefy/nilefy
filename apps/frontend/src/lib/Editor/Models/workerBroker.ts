@@ -8,16 +8,16 @@ import {
 } from 'mobx';
 import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
 import { debounce } from 'lodash';
-import { Operation } from 'fast-json-patch';
 import { WebloomDisposable } from './interfaces';
+import { EditorState } from './editor';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
-  public lastEvalUpdates: Record<string, Operation[]> = {};
-  public lastErrorUpdates: Record<string, Operation[]> = {};
-  constructor() {
+
+  constructor(private readonly editorState: EditorState) {
+    this.editorState = editorState;
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),
       { type: 'module' },
@@ -26,8 +26,6 @@ export class WorkerBroker implements WebloomDisposable {
     makeObservable(this, {
       // @ts-expect-error mobx decorators please
       queue: observable,
-      lastEvalUpdates: observable.ref,
-      lastErrorUpdates: observable.ref,
       debouncePostMessege: action.bound,
       receiveMessage: action,
       postMessege: action,
@@ -60,7 +58,7 @@ export class WorkerBroker implements WebloomDisposable {
     this.worker.postMessage({
       event: 'batch',
       body: queueCopy,
-    } as WorkerRequest);
+    });
   }
 
   receiveMessage(res: WorkerResponse) {
@@ -68,8 +66,21 @@ export class WorkerBroker implements WebloomDisposable {
     console.log('worker sent', event, body);
     switch (event) {
       case 'EvaluationUpdate':
-        this.lastEvalUpdates = body.evaluationUpdates;
-        this.lastErrorUpdates = body.errorUpdates;
+        this.editorState.applyEvalForestPatch(
+          body.evaluationUpdates,
+          body.errorUpdates,
+        );
+        break;
+      case 'EventExecution':
+        body.forEach((executionResult) => {
+          const id = executionResult.id;
+          const entity = this.editorState.getEntityById(id);
+          if (!entity) return;
+          entity.executeAction(
+            executionResult.actionName,
+            ...executionResult.args,
+          );
+        });
         break;
       default:
         break;

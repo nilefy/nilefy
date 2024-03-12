@@ -15,6 +15,7 @@ const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTextProps;
+
   return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
 });
 const config: WidgetConfig = {
@@ -28,6 +29,20 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setText: {
+      type: 'SETTER',
+      name: 'setText',
+      path: 'text',
+    },
+    testSideEffect: {
+      type: 'SIDE_EFFECT',
+      name: 'testSideEffect',
+      fn: (entity, ...args: unknown[]) => {
+        console.log('testSideEffect', entity, args);
+      },
+    },
+  },
 };
 
 const defaultProps: WebloomTextProps = {
@@ -50,6 +65,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
     ],
   },
 ];
+
 export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,

@@ -4,11 +4,12 @@ import {
   makeObservable,
   observable,
   reaction,
+  runInAction,
   toJS,
 } from 'mobx';
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
-import { cloneDeep, debounce, get, set } from 'lodash';
+import { cloneDeep, debounce, entries, get, has, set } from 'lodash';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import {
@@ -16,17 +17,19 @@ import {
   EntityTypes,
   EntityErrorsRecord,
 } from '../interface';
-import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 import {
   ajv,
   extractValidators,
   transformErrorToMessage,
 } from '../validations';
 import { Operation, applyPatch } from 'fast-json-patch';
-
+import {
+  EntityActionRawConfig,
+  EntityActionConfig as EntityActionsConfig,
+} from '../evaluation/interface';
+import { memoizeDebounce } from '../utils';
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
-  private readonly evaluablePaths: Set<string>;
   public readonly publicAPI: Set<string>;
   private dispoables: Array<() => void> = [];
   public readonly inspectorConfig: EntityInspectorConfig;
@@ -38,14 +41,17 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public codePaths: Set<string>;
   protected readonly workerBroker: WorkerBroker;
   public errors: EntityErrorsRecord[string] = {};
+  public actions: Record<string, (...args: unknown[]) => void> = {};
+  public actionsConfig: EntityActionsConfig;
+  public rawActionsConfig: EntityActionRawConfig;
   constructor({
     id,
     workerBroker,
     rawValues,
     inspectorConfig = [],
-    evaluablePaths = [],
     publicAPI = new Set(),
     entityType: entityType,
+    entityActionConfig = {},
   }: {
     id: string;
     entityType: EntityTypes;
@@ -54,6 +60,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     evaluablePaths?: string[];
     publicAPI?: Set<string>;
     workerBroker: WorkerBroker;
+    entityActionConfig?: EntityActionsConfig;
   }) {
     makeObservable(this, {
       id: observable,
@@ -66,15 +73,26 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       hasErrors: computed,
       applyEvalationUpdatePatch: action,
       applyErrorUpdatePatch: action,
+      executeAction: action,
       errors: observable,
     });
     this.publicAPI = publicAPI;
     this.id = id;
     this.entityType = entityType;
     this.workerBroker = workerBroker;
+    this.actionsConfig = cloneDeep(entityActionConfig);
+    this.rawActionsConfig = Object.entries(entityActionConfig).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value;
+        // @ts-expect-error fn is not defined in the type
+        delete acc[key]['fn'];
+        return acc;
+      },
+      {} as EntityActionRawConfig,
+    );
+    this.actions = this.processActionConfig(this.actionsConfig);
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
-
     this.values = {};
     this.validators = extractValidators(inspectorConfig);
     for (const path in this.validators) {
@@ -83,17 +101,10 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         set(this.finalValues, path, res.value);
       }
     }
-    this.evaluablePaths = new Set<string>([
-      ...evaluablePaths,
-      ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
-    ]);
+
     this.codePaths = new Set<string>();
     this.inspectorConfig = inspectorConfig;
-    this.dispoables.push(
-      ...[
-        reaction(() => this.rawValues, this.syncRawValuesWithEvaluationWorker),
-      ],
-    );
+
     this.workerBroker.postMessege({
       event: 'addEntity',
       body: {
@@ -103,16 +114,40 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
           inspectorConfig: this.inspectorConfig,
           publicAPI: this.publicAPI,
           id: this.id,
+          actionsConfig: this.rawActionsConfig,
         },
       },
     });
   }
 
   applyEvalationUpdatePatch(ops: Operation[]) {
+    const changed = new Set<string>();
+    const removed = new Set<string>();
+    for (const op of ops) {
+      if (op.op === '_get' || op.op === 'test') {
+        continue;
+      } else if (op.op === 'move') {
+        changed.add(op.path);
+        changed.add(op.from);
+        removed.add(op.from);
+      } else if (op.op === 'remove') {
+        removed.add(op.path);
+        changed.add(op.path);
+      } else {
+        changed.add(op.path);
+      }
+    }
     applyPatch(this.values, ops, false, true);
     applyPatch(this.finalValues, ops, false, true);
-    // TODO: Can we move this to the worker?
+    for (const path of removed) {
+      const lodashPath = path.split('/').slice(1);
+      if (has(this.rawValues, lodashPath)) {
+        set(this.finalValues, lodashPath, get(this.rawValues, lodashPath));
+      }
+    }
+    // TODO: Can we move this to the worker
     for (const path in this.validators) {
+      if (!changed.has(path.split('.').join('/'))) continue;
       const res = this.validatePath(
         path,
         get(this.values, path, get(this.rawValues, path)),
@@ -148,18 +183,19 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     } as WorkerRequest);
   }
 
-  syncRawValuesWithEvaluationWorker() {
+  syncRawValuesWithEvaluationWorker = (path: string) => {
     this.workerBroker.postMessege({
       event: 'updateEntity',
       body: {
-        unevalValues: toJS(this.rawValues),
+        value: toJS(get(this.rawValues, path)),
+        path,
         id: this.id,
         entityType: this.entityType,
       },
     } as WorkerRequest);
-  }
+  };
 
-  debouncedSyncRawValuesWithEvaluationWorker = debounce(
+  debouncedSyncRawValuesWithEvaluationWorker = memoizeDebounce(
     this.syncRawValuesWithEvaluationWorker,
     200,
   );
@@ -174,7 +210,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       }
       set(this.finalValues, path, value);
     }
-    this.debouncedSyncRawValuesWithEvaluationWorker();
+    this.debouncedSyncRawValuesWithEvaluationWorker(path);
   }
 
   getValue(key: string) {
@@ -227,4 +263,30 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     return null;
   }
+
+  processActionConfig = (config: EntityActionsConfig) => {
+    const actions: Record<string, (...args: unknown[]) => void> = {};
+    for (const key in config) {
+      const configItem = config[key];
+      if (configItem.type === 'SIDE_EFFECT') {
+        actions[key] = (...args: unknown[]) => {
+          runInAction(() => {
+            configItem.fn(this, ...args);
+          });
+        };
+      }
+      // We needn't handle setters. They only work in the worker.
+    }
+    return actions;
+  };
+
+  executeAction = (actionName: string, ...args: unknown[]) => {
+    const action = this.actions[actionName];
+    if (!action) return;
+    if (args.length === 0) {
+      action();
+      return;
+    }
+    action(...args);
+  };
 }

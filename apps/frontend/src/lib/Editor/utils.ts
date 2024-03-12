@@ -1,4 +1,10 @@
-import { isPlainObject } from 'lodash';
+import {
+  DebounceSettings,
+  DebouncedFunc,
+  debounce,
+  isPlainObject,
+  memoize,
+} from 'lodash';
 import { WebloomGridDimensions, WebloomPixelDimensions } from './interface';
 
 export const getDOMInfo = (el: HTMLElement) => {
@@ -130,4 +136,36 @@ export function normalizeCoords(
 }
 export function isObject(val: unknown): val is Record<string, unknown> {
   return isPlainObject(val);
+}
+
+export interface MemoizeDebouncedFunction<
+  F extends (...args: unknown[]) => unknown,
+> {
+  (...args: Parameters<F>): void;
+  flush: (...args: Parameters<F>) => void;
+}
+
+export function memoizeDebounce<F extends (...args: any[]) => any>(
+  func: F,
+  wait = 0,
+  options: DebounceSettings = {},
+  resolver?: (...args: Parameters<F>) => unknown,
+): MemoizeDebouncedFunction<F> {
+  const debounceMemo = memoize<(...args: Parameters<F>) => DebouncedFunc<F>>(
+    (..._args: Parameters<F>) => debounce(func, wait, options),
+    resolver,
+  );
+
+  function wrappedFunction(
+    this: MemoizeDebouncedFunction<F>,
+    ...args: Parameters<F>
+  ): ReturnType<F> | undefined {
+    return debounceMemo(...args)(...args);
+  }
+
+  wrappedFunction.flush = (...args: Parameters<F>): void => {
+    debounceMemo(...args).flush();
+  };
+
+  return wrappedFunction as unknown as MemoizeDebouncedFunction<F>;
 }

@@ -1,12 +1,11 @@
 import { memoize } from 'lodash';
-import { bindingRegexGlobal } from '../utils';
-import { EntityInspectorConfig } from './interface';
-
-export type EvaluationContext = Record<string, unknown>;
+import { bindingRegexGlobal } from '../../utils';
+import { EntityInspectorConfig } from '../interface';
 
 export const evaluate = (
   code: string,
   evaluationContext: Record<string, unknown>,
+  isAction: boolean = false,
 ): {
   value: unknown;
   errors: string[] | null;
@@ -31,6 +30,11 @@ export const evaluate = (
   const errors: string[] = [];
   const evalInContext = (expression: string) => {
     try {
+      if (isAction) {
+        return new Function('context', `with(context) { ${expression} }`)(
+          evaluationContext,
+        );
+      }
       return new Function('context', `with(context) { return ${expression} }`)(
         evaluationContext,
       );

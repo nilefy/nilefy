@@ -1,6 +1,8 @@
 import { InputProps } from '@/components/ui/input';
 import { ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
+import { EntityActionConfig } from './evaluation/interface';
+import { WebloomWidget } from './Models/widget';
 
 type BaseControlProps = {
   label: string;
@@ -56,10 +58,10 @@ export type FormControl<
   Key extends keyof TProps = keyof TProps,
 > = {
   type: FormControlType;
+  isEvent?: boolean;
   path: Key;
   options: FormControlOptions[FormControlType];
   hidden?(props: TProps): boolean;
-  deps?: keyof TProps[];
   validation?: JsonSchema7Type;
 } & BaseControlProps;
 type InspectorFormControlsTypes = keyof FormControlOptions;
@@ -123,6 +125,7 @@ export interface WidgetConfig {
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
+  widgetActions?: EntityActionConfig<WebloomWidget>;
 }
 
 export type Widget<WidgetProps extends Record<string, unknown>> = {

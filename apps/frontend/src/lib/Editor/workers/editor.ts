@@ -3,17 +3,23 @@ import { Entity } from './entity';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { AddEntityRequest, EntityConfigBody } from './common/interface';
-import { EvaluationContext } from '../evaluation';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../dependancyUtils';
+import { MainThreadBroker } from './mainThreadBroker';
+import { entries } from 'lodash';
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
+// The worker maintains its version of the state
+// They are kept in sync by autorunners
+// The worker is responsible for evaluation, widget events, and dependency analysis
+// as usually these tend to be the most expensive operations
 export class EditorState {
   pages: Record<string, Record<string, Entity>> = {};
   queries: Record<string, Entity> = {};
   currentPageId: string = '';
   dependencyManager: DependencyManager;
   evaluationManager: EvaluationManager;
+  mainThreadBroker: MainThreadBroker;
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -39,6 +45,7 @@ export class EditorState {
     });
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
+    this.mainThreadBroker = new MainThreadBroker(this);
   }
 
   cleanUp() {
@@ -47,6 +54,7 @@ export class EditorState {
     this.currentPageId = '';
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
+    this.mainThreadBroker = new MainThreadBroker(this);
   }
 
   init({
@@ -59,13 +67,10 @@ export class EditorState {
     pages: Record<string, Record<string, EntityConfigBody>>;
   }) {
     this.currentPageId = currentPageId;
-    Object.entries(queries).forEach(([_, query]) => {
-      this.addQuery({
-        ...query,
-        dependencyManager: this.dependencyManager,
-      });
+    entries(queries).forEach(([_, query]) => {
+      this.addQuery(this.normalizeEntityConfig(query));
     });
-    Object.entries(pages).forEach(([pageId, widgets]) => {
+    entries(pages).forEach(([pageId, widgets]) => {
       this.addPage({ pageId, widgets });
     });
     this.dependencyManager.initAnalysis();
@@ -73,7 +78,7 @@ export class EditorState {
 
   get context() {
     const context: AnalysisContext = {};
-    Object.entries(this.entities).forEach(([id, entity]) => {
+    entries(this.entities).forEach(([id, entity]) => {
       context[id] = entity.publicAPI;
     });
     return context;
@@ -99,10 +104,7 @@ export class EditorState {
   }) {
     this.pages[pageId] ||= {};
     Object.entries(widgets).forEach(([id, widget]) => {
-      this.pages[pageId][id] = new Entity({
-        ...widget,
-        dependencyManager: this.dependencyManager,
-      });
+      this.pages[pageId][id] = new Entity(this.normalizeEntityConfig(widget));
     });
   }
 
@@ -139,16 +141,17 @@ export class EditorState {
   }
   addEntity(body: AddEntityRequest['body']) {
     if (body.entityType === 'query') {
-      this.addQuery({
-        ...body.config,
-        dependencyManager: this.dependencyManager,
-      });
+      this.addQuery(this.normalizeEntityConfig(body.config));
     } else {
-      this.addWidget({
-        ...body.config,
-        dependencyManager: this.dependencyManager,
-      });
+      this.addWidget(this.normalizeEntityConfig(body.config));
     }
+  }
+  normalizeEntityConfig(config: EntityConfigBody) {
+    return {
+      ...config,
+      dependencyManager: this.dependencyManager,
+      mainThreadBroker: this.mainThreadBroker,
+    };
   }
   changePage(id: string) {
     this.currentPageId = id;

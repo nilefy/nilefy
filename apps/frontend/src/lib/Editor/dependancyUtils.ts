@@ -14,12 +14,12 @@ export type DependencyRelation = {
 export type AnalysisContext = Record<string, Set<string>>;
 export const analyzeDependancies = ({
   code,
-  toProperty,
+  toProperty = 'NONE',
   entityId,
   keys,
 }: {
   code: unknown;
-  toProperty: string;
+  toProperty?: string;
   entityId: string;
   keys: AnalysisContext;
 }) => {
@@ -31,13 +31,13 @@ export const analyzeDependancies = ({
   const matches = code.matchAll(bindingRegexGlobal);
   const errors: unknown[] = [];
   let isCode = false;
-  main_loop: for (const match of matches) {
+  for (const match of matches) {
     isCode = true;
     const expression = match[1];
     try {
       const { references: dependanciesInExpression } =
         extractIdentifierInfoFromCode(expression);
-      for (const dependancy of dependanciesInExpression) {
+      main_loop: for (const dependancy of dependanciesInExpression) {
         const dependancyParts = dependancy.split('.');
         const dependancyName = dependancyParts[0];
         const fullPath = dependancyParts.slice(1).join('.');
@@ -45,6 +45,7 @@ export const analyzeDependancies = ({
         const pathPermutation = calcPathPermutations(fullPath);
         for (const path of pathPermutation) {
           if (keys[dependancyName].has(path)) {
+            // TODO remove dependent part of the object, since it's not of any use
             dependencies.push({
               dependent: {
                 entityId,

@@ -1,14 +1,16 @@
-import { computed, makeObservable, observable, toJS } from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import invariant from 'invariant';
-import { get, merge, set } from 'lodash';
+import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
 import { bindingRegexGlobal } from '@/lib/utils';
 import { EntityErrorsRecord } from '../interface';
+import { analyzeDependancies } from '../dependancyUtils';
 
 export class EvaluationManager {
   editor: EditorState;
   disposables: Array<() => void> = [];
+  lastEvaluatedForest: Record<string, unknown> = {};
   constructor(editor: EditorState) {
     makeObservable(this, {
       editor: observable,
@@ -16,6 +18,8 @@ export class EvaluationManager {
         keepAlive: true,
         requiresReaction: false,
       }),
+      settedProps: computed,
+      executeEvent: action,
     });
     this.editor = editor;
   }
@@ -28,6 +32,46 @@ export class EvaluationManager {
     }
     return false;
   }
+  get settedProps() {
+    return entries(this.editor.entities).reduce(
+      (acc, [id, entity]) => {
+        acc[id] = entity.setterProps;
+        return acc;
+      },
+      {} as Record<string, Record<string, unknown>>,
+    );
+  }
+
+  executeEvent(entityId: string, code: string) {
+    // since events aren't continously evaluated, we extract dependencies on the fly.
+    // We'll extract dependencies for actions as well.
+    const res = analyzeDependancies({
+      code,
+      entityId,
+      keys: this.editor.context,
+    });
+    if (!res.isCode) return;
+    const { dependencies } = res;
+    const context: Record<string, unknown> = {};
+    for (const item of dependencies) {
+      const { entityId, path } = item.dependency;
+      const fullPath = `${entityId}.${path}`;
+      const entity = this.editor.getEntityById(entityId);
+      const value = get(
+        this.lastEvaluatedForest,
+        fullPath,
+        get(entity.unevalValues, path, get(entity.actions, path)),
+      );
+      set(context, fullPath, value);
+    }
+    // We don't expect return values from events.
+    evaluate(code, context, true);
+  }
+
+  /**
+   * @description this method evaluates the whole forest of the dependency graph.
+   * it shouldn't be used to execute actions or events.
+   */
   get evaluatedForest() {
     performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
@@ -91,9 +135,19 @@ export class EvaluationManager {
 
       set(evalTree, item, evaluatedValue);
     }
+    // remove leaves of the graph because they are only used for evaluation.
     toBeRemoved.forEach((item) => {
       set(evalTree, item, undefined);
     });
+
+    // add setted props to the evalTree so they override their raw values in the main thread
+    for (const [entityId, props] of entries(this.settedProps)) {
+      for (const path of keys(props)) {
+        const entity = this.editor.getEntityById(entityId);
+        set(evalTree, `${entityId}.${path}`, get(entity.unevalValues, path));
+      }
+    }
+
     performance.mark('end-evaluatedForest');
     const duration = performance.measure(
       'evaluatedForest',
@@ -101,7 +155,7 @@ export class EvaluationManager {
       'end-evaluatedForest',
     );
     console.log('perf eval', duration.duration);
-
+    this.lastEvaluatedForest = evalTree;
     return {
       evalTree,
       errors,
