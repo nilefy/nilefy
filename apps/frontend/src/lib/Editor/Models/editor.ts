@@ -18,6 +18,7 @@ import { QueriesManager } from './queriesManager';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { EvaluationContext } from '../evaluation/interface';
 import { Operation } from 'fast-json-patch';
+import { WebloomGlobal } from './webloomGlobal';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -27,6 +28,7 @@ export class EditorState implements WebloomDisposable {
    */
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery> = {};
+  globals: WebloomGlobal | undefined = undefined;
   workerBroker: WorkerBroker;
   currentPageId: string = '';
   initting = false;
@@ -79,6 +81,7 @@ export class EditorState implements WebloomDisposable {
   dispose() {
     Object.values(this.pages).forEach((page) => page.dispose());
     Object.values(this.queries).forEach((query) => query.dispose());
+    this.globals = undefined;
     // react strict mode causes this to be called twice
     process.env.NODE_ENV === 'production' ? this.workerBroker.dispose() : null;
     this.pages = {};
@@ -96,6 +99,7 @@ export class EditorState implements WebloomDisposable {
     queries = [],
     appId,
     workspaceId,
+    currentUser,
   }: {
     name: string;
     pages: Optional<
@@ -109,6 +113,7 @@ export class EditorState implements WebloomDisposable {
     >[];
     appId: number;
     workspaceId: number;
+    currentUser: string;
   }) {
     this.dispose();
     this.appId = appId;
@@ -116,6 +121,13 @@ export class EditorState implements WebloomDisposable {
     this.name = name;
     this.queryClient = new QueryClient();
     this.queriesManager = new QueriesManager(this.queryClient, this);
+    this.globals = new WebloomGlobal({
+      globals: {
+        currentPageName: currentPageId,
+        currentUser,
+      },
+      workerBroker: this.workerBroker,
+    });
     seedNameMap([
       ...Object.values(pages[0].widgets || {}).map((w) => w.type),
       ...queries.map((q) => q.dataSource.name),
@@ -153,6 +165,13 @@ export class EditorState implements WebloomDisposable {
       event: 'init',
       body: {
         currentPageId: this.currentPageId,
+        globals: {
+          unevalValues: this.globals.rawValues,
+          id: this.globals.id,
+          inspectorConfig: this.globals.inspectorConfig,
+          publicAPI: this.globals.publicAPI,
+          actionsConfig: this.globals.rawActionsConfig,
+        },
         queries: Object.values(this.queries).reduce(
           (acc, query) => {
             acc[query.id as string] = {
@@ -191,6 +210,7 @@ export class EditorState implements WebloomDisposable {
   get context() {
     const context: EvaluationContext = {};
     Object.values(this.entities).forEach((entity) => {
+      if (!entity) return;
       if (entity.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return;
       context[entity.id] = entity.finalValues;
     });
@@ -198,7 +218,7 @@ export class EditorState implements WebloomDisposable {
   }
 
   getEntityById(id: string): Entity | undefined {
-    return this.currentPage.widgets[id] || this.queries[id];
+    return this.entities[id as keyof typeof this.entities];
   }
 
   get currentPage() {
@@ -263,6 +283,7 @@ export class EditorState implements WebloomDisposable {
     return {
       ...this.currentPage.widgets,
       ...this.queries,
+      [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
   }
 }

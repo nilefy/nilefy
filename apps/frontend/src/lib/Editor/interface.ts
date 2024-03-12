@@ -147,7 +147,7 @@ export type {
   InspectorColorProps,
 };
 
-export type EntityTypes = 'query' | 'widget';
+export type EntityTypes = 'query' | 'widget' | 'globals';
 
 export type EntityPathErrors = {
   /**

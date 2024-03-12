@@ -16,6 +16,7 @@ type EntityConfigRecord = Record<string, EntityConfigBody>;
 export class EditorState {
   pages: Record<string, Record<string, Entity>> = {};
   queries: Record<string, Entity> = {};
+  otherEntities: Record<string, Entity> = {};
   currentPageId: string = '';
   dependencyManager: DependencyManager;
   evaluationManager: EvaluationManager;
@@ -61,10 +62,12 @@ export class EditorState {
     currentPageId,
     queries,
     pages,
+    globals,
   }: {
     currentPageId: string;
     queries: Record<string, EntityConfigBody>;
     pages: Record<string, Record<string, EntityConfigBody>>;
+    globals: EntityConfigBody;
   }) {
     this.currentPageId = currentPageId;
     entries(queries).forEach(([_, query]) => {
@@ -73,6 +76,9 @@ export class EditorState {
     entries(pages).forEach(([pageId, widgets]) => {
       this.addPage({ pageId, widgets });
     });
+    this.otherEntities[EDITOR_CONSTANTS.GLOBALS_ID] = new Entity(
+      this.normalizeEntityConfig(globals),
+    );
     this.dependencyManager.initAnalysis();
   }
 
@@ -88,11 +94,12 @@ export class EditorState {
     return {
       ...this.currentPage,
       ...this.queries,
+      ...this.otherEntities,
     };
   }
 
   getEntityById(id: string) {
-    return this.currentPage[id] || this.queries[id];
+    return this.currentPage[id] || this.queries[id] || this.otherEntities[id];
   }
 
   addPage({
@@ -123,6 +130,9 @@ export class EditorState {
   addQuery(config: EntityConfig) {
     this.queries[config.id] = new Entity(config);
   }
+  addOtherEntity(config: EntityConfig) {
+    this.otherEntities[config.id] = new Entity(config);
+  }
   removeWidget(id: string) {
     delete this.currentPage[id];
   }
@@ -140,10 +150,16 @@ export class EditorState {
     }
   }
   addEntity(body: AddEntityRequest['body']) {
-    if (body.entityType === 'query') {
-      this.addQuery(this.normalizeEntityConfig(body.config));
-    } else {
-      this.addWidget(this.normalizeEntityConfig(body.config));
+    switch (body.entityType) {
+      case 'query':
+        this.addQuery(this.normalizeEntityConfig(body.config));
+        break;
+      case 'widget':
+        this.addWidget(this.normalizeEntityConfig(body.config));
+        break;
+      default:
+        this.addOtherEntity(this.normalizeEntityConfig(body.config));
+        break;
     }
   }
   normalizeEntityConfig(config: EntityConfigBody) {

@@ -52,6 +52,7 @@ export type InitRequest = {
     currentPageId: string;
     queries: Record<string, EntityConfigBody>;
     pages: Record<string, Record<string, EntityConfigBody>>;
+    globals: EntityConfigBody;
   };
   event: 'init';
 };

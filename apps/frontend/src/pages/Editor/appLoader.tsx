@@ -2,6 +2,7 @@ import { commandManager } from '@/Actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { editorStore } from '@/lib/Editor/Models';
 
 import { getToken, removeToken } from '@/lib/token.localstorage';
@@ -56,6 +57,8 @@ export const appLoader =
         workspaceId: app.workspaceId,
         appId: app.id,
         queries,
+        // TODO: get the current user from the token
+        currentUser: 'Super User',
         currentPageId: app.defaultPage.id.toString(),
         pages: [
           {

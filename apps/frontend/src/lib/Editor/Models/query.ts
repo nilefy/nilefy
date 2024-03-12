@@ -34,7 +34,6 @@ const QueryActions = {
     type: 'SIDE_EFFECT',
     name: 'runQuery',
     fn: (entity: WebloomQuery) => {
-      console.log('running query');
       entity.runQuery.mutate();
     },
   },

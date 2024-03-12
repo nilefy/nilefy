@@ -1,4 +1,4 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import { observable, makeObservable, action, computed, toJS } from 'mobx';
 import { analyzeDependancies } from '../dependancyUtils';
 import { forEach } from 'lodash';
 import { EditorState } from './editor';

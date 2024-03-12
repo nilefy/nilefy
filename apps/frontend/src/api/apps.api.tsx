@@ -150,7 +150,7 @@ export const useAppsQuery = ({
 function useApps(...rest: Parameters<typeof useAppsQuery>) {
   return useQuery(useAppsQuery(...rest));
 }
-
+// todo change function name because it's currently misleading
 export const useAppQuery = ({
   workspaceId,
   appId,
