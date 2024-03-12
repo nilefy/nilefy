@@ -12,16 +12,34 @@ export type DependencyRelation = {
   dependency: { entityId: string; path: string };
 };
 export type AnalysisContext = Record<string, Set<string>>;
+
+export const functionActionWrapper = (code: string) => {
+  return `
+    (function() {
+       ${code}
+    })()
+  `;
+};
+export const functionExpressionWrapper = (code: string) => {
+  return `
+    (function() {
+       return ${code}
+    })()
+  `;
+};
+
 export const analyzeDependancies = ({
   code,
   toProperty = 'NONE',
   entityId,
   keys,
+  isAction = false,
 }: {
   code: unknown;
   toProperty?: string;
   entityId: string;
   keys: AnalysisContext;
+  isAction?: boolean;
 }) => {
   if (typeof code !== 'string')
     return { toProperty, dependencies: [], isCode: false };
@@ -34,9 +52,12 @@ export const analyzeDependancies = ({
   for (const match of matches) {
     isCode = true;
     const expression = match[1];
+    const wrappedExpression = isAction
+      ? functionActionWrapper(expression)
+      : functionExpressionWrapper(expression);
     try {
       const { references: dependanciesInExpression } =
-        extractIdentifierInfoFromCode(expression);
+        extractIdentifierInfoFromCode(wrappedExpression);
       main_loop: for (const dependancy of dependanciesInExpression) {
         const dependancyParts = dependancy.split('.');
         const dependancyName = dependancyParts[0];

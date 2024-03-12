@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
@@ -49,6 +49,7 @@ export class EvaluationManager {
       code,
       entityId,
       keys: this.editor.context,
+      isAction: true,
     });
     if (!res.isCode) return;
     const { dependencies } = res;
