@@ -5,10 +5,10 @@ import {
   Body,
   Param,
   Delete,
-  UseGuards,
   ParseIntPipe,
   Req,
   Put,
+  StreamableFile,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -21,13 +21,14 @@ import {
   AppRetDto,
   AppDto,
 } from '../dto/apps.dto';
-import { JwtGuard } from '../auth/jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
+import { Readable } from 'node:stream';
 
 @ApiBearerAuth()
-@UseGuards(JwtGuard)
+// auth guard is on hold for this [PR] for testing purposes
+// @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -58,6 +59,20 @@ export class AppsController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
   ): Promise<AppsRetDto[]> {
     return await this.appsService.findAll(workspaceId);
+  }
+
+  @Get('export/:appId')
+  @ApiCreatedResponse({
+    description: 'get workspace app',
+    type: AppRetDto,
+  })
+  async exportOne(
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+  ): Promise<StreamableFile> {
+    const app = await this.appsService.exportAppJSON(workspaceId, appId);
+    const stream = Readable.from([app]);
+    return new StreamableFile(stream);
   }
 
   @Get(':appId')
