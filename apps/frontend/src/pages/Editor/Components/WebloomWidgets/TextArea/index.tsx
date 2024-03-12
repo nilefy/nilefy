@@ -12,6 +12,7 @@ import {
   genEventHandlerUiSchema,
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
+import { ToolTipWrapper } from '../tooltipWrapper';
 
 export type WebloomTextAreaProps = {
   label: string;
@@ -20,6 +21,10 @@ export type WebloomTextAreaProps = {
   autoFocus?: boolean | undefined;
   value?: string;
   events: WidgetsEventHandler;
+  caption?: string;
+  tooltip?: string;
+  maxLength?: number;
+  minLength?: number;
 };
 
 const webloomTextAreaEvents = {
@@ -59,36 +64,45 @@ const WebloomTextArea = observer(function WebloomTextArea() {
   }, [clearValue]);
 
   return (
-    <div className="flex h-full w-full items-center justify-center gap-2">
-      <Label>{props.label}</Label>
-      <Textarea
-        className="h-full w-full resize-none"
-        ref={textAreaRef}
-        placeholder={props.placeholder}
-        value={props.value ?? ''}
-        disabled={props.disabled}
-        autoFocus={props.autoFocus}
-        onChange={(e) => {
-          onPropChange({
-            key: 'value',
-            value: e.target.value,
-          });
-          editorStore.executeActions<typeof webloomTextAreaEvents>(
-            id,
-            'onTextChanged',
-          );
-        }}
-        onFocus={() =>
-          editorStore.executeActions<typeof webloomTextAreaEvents>(
-            id,
-            'onFocus',
-          )
-        }
-        onBlur={() =>
-          editorStore.executeActions<typeof webloomTextAreaEvents>(id, 'onBlur')
-        }
-      />
-    </div>
+    <ToolTipWrapper text={props.tooltip}>
+      <div className="flex h-full w-full flex-col gap-4 p-1">
+        <Label htmlFor={id}>{props.label}</Label>
+        <Textarea
+          id={id}
+          className="h-full w-full resize-none"
+          ref={textAreaRef}
+          placeholder={props.placeholder}
+          value={props.value ?? ''}
+          disabled={props.disabled}
+          autoFocus={props.autoFocus}
+          maxLength={props.maxLength}
+          minLength={props.minLength}
+          onChange={(e) => {
+            onPropChange({
+              key: 'value',
+              value: e.target.value,
+            });
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onTextChanged',
+            );
+          }}
+          onFocus={() =>
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onFocus',
+            )
+          }
+          onBlur={() =>
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onBlur',
+            )
+          }
+        />
+        <p className="text-sm text-muted-foreground">{props.caption}</p>
+      </div>
+    </ToolTipWrapper>
   );
 });
 
@@ -122,6 +136,12 @@ const schema: WidgetInspectorConfig = {
       label: {
         type: 'string',
       },
+      caption: {
+        type: 'string',
+      },
+      tooltip: {
+        type: 'string',
+      },
       disabled: {
         type: 'boolean',
         default: false,
@@ -129,6 +149,12 @@ const schema: WidgetInspectorConfig = {
       autoFocus: {
         type: 'boolean',
         default: false,
+      },
+      maxLength: {
+        type: 'number',
+      },
+      minLength: {
+        type: 'number',
       },
       events: widgetsEventHandlerJsonSchema,
       value: {
@@ -144,10 +170,22 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Placeholder',
       'ui:placeholder': 'Enter placeholder',
     },
+    caption: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    maxLength: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    minLength: {
+      'ui:widget': 'inlineCodeInput',
+    },
     label: {
       'ui:widget': 'inlineCodeInput',
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
+    },
+    tooltip: {
+      'ui:widget': 'inlineCodeInput',
     },
     events: genEventHandlerUiSchema(webloomTextAreaEvents),
   },
