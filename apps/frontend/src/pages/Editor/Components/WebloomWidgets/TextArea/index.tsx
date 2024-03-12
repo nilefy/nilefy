@@ -1,59 +1,43 @@
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-// import z from 'zod';
-// import zodToJsonSchema from 'zod-to-json-schema';
 import {
   WidgetsEventHandler,
   genEventHandlerUiSchema,
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
+import { ToolTipWrapper } from '../tooltipWrapper';
 
-/**
- * fields that you want to be on the configForm
- */
-// const webloomInputProps = z.object({
-//   placeholder: z.string().optional(),
-//   label: z.string(),
-//   type: z.union([
-//     z.literal('text'),
-//     z.literal('password'),
-//     z.literal('number'),
-//     z.literal('email'),
-//   ]),
-//   disabled: z.boolean().default(false).optional(),
-//   autoFocus: z.boolean().default(false).optional(),
-//   value: z.union([z.string(), z.number()]).optional(),
-//   events: widgetsEventHandler,
-// });
-
-export type WebloomInputProps = {
+export type WebloomTextAreaProps = {
   label: string;
-  type: 'text' | 'password' | 'email';
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
-  value?: string | number | undefined;
+  value?: string;
   events: WidgetsEventHandler;
+  caption?: string;
+  tooltip?: string;
+  maxLength?: number;
+  minLength?: number;
 };
 
-const webloomInputEvents = {
+const webloomTextAreaEvents = {
   onTextChanged: 'onTextChanged',
   onFocus: 'onFocus',
   onBlur: 'onBlur',
 } as const;
 
-const WebloomInput = observer(function WebloomInput() {
+const WebloomTextArea = observer(function WebloomTextArea() {
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
-  const props = widget.finalValues as WebloomInputProps;
-  const inputRef = useRef<HTMLInputElement>(null);
+  const props = widget.finalValues as WebloomTextAreaProps;
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const clearValue = useCallback(() => {
     onPropChange({
@@ -68,8 +52,8 @@ const WebloomInput = observer(function WebloomInput() {
       {
         key: 'focus',
         setter: () => {
-          if (!inputRef || !inputRef.current) return;
-          inputRef.current.focus();
+          if (!textAreaRef || !textAreaRef.current) return;
+          textAreaRef.current.focus();
         },
       },
       {
@@ -80,54 +64,64 @@ const WebloomInput = observer(function WebloomInput() {
   }, [clearValue]);
 
   return (
-    <div className="flex w-full items-center justify-center gap-2">
-      <Label>{props.label}</Label>
-      <Input
-        ref={inputRef}
-        placeholder={props.placeholder}
-        type={props.type}
-        value={props.value ?? ''}
-        disabled={props.disabled}
-        autoFocus={props.autoFocus}
-        onChange={(e) => {
-          onPropChange({
-            key: 'value',
-            value: e.target.value,
-          });
-          editorStore.executeActions<typeof webloomInputEvents>(
-            id,
-            'onTextChanged',
-          );
-        }}
-        onFocus={() =>
-          editorStore.executeActions<typeof webloomInputEvents>(id, 'onFocus')
-        }
-        onBlur={() =>
-          editorStore.executeActions<typeof webloomInputEvents>(id, 'onBlur')
-        }
-      />
-    </div>
+    <ToolTipWrapper text={props.tooltip}>
+      <div className="flex h-full w-full flex-col gap-4 p-1">
+        <Label htmlFor={id}>{props.label}</Label>
+        <Textarea
+          id={id}
+          className="h-full w-full resize-none"
+          ref={textAreaRef}
+          placeholder={props.placeholder}
+          value={props.value ?? ''}
+          disabled={props.disabled}
+          autoFocus={props.autoFocus}
+          maxLength={props.maxLength}
+          minLength={props.minLength}
+          onChange={(e) => {
+            onPropChange({
+              key: 'value',
+              value: e.target.value,
+            });
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onTextChanged',
+            );
+          }}
+          onFocus={() =>
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onFocus',
+            )
+          }
+          onBlur={() =>
+            editorStore.executeActions<typeof webloomTextAreaEvents>(
+              id,
+              'onBlur',
+            )
+          }
+        />
+        <p className="text-sm text-muted-foreground">{props.caption}</p>
+      </div>
+    </ToolTipWrapper>
   );
 });
 
 const config: WidgetConfig = {
-  name: 'Input',
+  name: 'textarea',
   icon: <TextCursorInput />,
   isCanvas: false,
   layoutConfig: {
-    colsCount: 5,
-    rowsCount: 8,
-    minColumns: 1,
+    colsCount: 10,
+    rowsCount: 10,
+    minColumns: 2,
     minRows: 4,
   },
-  resizingDirection: 'Horizontal',
+  resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomInputProps = {
+const defaultProps: WebloomTextAreaProps = {
   placeholder: 'Enter text',
-  value: '',
   label: 'Label',
-  type: 'text',
   disabled: false,
   events: [],
 };
@@ -142,9 +136,11 @@ const schema: WidgetInspectorConfig = {
       label: {
         type: 'string',
       },
-      type: {
+      caption: {
         type: 'string',
-        enum: ['text', 'password', 'email'],
+      },
+      tooltip: {
+        type: 'string',
       },
       disabled: {
         type: 'boolean',
@@ -154,35 +150,49 @@ const schema: WidgetInspectorConfig = {
         type: 'boolean',
         default: false,
       },
+      maxLength: {
+        type: 'number',
+      },
+      minLength: {
+        type: 'number',
+      },
       events: widgetsEventHandlerJsonSchema,
       value: {
-        anyOf: [{ type: 'string' }, { type: 'number' }],
+        type: 'string',
       },
     },
     required: ['events', 'label'],
   },
   uiSchema: {
     value: { 'ui:widget': 'hidden' },
-    type: {
-      'ui:placeholder': 'Select type',
-      'ui:title': 'Type',
-    },
     placeholder: {
       'ui:widget': 'inlineCodeInput',
       'ui:title': 'Placeholder',
       'ui:placeholder': 'Enter placeholder',
+    },
+    caption: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    maxLength: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    minLength: {
+      'ui:widget': 'inlineCodeInput',
     },
     label: {
       'ui:widget': 'inlineCodeInput',
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
     },
-    events: genEventHandlerUiSchema(webloomInputEvents),
+    tooltip: {
+      'ui:widget': 'inlineCodeInput',
+    },
+    events: genEventHandlerUiSchema(webloomTextAreaEvents),
   },
 };
 
-const WebloomInputWidget: Widget<WebloomInputProps> = {
-  component: WebloomInput,
+const WebloomTextAreaWidget: Widget<WebloomTextAreaProps> = {
+  component: WebloomTextArea,
   config,
   defaultProps,
   schema,
@@ -198,4 +208,4 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   },
 };
 
-export { WebloomInputWidget };
+export { WebloomTextAreaWidget };

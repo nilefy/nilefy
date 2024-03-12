@@ -446,6 +446,11 @@ const WebloomTableWidget: Widget<WebloomTableProps> = {
       path: 'data',
       type: 'array<object>',
     },
+    setPage: {
+      path: 'pageIndex',
+      type: 'number',
+    },
+    setPageSize: { path: 'pageSize', type: 'number' },
   },
 };
 

@@ -7,49 +7,28 @@ import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-// import z from 'zod';
-// import zodToJsonSchema from 'zod-to-json-schema';
 import {
   WidgetsEventHandler,
   genEventHandlerUiSchema,
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
 
-/**
- * fields that you want to be on the configForm
- */
-// const webloomInputProps = z.object({
-//   placeholder: z.string().optional(),
-//   label: z.string(),
-//   type: z.union([
-//     z.literal('text'),
-//     z.literal('password'),
-//     z.literal('number'),
-//     z.literal('email'),
-//   ]),
-//   disabled: z.boolean().default(false).optional(),
-//   autoFocus: z.boolean().default(false).optional(),
-//   value: z.union([z.string(), z.number()]).optional(),
-//   events: widgetsEventHandler,
-// });
-
 export type WebloomInputProps = {
   label: string;
-  type: 'text' | 'password' | 'email';
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
-  value?: string | number | undefined;
+  value?: number;
   events: WidgetsEventHandler;
 };
 
-const webloomInputEvents = {
-  onTextChanged: 'onTextChanged',
+const webloomNumberInputEvents = {
+  onChange: 'onChange',
   onFocus: 'onFocus',
   onBlur: 'onBlur',
 } as const;
 
-const WebloomInput = observer(function WebloomInput() {
+const WebloomNumberInput = observer(function WebloomNumberInput() {
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomInputProps;
@@ -58,11 +37,10 @@ const WebloomInput = observer(function WebloomInput() {
   const clearValue = useCallback(() => {
     onPropChange({
       key: 'value',
-      value: '',
+      value: 0,
     });
   }, [onPropChange]);
 
-  // append runtime methods
   useEffect(() => {
     widget.appendSetters([
       {
@@ -85,8 +63,8 @@ const WebloomInput = observer(function WebloomInput() {
       <Input
         ref={inputRef}
         placeholder={props.placeholder}
-        type={props.type}
-        value={props.value ?? ''}
+        type="number"
+        value={props.value ?? 0}
         disabled={props.disabled}
         autoFocus={props.autoFocus}
         onChange={(e) => {
@@ -94,16 +72,22 @@ const WebloomInput = observer(function WebloomInput() {
             key: 'value',
             value: e.target.value,
           });
-          editorStore.executeActions<typeof webloomInputEvents>(
+          editorStore.executeActions<typeof webloomNumberInputEvents>(
             id,
-            'onTextChanged',
+            'onChange',
           );
         }}
         onFocus={() =>
-          editorStore.executeActions<typeof webloomInputEvents>(id, 'onFocus')
+          editorStore.executeActions<typeof webloomNumberInputEvents>(
+            id,
+            'onFocus',
+          )
         }
         onBlur={() =>
-          editorStore.executeActions<typeof webloomInputEvents>(id, 'onBlur')
+          editorStore.executeActions<typeof webloomNumberInputEvents>(
+            id,
+            'onBlur',
+          )
         }
       />
     </div>
@@ -111,7 +95,7 @@ const WebloomInput = observer(function WebloomInput() {
 });
 
 const config: WidgetConfig = {
-  name: 'Input',
+  name: 'Number Input',
   icon: <TextCursorInput />,
   isCanvas: false,
   layoutConfig: {
@@ -125,9 +109,8 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomInputProps = {
   placeholder: 'Enter text',
-  value: '',
+  value: 0,
   label: 'Label',
-  type: 'text',
   disabled: false,
   events: [],
 };
@@ -142,10 +125,6 @@ const schema: WidgetInspectorConfig = {
       label: {
         type: 'string',
       },
-      type: {
-        type: 'string',
-        enum: ['text', 'password', 'email'],
-      },
       disabled: {
         type: 'boolean',
         default: false,
@@ -156,17 +135,13 @@ const schema: WidgetInspectorConfig = {
       },
       events: widgetsEventHandlerJsonSchema,
       value: {
-        anyOf: [{ type: 'string' }, { type: 'number' }],
+        type: 'number',
       },
     },
     required: ['events', 'label'],
   },
   uiSchema: {
     value: { 'ui:widget': 'hidden' },
-    type: {
-      'ui:placeholder': 'Select type',
-      'ui:title': 'Type',
-    },
     placeholder: {
       'ui:widget': 'inlineCodeInput',
       'ui:title': 'Placeholder',
@@ -177,19 +152,19 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Label',
       'ui:placeholder': 'Enter label',
     },
-    events: genEventHandlerUiSchema(webloomInputEvents),
+    events: genEventHandlerUiSchema(webloomNumberInputEvents),
   },
 };
 
-const WebloomInputWidget: Widget<WebloomInputProps> = {
-  component: WebloomInput,
+const WebloomNumberInputWidget: Widget<WebloomInputProps> = {
+  component: WebloomNumberInput,
   config,
   defaultProps,
   schema,
   setters: {
     setValue: {
       path: 'value',
-      type: 'string',
+      type: 'number',
     },
     setDisabled: {
       path: 'disabled',
@@ -198,4 +173,4 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   },
 };
 
-export { WebloomInputWidget };
+export { WebloomNumberInputWidget };

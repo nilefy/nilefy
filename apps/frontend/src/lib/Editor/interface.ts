@@ -177,7 +177,10 @@ export type Widget<WidgetProps> = {
   schema: WidgetInspectorConfig;
   setters?: WidgetSetters<WidgetProps>;
 };
-
+export type selectOptions = {
+  value: string;
+  label: string;
+};
 // inspector types
 export type {
   BaseControlProps,

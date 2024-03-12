@@ -8,23 +8,31 @@ import { editorStore } from '@/lib/Editor/Models';
 import z from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { ToolTipWrapper } from '../tooltipWrapper';
+import {
+  WidgetsEventHandler,
+  genEventHandlerUiSchema,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
 
 /**
  * fields that you want to be on the configForm
  */
-const webloomImageProps = z.object({
-  src: z.string().optional(),
-  altText: z.string().optional(),
-  tooltip: z.string().optional(),
+
+export type WebloomImageProps = {
   /**
    * @link https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit
+   * @default contain
    */
-  objectFit: z
-    .enum(['contain', 'cover', 'none', 'fill', 'scale-down'])
-    .default('contain'),
-});
+  objectFit: 'fill' | 'none' | 'contain' | 'cover' | 'scale-down';
+  src?: string | undefined;
+  altText?: string | undefined;
+  tooltip?: string | undefined;
+  events: WidgetsEventHandler;
+};
 
-export type WebloomImageProps = z.infer<typeof webloomImageProps>;
+const webloomImageEvents = {
+  onClick: 'onClick',
+} as const;
 
 const WebloomImage = observer(function WebloomImage() {
   const { id } = useContext(WidgetContext);
@@ -40,6 +48,12 @@ const WebloomImage = observer(function WebloomImage() {
           className="h-full w-full"
           style={{
             objectFit,
+          }}
+          onClick={() => {
+            editorStore.executeActions<typeof webloomImageEvents>(
+              id,
+              'onClick',
+            );
           }}
         />
       </div>
@@ -64,10 +78,31 @@ const defaultProps: WebloomImageProps = {
   // TODO: change this url
   src: 'https://assets.appsmith.com/widgets/default.png',
   objectFit: 'contain',
+  events: [],
 };
 
 const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomImageProps),
+  dataSchema: {
+    type: 'object',
+    properties: {
+      src: {
+        type: 'string',
+      },
+      altText: {
+        type: 'string',
+      },
+      tooltip: {
+        type: 'string',
+      },
+      objectFit: {
+        type: 'string',
+        enum: ['contain', 'cover', 'none', 'fill', 'scale-down'],
+        default: 'contain',
+      },
+      events: widgetsEventHandlerJsonSchema,
+    },
+    required: ['events', 'objectFit'],
+  },
   uiSchema: {
     src: {
       'ui:widget': 'inlineCodeInput',
@@ -79,6 +114,7 @@ const schema: WidgetInspectorConfig = {
     tooltip: {
       'ui:widget': 'inlineCodeInput',
     },
+    events: genEventHandlerUiSchema(webloomImageEvents),
   },
 };
 
@@ -87,6 +123,12 @@ const WebloomImageWidget: Widget<WebloomImageProps> = {
   config,
   defaultProps,
   schema,
+  setters: {
+    setImageUrl: {
+      path: 'src',
+      type: 'string',
+    },
+  },
 };
 
 export { WebloomImageWidget };

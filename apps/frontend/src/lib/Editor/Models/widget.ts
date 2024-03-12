@@ -8,7 +8,6 @@ import {
   WebloomPixelDimensions,
   LayoutMode,
   WIDGET_SECTIONS,
-  WidgetSetters,
 } from '../interface';
 import {
   convertGridToPixel,
@@ -131,6 +130,7 @@ export class WebloomWidget
       isVisible: computed,
     });
   }
+
   get columnWidth(): number {
     if (this.isRoot)
       // flooring to avoid floating point errors and because integers are just nice
@@ -349,8 +349,12 @@ export class WebloomWidget
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
+
+  /**
+   * meanted to be used just once when creating the widget
+   */
   private genSetters(
-    settersConfig?: WidgetSetters,
+    settersConfig?: (typeof WebloomWidgets)[WidgetTypes]['setters'],
   ): Record<string, (arg: unknown) => void> {
     const res: Record<string, (arg: unknown) => void> = {};
     if (!settersConfig) return res;
@@ -358,5 +362,17 @@ export class WebloomWidget
       res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
     }
     return res;
+  }
+
+  /**
+   * if doesn't exist add it if not overwrite existing one
+   * @param key setter key
+   * @param setter the funcion to run
+   * TODO: also take the signature for autocompletion
+   */
+  appendSetters(setters: { key: string; setter: (...args: any[]) => void }[]) {
+    setters.forEach(({ key, setter }) => {
+      this.setters[key] = setter;
+    });
   }
 }
