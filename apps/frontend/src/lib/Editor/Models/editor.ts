@@ -5,7 +5,6 @@ import {
   computed,
   comparer,
   toJS,
-  reaction,
 } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
@@ -33,6 +32,8 @@ export class EditorState implements WebloomDisposable {
   initting = false;
   queryClient!: QueryClient;
   queriesManager!: QueriesManager;
+  appId!: number;
+  workspaceId!: number;
   /**
    * application name
    */
@@ -84,6 +85,8 @@ export class EditorState implements WebloomDisposable {
     this.queries = {};
     this.currentPageId = '';
     this.queryClient?.clear();
+    this.appId = -1;
+    this.workspaceId = -1;
   }
 
   init({
@@ -91,6 +94,8 @@ export class EditorState implements WebloomDisposable {
     pages: pages = [],
     currentPageId = '',
     queries = [],
+    appId,
+    workspaceId,
   }: {
     name: string;
     pages: Optional<
@@ -100,10 +105,14 @@ export class EditorState implements WebloomDisposable {
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'workerBroker' | 'queryClient'
+      'workerBroker' | 'queryClient' | 'workspaceId'
     >[];
+    appId: number;
+    workspaceId: number;
   }) {
     this.dispose();
+    this.appId = appId;
+    this.workspaceId = workspaceId;
     this.name = name;
     this.queryClient = new QueryClient();
     this.queriesManager = new QueriesManager(this.queryClient, this);
@@ -136,6 +145,8 @@ export class EditorState implements WebloomDisposable {
         ...q,
         queryClient: this.queryClient,
         workerBroker: this.workerBroker,
+        appId,
+        workspaceId,
       });
     });
     this.workerBroker.postMessege({
@@ -149,6 +160,7 @@ export class EditorState implements WebloomDisposable {
               id: query.id,
               inspectorConfig: query.inspectorConfig,
               publicAPI: query.publicAPI,
+              actionsConfig: query.rawActionsConfig,
             };
             return acc;
           },

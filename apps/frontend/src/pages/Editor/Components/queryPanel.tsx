@@ -97,14 +97,7 @@ const QueryItem = observer(function QueryItem({
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
             }
-            query.runQuery.mutate({
-              workspaceId: +workspaceId,
-              appId: +appId,
-              queryId: query.id,
-              body: {
-                evaluatedConfig: toJS(query.config) as Record<string, unknown>,
-              },
-            });
+            query.runQuery.mutate();
           }}
         >
           run

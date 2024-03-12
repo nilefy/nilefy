@@ -1,4 +1,4 @@
-import { makeObservable, observable, action } from 'mobx';
+import { makeObservable, observable, action, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 
@@ -29,6 +29,17 @@ type QueryRawValues = {
   error?: string;
 };
 
+const QueryActions = {
+  runQuery: {
+    type: 'SIDE_EFFECT',
+    name: 'runQuery',
+    fn: (entity: WebloomQuery) => {
+      console.log('running query');
+      entity.runQuery.mutate();
+    },
+  },
+};
+
 export class WebloomQuery
   extends Entity
   implements
@@ -38,6 +49,7 @@ export class WebloomQuery
         | 'dataSource'
         | keyof ConstructorParameters<typeof Entity>[0]
         | 'queryClient'
+        | 'workspaceId'
       >
     >
 {
@@ -46,17 +58,19 @@ export class WebloomQuery
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
+  workspaceId: number;
   private readonly queryClient: QueryClient;
   runQuery: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
     FetchXError,
-    Parameters<typeof runQueryApi>[0],
+    void,
     void
   >;
   constructor({
     query,
     id,
     appId,
+    workspaceId,
     dataSource,
     dataSourceId,
     createdAt,
@@ -66,6 +80,7 @@ export class WebloomQuery
   }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
     workerBroker: WorkerBroker;
     queryClient: QueryClient;
+    workspaceId: number;
   }) {
     super({
       id,
@@ -81,12 +96,20 @@ export class WebloomQuery
       publicAPI: new Set(['data', 'queryState']),
       entityType: 'query',
       inspectorConfig: dataSource.dataSource.queryConfig.formConfig as any,
+      // @ts-expect-error TODO: fix this
+      entityActionConfig: QueryActions,
     });
-
     this.queryClient = queryClient;
     this.runQuery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
-        return runQueryApi(vars);
+      mutationFn: () => {
+        return runQueryApi({
+          appId,
+          workspaceId,
+          queryId: id,
+          body: {
+            evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+          },
+        });
       },
       onMutate: () => {
         this.setValue('queryState', 'loading');
@@ -103,7 +126,7 @@ export class WebloomQuery
         this.setValue('queryState', 'success');
       },
     }));
-
+    this.workspaceId = workspaceId;
     this.appId = appId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;

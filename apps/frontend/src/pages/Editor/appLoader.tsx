@@ -53,6 +53,8 @@ export const appLoader =
       const tree = app.defaultPage.tree;
       editorStore.init({
         name: app.name,
+        workspaceId: app.workspaceId,
+        appId: app.id,
         queries,
         currentPageId: app.defaultPage.id.toString(),
         pages: [

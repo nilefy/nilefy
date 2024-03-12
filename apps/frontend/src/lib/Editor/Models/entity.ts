@@ -3,13 +3,12 @@ import {
   computed,
   makeObservable,
   observable,
-  reaction,
   runInAction,
   toJS,
 } from 'mobx';
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
-import { cloneDeep, debounce, entries, get, has, set } from 'lodash';
+import { cloneDeep, get, has, set } from 'lodash';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import {
@@ -25,7 +24,7 @@ import {
 import { Operation, applyPatch } from 'fast-json-patch';
 import {
   EntityActionRawConfig,
-  EntityActionConfig as EntityActionsConfig,
+  EntityActionConfig,
 } from '../evaluation/interface';
 import { memoizeDebounce } from '../utils';
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
@@ -42,7 +41,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   protected readonly workerBroker: WorkerBroker;
   public errors: EntityErrorsRecord[string] = {};
   public actions: Record<string, (...args: unknown[]) => void> = {};
-  public actionsConfig: EntityActionsConfig;
+  public actionsConfig: EntityActionConfig;
   public rawActionsConfig: EntityActionRawConfig;
   constructor({
     id,
@@ -60,7 +59,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     evaluablePaths?: string[];
     publicAPI?: Set<string>;
     workerBroker: WorkerBroker;
-    entityActionConfig?: EntityActionsConfig;
+    entityActionConfig?: EntityActionConfig;
   }) {
     makeObservable(this, {
       id: observable,
@@ -264,7 +263,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     return null;
   }
 
-  processActionConfig = (config: EntityActionsConfig) => {
+  processActionConfig = (config: EntityActionConfig) => {
     const actions: Record<string, (...args: unknown[]) => void> = {};
     for (const key in config) {
       const configItem = config[key];
