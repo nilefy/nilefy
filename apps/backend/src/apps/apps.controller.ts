@@ -75,6 +75,8 @@ export class AppsController {
     return new StreamableFile(stream);
   }
 
+  async importOne() {}
+
   @Get(':appId')
   @ApiCreatedResponse({
     description: 'get workspace app',

@@ -185,6 +185,7 @@ export class AppsService {
 
   async exportAppJSON(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
     const app = await this.findOne(workspaceId, appId);
-    return JSON.stringify(app);
+    const appJson = JSON.stringify(app);
+    return appJson;
   }
 }
