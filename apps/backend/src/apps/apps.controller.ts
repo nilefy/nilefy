@@ -75,7 +75,14 @@ export class AppsController {
     return new StreamableFile(stream);
   }
 
-  async importOne() {}
+  @Post('import')
+  async importOne(
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Req() req: ExpressAuthedRequest,
+  ) {
+    workspaceId;
+    req;
+  }
 
   @Get(':appId')
   @ApiCreatedResponse({
