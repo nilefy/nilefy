@@ -29,6 +29,7 @@ export class WorkerBroker implements WebloomDisposable {
       debouncePostMessege: action.bound,
       receiveMessage: action,
       postMessege: action,
+      _postMessege: action,
     });
 
     this.queue = [];
@@ -76,6 +77,9 @@ export class WorkerBroker implements WebloomDisposable {
           const id = executionResult.id;
           const entity = this.editorState.getEntityById(id);
           if (!entity) return;
+          // Todo: create a promise that resolves when no widgets has debounced updates => this will allow us to wait for the updates to be applied before executing the action
+          //flush queue first so that the worker has the latest state
+          this._postMessege();
           entity.executeAction(
             executionResult.actionName,
             ...executionResult.args,

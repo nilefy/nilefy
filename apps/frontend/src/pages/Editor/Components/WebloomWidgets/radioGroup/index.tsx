@@ -31,7 +31,6 @@ const WebloomRadio = observer(() => {
         value={props.value}
         loop={true}
         onValueChange={(e) => {
-          console.log('e', e);
           onPropChange({
             key: 'value',
             value: e,
@@ -113,6 +112,7 @@ export const WebloomRadioWidget: Widget<WebloomRadioProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  publicAPI: new Set(['value']),
 };
 
 export { WebloomRadio };
