@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
+import { FormProps } from '@rjsf/core';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -33,9 +34,11 @@ import { getNewEntityName } from '@/lib/Editor/widgetName';
 import { Label } from '@/components/ui/label';
 import EntityForm from '@/components/rjsf_shad/entityForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoadingButton } from '@/components/loadingButton';
+import { QueryI } from '@/api/queries.api';
 
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
-  function QueryPreview(props, ref) {
+  forwardRef(function QueryPreview(props, ref) {
     return (
       <Tabs
         ref={ref}
@@ -71,10 +74,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsContent>
       </Tabs>
     );
-  },
-  {
-    forwardRef: true,
-  },
+  }),
 );
 
 const QueryItem = observer(function QueryItem({
@@ -83,6 +83,9 @@ const QueryItem = observer(function QueryItem({
   query: WebloomQuery;
 }) {
   const rjsfRef = useRef<FormT>(null);
+  const [triggerMode, setTriggerMode] = useState<QueryI['triggerMode']>(
+    query.triggerMode,
+  );
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
@@ -100,17 +103,32 @@ const QueryItem = observer(function QueryItem({
         });
       },
     });
-  // const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
-  //   onSuccess(data) {
-  //     query.setQueryState('success');
-  //     query.updateQuery({
-  //       rawValues: {
-  //         ...data,
-  //       },
-  //     });
-  //     jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
-  //   },
-  // });
+
+  // pass to rjsf
+  const onSubmitCallback = useCallback<FormProps['onSubmit']>(
+    ({ formData }) => {
+      if (!workspaceId || !appId)
+        throw new Error(
+          "that's weird this function should run under workspaceId, appId",
+        );
+
+      updateMutation({
+        workspaceId: +workspaceId,
+        appId: +appId,
+        queryId: query.id,
+        dto: {
+          query: formData,
+          dataSourceId: +curDataSource,
+          triggerMode,
+        },
+      });
+    },
+    [appId, curDataSource, query.id, updateMutation, workspaceId, triggerMode],
+  );
+  // to trigger rjsf submit outside of rjsf jsx
+  const onSaveCallback = () => {
+    rjsfRef.current?.submit();
+  };
 
   return (
     <div className="h-full w-full">
@@ -118,22 +136,19 @@ const QueryItem = observer(function QueryItem({
       <div className="flex h-10 flex-row items-center justify-end gap-5 border-b border-gray-300">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input defaultValue={query.id} />
-        <Button
-          variant={'ghost'}
-          type="button"
-          className="mr-auto"
-          onClick={() => rjsfRef.current?.submit()}
+        <LoadingButton
+          isLoading={isSubmitting}
+          buttonProps={{
+            onClick: onSaveCallback,
+            variant: 'ghost',
+            type: 'button',
+            className: 'mr-auto',
+          }}
         >
-          {isSubmitting ? (
-            <>
-              <SaveIcon /> Saving...
-            </>
-          ) : (
-            <>
-              <SaveIcon /> Save
-            </>
-          )}
-        </Button>
+          <>
+            <SaveIcon /> Save
+          </>
+        </LoadingButton>
         <Button
           variant={'ghost'}
           disabled={query.runQuery.state.isPending}
@@ -195,23 +210,30 @@ const QueryItem = observer(function QueryItem({
           <EntityForm
             ref={rjsfRef}
             entityId={query.id}
-            onSubmit={({ formData }) => {
-              if (!workspaceId || !appId)
-                throw new Error(
-                  "that's weird this function should run under workspaceId, appId",
-                );
-
-              updateMutation({
-                workspaceId: +workspaceId,
-                appId: +appId,
-                queryId: query.id,
-                dto: {
-                  query: formData,
-                  dataSourceId: +curDataSource,
-                },
-              });
-            }}
+            onSubmit={onSubmitCallback}
           />
+          {/*QUERY OPTIONS*/}
+          <div>
+            <Label>Trigger Mode</Label>
+            <Select
+              value={triggerMode}
+              onValueChange={(newVal) =>
+                setTriggerMode(newVal as QueryI['triggerMode'])
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="trigger mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={'manually' satisfies QueryI['triggerMode']}>
+                  Manually
+                </SelectItem>
+                <SelectItem value={'onAppLoad' satisfies QueryI['triggerMode']}>
+                  On app load
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <QueryPreview
             ref={jsonResultRef}
             key={query.id + 'preview'}
