@@ -9,6 +9,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
   WidgetProps,
+  labelValue,
 } from '@rjsf/utils';
 
 import {
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '../ui/label';
+import { FormItem } from '../ui/form';
 
 export default function SelectWidget<
   T = any,
@@ -67,13 +69,13 @@ export default function SelectWidget<
   };
 
   return (
-    <div>
-      {/* {labelValue( */}
-      {/*   <Label htmlFor={id} id={`${id}-label`}> */}
-      {/*     {label} */}
-      {/*   </Label>, */}
-      {/*   hideLabel || !label, */}
-      {/* )} */}
+    <FormItem>
+      {labelValue(
+        <Label htmlFor={id} id={`${id}-label`}>
+          {label}
+        </Label>,
+        hideLabel || !label,
+      )}
       <Select
         disabled={disabled || readonly}
         required={required}
@@ -103,6 +105,6 @@ export default function SelectWidget<
           })}
         </SelectContent>
       </Select>
-    </div>
+    </FormItem>
   );
 }

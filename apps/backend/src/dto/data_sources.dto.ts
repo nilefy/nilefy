@@ -54,3 +54,46 @@ export class DataSourceDb extends createZodDto(dataSourcesInsert) {}
 export type DataSourceP = Partial<DataSourceDto>;
 
 export type DataSourceConfigT = Record<string, unknown>;
+
+export const dataSourceConnectionSchema = workspaceDataSourcesSelect
+  .pick({
+    id: true,
+    name: true,
+    workspaceId: true,
+    config: true,
+  })
+  .extend({
+    dataSource: dataSourceSelect
+      .pick({
+        id: true,
+        type: true,
+        name: true,
+        config: true,
+        image: true,
+      })
+      .extend({
+        config: z.object({
+          schema: z.record(z.string(), z.unknown()),
+          uiSchema: z.record(z.string(), z.unknown()).optional(),
+        }),
+      }),
+  });
+
+export const wsDataSourcesSchema = workspaceDataSourcesSelect
+  .pick({
+    id: true,
+    name: true,
+    workspaceId: true,
+  })
+  .extend({
+    dataSource: dataSourceSelect.pick({
+      id: true,
+      type: true,
+      name: true,
+      image: true,
+    }),
+  });
+export class DataSourceConnectionDto extends createZodDto(
+  dataSourceConnectionSchema,
+) {}
+export class WsDataSourcesDto extends createZodDto(wsDataSourcesSchema) {}

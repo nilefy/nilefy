@@ -7,6 +7,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
+import { CSSProperties } from 'react';
 
 /** The `ArrayFieldTemplate` component is the template used to render all items in an array.
  *
@@ -29,6 +30,7 @@ export default function ArrayFieldTemplate<
     required,
     schema,
     title,
+    formData,
   } = props;
   const uiOptions = getUiOptions(uiSchema);
   const ArrayFieldDescriptionTemplate = getTemplate<
@@ -54,7 +56,7 @@ export default function ArrayFieldTemplate<
   } = registry.templates;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="">
       <ArrayFieldTitleTemplate
         idSchema={idSchema}
         title={uiOptions.title || title}
@@ -72,12 +74,22 @@ export default function ArrayFieldTemplate<
       />
       {items &&
         items.map(
-          ({ key, ...itemProps }: ArrayFieldTemplateItemType<T, S, F>) => (
-            <ArrayFieldItemTemplate key={key} {...itemProps} />
-          ),
+          ({ key, ...itemProps }: ArrayFieldTemplateItemType<T, S, F>) => {
+            return (
+              <div key={key} className="px-4">
+                <ArrayFieldItemTemplate
+                  // TODO:
+                  // @ts-expect-error too lazy to update ts types for the component
+                  itemValue={formData[itemProps.index]}
+                  key={key}
+                  {...itemProps}
+                />
+              </div>
+            );
+          },
         )}
       {canAdd && (
-        <div className="ml-auto mt-2">
+        <div className="mt-4 flex justify-end">
           <AddButton
             className=""
             onClick={onAddClick}

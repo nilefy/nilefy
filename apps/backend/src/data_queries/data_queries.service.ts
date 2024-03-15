@@ -1,6 +1,11 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { QueryDb, QueryDto, UpdateQueryDto } from '../dto/data_queries.dto';
+import {
+  AppQueriesDto,
+  QueryDb,
+  QueryDto,
+  UpdateQueryDto,
+} from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
 import { queries } from '../drizzle/schema/data_sources.schema';
@@ -48,7 +53,7 @@ export class DataQueriesService {
     return await this.getQuery(query.appId, q.id);
   }
 
-  async getAppQueries(appId: QueryDto['appId']): Promise<CompleteQueryI[]> {
+  async getAppQueries(appId: QueryDto['appId']): Promise<AppQueriesDto[]> {
     const q = await this.db.query.queries.findMany({
       where: eq(queries.appId, appId),
       columns: {

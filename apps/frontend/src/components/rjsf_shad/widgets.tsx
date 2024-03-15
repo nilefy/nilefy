@@ -1,3 +1,9 @@
+import CodeInputWidget from './codeInput';
+import EventHandlerWidget, { EventHandlerTypeSelect } from './eventHandler';
+import ChartDynamicXValueWidget from './chartDynamicXValue';
+import SortableListWidget from './sortableList';
+import InlineCodeInputWidget from './inlineCodeInput';
+import ColorPickerWidget from './color';
 import RangeWidget from './range';
 import CheckboxWidget from './checkbox';
 import CheckboxesWidget from './checkboxes';
@@ -25,6 +31,13 @@ export function generateWidgets<
     SelectWidget,
     RadioWidget,
     sql: SQLRJSFWidget,
+    colorPicker: ColorPickerWidget,
+    inlineCodeInput: InlineCodeInputWidget,
+    sortableList: SortableListWidget,
+    eventManager: EventHandlerWidget,
+    eventManagerTypeSelect: EventHandlerTypeSelect,
+    codeInput: CodeInputWidget,
+    chartDynamicXValue: ChartDynamicXValueWidget,
   };
 }
 

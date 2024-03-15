@@ -3,32 +3,44 @@ import {
   Widget,
   WidgetConfig,
 } from '@/lib/Editor/interface';
-import { MousePointerSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, MousePointerSquare } from 'lucide-react';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
+
+import { ToolTipWrapper } from '../tooltipWrapper';
+
 export type WebloomButtonProps = {
   text: string;
-  color: string;
   onClick: string;
+  tooltip: string;
+  isLoading: boolean;
+  isDisabled: boolean;
+  variant: ButtonProps['variant'];
 };
-const WebloomButton = observer(() => {
+
+const WebloomButton = observer(function WebloomButton() {
   const { id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomButtonProps;
   return (
-    <Button
-      {...props}
-      onClick={() => {
-        widget.handleEvent('onClick');
-      }}
-      className={`active:bg-primary/20 block h-full w-full`}
-      style={{ backgroundColor: props.color }}
-    >
-      {props.text}
-    </Button>
+    <ToolTipWrapper text={props.tooltip}>
+      <Button
+        variant={props.variant}
+        onClick={() => {
+          widget.handleEvent('onClick');
+        }}
+        disabled={props.isLoading || props.isDisabled}
+        className={`active:bg-primary/20 block h-full w-full`}
+      >
+        {props.isLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : null}
+        {props.text}
+      </Button>
+    </ToolTipWrapper>
   );
 });
 const config: WidgetConfig = {
@@ -46,8 +58,11 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomButtonProps = {
   text: 'Button',
-  color: 'black',
   onClick: '',
+  variant: 'default',
+  isLoading: false,
+  isDisabled: false,
+  tooltip: '',
 };
 
 const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
@@ -78,20 +93,8 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
       },
     ],
   },
-  {
-    sectionName: 'Color',
-    children: [
-      {
-        path: 'color',
-        label: 'Color',
-        type: 'color',
-        options: {
-          color: '#fff',
-        },
-      },
-    ],
-  },
 ];
+
 export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   component: WebloomButton,
   config,

@@ -46,3 +46,8 @@ export type UpdatePageDb = z.infer<typeof updatePageDb>;
 // export type UpdatePageDto = z.infer<typeof updatePageSchema>;
 export class CreatePageDto extends createZodDto(createPageSchema) {}
 export class UpdatePageDto extends createZodDto(updatePageSchema) {}
+
+export const createPageRetSchema = pageSchema.extend({
+  tree: z.record(z.string(), z.unknown()),
+});
+export class CreatePageRetDto extends createZodDto(createPageRetSchema) {}

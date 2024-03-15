@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import {
   BaseControlProps,
   EntityInspectorConfig,
+  FormControl,
   InspectorFormControlsTypes,
 } from '@/lib/Editor/interface';
 import { InspectorFormControls } from './formControls';
@@ -94,10 +95,7 @@ export const EntityForm = observer(
 );
 
 export const EntityFormControl = observer(
-  (props: {
-    control: EntityInspectorConfig[number]['children'][number];
-    entityId: string;
-  }) => {
+  (props: { control: FormControl; entityId: string }) => {
     const { onFocus: _onFocus, onBlur } = useContext(EntityFormContext);
     const { control, entityId } = props;
     const id = entityId + control.path;
@@ -105,7 +103,8 @@ export const EntityFormControl = observer(
     const options = useMemo(
       () => ({
         ...control,
-        ...control.options,
+        // @ts-expect-error ignore
+        ...(control.options ?? []),
       }),
       [control],
     );

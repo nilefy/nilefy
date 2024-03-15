@@ -18,11 +18,12 @@ import {
   createWsDataSourceSchema,
   updateWsDataSourceSchema,
   UpdateWsDataSourceDto,
-  WsDataSourceP,
+  DataSourceConnectionDto,
+  WsDataSourcesDto,
 } from '../dto/data_sources.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -31,6 +32,10 @@ export class DataSourcesController {
   constructor(private dataSourceService: DataSourcesService) {}
 
   @Post(':dataSourceId') // global data source id
+  @ApiCreatedResponse({
+    description: 'add data source to workspace',
+    type: WsDataSourceDto,
+  })
   async create(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
@@ -49,6 +54,10 @@ export class DataSourcesController {
   }
 
   @Get(':dataSourceId/all') // global data source id
+  @ApiCreatedResponse({
+    description: 'get data source connections',
+    type: Array<WsDataSourceDto>,
+  })
   async getConnections(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
@@ -62,24 +71,36 @@ export class DataSourcesController {
   }
 
   @Get(':dataSourceId')
+  @ApiCreatedResponse({
+    description: 'get data source connection',
+    type: DataSourceConnectionDto,
+  })
   async getOne(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: number,
-  ) {
+  ): Promise<DataSourceConnectionDto> {
     return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
   @Get()
+  @ApiCreatedResponse({
+    description: 'get workspace data sources',
+    type: Array<WsDataSourcesDto>,
+  })
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
-  ): Promise<WsDataSourceP[]> {
+  ): Promise<WsDataSourcesDto[]> {
     return await this.dataSourceService.getWsDataSources(workspaceId);
   }
 
   @Delete(':dataSourceId/all') // global data source id
+  @ApiCreatedResponse({
+    description: 'delete data source connections',
+    type: Array<WsDataSourceDto>,
+  })
   async deleteConnections(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
@@ -93,6 +114,10 @@ export class DataSourcesController {
   }
 
   @Delete(':dataSourceId')
+  @ApiCreatedResponse({
+    description: 'delete data source connection',
+    type: WsDataSourceDto,
+  })
   async deleteOne(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
@@ -103,6 +128,10 @@ export class DataSourcesController {
   }
 
   @Put(':dataSourceId')
+  @ApiCreatedResponse({
+    description: 'update data source',
+    type: WsDataSourceDto,
+  })
   async update(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,

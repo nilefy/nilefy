@@ -17,12 +17,16 @@ type InspectorSelectProps = {
   items: { label: string; value: string }[];
   placeholder?: string;
 };
+
 type InspectorColorProps = {
   color: string;
 };
 
 type InspectorEvents = Record<string, never>;
 
+type InspectorDatePickerProps = {
+  date: Date;
+};
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -36,6 +40,10 @@ type FormControlOptions = {
   list: undefined;
   checkbox: undefined;
   inlineCodeInput: InlineCodeInputProps;
+  heightMode: {
+    label: string;
+  };
+  datePicker: InspectorDatePickerProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -53,17 +61,26 @@ type EntityInspectorConfig<
 }[];
 
 export type FormControl<
-  FormControlType extends InspectorFormControlsTypes,
+  FormControlType extends
+    InspectorFormControlsTypes = InspectorFormControlsTypes,
   TProps extends Record<string, unknown> = Record<string, unknown>,
   Key extends keyof TProps = keyof TProps,
 > = {
   type: FormControlType;
   isEvent?: boolean;
   path: Key;
-  options: FormControlOptions[FormControlType];
+
   hidden?(props: TProps): boolean;
   validation?: JsonSchema7Type;
-} & BaseControlProps;
+} & BaseControlProps &
+  ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;
+
+export type ConditionalOptionalFormControlOptions<T> = T extends undefined
+  ? object
+  : {
+      options: T;
+    };
+
 type InspectorFormControlsTypes = keyof FormControlOptions;
 
 type InlineCodeInputProps = {
@@ -112,11 +129,13 @@ export type WebloomPixelDimensions = {
   height: number;
 };
 
+export type LayoutMode = 'auto' | 'fixed' | 'limited';
 export interface LayoutConfig {
   minColumns?: number;
   minRows?: number;
   colsCount: number;
   rowsCount: number;
+  layoutMode?: LayoutMode;
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
@@ -163,3 +182,8 @@ export type EntityErrorsRecord = Record<
   string,
   Record<string, EntityPathErrors>
 >;
+export const WIDGET_SECTIONS = {
+  SCROLL_AREA: 'SCROLL_AREA',
+  CANVAS: 'CANVAS',
+  RESIZER: 'RESIZER',
+} as const;

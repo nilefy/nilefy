@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/query-core';
 import {
   makeObservable,
   observable,
@@ -8,17 +9,17 @@ import {
 } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
-import { Entity } from './entity';
-import { seedNameMap } from '../entitiesNameSeed';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interfaces';
-import { QueryClient } from '@tanstack/query-core';
 import { QueriesManager } from './queriesManager';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { EvaluationContext } from '../evaluation/interface';
 import { Operation } from 'fast-json-patch';
 import { WebloomGlobal } from './webloomGlobal';
+
+import { Entity } from './entity';
+import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -60,6 +61,7 @@ export class EditorState implements WebloomDisposable {
       removePage: action,
       init: action,
       applyEvalForestPatch: action.bound,
+      currentPageErrors: computed,
     });
     this.workerBroker = new WorkerBroker(this);
   }
@@ -128,9 +130,20 @@ export class EditorState implements WebloomDisposable {
       },
       workerBroker: this.workerBroker,
     });
-    seedNameMap([
-      ...Object.values(pages[0].widgets || {}).map((w) => w.type),
-      ...queries.map((q) => q.dataSource.name),
+
+    seedOrderMap([
+      ...Object.values(pages[0].widgets || {}).map((w) => {
+        return {
+          type: w.type,
+          name: w.id,
+        };
+      }),
+      ...queries.map((q) => {
+        return {
+          type: q.dataSource.name,
+          name: q.id,
+        };
+      }),
     ]);
     // create resources needed for the editor
     pages.forEach((page, index) => {
@@ -204,6 +217,13 @@ export class EditorState implements WebloomDisposable {
     });
   }
 
+  // TODO: add support for queries
+  get currentPageErrors() {
+    const res: { entityId: string; path: string; error: string }[] = [];
+
+    return res;
+  }
+
   /**
    * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
    */
@@ -270,6 +290,15 @@ export class EditorState implements WebloomDisposable {
   }
 
   removeQuery(id: string) {
+    updateOrderMap(
+      [
+        {
+          type: this.queries[id].dataSource.name,
+          name: id,
+        },
+      ],
+      true,
+    );
     delete this.queries[id];
   }
 

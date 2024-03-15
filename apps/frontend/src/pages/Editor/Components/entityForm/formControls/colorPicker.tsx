@@ -7,7 +7,7 @@ const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
   const { onChange } = useContext(EntityFormControlContext);
   return (
     <SketchPicker
-      color={props.color}
+      color={props.value as string}
       onChangeComplete={(e) => {
         onChange(e.hex);
       }}

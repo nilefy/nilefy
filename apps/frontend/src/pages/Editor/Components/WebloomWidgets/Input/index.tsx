@@ -4,36 +4,54 @@ import {
   WidgetConfig,
 } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
+import { autorun } from 'mobx';
 
 export type WebloomInputProps = {
   label: string;
-  type: 'text' | 'password';
-  placeholder: string;
-  value: string;
+  type: 'number' | 'text' | 'password';
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  autoFocus?: boolean | undefined;
+  value?: string | number | undefined;
 };
-
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-  const { label, ...rest } = editorStore.currentPage.getWidgetById(id)
+  const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomInputProps;
+  useEffect(
+    () =>
+      autorun(() => {
+        if (props.type === 'password' || props.type === 'text')
+          onPropChange({ value: '', key: 'value' });
+        if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
+      }),
+    [onPropChange, props.type],
+  );
+
   return (
     <div className="flex w-full items-center justify-center gap-2">
-      <Label>{label}</Label>
+      <Label>{props.label}</Label>
       <Input
-        {...rest}
+        placeholder={props.placeholder}
+        type={props.type}
+        value={props.value}
+        disabled={props.disabled}
+        autoFocus={props.autoFocus}
         onChange={(e) => {
           onPropChange({
             key: 'value',
             value: e.target.value,
           });
         }}
+        onFocus={() => {}}
+        onBlur={() => {}}
       />
     </div>
   );
@@ -56,6 +74,7 @@ const defaultProps: WebloomInputProps = {
   value: '',
   label: 'Label',
   type: 'text',
+  disabled: false,
 };
 
 const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [

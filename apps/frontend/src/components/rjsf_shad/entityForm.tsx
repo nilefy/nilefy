@@ -7,6 +7,13 @@ import { RJSFSchema } from '@rjsf/utils';
 import { get } from 'lodash';
 import { editorStore } from '@/lib/Editor/Models';
 import invariant from 'invariant';
+import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { commandManager } from '@/actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
+
+export type EntityFormContextT = {
+  entityId: string;
+};
 
 export type EntityFormProps = Omit<
   FormProps<any, RJSFSchema, any>,
@@ -38,13 +45,23 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
       NonNullable<FormProps<any, RJSFSchema, any>['onChange']>
     >(
       (form, id) => {
+        console.log('DEBUGPRINT[6]: entityForm.tsx:43: id=', id);
         if (!props.onChange) {
           if (!id) {
             return;
           }
           // function to get complete prop path from rjsf form control id
           const path = id!.split('.').slice(1).join('.');
-          entity.setValue(path, get(form.formData, path));
+          console.log('DEBUGPRINT[7]: entityForm.tsx:50: path=', path);
+          const newValue = get(form.formData, path);
+          if (entity instanceof WebloomWidget) {
+            // just to integrate the ws in
+            commandManager.executeCommand(
+              new ChangePropAction(props.entityId, path, newValue),
+            );
+          } else {
+            entity.setValue(path, newValue);
+          }
         } else {
           props.onChange(form, id);
         }
@@ -59,6 +76,11 @@ const EntityForm = forwardRef<Form<any, RJSFSchema, any>, EntityFormProps>(
         noValidate
         // despite having explicitly set noValidate, the following line is necessary because rjsf has not yet set the validator prop as optional
         validator={validator}
+        formContext={
+          {
+            entityId: props.entityId,
+          } satisfies EntityFormContextT
+        }
         idSeparator="."
         uiSchema={entity.schema.uiSchema}
         schema={entity.schema.dataSchema}

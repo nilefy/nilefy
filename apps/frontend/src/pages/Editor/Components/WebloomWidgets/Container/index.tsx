@@ -2,25 +2,87 @@ import {
   EntityInspectorConfig,
   Widget,
   WidgetConfig,
+  WIDGET_SECTIONS,
 } from '@/lib/Editor/interface';
-import { Container } from '../../_Components/Container';
 import { BoxSelect } from 'lucide-react';
-import { ComponentPropsWithoutRef, useContext } from 'react';
+import { useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
+
 import { WidgetContext } from '../..';
 
-type WebloomContainerProps = ComponentPropsWithoutRef<typeof Container>;
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Grid } from '../../lib';
+import { cn } from '@/lib/cn';
+
+import z from 'zod';
+
+const webloomContainerProps = z.object({
+  color: z.string(),
+  layoutMode: z.enum(['fixed', 'auto']),
+});
+type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+
 const WebloomContainer = observer(
-  ({ children }: { children: React.ReactNode }) => {
+  ({
+    children,
+    innerContainerStyle,
+    outerContainerStyle,
+    isVisibile = true,
+  }: {
+    children: React.ReactNode;
+    innerContainerStyle: {
+      width: string;
+      height: string;
+    };
+    outerContainerStyle: {
+      width: string;
+      height: string;
+    };
+    isVisibile: boolean;
+  }) => {
     const { id } = useContext(WidgetContext);
-    const props = editorStore.currentPage.getWidgetById(id)
-      .finalValues as WebloomContainerProps;
-    return <Container {...props}>{children}</Container>;
+    const entity = editorStore.currentPage.getWidgetById(id);
+    const props = entity.finalValues as WebloomContainerProps;
+    // TODO: This feels bad but what this basically does is center the root to look pwetty
+    const leftRootShift = entity.isRoot
+      ? editorStore.currentPage.width -
+        entity.innerContainerPixelDimensions.width
+      : 0;
+
+    return (
+      <ScrollArea
+        className="relative h-full w-full"
+        scrollAreaViewPortClassName={cn({
+          hidden: !isVisibile,
+          'rounded-md': !entity.isRoot,
+        })}
+        style={{
+          ...outerContainerStyle,
+          left: leftRootShift / 2,
+          visibility: isVisibile ? 'visible' : 'hidden',
+        }}
+      >
+        <div
+          className="relative bg-gray-300"
+          data-id={id}
+          data-type={WIDGET_SECTIONS.CANVAS}
+          style={{
+            ...innerContainerStyle,
+            visibility: isVisibile ? 'visible' : 'hidden',
+            backgroundColor: props.color,
+          }}
+        >
+          <Grid id={id} />
+          {children}
+        </div>
+      </ScrollArea>
+    );
   },
 );
 export const defaultProps: WebloomContainerProps = {
   color: '#a883f2',
+  layoutMode: 'fixed',
 };
 export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
   {
@@ -36,6 +98,22 @@ export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
       },
     ],
   },
+  {
+    sectionName: 'Layout',
+    children: [
+      {
+        path: 'layoutMode',
+        label: 'Layout Mode',
+        type: 'select',
+        options: {
+          items: [
+            { value: 'fixed', label: 'Fixed' },
+            { value: 'auto', label: 'Auto' },
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 export const config: WidgetConfig = {
@@ -43,10 +121,12 @@ export const config: WidgetConfig = {
   icon: <BoxSelect />,
   isCanvas: true,
   layoutConfig: {
-    colsCount: 2,
-    rowsCount: 4,
+    colsCount: 10,
+    rowsCount: 30,
+
     minColumns: 1,
     minRows: 4,
+    layoutMode: 'fixed',
   },
   resizingDirection: 'Both',
 };

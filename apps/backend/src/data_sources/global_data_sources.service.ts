@@ -17,7 +17,7 @@ export class GlobalDataSourcesService {
       .insert(dataSources)
       .values(dataSource)
       .returning();
-    return ds as DataSourceDto;
+    return ds;
   }
 
   async getAll(): Promise<DataSourceP[]> {
@@ -34,6 +34,6 @@ export class GlobalDataSourcesService {
     const ds = await this.db.query.dataSources.findFirst({
       where: eq(dataSources.id, dataSourceId),
     });
-    return ds as DataSourceDto;
+    return ds;
   }
 }

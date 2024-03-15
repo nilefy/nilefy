@@ -1,6 +1,7 @@
 import { FetchXError, fetchX } from '@/utils/fetch';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -137,19 +138,45 @@ async function update({
   return await res.json();
 }
 
-function useGlobalDataSources() {
-  return useQuery({
+export type GlobalDataSourceIndexRet = Awaited<
+  ReturnType<typeof GlobalDataSourceIndex>
+>;
+
+export function globalDataSourcesQuery(): UndefinedInitialDataOptions<
+  GlobalDataSourceIndexRet,
+  FetchXError,
+  GlobalDataSourceIndexRet
+> {
+  return {
     queryKey: [DATASOURCES_QUERY_KEY],
     queryFn: GlobalDataSourceIndex,
-  });
+  };
 }
 
-function useWsDataSources(workspaceId: number) {
-  return useQuery({
+function useGlobalDataSources() {
+  return useQuery(globalDataSourcesQuery());
+}
+
+type WsDataSourcesIndexRet = Awaited<ReturnType<typeof index>>;
+
+export function wsDataSourcesQuery({
+  workspaceId,
+}: {
+  workspaceId: WsDataSourceI['workspaceId'];
+}): UndefinedInitialDataOptions<
+  WsDataSourcesIndexRet,
+  FetchXError,
+  WsDataSourcesIndexRet
+> {
+  return {
     queryKey: [DATASOURCES_QUERY_KEY, { workspaceId }],
-    queryFn: () => index({ workspaceId }),
+    queryFn: async () => index({ workspaceId }),
     staleTime: 0,
-  });
+  };
+}
+
+function useWsDataSources(...rest: Parameters<typeof wsDataSourcesQuery>) {
+  return useQuery(wsDataSourcesQuery(...rest));
 }
 
 function useDataSource(workspaceId: number, dataSourceId: number) {

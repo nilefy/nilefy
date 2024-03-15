@@ -8,8 +8,8 @@ import {
 } from '@/components/ui/collapsible';
 import { editorStore } from '@/lib/Editor/Models';
 
-import { commandManager } from '@/Actions/CommandManager';
-import { SelectionAction } from '@/Actions/Editor/selection';
+import { commandManager } from '@/actions/CommandManager';
+import { SelectionAction } from '@/actions/Editor/selection';
 import { observer } from 'mobx-react-lite';
 
 // TODO: add real JSON type, you can copy it from `typefest`
@@ -110,7 +110,7 @@ export const JsonViewer = observer(function JsonViewer() {
     <Collapsible
       open={isComponentsOpen}
       onOpenChange={setIsComponentsOpen}
-      className="h-full w-full space-y-0 overflow-y-auto font-mono scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10"
+      className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 h-full w-full space-y-0 overflow-y-auto font-mono"
     >
       <div className="flex items-center">
         <CollapsibleTriggerWithChevr isOpen={isComponentsOpen} />

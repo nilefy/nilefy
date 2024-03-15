@@ -1,5 +1,19 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import validator from '@rjsf/validator-ajv8';
-import { useNavigate } from 'react-router-dom';
+import {
+  Await,
+  NavLink,
+  Outlet,
+  useAsyncValue,
+  useLoaderData,
+  useNavigate,
+} from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +29,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
 import { SaveIcon, Trash } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { Suspense, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
 import { DebouncedInput } from '@/components/debouncedInput';
@@ -34,6 +48,7 @@ import { useForm } from 'react-hook-form';
 import {
   DATASOURCES_QUERY_KEY,
   DataSourceMeta,
+  GlobalDataSourceIndexRet,
   dataSourceMeta,
 } from '@/api/dataSources.api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +63,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
-import FormT from '@rjsf/core';
+import { WebloomLoader } from '@/components/loader';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from '@/components/ui/card';
+import _ from 'lodash';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/cn';
+// import { dataSourcesTypes } from '@webloom/constants';
 
 function CreatePluginForm({
   workspaceId,
@@ -128,39 +153,41 @@ function CreatePluginForm({
   );
 }
 
-function DataSourcesView() {
-  const { workspaceId } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { isPending, isError, error, data } =
-    api.globalDataSource.index.useQuery();
-  const filteredDataSources = useMemo(() => {
-    if (!data) {
-      return;
-    }
-    const filter = searchParams.get('gfilter');
-    const globalSearch = searchParams.get('gsearch');
-    let tempData;
-    if (filter === null || filter === '') {
-      tempData = data;
-    } else {
-      tempData = data.filter((d) => d.type === filter);
-    }
-    return matchSorter(tempData, globalSearch ?? '', {
-      keys: ['description', 'name'],
-    });
-  }, [searchParams, data]);
+//
 
-  if (isPending) {
-    return <div>Loading...</div>;
-  } else if (isError) {
-    throw error;
-  }
+export function GlobalDataSourcesView() {
+  const { globalDataSources } = useLoaderData();
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 p-3">
+    <Suspense fallback={<WebloomLoader />}>
+      <Await resolve={globalDataSources}>
+        <GlobalDataSourcesResolved />
+      </Await>
+    </Suspense>
+  );
+}
+
+export function GlobalDataSourcesResolved() {
+  const data = useAsyncValue() as GlobalDataSourceIndexRet;
+  const { workspaceId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filteredDataSources = useMemo(() => {
+    if (!data) {
+      return {};
+    }
+    const globalSearch = searchParams.get('gsearch');
+    const tempData = matchSorter(data, globalSearch ?? '', {
+      keys: ['name', 'description'],
+    });
+    return _.groupBy(tempData, 'type');
+  }, [searchParams, data]);
+
+  return (
+    <div className="flex h-full w-full flex-col gap-6  p-4 ">
       <DebouncedInput
+        className="w-full"
         value={searchParams.get('gsearch') ?? ''}
-        placeholder="Search"
+        placeholder="Search data sources"
         type="search"
         onChange={(value) => {
           setSearchParams(
@@ -173,39 +200,69 @@ function DataSourcesView() {
           );
         }}
       />
-      <ScrollArea className="h-full w-full">
-        <div className="flex flex-wrap justify-between gap-6 ">
-          {filteredDataSources?.map((ds) => {
-            return (
-              <div
-                key={ds.id}
-                className="flex w-[30%] flex-col items-center justify-center gap-4 border p-2"
-              >
-                <Avatar className="mr-2">
-                  <AvatarImage src={ds.image ?? undefined} />
-                  <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
-                </Avatar>
-                <p className="line-clamp-1">{ds.name}</p>
-                <p className="line-clamp-2 h-12">{ds.description}</p>
-                <CreatePluginForm
-                  globalDataSourceId={ds.id}
-                  workspaceId={+(workspaceId as string)}
-                />
-              </div>
-            );
-          })}
+      {Object.keys(filteredDataSources).length === 0 ? (
+        <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-5">
+          <p>No Data Sources match your search query try changing the search</p>
         </div>
-      </ScrollArea>
+      ) : (
+        Object.entries(filteredDataSources).map(([type, dss]) => {
+          return (
+            <div
+              key={type}
+              className="flex h-full w-full max-w-full flex-col gap-6"
+            >
+              <h2 id={type}>{type.toUpperCase()}</h2>
+              <ul className="grid w-full max-w-full grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:grid-cols-3 md:gap-y-10 lg:grid-cols-4">
+                {dss.map((ds) => {
+                  return (
+                    <Card
+                      key={ds.id}
+                      className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
+                    >
+                      <CardHeader className="flex flex-col items-center justify-center gap-4 font-bold">
+                        <Avatar>
+                          <AvatarImage src={ds.image ?? undefined} />
+                          <AvatarFallback>
+                            {getInitials(ds.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="line-clamp-1">{ds.name}</p>
+                      </CardHeader>
+
+                      <CardContent>
+                        <p className="line-clamp-2 text-center">
+                          {ds.description}
+                        </p>
+                      </CardContent>
+
+                      <CardFooter className="mt-auto flex justify-end gap-5">
+                        <CreatePluginForm
+                          globalDataSourceId={ds.id}
+                          workspaceId={+(workspaceId as string)}
+                        />
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
 
+/**
+ * sidebar configured data sources
+ */
 function WorkspaceDataSourcesView() {
+  const navigate = useNavigate();
   const { workspaceId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data, isPending, isError, error } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data, isPending, isError, error } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
   const filteredPlugins = useMemo(() => {
     if (!data) {
@@ -217,14 +274,13 @@ function WorkspaceDataSourcesView() {
     });
   }, [searchParams, data]);
 
-  if (isPending) {
-    return <div>Loading...</div>;
-  } else if (isError) {
+  if (isError) {
     throw error;
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4">
+    <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
+      {isPending && <WebloomLoader />}
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -240,33 +296,41 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <ScrollArea className="w-full">
-        <div className="flex w-full flex-col gap-6">
-          {filteredPlugins?.map((ds) => {
+      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+        {!filteredPlugins ? (
+          <p>No Data Sources match your search query try changing the search</p>
+        ) : (
+          filteredPlugins.map((ds) => {
             return (
               <div
                 key={ds.id}
-                className="flex w-full items-center justify-start gap-2"
+                className="flex w-full items-center justify-start"
               >
-                <Link
-                  className="flex items-center gap-4"
+                <NavLink
+                  end={true}
+                  className={({ isActive }) => {
+                    return cn(
+                      'flex w-[90%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
+                      isActive ? 'bg-primary/20' : '',
+                    );
+                  }}
                   to={`/${workspaceId}/datasources/${ds.id}`}
                 >
                   <Avatar className="mr-2">
                     <AvatarImage src={ds.dataSource.image ?? undefined} />
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                   </Avatar>
-                  <p>{ds.name}</p>
-                </Link>
+                  <p className="line-clamp-1">{ds.name}</p>
+                </NavLink>
                 <AlertDialog>
                   <AlertDialogTrigger
                     className={buttonVariants({
-                      variant: 'destructive',
+                      variant: 'ghost',
                       size: 'icon',
                       className: 'ml-auto',
                     })}
                   >
-                    <Trash />
+                    <Trash size={15} />
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -288,6 +352,7 @@ function WorkspaceDataSourcesView() {
                             workspaceId: +workspaceId,
                             dataSourceId: ds.id,
                           });
+                          navigate(`/${workspaceId}/datasources/`);
                         }}
                       >
                         Delete
@@ -297,118 +362,70 @@ function WorkspaceDataSourcesView() {
                 </AlertDialog>
               </div>
             );
-          })}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
-
-const dataSourceFilter = [
-  {
-    name: 'all',
-    q: '',
-  },
-  {
-    name: 'databases',
-    q: 'database',
-  },
-  {
-    name: 'APIs',
-    q: 'api',
-  },
-  {
-    name: 'Cloud Storage',
-    q: 'cloud storage',
-  },
-  {
-    name: 'Plugin',
-    q: 'plugin',
-  },
-];
-
-function DataSourcesSidebar() {
-  const { workspaceId } = useParams();
-
-  return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col bg-primary/10">
-      <h2 className="ml-2 text-3xl">Data Sources</h2>
-      {/** plugins filter*/}
-      <ScrollArea className="h-full">
-        <h4>Filters</h4>
-        <div className="flex flex-col gap-5">
-          {dataSourceFilter.map((ds, i) => {
-            return (
-              <Link
-                key={ds.q + i}
-                to={{
-                  pathname: `/${workspaceId}/datasources`,
-                  search: `gfilter=${ds.q}`,
-                }}
-              >
-                {ds.name}
-              </Link>
-            );
-          })}
-        </div>
-      </ScrollArea>
-      <Separator />
-      {/** configured plugins*/}
-      <h4>plugins</h4>
-      <WorkspaceDataSourcesView />
-      <div className="mt-auto">
-        <SelectWorkSpace />
+          })
+        )}
       </div>
     </div>
   );
 }
 
-export function GlobalDataSourcesView() {
-  return (
-    <div className="flex h-full w-full">
-      <DataSourcesSidebar />
-      <DataSourcesView />
-    </div>
-  );
-}
-
 export function DataSourceView() {
-  // i want to disable the submit  button, but i'm not in the mood to supply submitting state through context to the form and all that so i'll do it the easy way and replace the submit button
-  // ref to call the form submit
-  const rjsfRef = useRef<FormT>(null);
   const { datasourceId, workspaceId } = useParams();
-  // const queryClient = useQueryClient();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
     +(datasourceId as string),
   );
   const { mutate: updateMutate, isPending: isSubmitting } =
     api.dataSources.update.useMutation();
+  const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
-    return <>loading ....</>;
+    return <WebloomLoader />;
   } else if (isError) {
     throw error;
   }
+
   return (
-    <div className="flex h-full w-full">
-      <DataSourcesSidebar />
+    <div key={data.id} className="flex h-full w-full flex-col gap-5 p-4">
+      <div className="flex flex-col gap-2">
+        <Label>Data Source Name</Label>
+        <Input defaultValue={data.name} ref={nameRef} />
+        <Separator />
+      </div>
+
       <ScrollArea className="h-full w-full">
-        <div className="flex w-full flex-col gap-5">
-          <div className="flex gap-5">
-            <Input defaultValue={data.name} />
-          </div>
-          <div className="p-4">
+        <Tabs defaultValue="dev">
+          <TabsList className="w-full space-x-3">
+            <TabsTrigger value="dev">Development</TabsTrigger>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  {/*TODO: re-enable when the back is ready  */}
+                  <TabsTrigger value="prod" disabled={true}>
+                    Production
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Soon</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TabsList>
+
+          <TabsContent value="dev" className="h-full w-full ">
             <RJSFShadcn
-              ref={rjsfRef}
-              // formContext={{ isSubmitting: isSubmitting }}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
               formData={data.config}
               validator={validator}
               onSubmit={({ formData }) => {
-                console.log('submit', formData);
-                if (!workspaceId || !datasourceId)
+                if (
+                  !workspaceId ||
+                  !datasourceId ||
+                  !nameRef ||
+                  !nameRef.current
+                )
                   throw new Error(
                     "that's weird this function should run under workspaceId, datasourceId",
                   );
@@ -416,6 +433,7 @@ export function DataSourceView() {
                   workspaceId: +workspaceId,
                   dataSourceId: +datasourceId,
                   dto: {
+                    name: nameRef.current.value,
                     config: formData,
                   },
                 });
@@ -424,18 +442,75 @@ export function DataSourceView() {
               <Button className="mt-4" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    Saving... <SaveIcon />{' '}
+                    <SaveIcon /> Saving...
                   </>
                 ) : (
                   <>
-                    Save <SaveIcon />
+                    <SaveIcon /> Save
                   </>
                 )}
               </Button>
             </RJSFShadcn>
-          </div>
-        </div>
+          </TabsContent>
+          {/*TODO:*/}
+          <TabsContent value="prod"></TabsContent>
+        </Tabs>
       </ScrollArea>
+    </div>
+  );
+}
+
+function DataSourcesSidebar() {
+  const { workspaceId } = useParams();
+
+  return (
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+      <Link
+        to={{
+          pathname: `/${workspaceId}/datasources`,
+        }}
+      >
+        <h2 className="ml-2 text-3xl">Data Sources</h2>
+      </Link>
+      {/** plugins filter*/}
+      {/* <div className="flex h-fit flex-col gap-3"> */}
+      {/*   <h2 className="text-xl">Filters</h2> */}
+      {/*   <div className="flex flex-col gap-5 pl-2"> */}
+      {/*     {dataSourcesTypes.map((ds, i) => { */}
+      {/*       return ( */}
+      {/*         <Link */}
+      {/*           key={ds + i} */}
+      {/*           to={{ */}
+      {/*             pathname: `/${workspaceId}/datasources`, */}
+      {/*             // search: `gfilter=${ds.q}`, */}
+      {/*             hash: ds, */}
+      {/*           }} */}
+      {/*           className="inline-flex h-11 items-center justify-start rounded-md pl-1 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" */}
+      {/*         > */}
+      {/*           {ds.toUpperCase()} */}
+      {/*         </Link> */}
+      {/*       ); */}
+      {/*     })} */}
+      {/*   </div> */}
+      {/* </div> */}
+      {/* <Separator /> */}
+      {/** configured plugins*/}
+      {/* <h4>plugins</h4> */}
+      <WorkspaceDataSourcesView />
+      <div className="mt-auto">
+        <SelectWorkSpace />
+      </div>
+    </div>
+  );
+}
+
+export function DataSourcesTemplate() {
+  return (
+    <div className="flex h-full w-full">
+      <DataSourcesSidebar />
+      <div className="h-full max-h-full w-full max-w-full overflow-hidden">
+        <Outlet />
+      </div>
     </div>
   );
 }

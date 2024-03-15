@@ -11,6 +11,7 @@ import { editorStore } from '@/lib/Editor/Models';
 export type WebloomTextProps = {
   text: string;
 };
+
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)

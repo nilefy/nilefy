@@ -1,6 +1,5 @@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { FocusEvent } from 'react';
 import {
   ariaDescribedByIds,
   enumOptionsIndexForValue,
@@ -12,6 +11,7 @@ import {
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
+import { FormItem } from '../ui/form';
 
 /** The `RadioWidget` is a widget for rendering a radio group.
  *  It is typically used with a string property constrained with enum options.
@@ -40,7 +40,7 @@ export default function RadioWidget<
   const selectedIndex = enumOptionsIndexForValue<S>(value, enumOptions) ?? null;
 
   return (
-    <>
+    <FormItem>
       {labelValue(<Label htmlFor={id}>{label || undefined}</Label>, hideLabel)}
       <RadioGroup
         id={id}
@@ -71,6 +71,6 @@ export default function RadioWidget<
             return radio;
           })}
       </RadioGroup>
-    </>
+    </FormItem>
   );
 }

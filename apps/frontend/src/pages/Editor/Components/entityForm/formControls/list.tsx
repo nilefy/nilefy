@@ -1,4 +1,3 @@
-import { BaseControlProps, InspectorListProps } from '@/lib/Editor/interface';
 import {
   DndContext,
   closestCenter,

@@ -8,11 +8,13 @@ import { SignInGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { TConfigService } from '../evn.validation';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     PassportModule,
     UsersModule,
+    EmailModule,
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],

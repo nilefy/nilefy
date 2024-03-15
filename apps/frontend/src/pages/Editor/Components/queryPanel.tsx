@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { matchSorter } from 'match-sorter';
+import ReactJson from 'react-json-view';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, SaveIcon } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
 import { DebouncedInput } from '../../../components/debouncedInput';
@@ -24,9 +25,10 @@ import clsx from 'clsx';
 import { Input } from '../../../components/ui/input';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomQuery } from '@/lib/Editor/Models/query';
+import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, toJS } from 'mobx';
+import { computed } from 'mobx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from './entityForm';
@@ -48,18 +50,75 @@ export const QueryConfigPanel = observer(({ id }: { id: string }) => {
     </div>
   );
 });
+
+const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
+  function QueryPreview(props, ref) {
+    return (
+      <Tabs
+        ref={ref}
+        defaultValue="json"
+        className="max-w-full overflow-x-hidden"
+      >
+        <TabsList className="w-full space-x-8 p-2">
+          <TabsTrigger value="json">JSON</TabsTrigger>
+          <TabsTrigger value="raw">Raw</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="json"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+        >
+          <ReactJson
+            theme={'twilight'}
+            src={
+              props.queryValues.error
+                ? { error: props.queryValues.error }
+                : (props.queryValues.data as object)
+            }
+          />
+        </TabsContent>
+        <TabsContent
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          value="raw"
+        >
+          {JSON.stringify(
+            props.queryValues.error ?? props.queryValues.data,
+            null,
+            3,
+          )}
+        </TabsContent>
+      </Tabs>
+    );
+  },
+  {
+    forwardRef: true,
+  },
+);
+
 const QueryItem = observer(function QueryItem({
   query,
 }: {
   query: WebloomQuery;
 }) {
+  const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
+
+  // const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
+  //   onSuccess(data) {
+  //     query.setQueryState('success');
+  //     query.updateQuery({
+  //       rawValues: {
+  //         ...data,
+  //       },
+  //     });
+  //     jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
+  //   },
+  // });
 
   return (
     <div className="h-full w-full">
@@ -68,6 +127,7 @@ const QueryItem = observer(function QueryItem({
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input defaultValue={query.id} />
         <Button
+          variant={'ghost'}
           type="button"
           className="mr-auto"
           onClick={() => {
@@ -84,15 +144,17 @@ const QueryItem = observer(function QueryItem({
         >
           {editorStore.queriesManager.updateQuery.state.isPending ? (
             <>
-              Saving... <SaveIcon />{' '}
+              <SaveIcon /> Saving...
             </>
           ) : (
             <>
-              Save <SaveIcon />
+              <SaveIcon /> Save
             </>
           )}
         </Button>
         <Button
+          variant={'ghost'}
+          disabled={query.runQuery.state.isPending}
           onClick={() => {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
@@ -100,41 +162,48 @@ const QueryItem = observer(function QueryItem({
             query.runQuery.mutate();
           }}
         >
-          run
+          <Play /> run
         </Button>
       </div>
       {/*FORM*/}
       <ScrollArea className="h-[calc(100%-3rem)] w-full ">
-        <Label className="flex items-center gap-4">
-          Data Source
-          <Select
-            value={curDataSource}
-            onValueChange={(e) => {
-              setCurDataSource(e);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={query?.dataSource.name} />
-            </SelectTrigger>
-            <SelectContent>
-              {dataSources
-                ?.filter(
-                  (dataSource) =>
-                    dataSource.dataSource.name ===
-                    query.dataSource.dataSource.name,
-                )
-                .map((dataSource) => (
-                  <SelectItem
-                    key={dataSource.name}
-                    value={dataSource.id.toString()}
-                  >
-                    {dataSource.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </Label>
-        <QueryConfigPanel id={query.id} />
+        <div className="flex flex-col gap-4 p-4">
+          <Label className="flex items-center gap-4">
+            Data Source
+            <Select
+              value={curDataSource}
+              onValueChange={(e) => {
+                setCurDataSource(e);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={query?.dataSource.name} />
+              </SelectTrigger>
+              <SelectContent>
+                {dataSources
+                  ?.filter(
+                    (dataSource) =>
+                      dataSource.dataSource.name ===
+                      query.dataSource.dataSource.name,
+                  )
+                  .map((dataSource) => (
+                    <SelectItem
+                      key={dataSource.name}
+                      value={dataSource.id.toString()}
+                    >
+                      {dataSource.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </Label>
+          <QueryConfigPanel id={query.id} />
+          <QueryPreview
+            ref={jsonResultRef}
+            key={query.id + 'preview'}
+            queryValues={query.rawValues as QueryRawValues}
+          />
+        </div>
       </ScrollArea>
     </div>
   );
@@ -153,9 +222,9 @@ export const QueryPanel = observer(function QueryPanel() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { workspaceId, appId } = useParams();
 
-  const { data: dataSources } = api.dataSources.index.useQuery(
-    +(workspaceId as string),
-  );
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
   const queries = editorStore.queries;
 
   const uniqueDataSourceTypes = Array.from(

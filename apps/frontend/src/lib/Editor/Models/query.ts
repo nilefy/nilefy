@@ -1,14 +1,14 @@
 import { makeObservable, observable, action, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
-
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
+
 import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 
-type QueryRawValues = {
+export type QueryRawValues = {
   isLoading: boolean;
   /**
    * @description data returned from the query
@@ -49,6 +49,7 @@ export class WebloomQuery
         | keyof ConstructorParameters<typeof Entity>[0]
         | 'queryClient'
         | 'workspaceId'
+
       >
     >
 {
@@ -65,6 +66,7 @@ export class WebloomQuery
     void,
     void
   >;
+
   constructor({
     query,
     id,
@@ -131,6 +133,7 @@ export class WebloomQuery
     this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    
     makeObservable(this, {
       createdAt: observable,
       updatedAt: observable,
@@ -154,6 +157,17 @@ export class WebloomQuery
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
+
+    if (dto.rawValues) {
+      this.rawValues.data = dto.rawValues.data;
+      this.rawValues.error = dto.rawValues.error;
+      this.rawValues.status = dto.rawValues.status;
+    }
+  }
+
+  // TODO: call server to get actual data
+  fetchValue() {
+    // this.value = {};
   }
 
   get snapshot() {

@@ -18,7 +18,6 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
-  PaginationState,
   getFilteredRowModel,
   Column,
 } from '@tanstack/react-table';
@@ -42,23 +41,40 @@ import { z } from 'zod';
 import { autorun, toJS } from 'mobx';
 type RowData = Record<string, unknown>;
 
-export type WebLoomTableColumn = {
-  id: string;
-  accessorKey: string;
-  header: string;
-  name: string;
-  type: 'Default' | 'String' | 'Number' | 'Boolean';
-};
-export type WebloomTableProps = {
-  columns?: WebLoomTableColumn[];
-  data: RowData[];
-  isRowSelectionEnabled: boolean;
-  isSearchEnabled?: boolean;
-  isPaginationEnabled?: boolean;
-  pageSize?: number;
-};
+import { runInAction } from 'mobx';
+import { DebouncedInput } from '@/components/debouncedInput';
 
-// Helper function to generate columns from data
+export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
+
+export const webLoomTableColumn = z.object({
+  id: z.string(),
+  accessorKey: z.string(),
+  header: z.string(),
+  name: z.string(),
+  type: z.enum(columnTypes),
+});
+
+export type WebLoomTableColumn = z.infer<typeof webLoomTableColumn>;
+const webloomTableProps = z.object({
+  data: z.array(z.record(z.string(), z.unknown())),
+  columns: z.array(webLoomTableColumn).optional(),
+  isRowSelectionEnabled: z.boolean(),
+  isSearchEnabled: z.boolean(),
+  isPaginationEnabled: z.boolean(),
+  pageSize: z.number().optional(),
+  pageIndex: z.number().optional(),
+  emptyState: z.string().default('No rows found'),
+  showHeaders: z.boolean().default(true),
+  showFooter: z.boolean().default(true),
+
+  rowSelection: z.record(z.boolean()),
+});
+
+export type WebloomTableProps = z.infer<typeof webloomTableProps>;
+
+/**
+ * Helper function to generate columns from data
+ */
 const generateColumnsFromData = (
   data: RowData | undefined,
 ): WebLoomTableColumn[] => {
@@ -95,29 +111,10 @@ const WebloomTable = observer(() => {
     [],
   );
 
-  // pagination options
-  const [{ pageIndex }, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: props.isPaginationEnabled
-      ? props.pageSize ?? 3
-      : props.data.length,
-  });
-  const pagination = React.useMemo(
-    () => ({
-      pageIndex,
-      pageSize: props.isPaginationEnabled
-        ? props.pageSize ?? 3
-        : props.data.length,
-    }),
-    [pageIndex, props.isPaginationEnabled, props.pageSize, props.data.length],
-  );
-
   // sorting options
   const [sorting, setSorting] = React.useState<SortingState>([]);
   // filtering options
   const [globalFilter, setGlobalFilter] = React.useState('');
-  // selection options
-  const [rowSelection, setRowSelection] = React.useState({});
 
   // mapping the columns to be  compatible with tanstack-table
 
@@ -173,24 +170,78 @@ const WebloomTable = observer(() => {
           ...tableCols,
         ]
       : tableCols,
-    state: { pagination, rowSelection, sorting, globalFilter },
-    onGlobalFilterChange: setGlobalFilter,
+    state: {
+      pagination: {
+        pageIndex: props.pageIndex ?? 0,
+        pageSize: props.isPaginationEnabled
+          ? props.pageSize ?? 3
+          : props.data.length,
+      },
+      rowSelection: props.rowSelection,
+      sorting,
+      globalFilter,
+    },
+    onGlobalFilterChange: (updater) => {
+      setGlobalFilter(updater);
+    },
     getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      setSorting(updater);
+      // execute user event
+      // editorStore.executeActions<typeof webloomTableEvents>(id, 'onSortChange');
+    },
     getSortedRowModel: getSortedRowModel(),
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      const v =
+        typeof updater === 'function'
+          ? updater({
+              pageIndex: props.pageIndex ?? 0,
+              pageSize: props.pageSize ?? props.data.length,
+            })
+          : updater;
+      runInAction(() => {
+        onPropChange({
+          key: 'pageIndex',
+          value: v.pageIndex,
+        });
+        onPropChange({
+          key: 'pageSize',
+          value: v.pageSize,
+        });
+      });
+      // execute user event
+      // editorStore.executeActions<typeof webloomTableEvents>(id, 'onPageChange');
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updater) => {
+      onPropChange({
+        key: 'rowSelection',
+        value:
+          typeof updater === 'function' ? updater(props.rowSelection) : updater,
+      });
+      // execute user event
+      // editorStore.executeActions<typeof webloomTableEvents>(
+      //   id,
+      //   'onRowSelectionChange',
+      // );
+    },
   });
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto">
+    <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
       {props.isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
-          <Input
+          <DebouncedInput
             value={globalFilter ?? ''}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={(value) => {
+              setGlobalFilter(String(value));
+              // execute user event
+              // editorStore.executeActions<typeof webloomTableEvents>(
+              //   id,
+              //   'onSearchChange',
+              // );
+            }}
             className=" border p-2 shadow"
             placeholder="Search"
           />
@@ -217,15 +268,24 @@ const WebloomTable = observer(() => {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {table.getRowModel().rows.length === 0 ? (
+              <div className="flex h-full w-full items-center justify-center text-xl">
+                {props.emptyState}
+              </div>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -304,72 +364,19 @@ const config: WidgetConfig = {
 };
 
 const defaultProps: WebloomTableProps = {
-  data: 'dsds',
+  data: [],
+  rowSelection: {},
   columns: [],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
   isPaginationEnabled: false,
   pageSize: 3,
+  emptyState: 'No rows found',
+  showHeaders: true,
+  showFooter: true,
 };
 
 const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
-  {
-    sectionName: 'Columns',
-    children: [
-      {
-        path: 'columns',
-        label: 'Columns',
-        type: 'list',
-      },
-    ],
-  },
-  {
-    sectionName: 'Row Selection',
-    children: [
-      {
-        path: 'isRowSelectionEnabled',
-        label: 'Allow Selection',
-        type: 'checkbox',
-        // defaultValue: ,
-        // value: isRowSelectionEnabled,
-        options: {
-          label: 'Allow Selection',
-        },
-      },
-    ],
-  },
-  {
-    sectionName: 'Search',
-    children: [
-      {
-        path: 'isSearchEnabled',
-        label: 'Enable Search',
-        type: 'checkbox',
-        options: {
-          label: 'Enable Search',
-        },
-      },
-    ],
-  },
-  {
-    sectionName: 'Pagination',
-    children: [
-      {
-        path: 'isPaginationEnabled',
-        label: 'Enable Pagination',
-        type: 'checkbox',
-        options: {
-          label: 'Enable Pagination',
-        },
-      },
-      {
-        path: 'pageSize',
-        label: 'Page Size',
-        type: 'input',
-        options: {},
-      },
-    ],
-  },
   {
     sectionName: 'Data',
     children: [
@@ -385,6 +392,67 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
             .array(z.record(z.string(), z.any()))
             .default([{ id: '1', name: 'John', age: 23 }]),
         ),
+      },
+    ],
+  },
+  {
+    sectionName: 'Columns',
+    children: [
+      {
+        path: 'columns',
+        label: 'Columns',
+        type: 'list',
+      },
+    ],
+  },
+  {
+    sectionName: 'Table Options',
+    children: [
+      {
+        path: 'isRowSelectionEnabled',
+        label: 'Row Selection',
+        type: 'checkbox',
+      },
+      {
+        path: 'isSearchEnabled',
+        label: 'Search',
+        type: 'checkbox',
+      },
+      {
+        path: 'isPaginationEnabled',
+        label: 'Pagination',
+        type: 'checkbox',
+      },
+      {
+        path: 'pageSize',
+        label: 'Page Size',
+        type: 'input',
+        options: {
+          type: 'number',
+        },
+      },
+    ],
+  },
+  {
+    sectionName: 'Appearance',
+    children: [
+      {
+        path: 'emptyState',
+        label: 'Empty State',
+        type: 'input',
+        options: {
+          type: 'text',
+        },
+      },
+      {
+        path: 'showHeaders',
+        label: 'Show Headers',
+        type: 'checkbox',
+      },
+      {
+        path: 'showFooter',
+        label: 'Show Footer',
+        type: 'checkbox',
       },
     ],
   },

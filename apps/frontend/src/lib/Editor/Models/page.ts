@@ -12,20 +12,21 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  isSameCoords,
   normalizeCoords,
 } from '../utils';
 import { WorkerBroker } from './workerBroker';
+import { CursorManager } from './cursorManager';
+
 import { WebloomDisposable } from './interfaces';
 
-type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
+export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 
 export class WebloomPage implements WebloomDisposable {
   id: string;
   name: string;
   handle: string;
   widgets: Record<string, WebloomWidget> = {};
-  mouseOverWidgetId: string | null = null;
+  hoveredWidgetId: string | null = null;
   /**
    * please note that those node always in the same level in the widgets tree
    */
@@ -35,6 +36,7 @@ export class WebloomPage implements WebloomDisposable {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
+  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -57,7 +59,7 @@ export class WebloomPage implements WebloomDisposable {
   }) {
     makeObservable(this, {
       widgets: observable,
-      mouseOverWidgetId: observable,
+      hoveredWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
       firstSelectedWidget: computed,
@@ -72,7 +74,6 @@ export class WebloomPage implements WebloomDisposable {
       setResizedWidgetId: action,
       setNewNode: action,
       setNewNodeTranslate: action,
-      setOverWidgetId: action,
       setSelectedNodeIds: action,
       setShadowElement: action,
       moveWidgetIntoGrid: action,
@@ -88,7 +89,13 @@ export class WebloomPage implements WebloomDisposable {
       setPageDimensions: action,
       adjustDimensions: action,
       snapshot: computed,
+      isDragging: computed,
+      isResizing: computed,
+      clearSelectedNodes: action,
+      setHoveredWidgetId: action,
+      removeSelectedNode: action,
     });
+
     this.id = id;
     this.workerBroker = workerBroker;
     this.name = name;
@@ -106,8 +113,15 @@ export class WebloomPage implements WebloomDisposable {
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-  }
 
+    this.cursorManager = new CursorManager(this);
+  }
+  clearSelectedNodes() {
+    this.selectedNodeIds.clear();
+  }
+  setHoveredWidgetId(id: string | null) {
+    this.hoveredWidgetId = id;
+  }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -122,7 +136,9 @@ export class WebloomPage implements WebloomDisposable {
     this.selectedNodeIds.clear();
     tempIds.forEach((id) => this.selectedNodeIds.add(id));
   }
-
+  removeSelectedNode(id: string) {
+    this.selectedNodeIds.delete(id);
+  }
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }
@@ -151,9 +167,7 @@ export class WebloomPage implements WebloomDisposable {
   setNewNodeTranslate(point: Point | null) {
     this.newNodeTranslate = point;
   }
-  setOverWidgetId(id: string | null) {
-    this.mouseOverWidgetId = id;
-  }
+
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }
@@ -194,7 +208,12 @@ export class WebloomPage implements WebloomDisposable {
   setNewNode(node: WebloomWidget | null) {
     this.newNode = node;
   }
-
+  get isDragging() {
+    return this.draggedWidgetId !== null;
+  }
+  get isResizing() {
+    return this.resizedWidgetId !== null;
+  }
   /**
    *
    * @param id
@@ -327,8 +346,12 @@ export class WebloomPage implements WebloomDisposable {
           },
         };
       } else {
+        const entity = this.getWidgetById(parent.id);
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newParentRowCount,
+          rowsCount:
+            entity.layoutMode === 'fixed'
+              ? undefined
+              : parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,
@@ -365,7 +388,7 @@ export class WebloomPage implements WebloomDisposable {
       const gridDimensions = node.gridDimensions;
       const newCoords = normalizeCoords(_newCoords, gridDimensions);
       // if the node is the same as the newCoords, return
-      if (isSameCoords(newCoords, gridDimensions)) return;
+      // if (isSameCoords(newCoords, gridDimensions)) return;
       const nodeGridBoundingRect = getGridBoundingRect(newCoords);
       const overlappingNodesToMove = this.findOverlappingNodesToMove(
         nodeGridBoundingRect,

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { apps as appsDrizzle } from '../drizzle/schema/schema';
 import { createZodDto } from 'nestjs-zod';
+import { pageSchema } from './pages.dto';
+import { userSchema } from './users.dto';
 
 export const appSchema = createSelectSchema(appsDrizzle);
 
@@ -40,3 +42,57 @@ export type UpdateAppDb = z.infer<typeof updateAppDb>;
 export class AppDto extends createZodDto(appSchema) {}
 export class CreateAppDto extends createZodDto(createAppSchema) {}
 export class UpdateAppDto extends createZodDto(updateAppSchema) {}
+
+export const createAppRetSchema = appSchema.extend({
+  pages: z.array(
+    pageSchema.extend({
+      tree: z.record(z.string(), z.unknown()),
+    }),
+  ),
+});
+export class CreateAppRetDto extends createZodDto(createAppRetSchema) {}
+
+export const appRetSchema = appSchema.extend({
+  pages: z.array(
+    pageSchema.pick({
+      id: true,
+      name: true,
+      handle: true,
+      index: true,
+      enabled: true,
+      visible: true,
+    }),
+  ),
+  defaultPage: pageSchema.extend({
+    tree: z.record(z.string(), z.unknown()),
+  }),
+  createdBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+  updatedBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+});
+export class AppRetDto extends createZodDto(appRetSchema) {}
+
+export const appsRetSchema = appSchema.extend({
+  createdBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+  updatedBy: userSchema
+    .pick({
+      id: true,
+      username: true,
+    })
+    .nullable(),
+});
+export class AppsRetDto extends createZodDto(appsRetSchema) {}
