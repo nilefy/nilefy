@@ -159,9 +159,9 @@ export class AuthService {
       throw new InternalServerErrorException();
     }
     if (!u.emailVerified) {
-      // throw new BadRequestException(
-      //   `please verify your email then try to sign in`,
-      // );
+      throw new BadRequestException(
+        `please verify your email then try to sign in`,
+      );
     }
     return {
       access_token: await this.jwtService.signAsync({
