@@ -177,7 +177,7 @@ export type Widget<WidgetProps> = {
   schema: WidgetInspectorConfig;
   setters?: WidgetSetters<WidgetProps>;
 };
-export type selectOptions = {
+type SelectOptions = {
   value: string;
   label: string;
 };
@@ -193,6 +193,7 @@ export type {
   InlineCodeInputProps,
   InspectorColorProps,
   WidgetSetters,
+  SelectOptions,
 };
 export const WIDGET_SECTIONS = {
   SCROLL_AREA: 'SCROLL_AREA',
