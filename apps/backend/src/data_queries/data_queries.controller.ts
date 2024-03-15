@@ -62,8 +62,6 @@ export class DataQueriesController {
     type: QueryDto,
   })
   async addQuery(
-    @Param('workspaceId', ParseIntPipe)
-    _workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,

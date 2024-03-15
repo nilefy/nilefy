@@ -19,6 +19,7 @@ export type QueryI = {
   updatedById: number;
   createdAt: Date;
   updatedAt: Date | null;
+  triggerMode: 'manually' | 'onAppLoad';
 };
 
 export type QueryReturnT = {
@@ -127,6 +128,7 @@ export async function updateQuery({
     dataSourceId: QueryI['dataSourceId'];
     id: QueryI['id'];
     query: QueryI['query'];
+    triggerMode: QueryI['triggerMode'];
   }>;
 }) {
   const res = await fetchX(
