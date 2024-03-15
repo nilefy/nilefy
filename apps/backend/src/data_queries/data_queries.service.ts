@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   AppQueriesDto,
@@ -14,6 +14,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
+import { ComponentsService } from '../components/components.service';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -26,6 +27,7 @@ export class DataQueriesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private dataSourcesService: DataSourcesService,
+    private componentsService: ComponentsService,
   ) {}
 
   async runQuery(
