@@ -10,8 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { WidgetsEventHandler } from './eventHandler';
-import { CSSProperties, ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { Copy, MoreVertical, Trash } from 'lucide-react';
 import z from 'zod';
 
@@ -97,36 +96,6 @@ function EventHandlerItemUtils({
   );
 }
 
-function EventHandlerItemView({
-  event,
-  children,
-  onDeleteCB,
-  onCopyCB,
-}: {
-  event: WidgetsEventHandler[0];
-  children: ReactElement;
-} & EventHandlerItemUtilsProps) {
-  return (
-    <DropdownMenu>
-      <div className="flex h-full w-full justify-between rounded-2xl  border-2 p-3">
-        <DropdownMenuTrigger className="h-full w-full ">
-          <p className="line-clamp-3 flex min-h-full w-full min-w-full items-center gap-3 ">
-            <span className="w-fit rounded-2xl bg-secondary p-3">
-              {event.type ?? 'unconfigured'}
-            </span>
-            <span className="">{event.config.type ?? 'unconfigured'}</span>
-          </p>
-        </DropdownMenuTrigger>
-        <EventHandlerItemUtils onCopyCB={onCopyCB} onDeleteCB={onDeleteCB} />
-      </div>
-
-      <DropdownMenuContent side="left" className="space-y-4 p-4">
-        {children}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function ChartDatasetItemView({
   dataset,
   children,
@@ -145,7 +114,7 @@ function ChartDatasetItemView({
               className="h-9 w-9 rounded-full"
               style={{ backgroundColor: dataset.color }}
             ></span>
-            <span className="w-fit rounded-2xl bg-secondary p-3">
+            <span className="bg-secondary w-fit rounded-2xl p-3">
               {dataset.name ?? 'unconfigured'}
             </span>
             <span className="">{dataset.aggMethod ?? 'unconfigured'}</span>
@@ -176,17 +145,6 @@ function Item({
   itemType?: ArrayFieldItemType;
 } & EventHandlerItemUtilsProps) {
   switch (itemType) {
-    case ArrayFieldItemType.EventHandlerItem: {
-      return (
-        <EventHandlerItemView
-          event={itemValue}
-          onDeleteCB={onDeleteCB}
-          onCopyCB={onCopyCB}
-        >
-          {children}
-        </EventHandlerItemView>
-      );
-    }
     case ArrayFieldItemType.ChartItem: {
       return (
         <ChartDatasetItemView
@@ -249,18 +207,10 @@ export default function ArrayFieldItemTemplate<
   } = props;
   const { CopyButton, MoveDownButton, MoveUpButton, RemoveButton } =
     registry.templates.ButtonTemplates;
-  const itemValue = temp as WidgetsEventHandler[0];
+  const itemValue = temp;
   const customItemType = uiSchema?.['ui:options']?.['ui:itemType'] as
     | ArrayFieldItemType
     | undefined;
-
-  const btnStyle: CSSProperties = {
-    flex: 1,
-    paddingLeft: 6,
-    paddingRight: 6,
-    fontWeight: 'bold',
-    minWidth: 0,
-  };
 
   return (
     <div className="flex items-center">

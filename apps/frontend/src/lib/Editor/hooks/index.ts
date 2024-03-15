@@ -9,3 +9,4 @@ export { useEditorMousePosition } from './useEditorMousePosition';
 export { useWebloomSelection } from './useWebloomSelection';
 export { useWebloomHover } from './useWebloomHover';
 export { useWebloomDragCore } from './useWebloomDrag';
+export { useExposeWidgetApi } from './useExposeWidgetApi';

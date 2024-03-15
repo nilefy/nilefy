@@ -8,7 +8,6 @@ import {
   WebloomPixelDimensions,
   LayoutMode,
   WIDGET_SECTIONS,
-  WidgetSetters,
   EntityInspectorConfig,
 } from '../interface';
 import {
@@ -17,12 +16,29 @@ import {
   getGridBoundingRect,
 } from '../utils';
 
-import { Snapshotable } from './interfaces';
+import { Snapshotable, WebloomDisposable } from './interfaces';
 import { cloneDeep, debounce } from 'lodash';
 import { Entity } from './entity';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { EntityActionConfig } from '../evaluation/interface';
+const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
+  scrollIntoView: {
+    type: 'SIDE_EFFECT',
+    name: 'scrollIntoView',
+    fn: (entity: WebloomWidget) => {
+      entity.dom?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      });
+    },
+  },
+};
 
+const normalizeWidgetActions = (actions: EntityActionConfig<WebloomWidget>) => {
+  return { ...defaultWidgetActions, ...actions };
+};
 export class WebloomWidget
   extends Entity
   implements
@@ -33,9 +49,19 @@ export class WebloomWidget
       > & {
         pageId: string;
       }
-    >
+    >,
+    WebloomDisposable
 {
   isRoot = false;
+  /**
+   * @description This is the runtime connection to the thing the widget can do like focus, submit, etc. Widgets have to set this up themselves because the api is
+   * different for each widget
+   * @example
+   * ```
+   *  widget.api.focus()
+   * ```
+   */
+  api: Record<string, (...args: unknown[]) => void> = {};
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
@@ -69,6 +95,7 @@ export class WebloomWidget
     props?: Record<string, unknown>;
   }) {
     const widgetConfig = WebloomWidgets[type];
+
     super({
       workerBroker: page.workerBroker,
       id,
@@ -79,7 +106,9 @@ export class WebloomWidget
       entityType: 'widget',
       publicAPI: widgetConfig.publicAPI,
       // @ts-expect-error fda
-      entityActionConfig: widgetConfig.config.widgetActions ?? {},
+      entityActionConfig: normalizeWidgetActions(
+        widgetConfig.config.widgetActions ?? {},
+      ),
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
@@ -147,6 +176,9 @@ export class WebloomWidget
   setValue(path: string, value: unknown): void {
     this.debouncedSyncRawValuesWithServer();
     super.setValue(path, value);
+  }
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
   }
   syncRawValuesWithServer() {
     commandManager.executeCommand(new ChangePropAction(this.id));
@@ -368,14 +400,12 @@ export class WebloomWidget
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
-  private genSetters(
-    settersConfig?: WidgetSetters,
-  ): Record<string, (arg: unknown) => void> {
-    const res: Record<string, (arg: unknown) => void> = {};
-    if (!settersConfig) return res;
-    for (const k in settersConfig) {
-      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
-    }
-    return res;
+  unselectSelf() {
+    this.page.setSelectedNodeIds((prev) => {
+      return new Set([...prev].filter((i) => i !== this.id));
+    });
+  }
+  dispose() {
+    this.unselectSelf();
   }
 }

@@ -49,7 +49,6 @@ export class WebloomQuery
         | keyof ConstructorParameters<typeof Entity>[0]
         | 'queryClient'
         | 'workspaceId'
-
       >
     >
 {
@@ -133,7 +132,7 @@ export class WebloomQuery
     this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    
+
     makeObservable(this, {
       createdAt: observable,
       updatedAt: observable,

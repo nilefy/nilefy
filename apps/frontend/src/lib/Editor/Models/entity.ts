@@ -80,15 +80,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.entityType = entityType;
     this.workerBroker = workerBroker;
     this.actionsConfig = cloneDeep(entityActionConfig);
-    this.rawActionsConfig = Object.entries(entityActionConfig).reduce(
-      (acc, [key, value]) => {
-        acc[key] = value;
-        // @ts-expect-error fn is not defined in the type
-        delete acc[key]['fn'];
-        return acc;
-      },
-      {} as EntityActionRawConfig,
-    );
+    this.rawActionsConfig = Object.entries(
+      cloneDeep(entityActionConfig),
+    ).reduce((acc, [key, value]) => {
+      acc[key] = value;
+      // @ts-expect-error fn is not defined in the type
+      delete acc[key]['fn'];
+      return acc;
+    }, {} as EntityActionRawConfig);
     this.actions = this.processActionConfig(this.actionsConfig);
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
@@ -146,10 +145,10 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     // TODO: Can we move this to the worker
     for (const path in this.validators) {
-      if (!changed.has(path.split('.').join('/'))) continue;
+      if (!changed.has('/' + path.split('.').join('/'))) continue;
       const res = this.validatePath(
         path,
-        get(this.values, path, get(this.rawValues, path)),
+        get(this.finalValues, path, get(this.rawValues, path)),
       );
       if (res) {
         this.addValidationErrors(path, res.errors);

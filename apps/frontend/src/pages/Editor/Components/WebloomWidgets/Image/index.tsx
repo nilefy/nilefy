@@ -1,12 +1,14 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Image } from 'lucide-react';
 import { useContext } from 'react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 import { ToolTipWrapper } from '../tooltipWrapper';
 
 /**
@@ -66,27 +68,57 @@ const defaultProps: WebloomImageProps = {
   objectFit: 'contain',
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomImageProps),
-  uiSchema: {
-    src: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:placeholder': 'URL',
-    },
-    altText: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    tooltip: {
-      'ui:widget': 'inlineCodeInput',
-    },
+const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Source',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Source',
+        },
+        path: 'src',
+      },
+      {
+        label: 'Alt Text',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Alt Text',
+        },
+        path: 'altText',
+      },
+      {
+        label: 'Tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Tooltip',
+        },
+        path: 'tooltip',
+      },
+      {
+        label: 'Object Fit',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Contain', value: 'contain' },
+            { label: 'Cover', value: 'cover' },
+            { label: 'None', value: 'none' },
+            { label: 'Fill', value: 'fill' },
+            { label: 'Scale Down', value: 'scale-down' },
+          ],
+        },
+        path: 'objectFit',
+      },
+    ],
   },
-};
+];
 
 const WebloomImageWidget: Widget<WebloomImageProps> = {
   component: WebloomImage,
   config,
   defaultProps,
-  schema,
+  inspectorConfig,
 };
 
 export { WebloomImageWidget };

@@ -275,11 +275,13 @@ export class EditorState implements WebloomDisposable {
   addQuery(
     query: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'workerBroker' | 'queryClient'
+      'workerBroker' | 'queryClient' | 'appId' | 'workspaceId'
     >,
   ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
+      appId: this.appId,
+      workspaceId: this.workspaceId,
       workerBroker: this.workerBroker,
       queryClient: this.queryClient,
     });

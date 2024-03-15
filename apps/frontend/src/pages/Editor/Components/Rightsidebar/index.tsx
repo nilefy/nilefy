@@ -19,17 +19,17 @@ function InsertTab() {
   }, [search]);
 
   return (
-    <ScrollArea>
-      <TabsContent value="insert" className="flex flex-col gap-3">
-        <DebouncedInput
-          value={search}
-          onChange={(val) => setSearch(val.toString())}
-          placeholder="Search"
-        />
+    <TabsContent value="insert" className="flex flex-col gap-3">
+      <DebouncedInput
+        value={search}
+        onChange={(val) => setSearch(val.toString())}
+        placeholder="Search"
+      />
+      <ScrollArea>
         <div
           className="grid min-w-full gap-2"
           style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
           }}
         >
           {filteredWidgetsKeys.map((name) => {
@@ -55,8 +55,8 @@ function InsertTab() {
             );
           })}
         </div>
-      </TabsContent>
-    </ScrollArea>
+      </ScrollArea>
+    </TabsContent>
   );
 }
 

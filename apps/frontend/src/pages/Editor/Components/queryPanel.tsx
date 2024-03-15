@@ -325,11 +325,11 @@ export const QueryPanel = observer(function QueryPanel() {
   ]).get();
 
   return (
-    <div className="flex h-full w-full border border-gray-300">
+    <div className="flex h-full w-full">
       {/* LEFT SIDE */}
-      <div className="flex h-full w-1/3 flex-col">
+      <div className="flex h-full w-1/3 flex-col border-l border-[#e5e7eb]">
         {/* SEARCH, FILTER AND ADD*/}
-        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-gray-300 p-4">
+        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-[#e5e7eb] p-4">
           {/* SEARCH and FILTER */}
           <div className="flex flex-row items-center gap-x-2">
             <Button
@@ -530,7 +530,7 @@ export const QueryPanel = observer(function QueryPanel() {
         </ScrollArea>
       </div>
       {/* ITEM */}
-      <div className="h-full w-full border border-gray-300">
+      <div className="h-full w-full border-l border-[#e5e7eb]">
         {selectedItemId ? (
           <QueryItem query={queries[selectedItemId]} />
         ) : (

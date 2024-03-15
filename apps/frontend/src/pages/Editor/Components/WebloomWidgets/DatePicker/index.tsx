@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/popover';
 import { Widget, WidgetConfig } from '@/lib/Editor/interface';
 import { CalendarDays } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
@@ -80,49 +79,6 @@ const defaultProps: WebloomDatePickerProps = {
 };
 const widgetName = 'WebloomDatePicker';
 
-// const schema: WidgetInspectorConfig<WebloomDatePickerProps> =
-//   [
-//   {
-//     sectionName: 'General',
-//     children: [
-//       {
-//         id: `${widgetName}-text`,
-//         key: 'label',
-//         label: 'Name',
-//         type: 'inlineCodeInput',
-//         options: {
-//           placeholder: 'Enter A Name',
-//           label: 'Lable',
-//         },
-//       },
-//       {
-//         id: `${widgetName}-Date`,
-//         key: 'date',
-//         label: 'Default Date',
-//         type: 'datePicker',
-//         options: {
-//           date: new Date(),
-//         },
-//       },
-//       {
-//         id: `${widgetName}-DateFormat`,
-//         key: 'dateFormat',
-//         label: 'Date Format',
-//         type: 'select',
-//         options: {
-//           items: [
-//             { value: 'yyyy-MM-dd', label: ' 2022-01-31' },
-//             { value: 'dd/MM/yyyy', label: ' 31/01/2022' },
-//             { value: 'MMMM dd, yyyy', label: 'January 31, 2022' },
-//             { value: 'MMMM yyyy', label: 'January 2022' },
-//             { value: 'E, MMM dd yyyy', label: 'Mon, Jan 31 2022' },
-//             { value: 'PPP', label: 'January 29th, 2022' },
-//           ],
-//         },
-//       },
-//     ],
-//   },
-// ];
 // export const WebloomDatePickerWidget: Widget<WebloomDatePickerProps> = {
 //   component: WebloomDatePicker,
 //   config,

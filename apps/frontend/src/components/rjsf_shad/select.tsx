@@ -1,10 +1,8 @@
-import { FocusEvent } from 'react';
 import {
   ariaDescribedByIds,
   EnumOptionsType,
   enumOptionsIndexForValue,
   enumOptionsValueForIndex,
-  labelValue,
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,

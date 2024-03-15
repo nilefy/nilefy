@@ -1,12 +1,19 @@
-import { Widget, WidgetConfig, selectOptions } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+  selectOptions,
+} from '@/lib/Editor/interface';
 import { CheckSquare } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import SelectComponent from './Select';
 import { Label } from '@/components/ui/label';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
+import { toJS } from 'mobx';
 
 export type WebloomSelectProps = {
   options: selectOptions[];
@@ -18,12 +25,13 @@ const WebloomSelect = observer(() => {
   const { id, onPropChange } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomSelectProps;
+
   return (
     <div className="w-full">
       <Label>{props.label}</Label>
       <SelectComponent
         value={props.value}
-        options={props.options}
+        options={toJS(props.options)}
         onPropChange={onPropChange}
       />
     </div>
@@ -53,52 +61,44 @@ const defaultProps: WebloomSelectProps = {
   value: 'Option 1',
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      label: {
-        type: 'string',
-        default: defaultProps.label,
-      },
-      options: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            value: {
-              type: 'string',
-            },
-            label: {
-              type: 'string',
-            },
-          },
+const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        path: 'label',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Label',
         },
       },
-      value: {
-        type: 'string',
+      {
+        label: 'Options',
+        path: 'options',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Options',
+        },
+        validation: zodToJsonSchema(
+          z
+            .array(
+              z.object({
+                label: z.string(),
+                value: z.string(),
+              }),
+            )
+            .default([]),
+        ),
       },
-    },
-    required: ['label', 'options'],
+    ],
   },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
-    },
-    options: {
-      'ui:widget': 'inlineCodeInput',
-    },
-  },
-};
-
+];
 export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomSelect,
   config,
   defaultProps,
-  schema,
+  inspectorConfig,
 };
 
 export { WebloomSelect };

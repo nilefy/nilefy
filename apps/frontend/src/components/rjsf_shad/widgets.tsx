@@ -1,6 +1,4 @@
 import CodeInputWidget from './codeInput';
-import EventHandlerWidget, { EventHandlerTypeSelect } from './eventHandler';
-import ChartDynamicXValueWidget from './chartDynamicXValue';
 import SortableListWidget from './sortableList';
 import InlineCodeInputWidget from './inlineCodeInput';
 import ColorPickerWidget from './color';
@@ -34,10 +32,8 @@ export function generateWidgets<
     colorPicker: ColorPickerWidget,
     inlineCodeInput: InlineCodeInputWidget,
     sortableList: SortableListWidget,
-    eventManager: EventHandlerWidget,
-    eventManagerTypeSelect: EventHandlerTypeSelect,
+
     codeInput: CodeInputWidget,
-    chartDynamicXValue: ChartDynamicXValueWidget,
   };
 }
 

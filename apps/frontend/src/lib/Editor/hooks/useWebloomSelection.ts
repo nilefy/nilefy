@@ -12,11 +12,12 @@ export const useWebloomSelection = (id: string) => {
   const dom = editorStore.currentPage.getWidgetById(id).dom;
   const select = useCallback(
     (e: MouseEvent) => {
-      e.stopPropagation();
-      if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-        return editorStore.currentPage.clearSelectedNodes();
-      }
-      commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
+      // TODO: Revamp selection
+      // e.stopPropagation();
+      // if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+      //   return editorStore.currentPage.clearSelectedNodes();
+      // }
+      // commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
     },
     [id],
   );

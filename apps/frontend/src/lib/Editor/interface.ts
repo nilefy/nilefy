@@ -187,3 +187,7 @@ export const WIDGET_SECTIONS = {
   CANVAS: 'CANVAS',
   RESIZER: 'RESIZER',
 } as const;
+export type selectOptions = {
+  value: string;
+  label: string;
+};

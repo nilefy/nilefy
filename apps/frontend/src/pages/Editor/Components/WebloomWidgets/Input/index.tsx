@@ -4,7 +4,7 @@ import {
   WidgetConfig,
 } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetContext } from '../..';
@@ -12,19 +12,25 @@ import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
 import { autorun } from 'mobx';
+import { useExposeWidgetApi } from '@/lib/Editor/hooks';
 
 export type WebloomInputProps = {
   label: string;
   type: 'number' | 'text' | 'password';
-  placeholder?: string | undefined;
-  disabled?: boolean | undefined;
-  autoFocus?: boolean | undefined;
-  value?: string | number | undefined;
+  placeholder?: string;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  value?: string | number;
+  onTextChange?: string;
+  onFocus?: string;
+  onBlur?: string;
+  onSubmit?: string;
 };
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomInputProps;
+  const ref = useRef<HTMLInputElement>(null);
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as WebloomInputProps;
   useEffect(
     () =>
       autorun(() => {
@@ -34,11 +40,21 @@ const WebloomInput = observer(() => {
       }),
     [onPropChange, props.type],
   );
-
+  useExposeWidgetApi(id, {
+    focus: () => {
+      if (!ref.current) return;
+      ref.current.focus();
+    },
+    blur: () => {
+      if (!ref.current) return;
+      ref.current.blur();
+    },
+  });
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{props.label}</Label>
       <Input
+        ref={ref}
         placeholder={props.placeholder}
         type={props.type}
         value={props.value}
@@ -49,9 +65,14 @@ const WebloomInput = observer(() => {
             key: 'value',
             value: e.target.value,
           });
+          widget.handleEvent('onTextChange');
         }}
-        onFocus={() => {}}
-        onBlur={() => {}}
+        onFocus={() => {
+          widget.handleEvent('onFocus');
+        }}
+        onBlur={() => {
+          widget.handleEvent('onBlur');
+        }}
       />
     </div>
   );
@@ -67,6 +88,22 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Horizontal',
+  widgetActions: {
+    focus: {
+      fn(entity) {
+        entity.api.focus();
+      },
+      name: 'focus',
+      type: 'SIDE_EFFECT',
+    },
+    blur: {
+      fn(entity) {
+        entity.api.blur();
+      },
+      name: 'blur',
+      type: 'SIDE_EFFECT',
+    },
+  },
 };
 
 const defaultProps: WebloomInputProps = {
@@ -127,6 +164,43 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
           label: 'Label',
         },
         validation: StringSchema('Label'),
+      },
+    ],
+  },
+  {
+    sectionName: 'Events',
+    children: [
+      {
+        path: 'onTextChange',
+        label: 'onTextChange',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onTextChange',
+        },
+      },
+      {
+        path: 'onFocus',
+        label: 'onFocus',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onFocus',
+        },
+      },
+      {
+        path: 'onBlur',
+        label: 'onBlur',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onBlur',
+        },
+      },
+      {
+        path: 'onSubmit',
+        label: 'onSubmit',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onSubmit',
+        },
       },
     ],
   },

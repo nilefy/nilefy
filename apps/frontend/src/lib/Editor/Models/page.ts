@@ -441,5 +441,6 @@ export class WebloomPage implements WebloomDisposable {
   }
   dispose(): void {
     Object.values(this.widgets).forEach((widget) => widget.dispose());
+    this.cursorManager.dispose();
   }
 }
