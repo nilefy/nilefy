@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   AppQueriesDto,
@@ -160,7 +165,18 @@ export class DataQueriesService {
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
   }): Promise<CompleteQueryI> {
-    // if (query.id && query.id !== queryId) {}
+    if (query.id && query.id !== queryId) {
+      try {
+        await this.getQuery(appId, query.id);
+        // there is a query with this new id
+        throw new BadRequestException();
+      } catch {}
+      const ret = await this.componentsService.getComponent(query.id);
+      if (ret) {
+        // there is a component with this new id
+        throw new BadRequestException();
+      }
+    }
 
     const [q] = await this.db
       .update(queries)
