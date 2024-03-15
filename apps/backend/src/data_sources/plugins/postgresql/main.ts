@@ -1,7 +1,8 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { configSchema, ConfigT, QueryT } from './types';
-import { Pool, PoolConfig } from 'pg';
+import { Pool, PoolConfig, Client } from 'pg';
+import { Logger } from '@nestjs/common';
 
 export default class PostgresqlQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -39,5 +40,29 @@ export default class PostgresqlQueryService
     // TODO: ssl + connection options
 
     return new Pool(config);
+  }
+
+  async testConnection(dataSourceConfig: ConfigT) {
+    const client = new Client({
+      ...dataSourceConfig,
+      connectionTimeoutMillis: 10000,
+    });
+    try {
+      await client.connect();
+      return {
+        connected: true,
+        msg: 'connected successfully',
+      };
+    } catch (error) {
+      return {
+        connected: false,
+        msg:
+          error instanceof Error
+            ? error.message
+            : 'unknown error please check your credentials',
+      };
+    } finally {
+      await client.end();
+    }
   }
 }

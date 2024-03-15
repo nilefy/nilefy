@@ -65,6 +65,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {
@@ -103,6 +104,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {

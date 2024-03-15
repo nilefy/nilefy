@@ -16,9 +16,10 @@ export const queryDb = createInsertSchema(queries).extend({
 });
 
 export const addQuerySchema = queryDb.pick({
-  dataSourceId: true,
   id: true,
+  dataSourceId: true,
   query: true,
+  triggerMode: true,
 });
 
 export const updateQuerySchema = addQuerySchema.partial();
@@ -50,6 +51,7 @@ export const appQueriesSchema = querySchema
     id: true,
     name: true,
     query: true,
+    triggerMode: true,
   })
   .extend({
     dataSource: workspaceDataSourcesSelect

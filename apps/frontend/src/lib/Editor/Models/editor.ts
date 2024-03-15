@@ -96,7 +96,7 @@ export class EditorState {
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger'
+      'dependencyManager' | 'evaluationManger' | 'workspaceId'
     >[];
   }) {
     this.cleanUp();
@@ -144,6 +144,7 @@ export class EditorState {
         ...q,
         evaluationManger: this.evaluationManger,
         dependencyManager: this.dependencyManager,
+        workspaceId: workspaceId,
       });
     });
     this.dependencyManager.initAnalysis();

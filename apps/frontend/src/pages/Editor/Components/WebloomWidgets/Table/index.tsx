@@ -16,6 +16,7 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
   Column,
+  RowSelectionState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/table';
 import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -78,7 +79,15 @@ const webloomTableProps = z.object({
     showFooter: z.boolean().default(true),
   }),
   events: widgetsEventHandler,
-  rowSelection: z.record(z.boolean()),
+  /**
+   * Contains the data of the row selected by the user. It's an empty object if no row is selected
+   */
+  selectedRow: z.record(z.unknown()),
+  /**
+   *Contains the index of the row selected by the user
+   * if no selection will be -1
+   */
+  selectedRowIndex: z.number(),
 });
 
 export type WebloomTableProps = z.infer<typeof webloomTableProps>;
@@ -126,6 +135,7 @@ const WebloomTable = observer(() => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   // filtering options
   const [globalFilter, setGlobalFilter] = React.useState('');
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // mapping the columns to be  compatible with tanstack-table
 
@@ -149,6 +159,7 @@ const WebloomTable = observer(() => {
 
   const table = useReactTable({
     data,
+    enableMultiRowSelection: false,
     columns: props.isRowSelectionEnabled
       ? [
           {
@@ -185,7 +196,7 @@ const WebloomTable = observer(() => {
           ? props.pageSize ?? 3
           : props.data.length,
       },
-      rowSelection: props.rowSelection,
+      rowSelection,
       sorting,
       globalFilter,
     },
@@ -223,11 +234,18 @@ const WebloomTable = observer(() => {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: (updater) => {
+      const selectedIndex: string | undefined = Object.keys(
+        typeof updater === 'function' ? updater(rowSelection) : updater,
+      )[0];
       onPropChange({
-        key: 'rowSelection',
-        value:
-          typeof updater === 'function' ? updater(props.rowSelection) : updater,
+        key: 'selectedRow',
+        value: selectedIndex ? props.data[+selectedIndex] : {},
       });
+      onPropChange({
+        key: 'selectedRowIndex',
+        value: selectedIndex ? +selectedIndex : -1,
+      });
+      setRowSelection(updater);
       // execute user event
       editorStore.executeActions<typeof webloomTableEvents>(
         id,
@@ -373,7 +391,8 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomTableProps = {
   data: [],
-  rowSelection: {},
+  selectedRow: {},
+  selectedRowIndex: -1,
   columns: [],
   events: [],
   isRowSelectionEnabled: false,
@@ -408,7 +427,11 @@ const schema: WidgetInspectorConfig = {
       appearance: zodToJsonSchema(webloomTableProps.shape.appearance),
       pageSize: { type: 'number' },
       events: widgetsEventHandlerJsonSchema,
-      rowSelection: zodToJsonSchema(webloomTableProps.shape.rowSelection),
+      selectedRow: zodToJsonSchema(webloomTableProps.shape.selectedRow),
+      selectedRowIndex: {
+        type: 'number',
+        default: -1,
+      },
       pageIndex: {
         type: 'number',
       },
@@ -424,7 +447,8 @@ const schema: WidgetInspectorConfig = {
     ],
   },
   uiSchema: {
-    rowSelection: { 'ui:widget': 'hidden' },
+    selectedRow: { 'ui:widget': 'hidden' },
+    selectedRowIndex: { 'ui:widget': 'hidden' },
     pageIndex: { 'ui:widget': 'hidden' },
     columns: {
       'ui:widget': 'sortableList',
