@@ -158,6 +158,8 @@ export class DataQueriesService {
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
   }): Promise<CompleteQueryI> {
+    // if (query.id && query.id !== queryId) {}
+
     const [q] = await this.db
       .update(queries)
       .set({ ...query, updatedById, updatedAt: sql`now()` })

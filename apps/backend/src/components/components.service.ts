@@ -14,10 +14,15 @@ import {
   WebloomTree,
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { AppDto } from '../dto/apps.dto';
 
 @Injectable()
 export class ComponentsService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private dataQueriesService: DataQueriesService,
+  ) {}
 
   /**
    * components state is represented as tree, but notice there's case we don't have to handle while inserting
@@ -79,6 +84,21 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    // id/name is changed
+    if (dto.id && dto.id !== componentId) {
+      // there is a component with this new id
+      const ret = await this.getComponent(dto.id);
+      if (ret) {
+        throw new BadRequestException();
+      }
+      const { appId } = (await this.getComponent(componentId))!;
+      try {
+        await this.dataQueriesService.getQuery(appId, dto.id);
+        // there is a query with this id
+        throw new BadRequestException();
+      } catch {}
+    }
+  
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
     // so we need to keep this condition true => accept root updates but discard the `parentId` update
@@ -136,5 +156,34 @@ export class ComponentsService {
       }
     });
     return tree;
+  }
+
+  async getComponent(
+    componentId: ComponentDto['id'],
+  ): Promise<{ id: ComponentDto['id']; appId: AppDto['id'] } | undefined> {
+    const ret = await this.db.query.components.findFirst({
+      where: eq(components.id, componentId),
+      columns: {
+        id: true,
+      },
+      with: {
+        page: {
+          with: {
+            app: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (ret) {
+      return {
+        id: ret.id,
+        appId: ret.page.app.id,
+      };
+    }
+    return ret;
   }
 }
