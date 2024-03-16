@@ -13,13 +13,19 @@ import {
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
 import { ToolTipWrapper } from '../tooltipWrapper';
+import clsx from 'clsx';
+import { autorun } from 'mobx';
 
 export type WebloomTextAreaProps = {
-  label: string;
+  label: {
+    text: string;
+    position: 'left' | 'top';
+  };
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
   value?: string;
+  defaultValue?: string;
   events: WidgetsEventHandler;
   caption?: string;
   tooltip?: string;
@@ -46,6 +52,19 @@ const WebloomTextArea = observer(function WebloomTextArea() {
     });
   }, [onPropChange]);
 
+  // for defaultValue, i don't think we can use radix-ui's select.defaultValue directly because the component is controlled
+  // so the meaning of default value what the value will start with
+  useEffect(
+    () =>
+      autorun(() => {
+        onPropChange({
+          key: 'value',
+          value: props.defaultValue,
+        });
+      }),
+    [onPropChange],
+  );
+
   // append runtime methods
   useEffect(() => {
     widget.appendSetters([
@@ -65,8 +84,13 @@ const WebloomTextArea = observer(function WebloomTextArea() {
 
   return (
     <ToolTipWrapper text={props.tooltip}>
-      <div className="flex h-full w-full flex-col gap-4 p-1">
-        <Label htmlFor={id}>{props.label}</Label>
+      <div
+        className={clsx('flex h-full w-full gap-4 p-1', {
+          'flex-col': props.label.position === 'top',
+          'items-center': props.label.position === 'left',
+        })}
+      >
+        <Label htmlFor={id}>{props.label.text}</Label>
         <Textarea
           id={id}
           className="h-full w-full resize-none"
@@ -121,7 +145,7 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomTextAreaProps = {
   placeholder: 'Enter text',
-  label: 'Label',
+  label: { text: 'Label', position: 'left' },
   disabled: false,
   events: [],
 };
@@ -134,6 +158,21 @@ const schema: WidgetInspectorConfig = {
         type: 'string',
       },
       label: {
+        type: 'object',
+        properties: {
+          text: {
+            type: 'string',
+            default: defaultProps.label.text,
+          },
+          position: {
+            type: 'string',
+            enum: ['top', 'left'],
+            default: defaultProps.label.position,
+          },
+        },
+        required: ['text', 'position'],
+      },
+      defaultValue: {
         type: 'string',
       },
       caption: {
@@ -170,6 +209,7 @@ const schema: WidgetInspectorConfig = {
       'ui:title': 'Placeholder',
       'ui:placeholder': 'Enter placeholder',
     },
+    defaultValue: { 'ui:widget': 'inlineCodeInput' },
     caption: {
       'ui:widget': 'inlineCodeInput',
     },
@@ -180,9 +220,11 @@ const schema: WidgetInspectorConfig = {
       'ui:widget': 'inlineCodeInput',
     },
     label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
+      text: {
+        'ui:widget': 'inlineCodeInput',
+        'ui:title': 'Label',
+        'ui:placeholder': 'Enter label',
+      },
     },
     tooltip: {
       'ui:widget': 'inlineCodeInput',

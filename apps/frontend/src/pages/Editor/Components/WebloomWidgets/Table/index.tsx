@@ -17,7 +17,15 @@ import {
   getFilteredRowModel,
   Column,
   RowSelectionState,
+  FilterFn,
+  SortingFn,
+  sortingFns,
 } from '@tanstack/react-table';
+import {
+  RankingInfo,
+  rankItem,
+  compareItems,
+} from '@tanstack/match-sorter-utils';
 import {
   Table,
   TableBody,
@@ -45,6 +53,14 @@ import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
 
 //Types
+declare module '@tanstack/react-table' {
+  interface FilterFns {
+    fuzzy: FilterFn<unknown>;
+  }
+  interface FilterMeta {
+    itemRank: RankingInfo;
+  }
+}
 type RowData = Record<string, unknown>;
 export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 
@@ -64,6 +80,34 @@ const webloomTableEvents = {
   onSearchChange: 'onSearchChange',
   onSortChange: 'onSortChange',
 } as const;
+
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  // Rank the item
+  const itemRank = rankItem(row.getValue(columnId), value);
+
+  // Store the itemRank info
+  addMeta({
+    itemRank,
+  });
+
+  // Return if the item should be filtered in/out
+  return itemRank.passed;
+};
+
+const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
+  let dir = 0;
+
+  // Only sort by rank if the column has ranking information
+  if (rowA.columnFiltersMeta[columnId]) {
+    dir = compareItems(
+      rowA.columnFiltersMeta[columnId].itemRank!,
+      rowB.columnFiltersMeta[columnId].itemRank!,
+    );
+  }
+
+  // Provide an alphanumeric fallback for when the item ranks are equal
+  return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
+};
 
 const webloomTableProps = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
@@ -159,7 +203,13 @@ const WebloomTable = observer(() => {
 
   const table = useReactTable({
     data,
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
     enableMultiRowSelection: false,
+    globalFilterFn: fuzzyFilter,
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     columns: props.isRowSelectionEnabled
       ? [
           {
