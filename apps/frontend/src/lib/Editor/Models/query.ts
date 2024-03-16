@@ -117,7 +117,6 @@ export class WebloomQuery
         });
       },
       onSuccess: (data) => {
-        console.log('DEBUGPRINT[1]: query.ts:120: data=', this.id, data);
         this.updateQuery({
           rawValues: {
             data: data.data,
@@ -125,14 +124,7 @@ export class WebloomQuery
             status: data.status,
           },
         });
-        console.log('DEBUGPRINT[1]: query.ts:128: data=', data);
         this.setQueryState('success');
-        console.log(
-          'DEBUGPRINT[1]: query.ts:121: data=',
-          data,
-          toJS(this.rawValues),
-          toJS(this.finalValues),
-        );
       },
     }));
     makeObservable(this, {
@@ -143,11 +135,6 @@ export class WebloomQuery
       setQueryState: action,
     });
     if (this.triggerMode === 'onAppLoad') {
-      console.log('load with app load');
-      console.log(
-        'DEBUGPRINT[2]: query.ts:152: toJS(this.config)=',
-        toJS(this.config),
-      );
       this.runQuery.mutate({
         appId: this.appId,
         queryId: this.id,
@@ -199,6 +186,7 @@ export class WebloomQuery
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,
       triggerMode: this.triggerMode,
+      workspaceId: this.workspaceId,
     };
   }
 
