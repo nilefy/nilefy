@@ -215,13 +215,14 @@ export class EditorState {
   addQuery(
     query: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger' | 'queryClient'
+      'dependencyManager' | 'evaluationManger' | 'queryClient' | 'workspaceId'
     >,
   ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
       dependencyManager: this.dependencyManager,
       evaluationManger: this.evaluationManger,
+      workspaceId: this.workspaceId,
     });
   }
 

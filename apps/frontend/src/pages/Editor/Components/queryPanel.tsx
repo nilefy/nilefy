@@ -579,7 +579,10 @@ export const QueryPanel = observer(function QueryPanel() {
       {/* ITEM */}
       <div className="h-full w-full border border-gray-300">
         {selectedItemId ? (
-          <QueryItem query={queries[selectedItemId]} />
+          <QueryItem
+            key={queries[selectedItemId].id}
+            query={queries[selectedItemId]}
+          />
         ) : (
           <div className="h-full w-full flex-row items-center justify-center ">
             <p>select or create new query</p>
