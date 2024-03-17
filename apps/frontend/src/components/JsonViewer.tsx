@@ -143,7 +143,7 @@ export const JsonViewer = observer(function JsonViewer() {
                   <button
                     onClick={() =>
                       commandManager.executeCommand(
-                        new SelectionAction(node.id, false),
+                        SelectionAction.remoteSelect(node.id),
                       )
                     }
                   >
