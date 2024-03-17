@@ -49,7 +49,7 @@ function evalInContext(
       evaluationContext,
     );
   } catch (e) {
-    console.error('DEBUGPRINT[4]: evaluation.ts:51: e=', e);
+    console.error('DEBUGPRINT[4]: evaluation.ts:51: e=', 'code', expression, e);
     // TODO: use errors to close https://github.com/z-grad-pr-sh/frontend/issues/250
     return undefined;
   }

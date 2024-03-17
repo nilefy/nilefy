@@ -151,7 +151,7 @@ const QueryItem = observer(function QueryItem({
         </LoadingButton>
         <Button
           variant={'ghost'}
-          disabled={query.runQuery.state.isPending}
+          disabled={query.queryRunner.state.isPending}
           onClick={() => {
             if (!workspaceId || !appId) {
               throw new Error('workspaceId or appId is not defined!');
@@ -162,7 +162,7 @@ const QueryItem = observer(function QueryItem({
             >;
 
             // query.setQueryState('loading');
-            query.runQuery.mutate({
+            query.queryRunner.mutate({
               workspaceId: +workspaceId,
               appId: +appId,
               queryId: query.id,

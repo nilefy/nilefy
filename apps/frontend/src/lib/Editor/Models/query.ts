@@ -51,7 +51,7 @@ export class WebloomQuery
   updatedAt: CompleteQueryI['updatedAt'];
   triggerMode: CompleteQueryI['triggerMode'];
   static queryClient: QueryClient;
-  runQuery: MobxMutation<
+  queryRunner: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
     FetchXError,
     Parameters<typeof runQueryApi>[0],
@@ -100,7 +100,7 @@ export class WebloomQuery
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.triggerMode = triggerMode;
-    this.runQuery = new MobxMutation(WebloomQuery.queryClient, () => ({
+    this.queryRunner = new MobxMutation(WebloomQuery.queryClient, () => ({
       mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
         return runQueryApi(vars);
       },
@@ -128,14 +128,13 @@ export class WebloomQuery
       },
     }));
     makeObservable(this, {
-      fetchValue: flow,
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
       setQueryState: action,
     });
     if (this.triggerMode === 'onAppLoad') {
-      this.runQuery.mutate({
+      this.queryRunner.mutate({
         appId: this.appId,
         queryId: this.id,
         workspaceId: this.workspaceId,
@@ -172,9 +171,18 @@ export class WebloomQuery
     }
   }
 
-  // TODO: call server to get actual data
-  fetchValue() {
-    // this.value = {};
+  /**
+   * trigger the query async, but don't return the promise
+   */
+  run() {
+    this.queryRunner.mutate({
+      workspaceId: this.workspaceId,
+      appId: this.appId,
+      queryId: this.id,
+      body: {
+        evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+      },
+    });
   }
 
   get snapshot() {

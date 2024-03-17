@@ -310,18 +310,7 @@ export class EditorState {
           Object.entries(this.queries).forEach(([queryName, query]) => {
             evaluationContext[queryName] = {
               ...query.finalValues,
-              run: () =>
-                query.runQuery.mutate({
-                  workspaceId: this.workspaceId,
-                  appId: this.appId,
-                  queryId: query.id,
-                  body: {
-                    evaluatedConfig: toJS(query.config) as Record<
-                      string,
-                      unknown
-                    >,
-                  },
-                }),
+              run: query.run,
             };
           });
           evaluateCode(actionConfig.script, evaluationContext);
