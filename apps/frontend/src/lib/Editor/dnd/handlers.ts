@@ -20,7 +20,7 @@ import {
 import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/Editor/Drag';
 import { toJS } from 'mobx';
-import { getNewEntityName } from '../entitiesNameSeed';
+import { uniqueId } from 'lodash';
 function snapCenterToCursor({
   currentMousePos,
   position,
@@ -75,7 +75,7 @@ export class DndHandlers {
     const dimensions = getDropPositionWithCollisions(
       grid,
       editorRelativeMousePosition,
-      item.isNew ? getNewEntityName(item.type) : item.id,
+      item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
       overId,
       droppableId,
       editorStore.currentPage.draggedWidgetId!,
@@ -127,7 +127,7 @@ export class DndHandlers {
     const dimensions = getDropPositionWithCollisions(
       grid,
       newMousePos,
-      item.isNew ? getNewEntityName(item.type) : item.id,
+      item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
       overId,
       droppableId,
       editorStore.currentPage.draggedWidgetId!,
