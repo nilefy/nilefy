@@ -1,13 +1,5 @@
 import { QueryClient } from '@tanstack/query-core';
-import {
-  makeObservable,
-  observable,
-  action,
-  computed,
-  comparer,
-  autorun,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, action, computed, comparer } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EvaluationContext, evaluateCode } from '../evaluation';
@@ -16,10 +8,7 @@ import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
-import {
-  EventTypes,
-  WidgetsEventHandler,
-} from '@/components/rjsf_shad/eventHandler';
+import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 import { toast } from '@/components/ui/use-toast';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
@@ -311,6 +300,7 @@ export class EditorState {
             evaluationContext[queryName] = {
               ...query.finalValues,
               run: query.run,
+              reset: query.reset,
             };
           });
           evaluateCode(actionConfig.script, evaluationContext);
