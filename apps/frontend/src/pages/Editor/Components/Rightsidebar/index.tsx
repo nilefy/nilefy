@@ -9,8 +9,8 @@ import { DeleteAction } from '@/actions/Editor/Delete';
 import { observer } from 'mobx-react-lite';
 import { WidgetConfigPanel } from './configInspector';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DebouncedInput } from '@/components/debouncedInput';
 import { matchSorter } from 'match-sorter';
+import { Input } from '@/components/ui/input';
 
 function InsertTab() {
   const [search, setSearch] = useState('');
@@ -20,9 +20,9 @@ function InsertTab() {
 
   return (
     <TabsContent value="insert" className="flex flex-col gap-3">
-      <DebouncedInput
+      <Input
         value={search}
-        onChange={(val) => setSearch(val.toString())}
+        onChange={(e) => setSearch(e.target.value)}
         placeholder="Search"
       />
       <ScrollArea>
