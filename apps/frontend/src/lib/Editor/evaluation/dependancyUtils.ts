@@ -1,10 +1,14 @@
 import type { Node, Options } from 'acorn';
 import { parse } from 'acorn';
-//@ts-expect-error no types
-import unescapeJS from 'unescape-js';
+
 import { ancestor } from 'acorn-walk';
 import { has, isFinite, isString, toPath } from 'lodash';
-import { bindingRegexGlobal } from '../utils';
+import {
+  bindingRegexGlobal,
+  functionActionWrapper,
+  functionExpressionWrapper,
+  sanitizeScript,
+} from './utils';
 export type DependencyRelation = {
   // from is the dependent
   dependent: { entityId: string; path: string };
@@ -12,21 +16,6 @@ export type DependencyRelation = {
   dependency: { entityId: string; path: string };
 };
 export type AnalysisContext = Record<string, Set<string>>;
-
-export const functionActionWrapper = (code: string) => {
-  return `
-    (function() {
-       ${code}
-    })()
-  `;
-};
-export const functionExpressionWrapper = (code: string) => {
-  return `
-    (function() {
-       return ${code}
-    })()
-  `;
-};
 
 export const analyzeDependancies = ({
   code,
@@ -111,15 +100,6 @@ export const getStringValue = (
   }
   return inputValue;
 };
-function sanitizeScript(js: string, evaluationVersion: number) {
-  // We remove any line breaks from the beginning of the script because that
-  // makes the final function invalid. We also unescape any escaped characters
-  // so that eval can happen
-  //default value of evalutaion version is 2
-  evaluationVersion = evaluationVersion ? evaluationVersion : 2;
-  const trimmedJS = js.replace(beginsWithLineBreakRegex, '');
-  return evaluationVersion > 1 ? trimmedJS : unescapeJS(trimmedJS);
-}
 
 // Each node has an attached type property which further defines
 // what all properties can the node have.
@@ -359,7 +339,6 @@ const getAST = (code: string, options?: AstOptions) =>
  * should run again.
  * @param code: The piece of script where references need to be extracted from
  */
-const beginsWithLineBreakRegex = /^\s+|\s+$/;
 
 interface IdentifierInfo {
   references: string[];
@@ -368,12 +347,11 @@ interface IdentifierInfo {
 }
 export const extractIdentifierInfoFromCode = (
   code: string,
-  evaluationVersion: number = 2020,
   invalidIdentifiers?: Record<string, unknown>,
 ): IdentifierInfo => {
   let ast: Node = { end: 0, start: 0, type: '' };
   try {
-    const sanitizedScript = sanitizeScript(code, evaluationVersion);
+    const sanitizedScript = sanitizeScript(code);
     /* wrapCode - Wrapping code in a function, since all code/script get wrapped with a function during evaluation.
        Some syntax won't be valid unless they're at the RHS of a statement.
        Since we're assigning all code/script to RHS during evaluation, we do the same here.

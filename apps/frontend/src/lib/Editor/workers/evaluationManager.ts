@@ -3,9 +3,9 @@ import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
-import { bindingRegexGlobal } from '@/lib/utils';
 import { EntityErrorsRecord } from '../interface';
-import { analyzeDependancies } from '../dependancyUtils';
+import { analyzeDependancies } from '../evaluation/dependancyUtils';
+import { bindingRegexGlobal } from '../evaluation/utils';
 
 export class EvaluationManager {
   editor: EditorState;

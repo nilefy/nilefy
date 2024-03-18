@@ -9,7 +9,7 @@ import {
   extractValidators,
   transformErrorToMessage,
 } from '@/lib/Editor/validations';
-import { analyzeDependancies } from '../dependancyUtils';
+import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { EntityInspectorConfig } from '../interface';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 import { EntityActionRawConfig } from '../evaluation/interface';

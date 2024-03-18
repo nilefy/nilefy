@@ -4,7 +4,7 @@ import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
 import { AddEntityRequest, EntityConfigBody } from './common/interface';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { AnalysisContext } from '../dependancyUtils';
+import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries } from 'lodash';
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];

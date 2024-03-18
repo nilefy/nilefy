@@ -1,6 +1,11 @@
 import { memoize } from 'lodash';
-import { bindingRegexGlobal } from '../../utils';
 import { EntityInspectorConfig } from '../interface';
+import {
+  bindingRegexGlobal,
+  functionActionWrapper,
+  functionExpressionWrapper,
+  sanitizeScript,
+} from './utils';
 
 export const evaluate = (
   code: string,
@@ -29,15 +34,18 @@ export const evaluate = (
   }
   const errors: string[] = [];
   const evalInContext = (expression: string) => {
+    expression = sanitizeScript(expression);
     try {
       if (isAction) {
-        return new Function('context', `with(context) { ${expression} }`)(
-          evaluationContext,
-        );
+        return new Function(
+          'context',
+          `with(context) { ${functionActionWrapper(expression)} }`,
+        )(evaluationContext);
       }
-      return new Function('context', `with(context) { return ${expression} }`)(
-        evaluationContext,
-      );
+      return new Function(
+        'context',
+        `with(context) { return (${functionExpressionWrapper(expression)}) }`,
+      )(evaluationContext);
     } catch (e: unknown) {
       const error = e as Error;
       errors.push(error.name + ': ' + error.message);
@@ -51,7 +59,6 @@ export const evaluate = (
       return null;
     }
   });
-
   if (evaluatedExpressions.length === 1 && firstMatchLength === code.length) {
     return {
       value: evaluatedExpressions[0],
