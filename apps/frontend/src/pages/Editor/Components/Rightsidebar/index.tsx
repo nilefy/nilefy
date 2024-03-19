@@ -23,6 +23,7 @@ function InsertTab() {
         value={search}
         onChange={(val) => setSearch(val.toString())}
         placeholder="Search"
+        type="search"
       />
       <div className="grid w-full  grid-cols-2 gap-2">
         {filteredWidgetsKeys.map((name) => {
