@@ -7,8 +7,6 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
@@ -16,12 +14,12 @@ export const WidgetConfigPanel = observer(() => {
     .inspectorConfig as EntityInspectorConfig;
 
   return (
-    <div>
+    <div className="w-full">
       <ConfigPanelHeader node={selectedNode} />
       <EntityForm>
-        <div className="flex flex-col gap-2 ">
-          <ScrollArea>
-            <div className="divide-y-2 divide-gray-200 border-black">
+        <div className="h-full w-full ">
+          <div className="flex flex-col gap-2 ">
+            <div className="h-full divide-y-2 divide-gray-200 border-black">
               {inspectorConfig.map((section) => {
                 return (
                   <DefaultSection
@@ -32,7 +30,7 @@ export const WidgetConfigPanel = observer(() => {
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </EntityForm>
     </div>

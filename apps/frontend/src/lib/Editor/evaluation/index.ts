@@ -83,6 +83,15 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     const paths: string[] = [];
     for (const section of config) {
       for (const control of section.children) {
+        if (control.type === 'array') {
+          for (const subControl of control.options.subform) {
+            // TODO: handle nested arrays but it's a bit of an overkill
+            if (evaluationFormControls.has(subControl.type)) {
+              const path = `${control.path}[*].${subControl.path}`;
+              paths.push(path);
+            }
+          }
+        }
         if (evaluationFormControls.has(control.type)) {
           const path = control.path;
           paths.push(path);

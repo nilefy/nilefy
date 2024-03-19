@@ -10,7 +10,7 @@ export const functionActionWrapper = (code: string) => {
 export const functionExpressionWrapper = (code: string) => {
   return `
       (function() {
-         return (${code})
+         return ${code}
       })()
     `;
 };

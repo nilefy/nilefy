@@ -24,46 +24,6 @@ type EventHandlerItemUtilsProps = {
   onDeleteCB: () => void;
 };
 
-export const chartDatasets = z.array(
-  z.object({
-    name: z.string().default(''),
-    yValue: z.string(),
-    /**
-     *@link https://docs.retool.com/apps/web/guides/components/charts#transformation-types
-     * @description none
-     * @description count	Returns the quantity of items for each group.
-     * @description sum	Returns the summation of all numeric values.
-     * @description avg	Returns the average of all numeric values.
-     * @description median	Returns the median of all numeric values.
-     * @description mode	Returns the mode of all numeric values.
-     * @description rms	Returns the rms of all numeric values.
-     * @description stddev	Returns the standard deviation of all numeric values.
-     * @description min	Returns the minimum numeric value for each group.
-     * @description max	Returns the maximum numeric value for each group.
-     * @description first	Returns the first numeric value for each group.
-     * @description last	Returns the last numeric value for each group.
-     */
-    aggMethod: z.enum([
-      'none',
-      'count',
-      'sum',
-      'avg',
-      'median',
-      // 'mode',
-      'rms',
-      'stddev',
-      'min',
-      'max',
-      'first',
-      'last',
-    ]),
-    chartType: z.enum(['bar', 'line', 'scatter']),
-    // TODO: make it auto generated from existing datasets
-    color: z.string(),
-  }),
-);
-type ChartDatasetsT = z.infer<typeof chartDatasets>;
-
 function EventHandlerItemUtils({
   onCopyCB,
   onDeleteCB,

@@ -78,9 +78,11 @@ export const Editor = observer(() => {
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
-            <Suspense fallback={<WebloomLoader />}>
-              <RightSidebar />
-            </Suspense>
+            <div>
+              <Suspense fallback={<WebloomLoader />}>
+                <RightSidebar />
+              </Suspense>
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

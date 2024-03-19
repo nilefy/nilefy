@@ -10,6 +10,8 @@ import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
 import { debounce } from 'lodash';
 import { WebloomDisposable } from './interfaces';
 import { EditorState } from './editor';
+// @ts-expect-error no types
+import structuredClone from '@ungap/structured-clone';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
@@ -52,7 +54,11 @@ export class WorkerBroker implements WebloomDisposable {
 
   _postMessege() {
     if (!this.queue.length) return;
-    const queueCopy = toJS(this.queue);
+    // We're using a custom structured clone because this one ignores unsupported types
+    const queueCopy = structuredClone(toJS(this.queue), {
+      lossy: true,
+      json: true,
+    });
     runInAction(() => {
       this.queue = [];
     });

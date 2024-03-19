@@ -19,13 +19,13 @@ function InsertTab() {
   }, [search]);
 
   return (
-    <TabsContent value="insert" className="flex flex-col gap-3">
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search"
-      />
-      <ScrollArea>
+    <TabsContent value="insert">
+      <div className="w- flex h-full w-full flex-col gap-3 py-4 ">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search"
+        />
         <div
           className="grid min-w-full gap-2"
           style={{
@@ -55,7 +55,7 @@ function InsertTab() {
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
     </TabsContent>
   );
 }
@@ -103,10 +103,7 @@ export const RightSidebar = observer(() => {
   }, [size]);
 
   return (
-    <div
-      className="right-sidebar h-full w-full overflow-y-auto"
-      key="right-sidebar"
-    >
+    <div className="right-sidebar h-full w-full p-2" key="right-sidebar">
       <Tabs
         value={openedTab}
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}
@@ -114,17 +111,20 @@ export const RightSidebar = observer(() => {
       >
         <ScrollArea>
           <ScrollBar orientation="horizontal" />
-          <TabsList className="flex w-full justify-start gap-2 p-6 leading-4">
+          <TabsList className="flex w-full  gap-2 p-6 leading-4">
             <TabsTrigger value="page">Page</TabsTrigger>
             <TabsTrigger value="inspect">Inspect</TabsTrigger>
             <TabsTrigger value="insert">Insert</TabsTrigger>
           </TabsList>
         </ScrollArea>
-        <div className="p-2">
+        <ScrollArea
+          className="h-screen"
+          scrollAreaViewPortClassName="h-full w-full px-3 pt-2 [&>div]:!block"
+        >
           <InsertTab />
           <InspectTab />
           <TabsContent value="page">show page meta data</TabsContent>
-        </div>
+        </ScrollArea>
       </Tabs>
     </div>
   );

@@ -1,5 +1,5 @@
 import { InputProps } from '@/components/ui/input';
-import { ReactNode } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
@@ -13,10 +13,16 @@ type InspectorInputProps = Partial<
   Pick<InputProps, 'type' | 'placeholder' | 'max' | 'min'>
 >;
 
-type InspectorSelectProps = {
+type InspectorStaticSelectProps = {
   items: { label: string; value: string }[];
-  placeholder?: string;
 };
+type InspectorDynamicSelectProps = {
+  path: string;
+  convertToOptions: (value: unknown) => { label: string; value: string }[];
+};
+type InspectorSelectProps = {
+  placeholder?: string;
+} & (InspectorStaticSelectProps | InspectorDynamicSelectProps);
 
 type InspectorColorProps = {
   color: string;
@@ -27,6 +33,16 @@ type InspectorEvents = Record<string, never>;
 type InspectorDatePickerProps = {
   date: Date;
 };
+export type ArrayInputProps = {
+  subform: FormControl[];
+  SubformWrapper?: ReactElement<{
+    onDelete: () => void;
+    children: ReactNode;
+    value: Record<string, unknown>;
+  }>;
+  newItemDefaultValue: Record<string, unknown>;
+};
+
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -40,10 +56,9 @@ type FormControlOptions = {
   list: undefined;
   checkbox: undefined;
   inlineCodeInput: InlineCodeInputProps;
-  heightMode: {
-    label: string;
-  };
+  chartDatasets: undefined;
   datePicker: InspectorDatePickerProps;
+  array: ArrayInputProps;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;

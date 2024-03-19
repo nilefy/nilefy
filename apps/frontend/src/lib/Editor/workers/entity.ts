@@ -3,7 +3,7 @@ import { deepEqual } from 'fast-equals';
 
 import { DependencyManager } from './dependencyManager';
 
-import { get, set } from 'lodash';
+import { get, set, toPath } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -81,6 +81,7 @@ export class Entity {
     ]);
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
+    this.initDependecies();
   }
 
   initDependecies() {
@@ -94,18 +95,44 @@ export class Entity {
     >[] = [];
 
     for (const path of this.evaluablePaths) {
-      relations.push(this.analyzeDependcyForPath(path));
+      const res = this.analyzeDependcyForPath(path);
+      if (!res) continue;
+      relations.push(...res);
     }
     return relations;
   }
 
-  analyzeDependcyForPath(path: string) {
+  analyzeDependcyForPath(
+    path: string,
+  ):
+    | ReturnType<(typeof this.dependencyManager)['analyzeDependencies']>[]
+    | null {
+    let _path = path;
+    const pathIsInEvaluablePaths = this.evaluablePaths.has(path);
+    if (!pathIsInEvaluablePaths) {
+      _path = getGenericArrayPath(path);
+    }
+    if (!pathIsInEvaluablePaths && this.evaluablePaths.has(_path)) {
+      const pathsToAnalyze = this.getArrayPaths(_path);
+      if (!pathsToAnalyze.length) return null;
+      const relations = pathsToAnalyze.map((path) => {
+        const value = get(this.unevalValues, path) as string;
+        return this.dependencyManager.analyzeDependencies({
+          code: value,
+          entityId: this.id,
+          toProperty: path,
+        });
+      });
+      return relations;
+    }
     const value = get(this.unevalValues, path) as string;
-    return this.dependencyManager.analyzeDependencies({
-      code: value,
-      entityId: this.id,
-      toProperty: path,
-    });
+    return [
+      this.dependencyManager.analyzeDependencies({
+        code: value,
+        entityId: this.id,
+        toProperty: path,
+      }),
+    ];
   }
   validatePath(path: string, value: unknown) {
     const validate = this.validators[path];
@@ -132,10 +159,35 @@ export class Entity {
       this.addDependencies(relation);
     }
   }
+  /**
 
+   * @description this method returns all the paths that are affected by the path
+   * @todo currently works for one level deep
+   * @param path ```ts
+   * "path1[*].path2.path3[*].path4"
+   * ```
+   * @returns ```ts
+   * ["path1[0].path2.path3[0].path4", "path1[0].path2.path3[1].path4", "path1[0].path2.path3[2].path4"]
+   * ```
+   */
+
+  getArrayPaths(path: string): string[] {
+    const paths: string[] = [];
+    if (!this.evaluablePaths.has(path)) return [];
+    const [array, ...rest] = path.split('[*]');
+    const arrayValue = get(this.unevalValues, array);
+    if (Array.isArray(arrayValue)) {
+      for (let i = 0; i < arrayValue.length; i++) {
+        paths.push(`${array}[${i}]${rest.join('')}`);
+      }
+    }
+    return paths;
+  }
   analyzeAndApplyDependencyUpdate(path: string) {
     const relations = this.analyzeDependcyForPath(path);
-    this.applyDependencyUpdate([relations]);
+    if (relations) {
+      this.applyDependencyUpdate(relations);
+    }
   }
 
   addDependencies(relations: ReturnType<typeof analyzeDependancies>) {
@@ -160,9 +212,7 @@ export class Entity {
       delete this.setterProps[path];
     }
     set(this.unevalValues, path, value);
-    if (this.evaluablePaths.has(path)) {
-      this.analyzeAndApplyDependencyUpdate(path);
-    }
+    this.analyzeAndApplyDependencyUpdate(path);
   }
   setValues(values: Record<string, unknown>) {
     for (const path in values) {
@@ -172,6 +222,7 @@ export class Entity {
       this.analyzeAndApplyDependencyUpdate(path);
     }
   }
+
   getEvent(eventName: string) {
     return this.unevalValues[eventName] as string;
   }
@@ -200,3 +251,19 @@ export class Entity {
     return actions;
   };
 }
+
+const digitRegex = /\d+/;
+const getGenericArrayPath = (path: string) => {
+  const pathParts = toPath(path);
+  let newPath = '';
+  for (let i = 0; i < pathParts.length; i++) {
+    if (digitRegex.test(pathParts[i])) {
+      newPath += '[*]';
+    } else {
+      if (i === 0) {
+        newPath += pathParts[i];
+      } else newPath += '.' + pathParts[i];
+    }
+  }
+  return newPath;
+};
