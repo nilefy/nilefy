@@ -12,9 +12,12 @@ import {
   widgetsEventHandlerJsonSchema,
 } from '@/components/rjsf_shad/eventHandler';
 import _ from 'lodash';
+import { EditorState } from './editor';
 
-const SUCCESSEVENTKEY = 'loomSuccessEvent';
-const FAILUREEVENTKEY = 'loomFailureEvent';
+const SucessEventKey = 'loomSuccessEvent';
+const FailureEventKey = 'loomFailureEvent';
+const SucessEventType = 'success';
+const FailureEventType = 'failure';
 
 export type QueryRawValues = {
   /**
@@ -52,6 +55,7 @@ export class WebloomQuery
       >
     >
 {
+  editor: EditorState;
   appId: CompleteQueryI['appId'];
   workspaceId: number;
   dataSource: CompleteQueryI['dataSource'];
@@ -79,10 +83,12 @@ export class WebloomQuery
     dependencyManager,
     triggerMode,
     workspaceId,
+    editor,
   }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
     evaluationManger: EvaluationManager;
     dependencyManager: DependencyManager;
     workspaceId: number;
+    editor: EditorState;
   }) {
     WebloomQuery.addEventConfigToSchema(dataSource.dataSource.queryConfig);
     super({
@@ -103,6 +109,7 @@ export class WebloomQuery
       },
       nestedPathPrefix: 'config',
     });
+    this.editor = editor;
     this.appId = appId;
     this.workspaceId = workspaceId;
     this.dataSourceId = dataSourceId;
@@ -125,6 +132,8 @@ export class WebloomQuery
             statusCode: error.statusCode,
           },
         });
+        // similar to widgets the query is responsible of informing the editor when to run events
+        this.editor.executeActions(this.id, FailureEventType, FailureEventKey);
       },
       onSuccess: (data) => {
         this.updateQuery({
@@ -134,7 +143,19 @@ export class WebloomQuery
             statusCode: data.status,
           },
         });
+        if (data.error) {
+          this.setQueryState('error');
+          // similar to widgets the query is responsible of informing the editor when to run events
+          // the other backend could fail but our backend will return the failure state in the json so fetchX cannot know it's failure
+          this.editor.executeActions(
+            this.id,
+            FailureEventType,
+            FailureEventKey,
+          );
+        }
         this.setQueryState('success');
+        // similar to widgets the query is responsible of informing the editor when to run events
+        this.editor.executeActions(this.id, SucessEventType, SucessEventKey);
       },
     }));
     makeObservable(this, {
@@ -159,6 +180,9 @@ export class WebloomQuery
     );
   }
 
+  /**
+   * path the query json schema and ui schema to add event handlers config
+   */
   private static addEventConfigToSchema(
     config: CompleteQueryI['dataSource']['dataSource']['queryConfig'],
   ) {
@@ -170,12 +194,12 @@ export class WebloomQuery
       }
       _.set(
         dataSchema,
-        path + '.' + SUCCESSEVENTKEY,
+        path + '.' + SucessEventKey,
         widgetsEventHandlerJsonSchema,
       );
       _.set(
         dataSchema,
-        path + '.' + FAILUREEVENTKEY,
+        path + '.' + FailureEventKey,
         widgetsEventHandlerJsonSchema,
       );
     }
@@ -186,20 +210,20 @@ export class WebloomQuery
     }
     _.set(
       uiSchema as Record<string, unknown>,
-      SUCCESSEVENTKEY,
+      SucessEventKey,
       genEventHandlerUiSchema(
         {
-          success: 'Success',
+          [SucessEventType]: 'Success',
         },
         'success events',
       ),
     );
     _.set(
       uiSchema as Record<string, unknown>,
-      FAILUREEVENTKEY,
+      FailureEventKey,
       genEventHandlerUiSchema(
         {
-          failure: 'Failure',
+          [FailureEventType]: 'Failure',
         },
         'failure events',
       ),
