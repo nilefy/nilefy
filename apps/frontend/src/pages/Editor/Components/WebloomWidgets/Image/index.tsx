@@ -24,14 +24,16 @@ const webloomImageProps = z.object({
   objectFit: z
     .enum(['contain', 'cover', 'none', 'fill', 'scale-down'])
     .default('contain'),
+  onClick: z.string().optional(),
 });
 
 export type WebloomImageProps = z.infer<typeof webloomImageProps>;
 
 const WebloomImage = observer(function WebloomImage() {
   const { id } = useContext(WidgetContext);
+  const widget = editorStore.currentPage.getWidgetById(id);
   const { src, altText, tooltip, objectFit } =
-    editorStore.currentPage.getWidgetById(id).finalValues as WebloomImageProps;
+    widget.finalValues as WebloomImageProps;
 
   return (
     <ToolTipWrapper text={tooltip}>
@@ -43,6 +45,7 @@ const WebloomImage = observer(function WebloomImage() {
           style={{
             objectFit,
           }}
+          onClick={() => widget.handleEvent('onClick')}
         />
       </div>
     </ToolTipWrapper>
@@ -109,6 +112,20 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
           ],
         },
         path: 'objectFit',
+      },
+    ],
+  },
+
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onClick',
+        label: 'onClick',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onClick',
+        },
       },
     ],
   },

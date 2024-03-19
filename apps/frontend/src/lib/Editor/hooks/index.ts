@@ -1,3 +1,4 @@
+export { useSize } from './useSize';
 export { useSetDom } from './useSetDom';
 export { useMousePosition } from './useMousePosition';
 export { useSetPageDimensions } from './useSetPageDimensions';

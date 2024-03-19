@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
@@ -11,7 +11,7 @@ import { WidgetConfigPanel } from './configInspector';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { matchSorter } from 'match-sorter';
 import { Input } from '@/components/ui/input';
-
+import { useSize } from '@/lib/Editor/hooks';
 function InsertTab() {
   const [search, setSearch] = useState('');
   const filteredWidgetsKeys = useMemo(() => {
@@ -94,20 +94,20 @@ type RightSidebarTabs = 'insert' | 'inspect' | 'page';
 export const RightSidebar = observer(() => {
   // i need it to be controlled so i can change it when the selected items count change
   const [openedTab, setOpenedTab] = useState<RightSidebarTabs>('insert');
-
-  const size = editorStore.currentPage.selectedNodesSize;
-
+  const selectedElementsSize = editorStore.currentPage.selectedNodesSize;
+  const scrollArea = useRef<HTMLDivElement>(null);
+  const bodyDomRect = useSize(document.body) || { height: 0 };
+  const scrollAreaY = scrollArea.current?.getBoundingClientRect().y || 0;
   useLayoutEffect(() => {
-    if (size > 0) setOpenedTab('inspect');
+    if (selectedElementsSize > 0) setOpenedTab('inspect');
     else setOpenedTab('insert');
-  }, [size]);
-
+  }, [selectedElementsSize]);
   return (
     <div className="right-sidebar h-full w-full p-2" key="right-sidebar">
       <Tabs
         value={openedTab}
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}
-        className="w-full"
+        className="h-full w-full"
       >
         <ScrollArea>
           <ScrollBar orientation="horizontal" />
@@ -117,14 +117,18 @@ export const RightSidebar = observer(() => {
             <TabsTrigger value="insert">Insert</TabsTrigger>
           </TabsList>
         </ScrollArea>
-        <ScrollArea
-          className="h-screen"
-          scrollAreaViewPortClassName="h-full w-full px-3 pt-2 [&>div]:!block"
-        >
-          <InsertTab />
-          <InspectTab />
-          <TabsContent value="page">show page meta data</TabsContent>
-        </ScrollArea>
+        <div className="h-full" ref={scrollArea}>
+          <ScrollArea
+            style={{
+              height: bodyDomRect.height - scrollAreaY,
+            }}
+            scrollAreaViewPortClassName="h-full w-full px-3 pt-2 [&>div]:!block"
+          >
+            <InsertTab />
+            <InspectTab />
+            <TabsContent value="page">show page meta data</TabsContent>
+          </ScrollArea>
+        </div>
       </Tabs>
     </div>
   );
