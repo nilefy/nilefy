@@ -1,4 +1,4 @@
-import { makeObservable, observable, flow, action, autorun, toJS } from 'mobx';
+import { makeObservable, observable, action, autorun, toJS } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 import { EvaluationManager } from './evaluationManager';
@@ -9,7 +9,6 @@ import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 
 export type QueryRawValues = {
-  isLoading: boolean;
   /**
    * @description data returned from the query
    * @NOTE: start with undefined
@@ -22,11 +21,13 @@ export type QueryRawValues = {
   /**
    * statusCode of the query call to the other backend, or 505 if ourserver faced error
    */
-  status?: number;
+  statusCode?: number;
   /**
    * if the plugin returned error will be here
    */
   error?: string;
+  config: CompleteQueryI['query'];
+  queryState: 'idle' | 'loading' | 'success' | 'error';
 };
 
 export class WebloomQuery
@@ -51,7 +52,7 @@ export class WebloomQuery
   updatedAt: CompleteQueryI['updatedAt'];
   triggerMode: CompleteQueryI['triggerMode'];
   static queryClient: QueryClient;
-  runQuery: MobxMutation<
+  queryRunner: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
     FetchXError,
     Parameters<typeof runQueryApi>[0],
@@ -84,9 +85,9 @@ export class WebloomQuery
         data: undefined,
         queryState: 'idle',
         type: dataSource.dataSource.type,
-        status: undefined,
+        statusCode: undefined,
         error: undefined,
-      },
+      } satisfies QueryRawValues,
       schema: {
         dataSchema: dataSource.dataSource.queryConfig.schema,
         uiSchema: dataSource.dataSource.queryConfig.uiSchema,
@@ -100,7 +101,7 @@ export class WebloomQuery
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.triggerMode = triggerMode;
-    this.runQuery = new MobxMutation(WebloomQuery.queryClient, () => ({
+    this.queryRunner = new MobxMutation(WebloomQuery.queryClient, () => ({
       mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
         return runQueryApi(vars);
       },
@@ -112,7 +113,7 @@ export class WebloomQuery
         this.updateQuery({
           rawValues: {
             error: error.message,
-            status: error.statusCode,
+            statusCode: error.statusCode,
           },
         });
       },
@@ -121,21 +122,21 @@ export class WebloomQuery
           rawValues: {
             data: data.data,
             error: data.error,
-            status: data.status,
+            statusCode: data.status,
           },
         });
         this.setQueryState('success');
       },
     }));
     makeObservable(this, {
-      fetchValue: flow,
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
       setQueryState: action,
+      reset: action.bound,
     });
     if (this.triggerMode === 'onAppLoad') {
-      this.runQuery.mutate({
+      this.queryRunner.mutate({
         appId: this.appId,
         queryId: this.id,
         workspaceId: this.workspaceId,
@@ -168,13 +169,32 @@ export class WebloomQuery
     if (dto.rawValues) {
       this.rawValues.data = dto.rawValues.data;
       this.rawValues.error = dto.rawValues.error;
-      this.rawValues.status = dto.rawValues.status;
+      this.rawValues.statusCode = dto.rawValues.statusCode;
     }
   }
 
-  // TODO: call server to get actual data
-  fetchValue() {
-    // this.value = {};
+  /**
+   * trigger the query async, but don't return the promise
+   */
+  run() {
+    this.queryRunner.mutate({
+      workspaceId: this.workspaceId,
+      appId: this.appId,
+      queryId: this.id,
+      body: {
+        evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+      },
+    });
+  }
+
+  /**
+   * Clear the data and error properties of the query.
+   */
+  reset() {
+    this.rawValues.data = undefined;
+    this.rawValues.queryState = 'idle';
+    this.rawValues.statusCode = undefined;
+    this.rawValues.error = undefined;
   }
 
   get snapshot() {

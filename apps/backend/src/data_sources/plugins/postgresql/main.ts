@@ -2,7 +2,6 @@ import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { configSchema, ConfigT, QueryT } from './types';
 import { Pool, PoolConfig, Client } from 'pg';
-import { Logger } from '@nestjs/common';
 
 export default class PostgresqlQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -16,12 +15,12 @@ export default class PostgresqlQueryService
       const pool = this.connect(dataSourceConfig);
       const res = await pool.query(query.query.query);
       return {
-        status: 200,
+        statusCode: 200,
         data: res.rows,
       };
     } catch (error) {
       return {
-        status: 500,
+        statusCode: 500,
         data: {},
         error: (error as Error).message,
       };
