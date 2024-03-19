@@ -200,6 +200,7 @@ export class WebloomPage {
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
+    widget.initDependecies();
   }
   getWidgetById(id: string) {
     return this.widgets[id];

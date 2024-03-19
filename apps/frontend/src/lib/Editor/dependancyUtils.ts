@@ -46,7 +46,7 @@ export const analyzeDependancies = ({
         }
       }
     } catch (_) {
-      //todo handle field validation
+      //TODO: handle field validation
     }
   }
   return { toProperty, dependencies, isCode };

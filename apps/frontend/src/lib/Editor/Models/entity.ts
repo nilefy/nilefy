@@ -29,42 +29,6 @@ import { analyzeDependancies } from '../dependancyUtils';
 function createPathFromStack(stack: string[]) {
   return stack.join('.');
 }
-const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
-const getEvaluablePathsFromSchema = memoize(
-  (schema: Record<string, unknown> | undefined, nestedPathPrefix?: string) => {
-    if (!schema) return [];
-    const stack: string[] = [];
-    const result: string[] = [];
-    // the actual function that do the recursion
-    const helper = (
-      obj: Record<string, unknown>,
-      stack: string[],
-      result: string[],
-    ) => {
-      const isLastLevel = Object.keys(obj).every((k) => !isPlainObject(obj[k]));
-      if (isLastLevel) {
-        if (evaluationFormControls.has(obj['ui:widget'] as string)) {
-          let path = createPathFromStack(stack);
-          if (nestedPathPrefix) {
-            path = nestedPathPrefix + '.' + path;
-          }
-          result.push(path);
-        }
-        return;
-      }
-      for (const k in obj) {
-        stack.push(k);
-        const item = obj[k];
-        if (isPlainObject(item)) {
-          helper(item, stack, result);
-        }
-        stack.pop();
-      }
-    };
-    helper(schema, stack, result);
-    return result;
-  },
-);
 
 function getEvaluablePathsDyn(obj: Record<string, unknown>): string[] {
   const stack: string[] = [];
@@ -98,7 +62,6 @@ export type EntitySchema = {
 };
 
 export class Entity implements RuntimeEvaluable {
-  private readonly evaluablePaths: Set<string>;
   private dispoables: Array<() => void> = [];
   public readonly schema: EntitySchema;
   public values: Record<string, unknown>;
@@ -121,7 +84,6 @@ export class Entity implements RuntimeEvaluable {
     evaluationManger,
     rawValues,
     schema = {},
-    evaluablePaths = [],
     nestedPathPrefix,
   }: {
     id: string;
@@ -158,10 +120,6 @@ export class Entity implements RuntimeEvaluable {
     this.rawValues = rawValues;
     this.finalValues = cloneDeep(rawValues);
     this.values = {};
-    this.evaluablePaths = new Set<string>([
-      ...evaluablePaths,
-      ...getEvaluablePathsFromSchema(schema?.uiSchema || {}, nestedPathPrefix),
-    ]);
     this.codePaths = new Set<string>();
     this.schema = schema;
     if (schema?.dataSchema) {
@@ -187,7 +145,6 @@ export class Entity implements RuntimeEvaluable {
         console.log(
           `-------------------------- ${this.id} start --------------------------`,
         );
-        console.log('this.evaluablePaths', toJS(this.evaluablePaths));
         console.log('this.values', toJS(this.values));
         console.log('this.rawValues', toJS(this.rawValues));
         console.log('this.codePaths', toJS(this.codePaths));
