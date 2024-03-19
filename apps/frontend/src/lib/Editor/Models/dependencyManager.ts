@@ -49,11 +49,13 @@ export class DependencyManager {
       console.log('dependencies', toJS(this.dependencies));
     });
   }
+
   initAnalysis() {
     forEach(this.editor.entities, (entity) => {
       entity.initDependecies();
     });
   }
+
   analyzeDependencies(
     args: Omit<Parameters<typeof analyzeDependancies>[0], 'keys'>,
   ) {
