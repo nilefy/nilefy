@@ -23,8 +23,8 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
 import { DebouncedInput } from '../../../components/debouncedInput';
 import clsx from 'clsx';
-import { Input } from '../../../components/ui/input';
-import { ScrollArea } from '../../../components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import FormT from '@rjsf/core';
 import { editorStore } from '@/lib/Editor/Models';
 import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
@@ -36,6 +36,7 @@ import EntityForm from '@/components/rjsf_shad/entityForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingButton } from '@/components/loadingButton';
 import { QueryI } from '@/api/queries.api';
+import { Separator } from '@/components/ui/separator';
 
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
   forwardRef(function QueryPreview(props, ref) {
@@ -212,28 +213,37 @@ const QueryItem = observer(function QueryItem({
             entityId={query.id}
             onSubmit={onSubmitCallback}
           />
+          <Separator />
           {/*QUERY OPTIONS*/}
-          <div>
-            <Label>Trigger Mode</Label>
-            <Select
-              value={triggerMode}
-              onValueChange={(newVal) =>
-                setTriggerMode(newVal as QueryI['triggerMode'])
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="trigger mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={'manually' satisfies QueryI['triggerMode']}>
-                  Manually
-                </SelectItem>
-                <SelectItem value={'onAppLoad' satisfies QueryI['triggerMode']}>
-                  On app load
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-4">
+            <h3>Options</h3>
+            <div className="flex flex-col gap-2">
+              <Label>Trigger Mode</Label>
+              <Select
+                value={triggerMode}
+                onValueChange={(newVal) =>
+                  setTriggerMode(newVal as QueryI['triggerMode'])
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="trigger mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    value={'manually' satisfies QueryI['triggerMode']}
+                  >
+                    Manually
+                  </SelectItem>
+                  <SelectItem
+                    value={'onAppLoad' satisfies QueryI['triggerMode']}
+                  >
+                    On app load
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          <Separator />
           <QueryPreview
             ref={jsonResultRef}
             key={query.id + 'preview'}
