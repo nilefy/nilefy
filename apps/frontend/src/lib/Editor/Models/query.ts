@@ -7,6 +7,14 @@ import { Entity } from './entity';
 import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
+import {
+  genEventHandlerUiSchema,
+  widgetsEventHandlerJsonSchema,
+} from '@/components/rjsf_shad/eventHandler';
+import _ from 'lodash';
+
+const SUCCESSEVENTKEY = 'loomSuccessEvent';
+const FAILUREEVENTKEY = 'loomFailureEvent';
 
 export type QueryRawValues = {
   /**
@@ -76,6 +84,7 @@ export class WebloomQuery
     dependencyManager: DependencyManager;
     workspaceId: number;
   }) {
+    WebloomQuery.addEventConfigToSchema(dataSource.dataSource.queryConfig);
     super({
       id,
       dependencyManager,
@@ -147,6 +156,53 @@ export class WebloomQuery
     }
     autorun(() =>
       console.log('query:rawvalues', this.id, toJS(this.rawValues)),
+    );
+  }
+
+  private static addEventConfigToSchema(
+    config: CompleteQueryI['dataSource']['dataSource']['queryConfig'],
+  ) {
+    const dataSchema = config.schema;
+    if (dataSchema) {
+      let path = 'properties';
+      if ('$ref' in dataSchema && typeof dataSchema['$ref'] === 'string') {
+        path = dataSchema['$ref'].split('/').slice(1).join('.') + '.' + path;
+      }
+      _.set(
+        dataSchema,
+        path + '.' + SUCCESSEVENTKEY,
+        widgetsEventHandlerJsonSchema,
+      );
+      _.set(
+        dataSchema,
+        path + '.' + FAILUREEVENTKEY,
+        widgetsEventHandlerJsonSchema,
+      );
+    }
+    let uiSchema = config.uiSchema;
+    if (!uiSchema) {
+      _.set(config, 'uiSchema', {});
+      uiSchema = config.uiSchema;
+    }
+    _.set(
+      uiSchema as Record<string, unknown>,
+      SUCCESSEVENTKEY,
+      genEventHandlerUiSchema(
+        {
+          success: 'Success',
+        },
+        'success events',
+      ),
+    );
+    _.set(
+      uiSchema as Record<string, unknown>,
+      FAILUREEVENTKEY,
+      genEventHandlerUiSchema(
+        {
+          failure: 'Failure',
+        },
+        'failure events',
+      ),
     );
   }
 

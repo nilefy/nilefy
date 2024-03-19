@@ -15,8 +15,6 @@ import {
   debounce,
   get,
   isObjectLike,
-  isPlainObject,
-  memoize,
   merge,
   set,
   unset,
