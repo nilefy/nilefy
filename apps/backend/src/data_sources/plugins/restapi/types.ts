@@ -156,8 +156,8 @@ export const queryConfigForm = {
     endpoint: {
       'ui:title': 'End-Point',
       'ui:placeholder': '/users',
+      'ui:widget': 'inlineCodeInput',
     },
-
     method: {
       'ui:title': 'Method',
     },
@@ -166,9 +166,19 @@ export const queryConfigForm = {
       'ui:options': {
         orderable: false,
       },
+      items: {
+        items: {
+          'ui:widget': 'inlineCodeInput',
+        },
+      },
     },
     params: {
       'ui:title': 'Params',
+      items: {
+        items: {
+          'ui:widget': 'inlineCodeInput',
+        },
+      },
     },
     body: {
       'ui:title': 'Body',
