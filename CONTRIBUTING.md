@@ -358,3 +358,183 @@ event so the widget won't run the event itself the widget will hold **the events
     }
     />
     ```
+
+## How to Create a New Plugin/Data Source
+
+This guide explains how to create a plugin to connect to a remote data source such as a database, API, or SaaS service.
+
+We will create a simple PostgreSQL plugin.
+
+- Create a folder with the data source name: `mkdir ./apps/backend/src/data_sources/plugins/postgresql`
+
+- Let's create a file to host our plugin logic: `touch ./apps/backend/src/data_sources/plugins/postgresql/main.ts`
+
+- Any plugin should follow the interface `QueryRunnerI<ConfigT, QueryT>`
+    
+  - `ConfigT`: is the type of the data source config(config the plugin needs to connect to the backend, or any configuration the plugin wants to share across all data queries)
+  - `QueryT`: the type of the query config
+
+- We normally divide the types from the implementation, so let's create a file to host our plugin types:`touch ./apps/backend/src/data_sources/plugins/postgresql/types.ts`
+
+    we use zod for validation so let's create our plugin types
+    
+  - `configT`
+
+    ```ts
+        export const configSchema = z.object({
+          user: z.string().min(1),
+          host: z.string().min(1),
+          port: z.number().default(5432),
+          database: z.string().min(1),
+          password: z.string(),
+        });
+    ```
+
+  - `QueryT`
+
+    ```ts
+        export const querySchema = z.object({
+          query: z.string(),
+        });
+    ```
+
+  - export the types
+
+    ```ts
+        export type ConfigT = z.infer<typeof configSchema>;
+        export type QueryT = z.infer<typeof querySchema>;
+
+    ```
+
+- As we're already in `types.ts`, let's discuss how the front-end will render a form for our plugin
+    we use [RJSF](https://rjsf-team.github.io/react-jsonschema-form/docs/) which renders form based on json schema.
+
+  - we need to convert our zod schema to json schema(or you can write your schema directly in json schema) we use [zod-to-json-schema](https://www.npmjs.com/package/zod-to-json-schema)
+
+  - rjsf uses custom schema called **[uiSchema](https://rjsf-team.github.io/react-jsonschema-form/docs/api-reference/uiSchema)** to customize how the form will look
+
+    > A UI schema is basically an object literal providing information on how the form should be rendered, while the JSON schema tells what.
+    The uiSchema object follows the tree structure of the form field hierarchy, and defines how each property should be rendered.
+    
+    so we need to return both the front-end let's create this
+
+    ```ts
+    // ConfigT
+    export const pluginConfigForm = {
+        // json schema
+      schema: zodToJsonSchema(configSchema, 'configSchema'),
+      // ui schema
+      uiSchema: {
+        host: {
+          'ui:placeholder': 'localhost',
+          'ui:title': 'Host',
+        },
+        port: {
+          'ui:placeholder': '5432',
+          'ui:title': 'Port',
+        },
+        database: {
+          'ui:placeholder': 'Name of your database',
+          'ui:title': 'Database Name',
+        },
+        user: {
+          'ui:placeholder': 'Enter username',
+        },
+        password: {
+          'ui:widget': 'password',
+          'ui:placeholder': 'Enter password',
+        },
+      },
+    };
+    ```
+
+    ```ts
+    // QueryT
+    export const queryConfigForm = {
+      schema: zodToJsonSchema(querySchema, 'querySchema'),
+      uiSchema: {
+        query: {
+          'ui:widget': 'sql',
+          'ui:placeholder': 'select * from table;',
+          'ui:title': 'SQL Query',
+        },
+        options: {
+          'ui:widget': 'sql',
+          'ui:placeholder': 'select * from table;',
+          'ui:title': 'Options',
+        },
+      },
+    };
+    ```
+
+- let's get back to writing the logic of our plugin in `main.ts`
+
+start by copying this boilerplate code
+
+```ts
+
+import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
+import { QueryRunnerI } from '../../../data_queries/query.interface';
+import { configSchema, ConfigT, QueryT } from './types';
+
+export default class PostgresqlQueryService
+  implements QueryRunnerI<ConfigT, QueryT>
+{
+  async run(
+    dataSourceConfig: ConfigT,
+    query: QueryConfig<QueryT>,
+  ): Promise<QueryRet> {
+  }
+
+  // optional
+  connect(dataSourceConfig: ConfigT): Pool {
+  }
+
+  // optional
+  async testConnection(dataSourceConfig: ConfigT) {
+  }
+}
+```
+
+- there's no constraints on how you organize your plugin but the `run` function, because this the entry point to the plugin
+
+> NOTE that config validation is the plugin respobsiblity
+
+- you can use any library/driver to connect to your external data source, in our example we will use [pg](https://node-postgres.com/) to connect to postgres
+
+the `connect` method
+
+```ts
+  connect(dataSourceConfig: ConfigT): Pool {
+    const config: PoolConfig = {
+      ...dataSourceConfig,
+    };
+    return new Pool(config);
+  }
+```
+
+- update the `run` method, this the entry point of the plugin so its job will be mainlly calling other methods/functions
+
+```ts
+  async run(
+    dataSourceConfig: ConfigT,
+    query: QueryConfig<QueryT>,
+  ): Promise<QueryRet> {
+    try {
+      // validate ASAP
+      configSchema.parse(dataSourceConfig);
+      const pool = this.connect(dataSourceConfig);
+      const res = await pool.query(query.query.query);
+      return {
+        statusCode: 200,
+        data: res.rows,
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        data: {},
+        error: (error as Error).message,
+      };
+    }
+  }
+```

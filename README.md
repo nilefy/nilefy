@@ -33,3 +33,5 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
 
 - how to create new `WebloomWidget` guide check [CONTRIBUTING.md/How to create new Widget](/CONTRIBUTING.md#how-to-create-new-widget)
+
+- how to create new `DataSource`/`Plugin` guide check [CONTRIBUTING.md/How to Create a New Plugin/Data Source](/CONTRIBUTING.md#how-to-create-a-new-plugindata-source)
