@@ -133,8 +133,12 @@ export const widgetsEventHandlerJsonSchema: RJSFSchema = {
   },
 };
 
-export function genEventHandlerUiSchema(entityEvents: EventTypes): UiSchema {
+export function genEventHandlerUiSchema(
+  entityEvents: EventTypes,
+  title: string = 'Event Handlers',
+): UiSchema {
   return {
+    'ui:title': title,
     'ui:options': {
       orderable: false,
     },
@@ -501,8 +505,6 @@ export default function EventHandlerWidget<
 
   if (Object.keys(options).length === 0)
     throw new Error("don't use eventHandler if you won't handle any events");
-  console.log('DEBUGPRINT[1]: eventHandler.tsx:26: value=', value);
-  console.log('DEBUGPRINT[2]: eventHandler.tsx:52: options=', options);
 
   return (
     <EventHandlerArray

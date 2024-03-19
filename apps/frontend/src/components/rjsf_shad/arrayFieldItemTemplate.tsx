@@ -108,7 +108,7 @@ function EventHandlerItemView({
 } & EventHandlerItemUtilsProps) {
   return (
     <DropdownMenu>
-      <div className="flex h-full w-full justify-between rounded-2xl  border-2 p-3">
+      <div className="flex h-full w-full justify-between rounded-2xl border-2">
         <DropdownMenuTrigger className="h-full w-full ">
           <p className="line-clamp-3 flex min-h-full w-full min-w-full items-center gap-3 ">
             <span className="w-fit rounded-2xl bg-secondary p-3">
@@ -138,7 +138,7 @@ function ChartDatasetItemView({
 } & EventHandlerItemUtilsProps) {
   return (
     <DropdownMenu>
-      <div className="flex h-full w-full justify-between rounded-2xl  border-2 p-3">
+      <div className="flex h-full w-full justify-between rounded-2xl border-2">
         <DropdownMenuTrigger className="h-full w-full ">
           <p className="line-clamp-3 flex min-h-full w-full min-w-full items-center gap-3 ">
             <span
