@@ -110,6 +110,7 @@ export class Entity implements RuntimeEvaluable {
       debouncedAnalyzeAndApplyDependencyUpdate: action,
       applyDependencyUpdate: action,
       prefixedRawValues: computed,
+      prefixedFinalValues: computed,
     });
     this.id = id;
     this.nestedPathPrefix = nestedPathPrefix;
@@ -143,10 +144,10 @@ export class Entity implements RuntimeEvaluable {
         console.log(
           `-------------------------- ${this.id} start --------------------------`,
         );
-        console.log('this.values', toJS(this.values));
-        console.log('this.rawValues', toJS(this.rawValues));
-        console.log('this.codePaths', toJS(this.codePaths));
-        console.log('this.finalValues', toJS(this.finalValues));
+        console.log('this.values', this.id, toJS(this.values));
+        console.log('this.rawValues', this.id, toJS(this.rawValues));
+        console.log('this.codePaths', this.id, toJS(this.codePaths));
+        console.log('this.finalValues', this.id, toJS(this.finalValues));
         // console.log('this.errors', toJS(this.errors));
 
         console.log(
@@ -298,5 +299,11 @@ export class Entity implements RuntimeEvaluable {
     return this.isPrefixed()
       ? get(this.rawValues, this.nestedPathPrefix as string)
       : this.rawValues;
+  }
+
+  get prefixedFinalValues() {
+    return this.isPrefixed()
+      ? get(this.finalValues, this.nestedPathPrefix as string)
+      : this.finalValues;
   }
 }

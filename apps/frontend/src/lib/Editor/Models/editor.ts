@@ -8,7 +8,10 @@ import { EvaluationManager } from './evaluationManager';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../widgetName';
 import { ErrorSchema } from '@rjsf/utils';
-import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
+import {
+  WidgetsEventHandler,
+  widgetsEventHandler,
+} from '@/components/rjsf_shad/eventHandler';
 import { toast } from '@/components/ui/use-toast';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
@@ -85,7 +88,7 @@ export class EditorState {
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger' | 'workspaceId'
+      'editor' | 'dependencyManager' | 'evaluationManger' | 'workspaceId'
     >[];
   }) {
     this.cleanUp();
@@ -134,6 +137,7 @@ export class EditorState {
         evaluationManger: this.evaluationManger,
         dependencyManager: this.dependencyManager,
         workspaceId: workspaceId,
+        editor: this,
       });
     });
     this.dependencyManager.initAnalysis();
@@ -238,6 +242,7 @@ export class EditorState {
       currentPageId: this.currentPageId,
     };
   }
+
   get entities() {
     return {
       ...this.currentPage.widgets,
@@ -247,18 +252,33 @@ export class EditorState {
 
   /**
    * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
-   * @param key where to get the handlers configuration
+   * @param key where to get the handlers configuration relative to the prefix if exist
    * @default 'events'
    */
   executeActions<Events extends object>(
-    widgetId: string,
+    entityId: string,
     type: keyof Events,
     key: string = 'events',
   ) {
-    const eventHandlers = this.currentPage.getWidgetById(widgetId).finalValues[
-      key
-    ] as WidgetsEventHandler;
+    const entity = this.getEntityById(entityId);
+    if (!entity) {
+      throw new Error('entity not found');
+    }
+    const eventHandlers = (
+      entity.prefixedFinalValues as Record<string, unknown>
+    )[key] as WidgetsEventHandler;
     if (!eventHandlers) return;
+    const parsed = widgetsEventHandler.safeParse(eventHandlers);
+    if (!parsed.success) {
+      console.error('error while running event: ', {
+        config: {
+          entityId,
+          type,
+          key,
+        },
+        error: parsed.error,
+      });
+    }
     eventHandlers.forEach((handler) => {
       if (handler.type === type) {
         this.executeActionHelper(handler.config);
