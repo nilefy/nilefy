@@ -1,5 +1,5 @@
-//@ts-expect-error no types
 import { get } from 'lodash';
+//@ts-expect-error no types
 import unescapeJS from 'unescape-js';
 export const functionActionWrapper = (code: string) => {
   return `

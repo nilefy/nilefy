@@ -90,6 +90,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         options: {
           label: 'onClick',
         },
+        isEvent: true,
       },
     ],
   },

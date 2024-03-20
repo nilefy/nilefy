@@ -12,11 +12,7 @@ import { get, set } from 'lodash';
 import { klona } from 'klona';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-import {
-  EntityInspectorConfig,
-  EntityTypes,
-  EntityErrorsRecord,
-} from '../interface';
+import { EntityInspectorConfig, EntityTypes } from '../interface';
 import {
   ajv,
   extractValidators,

@@ -83,6 +83,7 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     const paths: string[] = [];
     for (const section of config) {
       for (const control of section.children) {
+        if (control.isEvent) continue;
         if (control.type === 'array') {
           for (const subControl of control.options.subform) {
             // TODO: handle nested arrays but it's a bit of an overkill

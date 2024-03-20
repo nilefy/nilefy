@@ -408,5 +408,6 @@ export class WebloomWidget
   }
   dispose() {
     this.unselectSelf();
+    super.dispose();
   }
 }

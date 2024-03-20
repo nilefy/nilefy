@@ -143,6 +143,8 @@ export class EditorState {
     delete this.pages[id];
   }
   removeEntity(id: string) {
+    const entity = this.getEntityById(id);
+    entity.dispose();
     if (this.currentPage[id]) {
       this.removeWidget(id);
     } else {

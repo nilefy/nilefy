@@ -18,8 +18,9 @@ import {
 import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
 import { getArrayPaths } from '../evaluation/utils';
+import { WebloomDisposable } from '../Models/interfaces';
 
-export class Entity {
+export class Entity implements WebloomDisposable {
   private readonly evaluablePaths: Set<string>;
   public unevalValues: Record<string, unknown>;
   public id: string;
@@ -36,6 +37,7 @@ export class Entity {
   private mainThreadBroker: MainThreadBroker;
   // these are the props that are set by the setter, we map the path to the old value.
   public setterProps: Record<string, unknown> = {};
+
   constructor({
     id,
     dependencyManager,
@@ -63,7 +65,7 @@ export class Entity {
       setValue: action,
       addDependencies: action,
       clearDependents: action,
-      cleanup: action,
+      dispose: action,
       analyzeAndApplyDependencyUpdate: action,
       applyDependencyUpdate: action,
       setValues: action,
@@ -83,6 +85,7 @@ export class Entity {
       ...evaluablePaths,
       ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
     ]);
+    // events props cannot be dependcies to other props, so we have to keep track of them
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
     this.initDependecies();
@@ -121,6 +124,7 @@ export class Entity {
       // A candidate for array path
       _path = getGenericArrayPath(path);
     }
+
     if (
       (genericArrayPathCandidate || isGenericArrayPath) &&
       this.evaluablePaths.has(_path)
@@ -130,6 +134,7 @@ export class Entity {
         this.evaluablePaths,
         this.unevalValues,
       );
+
       if (!pathsToAnalyze.length) return null;
       const relations = pathsToAnalyze.map((path) => {
         const value = get(this.unevalValues, path) as string;
@@ -140,15 +145,17 @@ export class Entity {
         });
       });
       return relations;
+    } else if (this.evaluablePaths.has(path)) {
+      const value = get(this.unevalValues, path) as string;
+      return [
+        this.dependencyManager.analyzeDependencies({
+          code: value,
+          entityId: this.id,
+          toProperty: path,
+        }),
+      ];
     }
-    const value = get(this.unevalValues, path) as string;
-    return [
-      this.dependencyManager.analyzeDependencies({
-        code: value,
-        entityId: this.id,
-        toProperty: path,
-      }),
-    ];
+    return null;
   }
   validatePath(path: string, value: unknown) {
     const validate = this.validators[path];
@@ -194,7 +201,7 @@ export class Entity {
     this.dependencyManager.removeRelationshipsForEntity(this.id);
   }
 
-  cleanup() {
+  dispose() {
     this.clearDependents();
   }
 

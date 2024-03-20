@@ -126,6 +126,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
         options: {
           label: 'onClick',
         },
+        isEvent: true,
       },
     ],
   },
