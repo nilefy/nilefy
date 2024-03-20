@@ -64,7 +64,7 @@ const WebloomContainer = observer(
         }}
       >
         <div
-          className="relative bg-gray-300"
+          className="relative bg-gray-100"
           data-id={id}
           data-type={WIDGET_SECTIONS.CANVAS}
           style={{
