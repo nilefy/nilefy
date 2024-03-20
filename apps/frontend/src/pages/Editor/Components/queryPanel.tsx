@@ -123,47 +123,52 @@ const QueryItem = observer(function QueryItem({
   return (
     <div className="h-full w-full">
       {/* HEADER */}
-      <div className="flex h-10 flex-row items-center justify-end gap-5 border-b border-gray-300">
+      <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
-        <Input defaultValue={query.id} />
-        <Button
-          variant={'ghost'}
-          type="button"
-          className="mr-auto"
-          onClick={() => {
-            editorStore.queriesManager.updateQuery.mutate({
-              workspaceId: +workspaceId!,
-              appId: +appId!,
-              queryId: query.id,
-              dto: {
-                query: query.rawConfig as Record<string, unknown>,
-                dataSourceId: +curDataSource,
-              },
-            });
-          }}
-        >
-          {editorStore.queriesManager.updateQuery.state.isPending ? (
-            <>
-              <SaveIcon /> Saving...
-            </>
-          ) : (
-            <>
-              <SaveIcon /> Save
-            </>
-          )}
-        </Button>
-        <Button
-          variant={'ghost'}
-          disabled={query.runQuery.state.isPending}
-          onClick={() => {
-            if (!workspaceId || !appId) {
-              throw new Error('workspaceId or appId is not defined!');
-            }
-            query.runQuery.mutate();
-          }}
-        >
-          <Play /> run
-        </Button>
+        <Input
+          defaultValue={query.id}
+          className="h-4/5 w-1/5 border-gray-400 transition-colors hover:border-blue-400"
+        />
+        <div className="ml-auto flex flex-row items-center">
+          <Button
+            variant={'ghost'}
+            type="button"
+            className="mr-auto"
+            onClick={() => {
+              editorStore.queriesManager.updateQuery.mutate({
+                workspaceId: +workspaceId!,
+                appId: +appId!,
+                queryId: query.id,
+                dto: {
+                  query: query.rawConfig as Record<string, unknown>,
+                  dataSourceId: +curDataSource,
+                },
+              });
+            }}
+          >
+            {editorStore.queriesManager.updateQuery.state.isPending ? (
+              <>
+                <SaveIcon /> Saving...
+              </>
+            ) : (
+              <>
+                <SaveIcon /> Save
+              </>
+            )}
+          </Button>
+          <Button
+            variant={'ghost'}
+            disabled={query.runQuery.state.isPending}
+            onClick={() => {
+              if (!workspaceId || !appId) {
+                throw new Error('workspaceId or appId is not defined!');
+              }
+              query.runQuery.mutate();
+            }}
+          >
+            <Play /> run
+          </Button>
+        </div>
       </div>
       {/*FORM*/}
       <ScrollArea className="h-[calc(100%-3rem)] w-full ">
@@ -472,11 +477,18 @@ export const QueryPanel = observer(function QueryPanel() {
               </div>
             )}
             {filteredQueries?.map((item) => (
-              <li className="flex w-full " key={item.id}>
+              <li
+                className={clsx(
+                  { 'bg-primary/10': item.id === selectedItemId },
+                  'flex w-full items-center',
+                )}
+                key={item.id}
+              >
                 {editingItemId === item.id ? (
                   <Input
                     type="text"
                     value={item.id}
+                    className="w-full"
                     // TODO: enable rename
                     // onChange={(e) => renameItem(item, e)}
                     autoFocus
@@ -484,44 +496,42 @@ export const QueryPanel = observer(function QueryPanel() {
                   />
                 ) : (
                   <>
-                    {/* TOGGLE ITEM SELECTION */}
-                    <Button
-                      variant="outline"
-                      className={clsx({
-                        'group cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-primary/5':
-                          true,
-                        'bg-primary/10': selectedItemId === item.id,
-                      })}
+                    <div
+                      className="group my-2 flex h-6 w-full cursor-pointer items-center justify-start border-0 p-4"
                       onClick={() => handleItemClick(item.id)}
                     >
                       {item.id}
-                    </Button>
-                    <Button
-                      size={'icon'}
-                      variant={'ghost'}
-                      onClick={() => setEditingItemId(item.id)}
-                    >
-                      <Pencil size={16} />
-                    </Button>
-                    {/* TODO: enable clone*/}
-                    {/* <button onClick={() => duplicateItem(item)}>
+                    </div>
+                    <div className="ml-auto flex flex-row items-center gap-x-2">
+                      {/* TOGGLE ITEM SELECTION */}
+
+                      <Button
+                        size={'icon'}
+                        variant={'ghost'}
+                        onClick={() => setEditingItemId(item.id)}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      {/* TODO: enable clone*/}
+                      {/* <button onClick={() => duplicateItem(item)}>
                               <Copy size={16} />
                             </button> */}
 
-                    <Button
-                      size={'icon'}
-                      variant={'ghost'}
-                      onClick={() => {
-                        if (!workspaceId || !appId) throw new Error();
-                        editorStore.queriesManager.deleteQuery.mutate({
-                          workspaceId: +workspaceId,
-                          appId: +appId,
-                          queryId: item.id,
-                        });
-                      }}
-                    >
-                      <Trash size={16} />
-                    </Button>
+                      <Button
+                        size={'icon'}
+                        variant={'ghost'}
+                        onClick={() => {
+                          if (!workspaceId || !appId) throw new Error();
+                          editorStore.queriesManager.deleteQuery.mutate({
+                            workspaceId: +workspaceId,
+                            appId: +appId,
+                            queryId: item.id,
+                          });
+                        }}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    </div>
                   </>
                 )}
               </li>
