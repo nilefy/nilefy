@@ -8,7 +8,8 @@ import {
 } from 'mobx';
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
-import { cloneDeep, get, has, set } from 'lodash';
+import { get, set } from 'lodash';
+import { klona } from 'klona';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import {
@@ -21,12 +22,14 @@ import {
   extractValidators,
   transformErrorToMessage,
 } from '../validations';
-import { Operation, applyPatch } from 'fast-json-patch';
+import { Operation, applyPatch, compare } from 'fast-json-patch';
 import {
   EntityActionRawConfig,
   EntityActionConfig,
 } from '../evaluation/interface';
 import { memoizeDebounce } from '../utils';
+import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
+import { getArrayPaths } from '../evaluation/utils';
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
   public readonly publicAPI: Set<string>;
@@ -39,10 +42,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public codePaths: Set<string>;
   protected readonly workerBroker: WorkerBroker;
-  public errors: EntityErrorsRecord[string] = {};
+  // public errors: EntityErrorsRecord[string] = {};
+  public runtimeErros: Record<string, string[]>;
+  public evaluationValidationErrors: Record<string, string[]>;
+  public inputValidationErrors: Record<string, string[]>;
   public actions: Record<string, (...args: unknown[]) => void> = {};
   public actionsConfig: EntityActionConfig;
   public rawActionsConfig: EntityActionRawConfig;
+  private evaluablePaths: Set<string>;
   constructor({
     id,
     workerBroker,
@@ -51,6 +58,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     publicAPI = new Set(),
     entityType: entityType,
     entityActionConfig = {},
+    evaluablePaths = [],
   }: {
     id: string;
     entityType: EntityTypes;
@@ -73,24 +81,35 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       applyEvalationUpdatePatch: action,
       applyErrorUpdatePatch: action,
       executeAction: action,
-      errors: observable,
+      errors: computed,
+      inputValidationErrors: observable,
+      runtimeErros: observable,
+      evaluationValidationErrors: observable,
     });
+    this.evaluablePaths = new Set<string>([
+      ...evaluablePaths,
+      ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
+    ]);
     this.publicAPI = publicAPI;
     this.id = id;
     this.entityType = entityType;
     this.workerBroker = workerBroker;
-    this.actionsConfig = cloneDeep(entityActionConfig);
-    this.rawActionsConfig = Object.entries(
-      cloneDeep(entityActionConfig),
-    ).reduce((acc, [key, value]) => {
-      acc[key] = value;
-      // @ts-expect-error fn is not defined in the type
-      delete acc[key]['fn'];
-      return acc;
-    }, {} as EntityActionRawConfig);
+    this.runtimeErros = {};
+    this.evaluationValidationErrors = {};
+    this.inputValidationErrors = {};
+    this.actionsConfig = klona(entityActionConfig);
+    this.rawActionsConfig = Object.entries(klona(entityActionConfig)).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value;
+        // @ts-expect-error fn is not defined in the type
+        delete acc[key]['fn'];
+        return acc;
+      },
+      {} as EntityActionRawConfig,
+    );
     this.actions = this.processActionConfig(this.actionsConfig);
     this.rawValues = rawValues;
-    this.finalValues = cloneDeep(rawValues);
+    this.finalValues = klona(rawValues);
     this.values = {};
     this.validators = extractValidators(inspectorConfig);
     for (const path in this.validators) {
@@ -136,41 +155,43 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       }
     }
     applyPatch(this.values, ops, false, true);
-    applyPatch(this.finalValues, ops, false, true);
-    for (const path of removed) {
-      const lodashPath = path.split('/').slice(1);
-      if (has(this.rawValues, lodashPath)) {
-        set(this.finalValues, lodashPath, get(this.rawValues, lodashPath));
+    const newFinalValues = klona(this.rawValues);
+    for (const path of this.evaluablePaths) {
+      let paths = [path];
+      if (path.includes('[*]')) {
+        paths = getArrayPaths(path, this.evaluablePaths, this.rawValues);
+      }
+      for (const path of paths) {
+        const possibleEvalValue = get(this.values, path);
+        if (possibleEvalValue === undefined) {
+          const res = this.validatePath(path, get(this.rawValues, path));
+          if (res) {
+            set(newFinalValues, path, res.value);
+            this.addInputValidationError(path, res.errors);
+          } else {
+            set(newFinalValues, path, get(this.rawValues, path));
+            this.inputValidationErrors[path] = [];
+          }
+        } else {
+          set(newFinalValues, path, possibleEvalValue);
+          this.inputValidationErrors[path] = [];
+        }
       }
     }
-    // TODO: Can we move this to the worker
-    for (const path in this.validators) {
-      if (!changed.has('/' + path.split('.').join('/'))) continue;
-      const res = this.validatePath(
-        path,
-        get(this.finalValues, path, get(this.rawValues, path)),
-      );
-      if (res) {
-        this.addValidationErrors(path, res.errors);
-        set(this.finalValues, path, res.value);
-        set(this.values, path, res.value);
-      } else {
-        this.clearValidationErrorsForPath(path);
-      }
-    }
+    const opsFinal = compare(this.finalValues, newFinalValues);
+    applyPatch(this.finalValues, opsFinal, false, true);
   }
-  applyErrorUpdatePatch(ops: Operation[]) {
-    // applyPatch(this.errors, ops, false, true);
+  applyErrorUpdatePatch(
+    ops: Operation[],
+    type: 'runtimeErrors' | 'evaluationValidationErrors',
+  ) {
+    if (type === 'runtimeErrors') {
+      applyPatch(this.runtimeErros, ops, false, true);
+    } else {
+      applyPatch(this.evaluationValidationErrors, ops, false, true);
+    }
   }
 
-  clearValidationErrorsForPath(path: string) {
-    if (!this.errors[path]) return;
-    if (!this.errors[path].validationErrors) return;
-    this.errors[path].validationErrors = [];
-  }
-  clearErrorsForPath(path: string) {
-    this.errors[path] = {};
-  }
   dispose() {
     this.dispoables.forEach((dispose) => dispose());
     this.workerBroker.postMessege({
@@ -192,7 +213,13 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       },
     } as WorkerRequest);
   };
-
+  get errors() {
+    return {
+      evaluationValidationErrors: this.evaluationValidationErrors,
+      runtimeErros: this.runtimeErros,
+      inputValidationErrors: this.inputValidationErrors,
+    };
+  }
   debouncedSyncRawValuesWithEvaluationWorker = memoizeDebounce(
     this.syncRawValuesWithEvaluationWorker,
     200,
@@ -203,7 +230,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     if (get(this.values, path) === undefined) {
       const res = this.validatePath(path, value);
       if (res) {
-        this.addValidationErrors(path, res.errors);
+        this.addInputValidationError(path, res.errors);
         value = res.value;
       }
       set(this.finalValues, path, value);
@@ -212,13 +239,10 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   getValue(key: string) {
-    return get(this.values, key, get(this.rawValues, key));
+    return get(this.finalValues, key, get(this.rawValues, key));
   }
-  addValidationErrors(path: string, errors: string[]) {
-    if (!this.errors[path]) {
-      this.errors[path] = { validationErrors: [] };
-    }
-    this.errors[path].validationErrors = errors;
+  addInputValidationError(path: string, errors: string[]) {
+    this.inputValidationErrors[path] = errors;
   }
 
   getRawValue(key: string) {
@@ -227,22 +251,27 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
 
   get hasErrors() {
     for (const key in this.errors) {
-      if (this.errors[key]?.validationErrors?.length) return true;
-      if (this.errors[key]?.evaluationErrors?.length) return true;
+      for (const path in this.errors[key as keyof typeof this.errors]) {
+        // @ts-expect-error object keys
+        if (this.errors[key][path].length > 0) return true;
+      }
     }
     return false;
   }
 
   pathErrors(path: string) {
-    return this.errors[path];
+    return {
+      evaluationValidationErrors: this.evaluationValidationErrors[path],
+      runtimeErros: this.runtimeErros[path],
+      inputValidationErrors: this.inputValidationErrors[path],
+    };
   }
 
   pathHasErrors(path: string) {
-    if (!this.errors[path]) return false;
-    const validationErrors = this.errors[path].validationErrors;
-    const evaluationErrors = this.errors[path].evaluationErrors;
-    if (validationErrors && validationErrors.length > 0) return true;
-    if (evaluationErrors && evaluationErrors.length > 0) return true;
+    const errors = this.pathErrors(path);
+    for (const key in errors) {
+      if (errors[key as keyof typeof errors]?.length > 0) return true;
+    }
     return false;
   }
 

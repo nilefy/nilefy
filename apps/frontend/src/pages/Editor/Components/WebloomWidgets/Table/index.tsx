@@ -269,9 +269,9 @@ const WebloomTable = observer(() => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <div className="flex h-full w-full items-center justify-center text-xl">
-                {props.emptyState}
-              </div>
+              <tr className="flex h-full w-full items-center justify-center text-xl">
+                <td>{props.emptyState}</td>
+              </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>

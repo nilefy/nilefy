@@ -75,7 +75,8 @@ export class WorkerBroker implements WebloomDisposable {
       case 'EvaluationUpdate':
         this.editorState.applyEvalForestPatch(
           body.evaluationUpdates,
-          body.errorUpdates,
+          body.runtimeErrorUpdates,
+          body.validationErrorUpdates,
         );
         break;
       case 'EventExecution':

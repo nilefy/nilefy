@@ -3,7 +3,7 @@ import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate } from '../evaluation';
 import { EditorState } from './editor';
-import { EntityErrorsRecord } from '../interface';
+import { EntityErrorsRecord, EntityPathErrors } from '../interface';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { bindingRegexGlobal } from '../evaluation/utils';
 
@@ -77,7 +77,11 @@ export class EvaluationManager {
     performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
     const evalTree: Record<string, unknown> = {};
-    const errors: EntityErrorsRecord = {};
+    const runtimeErrors: Record<string, Record<string, string[]>> = {};
+    const evaluationValidationErrors: Record<
+      string,
+      Record<string, string[]>
+    > = {};
     const toBeRemoved = new Set<string>();
     const alreadyEvaluated = new Set<string>();
     for (const item of this.editor.dependencyManager.leaves) {
@@ -93,15 +97,19 @@ export class EvaluationManager {
           evalTree,
         );
         if (evaluationErrors) {
-          addErrorsToEntity(
-            errors,
-            entityId,
-            path,
-            evaluationErrors,
-            'evaluationErrors',
+          runtimeErrors[entityId] = merge({}, runtimeErrors[entityId], {
+            [path]: evaluationErrors,
+          });
+        }
+        const res = entity.validatePath(path, evaluatedValue);
+        if (res) {
+          evaluatedValue = res.value;
+          evaluationValidationErrors[entityId] = merge(
+            {},
+            evaluationValidationErrors[entityId],
+            { [path]: res.errors },
           );
         }
-
         set(evalTree, item, evaluatedValue);
         continue;
       }
@@ -125,15 +133,19 @@ export class EvaluationManager {
         evalTree,
       );
       if (evaluationErrors) {
-        addErrorsToEntity(
-          errors,
-          entityId,
-          path,
-          evaluationErrors,
-          'evaluationErrors',
+        runtimeErrors[entityId] = merge({}, runtimeErrors[entityId], {
+          [path]: evaluationErrors,
+        });
+      }
+      const res = entity.validatePath(path, evaluatedValue);
+      if (res) {
+        evaluatedValue = res.value;
+        evaluationValidationErrors[entityId] = merge(
+          {},
+          evaluationValidationErrors[entityId],
+          { [path]: res.errors },
         );
       }
-
       set(evalTree, item, evaluatedValue);
     }
     // remove leaves of the graph because they are only used for evaluation.
@@ -159,23 +171,8 @@ export class EvaluationManager {
     this.lastEvaluatedForest = evalTree;
     return {
       evalTree,
-      errors,
+      runtimeErrors,
+      evaluationValidationErrors,
     };
   }
-}
-
-function addErrorsToEntity(
-  errorsRecord: EntityErrorsRecord,
-  entityId: string,
-  path: string,
-  errors: string[],
-  errorsKey: 'validationErrors' | 'evaluationErrors',
-) {
-  merge(errorsRecord, {
-    [entityId]: {
-      [path]: {
-        [errorsKey]: errors,
-      },
-    },
-  });
 }

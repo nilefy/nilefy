@@ -187,8 +187,8 @@ export type EntityPathErrors = {
   /**
    * key is the path of the property
    */
-  validationErrors?: string[];
-  evaluationErrors?: string[];
+  evaluationValidationErrors?: string[];
+  runtimeErrors?: string[];
 };
 /**
  * key is the entityId

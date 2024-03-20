@@ -12,14 +12,17 @@ import {
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
-import { EntityErrorsRecord } from '../interface';
 import { Operation, compare } from 'fast-json-patch';
 
 export class MainThreadBroker {
   private disposables: (() => void)[] = [];
   private worker = self;
   private lastEvaluatedForest: Record<string, unknown> = {};
-  private lastErrors: EntityErrorsRecord = {};
+  private lastRunTimeErros: Record<string, Record<string, string[]>> = {};
+  private lastEvaluationValidationErrors: Record<
+    string,
+    Record<string, string[]>
+  > = {};
   actionsQueue: EventExecutionResult[] = [];
   constructor(private editorState: EditorState) {
     makeObservable(this, {
@@ -134,39 +137,61 @@ export class MainThreadBroker {
     const serializedEvalForest = toJS(
       this.editorState.evaluationManager.evaluatedForest.evalTree,
     );
-    const serializedErrors = toJS(
-      this.editorState.evaluationManager.evaluatedForest.errors,
+    const serializedRuntimeErrors = toJS(
+      this.editorState.evaluationManager.evaluatedForest.runtimeErrors,
+    );
+    const serializedValidationErrors = toJS(
+      this.editorState.evaluationManager.evaluatedForest
+        .evaluationValidationErrors,
     );
     const lastEvalTreeWithDefault: Record<string, unknown> = {};
-    const lastErrorsWithDefault: EntityErrorsRecord = {};
+    const lastRunTimeErrorsWithDefault: Record<
+      string,
+      Record<string, string[]>
+    > = {};
+    const lastValidationErrorsWithDefault: Record<
+      string,
+      Record<string, string[]>
+    > = {};
     for (const key in this.editorState.entities) {
       lastEvalTreeWithDefault[key] = this.lastEvaluatedForest[key] || {};
-      lastErrorsWithDefault[key] = this.lastErrors[key] || {};
+      lastRunTimeErrorsWithDefault[key] = this.lastRunTimeErros[key] || {};
+      lastValidationErrorsWithDefault[key] =
+        this.lastEvaluationValidationErrors[key] || {};
     }
     const evaluationOps: Record<string, Operation[]> = {};
-    const errorsOps: Record<string, Operation[]> = {};
+    const runtimeErrorOps: Record<string, Operation[]> = {};
+    const validationErrorOps: Record<string, Operation[]> = {};
     for (const key in lastEvalTreeWithDefault) {
       const lastEval = lastEvalTreeWithDefault[key];
       const ops = compare(lastEval as any, serializedEvalForest[key] || {});
       if (ops.length === 0) continue;
       evaluationOps[key] = ops;
     }
-    for (const key in lastErrorsWithDefault) {
-      const lastErr = lastErrorsWithDefault[key];
-      const ops = compare(lastErr, serializedErrors[key] || {});
+    for (const key in lastRunTimeErrorsWithDefault) {
+      const lastErr = lastRunTimeErrorsWithDefault[key];
+      const ops = compare(lastErr, serializedRuntimeErrors[key] || {});
       if (ops.length === 0) continue;
-      errorsOps[key] = ops;
+      runtimeErrorOps[key] = ops;
+    }
+    for (const key in lastValidationErrorsWithDefault) {
+      const lastErr = lastValidationErrorsWithDefault[key];
+      const ops = compare(lastErr, serializedValidationErrors[key] || {});
+      if (ops.length === 0) continue;
+      validationErrorOps[key] = ops;
     }
 
     this.postMessage({
       event: 'EvaluationUpdate',
       body: {
         evaluationUpdates: evaluationOps,
-        errorUpdates: errorsOps,
+        runtimeErrorUpdates: runtimeErrorOps,
+        validationErrorUpdates: validationErrorOps,
       },
     });
     this.lastEvaluatedForest = serializedEvalForest;
-    this.lastErrors = serializedErrors;
+    this.lastRunTimeErros = serializedRuntimeErrors;
+    this.lastEvaluationValidationErrors = serializedValidationErrors;
   };
   dispose() {
     this.disposables.forEach((fn) => fn());

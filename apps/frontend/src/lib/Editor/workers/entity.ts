@@ -3,7 +3,7 @@ import { deepEqual } from 'fast-equals';
 
 import { DependencyManager } from './dependencyManager';
 
-import { get, set, toPath } from 'lodash';
+import { get, set } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -11,9 +11,13 @@ import {
 } from '@/lib/Editor/validations';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { EntityInspectorConfig } from '../interface';
-import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
+import {
+  getEvaluablePathsFromInspectorConfig,
+  getGenericArrayPath,
+} from '../evaluation';
 import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
+import { getArrayPaths } from '../evaluation/utils';
 
 export class Entity {
   private readonly evaluablePaths: Set<string>;
@@ -86,6 +90,7 @@ export class Entity {
 
   initDependecies() {
     const relations = this.analyzeDependencies();
+
     this.applyDependencyUpdate(relations);
   }
 
@@ -108,12 +113,23 @@ export class Entity {
     | ReturnType<(typeof this.dependencyManager)['analyzeDependencies']>[]
     | null {
     let _path = path;
-    const pathIsInEvaluablePaths = this.evaluablePaths.has(path);
-    if (!pathIsInEvaluablePaths) {
+    const isGenericArrayPath = _path.includes('[*]');
+    //check if path is an array path ex. a[0].b, notice that a[*].b doesn't hit this condition
+    const genericArrayPathCandidate =
+      !this.evaluablePaths.has(_path) && !isGenericArrayPath;
+    if (genericArrayPathCandidate) {
+      // A candidate for array path
       _path = getGenericArrayPath(path);
     }
-    if (!pathIsInEvaluablePaths && this.evaluablePaths.has(_path)) {
-      const pathsToAnalyze = this.getArrayPaths(_path);
+    if (
+      (genericArrayPathCandidate || isGenericArrayPath) &&
+      this.evaluablePaths.has(_path)
+    ) {
+      const pathsToAnalyze = getArrayPaths(
+        _path,
+        this.evaluablePaths,
+        this.unevalValues,
+      );
       if (!pathsToAnalyze.length) return null;
       const relations = pathsToAnalyze.map((path) => {
         const value = get(this.unevalValues, path) as string;
@@ -159,30 +175,7 @@ export class Entity {
       this.addDependencies(relation);
     }
   }
-  /**
 
-   * @description this method returns all the paths that are affected by the path
-   * @todo currently works for one level deep
-   * @param path ```ts
-   * "path1[*].path2.path3[*].path4"
-   * ```
-   * @returns ```ts
-   * ["path1[0].path2.path3[0].path4", "path1[0].path2.path3[1].path4", "path1[0].path2.path3[2].path4"]
-   * ```
-   */
-
-  getArrayPaths(path: string): string[] {
-    const paths: string[] = [];
-    if (!this.evaluablePaths.has(path)) return [];
-    const [array, ...rest] = path.split('[*]');
-    const arrayValue = get(this.unevalValues, array);
-    if (Array.isArray(arrayValue)) {
-      for (let i = 0; i < arrayValue.length; i++) {
-        paths.push(`${array}[${i}]${rest.join('')}`);
-      }
-    }
-    return paths;
-  }
   analyzeAndApplyDependencyUpdate(path: string) {
     const relations = this.analyzeDependcyForPath(path);
     if (relations) {
@@ -251,19 +244,3 @@ export class Entity {
     return actions;
   };
 }
-
-const digitRegex = /\d+/;
-const getGenericArrayPath = (path: string) => {
-  const pathParts = toPath(path);
-  let newPath = '';
-  for (let i = 0; i < pathParts.length; i++) {
-    if (digitRegex.test(pathParts[i])) {
-      newPath += '[*]';
-    } else {
-      if (i === 0) {
-        newPath += pathParts[i];
-      } else newPath += '.' + pathParts[i];
-    }
-  }
-  return newPath;
-};

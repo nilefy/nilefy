@@ -16,7 +16,7 @@ export const ErrorPopover = observer(
     const { focusedPath } = useContext(EntityFormContext);
     const { entityId, path } = useContext(EntityFormControlContext);
     const entity = editorStore.getEntityById(entityId);
-    const errors = entity!.errors[path];
+    const errors = entity?.pathErrors(path);
     const popOverOpen = focusedPath === path && entity?.pathHasErrors(path);
     return (
       <Popover open={popOverOpen} defaultOpen={false}>
@@ -38,10 +38,13 @@ export const ErrorPopover = observer(
             <ScrollArea>
               <div className="p-2 text-sm text-gray-600">
                 <ul>
-                  {errors?.validationErrors?.map((error) => (
+                  {errors?.inputValidationErrors?.map((error) => (
                     <li key={error}>{error}</li>
                   ))}
-                  {errors?.evaluationErrors?.map((error) => (
+                  {errors?.evaluationValidationErrors?.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                  {errors?.runtimeErros?.map((error) => (
                     <li key={error}>{error}</li>
                   ))}
                 </ul>

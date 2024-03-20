@@ -17,7 +17,8 @@ import {
 } from '../utils';
 
 import { Snapshotable, WebloomDisposable } from './interfaces';
-import { cloneDeep, debounce } from 'lodash';
+import { debounce } from 'lodash';
+import { klona } from 'klona';
 import { Entity } from './entity';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
@@ -264,7 +265,7 @@ export class WebloomWidget
       pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: cloneDeep(this.rawValues),
+      props: klona(this.rawValues),
       type: this.type,
       col: this.col,
       row: this.row,

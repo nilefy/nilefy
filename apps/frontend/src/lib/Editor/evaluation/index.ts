@@ -1,4 +1,4 @@
-import { memoize } from 'lodash';
+import { memoize, toPath } from 'lodash';
 import { EntityInspectorConfig } from '../interface';
 import {
   bindingRegexGlobal,
@@ -101,3 +101,29 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     return paths;
   },
 );
+
+export const evaluablePathsHasPath = (
+  path: string,
+  evaluablePaths: Set<string>,
+) => {
+  if (evaluablePaths.has(path)) return true;
+  const genericPath = getGenericArrayPath(path);
+  if (evaluablePaths.has(genericPath)) return true;
+  return false;
+};
+const digitRegex = /\d+/;
+
+export const getGenericArrayPath = (path: string) => {
+  const pathParts = toPath(path);
+  let newPath = '';
+  for (let i = 0; i < pathParts.length; i++) {
+    if (digitRegex.test(pathParts[i])) {
+      newPath += '[*]';
+    } else {
+      if (i === 0) {
+        newPath += pathParts[i];
+      } else newPath += '.' + pathParts[i];
+    }
+  }
+  return newPath;
+};

@@ -36,7 +36,10 @@ function InsertTab() {
             const config =
               WebloomWidgets[name as keyof typeof WebloomWidgets].config;
             return (
-              <div key={name} className=" flex items-center justify-center  ">
+              <div
+                key={name}
+                className=" flex cursor-grab items-center justify-center"
+              >
                 <NewNodeAdapter
                   type={name as keyof typeof WebloomWidgets}
                   key={name}

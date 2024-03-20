@@ -20,6 +20,7 @@ import { WebloomGlobal } from './webloomGlobal';
 
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
+import { entries } from 'lodash';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -67,16 +68,25 @@ export class EditorState implements WebloomDisposable {
   }
   applyEvalForestPatch(
     lastEvalUpdates: Record<string, Operation[]>,
-    lastErrorUpdates: Record<string, Operation[]>,
+    lastRunTimeErrors: Record<string, Operation[]>,
+    lastValidationErrors: Record<string, Operation[]>,
   ) {
-    Object.entries(lastEvalUpdates).forEach(([id, op]) => {
+    entries(lastEvalUpdates).forEach(([id, op]) => {
       const entity = this.getEntityById(id);
       if (entity) {
         entity.applyEvalationUpdatePatch(op);
-        const errors = lastErrorUpdates[id];
-        if (errors) {
-          entity.applyErrorUpdatePatch(errors);
-        }
+      }
+    });
+    entries(lastRunTimeErrors).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyErrorUpdatePatch(op, 'runtimeErrors');
+      }
+    });
+    entries(lastValidationErrors).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyErrorUpdatePatch(op, 'evaluationValidationErrors');
       }
     });
   }

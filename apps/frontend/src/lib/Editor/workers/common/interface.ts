@@ -30,7 +30,8 @@ export type WorkerRequest =
 export type EvaluationUpdateResponse = {
   body: {
     evaluationUpdates: Record<string, Operation[]>;
-    errorUpdates: Record<string, Operation[]>;
+    runtimeErrorUpdates: Record<string, Operation[]>;
+    validationErrorUpdates: Record<string, Operation[]>;
   };
   event: 'EvaluationUpdate';
 };
