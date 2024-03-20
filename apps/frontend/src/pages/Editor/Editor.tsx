@@ -72,7 +72,9 @@ export const Editor = observer(() => {
                 defaultSizePercentage={35}
                 collapsible
               >
-                <QueryPanel />
+                <Suspense fallback={<WebloomLoader />}>
+                  <QueryPanel />
+                </Suspense>
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
