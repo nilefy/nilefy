@@ -8,38 +8,46 @@ export const InspectorArrayInput = (props: ArrayInputProps) => {
   const { value, onChange, path, entityId } = useContext(
     EntityFormControlContext,
   );
+  const SubFormWrapper = props.SubFormWrapper ?? DefaultSubFormWrapper;
+  const FormWrapper = props.FormWrapper ?? DefaultFormWrapper;
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full flex-col gap-2">
-        {(value as unknown[]).map((subformItem, index) => {
-          return (
-            <FormWrapper
-              key={hashKey(subformItem)}
-              value={value as unknown[]}
-              onDelete={() => {
-                const newValue = [...(value as unknown[])];
-                newValue.splice(index, 1);
-                onChange(newValue);
-              }}
-            >
-              <Form
-                subForm={props.subform}
-                index={index}
-                id={entityId}
-                orgPath={path}
-              />
-            </FormWrapper>
-          );
-        })}
+        {((value as Record<string, unknown>[]) || []).map(
+          (subformItem, index) => {
+            return (
+              <SubFormWrapper
+                key={hashKey(subformItem) + index}
+                value={subformItem}
+                onDelete={() => {
+                  const newValue = [...((value as unknown[]) || [])];
+                  newValue.splice(index, 1);
+                  onChange(newValue);
+                }}
+              >
+                <Form
+                  FormWrapper={FormWrapper}
+                  subForm={props.subform}
+                  index={index}
+                  id={entityId}
+                  orgPath={path}
+                />
+              </SubFormWrapper>
+            );
+          },
+        )}
       </div>
       <div>
         <Button
           size="sm"
           onClick={() => {
-            onChange([...(value as unknown[]), props.newItemDefaultValue]);
+            onChange([
+              ...((value as unknown[]) || []),
+              props.newItemDefaultValue,
+            ]);
           }}
         >
-          Add Dataset
+          {props.addButtonText ?? 'Add'}
         </Button>
       </div>
     </div>
@@ -51,14 +59,16 @@ const Form = ({
   id,
   subForm,
   orgPath,
+  FormWrapper,
 }: {
   index: number;
   id: string;
   subForm: ArrayInputProps['subform'];
   orgPath: string;
+  FormWrapper: React.FC<{ children: React.ReactNode }>;
 }) => {
   return (
-    <>
+    <FormWrapper>
       {subForm.map((control) => {
         const path = `${orgPath}[${index}].${control.path}`;
         const _id = `${id}-${control.path}-${index}`;
@@ -67,15 +77,15 @@ const Form = ({
           <EntityFormControl control={newControl} entityId={id} key={_id} />
         );
       })}
-    </>
+    </FormWrapper>
   );
 };
 
-const FormWrapper = ({
+const DefaultSubFormWrapper = ({
   children,
   onDelete,
 }: {
-  value: unknown[];
+  value: Record<string, unknown>;
   children: React.ReactNode;
   onDelete: () => void;
 }) => {
@@ -95,5 +105,7 @@ const FormWrapper = ({
     </div>
   );
 };
-
+const DefaultFormWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
 export default InspectorArrayInput;

@@ -92,8 +92,9 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
               paths.push(path);
             }
           }
-        }
-        if (evaluationFormControls.has(control.type)) {
+        } else if (control.type === 'keyValue') {
+          paths.push(...[`${control.path}[*].value`, `${control.path}[*].key`]);
+        } else if (evaluationFormControls.has(control.type)) {
           const path = control.path;
           paths.push(path);
         }

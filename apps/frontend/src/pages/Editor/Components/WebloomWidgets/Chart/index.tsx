@@ -27,6 +27,12 @@ import { calculateAggregation } from './aggergationMethods';
 import { WebloomChartProps, webloomChartProps } from './interface';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { keys } from 'lodash';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 ChartJS.register(
   LinearScale,
@@ -44,6 +50,7 @@ const WebloomChart = observer(function WebloomChart() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomChartProps;
+
   return (
     <ToolTipWrapper text={props.tooltip}>
       <div className="relative h-full w-full">
@@ -216,6 +223,48 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
             chartType: 'bar',
             color: '#165DFF',
           },
+          SubFormWrapper: ({
+            onDelete,
+            children,
+            value,
+          }: {
+            onDelete: () => void;
+            children: React.ReactNode;
+            value: WebloomChartProps['datasets'][number];
+          }) => {
+            return (
+              <DropdownMenu>
+                <div className="flex h-full w-full justify-between rounded-md border-2 p-2">
+                  <DropdownMenuTrigger className="h-full w-full ">
+                    <div className="flex h-9 w-full min-w-full items-center gap-3 px-3 align-baseline leading-3">
+                      <div className="flex w-fit flex-row items-center  gap-3">
+                        <div
+                          className="h-6 w-6 rounded-sm"
+                          style={{ backgroundColor: value.color }}
+                        ></div>
+                        <div className="">{value.name ?? 'unconfigured'}</div>
+                      </div>
+                      <div className="ml-auto font-semibold text-gray-500">
+                        {value.aggMethod ?? 'unconfigured'}
+                      </div>
+                    </div>
+                  </DropdownMenuTrigger>
+                </div>
+
+                <DropdownMenuContent side="left" className="space-y-4 p-4">
+                  {children}
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onDelete();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          },
           subform: [
             {
               label: 'Name',
@@ -355,33 +404,3 @@ const WebloomChartWidget: Widget<WebloomChartProps> = {
 };
 
 export { WebloomChartWidget };
-// {
-//   /* <DropdownMenu>
-// <div className="flex h-full w-full justify-between rounded-2xl  border-2 p-3">
-//   <DropdownMenuTrigger className="h-full w-full ">
-//     <p className="line-clamp-3 flex min-h-full w-full min-w-full items-center gap-3 ">
-//       <span
-//         className="h-9 w-9 rounded-full"
-//         style={{ backgroundColor: dataset.color }}
-//       ></span>
-//       <span className="bg-secondary w-fit rounded-2xl p-3">
-//         {dataset.name ?? 'unconfigured'}
-//       </span>
-//       <span className="">{dataset.aggMethod ?? 'unconfigured'}</span>
-//     </p>
-//   </DropdownMenuTrigger>
-// </div>
-
-// <DropdownMenuContent side="left" className="space-y-4 p-4">
-//   {children}
-//   <Button
-//     variant="destructive"
-//     onClick={() => {
-//       onDelete();
-//     }}
-//   >
-//     Delete
-//   </Button>
-// </DropdownMenuContent>
-// </DropdownMenu> */
-// }

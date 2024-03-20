@@ -1,4 +1,3 @@
-import { xcodeDark } from '@uiw/codemirror-theme-xcode';
 import { RegExpCursor } from '@codemirror/search';
 import {
   Decoration,
@@ -8,7 +7,7 @@ import {
   ViewUpdate,
   placeholder,
 } from '@codemirror/view';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
 
@@ -173,7 +172,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   );
 
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext, javascript(), xcodeDark];
+    const extensions = [setup, webLoomContext, javascript()];
     if (props.templateAutocompletionOnly) {
       extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {

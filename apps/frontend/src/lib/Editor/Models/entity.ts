@@ -8,7 +8,7 @@ import {
 } from 'mobx';
 
 import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
-import { get, set } from 'lodash';
+import { get, isArray, set } from 'lodash';
 import { klona } from 'klona';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
@@ -134,22 +134,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   applyEvalationUpdatePatch(ops: Operation[]) {
-    const changed = new Set<string>();
-    const removed = new Set<string>();
-    for (const op of ops) {
-      if (op.op === '_get' || op.op === 'test') {
-        continue;
-      } else if (op.op === 'move') {
-        changed.add(op.path);
-        changed.add(op.from);
-        removed.add(op.from);
-      } else if (op.op === 'remove') {
-        removed.add(op.path);
-        changed.add(op.path);
-      } else {
-        changed.add(op.path);
-      }
-    }
     applyPatch(this.values, ops, false, true);
     const newFinalValues = klona(this.rawValues);
     for (const path of this.evaluablePaths) {
@@ -223,7 +207,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   setValue(path: string, value: unknown) {
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
-    if (get(this.values, path) === undefined) {
+    if (get(this.values, path) === undefined || isArray(value)) {
       const res = this.validatePath(path, value);
       if (res) {
         this.addInputValidationError(path, res.errors);

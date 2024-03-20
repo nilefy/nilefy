@@ -33,14 +33,16 @@ type InspectorEvents = Record<string, never>;
 type InspectorDatePickerProps = {
   date: Date;
 };
-export type ArrayInputProps = {
+export type ArrayInputProps<T = any> = {
   subform: FormControl[];
-  SubformWrapper?: ReactElement<{
+  SubFormWrapper?: React.FC<{
     onDelete: () => void;
     children: ReactNode;
-    value: Record<string, unknown>;
+    value: T;
   }>;
+  FormWrapper?: React.FC<{ children: ReactNode }>;
   newItemDefaultValue: Record<string, unknown>;
+  addButtonText?: string;
 };
 
 // config panel types
@@ -59,6 +61,7 @@ type FormControlOptions = {
   chartDatasets: undefined;
   datePicker: InspectorDatePickerProps;
   array: ArrayInputProps;
+  keyValue: undefined;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;

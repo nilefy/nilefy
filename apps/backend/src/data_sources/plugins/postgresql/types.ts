@@ -12,7 +12,7 @@ export const configSchema = z.object({
   connectionOptions: z.string().optional(),
 });
 
-const query = z.string().default('select * from table');
+const query = z.string().default('');
 export const querySchema = z.object({
   query,
 });
