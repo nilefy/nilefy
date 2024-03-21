@@ -231,8 +231,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.debouncedSyncRawValuesWithEvaluationWorker(path);
   }
   pushIntoArray(path: string, value: unknown) {
-    const array = get(this.rawValues, path) as unknown[];
-    if (!isArray(array)) return;
+    let array = get(this.rawValues, path) as unknown[];
+    if (!array) set(this.rawValues, path, []);
+    array = get(this.rawValues, path) as unknown[];
     array.push(value);
     this.debouncedSyncRawValuesWithEvaluationWorker(path);
   }
