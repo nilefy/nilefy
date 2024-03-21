@@ -128,7 +128,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         set(this.finalValues, path, res.value);
       }
     }
-
     this.codePaths = new Set<string>();
     this.inspectorConfig = inspectorConfig;
 

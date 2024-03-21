@@ -13,7 +13,6 @@ import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { z } from 'zod';
-import { toJS } from 'mobx';
 
 export type WebloomCheckBoxGroupProps = {
   options: selectOptions[];
@@ -25,7 +24,6 @@ const WebloomCheckBoxGroup = observer(function WebloomCheckBoxGroup() {
   const { id, onPropChange } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomCheckBoxGroupProps;
-  console.log('props,', toJS(props.options));
   return (
     <div className="w-full">
       <Label>{props.label}</Label>

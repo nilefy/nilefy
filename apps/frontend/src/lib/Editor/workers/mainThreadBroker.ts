@@ -141,8 +141,6 @@ export class MainThreadBroker {
         .evaluationValidationErrors,
     );
 
-    console.log('serializedEvalForest', serializedEvalForest);
-    console.log('lastEvaluatedForest', this.lastEvaluatedForest);
     const lastEvalTreeWithDefault: Record<string, unknown> = {};
     const lastRunTimeErrorsWithDefault: Record<
       string,

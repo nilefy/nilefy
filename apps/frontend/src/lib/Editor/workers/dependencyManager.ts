@@ -160,7 +160,6 @@ export class DepGraph {
   removePath(node: string): void {
     if (node.includes('[*]')) {
       const identifier = node.split('[*]')[0];
-      console.log(identifier);
       const nodes = Array.from(this.paths).filter((path) => {
         return path.startsWith(identifier);
       });

@@ -7,14 +7,16 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
-    const queryUrl = new URL(
-      query.query.endpoint,
-      dataSourceConfig.base_url,
-    ).toString();
+    const searchParams = new URLSearchParams();
+    for (const param of query.query.params || []) {
+      searchParams.append(param.key, param.value);
+    }
+    const queryUrl = new URL(query.query.endpoint, dataSourceConfig.base_url);
+    queryUrl.search = searchParams.toString();
 
     const collectedHeaders = [
       ...dataSourceConfig.headers,
-      ...query.query.headers.map((i) => [i.key, i.value]),
+      ...(query.query.headers || []).map((i) => [i.key, i.value]),
     ].reduce(
       (acc, [key, value]) => {
         acc[key] = value;
