@@ -52,10 +52,13 @@ const WebloomContainer = observer(
 
     return (
       <ScrollArea
-        className="relative h-full w-full"
+        // temporary styles till we implement custom styles
+        className={cn('relative h-full w-full', {
+          'shadow-md ': !entity.isRoot,
+        })}
         scrollAreaViewPortClassName={cn({
           hidden: !isVisibile,
-          'rounded-md': !entity.isRoot,
+          'rounded-md border border-gray-200': !entity.isRoot,
         })}
         style={{
           ...outerContainerStyle,
@@ -81,7 +84,7 @@ const WebloomContainer = observer(
   },
 );
 export const defaultProps: WebloomContainerProps = {
-  color: '#a883f2',
+  color: 'white',
   layoutMode: 'fixed',
 };
 export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
@@ -93,7 +96,7 @@ export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
         label: 'Color',
         type: 'color',
         options: {
-          color: '#a883f2',
+          color: 'white',
         },
       },
     ],

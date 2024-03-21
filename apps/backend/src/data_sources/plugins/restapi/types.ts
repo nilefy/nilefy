@@ -179,6 +179,7 @@ export const queryConfigForm = {
               { label: 'DELETE', value: 'DELETE' },
             ],
           },
+          validation: zodToJsonSchema(endpointMethods),
         },
         {
           path: 'config.headers',

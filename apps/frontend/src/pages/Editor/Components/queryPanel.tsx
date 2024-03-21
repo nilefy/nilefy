@@ -127,7 +127,7 @@ const QueryItem = observer(function QueryItem({
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input
           defaultValue={query.id}
-          className="h-4/5 w-1/5 border-gray-400 transition-colors hover:border-blue-400"
+          className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
         <div className="ml-auto flex flex-row items-center">
           <Button

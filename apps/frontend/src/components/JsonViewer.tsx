@@ -141,11 +141,18 @@ export const JsonViewer = observer(function JsonViewer() {
                 />
                 <h4 className="text-sm font-semibold">
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       commandManager.executeCommand(
                         SelectionAction.remoteSelect(node.id),
-                      )
-                    }
+                      );
+                      editorStore.currentPage
+                        .getWidgetById(node.id)
+                        .dom?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'center',
+                          inline: 'center',
+                        });
+                    }}
                   >
                     {node.id}
                   </button>
