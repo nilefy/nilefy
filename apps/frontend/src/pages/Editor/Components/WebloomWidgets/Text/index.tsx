@@ -8,6 +8,7 @@ import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
+import { StringSchema } from '@/lib/Editor/validations';
 export type WebloomTextProps = {
   text: string;
 };
@@ -62,6 +63,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
           placeholder: 'Enter text',
           label: 'Text',
         },
+        validation: StringSchema('Text'),
       },
     ],
   },

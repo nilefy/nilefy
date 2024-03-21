@@ -158,6 +158,16 @@ export class DepGraph {
    * Remove a node from the dependency graph. If a node does not exist, this method will do nothing.
    */
   removePath(node: string): void {
+    if (node.includes('[*]')) {
+      const identifier = node.split('[*]')[0];
+      console.log(identifier);
+      const nodes = Array.from(this.paths).filter((path) => {
+        return path.startsWith(identifier);
+      });
+      nodes.forEach((node) => {
+        this.removePath(node);
+      });
+    }
     if (this.hasNode(node)) {
       this.paths.delete(node);
       this.outgoingPathsEdges.delete(node);

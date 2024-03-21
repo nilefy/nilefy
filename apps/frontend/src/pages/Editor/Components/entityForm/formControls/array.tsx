@@ -2,14 +2,17 @@ import { Button } from '@/components/ui/button';
 import { ArrayInputProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { EntityFormControl, EntityFormControlContext } from '..';
-import { hashKey } from '@/lib/utils';
+import { editorStore } from '@/lib/Editor/Models';
+import { observer } from 'mobx-react-lite';
 
-export const InspectorArrayInput = (props: ArrayInputProps) => {
-  const { value, onChange, path, entityId } = useContext(
-    EntityFormControlContext,
+export const InspectorArrayInput = observer((props: ArrayInputProps) => {
+  const { path, entityId } = useContext(EntityFormControlContext);
+  const value = editorStore.getEntityById(entityId)?.getRawValue(path);
+  const SubFormWrapper = observer(
+    props.SubFormWrapper ?? DefaultSubFormWrapper,
   );
-  const SubFormWrapper = props.SubFormWrapper ?? DefaultSubFormWrapper;
-  const FormWrapper = props.FormWrapper ?? DefaultFormWrapper;
+  const FormWrapper = observer(props.FormWrapper ?? DefaultFormWrapper);
+
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full flex-col gap-2">
@@ -17,12 +20,11 @@ export const InspectorArrayInput = (props: ArrayInputProps) => {
           (subformItem, index) => {
             return (
               <SubFormWrapper
-                key={hashKey(subformItem) + index}
+                key={index}
                 value={subformItem}
                 onDelete={() => {
-                  const newValue = [...((value as unknown[]) || [])];
-                  newValue.splice(index, 1);
-                  onChange(newValue);
+                  const entity = editorStore.getEntityById(entityId);
+                  entity?.removeElementFromArray(path, index);
                 }}
               >
                 <Form
@@ -41,10 +43,8 @@ export const InspectorArrayInput = (props: ArrayInputProps) => {
         <Button
           size="sm"
           onClick={() => {
-            onChange([
-              ...((value as unknown[]) || []),
-              props.newItemDefaultValue,
-            ]);
+            const entity = editorStore.getEntityById(entityId);
+            entity?.pushIntoArray(path, props.newItemDefaultValue);
           }}
         >
           {props.addButtonText ?? 'Add'}
@@ -52,59 +52,63 @@ export const InspectorArrayInput = (props: ArrayInputProps) => {
       </div>
     </div>
   );
-};
+});
 
-const Form = ({
-  index,
-  id,
-  subForm,
-  orgPath,
-  FormWrapper,
-}: {
-  index: number;
-  id: string;
-  subForm: ArrayInputProps['subform'];
-  orgPath: string;
-  FormWrapper: React.FC<{ children: React.ReactNode }>;
-}) => {
-  return (
-    <FormWrapper>
-      {subForm.map((control) => {
-        const path = `${orgPath}[${index}].${control.path}`;
-        const _id = `${id}-${control.path}-${index}`;
-        const newControl = { ...control, path, id };
-        return (
-          <EntityFormControl control={newControl} entityId={id} key={_id} />
-        );
-      })}
-    </FormWrapper>
-  );
-};
+const Form = observer(
+  ({
+    index,
+    id,
+    subForm,
+    orgPath,
+    FormWrapper,
+  }: {
+    index: number;
+    id: string;
+    subForm: ArrayInputProps['subform'];
+    orgPath: string;
+    FormWrapper: React.FC<{ children: React.ReactNode }>;
+  }) => {
+    return (
+      <FormWrapper>
+        {subForm.map((control) => {
+          const path = `${orgPath}[${index}].${control.path}`;
+          const _id = `${id}-${control.path}-${index}`;
+          const newControl = { ...control, path, id };
+          return (
+            <EntityFormControl control={newControl} entityId={id} key={_id} />
+          );
+        })}
+      </FormWrapper>
+    );
+  },
+);
 
-const DefaultSubFormWrapper = ({
-  children,
-  onDelete,
-}: {
-  value: Record<string, unknown>;
-  children: React.ReactNode;
-  onDelete: () => void;
-}) => {
-  return (
-    <div className="flex w-full flex-col gap-2 border border-gray-300 p-2">
-      {children}
-      <div>
-        <Button
-          className="text-center"
-          size="sm"
-          variant="destructive"
-          onClick={onDelete}
-        >
-          Remove
-        </Button>
+const DefaultSubFormWrapper = observer(
+  ({
+    children,
+    onDelete,
+  }: {
+    value: Record<string, unknown>;
+    children: React.ReactNode;
+    onDelete: () => void;
+  }) => {
+    return (
+      <div className="flex w-full flex-col gap-2 border border-gray-300 p-2">
+        {children}
+        <div>
+          <Button
+            className="text-center"
+            size="sm"
+            variant="destructive"
+            onClick={onDelete}
+          >
+            Remove
+          </Button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  },
+);
 const DefaultFormWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };

@@ -75,6 +75,7 @@ export class EvaluationManager {
   get evaluatedForest() {
     performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
+    console.log('sortedGraph', sortedGraph);
     const evalTree: Record<string, unknown> = {};
     const runtimeErrors: Record<string, Record<string, string[]>> = {};
     const evaluationValidationErrors: Record<

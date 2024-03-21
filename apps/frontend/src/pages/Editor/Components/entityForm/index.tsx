@@ -119,16 +119,21 @@ export const EntityFormControl = observer(
       },
       [control.path, entityId],
     );
-
-    const contextValue = {
-      onChange,
-      id,
-      entityId,
-      path: control.path,
-      value: editorStore.getEntityById(entityId)!.getRawValue(control.path),
-      onFocus,
-      onBlur,
-    };
+    const value = editorStore
+      .getEntityById(entityId)!
+      .getRawValue(control.path);
+    const contextValue = useMemo(
+      () => ({
+        onChange,
+        id,
+        entityId,
+        path: control.path,
+        value: value,
+        onFocus,
+        onBlur,
+      }),
+      [onChange, id, entityId, control.path, onFocus, onBlur, value],
+    );
     return (
       <EntityFormControlContext.Provider value={contextValue}>
         <FormControlWrapper

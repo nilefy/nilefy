@@ -1,6 +1,6 @@
 import { EntityTypes } from '../../interface';
 import { EntityConfig } from '../editor';
-import { Operation } from 'fast-json-patch';
+import { Diff } from 'deep-diff';
 
 export type EventExecutionResult = {
   id: string;
@@ -29,9 +29,9 @@ export type WorkerRequest =
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
-    evaluationUpdates: Record<string, Operation[]>;
-    runtimeErrorUpdates: Record<string, Operation[]>;
-    validationErrorUpdates: Record<string, Operation[]>;
+    evaluationUpdates: Record<string, Diff<any>[]>;
+    runtimeErrorUpdates: Record<string, Diff<any>[]>;
+    validationErrorUpdates: Record<string, Diff<any>[]>;
   };
   event: 'EvaluationUpdate';
 };

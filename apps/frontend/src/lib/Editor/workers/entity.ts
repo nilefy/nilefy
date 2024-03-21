@@ -3,7 +3,7 @@ import { deepEqual } from 'fast-equals';
 
 import { DependencyManager } from './dependencyManager';
 
-import { get, set } from 'lodash';
+import { get, isArray, keys, set } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -115,8 +115,21 @@ export class Entity implements WebloomDisposable {
   ):
     | ReturnType<(typeof this.dependencyManager)['analyzeDependencies']>[]
     | null {
+    let pathesToAnalyze: string[] = [];
     let _path = path;
     const isGenericArrayPath = _path.includes('[*]');
+    const valueIsArray = isArray(get(this.unevalValues, _path));
+    if (valueIsArray) {
+      const arr = get(this.unevalValues, _path) as Record<string, unknown>[];
+      _path += '[*]';
+      this.dependencyManager.dependencyGraph.removePath(this.id + '.' + _path);
+      if (arr.length === 0) return null;
+
+      const pathesToAnalyze = keys(arr[0]).map((key) => `${_path}.${key}`);
+      return pathesToAnalyze
+        .flatMap((path) => this.analyzeDependcyForPath(path))
+        .filter((i) => i !== null);
+    }
     //check if path is an array path ex. a[0].b, notice that a[*].b doesn't hit this condition
     const genericArrayPathCandidate =
       !this.evaluablePaths.has(_path) && !isGenericArrayPath;
@@ -136,26 +149,21 @@ export class Entity implements WebloomDisposable {
       );
 
       if (!pathsToAnalyze.length) return null;
-      const relations = pathsToAnalyze.map((path) => {
-        const value = get(this.unevalValues, path) as string;
-        return this.dependencyManager.analyzeDependencies({
-          code: value,
-          entityId: this.id,
-          toProperty: path,
-        });
-      });
-      return relations;
+      pathesToAnalyze = pathsToAnalyze;
     } else if (this.evaluablePaths.has(path)) {
-      const value = get(this.unevalValues, path) as string;
-      return [
-        this.dependencyManager.analyzeDependencies({
-          code: value,
-          entityId: this.id,
-          toProperty: path,
-        }),
-      ];
+      pathesToAnalyze = [path];
+    } else {
+      return null;
     }
-    return null;
+    const relations = pathesToAnalyze.map((path) => {
+      const value = get(this.unevalValues, path) as string;
+      return this.dependencyManager.analyzeDependencies({
+        code: value,
+        entityId: this.id,
+        toProperty: path,
+      });
+    });
+    return relations;
   }
   validatePath(path: string, value: unknown) {
     const validate = this.validators[path];

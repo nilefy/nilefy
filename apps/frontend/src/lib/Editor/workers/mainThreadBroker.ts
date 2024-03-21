@@ -1,19 +1,12 @@
-import {
-  action,
-  autorun,
-  makeObservable,
-  observable,
-  reaction,
-  toJS,
-} from 'mobx';
+import { action, makeObservable, observable, reaction, toJS } from 'mobx';
 import { EditorState } from './editor';
 import {
   EventExecutionResult,
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
-import { Operation, compare } from 'fast-json-patch';
-
+import { diff, Diff } from 'deep-diff';
+import { klona } from 'klona';
 export class MainThreadBroker {
   private disposables: (() => void)[] = [];
   private worker = self;
@@ -49,7 +42,10 @@ export class MainThreadBroker {
       () => this.worker.removeEventListener('error', errorHandler),
       () =>
         this.worker.removeEventListener('messageerror', errorMessageHandler),
-      autorun(this.handleEvaluationUpdate),
+      reaction(
+        () => this.editorState.evaluationManager.evaluatedForest,
+        this.handleEvaluationUpdate,
+      ),
       reaction(() => this.actionsQueue.length, this.handleEventExecution, {
         delay: 10,
       }),
@@ -134,16 +130,19 @@ export class MainThreadBroker {
   };
 
   handleEvaluationUpdate = () => {
-    const serializedEvalForest = toJS(
+    const serializedEvalForest = klona(
       this.editorState.evaluationManager.evaluatedForest.evalTree,
     );
-    const serializedRuntimeErrors = toJS(
+    const serializedRuntimeErrors = klona(
       this.editorState.evaluationManager.evaluatedForest.runtimeErrors,
     );
-    const serializedValidationErrors = toJS(
+    const serializedValidationErrors = klona(
       this.editorState.evaluationManager.evaluatedForest
         .evaluationValidationErrors,
     );
+
+    console.log('serializedEvalForest', serializedEvalForest);
+    console.log('lastEvaluatedForest', this.lastEvaluatedForest);
     const lastEvalTreeWithDefault: Record<string, unknown> = {};
     const lastRunTimeErrorsWithDefault: Record<
       string,
@@ -159,25 +158,26 @@ export class MainThreadBroker {
       lastValidationErrorsWithDefault[key] =
         this.lastEvaluationValidationErrors[key] || {};
     }
-    const evaluationOps: Record<string, Operation[]> = {};
-    const runtimeErrorOps: Record<string, Operation[]> = {};
-    const validationErrorOps: Record<string, Operation[]> = {};
+    const evaluationOps: Record<string, Diff<any>[]> = {};
+    const runtimeErrorOps: Record<string, Diff<any>[]> = {};
+    const validationErrorOps: Record<string, Diff<any>[]> = {};
     for (const key in lastEvalTreeWithDefault) {
       const lastEval = lastEvalTreeWithDefault[key];
-      const ops = compare(lastEval as any, serializedEvalForest[key] || {});
-      if (ops.length === 0) continue;
+
+      const ops = diff(lastEval, serializedEvalForest[key] || {});
+      if (!ops || ops.length === 0) continue;
       evaluationOps[key] = ops;
     }
     for (const key in lastRunTimeErrorsWithDefault) {
       const lastErr = lastRunTimeErrorsWithDefault[key];
-      const ops = compare(lastErr, serializedRuntimeErrors[key] || {});
-      if (ops.length === 0) continue;
+      const ops = diff(lastErr, serializedRuntimeErrors[key] || {});
+      if (!ops || ops.length === 0) continue;
       runtimeErrorOps[key] = ops;
     }
     for (const key in lastValidationErrorsWithDefault) {
       const lastErr = lastValidationErrorsWithDefault[key];
-      const ops = compare(lastErr, serializedValidationErrors[key] || {});
-      if (ops.length === 0) continue;
+      const ops = diff(lastErr, serializedValidationErrors[key] || {});
+      if (!ops || ops.length === 0) continue;
       validationErrorOps[key] = ops;
     }
 

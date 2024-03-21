@@ -11,7 +11,9 @@ export type EntityActionSetter = {
   path: string;
 };
 /**
- * @example { type: 'SIDE_EFFECT', name: 'runQuery', fn:(entity:Query) => { query.runQuery(); } -> query1.runQuery()
+ * @example { type: 'SIDE_EFFECT', name: 'runQuery', fn:(entity:Query) => { query.runQuery(); } }
+ * // in the code editor you can now type
+ *  query1.runQuery()
  */
 export type EntityActionSideEffect<T extends Entity> = {
   type: 'SIDE_EFFECT';

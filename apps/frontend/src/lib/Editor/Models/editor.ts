@@ -15,9 +15,8 @@ import { WebloomDisposable } from './interfaces';
 import { QueriesManager } from './queriesManager';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { EvaluationContext } from '../evaluation/interface';
-import { Operation } from 'fast-json-patch';
 import { WebloomGlobal } from './webloomGlobal';
-
+import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
 import { entries } from 'lodash';
@@ -67,9 +66,9 @@ export class EditorState implements WebloomDisposable {
     this.workerBroker = new WorkerBroker(this);
   }
   applyEvalForestPatch(
-    lastEvalUpdates: Record<string, Operation[]>,
-    lastRunTimeErrors: Record<string, Operation[]>,
-    lastValidationErrors: Record<string, Operation[]>,
+    lastEvalUpdates: Record<string, Diff<any>[]>,
+    lastRunTimeErrors: Record<string, Diff<any>[]>,
+    lastValidationErrors: Record<string, Diff<any>[]>,
   ) {
     entries(lastEvalUpdates).forEach(([id, op]) => {
       const entity = this.getEntityById(id);

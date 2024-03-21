@@ -18,7 +18,7 @@ import {
   extractValidators,
   transformErrorToMessage,
 } from '../validations';
-import { Operation, applyPatch, compare } from 'fast-json-patch';
+import { Diff, applyChange, diff } from 'deep-diff';
 import {
   EntityActionRawConfig,
   EntityActionConfig,
@@ -26,6 +26,17 @@ import {
 import { memoizeDebounce } from '../utils';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 import { getArrayPaths } from '../evaluation/utils';
+
+const applyDiff = (
+  obj: Record<string, unknown>,
+  ops: Diff<unknown>[] | undefined,
+) => {
+  if (!ops) return;
+  for (const op of ops) {
+    applyChange(obj, undefined, op);
+  }
+};
+
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
   public readonly publicAPI: Set<string>;
@@ -81,6 +92,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       inputValidationErrors: observable,
       runtimeErros: observable,
       evaluationValidationErrors: observable,
+      addInputValidationError: action,
+      pushIntoArray: action,
+      removeElementFromArray: action,
     });
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
@@ -133,8 +147,8 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     });
   }
 
-  applyEvalationUpdatePatch(ops: Operation[]) {
-    applyPatch(this.values, ops, false, true);
+  applyEvalationUpdatePatch(ops: Diff<any>[]) {
+    applyDiff(this.values, ops);
     const newFinalValues = klona(this.rawValues);
     for (const path of this.evaluablePaths) {
       let paths = [path];
@@ -158,17 +172,17 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
         }
       }
     }
-    const opsFinal = compare(this.finalValues, newFinalValues);
-    applyPatch(this.finalValues, opsFinal, false, true);
+    const opsFinal = diff(this.finalValues, newFinalValues) || [];
+    applyDiff(this.finalValues, opsFinal);
   }
   applyErrorUpdatePatch(
-    ops: Operation[],
+    ops: Diff<any>[],
     type: 'runtimeErrors' | 'evaluationValidationErrors',
   ) {
     if (type === 'runtimeErrors') {
-      applyPatch(this.runtimeErros, ops, false, true);
+      applyDiff(this.runtimeErros, ops);
     } else {
-      applyPatch(this.evaluationValidationErrors, ops, false, true);
+      applyDiff(this.evaluationValidationErrors, ops);
     }
   }
 
@@ -207,7 +221,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   setValue(path: string, value: unknown) {
     if (get(this.rawValues, path) === value) return;
     set(this.rawValues, path, value);
-    if (get(this.values, path) === undefined || isArray(value)) {
+    if (get(this.values, path) === undefined) {
       const res = this.validatePath(path, value);
       if (res) {
         this.addInputValidationError(path, res.errors);
@@ -217,7 +231,18 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     this.debouncedSyncRawValuesWithEvaluationWorker(path);
   }
-
+  pushIntoArray(path: string, value: unknown) {
+    const array = get(this.rawValues, path) as unknown[];
+    if (!isArray(array)) return;
+    array.push(value);
+    this.debouncedSyncRawValuesWithEvaluationWorker(path);
+  }
+  removeElementFromArray(path: string, index: number) {
+    const array = get(this.rawValues, path) as unknown[];
+    if (!isArray(array)) return;
+    array.splice(index, 1);
+    this.debouncedSyncRawValuesWithEvaluationWorker(path);
+  }
   getValue(key: string) {
     return get(this.finalValues, key, get(this.rawValues, key));
   }

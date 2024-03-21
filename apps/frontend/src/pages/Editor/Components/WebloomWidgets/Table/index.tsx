@@ -463,6 +463,7 @@ const WebloomTableWidget: Widget<WebloomTableProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  publicAPI: new Set(),
 };
 
 export { WebloomTableWidget };
