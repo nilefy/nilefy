@@ -122,7 +122,7 @@ export class Entity implements WebloomDisposable {
     if (valueIsArray) {
       const arr = get(this.unevalValues, _path) as Record<string, unknown>[];
       _path += '[*]';
-      this.dependencyManager.dependencyGraph.removePath(this.id + '.' + _path);
+      // this.dependencyManager.dependencyGraph.removePath(this.id + '.' + _path);
       if (arr.length === 0) return null;
 
       const pathesToAnalyze = keys(arr[0]).map((key) => `${_path}.${key}`);

@@ -140,7 +140,6 @@ export class MainThreadBroker {
       this.editorState.evaluationManager.evaluatedForest
         .evaluationValidationErrors,
     );
-
     const lastEvalTreeWithDefault: Record<string, unknown> = {};
     const lastRunTimeErrorsWithDefault: Record<
       string,
