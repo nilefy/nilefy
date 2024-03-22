@@ -26,17 +26,16 @@ export const WithPopover = <P extends { id: string }>(
 
     return (
       <>
-        {
-          <div
-            ref={popoverRef}
-            style={floatingStyles}
-            className={cn('w-max bg-blue-400 p-1 text-center text-xs', {
-              hidden: !isActive,
-            })}
-          >
-            {widget.id}
-          </div>
-        }
+        <div
+          ref={popoverRef}
+          style={floatingStyles}
+          className={cn('w-max bg-blue-400 p-1 text-center text-xs', {
+            hidden: !isActive,
+          })}
+        >
+          {widget.id}
+        </div>
+
         <WrappedComponent {...props} />
       </>
     );
