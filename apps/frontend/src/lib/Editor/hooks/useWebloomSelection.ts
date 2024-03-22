@@ -1,8 +1,7 @@
-import { commandManager } from '@/Actions/CommandManager';
+import { commandManager } from '@/actions/CommandManager';
 import { useCallback, useEffect } from 'react';
 import { editorStore } from '../Models';
-import { SelectionAction } from '@/Actions/Editor/selection';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { SelectionAction } from '@/actions/Editor/selection';
 /**
  * @description Used to select the widget on click
  * @param ref
@@ -12,11 +11,9 @@ export const useWebloomSelection = (id: string) => {
   const dom = editorStore.currentPage.getWidgetById(id).dom;
   const select = useCallback(
     (e: MouseEvent) => {
-      e.stopPropagation();
-      if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-        return editorStore.currentPage.clearSelectedNodes();
-      }
-      commandManager.executeCommand(new SelectionAction(id, e.shiftKey));
+      commandManager.executeCommand(
+        SelectionAction.selectThroughClick(id, e.shiftKey),
+      );
     },
     [id],
   );

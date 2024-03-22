@@ -1,10 +1,10 @@
 import { SketchPicker } from 'react-color';
 import { BaseControlProps, InspectorColorProps } from '@/lib/Editor/interface';
 import { useContext } from 'react';
-import { FormControlContext } from '..';
+import { EntityFormControlContext } from '..';
 
 const InspectorColor = (props: InspectorColorProps & BaseControlProps) => {
-  const { onChange } = useContext(FormControlContext);
+  const { onChange } = useContext(EntityFormControlContext);
   return (
     <SketchPicker
       color={props.value as string}

@@ -2,7 +2,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { ClipboardDataT, UndoableCommand } from '../types';
 import { getWidgetsBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';

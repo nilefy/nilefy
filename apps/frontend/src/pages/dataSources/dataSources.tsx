@@ -208,49 +208,53 @@ export function GlobalDataSourcesResolved() {
           <p>No Data Sources match your search query try changing the search</p>
         </div>
       ) : (
-        Object.entries(filteredDataSources).map(([type, dss]) => {
-          return (
-            <div
-              key={type}
-              className="flex h-full w-full max-w-full flex-col gap-6"
-            >
-              <h2 id={type}>{type.toUpperCase()}</h2>
-              <ul className="grid w-full max-w-full grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:grid-cols-3 md:gap-y-10 lg:grid-cols-4">
-                {dss.map((ds) => {
-                  return (
-                    <Card
-                      key={ds.id}
-                      className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
-                    >
-                      <CardHeader className="flex flex-col items-center justify-center gap-4 font-bold">
-                        <Avatar>
-                          <AvatarImage src={ds.image ?? undefined} />
-                          <AvatarFallback>
-                            {getInitials(ds.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <p className="line-clamp-1">{ds.name}</p>
-                      </CardHeader>
+        <ScrollArea>
+          <div className="flex flex-col gap-3">
+            {Object.entries(filteredDataSources).map(([type, dss]) => {
+              return (
+                <div
+                  key={type}
+                  className="flex h-full w-full max-w-full flex-col gap-1"
+                >
+                  <h2 id={type}>{type.toUpperCase()}</h2>
+                  <ul className="grid w-full max-w-full grid-cols-1 gap-6 text-sm sm:grid-cols-2 md:grid-cols-3 md:gap-y-10 lg:grid-cols-4">
+                    {dss.map((ds) => {
+                      return (
+                        <Card
+                          key={ds.id}
+                          className="flex h-full w-full flex-col items-center justify-center gap-4 p-2 hover:border hover:border-blue-400"
+                        >
+                          <CardHeader className="flex flex-col items-center justify-center gap-4 font-bold">
+                            <Avatar>
+                              <AvatarImage src={ds.image ?? undefined} />
+                              <AvatarFallback>
+                                {getInitials(ds.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="line-clamp-1">{ds.name}</p>
+                          </CardHeader>
 
-                      <CardContent>
-                        <p className="line-clamp-2 text-center">
-                          {ds.description}
-                        </p>
-                      </CardContent>
+                          <CardContent>
+                            <p className="line-clamp-2 text-center">
+                              {ds.description}
+                            </p>
+                          </CardContent>
 
-                      <CardFooter className="mt-auto flex justify-end gap-5">
-                        <CreatePluginForm
-                          globalDataSourceId={ds.id}
-                          workspaceId={+(workspaceId as string)}
-                        />
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })
+                          <CardFooter className="mt-auto flex justify-end gap-5">
+                            <CreatePluginForm
+                              globalDataSourceId={ds.id}
+                              workspaceId={+(workspaceId as string)}
+                            />
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
       )}
     </div>
   );
@@ -299,7 +303,7 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col gap-4  overflow-y-auto overflow-x-hidden">
         {!filteredPlugins ? (
           <p>No Data Sources match your search query try changing the search</p>
         ) : (
@@ -509,7 +513,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,

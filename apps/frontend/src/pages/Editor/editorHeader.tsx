@@ -9,7 +9,7 @@ export const EditorHeader = observer(function EditorHeader() {
   const appName = editorStore.name;
   const currentPageId = editorStore.currentPageId;
   return (
-    <div className="flex h-max w-full items-center gap-5 border-b p-2 ">
+    <div className="flex w-full items-center gap-5 border-b px-6 py-[4px]">
       <p>{appName}</p>
       <Link
         className={cn(

@@ -1,12 +1,12 @@
 import { useHotkeys } from 'react-hotkeys-hook';
 import { EditorState } from '../Models/editor';
-import { CommandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
-import { CopyAction } from '@/Actions/Editor/Copy';
-import { CutAction } from '@/Actions/Editor/Cut';
-import { ClipboardDataT } from '@/Actions/types';
-import { PasteAction } from '@/Actions/Editor/Paste';
-import ResizeAction from '@/Actions/Editor/Resize';
+import { CommandManager } from '@/actions/CommandManager';
+import { DeleteAction } from '@/actions/Editor/Delete';
+import { CopyAction } from '@/actions/Editor/Copy';
+import { CutAction } from '@/actions/Editor/Cut';
+import { ClipboardDataT } from '@/actions/types';
+import { PasteAction } from '@/actions/Editor/Paste';
+import ResizeAction from '@/actions/Editor/Resize';
 import { useEditorMousePosition } from './useEditorMousePosition';
 
 export const useEditorHotKeys = (

@@ -14,14 +14,14 @@ import {
   getGridBoundingRect,
   normalizeCoords,
 } from '../utils';
-import { EvaluationManager } from './evaluationManager';
+import { WorkerBroker } from './workerBroker';
 import { CursorManager } from './cursorManager';
 
-import { DependencyManager } from './dependencyManager';
+import { WebloomDisposable } from './interfaces';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 
-export class WebloomPage {
+export class WebloomPage implements WebloomDisposable {
   id: string;
   name: string;
   handle: string;
@@ -43,24 +43,19 @@ export class WebloomPage {
   };
   width: number = 0;
   height: number = 0;
-  // drilled from the editor
-  evaluationManger: EvaluationManager;
-  dependencyManager: DependencyManager;
-
+  readonly workerBroker: WorkerBroker;
   constructor({
     id,
     name,
     handle,
     widgets,
-    evaluationManger,
-    dependencyManager,
+    workerBroker,
   }: {
     id: string;
     name: string;
     handle: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
+    workerBroker: WorkerBroker;
   }) {
     makeObservable(this, {
       widgets: observable,
@@ -102,8 +97,7 @@ export class WebloomPage {
     });
 
     this.id = id;
-    this.evaluationManger = evaluationManger;
-    this.dependencyManager = dependencyManager;
+    this.workerBroker = workerBroker;
     this.name = name;
     this.handle = handle;
     const widgetMap: Record<string, WebloomWidget> = {};
@@ -112,8 +106,6 @@ export class WebloomPage {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
       });
     });
     this.widgets = widgetMap;
@@ -194,13 +186,10 @@ export class WebloomPage {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
     });
     this.widgets[widget.id] = widget;
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    widget.initDependecies();
   }
   getWidgetById(id: string) {
     return this.widgets[id];
@@ -260,7 +249,7 @@ export class WebloomPage {
       const parent = this.widgets[node.parentId];
       if (parent) parent.removeChild(nodeId);
       // remove from page
-      this.widgets[nodeId].cleanup();
+      this.widgets[nodeId].dispose();
       delete this.widgets[nodeId];
     }
     // return the stack of deleted widgets for undo
@@ -449,5 +438,9 @@ export class WebloomPage {
 
   snapshotWidgets() {
     return Object.values(this.widgets).map((widget) => widget.snapshot);
+  }
+  dispose(): void {
+    Object.values(this.widgets).forEach((widget) => widget.dispose());
+    this.cursorManager.dispose();
   }
 }

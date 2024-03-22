@@ -1,4 +1,3 @@
-import { xcodeDark } from '@uiw/codemirror-theme-xcode';
 import { RegExpCursor } from '@codemirror/search';
 import {
   Decoration,
@@ -106,6 +105,8 @@ export type WebloomCodeEditorProps = {
   templateAutocompletionOnly?: boolean;
   setup: Extension;
   id?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 /**
  *
@@ -137,6 +138,8 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     onChange,
     autoFocus = false,
     value = '',
+    onFocus,
+    onBlur,
     setup,
   } = props;
   const editor = useRef<HTMLDivElement>(null);
@@ -163,11 +166,13 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
         onChange(value, viewUpdate);
       }
+
       // onStatistics && onStatistics(getStatistics(vu));
     },
   );
+
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext, javascript(), xcodeDark];
+    const extensions = [setup, webLoomContext, javascript()];
     if (props.templateAutocompletionOnly) {
       extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {
@@ -188,9 +193,14 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
   useEffect(() => {
     if (container && !state) {
+      const focusListner = EditorView.domEventObservers({
+        focus: onFocus,
+        blur: onBlur,
+      });
+
       const config: EditorStateConfig = {
         doc: value,
-        extensions: getExtensions,
+        extensions: [...getExtensions, focusListner],
       };
       const stateCurrent = initialState
         ? EditorState.fromJSON(initialState.json, config, initialState.fields)
@@ -212,7 +222,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, container]);
+  }, [state, container, onFocus, onBlur]);
 
   useEffect(() => {
     if (autoFocus && view) {

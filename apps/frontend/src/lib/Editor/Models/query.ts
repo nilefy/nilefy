@@ -1,12 +1,14 @@
-import { makeObservable, observable, action, autorun, toJS } from 'mobx';
+import { makeObservable, observable, action, toJS, computed } from 'mobx';
 import { Snapshotable } from './interfaces';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
-import { EvaluationManager } from './evaluationManager';
-import { DependencyManager } from './dependencyManager';
 import { Entity } from './entity';
+import { WorkerBroker } from './workerBroker';
+
 import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
+import { EntityInspectorConfig } from '../interface';
+import { concat } from 'lodash';
 
 export type QueryRawValues = {
   /**
@@ -30,17 +32,58 @@ export type QueryRawValues = {
   queryState: 'idle' | 'loading' | 'success' | 'error';
 };
 
+const QueryActions = {
+  run: {
+    type: 'SIDE_EFFECT',
+    name: 'run',
+    fn: (entity: WebloomQuery) => {
+      entity.run();
+    },
+  },
+  reset: {
+    type: 'SIDE_EFFECT',
+    name: 'reset',
+    fn: (entity: WebloomQuery) => {
+      entity.reset();
+    },
+  },
+};
+
+const defaultQueryInspectorConfig: EntityInspectorConfig = [
+  {
+    sectionName: 'Trigger Mode',
+    children: [
+      {
+        path: 'triggerMode',
+        type: 'select',
+        label: 'Trigger Mode',
+        options: {
+          items: [
+            {
+              label: 'On App Load',
+              value: 'onAppLoad',
+            },
+            {
+              label: 'Manual',
+              value: 'manually',
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export class WebloomQuery
   extends Entity
   implements
     Snapshotable<
       Omit<
         ConstructorParameters<typeof WebloomQuery>[0],
-        | 'editor'
         | 'dataSource'
-        | 'evaluationManger'
-        | 'dependencyManager'
+        | keyof ConstructorParameters<typeof Entity>[0]
         | 'queryClient'
+        | 'workspaceId'
       >
     >
 {
@@ -50,12 +93,11 @@ export class WebloomQuery
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
-  triggerMode: CompleteQueryI['triggerMode'];
-  static queryClient: QueryClient;
+  private readonly queryClient: QueryClient;
   queryRunner: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
     FetchXError,
-    Parameters<typeof runQueryApi>[0],
+    void,
     void
   >;
 
@@ -63,93 +105,91 @@ export class WebloomQuery
     query,
     id,
     appId,
+    workspaceId,
     dataSource,
     dataSourceId,
+    triggerMode,
     createdAt,
     updatedAt,
-    evaluationManger,
-    dependencyManager,
-    triggerMode,
-    workspaceId,
+    workerBroker,
+    queryClient,
   }: Omit<CompleteQueryI, 'createdById' | 'updatedById'> & {
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
+    workerBroker: WorkerBroker;
+    queryClient: QueryClient;
     workspaceId: number;
   }) {
     super({
       id,
-      dependencyManager,
-      evaluationManger,
       rawValues: {
         config: query,
+        triggerMode: triggerMode ?? 'manually',
         data: undefined,
         queryState: 'idle',
         type: dataSource.dataSource.type,
         statusCode: undefined,
         error: undefined,
-      } satisfies QueryRawValues,
-      schema: {
-        dataSchema: dataSource.dataSource.queryConfig.schema,
-        uiSchema: dataSource.dataSource.queryConfig.uiSchema,
       },
-      nestedPathPrefix: 'config',
+      workerBroker,
+      publicAPI: new Set(['data', 'queryState']),
+      entityType: 'query',
+      inspectorConfig: concat(
+        [],
+        dataSource.dataSource.queryConfig.formConfig as any,
+        defaultQueryInspectorConfig,
+      ),
+      // @ts-expect-error TODO: fix this
+      entityActionConfig: QueryActions,
     });
+    this.queryClient = queryClient;
+    this.queryRunner = new MobxMutation(this.queryClient, () => ({
+      mutationFn: () => {
+        return runQueryApi({
+          appId,
+          workspaceId,
+          queryId: id,
+          body: {
+            evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+          },
+        });
+      },
+      onMutate: () => {
+        this.setValue('queryState', 'loading');
+      },
+      onError: (error) => {
+        this.setValue('queryState', 'error');
+        this.setValue('error', error.message);
+        this.setValue('status', 505);
+      },
+      onSuccess: (data) => {
+        this.setValue('data', data.data);
+        this.setValue('status', data.status);
+        this.setValue('error', data.error);
+        this.setValue('queryState', 'success');
+      },
+    }));
+    this.workspaceId = workspaceId;
     this.appId = appId;
     this.workspaceId = workspaceId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    this.triggerMode = triggerMode;
-    this.queryRunner = new MobxMutation(WebloomQuery.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof runQueryApi>[0]) => {
-        return runQueryApi(vars);
-      },
-      onMutate: () => {
-        this.setQueryState('loading');
-      },
-      onError: (error) => {
-        this.setQueryState('error');
-        this.updateQuery({
-          rawValues: {
-            error: error.message,
-            statusCode: error.statusCode,
-          },
-        });
-      },
-      onSuccess: (data) => {
-        this.updateQuery({
-          rawValues: {
-            data: data.data,
-            error: data.error,
-            statusCode: data.status,
-          },
-        });
-        this.setQueryState('success');
-      },
-    }));
     makeObservable(this, {
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
       setQueryState: action,
       reset: action.bound,
+      triggerMode: computed,
     });
-    if (this.triggerMode === 'onAppLoad') {
-      this.queryRunner.mutate({
-        appId: this.appId,
-        queryId: this.id,
-        workspaceId: this.workspaceId,
-        body: {
-          evaluatedConfig: toJS(this.config) as Record<string, unknown>,
-        },
-      });
-    }
-    autorun(() =>
-      console.log('query:rawvalues', this.id, toJS(this.rawValues)),
-    );
+    // todo: schedule after first evaluation
+    // if (this.triggerMode === 'onAppLoad') {
+    //   this.queryRunner.mutate();
+    // }
   }
-
+  get triggerMode() {
+    return this.rawValues.triggerMode as 'onAppLoad' | 'manually';
+  }
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
     this.rawValues.queryState = state;
   }
@@ -165,7 +205,6 @@ export class WebloomQuery
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
-    if (dto.triggerMode) this.triggerMode = dto.triggerMode;
     if (dto.rawValues) {
       this.rawValues.data = dto.rawValues.data;
       this.rawValues.error = dto.rawValues.error;
@@ -177,14 +216,7 @@ export class WebloomQuery
    * trigger the query async, but don't return the promise
    */
   run() {
-    this.queryRunner.mutate({
-      workspaceId: this.workspaceId,
-      appId: this.appId,
-      queryId: this.id,
-      body: {
-        evaluatedConfig: toJS(this.config) as Record<string, unknown>,
-      },
-    });
+    this.queryRunner.mutate();
   }
 
   /**
@@ -201,7 +233,7 @@ export class WebloomQuery
     return {
       id: this.id,
       dataSourceId: this.dataSourceId,
-      query: this.rawValues,
+      query: this.rawValues.config as Record<string, unknown>,
       appId: this.appId,
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,

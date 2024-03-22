@@ -1,5 +1,5 @@
-import ResizeAction from '@/Actions/Editor/Resize';
-import { commandManager } from '@/Actions/CommandManager';
+import ResizeAction from '@/actions/Editor/Resize';
+import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
 import { CSSProperties, useCallback, useMemo } from 'react';
 
@@ -104,8 +104,8 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
             top,
             left,
             cursor: cursors[key],
-            backgroundColor: 'white',
-            border: `4px solid white`,
+            backgroundColor: '#a9c0ff',
+            border: `4px solid #a9c0ff`,
           }}
           onMouseDown={(e) => {
             e.stopPropagation();

@@ -1,3 +1,4 @@
+import { CheckSquare } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -5,45 +6,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Widget, WidgetConfig, SelectOptions } from '@/lib/Editor/interface';
-import { CheckSquare } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
-import { useCallback, useContext, useEffect } from 'react';
+import {
+  Widget,
+  WidgetConfig,
+  SelectOptions,
+  EntityInspectorConfig,
+} from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import { Label } from '@/components/ui/label';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
+
 import { ToolTipWrapper } from '../tooltipWrapper';
-import {
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
+
 import clsx from 'clsx';
 import { autorun } from 'mobx';
+import { useContext, useEffect } from 'react';
 
 export type WebloomSelectProps = {
   options: SelectOptions[];
-  label: {
-    text: string;
-    position: 'left' | 'top';
-  };
+  labelText: string;
+  labelPosition: 'left' | 'top';
   selectedOptionValue?: string;
   defaultValue?: string;
   disabled?: boolean;
   tooltip?: string;
   placeholder?: string;
-  events: WidgetsEventHandler;
 };
-
-// https://www.radix-ui.com/primitives/docs/components/select#root
-const webloomSelectEvents = {
-  onOptionChange: 'onOptionChange',
-  onOpenChange: 'onOpenChange',
-} as const;
 
 const WebloomSelect = observer(function WebloomSelect() {
   const { id, onPropChange } = useContext(WidgetContext);
+
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomSelectProps;
 
@@ -57,24 +52,9 @@ const WebloomSelect = observer(function WebloomSelect() {
           value: props.defaultValue,
         });
       }),
-    [onPropChange],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
-  const clearValue = useCallback(() => {
-    onPropChange({
-      key: 'selectedOptionValue',
-      value: undefined,
-    });
-  }, [onPropChange]);
-
-  // append runtime methods
-  useEffect(() => {
-    widget.appendSetters([
-      {
-        key: 'clearValue',
-        setter: clearValue,
-      },
-    ]);
-  }, [clearValue]);
 
   /**
    * why do i set the key to this weird `id + props.selectedOptionValue`?
@@ -86,11 +66,11 @@ const WebloomSelect = observer(function WebloomSelect() {
     <ToolTipWrapper text={props.tooltip} key={id + props.selectedOptionValue}>
       <div
         className={clsx('justify-left flex h-full w-full gap-3 p-1', {
-          'flex-col': props.label.position === 'top',
-          'items-center': props.label.position === 'left',
+          'flex-col': props.labelPosition === 'top',
+          'items-center': props.labelPosition === 'left',
         })}
       >
-        <Label>{props.label.text}</Label>
+        <Label>{props.labelText}</Label>
         <Select
           value={props.selectedOptionValue}
           disabled={props.disabled}
@@ -99,16 +79,10 @@ const WebloomSelect = observer(function WebloomSelect() {
               key: 'selectedOptionValue',
               value: e,
             });
-            editorStore.executeActions<typeof webloomSelectEvents>(
-              id,
-              'onOptionChange',
-            );
+            widget.handleEvent('onOptionChange');
           }}
           onOpenChange={() => {
-            editorStore.executeActions<typeof webloomSelectEvents>(
-              id,
-              'onOpenChange',
-            );
+            widget.handleEvent('onOpenChange');
           }}
         >
           <SelectTrigger className="w-full">
@@ -138,6 +112,29 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setValue: {
+      type: 'SETTER',
+      path: 'selectedOptionValue',
+      name: 'setValue',
+    },
+    setDisabled: {
+      type: 'SETTER',
+      path: 'disabled',
+      name: 'setDisabled',
+    },
+    setOptions: {
+      type: 'SETTER',
+      path: 'options',
+      name: 'setOptions',
+    },
+    clearValue: {
+      type: 'SETTER',
+      path: 'selectedOptionValue',
+      value: undefined,
+      name: 'clearValue',
+    },
+  },
 };
 
 const defaultProps: WebloomSelectProps = {
@@ -146,104 +143,92 @@ const defaultProps: WebloomSelectProps = {
     { value: 'option2', label: 'Option 2' },
     { value: 'option3', label: 'Option 3' },
   ],
-  label: { text: 'Select', position: 'left' },
-  events: [],
+  labelText: 'Select',
+  labelPosition: 'left',
   placeholder: 'please select option',
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      label: {
-        type: 'object',
-        properties: {
-          text: {
-            type: 'string',
-            default: defaultProps.label.text,
-          },
-          position: {
-            type: 'string',
-            enum: ['top', 'left'],
-            default: defaultProps.label.position,
-          },
-        },
-        required: ['text', 'position'],
-      },
-      options: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            value: {
-              type: 'string',
-            },
-            label: {
-              type: 'string',
-            },
-          },
+const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        path: 'labelText',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Label',
         },
       },
-      defaultValue: {
-        type: 'string',
+      {
+        label: 'Label Position',
+        path: 'labelPosition',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Label Position',
+        },
+        validation: zodToJsonSchema(z.enum(['left', 'top']).default('left')),
       },
-      placeholder: {
-        type: 'string',
+      {
+        label: 'Tooltip',
+        path: 'tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Tooltip',
+        },
       },
-      tooltip: { type: 'string' },
-      disabled: { type: 'boolean', default: false },
-      events: widgetsEventHandlerJsonSchema,
-      selectedOptionValue: {
-        type: 'string',
+      {
+        label: 'Placeholder',
+        path: 'placeholder',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Placeholder',
+        },
       },
-    },
-    required: ['label', 'options'],
+      {
+        label: 'Default Value',
+        path: 'defaultValue',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Default Value',
+        },
+      },
+      {
+        label: 'Disabled',
+        path: 'disabled',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Disabled',
+        },
+        validation: zodToJsonSchema(z.boolean().default(false)),
+      },
+      {
+        label: 'Options',
+        path: 'options',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Options',
+        },
+        validation: zodToJsonSchema(
+          z
+            .array(
+              z.object({
+                label: z.string(),
+                value: z.string(),
+              }),
+            )
+            .default([]),
+        ),
+      },
+    ],
   },
-  uiSchema: {
-    selectedOptionValue: { 'ui:widget': 'hidden' },
-    label: {
-      text: {
-        'ui:widget': 'inlineCodeInput',
-        'ui:title': 'Label',
-        'ui:placeholder': 'Enter label',
-      },
-    },
-    options: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    defaultValue: { 'ui:widget': 'inlineCodeInput' },
-    disabled: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    tooltip: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    placeholder: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    events: genEventHandlerUiSchema(webloomSelectEvents),
-  },
-};
+];
 
 export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomSelect,
   config,
   defaultProps,
-  schema,
-  setters: {
-    setValue: {
-      path: 'selectedOptionValue',
-      type: 'string',
-    },
-    setDisabled: {
-      path: 'disabled',
-      type: 'boolean',
-    },
-    setOptions: {
-      path: 'options',
-      type: 'array<object>',
-    },
-  },
+  inspectorConfig,
 };
 
 export { WebloomSelect };

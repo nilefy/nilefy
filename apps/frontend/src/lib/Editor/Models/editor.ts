@@ -1,35 +1,46 @@
 import { QueryClient } from '@tanstack/query-core';
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  toJS,
+} from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
-import { EvaluationContext, evaluateCode } from '../evaluation';
-import { DependencyManager } from './dependencyManager';
-import { EvaluationManager } from './evaluationManager';
+import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
+import { WorkerBroker } from './workerBroker';
+import { WebloomDisposable } from './interfaces';
+import { QueriesManager } from './queriesManager';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EvaluationContext } from '../evaluation/interface';
+import { WebloomGlobal } from './webloomGlobal';
+import { Diff } from 'deep-diff';
 import { Entity } from './entity';
-import { seedOrderMap, updateOrderMap } from '../widgetName';
-import { ErrorSchema } from '@rjsf/utils';
-import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
-import { toast } from '@/components/ui/use-toast';
+import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
+import { entries } from 'lodash';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
-export class EditorState {
+export class EditorState implements WebloomDisposable {
   /**
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery> = {};
+  globals: WebloomGlobal | undefined = undefined;
+  workerBroker: WorkerBroker;
   currentPageId: string = '';
-  dependencyManager: DependencyManager = new DependencyManager({
-    editor: this,
-  });
-  evaluationManger: EvaluationManager = new EvaluationManager(this);
+  initting = false;
+  queryClient!: QueryClient;
+  queriesManager!: QueriesManager;
+  appId!: number;
+  workspaceId!: number;
   /**
    * application name
    */
   name: string = 'New Application';
-  appId!: number;
-  workspaceId!: number;
 
   constructor() {
     makeObservable(this, {
@@ -40,6 +51,7 @@ export class EditorState {
         keepAlive: true,
         equals: comparer.shallow,
       }),
+      entities: computed,
       name: observable,
       currentPage: computed,
       changePage: action,
@@ -48,18 +60,47 @@ export class EditorState {
       removeQuery: action,
       removePage: action,
       init: action,
+      applyEvalForestPatch: action.bound,
       currentPageErrors: computed,
     });
+    this.workerBroker = new WorkerBroker(this);
   }
-
-  cleanUp() {
+  applyEvalForestPatch(
+    lastEvalUpdates: Record<string, Diff<any>[]>,
+    lastRunTimeErrors: Record<string, Diff<any>[]>,
+    lastValidationErrors: Record<string, Diff<any>[]>,
+  ) {
+    entries(lastEvalUpdates).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyEvalationUpdatePatch(op);
+      }
+    });
+    entries(lastRunTimeErrors).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyErrorUpdatePatch(op, 'runtimeErrors');
+      }
+    });
+    entries(lastValidationErrors).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyErrorUpdatePatch(op, 'evaluationValidationErrors');
+      }
+    });
+  }
+  dispose() {
+    Object.values(this.pages).forEach((page) => page.dispose());
+    Object.values(this.queries).forEach((query) => query.dispose());
+    this.globals = undefined;
+    // react strict mode causes this to be called twice
+    process.env.NODE_ENV === 'production' ? this.workerBroker.dispose() : null;
     this.pages = {};
     this.queries = {};
     this.currentPageId = '';
-    this.dependencyManager = new DependencyManager({
-      editor: this,
-    });
-    this.evaluationManger = new EvaluationManager(this);
+    this.queryClient?.clear();
+    this.appId = -1;
+    this.workspaceId = -1;
   }
 
   init({
@@ -67,32 +108,38 @@ export class EditorState {
     pages: pages = [],
     currentPageId = '',
     queries = [],
-    queryClient,
     appId,
     workspaceId,
+    currentUser,
   }: {
-    appId: number;
-    workspaceId: number;
-    queryClient: QueryClient;
     name: string;
     pages: Optional<
-      Omit<
-        ConstructorParameters<typeof WebloomPage>[0],
-        'dependencyManager' | 'evaluationManger'
-      >,
+      Omit<ConstructorParameters<typeof WebloomPage>[0], 'workerBroker'>,
       'widgets'
     >[];
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger' | 'workspaceId'
+      'workerBroker' | 'queryClient' | 'workspaceId'
     >[];
+    appId: number;
+    workspaceId: number;
+    currentUser: string;
   }) {
-    this.cleanUp();
-    WebloomQuery.queryClient = queryClient;
-    this.name = name;
+    this.dispose();
     this.appId = appId;
     this.workspaceId = workspaceId;
+    this.name = name;
+    this.queryClient = new QueryClient();
+    this.queriesManager = new QueriesManager(this.queryClient, this);
+    this.globals = new WebloomGlobal({
+      globals: {
+        currentPageName: currentPageId,
+        currentUser,
+      },
+      workerBroker: this.workerBroker,
+    });
+
     seedOrderMap([
       ...Object.values(pages[0].widgets || {}).map((w) => {
         return {
@@ -113,8 +160,7 @@ export class EditorState {
       if (index !== 0) return;
       this.pages[page.id] = new WebloomPage({
         ...page,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
+        workerBroker: this.workerBroker,
         // Todo fix this
         widgets: page.widgets || {},
       });
@@ -131,30 +177,59 @@ export class EditorState {
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
         ...q,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
-        workspaceId: workspaceId,
+        queryClient: this.queryClient,
+        workerBroker: this.workerBroker,
+        appId,
+        workspaceId,
       });
     });
-    this.dependencyManager.initAnalysis();
+    this.workerBroker.postMessege({
+      event: 'init',
+      body: {
+        currentPageId: this.currentPageId,
+        globals: {
+          unevalValues: this.globals.rawValues,
+          id: this.globals.id,
+          inspectorConfig: this.globals.inspectorConfig,
+          publicAPI: this.globals.publicAPI,
+          actionsConfig: this.globals.rawActionsConfig,
+        },
+        queries: Object.values(this.queries).reduce(
+          (acc, query) => {
+            acc[query.id as string] = {
+              unevalValues: query.rawValues,
+              id: query.id,
+              inspectorConfig: query.inspectorConfig,
+              publicAPI: query.publicAPI,
+              actionsConfig: query.rawActionsConfig,
+            };
+            return acc;
+          },
+          {} as Record<string, EntityConfigBody>,
+        ),
+        pages: {
+          [currentPageId]: Object.entries(this.currentPage.widgets).reduce(
+            (acc, [id, widget]) => {
+              acc[id] = {
+                id: widget.id,
+                unevalValues: toJS(widget.rawValues),
+                inspectorConfig: widget.inspectorConfig,
+                publicAPI: widget.publicAPI,
+                actionsConfig: widget.rawActionsConfig,
+              };
+              return acc;
+            },
+            {} as Record<string, EntityConfigBody>,
+          ),
+        },
+      },
+    });
   }
 
   // TODO: add support for queries
   get currentPageErrors() {
     const res: { entityId: string; path: string; error: string }[] = [];
-    for (const w in this.currentPage.widgets) {
-      const widget = this.currentPage.getWidgetById(w);
-      if (!widget || widget.isRoot) continue;
-      const errors = widget.validationErrors;
-      if (!errors) continue;
-      Object.entries(errors).map(([key, err]) => {
-        res.push({
-          entityId: widget.id,
-          path: key,
-          error: (err as ErrorSchema).__errors?.join(' '),
-        });
-      });
-    }
+
     return res;
   }
 
@@ -163,18 +238,16 @@ export class EditorState {
    */
   get context() {
     const context: EvaluationContext = {};
-    Object.values(this.currentPage.widgets).forEach((widget) => {
-      if (widget.isRoot) return;
-      context[widget.id] = widget.rawValues;
-    });
-    Object.values(this.queries).forEach((query) => {
-      context[query.id] = query.rawValues;
+    Object.values(this.entities).forEach((entity) => {
+      if (!entity) return;
+      if (entity.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return;
+      context[entity.id] = entity.finalValues;
     });
     return context;
   }
 
   getEntityById(id: string): Entity | undefined {
-    return this.currentPage.widgets[id] || this.queries[id];
+    return this.entities[id as keyof typeof this.entities];
   }
 
   get currentPage() {
@@ -188,6 +261,12 @@ export class EditorState {
     } else {
       this.currentPageId = id;
     }
+    this.workerBroker.postMessege({
+      event: 'changePage',
+      body: {
+        currentPageId: this.currentPageId,
+      },
+    } as WorkerRequest);
   }
 
   addPage(id: string, name: string, handle: string) {
@@ -195,23 +274,25 @@ export class EditorState {
       id,
       name,
       handle,
-      dependencyManager: this.dependencyManager,
-      evaluationManger: this.evaluationManger,
+      workerBroker: this.workerBroker,
       widgets: {},
     });
   }
-
+  getQueryById(id: string) {
+    return this.queries[id];
+  }
   addQuery(
     query: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
-      'dependencyManager' | 'evaluationManger' | 'queryClient' | 'workspaceId'
+      'workerBroker' | 'queryClient' | 'appId' | 'workspaceId'
     >,
   ) {
     this.queries[query.id] = new WebloomQuery({
       ...query,
-      dependencyManager: this.dependencyManager,
-      evaluationManger: this.evaluationManger,
+      appId: this.appId,
       workspaceId: this.workspaceId,
+      workerBroker: this.workerBroker,
+      queryClient: this.queryClient,
     });
   }
 
@@ -242,72 +323,7 @@ export class EditorState {
     return {
       ...this.currentPage.widgets,
       ...this.queries,
+      [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
-  }
-
-  /**
-   * @param type the name of the event you want to run handlers for(must match the name you configured to eventManager)
-   * @param key where to get the handlers configuration
-   * @default 'events'
-   */
-  executeActions<Events extends object>(
-    widgetId: string,
-    type: keyof Events,
-    key: string = 'events',
-  ) {
-    const eventHandlers = this.currentPage.getWidgetById(widgetId).finalValues[
-      key
-    ] as WidgetsEventHandler;
-    if (!eventHandlers) return;
-    eventHandlers.forEach((handler) => {
-      if (handler.type === type) {
-        this.executeActionHelper(handler.config);
-      }
-    });
-  }
-
-  private executeActionHelper(actionConfig: WidgetsEventHandler[0]['config']) {
-    switch (actionConfig.type) {
-      case 'alert':
-        {
-          toast({
-            description: actionConfig.message,
-            variant:
-              actionConfig.messageType === 'failure'
-                ? 'destructive'
-                : 'default',
-          });
-        }
-        break;
-      case 'openLink':
-        {
-          window.open(actionConfig.link, '_blank');
-        }
-        break;
-      case 'runScript':
-        {
-          // TODO: i don't think this way to create context is too performant, try improving it
-          const evaluationContext: EvaluationContext = {};
-          Object.entries(this.currentPage.widgets).forEach(
-            ([widgetName, widget]) => {
-              evaluationContext[widgetName] = {
-                ...widget.finalValues,
-                ...widget.setters,
-              };
-            },
-          );
-          Object.entries(this.queries).forEach(([queryName, query]) => {
-            evaluationContext[queryName] = {
-              ...query.finalValues,
-              run: query.run,
-              reset: query.reset,
-            };
-          });
-          evaluateCode(actionConfig.script, evaluationContext);
-        }
-        break;
-      default:
-        throw new Error("don't know this type");
-    }
   }
 }

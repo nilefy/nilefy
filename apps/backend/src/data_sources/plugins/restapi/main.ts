@@ -7,93 +7,36 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
     dataSourceConfig: ConfigT,
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
-    const queryUrl = new URL(
-      query.query.endpoint,
-      dataSourceConfig.base_url,
-    ).toString();
+    const searchParams = new URLSearchParams();
+    for (const param of query.query.params || []) {
+      searchParams.append(param.key, param.value);
+    }
+    const queryUrl = new URL(query.query.endpoint, dataSourceConfig.base_url);
+    queryUrl.search = searchParams.toString();
 
-    const collectedHeaders = {
+    const collectedHeaders = [
       ...dataSourceConfig.headers,
-      ...query.query.headers,
-    };
+      ...(query.query.headers || []).map((i) => [i.key, i.value]),
+    ].reduce(
+      (acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
     const body = query.query.body;
-    const reqBody = typeof body === 'string' ? body : JSON.stringify(body);
+    const finalHeaders = constructHeaders(
+      collectedHeaders,
+      query.query.method,
+      body,
+      dataSourceConfig.auth,
+    );
     //todo 1. custom headers ✅
     //todo 2. custom body ✅
     //todo 3. Documentation
     //todo 4. config schema ✅
     try {
-      let res: Response;
-      switch (dataSourceConfig.auth.auth_type) {
-        case 'none':
-          {
-            res = await fetch(queryUrl, {
-              method: query.query.method,
-              headers: collectedHeaders,
-              body: reqBody,
-            });
-          }
-          break;
-        // case 'oauth2': {
-        //   throw new Error("don't support OUATH2")
-        // todo
-        // try {
-        //   const tokenResponse = await this.getOAuth2Token(dataSourceConfig);
-        //   const token = tokenResponse.data.access_token;
-
-        //   const response = await axios({
-        //     method: query.operation,
-        //     url: `${dataSourceConfig.url}/${query.query}`,
-        //     headers: {
-        //       Authorization: `Bearer ${token}`,
-        //       'Content-Type': 'application/json',
-        //     },
-        //   });
-
-        //   status = response.status;
-        //   data = response.data;
-        // } catch (error) {
-        //   status = error.response ? error.response.status : 500;
-        //   eMessage = error.message;
-        // }
-        // break;
-        // } break;
-
-        case 'basic':
-          {
-            res = await fetch(queryUrl, {
-              method: query.query.method,
-              headers: {
-                Authorization:
-                  'Basic ' +
-                  btoa(
-                    dataSourceConfig.auth.username +
-                      ':' +
-                      dataSourceConfig.auth.password,
-                  ),
-
-                ...collectedHeaders,
-              },
-              body: reqBody,
-            });
-          }
-          break;
-        case 'bearer':
-          {
-            res = await fetch(queryUrl, {
-              method: query.query.method,
-              headers: {
-                Authorization: `Bearer ${dataSourceConfig.auth.bearer_token}`,
-                ...collectedHeaders,
-              },
-              body: reqBody,
-            });
-          }
-          break;
-        default:
-          throw new Error('unreachable');
-      }
-
+      const res: Response = await fetch(queryUrl, finalHeaders);
       return {
         statusCode: res.status,
         data: await res.json(),
@@ -128,4 +71,39 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
 
   //   return response.data;
   // }
+}
+
+function constructHeaders(
+  headers: Record<string, string>,
+  method: QueryConfig['query']['method'],
+  body: QueryConfig['query']['body'],
+  auth: ConfigT['auth'],
+): Record<string, string> {
+  let finalHeaders = headers;
+  switch (auth.auth_type) {
+    case 'none':
+      break;
+    case 'basic':
+      finalHeaders = {
+        ...headers,
+        Authorization: 'Basic ' + btoa(auth.username + ':' + auth.password),
+      };
+      break;
+    case 'bearer':
+      finalHeaders = {
+        ...headers,
+        Authorization: `Bearer ${auth.bearer_token}`,
+      };
+      break;
+    default:
+      throw new Error('unreachable');
+  }
+  if (method !== 'GET') {
+    const finalBody = typeof body === 'string' ? body : JSON.stringify(body);
+    finalHeaders = {
+      ...finalHeaders,
+      body: finalBody as string,
+    };
+  }
+  return finalHeaders;
 }

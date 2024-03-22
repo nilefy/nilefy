@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
-import { FormProps } from '@rjsf/core';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -25,15 +24,33 @@ import { DebouncedInput } from '../../../components/debouncedInput';
 import clsx from 'clsx';
 import { Input } from '../../../components/ui/input';
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import FormT from '@rjsf/core';
 import { editorStore } from '@/lib/Editor/Models';
 import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
-import { computed, runInAction, toJS } from 'mobx';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
-import { Label } from '@/components/ui/label';
-import EntityForm from '@/components/rjsf_shad/entityForm';
+import { computed } from 'mobx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
+import { Label } from '@/components/ui/label';
+import { DefaultSection, EntityForm } from './entityForm';
+export const QueryConfigPanel = observer(({ id }: { id: string }) => {
+  const query = editorStore.getEntityById(id)!;
+  return (
+    <div>
+      <EntityForm>
+        {query.inspectorConfig.map((section) => {
+          return (
+            <DefaultSection
+              key={section.sectionName}
+              section={section}
+              selectedId={id}
+            />
+          );
+        })}
+      </EntityForm>
+    </div>
+  );
+});
+
 import { LoadingButton } from '@/components/loadingButton';
 import { QueryI } from '@/api/queries.api';
 
@@ -51,7 +68,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -63,7 +80,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
@@ -82,10 +99,6 @@ const QueryItem = observer(function QueryItem({
 }: {
   query: WebloomQuery;
 }) {
-  const rjsfRef = useRef<FormT>(null);
-  const [triggerMode, setTriggerMode] = useState<QueryI['triggerMode']>(
-    query.triggerMode,
-  );
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
@@ -94,89 +107,56 @@ const QueryItem = observer(function QueryItem({
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
-  const { mutate: updateMutation, isPending: isSubmitting } =
-    api.queries.update.useMutation({
-      onSuccess(data) {
-        runInAction(() => {
-          query.setQueryState('success');
-          query.updateQuery(data);
-        });
-      },
-    });
-
-  // pass to rjsf
-  const onSubmitCallback = useCallback<FormProps['onSubmit']>(
-    ({ formData }) => {
-      if (!workspaceId || !appId)
-        throw new Error(
-          "that's weird this function should run under workspaceId, appId",
-        );
-
-      updateMutation({
-        workspaceId: +workspaceId,
-        appId: +appId,
-        queryId: query.id,
-        dto: {
-          query: formData,
-          dataSourceId: +curDataSource,
-          triggerMode,
-        },
-      });
-    },
-    [appId, curDataSource, query.id, updateMutation, workspaceId, triggerMode],
-  );
-  // to trigger rjsf submit outside of rjsf jsx
-  const onSaveCallback = () => {
-    rjsfRef.current?.submit();
-  };
 
   return (
     <div className="h-full w-full">
       {/* HEADER */}
-      <div className="flex h-10 flex-row items-center justify-end gap-5 border-b border-gray-300">
+      <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
-        <Input defaultValue={query.id} />
-        <LoadingButton
-          isLoading={isSubmitting}
-          buttonProps={{
-            onClick: onSaveCallback,
-            variant: 'ghost',
-            type: 'button',
-            className: 'mr-auto',
-          }}
-        >
-          <>
-            <SaveIcon /> Save
-          </>
-        </LoadingButton>
-        <Button
-          variant={'ghost'}
-          disabled={query.queryRunner.state.isPending}
-          onClick={() => {
-            if (!workspaceId || !appId) {
-              throw new Error('workspaceId or appId is not defined!');
-            }
-            const evaluatedConfig = toJS(query.config) as Record<
-              string,
-              unknown
-            >;
-
-            // query.setQueryState('loading');
-            query.queryRunner.mutate({
-              workspaceId: +workspaceId,
-              appId: +appId,
-              queryId: query.id,
-              body: {
-                evaluatedConfig,
+        <Input
+          defaultValue={query.id}
+          className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
+        />
+        <div className="ml-auto flex flex-row items-center">
+          <LoadingButton
+            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
+            buttonProps={{
+              variant: 'ghost',
+              type: 'button',
+              className: 'mr-auto',
+              onClick: () => {
+                editorStore.queriesManager.updateQuery.mutate({
+                  workspaceId: +workspaceId!,
+                  appId: +appId!,
+                  queryId: query.id,
+                  dto: {
+                    query: query.rawConfig as Record<string, unknown>,
+                    dataSourceId: +curDataSource,
+                  },
+                });
               },
-            });
-          }}
-        >
-          <Play /> run
-        </Button>
+            }}
+          >
+            <>
+              <SaveIcon /> Save
+            </>
+          </LoadingButton>
+          <Button
+            variant={'ghost'}
+            disabled={query.queryRunner.state.isPending}
+            onClick={() => {
+              if (!workspaceId || !appId) {
+                throw new Error('workspaceId or appId is not defined!');
+              }
+              query.queryRunner.mutate();
+            }}
+          >
+            <Play /> run
+          </Button>
+        </div>
       </div>
       {/*FORM*/}
-      <ScrollArea className=" h-[calc(100%-3rem)] w-full">
+      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
         <div className="flex flex-col gap-4 p-4">
           <Label className="flex items-center gap-4">
             Data Source
@@ -207,33 +187,8 @@ const QueryItem = observer(function QueryItem({
               </SelectContent>
             </Select>
           </Label>
-          <EntityForm
-            ref={rjsfRef}
-            entityId={query.id}
-            onSubmit={onSubmitCallback}
-          />
-          {/*QUERY OPTIONS*/}
-          <div>
-            <Label>Trigger Mode</Label>
-            <Select
-              value={triggerMode}
-              onValueChange={(newVal) =>
-                setTriggerMode(newVal as QueryI['triggerMode'])
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="trigger mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={'manually' satisfies QueryI['triggerMode']}>
-                  Manually
-                </SelectItem>
-                <SelectItem value={'onAppLoad' satisfies QueryI['triggerMode']}>
-                  On app load
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <QueryConfigPanel id={query.id} />
+
           <QueryPreview
             ref={jsonResultRef}
             key={query.id + 'preview'}
@@ -262,17 +217,6 @@ export const QueryPanel = observer(function QueryPanel() {
     workspaceId: +(workspaceId as string),
   });
   const queries = editorStore.queries;
-  const { mutate: addMutation } = api.queries.insert.useMutation({
-    onSuccess: (data) => {
-      editorStore.addQuery(data);
-    },
-  });
-  const { mutate: deleteMutation } = api.queries.delete.useMutation({
-    onSuccess: ({ id }) => {
-      setSelectedItemId(null);
-      editorStore.removeQuery(id);
-    },
-  });
 
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
@@ -372,11 +316,11 @@ export const QueryPanel = observer(function QueryPanel() {
   ]).get();
 
   return (
-    <div className="flex h-full w-full border border-gray-300">
+    <div className="flex h-full w-full">
       {/* LEFT SIDE */}
-      <div className="flex h-full w-1/3 flex-col">
+      <div className="flex h-full w-1/3 flex-col border-l border-[#e5e7eb]">
         {/* SEARCH, FILTER AND ADD*/}
-        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-gray-300 p-4">
+        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-[#e5e7eb] p-4">
           {/* SEARCH and FILTER */}
           <div className="flex flex-row items-center gap-x-2">
             <Button
@@ -474,7 +418,7 @@ export const QueryPanel = observer(function QueryPanel() {
                   key={item.dataSource.type}
                   onClick={() => {
                     if (!workspaceId || !appId) throw new Error();
-                    addMutation({
+                    editorStore.queriesManager.addQuery.mutate({
                       workspaceId: +workspaceId,
                       appId: +appId,
                       dto: {
@@ -519,11 +463,18 @@ export const QueryPanel = observer(function QueryPanel() {
               </div>
             )}
             {filteredQueries?.map((item) => (
-              <li className="flex w-full " key={item.id}>
+              <li
+                className={clsx(
+                  { 'bg-primary/10': item.id === selectedItemId },
+                  'flex w-full items-center',
+                )}
+                key={item.id}
+              >
                 {editingItemId === item.id ? (
                   <Input
                     type="text"
                     value={item.id}
+                    className="w-full"
                     // TODO: enable rename
                     // onChange={(e) => renameItem(item, e)}
                     autoFocus
@@ -531,44 +482,42 @@ export const QueryPanel = observer(function QueryPanel() {
                   />
                 ) : (
                   <>
-                    {/* TOGGLE ITEM SELECTION */}
-                    <Button
-                      variant="outline"
-                      className={clsx({
-                        'group cursor-pointer my-2 flex h-6 w-full items-center justify-start p-4 border-0 hover:bg-primary/5':
-                          true,
-                        'bg-primary/10': selectedItemId === item.id,
-                      })}
+                    <div
+                      className="group my-2 flex h-6 w-full cursor-pointer items-center justify-start border-0 p-4"
                       onClick={() => handleItemClick(item.id)}
                     >
                       {item.id}
-                    </Button>
-                    <Button
-                      size={'icon'}
-                      variant={'ghost'}
-                      onClick={() => setEditingItemId(item.id)}
-                    >
-                      <Pencil size={16} />
-                    </Button>
-                    {/* TODO: enable clone*/}
-                    {/* <button onClick={() => duplicateItem(item)}>
+                    </div>
+                    <div className="ml-auto flex flex-row items-center gap-x-2">
+                      {/* TOGGLE ITEM SELECTION */}
+
+                      <Button
+                        size={'icon'}
+                        variant={'ghost'}
+                        onClick={() => setEditingItemId(item.id)}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      {/* TODO: enable clone*/}
+                      {/* <button onClick={() => duplicateItem(item)}>
                               <Copy size={16} />
                             </button> */}
 
-                    <Button
-                      size={'icon'}
-                      variant={'ghost'}
-                      onClick={() => {
-                        if (!workspaceId || !appId) throw new Error();
-                        deleteMutation({
-                          workspaceId: +workspaceId,
-                          appId: +appId,
-                          queryId: item.id,
-                        });
-                      }}
-                    >
-                      <Trash size={16} />
-                    </Button>
+                      <Button
+                        size={'icon'}
+                        variant={'ghost'}
+                        onClick={() => {
+                          if (!workspaceId || !appId) throw new Error();
+                          editorStore.queriesManager.deleteQuery.mutate({
+                            workspaceId: +workspaceId,
+                            appId: +appId,
+                            queryId: item.id,
+                          });
+                        }}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    </div>
                   </>
                 )}
               </li>
@@ -577,7 +526,7 @@ export const QueryPanel = observer(function QueryPanel() {
         </ScrollArea>
       </div>
       {/* ITEM */}
-      <div className="h-full w-full border border-gray-300">
+      <div className="h-full w-full border-l border-[#e5e7eb]">
         {selectedItemId ? (
           <QueryItem
             key={queries[selectedItemId].id}

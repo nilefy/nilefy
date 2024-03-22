@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/resizable';
 
 import { WebloomElementShadow, WebloomRoot } from './Components/lib';
-import { commandManager } from '@/Actions/CommandManager';
+import { commandManager } from '@/actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { EditorLeftSidebar } from './editorLeftSideBar';
 import { editorStore } from '@/lib/Editor/Models';
@@ -35,7 +35,7 @@ export const Editor = observer(() => {
   }, [editorRef]);
   const throttledResize = useThrottle(handleResize, 100);
   return (
-    <div className=" flex h-full max-h-full w-full flex-col bg-transparent">
+    <div className=" flex h-full max-h-full w-full flex-col overflow-hidden bg-transparent">
       <div className="h-fit w-full">
         <EditorHeader />
       </div>
@@ -72,15 +72,19 @@ export const Editor = observer(() => {
                 defaultSizePercentage={35}
                 collapsible
               >
-                <QueryPanel />
+                <Suspense fallback={<WebloomLoader />}>
+                  <QueryPanel />
+                </Suspense>
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
-            <Suspense fallback={<WebloomLoader />}>
-              <RightSidebar />
-            </Suspense>
+            <div>
+              <Suspense fallback={<WebloomLoader />}>
+                <RightSidebar />
+              </Suspense>
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

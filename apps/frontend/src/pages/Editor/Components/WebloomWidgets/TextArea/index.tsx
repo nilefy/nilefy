@@ -1,57 +1,44 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useCallback, useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import {
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
+
 import { ToolTipWrapper } from '../tooltipWrapper';
 import clsx from 'clsx';
 import { autorun } from 'mobx';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 
 export type WebloomTextAreaProps = {
-  label: {
-    text: string;
-    position: 'left' | 'top';
-  };
+  labelText: string;
+  labelPosition: 'left' | 'top';
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
   value?: string;
   defaultValue?: string;
-  events: WidgetsEventHandler;
   caption?: string;
   tooltip?: string;
   maxLength?: number;
   minLength?: number;
+  onTextChange?: string;
+  onFocus?: string;
+  onBlur?: string;
 };
-
-const webloomTextAreaEvents = {
-  onTextChanged: 'onTextChanged',
-  onFocus: 'onFocus',
-  onBlur: 'onBlur',
-} as const;
 
 const WebloomTextArea = observer(function WebloomTextArea() {
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomTextAreaProps;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  const clearValue = useCallback(() => {
-    onPropChange({
-      key: 'value',
-      value: '',
-    });
-  }, [onPropChange]);
-
   // for defaultValue, i don't think we can use radix-ui's select.defaultValue directly because the component is controlled
   // so the meaning of default value what the value will start with
   useEffect(
@@ -62,35 +49,19 @@ const WebloomTextArea = observer(function WebloomTextArea() {
           value: props.defaultValue,
         });
       }),
-    [onPropChange],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
-
-  // append runtime methods
-  useEffect(() => {
-    widget.appendSetters([
-      {
-        key: 'focus',
-        setter: () => {
-          if (!textAreaRef || !textAreaRef.current) return;
-          textAreaRef.current.focus();
-        },
-      },
-      {
-        key: 'clearValue',
-        setter: clearValue,
-      },
-    ]);
-  }, [clearValue]);
 
   return (
     <ToolTipWrapper text={props.tooltip}>
       <div
         className={clsx('flex h-full w-full gap-4 p-1', {
-          'flex-col': props.label.position === 'top',
-          'items-center': props.label.position === 'left',
+          'flex-col': props.labelPosition === 'top',
+          'items-center': props.labelPosition === 'left',
         })}
       >
-        <Label htmlFor={id}>{props.label.text}</Label>
+        <Label htmlFor={id}>{props.labelText}</Label>
         <Textarea
           id={id}
           className="h-full w-full resize-none"
@@ -106,25 +77,12 @@ const WebloomTextArea = observer(function WebloomTextArea() {
               key: 'value',
               value: e.target.value,
             });
-            editorStore.executeActions<typeof webloomTextAreaEvents>(
-              id,
-              'onTextChanged',
-            );
+            widget.handleEvent('onTextChanged');
           }}
-          onFocus={() =>
-            editorStore.executeActions<typeof webloomTextAreaEvents>(
-              id,
-              'onFocus',
-            )
-          }
-          onBlur={() =>
-            editorStore.executeActions<typeof webloomTextAreaEvents>(
-              id,
-              'onBlur',
-            )
-          }
+          onFocus={() => widget.handleEvent('onFocus')}
+          onBlur={() => widget.handleEvent('onBlur')}
         />
-        <p className="text-sm text-muted-foreground">{props.caption}</p>
+        <p className="text-muted-foreground text-sm">{props.caption}</p>
       </div>
     </ToolTipWrapper>
   );
@@ -141,113 +99,154 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setValue: {
+      type: 'SETTER',
+      path: 'value',
+      name: 'setValue',
+    },
+    setDisabled: {
+      type: 'SETTER',
+      path: 'disabled',
+      name: 'setDisabled',
+    },
+    clearValue: {
+      type: 'SETTER',
+      path: 'value',
+      value: '',
+      name: 'clearValue',
+    },
+  },
 };
 
 const defaultProps: WebloomTextAreaProps = {
   placeholder: 'Enter text',
-  label: { text: 'Label', position: 'left' },
+  labelText: 'Label',
+  labelPosition: 'top',
   disabled: false,
-  events: [],
 };
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      placeholder: {
-        type: 'string',
-      },
-      label: {
-        type: 'object',
-        properties: {
-          text: {
-            type: 'string',
-            default: defaultProps.label.text,
-          },
-          position: {
-            type: 'string',
-            enum: ['top', 'left'],
-            default: defaultProps.label.position,
-          },
+const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        path: 'labelText',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Label',
         },
-        required: ['text', 'position'],
+        validation: zodToJsonSchema(z.string().default('Label')),
       },
-      defaultValue: {
-        type: 'string',
+      {
+        label: 'Label Position',
+        path: 'labelPosition',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Label Position',
+        },
+        validation: zodToJsonSchema(z.enum(['left', 'top']).default('left')),
       },
-      caption: {
-        type: 'string',
+      {
+        label: 'Tooltip',
+        path: 'tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Tooltip',
+        },
+        validation: zodToJsonSchema(z.string().default('')),
       },
-      tooltip: {
-        type: 'string',
+      {
+        label: 'Placeholder',
+        path: 'placeholder',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Placeholder',
+        },
+        validation: zodToJsonSchema(z.string().default('')),
       },
-      disabled: {
-        type: 'boolean',
-        default: false,
+      {
+        label: 'Default Value',
+        path: 'defaultValue',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Default Value',
+        },
+        validation: zodToJsonSchema(z.string().optional().default('')),
       },
-      autoFocus: {
-        type: 'boolean',
-        default: false,
+      {
+        label: 'Disabled',
+        path: 'disabled',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Disabled',
+        },
+        validation: zodToJsonSchema(z.boolean().default(false)),
       },
-      maxLength: {
-        type: 'number',
+      {
+        label: 'Caption',
+        path: 'caption',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Caption',
+        },
+        validation: zodToJsonSchema(z.string().default('')),
       },
-      minLength: {
-        type: 'number',
+      {
+        label: 'Max Length',
+        path: 'maxLength',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Max Length',
+        },
+        validation: zodToJsonSchema(z.number().default(400)),
       },
-      events: widgetsEventHandlerJsonSchema,
-      value: {
-        type: 'string',
+      {
+        label: 'Min Length',
+        path: 'minLength',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'Min Length',
+        },
+        validation: zodToJsonSchema(z.number().default(0)),
       },
-    },
-    required: ['events', 'label'],
+    ],
   },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    placeholder: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Placeholder',
-      'ui:placeholder': 'Enter placeholder',
-    },
-    defaultValue: { 'ui:widget': 'inlineCodeInput' },
-    caption: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    maxLength: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    minLength: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    label: {
-      text: {
-        'ui:widget': 'inlineCodeInput',
-        'ui:title': 'Label',
-        'ui:placeholder': 'Enter label',
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onTextChange',
+        label: 'onTextChange',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onTextChange',
+        },
       },
-    },
-    tooltip: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    events: genEventHandlerUiSchema(webloomTextAreaEvents),
+      {
+        path: 'onFocus',
+        label: 'onFocus',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onFocus',
+        },
+      },
+      {
+        path: 'onBlur',
+        label: 'onBlur',
+        type: 'inlineCodeInput',
+        options: {
+          label: 'onBlur',
+        },
+      },
+    ],
   },
-};
-
+];
 const WebloomTextAreaWidget: Widget<WebloomTextAreaProps> = {
   component: WebloomTextArea,
   config,
   defaultProps,
-  schema,
-  setters: {
-    setValue: {
-      path: 'value',
-      type: 'string',
-    },
-    setDisabled: {
-      path: 'disabled',
-      type: 'boolean',
-    },
-  },
+  inspectorConfig,
 };
 
 export { WebloomTextAreaWidget };

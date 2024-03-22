@@ -1,6 +1,5 @@
-import { WebloomChartProps } from '.';
+import { WebloomChartProps } from './interface';
 
-// GPT
 function calculateStandardDeviation(array: number[]): number | undefined {
   if (array.length === 0) {
     return undefined; // No standard deviation for an empty array
@@ -24,7 +23,6 @@ function calculateStandardDeviation(array: number[]): number | undefined {
   return standardDeviation;
 }
 
-// GPT
 function calculateRMS(array: number[]): number {
   // Step 1: Square each element of the array
   const squaredValues: number[] = array.map((value) => value * value);
@@ -39,7 +37,6 @@ function calculateRMS(array: number[]): number {
   return rms;
 }
 
-// GPT
 function calculateMedian(array: number[]): number | undefined {
   if (array.length === 0) {
     return undefined; // No median for an empty array
@@ -60,11 +57,11 @@ function calculateMedian(array: number[]): number | undefined {
   }
 }
 
-export function agg(
-  data: WebloomChartProps['data']['dataSource'],
-  xAxisValue: WebloomChartProps['data']['xAxisValue'],
-  yAxisValue: WebloomChartProps['data']['datasets'][0]['yValue'],
-  method: WebloomChartProps['data']['datasets'][0]['aggMethod'],
+export function calculateAggregation(
+  data: WebloomChartProps['dataSource'],
+  xAxisValue: WebloomChartProps['xAxisValue'],
+  yAxisValue: WebloomChartProps['datasets'][0]['yValue'],
+  method: WebloomChartProps['datasets'][0]['aggMethod'],
 ): number[] {
   switch (method) {
     case 'none': {

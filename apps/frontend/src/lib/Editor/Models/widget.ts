@@ -1,6 +1,6 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
@@ -8,6 +8,7 @@ import {
   WebloomPixelDimensions,
   LayoutMode,
   WIDGET_SECTIONS,
+  EntityInspectorConfig,
 } from '../interface';
 import {
   convertGridToPixel,
@@ -15,12 +16,30 @@ import {
   getGridBoundingRect,
 } from '../utils';
 
-import { Snapshotable } from './interfaces';
-import { DependencyManager } from './dependencyManager';
-import { cloneDeep } from 'lodash';
-import { EvaluationManager } from './evaluationManager';
+import { Snapshotable, WebloomDisposable } from './interfaces';
+import { debounce } from 'lodash';
+import { klona } from 'klona';
 import { Entity } from './entity';
+import { commandManager } from '@/actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { EntityActionConfig } from '../evaluation/interface';
+const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
+  scrollIntoView: {
+    type: 'SIDE_EFFECT',
+    name: 'scrollIntoView',
+    fn: (entity: WebloomWidget) => {
+      entity.dom?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      });
+    },
+  },
+};
 
+const normalizeWidgetActions = (actions: EntityActionConfig<WebloomWidget>) => {
+  return { ...defaultWidgetActions, ...actions };
+};
 export class WebloomWidget
   extends Entity
   implements
@@ -31,9 +50,19 @@ export class WebloomWidget
       > & {
         pageId: string;
       }
-    >
+    >,
+    WebloomDisposable
 {
   isRoot = false;
+  /**
+   * @description This is the runtime connection to the thing the widget can do like focus, submit, etc. Widgets have to set this up themselves because the api is
+   * different for each widget
+   * @example
+   * ```
+   *  widget.api.focus()
+   * ```
+   */
+  api: Record<string, (...args: unknown[]) => void> = {};
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
@@ -43,8 +72,6 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
-  setters: Record<string, (arg: unknown) => void>;
-
   constructor({
     type,
     parentId,
@@ -56,8 +83,6 @@ export class WebloomWidget
     rowsCount,
     columnsCount,
     props,
-    evaluationManger,
-    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
@@ -69,28 +94,33 @@ export class WebloomWidget
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependents?: Set<string>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
   }) {
-    const { config } = WebloomWidgets[type];
+    const widgetConfig = WebloomWidgets[type];
+
     super({
-      dependencyManager,
-      evaluationManger,
+      workerBroker: page.workerBroker,
       id,
-      rawValues: { ...props, layoutMode: config.layoutConfig.layoutMode } ?? {},
-      schema: WebloomWidgets[type].schema,
+      rawValues:
+        { ...props, layoutMode: widgetConfig.config.layoutConfig.layoutMode } ??
+        {},
+      inspectorConfig: widgetConfig.inspectorConfig as EntityInspectorConfig,
+      entityType: 'widget',
+      publicAPI: widgetConfig.publicAPI,
+      // @ts-expect-error fda
+      entityActionConfig: normalizeWidgetActions(
+        widgetConfig.config.widgetActions ?? {},
+      ),
     });
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
+
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const baseWidget = WebloomWidgets[this.type as WidgetTypes];
-    this.setters = this.genSetters(baseWidget.setters);
-    this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
-    this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
+    this.rowsCount = rowsCount ?? widgetConfig.config.layoutConfig.rowsCount;
+    this.columnsCount =
+      columnsCount ?? widgetConfig.config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
 
@@ -119,6 +149,7 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      setValue: override,
       innerRowsCount: computed,
       actualRowsCount: computed,
       innerContainerDimensions: computed,
@@ -144,6 +175,20 @@ export class WebloomWidget
       );
     return 0;
   }
+  setValue(path: string, value: unknown): void {
+    this.debouncedSyncRawValuesWithServer();
+    super.setValue(path, value);
+  }
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new ChangePropAction(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
@@ -221,7 +266,7 @@ export class WebloomWidget
       pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: cloneDeep(this.rawValues),
+      props: klona(this.rawValues),
       type: this.type,
       col: this.col,
       row: this.row,
@@ -341,38 +386,29 @@ export class WebloomWidget
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
     });
   }
 
+  handleEvent(event: string) {
+    if (!this.rawValues[event]) return;
+    this.workerBroker.postMessege({
+      event: 'eventExecution',
+      body: {
+        eventName: event,
+        id: this.id,
+      },
+    });
+  }
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
-
-  /**
-   * meanted to be used just once when creating the widget
-   */
-  private genSetters(
-    settersConfig?: (typeof WebloomWidgets)[WidgetTypes]['setters'],
-  ): Record<string, (arg: unknown) => void> {
-    const res: Record<string, (arg: unknown) => void> = {};
-    if (!settersConfig) return res;
-    for (const k in settersConfig) {
-      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
-    }
-    return res;
-  }
-
-  /**
-   * if doesn't exist add it if not overwrite existing one
-   * @param key setter key
-   * @param setter the funcion to run
-   * TODO: also take the signature for autocompletion
-   */
-  appendSetters(setters: { key: string; setter: (...args: any[]) => void }[]) {
-    setters.forEach(({ key, setter }) => {
-      this.setters[key] = setter;
+  unselectSelf() {
+    this.page.setSelectedNodeIds((prev) => {
+      return new Set([...prev].filter((i) => i !== this.id));
     });
+  }
+  dispose() {
+    this.unselectSelf();
+    super.dispose();
   }
 }

@@ -172,14 +172,12 @@ async function enableMocking() {
 
 // enableMocking().then(() => {
 root.render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Toaster />
-        <RouterProvider router={router} />
-      </ThemeProvider>
-      <ReactQueryDevtools buttonPosition="bottom-right" />
-    </QueryClientProvider>
-  </React.StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <Toaster />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+    <ReactQueryDevtools buttonPosition="bottom-right" />
+  </QueryClientProvider>,
 );
 // });

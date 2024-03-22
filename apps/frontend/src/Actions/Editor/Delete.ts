@@ -2,7 +2,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { RemoteTypes, UndoableCommand } from '../types';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { toJS } from 'mobx';
-import { updateOrderMap } from '@/lib/Editor/widgetName';
+import { updateOrderMap } from '@/lib/Editor/entitiesNameSeed';
 
 /**
  * @NOTE: the default behaviour: the action will delete current selected widgets
