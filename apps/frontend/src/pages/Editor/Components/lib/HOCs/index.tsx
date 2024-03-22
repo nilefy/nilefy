@@ -16,7 +16,7 @@ import { CSSProperties, useRef } from 'react';
 export { WithDrag, WithDrop, WithDnd } from './Dnd';
 export { WithResize } from './Resize';
 export { WithSelection } from './Selection';
-
+export { WithPopover } from './Popover';
 export const WithLayout = <P extends { id: string }>(
   WrappedComponent: React.FC<P>,
 ) => {

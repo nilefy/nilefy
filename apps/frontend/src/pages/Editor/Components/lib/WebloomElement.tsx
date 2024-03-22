@@ -11,6 +11,7 @@ import {
   WithDeletePopover,
   WithDnd,
   WithLayout,
+  WithPopover,
   WithResize,
   WithSelection,
 } from './HOCs';
@@ -133,6 +134,7 @@ export const WebloomElement: React.FC<{ id: string }> = flowRight(
   WithLayout,
   WithResize,
   WithDnd,
+  WithPopover,
   WithSelection,
   WithDeletePopover,
 )(WebloomElementBase);
