@@ -64,6 +64,11 @@ export const workspaceDataSources = pgTable(
   },
 );
 
+export const queriesTriggerMode = pgEnum('queries_trigger_mode', [
+  'manually',
+  'onAppLoad',
+]);
+
 export const queries = pgTable(
   'workspace_app_queries',
   {
@@ -75,6 +80,9 @@ export const queries = pgTable(
      * query **un-evaluated** configuration(cannot run query with this config, needs to get the evaluated config the from front-end)
      */
     query: json('query').$type<Record<string, unknown>>().notNull(),
+    triggerMode: queriesTriggerMode('trigger_mode')
+      .default('manually')
+      .notNull(),
     appId: integer('app_id')
       .references(() => apps.id)
       .notNull(),

@@ -9,7 +9,6 @@ import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 
 export type QueryRawValues = {
-  isLoading: boolean;
   /**
    * @description data returned from the query
    * @NOTE: start with undefined
@@ -22,19 +21,28 @@ export type QueryRawValues = {
   /**
    * statusCode of the query call to the other backend, or 505 if ourserver faced error
    */
-  status?: number;
+  statusCode?: number;
   /**
    * if the plugin returned error will be here
    */
   error?: string;
+  config: CompleteQueryI['query'];
+  queryState: 'idle' | 'loading' | 'success' | 'error';
 };
 
 const QueryActions = {
-  runQuery: {
+  run: {
     type: 'SIDE_EFFECT',
-    name: 'runQuery',
+    name: 'run',
     fn: (entity: WebloomQuery) => {
-      entity.runQuery.mutate();
+      entity.run();
+    },
+  },
+  reset: {
+    type: 'SIDE_EFFECT',
+    name: 'reset',
+    fn: (entity: WebloomQuery) => {
+      entity.reset();
     },
   },
 };
@@ -52,14 +60,15 @@ export class WebloomQuery
       >
     >
 {
+  triggerMode: CompleteQueryI['triggerMode'];
   appId: CompleteQueryI['appId'];
+  workspaceId: number;
   dataSource: CompleteQueryI['dataSource'];
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
-  workspaceId: number;
   private readonly queryClient: QueryClient;
-  runQuery: MobxMutation<
+  queryRunner: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
     FetchXError,
     void,
@@ -73,6 +82,7 @@ export class WebloomQuery
     workspaceId,
     dataSource,
     dataSourceId,
+    triggerMode,
     createdAt,
     updatedAt,
     workerBroker,
@@ -89,7 +99,7 @@ export class WebloomQuery
         data: undefined,
         queryState: 'idle',
         type: dataSource.dataSource.type,
-        status: undefined,
+        statusCode: undefined,
         error: undefined,
       },
       workerBroker,
@@ -100,7 +110,7 @@ export class WebloomQuery
       entityActionConfig: QueryActions,
     });
     this.queryClient = queryClient;
-    this.runQuery = new MobxMutation(this.queryClient, () => ({
+    this.queryRunner = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
         return runQueryApi({
           appId,
@@ -128,17 +138,22 @@ export class WebloomQuery
     }));
     this.workspaceId = workspaceId;
     this.appId = appId;
+    this.workspaceId = workspaceId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-
+    this.triggerMode = triggerMode;
     makeObservable(this, {
       createdAt: observable,
       updatedAt: observable,
       updateQuery: action,
       setQueryState: action,
+      reset: action.bound,
     });
+    if (this.triggerMode === 'onAppLoad') {
+      this.queryRunner.mutate();
+    }
   }
 
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
@@ -156,17 +171,29 @@ export class WebloomQuery
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
-
+    if (dto.triggerMode) this.triggerMode = dto.triggerMode;
     if (dto.rawValues) {
       this.rawValues.data = dto.rawValues.data;
       this.rawValues.error = dto.rawValues.error;
-      this.rawValues.status = dto.rawValues.status;
+      this.rawValues.statusCode = dto.rawValues.statusCode;
     }
   }
 
-  // TODO: call server to get actual data
-  fetchValue() {
-    // this.value = {};
+  /**
+   * trigger the query async, but don't return the promise
+   */
+  run() {
+    this.queryRunner.mutate();
+  }
+
+  /**
+   * Clear the data and error properties of the query.
+   */
+  reset() {
+    this.rawValues.data = undefined;
+    this.rawValues.queryState = 'idle';
+    this.rawValues.statusCode = undefined;
+    this.rawValues.error = undefined;
   }
 
   get snapshot() {
@@ -177,6 +204,8 @@ export class WebloomQuery
       appId: this.appId,
       updatedAt: this.updatedAt,
       createdAt: this.createdAt,
+      triggerMode: this.triggerMode,
+      workspaceId: this.workspaceId,
     };
   }
 

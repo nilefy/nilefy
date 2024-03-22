@@ -8,26 +8,23 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
 import { ToolTipWrapper } from '../tooltipWrapper';
 
 /**
  * fields that you want to be on the configForm
  */
-const webloomImageProps = z.object({
-  src: z.string().optional(),
-  altText: z.string().optional(),
-  tooltip: z.string().optional(),
+
+export type WebloomImageProps = {
   /**
    * @link https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit
+   * @default contain
    */
-  objectFit: z
-    .enum(['contain', 'cover', 'none', 'fill', 'scale-down'])
-    .default('contain'),
-  onClick: z.string().optional(),
-});
-
-export type WebloomImageProps = z.infer<typeof webloomImageProps>;
+  objectFit: 'fill' | 'none' | 'contain' | 'cover' | 'scale-down';
+  src?: string | undefined;
+  altText?: string | undefined;
+  tooltip?: string | undefined;
+  onClick?: string;
+};
 
 const WebloomImage = observer(function WebloomImage() {
   const { id } = useContext(WidgetContext);

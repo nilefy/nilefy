@@ -38,13 +38,13 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
     try {
       const res: Response = await fetch(queryUrl, finalHeaders);
       return {
-        status: res.status,
+        statusCode: res.status,
         data: await res.json(),
         error: '',
       };
     } catch (e) {
       return {
-        status: 500,
+        statusCode: 500,
         data: {},
         error: 'server error: ' + e,
       };

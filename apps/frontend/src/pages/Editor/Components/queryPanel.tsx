@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -51,8 +51,11 @@ export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   );
 });
 
+import { LoadingButton } from '@/components/loadingButton';
+import { QueryI } from '@/api/queries.api';
+
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
-  function QueryPreview(props, ref) {
+  forwardRef(function QueryPreview(props, ref) {
     return (
       <Tabs
         ref={ref}
@@ -88,10 +91,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsContent>
       </Tabs>
     );
-  },
-  {
-    forwardRef: true,
-  },
+  }),
 );
 
 const QueryItem = observer(function QueryItem({
@@ -99,6 +99,9 @@ const QueryItem = observer(function QueryItem({
 }: {
   query: WebloomQuery;
 }) {
+  const [triggerMode, setTriggerMode] = useState<QueryI['triggerMode']>(
+    query.triggerMode,
+  );
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
@@ -107,18 +110,6 @@ const QueryItem = observer(function QueryItem({
   const [curDataSource, setCurDataSource] = useState<string>(() =>
     query.dataSource.id.toString(),
   );
-
-  // const { mutate: run, isPending: isRunPending } = api.queries.run.useMutation({
-  //   onSuccess(data) {
-  //     query.setQueryState('success');
-  //     query.updateQuery({
-  //       rawValues: {
-  //         ...data,
-  //       },
-  //     });
-  //     jsonResultRef.current?.scrollIntoView({ behavior: 'smooth' });
-  //   },
-  // });
 
   return (
     <div className="h-full w-full">
@@ -130,40 +121,37 @@ const QueryItem = observer(function QueryItem({
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
         <div className="ml-auto flex flex-row items-center">
-          <Button
-            variant={'ghost'}
-            type="button"
-            className="mr-auto"
-            onClick={() => {
-              editorStore.queriesManager.updateQuery.mutate({
-                workspaceId: +workspaceId!,
-                appId: +appId!,
-                queryId: query.id,
-                dto: {
-                  query: query.rawConfig as Record<string, unknown>,
-                  dataSourceId: +curDataSource,
-                },
-              });
+          <LoadingButton
+            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
+            buttonProps={{
+              variant: 'ghost',
+              type: 'button',
+              className: 'mr-auto',
+              onClick: () => {
+                editorStore.queriesManager.updateQuery.mutate({
+                  workspaceId: +workspaceId!,
+                  appId: +appId!,
+                  queryId: query.id,
+                  dto: {
+                    query: query.rawConfig as Record<string, unknown>,
+                    dataSourceId: +curDataSource,
+                  },
+                });
+              },
             }}
           >
-            {editorStore.queriesManager.updateQuery.state.isPending ? (
-              <>
-                <SaveIcon /> Saving...
-              </>
-            ) : (
-              <>
-                <SaveIcon /> Save
-              </>
-            )}
-          </Button>
+            <>
+              <SaveIcon /> Save
+            </>
+          </LoadingButton>
           <Button
             variant={'ghost'}
-            disabled={query.runQuery.state.isPending}
+            disabled={query.queryRunner.state.isPending}
             onClick={() => {
               if (!workspaceId || !appId) {
                 throw new Error('workspaceId or appId is not defined!');
               }
-              query.runQuery.mutate();
+              query.queryRunner.mutate();
             }}
           >
             <Play /> run
@@ -203,6 +191,29 @@ const QueryItem = observer(function QueryItem({
             </Select>
           </Label>
           <QueryConfigPanel id={query.id} />
+
+          {/*QUERY OPTIONS*/}
+          <div>
+            <Label>Trigger Mode</Label>
+            <Select
+              value={triggerMode}
+              onValueChange={(newVal) =>
+                setTriggerMode(newVal as QueryI['triggerMode'])
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="trigger mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={'manually' satisfies QueryI['triggerMode']}>
+                  Manually
+                </SelectItem>
+                <SelectItem value={'onAppLoad' satisfies QueryI['triggerMode']}>
+                  On app load
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <QueryPreview
             ref={jsonResultRef}
             key={query.id + 'preview'}
@@ -542,7 +553,10 @@ export const QueryPanel = observer(function QueryPanel() {
       {/* ITEM */}
       <div className="h-full w-full border-l border-[#e5e7eb]">
         {selectedItemId ? (
-          <QueryItem query={queries[selectedItemId]} />
+          <QueryItem
+            key={queries[selectedItemId].id}
+            query={queries[selectedItemId]}
+          />
         ) : (
           <div className="h-full w-full flex-row items-center justify-center ">
             <p>select or create new query</p>

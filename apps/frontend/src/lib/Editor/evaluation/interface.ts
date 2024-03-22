@@ -9,6 +9,7 @@ export type EntityActionSetter = {
   type: 'SETTER';
   name: string;
   path: string;
+  value?: unknown;
 };
 /**
  * @example { type: 'SIDE_EFFECT', name: 'runQuery', fn:(entity:Query) => { query.runQuery(); } }

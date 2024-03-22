@@ -73,6 +73,9 @@ import {
 import _ from 'lodash';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/cn';
+import { LoadingButton } from '@/components/loadingButton';
+import FormT from '@rjsf/core';
+import { useToast } from '@/components/ui/use-toast';
 // import { dataSourcesTypes } from '@webloom/constants';
 
 function CreatePluginForm({
@@ -374,6 +377,8 @@ function WorkspaceDataSourcesView() {
 }
 
 export function DataSourceView() {
+  const { toast } = useToast();
+  const form = useRef<FormT>(null);
   const { datasourceId, workspaceId } = useParams();
   const { data, isPending, isError, error } = api.dataSources.one.useQuery(
     +(workspaceId as string),
@@ -381,6 +386,22 @@ export function DataSourceView() {
   );
   const { mutate: updateMutate, isPending: isSubmitting } =
     api.dataSources.update.useMutation();
+  const { mutate: testConnectionMutate, isPending: isTestingConnection } =
+    api.dataSources.testConnection.useMutation({
+      onSuccess(data) {
+        toast({
+          title: 'connection Test',
+          description: data.msg,
+        });
+      },
+      onError(error) {
+        toast({
+          variant: 'destructive',
+          title: 'connection Test',
+          description: error.message,
+        });
+      },
+    });
   const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
@@ -388,7 +409,6 @@ export function DataSourceView() {
   } else if (isError) {
     throw error;
   }
-
   return (
     <div key={data.id} className="flex h-full w-full flex-col gap-5 p-4">
       <div className="flex flex-col gap-2">
@@ -419,6 +439,7 @@ export function DataSourceView() {
 
           <TabsContent value="dev" className="h-full w-full ">
             <RJSFShadcn
+              ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
               formData={data.config}
@@ -443,17 +464,41 @@ export function DataSourceView() {
                 });
               }}
             >
-              <Button className="mt-4" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <SaveIcon /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <SaveIcon /> Save
-                  </>
-                )}
-              </Button>
+              <LoadingButton
+                key={'dsSave'}
+                isLoading={isSubmitting}
+                buttonProps={{ type: 'submit', className: 'mt-4' }}
+              >
+                <span>
+                  <SaveIcon /> Save
+                </span>
+              </LoadingButton>
+              <LoadingButton
+                isLoading={isTestingConnection}
+                buttonProps={{
+                  type: 'button',
+                  onClick: () => {
+                    if (
+                      !workspaceId ||
+                      !datasourceId ||
+                      !form ||
+                      !form.current
+                    ) {
+                      throw new Error();
+                    }
+                    testConnectionMutate({
+                      workspaceId: +workspaceId,
+                      dataSourceId: +datasourceId,
+                      dto: {
+                        config: form.current.state.formData,
+                      },
+                    });
+                  },
+                }}
+                key={'dsTest'}
+              >
+                <>Test Connection</>
+              </LoadingButton>
             </RJSFShadcn>
           </TabsContent>
           {/*TODO:*/}

@@ -1,5 +1,5 @@
 import { InputProps } from '@/components/ui/input';
-import { ReactElement, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
@@ -172,7 +172,10 @@ export type Widget<WidgetProps extends Record<string, unknown>> = {
   publicAPI?: Set<string>;
   inspectorConfig: EntityInspectorConfig<WidgetProps>;
 };
-
+type SelectOptions = {
+  value: string;
+  label: string;
+};
 // inspector types
 export type {
   BaseControlProps,
@@ -182,6 +185,7 @@ export type {
   InspectorFormControlsTypes,
   InlineCodeInputProps,
   InspectorColorProps,
+  SelectOptions,
 };
 
 export type EntityTypes = 'query' | 'widget' | 'globals';

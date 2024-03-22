@@ -161,6 +161,7 @@ export class WebloomWidget
       isVisible: computed,
     });
   }
+
   get columnWidth(): number {
     if (this.isRoot)
       // flooring to avoid floating point errors and because integers are just nice

@@ -242,6 +242,9 @@ export class Entity implements WebloomDisposable {
         actions[key] = (value: unknown) => {
           runInAction(() => {
             const path = configItem.path;
+            if ('value' in configItem) {
+              value = configItem.value;
+            }
             this.setValue(path, value);
             this.setterProps[path] = this.unevalValues[path];
           });

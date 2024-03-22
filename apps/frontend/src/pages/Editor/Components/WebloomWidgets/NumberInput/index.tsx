@@ -4,60 +4,52 @@ import {
   WidgetConfig,
 } from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import { StringSchema } from '@/lib/Editor/validations';
-import { autorun } from 'mobx';
 import { useExposeWidgetApi } from '@/lib/Editor/hooks';
+import { StringSchema } from '@/lib/Editor/validations';
 
 export type WebloomInputProps = {
   label: string;
-  type: 'number' | 'text' | 'password';
-  placeholder?: string;
-  disabled?: boolean;
-  autoFocus?: boolean;
-  value?: string | number;
-  onTextChange?: string;
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  autoFocus?: boolean | undefined;
+  value?: number;
+  onChange?: string;
   onFocus?: string;
   onBlur?: string;
   onSubmit?: string;
 };
-const WebloomInput = observer(() => {
+
+const WebloomNumberInput = observer(function WebloomNumberInput() {
   const { onPropChange, id } = useContext(WidgetContext);
-  const ref = useRef<HTMLInputElement>(null);
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomInputProps;
-  useEffect(
-    () =>
-      autorun(() => {
-        if (props.type === 'password' || props.type === 'text')
-          onPropChange({ value: '', key: 'value' });
-        if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
-      }),
-    [onPropChange, props.type],
-  );
+  const inputRef = useRef<HTMLInputElement>(null);
+
   useExposeWidgetApi(id, {
     focus: () => {
-      if (!ref.current) return;
-      ref.current.focus();
+      if (!inputRef.current) return;
+      inputRef.current.focus();
     },
     blur: () => {
-      if (!ref.current) return;
-      ref.current.blur();
+      if (!inputRef.current) return;
+      inputRef.current.blur();
     },
   });
+
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{props.label}</Label>
       <Input
-        ref={ref}
+        ref={inputRef}
         placeholder={props.placeholder}
-        type={props.type}
-        value={props.value ?? ''}
+        type="number"
+        value={props.value ?? 0}
         disabled={props.disabled}
         autoFocus={props.autoFocus}
         onChange={(e) => {
@@ -65,7 +57,7 @@ const WebloomInput = observer(() => {
             key: 'value',
             value: e.target.value,
           });
-          widget.handleEvent('onTextChange');
+          widget.handleEvent('onChange');
         }}
         onFocus={() => {
           widget.handleEvent('onFocus');
@@ -77,8 +69,9 @@ const WebloomInput = observer(() => {
     </div>
   );
 });
+
 const config: WidgetConfig = {
-  name: 'Input',
+  name: 'Number Input',
   icon: <TextCursorInput />,
   isCanvas: false,
   layoutConfig: {
@@ -119,9 +112,8 @@ const config: WidgetConfig = {
 
 const defaultProps: WebloomInputProps = {
   placeholder: 'Enter text',
-  value: '',
+  value: 0,
   label: 'Label',
-  type: 'text',
   disabled: false,
 };
 
@@ -129,28 +121,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
   {
     sectionName: 'Basic',
     children: [
-      {
-        path: 'type',
-        label: 'Type',
-        type: 'select',
-        options: {
-          items: [
-            {
-              label: 'Text',
-              value: 'text',
-            },
-            {
-              label: 'Number',
-              value: 'number',
-            },
-            {
-              label: 'Password',
-              value: 'password',
-            },
-          ],
-          placeholder: 'Select type',
-        },
-      },
       {
         path: 'placeholder',
         label: 'Placeholder',
@@ -179,10 +149,10 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
     ],
   },
   {
-    sectionName: 'Interactions',
+    sectionName: 'Events',
     children: [
       {
-        path: 'onTextChange',
+        path: 'onChange',
         label: 'onTextChange',
         type: 'inlineCodeInput',
         options: {
@@ -216,12 +186,12 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
     ],
   },
 ];
-const WebloomInputWidget: Widget<WebloomInputProps> = {
-  component: WebloomInput,
+
+const WebloomNumberInputWidget: Widget<WebloomInputProps> = {
+  component: WebloomNumberInput,
   config,
   defaultProps,
-  publicAPI: new Set(['value']),
   inspectorConfig,
 };
 
-export { WebloomInputWidget };
+export { WebloomNumberInputWidget };
