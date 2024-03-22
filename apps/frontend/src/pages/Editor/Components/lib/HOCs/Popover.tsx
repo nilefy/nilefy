@@ -1,6 +1,12 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import { useFloating, autoUpdate, flip, shift } from '@floating-ui/react';
+import {
+  useFloating,
+  autoUpdate,
+  flip,
+  shift,
+  offset,
+} from '@floating-ui/react';
 import { useRef } from 'react';
 import { cn } from '@/lib/cn';
 export const WithPopover = <P extends { id: string }>(
@@ -16,7 +22,14 @@ export const WithPopover = <P extends { id: string }>(
       nodeId: widget.id,
 
       placement: 'top-end',
-      middleware: [flip({ fallbackAxisSideDirection: 'end' }), shift()],
+      middleware: [
+        flip({ fallbackAxisSideDirection: 'end' }),
+        shift(),
+        offset({
+          mainAxis: 1,
+          crossAxis: 1,
+        }),
+      ],
       whileElementsMounted: autoUpdate,
       elements: {
         reference: widget.dom,
