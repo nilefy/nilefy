@@ -1,7 +1,7 @@
-import ResizeAction from '@/actions/Editor/Resize';
+import ResizeAction, { ResizingKeys } from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';
@@ -69,7 +69,29 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
   const isSelected = widget.isSelected;
   const isHovered = widget.isHovered;
   const isVisible = !isDragging && (isSelected || isHovered);
-
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent, key: ResizingKeys) => {
+      e.stopPropagation();
+      const dims = widget.pixelDimensions;
+      commandManager.executeCommand(
+        ResizeAction.start(id, key, {
+          width: dims.width,
+          height: dims.height,
+          x: dims.x,
+          y: dims.y,
+        }),
+      );
+    },
+    [id, widget],
+  );
+  const handleResizeMouseUp = useCallback((e: React.MouseEvent) => {
+    commandManager.executeCommand(
+      ResizeAction.end({
+        x: e.clientX,
+        y: e.clientY,
+      }),
+    );
+  }, []);
   return (
     isVisible && (
       <>
@@ -83,25 +105,9 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
                 id={'RESIZE_HANDLER' + widget.id + key}
                 className={borderStyles[key]}
                 onMouseDown={(e) => {
-                  e.stopPropagation();
-                  const dims = widget.pixelDimensions;
-                  commandManager.executeCommand(
-                    ResizeAction.start(id, key, {
-                      width: dims.width,
-                      height: dims.height,
-                      x: dims.x,
-                      y: dims.y,
-                    }),
-                  );
+                  handleResizeMouseDown(e, key);
                 }}
-                onMouseUp={(e) =>
-                  commandManager.executeCommand(
-                    ResizeAction.end({
-                      x: e.clientX,
-                      y: e.clientY,
-                    }),
-                  )
-                }
+                onMouseUp={handleResizeMouseUp}
               ></div>
             );
           })}
@@ -114,25 +120,9 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
                 id={'RESIZE_HANDLER' + widget.id + key}
                 className={cornerStyles[key as keyof typeof cornerStyles]}
                 onMouseDown={(e) => {
-                  e.stopPropagation();
-                  const dims = widget.pixelDimensions;
-                  commandManager.executeCommand(
-                    ResizeAction.start(id, key as keyof typeof cornerStyles, {
-                      width: dims.width,
-                      height: dims.height,
-                      x: dims.x,
-                      y: dims.y,
-                    }),
-                  );
+                  handleResizeMouseDown(e, key as ResizingKeys);
                 }}
-                onMouseUp={(e) =>
-                  commandManager.executeCommand(
-                    ResizeAction.end({
-                      x: e.clientX,
-                      y: e.clientY,
-                    }),
-                  )
-                }
+                onMouseUp={handleResizeMouseUp}
               ></div>
             );
           })}
