@@ -1,7 +1,7 @@
 import ResizeAction from '@/actions/Editor/Resize';
 import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
-import { CSSProperties, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';
@@ -51,16 +51,6 @@ const handlePositions = {
   ...mainDirectionPositions,
 } as const;
 
-const cursors = {
-  'top-left': 'nwse-resize',
-  'top-right': 'nesw-resize',
-  'bottom-left': 'nesw-resize',
-  'bottom-right': 'nwse-resize',
-  top: 'ns-resize',
-  bottom: 'ns-resize',
-  left: 'ew-resize',
-  right: 'ew-resize',
-} as const;
 export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
   const widget = editorStore.currentPage.getWidgetById(id);
   const direction = WebloomWidgets[widget.type].config.resizingDirection;
