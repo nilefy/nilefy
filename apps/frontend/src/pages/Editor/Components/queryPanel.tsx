@@ -99,9 +99,6 @@ const QueryItem = observer(function QueryItem({
 }: {
   query: WebloomQuery;
 }) {
-  const [triggerMode, setTriggerMode] = useState<QueryI['triggerMode']>(
-    query.triggerMode,
-  );
   const jsonResultRef = useRef<HTMLDivElement>(null);
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
@@ -192,28 +189,6 @@ const QueryItem = observer(function QueryItem({
           </Label>
           <QueryConfigPanel id={query.id} />
 
-          {/*QUERY OPTIONS*/}
-          <div>
-            <Label>Trigger Mode</Label>
-            <Select
-              value={triggerMode}
-              onValueChange={(newVal) =>
-                setTriggerMode(newVal as QueryI['triggerMode'])
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="trigger mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={'manually' satisfies QueryI['triggerMode']}>
-                  Manually
-                </SelectItem>
-                <SelectItem value={'onAppLoad' satisfies QueryI['triggerMode']}>
-                  On app load
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <QueryPreview
             ref={jsonResultRef}
             key={query.id + 'preview'}
