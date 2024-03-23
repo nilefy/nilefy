@@ -189,6 +189,7 @@ export class AppsService {
     const app = await this.findOne(workspaceId, appId);
     const omittedFields = [
       'id',
+      'appId',
       'createdById',
       'updatedBy',
       'workspaceId',
@@ -253,7 +254,7 @@ export class AppsService {
 
       await tx.insert(pages).values(pagesToInsert);
 
-      await this.pagesService.importPages();
+      // await this.pagesService.importPages();
     });
 
     return app;

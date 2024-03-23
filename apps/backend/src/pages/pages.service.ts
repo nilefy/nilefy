@@ -84,27 +84,27 @@ export class PagesService {
       } satisfies WebloomTree,
     };
   }
-  async importPages(
-    pagesToInsert: CreatePageDb[],
-    options?: {
-      tx?: PgTrans;
-    },
-  ): Promise<PageDto[]> {
-    const pagesToInsertMod = pagesToInsert.map((p) => {
-      return {
-        ...p,
-        index: this.getNewPageIndexInApp(p.appId),
-        handle: p.handle ?? p.name,
-        appId: p.appId,
-      };
-    });
-    await (options?.tx ? options.tx : this.db)
-      .insert(pages)
-      .values(pagesToInsertMod)
-      .returning();
-    
-      this.componentsService.create(
-  }
+  // async importPages(
+  //   pagesToInsert: CreatePageDb[],
+  //   options?: {
+  //     tx?: PgTrans;
+  //   },
+  // ): Promise<PageDto[]> {
+  //   const pagesToInsertMod = pagesToInsert.map((p) => {
+  //     return {
+  //       ...p,
+  //       index: this.getNewPageIndexInApp(p.appId),
+  //       handle: p.handle ?? p.name,
+  //       appId: p.appId,
+  //     };
+  //   });
+  //   await (options?.tx ? options.tx : this.db)
+  //     .insert(pages)
+  //     .values(pagesToInsertMod)
+  //     .returning();
+
+  //   // this.componentsService.create(
+  // }
 
   async clone({
     appId,
