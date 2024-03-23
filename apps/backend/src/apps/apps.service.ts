@@ -251,8 +251,15 @@ export class AppsService {
       const pagesToInsert = importAppDb.pages.map((page) => {
         return { ...page, appId: appId, createdById: createdById };
       });
+      console.log(pagesToInsert);
 
-      await tx.insert(pages).values(pagesToInsert);
+      const defaultPage = importAppDb.defaultPage;
+      console.log('hi');
+      console.log(defaultPage);
+      console.log('tree:');
+      console.log(defaultPage.tree);
+
+      // await tx.insert(pages).values(pagesToInsert);
 
       // await this.pagesService.importPages();
     });
