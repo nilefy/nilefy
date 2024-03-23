@@ -10,6 +10,7 @@ export const appSchema = createSelectSchema(appsDrizzle);
 export const createAppDb = createInsertSchema(appsDrizzle, {
   name: (schema) => schema.name.min(1).max(100),
 });
+export const importAppDb = createAppDb.omit({ id: true });
 
 export const createAppSchema = createAppDb.pick({
   name: true,
@@ -32,6 +33,7 @@ export const updateAppSchema = createAppSchema.partial();
  * insert in the db interface
  */
 export type CreateAppDb = z.infer<typeof createAppDb>;
+export type ImportAppDb = z.infer<typeof importAppDb>;
 /**
  * API insert interface
  */

@@ -9,6 +9,10 @@ import {
   Req,
   Put,
   StreamableFile,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  Header,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -25,6 +29,7 @@ import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { Readable } from 'node:stream';
+import { FileInterceptor } from '@nestjs/platform-express/multer';
 
 @ApiBearerAuth()
 // auth guard is on hold for this [PR] for testing purposes
@@ -62,6 +67,8 @@ export class AppsController {
   }
 
   @Get('export/:appId')
+  @Header('Content-Type', 'application/json')
+  @Header('Content-Disposition', 'attachment; filename="webloom_app_5.json"')
   @ApiCreatedResponse({
     description: 'get workspace app',
     type: AppRetDto,
@@ -69,19 +76,48 @@ export class AppsController {
   async exportOne(
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
+    // @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
     const app = await this.appsService.exportAppJSON(workspaceId, appId);
-    const stream = Readable.from([app]);
+
+    const appJson = JSON.stringify(app);
+    const stream: Readable = Readable.from([appJson]);
+
     return new StreamableFile(stream);
   }
 
   @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
   async importOne(
-    @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @UploadedFile(ParseFilePipe) file: Express.Multer.File,
   ) {
-    workspaceId;
-    req;
+    try {
+      const jsonData = JSON.parse(file.buffer.toString());
+
+      console.log('before');
+
+      // let userId = req.user.userId;
+      const userId = 1;
+
+      const createAppDto = {
+        ...jsonData,
+        workspaceId,
+        createdById: userId,
+      };
+
+      console.log('hello');
+      console.log('type: ' + typeof createAppDto);
+
+      this.appsService.importAppJSON(createAppDto);
+      console.log('after');
+    } catch (e) {
+      console.log('An Error has occured while importing the app!');
+      () => {
+        console.log(e);
+      };
+    }
   }
 
   @Get(':appId')

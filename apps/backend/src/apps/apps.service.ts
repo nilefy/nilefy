@@ -10,6 +10,7 @@ import {
   AppsRetDto,
   CreateAppDb,
   CreateAppRetDto,
+  ImportAppDb,
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -50,6 +51,7 @@ export class AppsService {
     const app = await this.db.transaction(async (tx) => {
       const [app] = await tx.insert(apps).values(createAppDto).returning();
       // create default page for the app
+      [].forEach;
       const page = await this.pagesService.create(
         {
           name: 'page 1',
@@ -185,7 +187,106 @@ export class AppsService {
 
   async exportAppJSON(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
     const app = await this.findOne(workspaceId, appId);
-    const appJson = JSON.stringify(app);
-    return appJson;
+    const omittedFields = [
+      'id',
+      'createdById',
+      'updatedBy',
+      'workspaceId',
+      'createdBy',
+      'createdAt',
+      'updatedAt',
+      'deletedAt',
+      'updatedById',
+      'deletedById',
+    ];
+    const omitFields = (obj: {
+      [x: string]: any;
+      hasOwnProperty: (arg0: string) => any;
+    }) => {
+      for (const prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+          if (omittedFields.includes(prop)) {
+            delete obj[prop];
+          } else if (typeof obj[prop] === 'object' && obj[prop] !== null) {
+            omitFields(obj[prop]);
+          }
+        }
+      }
+    };
+
+    const simplifiedObject = JSON.parse(JSON.stringify(app));
+
+    omitFields(simplifiedObject);
+
+    return simplifiedObject;
+  }
+
+  async importAppJSON(
+    importAppDb: ImportAppDb & {
+      pages: Page[];
+      defaultPage: DefaultPage;
+    },
+  ) {
+    let app;
+
+    this.db.transaction(async (tx) => {
+      const createdApps = await tx
+        .insert(apps)
+        .values({
+          name: importAppDb.name,
+          description: importAppDb.description,
+          workspaceId: importAppDb.workspaceId,
+          createdById: importAppDb.createdById,
+        })
+        .returning({
+          appId: apps.id,
+          createdById: apps.createdById,
+        });
+      app = createdApps[0];
+
+      const appId = createdApps[0].appId;
+      const createdById = createdApps[0].createdById;
+
+      const pagesToInsert = importAppDb.pages.map((page) => {
+        return { ...page, appId: appId, createdById: createdById };
+      });
+
+      await tx.insert(pages).values(pagesToInsert);
+
+      await this.pagesService.importPages();
+    });
+
+    return app;
   }
 }
+
+type DefaultPage = {
+  handle: string;
+  name: string;
+  enabled: boolean;
+  visible: boolean;
+  tree: {
+    [key: string]: {
+      id: string;
+      nodes: string[];
+      parentId: string;
+      props: {
+        [key: string]: any;
+      };
+      type: string;
+      col: number;
+      row: number;
+      columnsCount: number;
+      rowsCount: number;
+      columnWidth: number;
+    };
+  };
+};
+type Page = {
+  name: string;
+  handle: string;
+  index: number;
+  appId: number;
+  enabled: boolean;
+  visible: boolean;
+};
