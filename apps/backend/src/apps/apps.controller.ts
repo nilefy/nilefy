@@ -13,6 +13,7 @@ import {
   UploadedFile,
   ParseFilePipe,
   Header,
+  UseGuards,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -30,10 +31,11 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
+import { JwtGuard } from 'src/auth/jwt.guard';
 
 @ApiBearerAuth()
 // auth guard is on hold for this [PR] for testing purposes
-// @UseGuards(JwtGuard)
+@UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
