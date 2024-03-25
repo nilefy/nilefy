@@ -145,14 +145,30 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    console.log('from createTreeForPageImport: ');
+    console.log(tree);
     pageId;
     tree;
     options;
 
     const [t] = await (options?.tx ? options.tx : this.db)
       .insert(components)
-      .values(tree)
+      .values({
+        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+        type: 'WebloomContainer',
+        pageId: pageId,
+        createdById: pageDto.createdById,
+        parentId: null,
+        props: {
+          className: 'h-full w-full',
+        },
+        col: 0,
+        row: 0,
+        columnsCount: 32,
+        rowsCount: 0,
+      })
       .returning();
+    t;
   }
 }
 
