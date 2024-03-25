@@ -251,6 +251,9 @@ export class AppsService {
       const pagesToInsert = importAppDb.pages.map((page) => {
         return { ...page, appId: appId, createdById: createdById };
       });
+
+      this.pagesService.importPage(pagesToInsert, { tx: tx });
+
       console.log(pagesToInsert);
 
       const defaultPage = importAppDb.defaultPage;
@@ -263,7 +266,6 @@ export class AppsService {
 
       // await this.pagesService.importPages();
     });
-
     return app;
   }
 }

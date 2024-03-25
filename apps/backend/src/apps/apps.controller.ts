@@ -31,11 +31,11 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
-import { JwtGuard } from 'src/auth/jwt.guard';
+import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
 // auth guard is on hold for this [PR] for testing purposes
-@UseGuards(JwtGuard)
+// @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -112,8 +112,8 @@ export class AppsController {
       console.log('hello');
       console.log('type: ' + typeof createAppDto);
 
-      this.appsService.importAppJSON(createAppDto);
-      console.log('after');
+      const app = await this.appsService.importAppJSON(createAppDto);
+      console.log(app);
     } catch (e) {
       console.log('An Error has occured while importing the app!');
       () => {

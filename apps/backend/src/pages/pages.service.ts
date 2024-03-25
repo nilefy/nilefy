@@ -224,6 +224,61 @@ export class PagesService {
       .returning();
   }
 
+  async importPage(
+    pagesToInsert: {
+      appId: number;
+      createdById: number;
+      name: string;
+      handle: string;
+      index: number;
+      enabled: boolean;
+      visible: boolean;
+    }[],
+    options?: { tx?: PgTrans },
+  ) {
+    options;
+    pagesToInsert;
+    const [p] = await (options?.tx ? options.tx : this.db)
+      .insert(pages)
+      .values(pagesToInsert[0])
+      .returning();
+    p;
+    const [rootComponent] = await this.componentsService.create(
+      [
+        {
+          id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+          type: 'WebloomContainer',
+          pageId: p.id,
+          createdById: pagesToInsert[0].createdById,
+          parentId: null,
+          props: {
+            className: 'h-full w-full',
+          },
+          col: 0,
+          row: 0,
+          columnsCount: 32,
+          rowsCount: 0,
+        },
+      ],
+      {
+        tx: options?.tx,
+      },
+    );
+
+    return {
+      ...p,
+      tree: {
+        [rootComponent.id]: {
+          ...rootComponent,
+          id: rootComponent.id,
+          parentId: rootComponent.parentId ?? rootComponent.id,
+          props: rootComponent.props as WebloomNode['props'],
+          nodes: [],
+        },
+      } satisfies WebloomTree,
+    };
+  }
+
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
   async delete({
     appId,

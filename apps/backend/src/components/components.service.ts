@@ -137,4 +137,38 @@ export class ComponentsService {
     });
     return tree;
   }
+
+  async createTreeForPageImport(
+    pageId: PageDto['id'],
+    tree: ImportTreeDto,
+    options?: {
+      tx?: PgTrans;
+    },
+  ) {
+    pageId;
+    tree;
+    options;
+
+    const [t] = await (options?.tx ? options.tx : this.db)
+      .insert(components)
+      .values(tree)
+      .returning();
+  }
 }
+
+type ImportTreeDto = {
+  [key: string]: {
+    id: string;
+    nodes: string[];
+    parentId: string;
+    props: {
+      [key: string]: any;
+    };
+    type: string;
+    col: number;
+    row: number;
+    columnsCount: number;
+    rowsCount: number;
+    columnWidth: number;
+  };
+};

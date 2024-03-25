@@ -10,6 +10,17 @@ export const createComponentDb = createInsertSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
 });
 
+export const ImportComponentDb = createInsertSchema(componentsDrizzle).extend({
+  type: z.string(),
+  props: z.record(z.string(), z.unknown()),
+  parentId: z.string(),
+  col: z.number(),
+  row: z.number(),
+  columnsCount: z.number(),
+  rowsCount: z.number(),
+  pageId: z.number(),
+});
+
 export const updateComponentDb = createComponentDb
   .partial()
   // we don't support move the app from workspace to another one right now if we want to support this feature this `omit` should be deleted
