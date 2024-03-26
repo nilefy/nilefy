@@ -7,7 +7,7 @@ import {
   shift,
   offset,
 } from '@floating-ui/react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
 export const WithPopover = <P extends { id: string }>(
   WrappedComponent: React.FC<P>,
@@ -16,8 +16,9 @@ export const WithPopover = <P extends { id: string }>(
     const popoverRef = useRef<HTMLDivElement>(null);
 
     const widget = editorStore.currentPage.getWidgetById(props.id);
-    const isActive = widget.isSelected || widget.isHovered;
-    const { floatingStyles } = useFloating({
+    const isActive = widget.isHovered || widget.isTheOnlySelected;
+
+    const { floatingStyles, update } = useFloating({
       open: isActive,
       nodeId: widget.id,
 
@@ -30,13 +31,20 @@ export const WithPopover = <P extends { id: string }>(
           crossAxis: 1,
         }),
       ],
-      whileElementsMounted: autoUpdate,
+
       elements: {
         reference: widget.dom,
         floating: popoverRef.current,
       },
     });
-
+    useEffect(() => {
+      let cleanup = () => {};
+      if (isActive && popoverRef.current && widget.dom && update) {
+        cleanup = autoUpdate(widget.dom, popoverRef.current, update);
+      }
+      return cleanup;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isActive, update, widget.dom, popoverRef.current]);
     return (
       <>
         <div

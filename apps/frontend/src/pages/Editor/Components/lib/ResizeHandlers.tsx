@@ -98,7 +98,6 @@ export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
         {allowedResizingHandles
           .filter((key) => isMainDirection(key))
           .map((key) => {
-            console.log(key);
             return (
               <div
                 key={key}

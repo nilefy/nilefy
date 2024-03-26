@@ -1,5 +1,5 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomElement } from '.';
+import { MultiSelectBounding, WebloomElement } from '.';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -70,7 +70,12 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
         outerContainerStyle={outerContainerStyle}
         isVisibile={true}
       >
-        {!isProduction && <MultiSelect />}
+        {!isProduction && (
+          <>
+            <MultiSelect />
+            <MultiSelectBounding />
+          </>
+        )}
 
         {nodes.map((nodeId) =>
           isProduction ? (

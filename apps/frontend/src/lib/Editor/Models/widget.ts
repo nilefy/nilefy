@@ -159,6 +159,7 @@ export class WebloomWidget
       isResizing: computed,
       isHovered: computed,
       isVisible: computed,
+      isTheOnlySelected: computed,
     });
   }
 
@@ -353,7 +354,9 @@ export class WebloomWidget
     if (parent.isCanvas) return parent;
     return parent.canvasParent;
   }
-
+  get isTheOnlySelected() {
+    return this.page.selectedNodeIds.size === 1 && this.isSelected;
+  }
   addChild(nodeId: string) {
     this.nodes.push(nodeId);
     this.nodes.sort((a, b) => {
