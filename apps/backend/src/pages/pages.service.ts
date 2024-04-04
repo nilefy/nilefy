@@ -20,7 +20,11 @@ import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { WebloomNode, WebloomTree } from '../dto/components.dto';
+import {
+  CreateComponentDb,
+  WebloomNode,
+  WebloomTree,
+} from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 @Injectable()
 export class PagesService {
@@ -243,27 +247,13 @@ export class PagesService {
       .values(pagesToInsert[0])
       .returning();
     p;
-    const [rootComponent] = await this.componentsService.create(
-      [
-        {
-          id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-          type: 'WebloomContainer',
-          pageId: p.id,
-          createdById: pagesToInsert[0].createdById,
-          parentId: null,
-          props: {
-            className: 'h-full w-full',
-          },
-          col: 0,
-          row: 0,
-          columnsCount: 32,
-          rowsCount: 0,
-        },
-      ],
-      {
-        tx: options?.tx,
-      },
-    );
+    const [rootComponent] =
+      await this.componentsService.createTreeForPageImport(
+        p.id,
+        p.createdById,
+        [],
+        { tx: options?.tx },
+      );
 
     return {
       ...p,

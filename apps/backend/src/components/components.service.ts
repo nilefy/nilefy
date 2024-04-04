@@ -9,6 +9,7 @@ import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
+  createComponentDb,
   CreateComponentDb,
   UpdateComponentDb,
   WebloomTree,
@@ -140,15 +141,16 @@ export class ComponentsService {
 
   async createTreeForPageImport(
     pageId: PageDto['id'],
-    tree: ImportTreeDto,
+    createdById: PageDto['createdById'],
+    componentDto: CreateComponentDb[],
     options?: {
       tx?: PgTrans;
     },
   ) {
     console.log('from createTreeForPageImport: ');
-    console.log(tree);
+    console.log(componentDto);
     pageId;
-    tree;
+    componentDto;
     options;
 
     const [t] = await (options?.tx ? options.tx : this.db)
@@ -157,7 +159,8 @@ export class ComponentsService {
         id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
         pageId: pageId,
-        createdById: pageDto.createdById,
+        createdById: createdById,
+        nodes: [],
         parentId: null,
         props: {
           className: 'h-full w-full',
@@ -168,7 +171,7 @@ export class ComponentsService {
         rowsCount: 0,
       })
       .returning();
-    t;
+    return [t];
   }
 }
 

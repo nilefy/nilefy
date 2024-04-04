@@ -253,6 +253,13 @@ export class AppsService {
       });
 
       this.pagesService.importPage(pagesToInsert, { tx: tx });
+      /*
+      
+      - insert components into db and store their id's
+
+      - add the nodes' id's to the root component
+
+      */
 
       console.log(pagesToInsert);
 
