@@ -29,7 +29,7 @@ export type WebloomSelectProps = {
   options: SelectOptions[];
   labelText: string;
   labelPosition: 'left' | 'top';
-  selectedOptionValue?: string;
+  value?: string;
   defaultValue?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -48,7 +48,7 @@ const WebloomSelect = observer(function WebloomSelect() {
     () =>
       autorun(() => {
         onPropChange({
-          key: 'selectedOptionValue',
+          key: 'value',
           value: props.defaultValue,
         });
       }),
@@ -57,13 +57,13 @@ const WebloomSelect = observer(function WebloomSelect() {
   );
 
   /**
-   * why do i set the key to this weird `id + props.selectedOptionValue`?
+   * why do i set the key to this weird `id + props.value`?
    * when clearValue is triggred but the value was set before radix select don't re-show the placeholder
    * the workaround is to make react re-render the component when value changes from string back to undefined, so the component show the placeholder
    * @link https://github.com/radix-ui/primitives/issues/1569
    */
   return (
-    <ToolTipWrapper text={props.tooltip} key={id + props.selectedOptionValue}>
+    <ToolTipWrapper text={props.tooltip} key={id + props.value}>
       <div
         className={clsx('justify-left flex h-full w-full gap-3 p-1', {
           'flex-col': props.labelPosition === 'top',
@@ -72,11 +72,11 @@ const WebloomSelect = observer(function WebloomSelect() {
       >
         <Label>{props.labelText}</Label>
         <Select
-          value={props.selectedOptionValue}
+          value={props.value}
           disabled={props.disabled}
           onValueChange={(e) => {
             onPropChange({
-              key: 'selectedOptionValue',
+              key: 'value',
               value: e,
             });
             widget.handleEvent('onOptionChange');
@@ -115,7 +115,7 @@ const config: WidgetConfig = {
   widgetActions: {
     setValue: {
       type: 'SETTER',
-      path: 'selectedOptionValue',
+      path: 'value',
       name: 'setValue',
     },
     setDisabled: {
@@ -130,14 +130,14 @@ const config: WidgetConfig = {
     },
     clearValue: {
       type: 'SETTER',
-      path: 'selectedOptionValue',
+      path: 'value',
       value: undefined,
       name: 'clearValue',
     },
   },
 };
 
-const defaultProps: WebloomSelectProps = {
+const initialProps: WebloomSelectProps = {
   options: [
     { value: 'option1', label: 'Option 1' },
     { value: 'option2', label: 'Option 2' },
@@ -227,9 +227,9 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
 export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomSelect,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
-  metaProps: new Set(['selectedOptionValue']),
+  metaProps: new Set(['value']),
 };
 
 export { WebloomSelect };

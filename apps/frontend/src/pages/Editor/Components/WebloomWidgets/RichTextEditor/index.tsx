@@ -179,7 +179,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomTextEditorProps = {
+const initialProps: WebloomTextEditorProps = {
   label: 'Text Editor',
   value: '',
 };
@@ -203,7 +203,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextEditorProps> = [
 export const WebloomTextEditorWidget: Widget<WebloomTextEditorProps> = {
   component: WebloomTextEditor,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
 };

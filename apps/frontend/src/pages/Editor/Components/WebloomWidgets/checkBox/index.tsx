@@ -60,7 +60,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomCheckBoxProps = {
+const initialProps: WebloomCheckBoxProps = {
   label: 'Label',
   value: false,
   disabled: false,
@@ -94,7 +94,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomCheckBoxProps> = [
 export const WebloomCheckBoxWidget: Widget<WebloomCheckBoxProps> = {
   component: WebloomCheckBox,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
 };

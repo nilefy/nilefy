@@ -133,7 +133,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomChartProps = {
+const initialProps: WebloomChartProps = {
   dataSource: [
     { year: 2010, count: 10 },
     { year: 2011, count: 20 },
@@ -399,7 +399,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
 const WebloomChartWidget: Widget<WebloomChartProps> = {
   component: WebloomChart,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
 };
 

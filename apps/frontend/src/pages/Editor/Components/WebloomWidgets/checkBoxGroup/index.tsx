@@ -68,7 +68,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomCheckBoxGroupProps = {
+const initialProps: WebloomCheckBoxGroupProps = {
   options: [
     { value: 'Option 1', label: 'Option 1' },
     { value: 'Option 2', label: 'Option 2' },
@@ -115,7 +115,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomCheckBoxGroupProps> = [
 export const WebloomCheckBoxGroupWidget: Widget<WebloomCheckBoxGroupProps> = {
   component: WebloomCheckBoxGroup,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
 };

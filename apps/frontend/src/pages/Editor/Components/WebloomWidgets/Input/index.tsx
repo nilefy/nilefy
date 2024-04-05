@@ -118,7 +118,7 @@ const config: WidgetConfig = {
   },
 };
 
-const defaultProps: WebloomInputProps = {
+const initialProps: WebloomInputProps = {
   placeholder: 'Enter text',
   value: '',
   label: 'Label',
@@ -220,7 +220,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
 const WebloomInputWidget: Widget<WebloomInputProps> = {
   component: WebloomInput,
   config,
-  defaultProps,
+  initialProps,
   publicAPI: new Set(['value']),
   metaProps: new Set(['value']),
   inspectorConfig,

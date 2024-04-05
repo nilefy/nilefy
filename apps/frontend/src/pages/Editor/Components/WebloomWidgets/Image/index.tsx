@@ -62,7 +62,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomImageProps = {
+const initialProps: WebloomImageProps = {
   // TODO: change this url
   src: 'https://assets.appsmith.com/widgets/default.png',
   objectFit: 'contain',
@@ -132,7 +132,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
 const WebloomImageWidget: Widget<WebloomImageProps> = {
   component: WebloomImage,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
 };
 

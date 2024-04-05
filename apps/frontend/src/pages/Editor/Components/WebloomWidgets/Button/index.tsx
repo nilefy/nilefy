@@ -56,7 +56,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomButtonProps = {
+const initialProps: WebloomButtonProps = {
   text: 'Button',
   onClick: '',
   variant: 'default',
@@ -99,7 +99,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
 export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   component: WebloomButton,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
 };
 

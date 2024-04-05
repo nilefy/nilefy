@@ -1,13 +1,19 @@
 import { Widget } from '@/lib/Editor/interface';
 import {
-  defaultProps,
+  initialProps,
   inspectorConfig,
   WebloomContainer,
   WebloomContainerProps,
 } from '../Container';
 import { FileText } from 'lucide-react';
 import { editorStore } from '@/lib/Editor/Models';
-import { isPlainObject } from 'lodash';
+import { isPlainObject, set } from 'lodash';
+import { observer } from 'mobx-react-lite';
+import { useAutoRun } from '@/lib/Editor/hooks';
+import { useContext } from 'react';
+import { WidgetContext } from '../..';
+import { toJS } from 'mobx';
+
 const isEmptyValue = (value: unknown) => {
   if (Array.isArray(value) && value.length === 0) return true;
   if (value === undefined || value === null) {
@@ -19,11 +25,36 @@ const isEmptyValue = (value: unknown) => {
   if (isPlainObject(value) && Object.keys(value).length === 0) return true;
   return !!value;
 };
-export const WebloomFormWidget: Widget<WebloomContainerProps> = {
-  defaultProps,
-  inspectorConfig,
-  component: WebloomContainer,
 
+const WebloomForm = observer(
+  (props: Parameters<typeof WebloomContainer>[0]) => {
+    const { id } = useContext(WidgetContext);
+    const widget = editorStore.currentPage.getWidgetById(id);
+    // This works fine but I think a more versatile way would to be able to access the children in the code like so {{form.children}}
+    // and from that we can just delegate that to a derived value like so {{form.children}} -> {{form.data.children}} in the initialProps
+    useAutoRun(() => {
+      const data: Record<string, unknown> = {};
+      for (const descendantId of widget.descendants) {
+        const descendant = editorStore.currentPage.getWidgetById(descendantId);
+        if (descendant.finalValues.value) {
+          set(
+            data,
+            [descendantId, 'value'],
+            toJS(descendant.finalValues.value),
+          );
+        }
+      }
+      widget.setValue('data', data);
+    });
+    return <WebloomContainer {...props}>{props.children}</WebloomContainer>;
+  },
+);
+
+export const WebloomFormWidget: Widget<WebloomContainerProps> = {
+  initialProps,
+  inspectorConfig,
+  component: WebloomForm,
+  publicAPI: new Set(['data']),
   config: {
     icon: <FileText />,
     isCanvas: true,

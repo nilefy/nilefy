@@ -106,7 +106,7 @@ export class WebloomWidget
     props?: Record<string, unknown>;
   }) {
     const widgetConfig = WebloomWidgets[type];
-    const _props = props ?? widgetConfig.defaultProps;
+    const _props = props ?? widgetConfig.initialProps;
     const rawValues = {
       ..._props,
       layoutMode: widgetConfig.config.layoutConfig.layoutMode,
@@ -174,7 +174,15 @@ export class WebloomWidget
       isTheOnlySelected: computed,
       resizeDirection: computed,
       layoutMode: computed,
+      descendants: computed,
     });
+  }
+  get descendants(): string[] {
+    if (this.nodes.length === 0) return [];
+    return [
+      ...this.nodes.flatMap((node) => this.page.widgets[node].descendants),
+      ...this.nodes,
+    ];
   }
   get resizeDirection(): ResizeDirection {
     const direction = WebloomWidgets[this.type].config.resizingDirection;

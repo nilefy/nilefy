@@ -175,7 +175,7 @@ export type ComposedWidget = {
 };
 export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
-  defaultProps: TWidgetProps;
+  initialProps: TWidgetProps;
   publicAPI?: Set<string>;
   metaProps?: Set<string>;
   inspectorConfig: EntityInspectorConfig<TWidgetProps>;
@@ -226,4 +226,13 @@ export const WIDGET_SECTIONS = {
 export type selectOptions = {
   value: string;
   label: string;
+};
+
+/**
+ * @description These are the values that are passed to the widget when it is first created, they differ from
+ * default values. You can write code instead of static values here as well. Just make sure to add the paths of
+ * those values to the evaluablePaths array in the widget.
+ */
+export type InitialProps<T extends Record<string, unknown>> = {
+  [K in keyof T]: T[K] | string;
 };

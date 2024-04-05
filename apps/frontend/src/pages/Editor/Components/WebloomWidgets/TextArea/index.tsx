@@ -119,7 +119,7 @@ const config: WidgetConfig = {
   },
 };
 
-const defaultProps: WebloomTextAreaProps = {
+const initialProps: WebloomTextAreaProps = {
   placeholder: 'Enter text',
   labelText: 'Label',
   labelPosition: 'top',
@@ -245,7 +245,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
 const WebloomTextAreaWidget: Widget<WebloomTextAreaProps> = {
   component: WebloomTextArea,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
 };
