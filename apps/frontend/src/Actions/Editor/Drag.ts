@@ -23,7 +23,6 @@ class DragAction implements UndoableCommand {
   >;
   private newType!: WidgetTypes;
   private endPosition: WebloomGridDimensions;
-  private oldPosition!: WebloomGridDimensions;
   constructor(options: {
     draggedItem: DraggedItem;
     endPosition: WebloomGridDimensions;
@@ -51,23 +50,29 @@ class DragAction implements UndoableCommand {
           parentId: this.parentId,
           type: this.newType,
           id: this.id,
-          col: 0,
-          row: 0,
-          props: WebloomWidgets[this.newType].defaultProps,
         });
         this.undoData = editorStore.currentPage.moveWidgetIntoGrid(
           this.id,
           endDims,
         );
       });
+      const addedWidget = editorStore.currentPage.getWidgetById(
+        this.id,
+      ).snapshot;
       const affectedNodes = Object.keys(this.undoData)
         .filter((test) => test !== this.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
+      const blueprintChildren = affectedNodes.concat(
+        addedWidget.nodes.map(
+          (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
+        ),
+      );
+
       return {
         event: 'insert' as const,
         data: {
-          nodes: [editorStore.currentPage.getWidgetById(this.id).snapshot],
+          nodes: [addedWidget, ...blueprintChildren],
           sideEffects: affectedNodes,
         },
       };

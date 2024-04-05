@@ -26,6 +26,7 @@ export type WorkerRequest =
   | AddEntityRequest
   | ChangePageRequest
   | EntityEventExecutionRequest
+  | EntityActionExecutionRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -79,6 +80,13 @@ export type RemoveEntityRequest = {
   event: 'removeEntity';
   body: {
     id: string;
+  };
+};
+export type EntityActionExecutionRequest = {
+  event: 'entityActionExecution';
+  body: {
+    id: string;
+    actionName: string;
   };
 };
 

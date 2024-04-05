@@ -49,7 +49,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomSelectProps = {
+const initialProps: WebloomSelectProps = {
   options: [
     { value: 'Option 1', label: 'Option 1' },
     { value: 'Option 2', label: 'Option 2' },
@@ -94,8 +94,9 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
 ];
 export const WebloomMultiSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomMultiSelect,
+  metaProps: new Set(['value']),
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
 };
 

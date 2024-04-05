@@ -63,7 +63,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomRadioProps = {
+const initialProps: WebloomRadioProps = {
   options: [
     { value: 'Option 1', label: 'Option 1' },
     { value: 'Option 2', label: 'Option 2' },
@@ -110,9 +110,10 @@ const inspectorConfig: EntityInspectorConfig<WebloomRadioProps> = [
 export const WebloomRadioWidget: Widget<WebloomRadioProps> = {
   component: WebloomRadio,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   publicAPI: new Set(['value']),
+  metaProps: new Set(['value']),
 };
 
 export { WebloomRadio };

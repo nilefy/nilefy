@@ -53,7 +53,7 @@ const handlePositions = {
 
 export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
   const widget = editorStore.currentPage.getWidgetById(id);
-  const direction = WebloomWidgets[widget.type].config.resizingDirection;
+  const direction = widget.resizeDirection;
   const allowedResizingHandles = useMemo(() => {
     if (direction === 'Both') {
       return Object.keys(handlePositions);

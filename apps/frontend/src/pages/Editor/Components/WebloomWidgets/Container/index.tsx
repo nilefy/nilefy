@@ -21,7 +21,7 @@ const webloomContainerProps = z.object({
   color: z.string(),
   layoutMode: z.enum(['fixed', 'auto']),
 });
-type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+export type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
 
 const WebloomContainer = observer(
   ({
@@ -83,7 +83,7 @@ const WebloomContainer = observer(
     );
   },
 );
-export const defaultProps: WebloomContainerProps = {
+export const initialProps: WebloomContainerProps = {
   color: 'white',
   layoutMode: 'fixed',
 };
@@ -135,7 +135,7 @@ export const config: WidgetConfig = {
 };
 export const WebloomContainerWidget: Widget<WebloomContainerProps> = {
   component: WebloomContainer,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   config,
 };

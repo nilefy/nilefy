@@ -72,7 +72,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomDatePickerProps = {
+const initialProps: WebloomDatePickerProps = {
   date: new Date(),
   label: 'Date',
   dateFormat: 'PPP',
@@ -82,7 +82,7 @@ const widgetName = 'WebloomDatePicker';
 // export const WebloomDatePickerWidget: Widget<WebloomDatePickerProps> = {
 //   component: WebloomDatePicker,
 //   config,
-//   defaultProps,
+//   initialProps,
 //   inspectorConfig,
 // };
 

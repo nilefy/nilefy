@@ -189,7 +189,7 @@ we will use `post-checkout` event, follow those steps to enable the hook
     | config       | `WidgetConfig`               | true     | Used to describe metadata about the component. [For more information](#widgetconfig)           |
     | schema       | `WidgetInspectorConfig`      | true     | Describe the props schema using [rjsf](https://rjsf-team.github.io/react-jsonschema-form/docs/) flavored JSON schema.                                     |
     | setters      | `WidgetSetters<WidgetProps>` | false    | Describe the auto-generated [for more information](#widgetsetters) setters.                    |
-    | defaultProps | `WidgetProps`                | true     | Props the widget will start with (the component should add the props it must have to operate). |
+    | initialProps | `WidgetProps`                | true     | Props the widget will start with (the component should add the props it must have to operate). |
 
 - add the widget to the list of Webloom Widgets [here](/apps/frontend/src/pages/Editor/Components/index.ts)
 

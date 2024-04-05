@@ -37,7 +37,7 @@ export class Entity implements WebloomDisposable {
   private mainThreadBroker: MainThreadBroker;
   // these are the props that are set by the setter, we map the path to the old value.
   public setterProps: Record<string, unknown> = {};
-
+  private metaValues: Set<string>;
   constructor({
     id,
     dependencyManager,
@@ -47,6 +47,7 @@ export class Entity implements WebloomDisposable {
     inspectorConfig = [],
     publicAPI = new Set(),
     actionsConfig = {},
+    metaValues = new Set(),
   }: {
     id: string;
     dependencyManager: DependencyManager;
@@ -56,6 +57,7 @@ export class Entity implements WebloomDisposable {
     evaluablePaths?: string[];
     publicAPI?: Set<string>;
     actionsConfig?: EntityActionRawConfig;
+    metaValues?: Set<string>;
   }) {
     makeObservable(this, {
       id: observable,
@@ -71,6 +73,7 @@ export class Entity implements WebloomDisposable {
       setValues: action,
       initDependecies: action,
     });
+    this.metaValues = metaValues;
     this.mainThreadBroker = mainThreadBroker;
     this.actions = this.processActionConfig(actionsConfig);
     this.publicAPI = publicAPI;
@@ -240,6 +243,13 @@ export class Entity implements WebloomDisposable {
       const configItem = config[key];
       if (configItem.type === 'SETTER') {
         actions[key] = (value: unknown) => {
+          if (this.metaValues.has(configItem.path)) {
+            return this.mainThreadBroker.addEvent({
+              id: this.id,
+              actionName: key,
+              args: [value],
+            });
+          }
           runInAction(() => {
             const path = configItem.path;
             if ('value' in configItem) {

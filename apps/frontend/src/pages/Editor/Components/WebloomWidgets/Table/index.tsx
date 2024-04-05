@@ -441,7 +441,7 @@ const config: WidgetConfig = {
   },
 };
 
-const defaultProps: WebloomTableProps = {
+const initialProps: WebloomTableProps = {
   data: [],
   selectedRow: {},
   selectedRowIndex: -1,
@@ -549,9 +549,10 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
 const WebloomTableWidget: Widget<WebloomTableProps> = {
   component: WebloomTable,
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
   publicAPI: new Set(),
+  metaProps: new Set(['selectedRow', 'selectedRowIndex', 'data']),
 };
 
 export { WebloomTableWidget };

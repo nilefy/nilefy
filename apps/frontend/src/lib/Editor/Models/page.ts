@@ -18,9 +18,13 @@ import { WorkerBroker } from './workerBroker';
 import { CursorManager } from './cursorManager';
 
 import { WebloomDisposable } from './interfaces';
+import { WebloomWidgets } from '@/pages/Editor/Components';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-
+export type NewWidgePayload = Omit<
+  ConstructorParameters<typeof WebloomWidget>[0],
+  'page'
+>;
 export class WebloomPage implements WebloomDisposable {
   id: string;
   name: string;
@@ -70,6 +74,7 @@ export class WebloomPage implements WebloomDisposable {
       shadowElement: observable,
       removeWidget: action,
       addWidget: action,
+      _addWidget: action,
       setDraggedWidgetId: action,
       setResizedWidgetId: action,
       setNewNode: action,
@@ -94,6 +99,7 @@ export class WebloomPage implements WebloomDisposable {
       clearSelectedNodes: action,
       setHoveredWidgetId: action,
       removeSelectedNode: action,
+      selectAll: action,
     });
 
     this.id = id;
@@ -109,6 +115,7 @@ export class WebloomPage implements WebloomDisposable {
       });
     });
     this.widgets = widgetMap;
+
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
@@ -116,6 +123,10 @@ export class WebloomPage implements WebloomDisposable {
 
     this.cursorManager = new CursorManager(this);
   }
+  selectAll() {
+    this.selectedNodeIds = new Set(this.rootWidget.nodes);
+  }
+
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
@@ -178,18 +189,42 @@ export class WebloomPage implements WebloomDisposable {
    * @description adds a widget to the page.
    */
   addWidget(
-    widgetArgs: Omit<
-      ConstructorParameters<typeof WebloomWidget>[0],
-      'page' | 'evaluationManger' | 'dependencyManager'
-    >,
-  ) {
+    widgetArgs: Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'>,
+  ): string {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
     });
-    this.widgets[widget.id] = widget;
+    this._addWidget(widget);
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
+    const widgetConfig = WebloomWidgets[widgetArgs.type];
+    const ops: (() => void)[] = [];
+    // handle composed widgets
+    if (widgetConfig.blueprint) {
+      for (const child of widgetConfig.blueprint.children) {
+        let newCol = child.col || 0;
+        // This is kind of implicit, but whoever writes the config expects the col to be relative to the parent layout and this does that.
+        const newColPrecentage =
+          (newCol / widgetConfig.config.layoutConfig.colsCount) * 100;
+        newCol = Math.round((newColPrecentage / 100) * parent.columnsCount);
+        const id = this.addWidget({
+          ...child,
+          parentId: widget.id,
+          col: newCol,
+        });
+        if (child.onAttach) {
+          ops.push(() => {
+            child.onAttach!(this.widgets[id]);
+          });
+        }
+      }
+    }
+    ops.forEach((op) => op());
+    return widget.id;
+  }
+  _addWidget(widget: WebloomWidget) {
+    this.widgets[widget.id] = widget;
   }
   getWidgetById(id: string) {
     return this.widgets[id];

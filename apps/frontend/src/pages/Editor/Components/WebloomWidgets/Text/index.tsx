@@ -47,7 +47,7 @@ const config: WidgetConfig = {
   },
 };
 
-const defaultProps: WebloomTextProps = {
+const initialProps: WebloomTextProps = {
   text: 'Text',
 };
 
@@ -72,7 +72,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
 export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
-  defaultProps,
+  initialProps,
   publicAPI: new Set(['text']),
   inspectorConfig,
 };

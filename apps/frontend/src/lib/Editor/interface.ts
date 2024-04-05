@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
+import { NewWidgePayload } from './Models/page';
 
 type BaseControlProps = {
   label: string;
@@ -165,12 +166,25 @@ export interface WidgetConfig {
   widgetActions?: EntityActionConfig<WebloomWidget>;
 }
 
-export type Widget<WidgetProps extends Record<string, unknown>> = {
-  component: React.ElementType;
+export type PrimitiveWidget = {
+  isComposed: false;
+};
+
+export type ComposedWidget = {
+  isComposed: true;
+};
+export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
-  defaultProps: WidgetProps;
+  initialProps: TWidgetProps;
   publicAPI?: Set<string>;
-  inspectorConfig: EntityInspectorConfig<WidgetProps>;
+  metaProps?: Set<string>;
+  inspectorConfig: EntityInspectorConfig<TWidgetProps>;
+  blueprint?: {
+    children: (Omit<NewWidgePayload, 'parentId' | 'id'> & {
+      onAttach?: (widget: WebloomWidget) => void;
+    })[];
+  };
+  component: React.ElementType;
 };
 type SelectOptions = {
   value: string;
@@ -212,4 +226,13 @@ export const WIDGET_SECTIONS = {
 export type selectOptions = {
   value: string;
   label: string;
+};
+
+/**
+ * @description These are the values that are passed to the widget when it is first created, they differ from
+ * default values. You can write code instead of static values here as well. Just make sure to add the paths of
+ * those values to the evaluablePaths array in the widget.
+ */
+export type InitialProps<T extends Record<string, unknown>> = {
+  [K in keyof T]: T[K] | string;
 };

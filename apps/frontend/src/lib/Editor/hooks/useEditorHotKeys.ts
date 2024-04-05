@@ -51,4 +51,9 @@ export const useEditorHotKeys = (
       console.log(ig);
     }
   });
+
+  useHotkeys('ctrl+a', (e) => {
+    e.preventDefault();
+    editorStore.currentPage.selectAll();
+  });
 };

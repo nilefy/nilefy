@@ -53,3 +53,12 @@ export const getArrayPaths = (
   }
   return paths;
 };
+
+/**
+ * @description used for computed properties
+ * @param fn
+ * @returns
+ */
+export const functionToIIFEBindingString = (fn: (...args: never[]) => void) => {
+  return `{{(${fn.toString()})()}}`;
+};

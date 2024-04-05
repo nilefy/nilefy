@@ -52,7 +52,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Horizontal',
 };
 
-const defaultProps: WebloomFilePickerProps = {
+const initialProps: WebloomFilePickerProps = {
   value: undefined,
   label: 'Label',
 };
@@ -75,8 +75,9 @@ const inspectorConfig: EntityInspectorConfig<WebloomFilePickerProps> = [
 
 const WebloomFilePickerWidget: Widget<WebloomFilePickerProps> = {
   component: WebloomFilePicker,
+  metaProps: new Set(['value']),
   config,
-  defaultProps,
+  initialProps,
   inspectorConfig,
 };
 

@@ -57,6 +57,8 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public actionsConfig: EntityActionConfig;
   public rawActionsConfig: EntityActionRawConfig;
   private evaluablePaths: Set<string>;
+  public metaValues: Set<string>;
+
   constructor({
     id,
     workerBroker,
@@ -66,6 +68,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     entityType: entityType,
     entityActionConfig = {},
     evaluablePaths = [],
+    metaValues = new Set(),
   }: {
     id: string;
     entityType: EntityTypes;
@@ -75,6 +78,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     publicAPI?: Set<string>;
     workerBroker: WorkerBroker;
     entityActionConfig?: EntityActionConfig;
+    metaValues?: Set<string>;
   }) {
     makeObservable(this, {
       id: observable,
@@ -96,6 +100,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       pushIntoArray: action,
       removeElementFromArray: action,
     });
+    this.metaValues = metaValues;
     this.evaluablePaths = new Set<string>([
       ...evaluablePaths,
       ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
@@ -141,6 +146,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
           publicAPI: this.publicAPI,
           id: this.id,
           actionsConfig: this.rawActionsConfig,
+          metaValues: this.metaValues,
         },
       },
     });
@@ -149,7 +155,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   applyEvalationUpdatePatch(ops: Diff<any>[]) {
     applyDiff(this.values, ops);
     const newFinalValues = klona(this.rawValues);
-    for (const path of this.evaluablePaths) {
+    for (const path of [...this.evaluablePaths]) {
       let paths = [path];
       if (path.includes('[*]')) {
         paths = getArrayPaths(path, this.evaluablePaths, this.rawValues);
@@ -306,12 +312,28 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
             configItem.fn(this, ...args);
           });
         };
+      } else if (this.metaValues.has(configItem.path)) {
+        // We're only interested in the meta values since we're going to modify their raw values directly
+        // The worker modifes the final values for anythign that is not a meta value
+        actions[key] = (newValue: unknown) => {
+          if ('value' in configItem) {
+            newValue = configItem.value;
+          }
+          this.setValue(configItem.path, newValue);
+        };
       }
-      // We needn't handle setters. They only work in the worker.
     }
     return actions;
   };
-
+  remoteExecuteAction = (actionName: string) => {
+    this.workerBroker.postMessege({
+      event: 'entityActionExecution',
+      body: {
+        id: this.id,
+        actionName,
+      },
+    });
+  };
   executeAction = (actionName: string, ...args: unknown[]) => {
     const action = this.actions[actionName];
     if (!action) return;
