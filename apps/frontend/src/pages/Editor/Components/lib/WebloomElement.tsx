@@ -5,7 +5,6 @@ import { WebloomWidgets, WidgetContext } from '..';
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
 import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
-import { WebloomContainer } from '../WebloomWidgets/Container';
 import { flow, flowRight } from 'lodash';
 import {
   WithDeletePopover,

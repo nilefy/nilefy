@@ -26,12 +26,16 @@ const isEmptyValue = (value: unknown) => {
   return !!value;
 };
 
+export type WebloomFormProps = WebloomContainerProps & {
+  onSubmit?: string;
+};
+
 const WebloomForm = observer(
   (props: Parameters<typeof WebloomContainer>[0]) => {
     const { id } = useContext(WidgetContext);
     const widget = editorStore.currentPage.getWidgetById(id);
     // This works fine but I think a more versatile way would to be able to access the children in the code like so {{form.children}}
-    // and from that we can just delegate that to a derived value like so {{form.children}} -> {{form.data.children}} in the initialProps
+    // and from that we can just delegate that to a derived value like so {{(function(){computedDataFromChildren(from.children)})()}} in the initialProps
     useAutoRun(() => {
       const data: Record<string, unknown> = {};
       for (const descendantId of widget.descendants) {
@@ -50,9 +54,25 @@ const WebloomForm = observer(
   },
 );
 
-export const WebloomFormWidget: Widget<WebloomContainerProps> = {
+export const WebloomFormWidget: Widget<WebloomFormProps> = {
   initialProps,
-  inspectorConfig,
+  inspectorConfig: [
+    ...inspectorConfig,
+    {
+      sectionName: 'Interactions',
+      children: [
+        {
+          label: 'onSubmit',
+          type: 'inlineCodeInput',
+          isEvent: true,
+          path: 'onSubmit',
+          options: {
+            label: 'onSubmit',
+          },
+        },
+      ],
+    },
+  ],
   component: WebloomForm,
   publicAPI: new Set(['data']),
   config: {
@@ -87,6 +107,14 @@ export const WebloomFormWidget: Widget<WebloomContainerProps> = {
               }
             }
           }
+        },
+      },
+      submit: {
+        type: 'SIDE_EFFECT',
+        name: 'submit',
+        fn: (entity) => {
+          entity.handleEvent('onSubmit');
+          entity.remoteExecuteAction('reset');
         },
       },
     },
