@@ -37,6 +37,7 @@ export class EditorState implements WebloomDisposable {
   queriesManager!: QueriesManager;
   appId!: number;
   workspaceId!: number;
+  selectedQueryId: string | null = null;
   /**
    * application name
    */
@@ -61,10 +62,33 @@ export class EditorState implements WebloomDisposable {
       removePage: action,
       init: action,
       applyEvalForestPatch: action.bound,
+      applyEntityToEntityDependencyPatch: action.bound,
       currentPageErrors: computed,
+      selectedQueryId: observable,
+      setSelectedQueryId: action,
     });
     this.workerBroker = new WorkerBroker(this);
   }
+  setSelectedQueryId(
+    idOrCb: string | null | ((prev: string | null) => string | null),
+  ) {
+    if (typeof idOrCb === 'function') {
+      this.selectedQueryId = idOrCb(this.selectedQueryId);
+    } else {
+      this.selectedQueryId = idOrCb;
+    }
+  }
+  applyEntityToEntityDependencyPatch(
+    lastEntityToEntityDependencyUpdates: Record<string, Diff<any>[]>,
+  ) {
+    entries(lastEntityToEntityDependencyUpdates).forEach(([id, op]) => {
+      const entity = this.getEntityById(id);
+      if (entity) {
+        entity.applyDependencyUpdatePatch(op);
+      }
+    });
+  }
+
   applyEvalForestPatch(
     lastEvalUpdates: Record<string, Diff<any>[]>,
     lastRunTimeErrors: Record<string, Diff<any>[]>,

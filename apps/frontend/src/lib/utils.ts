@@ -20,3 +20,11 @@ export function hashKey(item: unknown): string {
       : val,
   );
 }
+
+export const singularOrPlural = (
+  num: number,
+  singular: string,
+  plural: string,
+) => {
+  return num === 1 ? singular : plural;
+};

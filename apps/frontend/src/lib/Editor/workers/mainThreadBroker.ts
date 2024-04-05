@@ -10,6 +10,13 @@ import { klona } from 'klona';
 export class MainThreadBroker {
   private disposables: (() => void)[] = [];
   private worker = self;
+  private lastEntityToEntityDependencies: Record<
+    string,
+    {
+      dependencies: string[];
+      dependants: string[];
+    }
+  > = {};
   private lastEvaluatedForest: Record<string, unknown> = {};
   private lastRunTimeErros: Record<string, Record<string, string[]>> = {};
   private lastEvaluationValidationErrors: Record<
@@ -45,6 +52,12 @@ export class MainThreadBroker {
       reaction(
         () => this.editorState.evaluationManager.evaluatedForest,
         this.handleEvaluationUpdate,
+      ),
+      reaction(
+        () =>
+          this.editorState.dependencyManager.dependencyGraph
+            .entityToEntityDependencies,
+        this.handleDependenciesUpdate,
       ),
       reaction(() => this.actionsQueue.length, this.handleEventExecution, {
         delay: 10,
@@ -136,7 +149,36 @@ export class MainThreadBroker {
       body: actions,
     });
   };
-
+  handleDependenciesUpdate = () => {
+    const serializedEntityToEntityDependencies = klona(
+      this.editorState.dependencyManager.dependencyGraph
+        .entityToEntityDependencies,
+    );
+    const lastEntityToEntityDependenciesWithDefault: Record<
+      string,
+      Record<string, string[]>
+    > = {};
+    for (const key in this.editorState.entities) {
+      lastEntityToEntityDependenciesWithDefault[key] =
+        this.lastEntityToEntityDependencies[key] || {};
+    }
+    const dependencyOps: Record<string, Diff<any>[]> = {};
+    for (const key in lastEntityToEntityDependenciesWithDefault) {
+      const lastDeps = lastEntityToEntityDependenciesWithDefault[key];
+      const ops = diff(
+        lastDeps,
+        serializedEntityToEntityDependencies[key] || {},
+      );
+      if (!ops || ops.length === 0) continue;
+      dependencyOps[key] = ops;
+    }
+    this.postMessage({
+      event: 'DependencyUpdate',
+      body: {
+        dependencyUpdates: dependencyOps,
+      },
+    });
+  };
   handleEvaluationUpdate = () => {
     const serializedEvalForest = klona(
       this.editorState.evaluationManager.evaluatedForest.evalTree,

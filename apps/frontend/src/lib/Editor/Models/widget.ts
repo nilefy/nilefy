@@ -1,12 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  computed,
-  action,
-  override,
-  autorun,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from './page';
@@ -32,6 +24,7 @@ import { Entity } from './entity';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
 import { EntityActionConfig } from '../evaluation/interface';
+import { WidgetSelection } from '@/actions/Editor/selection';
 const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
   scrollIntoView: {
     type: 'SIDE_EFFECT',
@@ -175,6 +168,7 @@ export class WebloomWidget
       resizeDirection: computed,
       layoutMode: computed,
       descendants: computed,
+      unselectSelf: action,
     });
   }
   get descendants(): string[] {
@@ -446,6 +440,7 @@ export class WebloomWidget
       return new Set([...prev].filter((i) => i !== this.id));
     });
   }
+
   dispose() {
     this.unselectSelf();
     super.dispose();

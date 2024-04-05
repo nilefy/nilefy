@@ -7,6 +7,18 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ArrowRight } from 'lucide-react';
+import { singularOrPlural } from '@/lib/utils';
+import { commandManager } from '@/actions/CommandManager';
+import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
@@ -37,7 +49,7 @@ export const WidgetConfigPanel = observer(() => {
   );
 });
 
-function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
+const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
   const [value, setValue] = useState(node.id);
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -49,8 +61,73 @@ function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
     setValue(node.id);
   }, [node.id]);
   if (!node) return null;
+  const incoming = node.connections.dependencies;
+  const outgoing = node.connections.dependents;
+  const selectCallback = useCallback((id: string) => {
+    commandManager.executeCommand(new RemoteSelectEntity(id));
+  }, []);
   return (
     <div className="flex flex-col items-start justify-center gap-1">
+      <div className="flex w-full justify-between px-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-between gap-2">
+            <ArrowRight />
+            <span className="font-semibold">{` ${
+              incoming.length
+            } ${singularOrPlural(
+              incoming.length,
+              'entity',
+              'entities',
+            )}`}</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Incoming connections</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {incoming.map((id) => {
+              return (
+                <DropdownMenuItem
+                  key={id}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    selectCallback(id);
+                  }}
+                >
+                  {id}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-between gap-2">
+            <ArrowRight />
+            <span className="font-semibold">{` ${
+              outgoing.length
+            } ${singularOrPlural(
+              outgoing.length,
+              'entity',
+              'entities',
+            )}`}</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Outgoing connections</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {outgoing.map((id) => {
+              return (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  key={id}
+                  onClick={() => {
+                    selectCallback(id);
+                  }}
+                >
+                  {id}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <Label className="text-sm font-medium text-gray-600" htmlFor="name">
         Name
       </Label>
@@ -65,4 +142,4 @@ function ConfigPanelHeader({ node }: { node: WebloomWidget }) {
       />
     </div>
   );
-}
+});

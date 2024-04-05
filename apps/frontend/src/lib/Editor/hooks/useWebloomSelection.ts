@@ -1,7 +1,7 @@
 import { commandManager } from '@/actions/CommandManager';
 import { useCallback, useEffect } from 'react';
 import { editorStore } from '../Models';
-import { SelectionAction } from '@/actions/Editor/selection';
+import { WidgetSelection } from '@/actions/Editor/selection';
 /**
  * @description Used to select the widget on click
  * @param ref
@@ -12,7 +12,7 @@ export const useWebloomSelection = (id: string) => {
   const select = useCallback(
     (e: MouseEvent) => {
       commandManager.executeCommand(
-        SelectionAction.selectThroughClick(id, e.shiftKey),
+        WidgetSelection.selectThroughClick(id, e.shiftKey),
       );
     },
     [id],
