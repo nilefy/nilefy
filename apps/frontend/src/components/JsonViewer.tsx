@@ -9,7 +9,7 @@ import {
 import { editorStore } from '@/lib/Editor/Models';
 
 import { commandManager } from '@/actions/CommandManager';
-import { SelectionAction } from '@/actions/Editor/selection';
+import { WidgetSelection } from '@/actions/Editor/selection';
 import { observer } from 'mobx-react-lite';
 
 // TODO: add real JSON type, you can copy it from `typefest`
@@ -143,7 +143,7 @@ export const JsonViewer = observer(function JsonViewer() {
                   <button
                     onClick={() => {
                       commandManager.executeCommand(
-                        SelectionAction.remoteSelect(node.id),
+                        WidgetSelection.remoteSelect(node.id),
                       );
                       editorStore.currentPage
                         .getWidgetById(node.id)

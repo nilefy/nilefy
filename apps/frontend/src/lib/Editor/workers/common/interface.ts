@@ -12,9 +12,18 @@ export type WorkerEventExecutionResponse = {
   body: EventExecutionResult[];
   event: 'EventExecution';
 };
+
+export type DependencyUpdateResponse = {
+  body: {
+    dependencyUpdates: Record<string, Diff<any>[]>;
+  };
+  event: 'DependencyUpdate';
+};
+
 export type WorkerResponse =
   | EvaluationUpdateResponse
-  | WorkerEventExecutionResponse;
+  | WorkerEventExecutionResponse
+  | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
   'dependencyManager' | 'mainThreadBroker'

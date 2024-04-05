@@ -79,6 +79,11 @@ export class WorkerBroker implements WebloomDisposable {
           body.validationErrorUpdates,
         );
         break;
+      case 'DependencyUpdate':
+        this.editorState.applyEntityToEntityDependencyPatch(
+          body.dependencyUpdates,
+        );
+        break;
       case 'EventExecution':
         body.forEach((executionResult) => {
           const id = executionResult.id;

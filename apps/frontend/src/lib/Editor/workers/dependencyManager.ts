@@ -1,4 +1,4 @@
-import { observable, makeObservable, action, computed } from 'mobx';
+import { observable, makeObservable, action, computed, toJS } from 'mobx';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { forEach } from 'lodash';
 import { EditorState } from './editor';
@@ -93,6 +93,8 @@ export class DepGraph {
       overAllOrderAllNodes: computed,
       entryNodes: computed,
       removeEntity: action,
+      entities: computed,
+      entityToEntityDependencies: computed,
       // while this is technically a getter, it's marked as an action because it does some mutation (which it reverts)
       // but I want mobx to not cause reactions to run when this is called
       willCauseCycle: action,
@@ -102,7 +104,27 @@ export class DepGraph {
       clearOutgoingEdgesForPath: action,
     });
   }
-
+  get entities() {
+    const entities = new Set<string>();
+    for (const path of this.paths) {
+      const [id] = path.split('.');
+      entities.add(id);
+    }
+    return entities;
+  }
+  get entityToEntityDependencies() {
+    const result: Record<
+      string,
+      { dependents: string[]; dependencies: string[] }
+    > = {};
+    for (const entity of this.entities) {
+      result[entity] = {
+        dependents: this.directEntityDependentsOfEntity(entity),
+        dependencies: this.directEntityDependenciesOfEntity(entity),
+      };
+    }
+    return result;
+  }
   clearIncomingEdgesForPath(path: string) {
     if (!this.incomingPathsEdges.has(path)) return;
     this.incomingPathsEdges.set(path, []);
@@ -270,6 +292,33 @@ export class DepGraph {
       }
     }
   }
+  directEntityDependenciesOfEntity(entityId: string) {
+    const result: Set<string> = new Set();
+    for (const path of this.incomingPathsEdges.keys()) {
+      const [id] = path.split('.');
+      if (entityId === id) {
+        this.incomingPathsEdges.get(path)!.forEach((path) => {
+          const [id] = path.split('.');
+          result.add(id);
+        });
+      }
+    }
+    return Array.from(result);
+  }
+  directEntityDependentsOfEntity(entityId: string) {
+    const result: Set<string> = new Set();
+    for (const path of this.outgoingPathsEdges.keys()) {
+      const [id] = path.split('.');
+      if (entityId === id) {
+        this.outgoingPathsEdges.get(path)!.forEach((path) => {
+          const [id] = path.split('.');
+          result.add(id);
+        });
+      }
+    }
+    return Array.from(result);
+  }
+
   removeEntity(entityId: string) {
     for (const path of this.paths) {
       const [id] = path.split('.');

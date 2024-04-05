@@ -58,6 +58,13 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public rawActionsConfig: EntityActionRawConfig;
   private evaluablePaths: Set<string>;
   public metaValues: Set<string>;
+  public connections: {
+    dependents: string[];
+    dependencies: string[];
+  } = {
+    dependents: [],
+    dependencies: [],
+  };
 
   constructor({
     id,
@@ -86,6 +93,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       values: observable,
       codePaths: observable,
       finalValues: observable,
+      connections: observable,
       setValue: action,
       dispose: action,
       hasErrors: computed,
@@ -151,7 +159,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       },
     });
   }
-
+  applyDependencyUpdatePatch(ops: Diff<any>[]) {
+    applyDiff(this.connections, ops);
+  }
   applyEvalationUpdatePatch(ops: Diff<any>[]) {
     applyDiff(this.values, ops);
     const newFinalValues = klona(this.rawValues);

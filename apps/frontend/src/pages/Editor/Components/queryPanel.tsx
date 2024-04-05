@@ -52,7 +52,6 @@ export const QueryConfigPanel = observer(({ id }: { id: string }) => {
 });
 
 import { LoadingButton } from '@/components/loadingButton';
-import { QueryI } from '@/api/queries.api';
 
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
   forwardRef(function QueryPreview(props, ref) {
@@ -204,7 +203,6 @@ export const QueryPanel = observer(function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState('all');
   const [sortingCriteria, setSortingCriteria] = useState<
@@ -226,7 +224,7 @@ export const QueryPanel = observer(function QueryPanel() {
    * toggle the selection
    */
   const handleItemClick = (itemId: string) => {
-    setSelectedItemId((prevSelectedItemId) =>
+    editorStore.setSelectedQueryId((prevSelectedItemId) =>
       prevSelectedItemId === itemId ? null : itemId,
     );
   };
@@ -298,11 +296,11 @@ export const QueryPanel = observer(function QueryPanel() {
           keys: ['id'],
         });
         if (res.length > 0) {
-          setSelectedItemId(res[0].id);
+          editorStore.setSelectedQueryId(res[0].id);
         }
         return res;
       } else {
-        setSelectedItemId(null);
+        editorStore.setSelectedQueryId(null);
         return [];
       }
     });
@@ -465,7 +463,7 @@ export const QueryPanel = observer(function QueryPanel() {
             {filteredQueries?.map((item) => (
               <li
                 className={clsx(
-                  { 'bg-primary/10': item.id === selectedItemId },
+                  { 'bg-primary/10': item.id === editorStore.selectedQueryId },
                   'flex w-full items-center',
                 )}
                 key={item.id}
@@ -527,10 +525,10 @@ export const QueryPanel = observer(function QueryPanel() {
       </div>
       {/* ITEM */}
       <div className="h-full w-full border-l border-[#e5e7eb]">
-        {selectedItemId ? (
+        {editorStore.selectedQueryId ? (
           <QueryItem
-            key={queries[selectedItemId].id}
-            query={queries[selectedItemId]}
+            key={queries[editorStore.selectedQueryId].id}
+            query={queries[editorStore.selectedQueryId]}
           />
         ) : (
           <div className="h-full w-full flex-row items-center justify-center ">
