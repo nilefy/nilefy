@@ -78,6 +78,8 @@ export const WebloomFormWidget: Widget<WebloomContainerProps> = {
               const action = widget.actionsConfig[actionName];
               if (
                 action.type === 'SETTER' &&
+                // We need a better way to differentiate between input widgets and other widgets
+                action.path === 'value' &&
                 'value' in action &&
                 isEmptyValue(action.value)
               ) {
