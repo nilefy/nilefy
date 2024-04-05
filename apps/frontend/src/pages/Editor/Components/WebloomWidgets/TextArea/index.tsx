@@ -247,6 +247,7 @@ const WebloomTextAreaWidget: Widget<WebloomTextAreaProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  metaProps: new Set(['value']),
 };
 
 export { WebloomTextAreaWidget };

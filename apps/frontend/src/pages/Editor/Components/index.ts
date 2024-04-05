@@ -16,6 +16,7 @@ import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
 import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
 import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
 import { WebloomTextAreaWidget } from './WebloomWidgets/TextArea';
+import { WebloomFormWidget } from './WebloomWidgets/Form';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -35,6 +36,7 @@ export const WebloomWidgets = {
   WebloomRadioGroup: WebloomRadioWidget,
   WebloomCheckBox: WebloomCheckBoxWidget,
   WebloomCheckBoxGroup: WebloomCheckBoxGroupWidget,
+  WebloomForm: WebloomFormWidget,
 } as const;
 
 export const WidgetContext = createContext<{

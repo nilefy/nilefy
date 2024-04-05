@@ -14,7 +14,7 @@ type CornerResizingKeys =
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right';
-type ResizingKeys = MainResizingKeys | CornerResizingKeys;
+export type ResizingKeys = MainResizingKeys | CornerResizingKeys;
 
 class ResizeAction {
   public static resizingKey: ResizingKeys | null = null;

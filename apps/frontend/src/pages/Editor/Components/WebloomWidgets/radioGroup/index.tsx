@@ -113,6 +113,7 @@ export const WebloomRadioWidget: Widget<WebloomRadioProps> = {
   defaultProps,
   inspectorConfig,
   publicAPI: new Set(['value']),
+  metaProps: new Set(['value']),
 };
 
 export { WebloomRadio };

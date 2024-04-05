@@ -29,9 +29,13 @@ export type EntityActionRawSideEffect = {
 
 export type EntityActionRaw = EntityActionSetter | EntityActionRawSideEffect;
 export type EntityActionRawConfig = Record<string, EntityActionRaw>;
-export type EntityAction<T extends Entity> =
-  | EntityActionSetter
-  | EntityActionSideEffect<T>;
+/**
+ * @param isPrivate if true the action will not be exposed to the user in the code editor
+ */
+export type EntityAction<T extends Entity> = {
+  type: 'SETTER' | 'SIDE_EFFECT';
+  isPrivate?: boolean;
+} & (EntityActionSetter | EntityActionSideEffect<T>);
 
 export type EntityActionConfig<T extends Entity = Entity> = Record<
   string,

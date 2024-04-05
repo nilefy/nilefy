@@ -111,6 +111,14 @@ export class MainThreadBroker {
           console.error('Error in eventExecution:', error);
         }
         break;
+      case 'entityActionExecution':
+        try {
+          const entity = this.editorState.getEntityById(body.id);
+          entity.actions[body.actionName]();
+        } catch (error) {
+          console.error('Error in actionExecution:', error);
+        }
+        break;
     }
   };
   addEvent(eventResult: EventExecutionResult) {

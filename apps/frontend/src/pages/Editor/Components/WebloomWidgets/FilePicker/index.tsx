@@ -75,6 +75,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomFilePickerProps> = [
 
 const WebloomFilePickerWidget: Widget<WebloomFilePickerProps> = {
   component: WebloomFilePicker,
+  metaProps: new Set(['value']),
   config,
   defaultProps,
   inspectorConfig,

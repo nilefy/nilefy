@@ -96,6 +96,7 @@ export const WebloomCheckBoxWidget: Widget<WebloomCheckBoxProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  metaProps: new Set(['value']),
 };
 
 export { WebloomCheckBox };

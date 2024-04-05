@@ -21,7 +21,7 @@ const webloomContainerProps = z.object({
   color: z.string(),
   layoutMode: z.enum(['fixed', 'auto']),
 });
-type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+export type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
 
 const WebloomContainer = observer(
   ({

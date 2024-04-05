@@ -193,6 +193,7 @@ export class EditorState implements WebloomDisposable {
           inspectorConfig: this.globals.inspectorConfig,
           publicAPI: this.globals.publicAPI,
           actionsConfig: this.globals.rawActionsConfig,
+          metaValues: this.globals.metaValues,
         },
         queries: Object.values(this.queries).reduce(
           (acc, query) => {
@@ -202,6 +203,7 @@ export class EditorState implements WebloomDisposable {
               inspectorConfig: query.inspectorConfig,
               publicAPI: query.publicAPI,
               actionsConfig: query.rawActionsConfig,
+              metaValues: query.metaValues,
             };
             return acc;
           },
@@ -216,6 +218,7 @@ export class EditorState implements WebloomDisposable {
                 inspectorConfig: widget.inspectorConfig,
                 publicAPI: widget.publicAPI,
                 actionsConfig: widget.rawActionsConfig,
+                metaValues: widget.metaValues,
               };
               return acc;
             },

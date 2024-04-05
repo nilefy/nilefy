@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
+import { NewWidgePayload } from './Models/page';
 
 type BaseControlProps = {
   label: string;
@@ -165,12 +166,25 @@ export interface WidgetConfig {
   widgetActions?: EntityActionConfig<WebloomWidget>;
 }
 
-export type Widget<WidgetProps extends Record<string, unknown>> = {
-  component: React.ElementType;
+export type PrimitiveWidget = {
+  isComposed: false;
+};
+
+export type ComposedWidget = {
+  isComposed: true;
+};
+export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
-  defaultProps: WidgetProps;
+  defaultProps: TWidgetProps;
   publicAPI?: Set<string>;
-  inspectorConfig: EntityInspectorConfig<WidgetProps>;
+  metaProps?: Set<string>;
+  inspectorConfig: EntityInspectorConfig<TWidgetProps>;
+  blueprint?: {
+    children: (Omit<NewWidgePayload, 'parentId' | 'id'> & {
+      onAttach?: (widget: WebloomWidget) => void;
+    })[];
+  };
+  component: React.ElementType;
 };
 type SelectOptions = {
   value: string;

@@ -229,6 +229,7 @@ export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  metaProps: new Set(['selectedOptionValue']),
 };
 
 export { WebloomSelect };

@@ -94,6 +94,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
 ];
 export const WebloomMultiSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomMultiSelect,
+  metaProps: new Set(['value']),
   config,
   defaultProps,
   inspectorConfig,

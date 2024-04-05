@@ -189,6 +189,8 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
 
 const WebloomNumberInputWidget: Widget<WebloomInputProps> = {
   component: WebloomNumberInput,
+  metaProps: new Set(['value']),
+
   config,
   defaultProps,
   inspectorConfig,

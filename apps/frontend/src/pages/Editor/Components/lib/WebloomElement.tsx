@@ -19,7 +19,7 @@ import {
 const RenderedElement = observer(
   ({ id, isVisible }: { id: string; isVisible: boolean }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
-    if (widget.type === 'WebloomContainer') {
+    if (WebloomWidgets[widget.type].component === WebloomContainer) {
       const innerContainerStyle = {
         width: widget.innerContainerPixelDimensions.width + 'px',
         height: widget.innerContainerPixelDimensions.height + 'px',

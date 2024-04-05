@@ -205,4 +205,5 @@ export const WebloomTextEditorWidget: Widget<WebloomTextEditorProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  metaProps: new Set(['value']),
 };

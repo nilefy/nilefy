@@ -50,6 +50,7 @@ const WebloomInput = observer(() => {
       ref.current.blur();
     },
   });
+  console.log('props', props.value);
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{props.label}</Label>
@@ -221,6 +222,7 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   config,
   defaultProps,
   publicAPI: new Set(['value']),
+  metaProps: new Set(['value']),
   inspectorConfig,
 };
 

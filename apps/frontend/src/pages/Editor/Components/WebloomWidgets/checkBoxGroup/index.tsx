@@ -117,6 +117,7 @@ export const WebloomCheckBoxGroupWidget: Widget<WebloomCheckBoxGroupProps> = {
   config,
   defaultProps,
   inspectorConfig,
+  metaProps: new Set(['value']),
 };
 
 export { WebloomCheckBoxGroup };
