@@ -266,7 +266,7 @@ export class AppsService {
         return { ...page, appId: appId, createdById: createdById };
       });
 
-      this.pagesService.importPage(pagesToInsert, { tx: tx });
+      this.pagesService.importPages(pagesToInsert, { tx: tx });
       /*
       
       - insert components into db and store their id's

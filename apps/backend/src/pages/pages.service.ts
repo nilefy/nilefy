@@ -228,7 +228,7 @@ export class PagesService {
       .returning();
   }
 
-  async importPage(
+  async importPages(
     pagesToInsert: {
       appId: number;
       createdById: number;
@@ -240,9 +240,11 @@ export class PagesService {
     }[],
     options?: { tx?: PgTrans },
   ) {
+    console.log('pages from import pages:');
+    console.log(pagesToInsert);
     const [p] = await (options?.tx ? options.tx : this.db)
       .insert(pages)
-      .values(pagesToInsert[0])
+      .values(pagesToInsert)
       .returning();
     p;
     const [rootComponent] =
