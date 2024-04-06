@@ -9,12 +9,17 @@ export const WithResize = <P extends { id: string }>(
   const ResizableComponent: React.FC<P> = (props) => {
     const widget = editorStore.currentPage.getWidgetById(props.id);
     const isActive = widget.isHovered || widget.isSelected;
+    const hasErrors = widget.hasErrors;
+    let color = '#a9c0ff';
+    if (hasErrors) {
+      color = 'red';
+    }
     return (
       <div
         className="relative z-50 h-full w-full"
         data-type={WIDGET_SECTIONS.RESIZER}
         style={{
-          boxShadow: isActive ? '0 0 0 1px #a9c0ff' : 'none',
+          boxShadow: isActive ? `0 0 0 1px ${color}` : 'none',
         }}
       >
         <ResizeHandles id={props.id} />
