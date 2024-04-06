@@ -187,6 +187,20 @@ export class AppsService {
 
   async exportAppJSON(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
     const app = await this.findOne(workspaceId, appId);
+    console.log(app);
+    if (app['deletedAt']) {
+      return null;
+    }
+
+    // todo: remove deleted pages (TypeScript type error)
+    // for (const page of app.pages) {
+    //   if (page.hasOwnProperty('deletedAt')) {
+    //     if (page['deletedAt'] != null) {
+    //       continue;
+    //     }
+    //   }
+    // }
+
     const omittedFields = [
       'id',
       'appId',
@@ -306,4 +320,6 @@ type Page = {
   appId: number;
   enabled: boolean;
   visible: boolean;
+  deletedAt?: Date | null;
+  deletedById?: Date | null;
 };
