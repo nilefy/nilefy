@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   AppDto,
@@ -12,12 +13,19 @@ import {
   CreateAppRetDto,
   UpdateAppDb,
 } from '../dto/apps.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import {
+  DatabaseI,
+  DrizzleAsyncProvider,
+  PgTrans,
+} from '../drizzle/drizzle.provider';
 import { apps } from '../drizzle/schema/schema';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
-import { pages } from '../drizzle/schema/appsState.schema';
+import { components, pages } from '../drizzle/schema/appsState.schema';
+import { queries as drizzleQueries } from '../drizzle/schema/data_sources.schema';
+import { alias } from 'drizzle-orm/pg-core';
+import { PageDto } from 'src/dto/pages.dto';
 
 @Injectable()
 export class AppsService {
@@ -26,7 +34,6 @@ export class AppsService {
     private pagesService: PagesService,
   ) {}
 
-  // TODO: copy app state
   async clone({
     workspaceId,
     appId,
@@ -36,14 +43,92 @@ export class AppsService {
     workspaceId: AppDto['workspaceId'];
     appId: AppDto['id'];
   }): Promise<CreateAppRetDto> {
-    const app = await this.findOne(workspaceId, appId);
-    const newApp = await this.create({
-      name: app.name + '(copy)',
-      description: app.description,
-      workspaceId,
-      createdById: createdById,
+    const newApp = await this.db.transaction(async (tx) => {
+      const apps2 = alias(apps, 'apps2');
+      const createAppSql = sql<AppDto>`
+      insert into ${apps} ("created_by_id", "name", "description", "workspace_id")
+      select ${createdById}, ${apps2.name} || ' (copy)', ${apps2.description}, ${apps2.workspaceId}
+      from ${apps} as ${apps2}
+      where ${apps2.id} = ${appId} and ${apps2.workspaceId} = ${workspaceId}
+      returning *;
+    `;
+      const newApp = (await tx.execute(createAppSql))
+        .rows[0] as unknown as AppDto;
+
+      const queries2 = alias(drizzleQueries, 'q2');
+      const copyQueries = sql`
+      insert into ${drizzleQueries} (app_id, created_by_id, id, query, trigger_mode, data_source_id )
+      select ${newApp.id}, ${createdById}, ${queries2.id}, ${queries2.query}, ${queries2.triggerMode}, ${queries2.dataSourceId}
+      from ${drizzleQueries} as ${queries2}
+      where ${queries2.appId} = ${appId};
+      `;
+      await tx.execute(copyQueries);
+
+      const appPages = (
+        await tx.query.apps.findFirst({
+          where: and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)),
+          columns: {
+            id: true,
+          },
+          with: {
+            pages: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        })
+      )?.pages;
+      if (!appPages) {
+        throw new InternalServerErrorException();
+      }
+      await Promise.all(
+        appPages.map(({ id }) => {
+          return this.copyPageToAnotherPage(
+            tx,
+            appId,
+            newApp.id,
+            id,
+            createdById,
+          );
+        }),
+      );
+
+      return newApp;
     });
     return newApp;
+  }
+
+  private async copyPageToAnotherPage(
+    tx: PgTrans,
+    oldAppId: number,
+    newAppId: number,
+    oldPageId: number,
+    createdById: number,
+  ) {
+    const pages2 = alias(pages, 'p2');
+    const copyPage = sql`
+      insert into ${pages} (app_id, created_by_id, handle, name, disabled, visible, index)
+      select ${newAppId}, ${createdById}, ${pages2.handle}, ${pages2.name}, ${pages2.enabled}, ${pages2.visible}, ${pages2.index}
+      from ${pages} as ${pages2}
+      where ${pages2.id} = ${oldPageId} and ${pages2.appId} = ${oldAppId}
+      returning id;
+      `;
+    const newPage = (await tx.execute(copyPage)).rows[0] as unknown as {
+      id: PageDto['id'];
+    };
+    if (!newPage) {
+      throw new InternalServerErrorException();
+    }
+    const components2 = alias(components, 'c2');
+    const copyComponents = sql`
+      insert into ${components} (created_by_id, id, type, props, parent_id, col, row, columns_count, rows_count, page_id)
+      select ${createdById}, ${components2.id}, ${components2.type}, ${components2.props}, ${components2.parentId} , ${components2.col}, ${components2.row}, ${components2.columnsCount}, ${components2.rowsCount}, ${newPage.id}
+      from ${components} as ${components2}
+      where ${components2.pageId} = ${oldPageId};
+      `;
+    await tx.execute(copyComponents);
+    return newPage;
   }
 
   async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
