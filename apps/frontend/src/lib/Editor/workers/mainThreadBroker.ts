@@ -14,7 +14,7 @@ export class MainThreadBroker {
     string,
     {
       dependencies: string[];
-      dependants: string[];
+      dependents: string[];
     }
   > = {};
   private lastEvaluatedForest: Record<string, unknown> = {};
@@ -178,6 +178,7 @@ export class MainThreadBroker {
         dependencyUpdates: dependencyOps,
       },
     });
+    this.lastEntityToEntityDependencies = serializedEntityToEntityDependencies;
   };
   handleEvaluationUpdate = () => {
     const serializedEvalForest = klona(
