@@ -229,7 +229,6 @@ export class AppsService {
     },
   ) {
     let app;
-
     this.db.transaction(async (tx) => {
       const createdApps = await tx
         .insert(apps)
@@ -245,10 +244,11 @@ export class AppsService {
         });
       app = createdApps[0];
 
-      const appId = createdApps[0].appId;
-      const createdById = createdApps[0].createdById;
+      const appId = app.appId;
+      const createdById = app.createdById;
 
       const pagesToInsert = importAppDb.pages.map((page) => {
+        console.log(page);
         return { ...page, appId: appId, createdById: createdById };
       });
 

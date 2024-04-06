@@ -33,6 +33,7 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    console.log(componentDto);
     return await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values(componentDto)
@@ -142,17 +143,18 @@ export class ComponentsService {
   async createTreeForPageImport(
     pageId: PageDto['id'],
     createdById: PageDto['createdById'],
-    componentDto: CreateComponentDb[],
+    componentsDto: CreateComponentDb[],
     options?: {
       tx?: PgTrans;
     },
   ) {
     console.log('from createTreeForPageImport: ');
-    console.log(componentDto);
+    console.log(componentsDto);
     pageId;
-    componentDto;
+    componentsDto;
     options;
 
+    console.log('from createTreeForPageImport: ');
     const [t] = await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values({
@@ -160,15 +162,34 @@ export class ComponentsService {
         type: 'WebloomContainer',
         pageId: pageId,
         createdById: createdById,
-        nodes: [],
         parentId: null,
         props: {
           className: 'h-full w-full',
+          isCanvas: 'true',
         },
         col: 0,
         row: 0,
         columnsCount: 32,
         rowsCount: 0,
+      })
+      .returning();
+
+    console.log('output tree:');
+    console.log(t);
+
+    const [ta] = await (options?.tx ? options.tx : this.db)
+      .insert(components)
+      .values({
+        id: 'WebloomContainer16',
+        type: 'WebloomContainer',
+        pageId: pageId,
+        createdById: createdById,
+        parentId: '0',
+        props: { color: '#a883f2', layoutMode: 'fixed' },
+        col: 0,
+        row: 0,
+        columnsCount: 10,
+        rowsCount: 40,
       })
       .returning();
     return [t];

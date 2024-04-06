@@ -240,8 +240,6 @@ export class PagesService {
     }[],
     options?: { tx?: PgTrans },
   ) {
-    options;
-    pagesToInsert;
     const [p] = await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values(pagesToInsert[0])
