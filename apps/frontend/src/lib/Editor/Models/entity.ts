@@ -320,7 +320,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       if (configItem.type === 'SIDE_EFFECT') {
         actions[key] = async (...args: unknown[]) => {
           await runInAction(async () => {
-            configItem.fn(this, ...args);
+            await configItem.fn(this, ...args);
           });
         };
       } else if (this.metaValues.has(configItem.path)) {
