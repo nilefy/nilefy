@@ -216,8 +216,7 @@ export class WebloomQuery
    * trigger the query async, but don't return the promise
    */
   async run() {
-    // TODO: change MobQ to make the distinction between mutate and mutateAsync more clear
-    await this.queryRunner.state.mutate();
+    await this.queryRunner.mutateAsync();
   }
 
   /**
