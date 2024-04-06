@@ -20,10 +20,10 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
-import { DebouncedInput } from '../../../components/debouncedInput';
+import { DebouncedInput } from '../../../../components/debouncedInput';
 import clsx from 'clsx';
-import { Input } from '../../../components/ui/input';
-import { ScrollArea } from '../../../components/ui/scroll-area';
+import { Input } from '../../../../components/ui/input';
+import { ScrollArea } from '../../../../components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
 import { QueryRawValues, WebloomQuery } from '@/lib/Editor/Models/query';
 import { observer } from 'mobx-react-lite';
@@ -31,7 +31,7 @@ import { computed } from 'mobx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
-import { DefaultSection, EntityForm } from './entityForm';
+import { DefaultSection, EntityForm } from '../entityForm';
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
   return (
@@ -314,11 +314,10 @@ export const QueryPanel = observer(function QueryPanel() {
   ]).get();
 
   return (
-    <div className="flex h-full w-full">
-      {/* LEFT SIDE */}
-      <div className="flex h-full w-1/3 flex-col border-l border-[#e5e7eb]">
+    <>
+      <div className="flex h-full w-1/3 flex-col ">
         {/* SEARCH, FILTER AND ADD*/}
-        <div className="flex h-10 w-full items-center justify-between gap-4 border-b border-[#e5e7eb] p-4">
+        <div className="flex h-10 w-full items-center justify-between gap-4 border-b p-4">
           {/* SEARCH and FILTER */}
           <div className="flex flex-row items-center gap-x-2">
             <Button
@@ -406,7 +405,7 @@ export const QueryPanel = observer(function QueryPanel() {
                   placeholder="Search..."
                   value={dataSourceSearch}
                   onChange={(v) => setDataSourceSearch(v.toString())}
-                  className=" mb-4 rounded-md border border-gray-300 p-2"
+                  className=" mb-4 rounded-md border  p-2"
                 />
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -440,7 +439,7 @@ export const QueryPanel = observer(function QueryPanel() {
         <ScrollArea className="h-full w-full">
           <ul className="h-full w-full overflow-y-auto">
             {closeSearsh && (
-              <div className="flex items-center justify-between border-b border-gray-300">
+              <div className="flex items-center justify-between border-b">
                 <DebouncedInput
                   type="text"
                   placeholder="Search..."
@@ -448,7 +447,7 @@ export const QueryPanel = observer(function QueryPanel() {
                   onChange={(e) => {
                     setQuerySearch(e.toString());
                   }}
-                  className="h-6 w-2/3  rounded-md border border-gray-300"
+                  className="h-6 w-2/3  rounded-md border"
                 />
                 <Button
                   variant="ghost"
@@ -524,7 +523,7 @@ export const QueryPanel = observer(function QueryPanel() {
         </ScrollArea>
       </div>
       {/* ITEM */}
-      <div className="h-full w-full border-l border-[#e5e7eb]">
+      <div className="h-full w-full border-l">
         {editorStore.selectedQueryId ? (
           <QueryItem
             key={queries[editorStore.selectedQueryId].id}
@@ -536,6 +535,6 @@ export const QueryPanel = observer(function QueryPanel() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 });

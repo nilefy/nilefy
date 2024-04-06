@@ -7,7 +7,7 @@ import { Command } from '../types';
  * @param shiftKey: if shift key is clicked the new selection will be added to the set
  * @default True
  */
-export class SelectionAction {
+export class WidgetSelection {
   private static id: string | null = null;
   private static shiftKey: boolean | null = null;
   /**
@@ -19,14 +19,14 @@ export class SelectionAction {
   static selectThroughClick(id: string, shiftKey: boolean = false): Command {
     return {
       execute: () => {
-        if (SelectionAction.id === null) {
-          SelectionAction.id = id;
+        if (WidgetSelection.id === null) {
+          WidgetSelection.id = id;
         }
-        if (SelectionAction.shiftKey === null) {
-          SelectionAction.shiftKey = shiftKey;
+        if (WidgetSelection.shiftKey === null) {
+          WidgetSelection.shiftKey = shiftKey;
         }
         if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-          SelectionAction.end();
+          WidgetSelection.end();
         }
       },
     };
@@ -35,16 +35,16 @@ export class SelectionAction {
   static remoteSelect(id: string) {
     return {
       execute: () => {
-        SelectionAction.id = id;
-        SelectionAction.shiftKey = false;
-        SelectionAction.end();
+        WidgetSelection.id = id;
+        WidgetSelection.shiftKey = false;
+        WidgetSelection.end();
       },
     };
   }
 
   static end() {
-    const id = SelectionAction.id!;
-    const shiftKey = SelectionAction.shiftKey!;
+    const id = WidgetSelection.id!;
+    const shiftKey = WidgetSelection.shiftKey!;
     editorStore.currentPage.setSelectedNodeIds((prev) => {
       // remove selection
       if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
@@ -66,7 +66,7 @@ export class SelectionAction {
       }
     });
 
-    SelectionAction.id = null;
-    SelectionAction.shiftKey = null;
+    WidgetSelection.id = null;
+    WidgetSelection.shiftKey = null;
   }
 }

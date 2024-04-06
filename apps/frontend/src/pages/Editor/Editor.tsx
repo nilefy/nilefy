@@ -9,7 +9,7 @@ import {
 import { WebloomElementShadow, WebloomRoot } from './Components/lib';
 import { commandManager } from '@/actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
-import { EditorLeftSidebar } from './editorLeftSideBar';
+import { EditorLeftSidebar } from './Components/Leftsidebar';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
@@ -19,7 +19,7 @@ import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
 import { useInitResizing, useMousePosition } from '@/lib/Editor/hooks';
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
-import { QueryPanel } from './Components/queryPanel';
+import { BottomPanel } from './Components/BottomPanel';
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -70,10 +70,15 @@ export const Editor = observer(() => {
               <ResizablePanel
                 maxSizePercentage={75}
                 defaultSizePercentage={35}
+                minSizePercentage={10}
                 collapsible
+                collapsedSizePixels={15}
+                onCollapse={() => {
+                  throttledResize();
+                }}
               >
                 <Suspense fallback={<WebloomLoader />}>
-                  <QueryPanel />
+                  <BottomPanel />
                 </Suspense>
               </ResizablePanel>
             </ResizablePanelGroup>

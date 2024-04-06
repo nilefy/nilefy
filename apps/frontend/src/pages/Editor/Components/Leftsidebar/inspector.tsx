@@ -7,7 +7,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { MousePointer2, Pin, PinOff } from 'lucide-react';
-import { JsonViewer } from './JsonViewer';
+import { JsonViewer } from '../../../../components/JsonViewer';
 
 export function Inspector() {
   const [open, setOpen] = useState(false);
@@ -20,7 +20,10 @@ export function Inspector() {
       onOpenChange={setOpen}
       modal={false}
     >
-      <SheetTrigger className="flex items-center justify-center">
+      <SheetTrigger
+        className="flex items-center justify-center"
+        title="Inspector"
+      >
         <MousePointer2 className="h-8 w-8 rotate-0 scale-100 cursor-pointer transition-all" />
       </SheetTrigger>
       <SheetContent side={'left'} className="left-14">

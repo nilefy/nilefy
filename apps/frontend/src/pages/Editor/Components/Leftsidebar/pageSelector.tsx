@@ -9,11 +9,11 @@ import {
 import { BookOpenText, Pin, PinOff, Plus, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { useToast } from './ui/use-toast';
+import { Button } from '../../../../components/ui/button';
+import { Input } from '../../../../components/ui/input';
+import { useToast } from '../../../../components/ui/use-toast';
 import { api } from '@/api';
-import Page from './page';
+import Page from '../../../../components/page';
 // import { SortableList } from './sortableList';
 import { PAGES_QUERY_KEY, PageDto } from '@/api/pages.api';
 import { matchSorter } from 'match-sorter';
@@ -69,7 +69,7 @@ export function PageSelector() {
       }}
       modal={false}
     >
-      <SheetTrigger className="flex items-center justify-center">
+      <SheetTrigger className="flex items-center justify-center" title="Pages">
         <BookOpenText className="h-8 w-8 rotate-0 scale-100 cursor-pointer transition-all" />
       </SheetTrigger>
       <SheetContent side={'left'} className="left-14">
