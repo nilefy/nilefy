@@ -9,6 +9,7 @@ import {
 } from '@floating-ui/react';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
+import { XCircle } from 'lucide-react';
 export const WithPopover = <P extends { id: string }>(
   WrappedComponent: React.FC<P>,
 ) => {
@@ -17,7 +18,7 @@ export const WithPopover = <P extends { id: string }>(
 
     const widget = editorStore.currentPage.getWidgetById(props.id);
     const isActive = widget.isHovered || widget.isTheOnlySelected;
-
+    const hasErrors = widget.hasErrors;
     const { floatingStyles, update } = useFloating({
       open: isActive,
       nodeId: widget.id,
@@ -50,10 +51,18 @@ export const WithPopover = <P extends { id: string }>(
         <div
           ref={popoverRef}
           style={floatingStyles}
-          className={cn('w-max bg-blue-400 p-1 text-center text-xs', {
-            hidden: !isActive,
-          })}
+          className={cn(
+            'w-max p-1 text-center text-xs flex items-center gap-1 ',
+            {
+              hidden: !isActive,
+            },
+            {
+              'bg-red-400': hasErrors,
+            },
+            { 'bg-blue-400': !hasErrors },
+          )}
         >
+          {hasErrors ? <XCircle size={16} color="red" /> : null}
           {widget.id}
         </div>
 

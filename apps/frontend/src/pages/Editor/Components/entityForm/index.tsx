@@ -25,6 +25,7 @@ import {
 } from '@/lib/Editor/interface';
 import { InspectorFormControls } from './formControls';
 import { ErrorPopover } from './formControls/errorPopover';
+import { cn } from '@/lib/cn';
 
 export const EntityFormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
@@ -141,6 +142,7 @@ export const EntityFormControl = observer(
           type={options.type as InspectorFormControlsTypes}
           id={id}
           label={control.label}
+          path={control.path}
         >
           {/* @ts-expect-error ignore */}
           <Component {...options} key={control.id} />
@@ -175,24 +177,30 @@ const FormControlWrapper = observer(
       type: InspectorFormControlsTypes;
       id: string;
       entityId: string;
+      path: string;
       hidden?: (props: Record<string, unknown>) => boolean;
     } & BaseControlProps,
   ) => {
-    if (
-      props.hidden &&
-      props.hidden(editorStore.getEntityById(props.entityId)!.finalValues)
-    )
-      return null;
+    const entity = editorStore.getEntityById(props.entityId);
+    if (props.hidden && props.hidden(entity!.finalValues)) return null;
     return (
       <ErrorPopover>
-        <div className="flex w-full flex-col  gap-1">
+        <div className="flex w-full flex-col gap-1">
           <Label
             className="text-sm font-medium text-gray-600"
             htmlFor={props.id}
           >
             {props.label}
           </Label>
-          {props.children}
+          <div
+            className={cn({
+              'border-red-500 border rounded-sm': entity?.pathHasErrors(
+                props.path,
+              ),
+            })}
+          >
+            {props.children}
+          </div>
         </div>
       </ErrorPopover>
     );

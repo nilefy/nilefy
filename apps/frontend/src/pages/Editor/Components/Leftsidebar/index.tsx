@@ -1,27 +1,21 @@
-import { Inspector } from '@/components/inspector';
+import { Inspector } from '@/pages/Editor/Components/Leftsidebar/inspector';
 import { ModeToggle } from '@/components/mode-toggle';
-import { PageSelector } from '@/components/pageSelector';
+import { PageSelector } from '@/pages/Editor/Components/Leftsidebar/pageSelector';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
-import { LogOut, Wind } from 'lucide-react';
-import { NavLink, useParams } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { BugsCount } from './bugsCount';
 
 export function EditorLeftSidebar() {
-  const { workspaceId } = useParams();
   const { mutate } = useSignOut();
 
   return (
     <div className="flex h-full w-max flex-col gap-5 p-2">
-      <NavLink
-        to={`/${workspaceId}`}
-        className="flex items-center justify-center"
-      >
-        <Wind size={30} />
-      </NavLink>
       {/*paths*/}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col items-center justify-center gap-4">
         <Inspector />
         <PageSelector />
+        <BugsCount />
       </div>
       <div className="mt-auto flex items-center justify-center">
         <ModeToggle />

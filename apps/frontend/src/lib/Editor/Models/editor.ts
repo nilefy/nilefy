@@ -19,10 +19,10 @@ import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
-import { entries } from 'lodash';
+import { entries, values } from 'lodash';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
-
+export type BottomPanelMode = 'query' | 'debug';
 export class EditorState implements WebloomDisposable {
   /**
    * @description [id]: page
@@ -38,6 +38,7 @@ export class EditorState implements WebloomDisposable {
   appId!: number;
   workspaceId!: number;
   selectedQueryId: string | null = null;
+  bottomPanelMode: BottomPanelMode = 'query';
   /**
    * application name
    */
@@ -64,10 +65,16 @@ export class EditorState implements WebloomDisposable {
       applyEvalForestPatch: action.bound,
       applyEntityToEntityDependencyPatch: action.bound,
       currentPageErrors: computed,
+      currentPageErrorsCount: computed,
       selectedQueryId: observable,
       setSelectedQueryId: action,
+      bottomPanelMode: observable,
+      setBottomPanelMode: action,
     });
     this.workerBroker = new WorkerBroker(this);
+  }
+  setBottomPanelMode(mode: BottomPanelMode) {
+    this.bottomPanelMode = mode;
   }
   setSelectedQueryId(
     idOrCb: string | null | ((prev: string | null) => string | null),
@@ -255,11 +262,25 @@ export class EditorState implements WebloomDisposable {
 
   // TODO: add support for queries
   get currentPageErrors() {
-    const res: { entityId: string; path: string; error: string }[] = [];
-
-    return res;
+    const errors: Record<string, InstanceType<typeof Entity>['errors']> = {};
+    entries(this.entities).forEach(([id, entity]) => {
+      if (!entity) return;
+      errors[id] = entity.errors;
+    });
+    return errors;
   }
-
+  get currentPageErrorsCount() {
+    let count = 0;
+    for (const entityErrors of Object.values(this.currentPageErrors)) {
+      for (const errorType of values(entityErrors)) {
+        count += values(toJS(errorType)).reduce(
+          (acc, curr) => acc + curr.length,
+          0,
+        );
+      }
+    }
+    return count;
+  }
   /**
    * @description returns the evaluation context for the page. This is used to give autocomplete suggestions.
    */
