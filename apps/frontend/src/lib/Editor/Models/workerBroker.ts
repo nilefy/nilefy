@@ -6,7 +6,11 @@ import {
   runInAction,
   toJS,
 } from 'mobx';
-import { WorkerRequest, WorkerResponse } from '../workers/common/interface';
+import {
+  WorkerActionExecutionResponse,
+  WorkerRequest,
+  WorkerResponse,
+} from '../workers/common/interface';
 import { debounce } from 'lodash';
 import { WebloomDisposable } from './interfaces';
 import { EditorState } from './editor';
@@ -84,25 +88,36 @@ export class WorkerBroker implements WebloomDisposable {
           body.dependencyUpdates,
         );
         break;
-      case 'EventExecution':
-        body.forEach((executionResult) => {
-          const id = executionResult.id;
-          const entity = this.editorState.getEntityById(id);
-          if (!entity) return;
-          // Todo: create a promise that resolves when no widgets has debounced updates => this will allow us to wait for the updates to be applied before executing the action
-          //flush queue first so that the worker has the latest state
-          this._postMessege();
-          entity.executeAction(
-            executionResult.actionName,
-            ...executionResult.args,
-          );
-        });
+      case 'ActionExecution':
+        this.handleActionExecution(body);
         break;
       default:
         break;
     }
   }
-
+  handleActionExecution = async (
+    body: WorkerActionExecutionResponse['body'],
+  ) => {
+    const action = async (
+      executionResult: WorkerActionExecutionResponse['body'][number],
+    ) => {
+      const id = executionResult.entityId;
+      const entity = this.editorState.getEntityById(id);
+      if (!entity) return;
+      // Todo: create a promise that resolves when no widgets has debounced updates => this will allow us to wait for the updates to be applied before executing the action
+      //flush queue first so that the worker has the latest state
+      this._postMessege();
+      await entity.executeAction(
+        executionResult.id,
+        executionResult.actionName,
+        ...executionResult.args,
+      );
+    };
+    // execute promises sequentially
+    for (const executionResult of body) {
+      await action(executionResult);
+    }
+  };
   private debouncePostMessege = debounce(this._postMessege, 100);
 
   dispose() {

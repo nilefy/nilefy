@@ -53,7 +53,8 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public runtimeErros: Record<string, string[]>;
   public evaluationValidationErrors: Record<string, string[]>;
   public inputValidationErrors: Record<string, string[]>;
-  public actions: Record<string, (...args: unknown[]) => void> = {};
+  public actions: Record<string, (...args: unknown[]) => void | Promise<void>> =
+    {};
   public actionsConfig: EntityActionConfig;
   public rawActionsConfig: EntityActionRawConfig;
   private evaluablePaths: Set<string>;
@@ -317,8 +318,8 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     for (const key in config) {
       const configItem = config[key];
       if (configItem.type === 'SIDE_EFFECT') {
-        actions[key] = (...args: unknown[]) => {
-          runInAction(() => {
+        actions[key] = async (...args: unknown[]) => {
+          await runInAction(async () => {
             configItem.fn(this, ...args);
           });
         };
@@ -344,13 +345,31 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       },
     });
   };
-  executeAction = (actionName: string, ...args: unknown[]) => {
+  executeAction = async (
+    actionId: string,
+    actionName: string,
+    ...args: unknown[]
+  ) => {
     const action = this.actions[actionName];
     if (!action) return;
-    if (args.length === 0) {
-      action();
-      return;
+    try {
+      if (args.length === 0) {
+        await action();
+      } else await action(...args);
+      this.workerBroker.postMessege({
+        event: 'fulfillAction',
+        body: {
+          id: actionId,
+        },
+      });
+    } catch (e) {
+      this.workerBroker.postMessege({
+        event: 'fulfillAction',
+        body: {
+          id: actionId,
+          error: e,
+        },
+      });
     }
-    action(...args);
   };
 }

@@ -3,7 +3,7 @@ import { get } from 'lodash';
 import unescapeJS from 'unescape-js';
 export const functionActionWrapper = (code: string) => {
   return `
-      (function() {
+      (async function() {
          ${code}
       })()
     `;

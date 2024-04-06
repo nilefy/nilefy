@@ -2,15 +2,16 @@ import { EntityTypes } from '../../interface';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
 
-export type EventExecutionResult = {
+export type ActionExecutionPayload = {
+  entityId: string;
   id: string;
   actionName: string;
   args: unknown[];
 };
 
-export type WorkerEventExecutionResponse = {
-  body: EventExecutionResult[];
-  event: 'EventExecution';
+export type WorkerActionExecutionResponse = {
+  body: ActionExecutionPayload[];
+  event: 'ActionExecution';
 };
 
 export type DependencyUpdateResponse = {
@@ -22,7 +23,7 @@ export type DependencyUpdateResponse = {
 
 export type WorkerResponse =
   | EvaluationUpdateResponse
-  | WorkerEventExecutionResponse
+  | WorkerActionExecutionResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -36,6 +37,7 @@ export type WorkerRequest =
   | ChangePageRequest
   | EntityEventExecutionRequest
   | EntityActionExecutionRequest
+  | FulfillActionRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -84,7 +86,14 @@ export type EntityEventExecutionRequest = {
     eventName: string;
   };
 };
-
+export type FulfillActionRequest = {
+  event: 'fulfillAction';
+  body: {
+    id: string;
+    value?: unknown;
+    error?: unknown;
+  };
+};
 export type RemoveEntityRequest = {
   event: 'removeEntity';
   body: {

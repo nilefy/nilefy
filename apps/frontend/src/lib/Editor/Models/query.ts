@@ -36,8 +36,8 @@ const QueryActions = {
   run: {
     type: 'SIDE_EFFECT',
     name: 'run',
-    fn: (entity: WebloomQuery) => {
-      entity.run();
+    fn: async (entity: WebloomQuery) => {
+      await entity.run();
     },
   },
   reset: {
@@ -215,8 +215,8 @@ export class WebloomQuery
   /**
    * trigger the query async, but don't return the promise
    */
-  run() {
-    this.queryRunner.mutate();
+  async run() {
+    this.queryRunner.state.mutate();
   }
 
   /**
