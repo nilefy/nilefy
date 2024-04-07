@@ -88,6 +88,7 @@ export class RolesController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('roleId', ParseIntPipe) roleId: number,
   ) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.rolesService.delete({
       deletedById: req.user.userId,
       roleId: roleId,

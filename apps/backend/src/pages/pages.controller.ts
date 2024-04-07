@@ -50,13 +50,13 @@ export class PagesController {
   @Post(':pageId/clone')
   @ApiCreatedResponse({
     description: 'clone app page',
-    type: Array<PageDto>,
+    type: PageDto,
   })
   async clone(
     @Req() req: ExpressAuthedRequest,
     @Param('appId', ParseIntPipe) appId: number,
     @Param('pageId', ParseIntPipe) pageId: number,
-  ): Promise<PageDto[]> {
+  ): Promise<PageDto> {
     return await this.pagesService.clone({
       appId,
       id: pageId,
@@ -112,6 +112,7 @@ export class PagesController {
     @Param('appId', ParseIntPipe) appId: number,
     @Param('pageId', ParseIntPipe) pageId: number,
   ): Promise<PageDto[]> {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.pagesService.delete({
       appId,
       pageId,
