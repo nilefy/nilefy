@@ -15,6 +15,7 @@ import { EventsModule } from './events/events.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
 import { EmailModule } from './email/email.module';
+import { JsQueriesModule } from './js_queries/js_queries.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { EmailModule } from './email/email.module';
     DataSourcesModule,
     DataQueriesModule,
     EmailModule,
+    JsQueriesModule,
   ],
 })
 export class AppModule {}
