@@ -125,7 +125,8 @@ export class AppsService {
       insert into ${components} (created_by_id, id, type, props, parent_id, col, row, columns_count, rows_count, page_id)
       select ${createdById}, ${components2.id}, ${components2.type}, ${components2.props}, ${components2.parentId} , ${components2.col}, ${components2.row}, ${components2.columnsCount}, ${components2.rowsCount}, ${newPage.id}
       from ${components} as ${components2}
-      where ${components2.pageId} = ${oldPageId};
+      where ${components2.pageId} = ${oldPageId}
+      order by ${components2.createdAt} ASC;
       `;
     await tx.execute(copyComponents);
     return newPage;
