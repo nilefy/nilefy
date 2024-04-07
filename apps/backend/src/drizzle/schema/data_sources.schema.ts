@@ -99,3 +99,33 @@ export const queries = pgTable(
     pk: primaryKey({ columns: [t.id, t.appId] }),
   }),
 );
+
+export const jsQueries = pgTable(
+  'app_js_queries',
+  {
+    /**
+     * id now act as name as well as id
+     */
+    id: text('id').notNull(),
+    appId: integer('app_id')
+      .references(() => apps.id)
+      .notNull(),
+    /**
+     * query **un-evaluated** configuration(cannot run query with this config, needs to get the evaluated config the from front-end)
+     */
+    query: text('query'),
+    /**
+     * for now used to handle any un-strucutred meta data like events handlers
+     * this should be improved in the future by extracting the structured data out of it, but i think it will make the trick for now
+     */
+    settings: json('settings'),
+    createdById: integer('created_by_id')
+      .references(() => users.id)
+      .notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    ...timeStamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id, t.appId] }),
+  }),
+);
