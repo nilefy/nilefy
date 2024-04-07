@@ -36,4 +36,7 @@ main()
   .catch((err) => {
     console.error('seeding failed');
     throw err;
+  })
+  .finally(() => {
+    process.exit();
   });

@@ -1,13 +1,13 @@
 {
-  "name": "webloom",
-  "description": "webloom ",
+  "name": "frontend",
+  "description": "frontend ",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "serve": "vite preview",
+    "build": "vite build",
+    "start": "vite preview --port 5173",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

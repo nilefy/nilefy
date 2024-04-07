@@ -4,16 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "dotenv turbo dev",
+    "start": "turbo start",
     "docs:start": "cd apps/docs && pnpm start",
     "dev:docs": "cd apps/docs && pnpm start",
     "lint": "turbo lint",
     "db:push": "cd apps/backend && pnpm db:push",
     "db:studio": "cd apps/backend && pnpm db:studio",
     "db:seed": "turbo db:seed",
+    "db:reset": "turbo db:reset",
     "typecheck": "turbo typecheck",
     "test": "turbo run test",
-    "test:watch": "turbo run test:watch"
+    "test:watch": "turbo run test:watch",
+    "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build && dotenv -e .env.test -- turbo run start\"  \"wait-on http://localhost:3000/api && turbo run e2e\""
   },
   "engines": {
     "node": ">=18.0.0",
@@ -23,8 +26,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.3.1",
+    "dotenv-cli": "^7.3.0",
     "turbo": "^1.12.4",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "wait-on": "^7.2.0"
   },
   "packageManager": "pnpm@^8.6.12"
 }
