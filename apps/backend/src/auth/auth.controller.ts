@@ -9,6 +9,7 @@ import {
   Res,
   Param,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInGoogleOAuthGuard } from './google.guard';
@@ -23,6 +24,8 @@ import { GoogleAuthedRequest } from './auth.types';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
+import axios from 'axios';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -30,7 +33,44 @@ export class AuthController {
     private authService: AuthService,
     private configService: ConfigService<EnvSchema, true>,
   ) {}
+  @Get('googlesheets')
+  @UseGuards(SignInGoogleOAuthGuard)
+  googleLogin() {}
 
+  @Get('login/google-redirect')
+  @UseGuards(AuthGuard('google'))
+  googleLoginCallback(@Req() req: any, @Res() res: any) {
+    const googleToken = req.user.accessToken;
+    const googleRefreshToken = req.user.refreshToken;
+    // console.log(req);
+    res.cookie('access_token', googleToken, { httpOnly: true });
+    res.cookie('refresh_token', googleRefreshToken, {
+      httpOnly: true,
+    });
+
+    res.redirect('http://localhost:3000/auth/profile');
+  }
+
+  //   @UseGuards(SignInGoogleOAuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req: any) {
+    // console.log(req);
+    const accessToken = req.cookies['access_token'];
+    if (accessToken) {
+      return (
+        await axios.get(
+          `https://sheets.googleapis.com/v4/spreadsheets/1N9USlPVtWFBF20WGB7NmoKNcB8C_2ATFpkgA_hD4WuM/values/A4:C6`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`, // Include access token in the request headers
+            },
+          },
+        )
+      ).data;
+    }
+
+    throw new UnauthorizedException('No access token');
+  }
   @Post('signup')
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) userDto: CreateUserDto,

@@ -1,4 +1,4 @@
-import { commandManager } from '@/actions/CommandManager';
+import { commandManager } from '@/Actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';

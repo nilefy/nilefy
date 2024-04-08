@@ -1,5 +1,5 @@
-import { commandManager } from '@/actions/CommandManager';
-import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
+import { commandManager } from '@/Actions/CommandManager';
+import { RemoteSelectEntity } from '@/Actions/Editor/remoteSelectEntity';
 import { Button } from '@/components/ui/button';
 import { editorStore } from '@/lib/Editor/Models';
 import { entries } from 'lodash';

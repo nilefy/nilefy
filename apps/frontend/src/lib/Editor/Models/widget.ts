@@ -21,10 +21,10 @@ import { Snapshotable, WebloomDisposable } from './interfaces';
 import { debounce, reduce } from 'lodash';
 import { klona } from 'klona';
 import { Entity } from './entity';
-import { commandManager } from '@/actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { commandManager } from '@/Actions/CommandManager';
+import { ChangePropAction } from '@/Actions/Editor/changeProps';
 import { EntityActionConfig } from '../evaluation/interface';
-import { WidgetSelection } from '@/actions/Editor/selection';
+// import { WidgetSelection } from '@/Actions/Editor/selection';
 const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
   scrollIntoView: {
     type: 'SIDE_EFFECT',

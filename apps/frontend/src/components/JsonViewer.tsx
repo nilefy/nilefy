@@ -8,8 +8,8 @@ import {
 } from '@/components/ui/collapsible';
 import { editorStore } from '@/lib/Editor/Models';
 
-import { commandManager } from '@/actions/CommandManager';
-import { WidgetSelection } from '@/actions/Editor/selection';
+import { commandManager } from '@/Actions/CommandManager';
+import { WidgetSelection } from '@/Actions/Editor/selection';
 import { observer } from 'mobx-react-lite';
 
 // TODO: add real JSON type, you can copy it from `typefest`

@@ -1,7 +1,7 @@
-import { commandManager } from '@/actions/CommandManager';
+import { commandManager } from '@/Actions/CommandManager';
 import { useCallback, useEffect } from 'react';
 import { editorStore } from '../Models';
-import { WidgetSelection } from '@/actions/Editor/selection';
+import { WidgetSelection } from '@/Actions/Editor/selection';
 /**
  * @description Used to select the widget on click
  * @param ref

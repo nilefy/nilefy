@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/resizable';
 
 import { WebloomElementShadow, WebloomRoot } from './Components/lib';
-import { commandManager } from '@/actions/CommandManager';
+import { commandManager } from '@/Actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { EditorLeftSidebar } from './Components/Leftsidebar';
 import { editorStore } from '@/lib/Editor/Models';

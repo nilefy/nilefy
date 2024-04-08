@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvSchema, TConfigService } from '../evn.validation';
 import { ConfigService } from '@nestjs/config';
 import z from 'zod';
-import { GoogleAuthedRequest } from './auth.types';
+// import { GoogleAuthedRequest } from './auth.types';
 
 const googleProfileSchema = z.object({
   id: z.string(),
@@ -29,10 +29,12 @@ export class SignInGoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: configService.get('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
-      callbackURL: '/auth/login/google-redirect',
+      callbackURL: 'http://localhost:3000/auth/login/google-redirect',
       scope: ['email', 'profile'],
     });
     this.configService = configService;
+    console.log('configService', configService.get('GOOGLE_CLIENT_ID'));
+    console.log('configService', configService.get('GOOGLE_CLIENT_SECRET'));
   }
 
   async validate(
@@ -43,13 +45,15 @@ export class SignInGoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     try {
       const parsedProfile = googleProfileSchema.parse(profile);
-      const user: GoogleAuthedRequest['user'] = {
+      const user = {
         email: parsedProfile.emails[0].value,
         isEmailVerified: parsedProfile.emails[0].verified,
         providerAccountId: parsedProfile.id,
         provider: 'google',
         avatar: parsedProfile.photos[0]?.value,
         username: parsedProfile.displayName,
+        accessToken: _accessToken,
+        refreshToken: _refreshToken,
       };
       done(null, user);
     } catch (e) {

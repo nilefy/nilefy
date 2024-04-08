@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
-import { commandManager } from '@/actions/CommandManager';
-import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
+import { commandManager } from '@/Actions/CommandManager';
+import { RemoteSelectEntity } from '@/Actions/Editor/remoteSelectEntity';
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);

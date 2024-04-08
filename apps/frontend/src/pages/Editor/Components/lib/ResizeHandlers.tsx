@@ -1,5 +1,5 @@
-import ResizeAction, { ResizingKeys } from '@/actions/Editor/Resize';
-import { commandManager } from '@/actions/CommandManager';
+import ResizeAction, { ResizingKeys } from '@/Actions/Editor/Resize';
+import { commandManager } from '@/Actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
 import { useCallback, useMemo } from 'react';
 

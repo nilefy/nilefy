@@ -9,7 +9,6 @@ import {
   Get,
   Delete,
   Put,
-  Logger,
 } from '@nestjs/common';
 import { DataSourcesService } from './data_sources.service';
 import { JwtGuard } from '../auth/jwt.guard';

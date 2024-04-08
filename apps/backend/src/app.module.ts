@@ -15,6 +15,9 @@ import { EventsModule } from './events/events.module';
 import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
 import { EmailModule } from './email/email.module';
+import { GooglesheetsController } from './googlesheets/googlesheets.controller';
+import { GooglesheetsService } from './googlesheets/googlesheets.service';
+import { GooglesheetsModule } from './googlesheets/googlesheets.module';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { EmailModule } from './email/email.module';
     DataSourcesModule,
     DataQueriesModule,
     EmailModule,
+    GooglesheetsModule,
   ],
+  controllers: [GooglesheetsController],
+  providers: [GooglesheetsService],
 })
 export class AppModule {}
