@@ -1,11 +1,11 @@
 import { configDotenv } from 'dotenv';
-import { dbConnect } from '../drizzle/drizzle.provider';
 import { userSeeder } from './seeders/user.seeder';
 import { workspaceSeeder } from './seeders/workspace.seeder';
 import { appSeeder } from './seeders/app.seeder';
 import { permissionsSeeder } from './seeders/permissions.seeder';
 import { rolesSeeder } from './seeders/roles.seeder';
 import { dataSourcesSeeder } from './seeders/data_sources.seeder';
+import { dbConnect } from '@webloom/database';
 // import { datasourcesSeeder } from './seeders/datasources.seeder';
 
 async function main() {

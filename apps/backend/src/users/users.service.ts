@@ -1,9 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
-import { accounts, users } from '../drizzle/schema/schema';
 import { genSalt, hash } from 'bcrypt';
+import { accounts, DatabaseI, users } from '@webloom/database';
 
 @Injectable()
 export class UsersService {

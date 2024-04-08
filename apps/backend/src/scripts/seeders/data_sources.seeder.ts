@@ -4,8 +4,6 @@ import {
   dataSourcesEnum,
   DataSourceT,
 } from '../seeders/seeder.types';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import * as schema from '../../drizzle/schema/data_sources.schema';
 import {
   pluginConfigForm as postgresConfigForm,
   queryConfigForm as postgresQueryConfigForm,
@@ -14,6 +12,7 @@ import {
   pluginConfigForm as restApiConfigForm,
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
+import { DatabaseI, dataSources as dataSourcesSchema } from '@webloom/database';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -92,5 +91,5 @@ export async function dataSourcesSeeder(db: DatabaseI) {
     });
   });
 
-  await db.insert(schema.dataSources).values(ds);
+  await db.insert(dataSourcesSchema).values(ds);
 }

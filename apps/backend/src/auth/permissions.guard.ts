@@ -7,11 +7,11 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ExpressAuthedRequest } from './auth.types';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { eq } from 'drizzle-orm';
-import { users } from '../drizzle/schema/schema';
 import { PermissionTypes } from '../dto/permissions.dto';
 import { UserDto } from '../dto/users.dto';
+import { DatabaseI, users } from '@webloom/database';
 
 const PERMISSIONS_KEY = 'permissions_key' as const;
 const ONLY_ADMIN_KEY = 'need_admin_key' as const;
