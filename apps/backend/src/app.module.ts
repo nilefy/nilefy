@@ -26,6 +26,7 @@ import { JsQueriesModule } from './js_queries/js_queries.module';
       isGlobal: true,
       // custom validation function with zod
       validate,
+      ignoreEnvFile: true,
     }),
     DrizzleModule,
     WorkspacesModule,

@@ -1,20 +1,39 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDotEnv": [".env"],
   "pipeline": {
     "lint": {
       "cache": false
+    },
+    "e2e":{
+      "persistent": true,
+      "cache": false
+    },
+    "e2e:build":{
+      "cache": true,
+      "dependsOn": ["db:reset", "build"],
+      "dotEnv": [".env.test"]
+    },
+    "start":{
+      "dependsOn": [
+        "build"
+      ],
+      "cache": true,
+      "persistent": true
     },
     "build": {
       "dependsOn": [
         "^build"
       ]
+      
     },
     "dev": {
       "cache": false,
       "persistent": true,
       "dependsOn": [
         "^build"
-      ]
+      ],
+      "dotEnv": [".env"]
     },
     "db:push": {
       "cache": false
@@ -23,6 +42,9 @@
       "cache": false
     },
     "db:seed": {
+      "cache": false
+    },
+    "db:reset": {
       "cache": false
     },
     "typecheck": {

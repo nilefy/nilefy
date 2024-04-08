@@ -1,16 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DrizzleAsyncProvider, DatabaseI } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import * as schema from '../drizzle/schema/schema';
-
+import * as schema from '@webloom/database';
 @Injectable()
 export class WorkspacesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(@Inject(DrizzleAsyncProvider) private db: schema.DatabaseI) {}
 
   async index(includeDeleted: boolean): Promise<WorkspaceDto[]> {
     const ws = await this.db.query.workspaces.findMany({

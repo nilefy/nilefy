@@ -12,12 +12,11 @@ import {
   CreateAppRetDto,
   UpdateAppDb,
 } from '../dto/apps.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { apps } from '../drizzle/schema/schema';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
-import { pages } from '../drizzle/schema/appsState.schema';
+import { apps, DatabaseI, pages } from '@webloom/database';
 
 @Injectable()
 export class AppsService {

@@ -12,11 +12,11 @@ import {
   WsDataSourcesDto,
   DataSourceDto,
 } from '../dto/data_sources.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
+import { DatabaseI, workspaceDataSources } from '@webloom/database';
 
 @Injectable()
 export class DataSourcesService {

@@ -4,24 +4,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  DatabaseI,
-  DrizzleAsyncProvider,
-  PgTrans,
-} from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreatePageDb,
   CreatePageRetDto,
   PageDto,
   UpdatePageDb,
 } from '../dto/pages.dto';
-import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
 import { WebloomNode, WebloomTree } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { DatabaseI, pages, PgTrans } from '@webloom/database';
 @Injectable()
 export class PagesService {
   constructor(

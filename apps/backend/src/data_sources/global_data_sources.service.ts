@@ -1,12 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   DataSourceDto,
   DataSourceDb,
   DataSourceP,
 } from '../dto/data_sources.dto';
-import { dataSources } from '../drizzle/schema/data_sources.schema';
 import { eq } from 'drizzle-orm';
+import { DatabaseI, dataSources } from '@webloom/database';
 
 @Injectable()
 export class GlobalDataSourcesService {
