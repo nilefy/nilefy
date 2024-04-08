@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "dotenv nest start",
     "start:dev": "nest start --watch",
     "dev": "pnpm start:dev",
     "start:debug": "nest start --debug --watch",
@@ -19,11 +19,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:push": "dotenv drizzle-kit push:pg",
-    "db:studio": "dotenv drizzle-kit studio --verbose",
-    "db:generate": "dotenv drizzle-kit generate:pg",
-    "db:migrate": "pnpm db:generate && dotenv ts-node ./src/drizzle/migrate",
-    "db:seed": "dotenv ts-node ./src/scripts/seeder",
+    "db:seed": "ts-node ./src/scripts/seeder",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -39,6 +35,7 @@
     "@nestjs/websockets": "^10.2.10",
     "@webloom/constants": "workspace:^",
     "@webloom/permissions": "workspace:*",
+    "@webloom/database": "workspace:*",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "dotenv-cli": "^7.3.0",

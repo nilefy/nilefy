@@ -1,12 +1,14 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { CreateRoleDb, RolesDto, UpdateRoleDb } from '../dto/roles.dto';
+
+import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 import {
+  DatabaseI,
   permissionsToRoles,
   roles,
   usersToRoles,
-} from '../drizzle/schema/schema';
-import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
+} from '@webloom/database';
 
 @Injectable()
 export class RolesService {

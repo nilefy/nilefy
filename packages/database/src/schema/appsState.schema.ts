@@ -12,7 +12,6 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { apps, timeStamps, softDelete, whoToBlame } from './schema';
-import { WebloomNode } from '../../dto/components.dto';
 
 /**
  * any app contains multiple pages, each page have a seprate `tree`/`state`
@@ -58,7 +57,7 @@ export const components = pgTable(
     id: text('id').notNull(),
     type: varchar('type').notNull(),
     // TODO: convert to jsonb
-    props: json('props').$type<WebloomNode['props']>().notNull(),
+    props: json('props').$type<Record<string,unknown>>().notNull(),
     /**
      * parent_id
      */

@@ -10,7 +10,7 @@ import {
   unique,
   primaryKey,
 } from 'drizzle-orm/pg-core';
-import { permissionTypes } from '../../dto/permissionsTypes';
+import {permissionsTypes} from "@webloom/permissions";
 
 /**
  * spread them to easy create createdAt and updatedAt fields
@@ -101,7 +101,7 @@ export const accounts = pgTable(
 
 export const pgPermissionsEnum = pgEnum(
   'permissions_enum',
-  permissionTypes.options,
+  permissionsTypes.options,
 );
 
 export const permissions = pgTable('permissions', {
