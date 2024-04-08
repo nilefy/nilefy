@@ -36,7 +36,8 @@ function InsertTab() {
             const config =
               WebloomWidgets[name as keyof typeof WebloomWidgets].config;
             return (
-              <div
+              <button
+                title={name}
                 key={name}
                 className=" flex cursor-grab items-center justify-center"
               >
@@ -54,7 +55,7 @@ function InsertTab() {
                     </div>
                   </div>
                 </NewNodeAdapter>
-              </div>
+              </button>
             );
           })}
         </div>

@@ -38,7 +38,11 @@ export const acquireAccount = async (id: number) => {
   const res = (
     await db
       .insert(roles)
-      .values({ createdById: user.id, name: 'test', workspaceId: workspace.id })
+      .values({
+        createdById: user.id,
+        name: 'test' + username,
+        workspaceId: workspace.id,
+      })
       .returning()
   )[0]!;
   await db
@@ -49,5 +53,5 @@ export const acquireAccount = async (id: number) => {
     .insert(usersToRoles)
     .values({ roleId: res.id, userId: user.id })
     .returning();
-  return { username, password, email };
+  return { username, password, email, workspaceId: workspace.id };
 };

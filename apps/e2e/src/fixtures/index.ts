@@ -2,11 +2,26 @@ import { test as baseTest, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { acquireAccount } from '../utils';
+import { EditorPage } from './editor';
 //todo env var
 const baseURL = 'http://localhost:5173';
 export * from '@playwright/test';
+
+export type WebloomFixtures = {
+  editorPage: EditorPage;
+};
 // eslint-disable-next-line
-export const test = baseTest.extend<{}, { workerStorageState: string }>({
+export const test = baseTest.extend<WebloomFixtures, {
+    workerStorageState: string;
+    activeWorkspaceId: string;
+  }
+>({
+  editorPage: async ({ page, activeWorkspaceId }, use) => {
+    const editorPage = new EditorPage(page, activeWorkspaceId);
+    await editorPage.boot();
+    await use(editorPage);
+    await editorPage.dispose();
+  },
   // Use the same storage state for all tests in this worker.
   storageState: ({ workerStorageState }, use) => use(workerStorageState),
 
@@ -37,13 +52,7 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
       await page.getByLabel('Email').fill(account.email);
       await page.getByLabel('Password').fill(account.password);
       await page.getByRole('button', { name: 'Submit' }).click();
-
-      await expect(
-        page.getByText(
-          'looks like you do not have any apps try creating one, happy hacking!',
-        ),
-      ).toBeVisible();
-
+      await expect(page.getByLabel('Email')).not.toBeVisible();
       // End of authentication steps.
       await page.context().storageState({ path: fileName });
       await page.close();
