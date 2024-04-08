@@ -11,7 +11,7 @@
     },
     "e2e:build":{
       "cache": true,
-      "dependsOn": ["db:reset","build"],
+      "dependsOn": ["db:reset", "build"],
       "dotEnv": [".env.test"]
     },
     "start":{
