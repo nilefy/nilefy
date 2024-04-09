@@ -20,6 +20,7 @@ import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
 import { entries, values } from 'lodash';
+import { WebloomJSQuery } from './jsQuery';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -28,7 +29,7 @@ export class EditorState implements WebloomDisposable {
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
-  queries: Record<string, WebloomQuery> = {};
+  queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   workerBroker: WorkerBroker;
   currentPageId: string = '';
@@ -343,16 +344,32 @@ export class EditorState implements WebloomDisposable {
       queryClient: this.queryClient,
     });
   }
-
+  addJSQuery(
+    query: Omit<
+      ConstructorParameters<typeof WebloomJSQuery>[0],
+      'workerBroker' | 'queryClient' | 'workspaceId'
+    >,
+  ) {
+    this.queries[query.id] = new WebloomJSQuery({
+      ...query,
+      appId: this.appId,
+      workspaceId: this.workspaceId,
+      workerBroker: this.workerBroker,
+      queryClient: this.queryClient,
+    });
+  }
   removePage(id: string) {
     delete this.pages[id];
   }
 
   removeQuery(id: string) {
+    const query = this.queries[id];
+    const type =
+      query instanceof WebloomQuery ? query.dataSource.name : query.entityType;
     updateOrderMap(
       [
         {
-          type: this.queries[id].dataSource.name,
+          type: type,
           name: id,
         },
       ],

@@ -1,6 +1,10 @@
 import { makeObservable, observable, action, toJS, computed } from 'mobx';
 import { Snapshotable } from './interface';
-import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
+import {
+  CompleteQueryI,
+  runQuery as runQueryApi,
+  updateQuery,
+} from '@/api/queries.api';
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
 
@@ -100,7 +104,12 @@ export class WebloomQuery
     void,
     void
   >;
-
+  updateQueryMutator: MobxMutation<
+    Awaited<ReturnType<typeof updateQuery>>,
+    FetchXError,
+    void,
+    void
+  >;
   constructor({
     query,
     id,
@@ -141,12 +150,31 @@ export class WebloomQuery
       entityActionConfig: QueryActions,
     });
     this.queryClient = queryClient;
+    this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
+      mutationFn: () => {
+        return updateQuery({
+          appId,
+          workspaceId,
+          queryId: this.id,
+          dto: {
+            dataSourceId: this.dataSourceId,
+            query: toJS(this.rawConfig) as Record<string, unknown>,
+          },
+        });
+      },
+      onSuccess: (data) => {
+        this.updateQuery(data);
+      },
+      onError: (error) => {
+        console.error('error', error);
+      },
+    }));
     this.queryRunner = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
         return runQueryApi({
           appId,
           workspaceId,
-          queryId: id,
+          queryId: this.id,
           body: {
             evaluatedConfig: toJS(this.config) as Record<string, unknown>,
           },
@@ -181,6 +209,9 @@ export class WebloomQuery
       setQueryState: action,
       reset: action.bound,
       triggerMode: computed,
+      setDataSource: action,
+      dataSourceId: observable,
+      appId: observable,
     });
     // todo: schedule after first evaluation
     // if (this.triggerMode === 'onAppLoad') {
@@ -193,7 +224,9 @@ export class WebloomQuery
   setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
     this.rawValues.queryState = state;
   }
-
+  setDataSource(dataSourceId: string) {
+    this.dataSourceId = +dataSourceId;
+  }
   // TODO: make it handle id update
   updateQuery(
     dto: Omit<

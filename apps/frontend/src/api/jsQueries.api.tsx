@@ -17,7 +17,7 @@ type InsertI = {
 };
 type UpdateI = Partial<InsertI>;
 
-export async function index({
+export async function indexJSqueries({
   workspaceId,
   appId,
 }: {
@@ -33,7 +33,7 @@ export async function index({
   return (await res.json()) as JsQueryI[];
 }
 
-export async function create({
+export async function createJSquery({
   workspaceId,
   appId,
   dto,
@@ -53,7 +53,7 @@ export async function create({
   return (await res.json()) as JsQueryI;
 }
 
-export async function update({
+export async function updateJSquery({
   workspaceId,
   appId,
   queryId,
@@ -75,7 +75,7 @@ export async function update({
   return (await res.json()) as JsQueryI;
 }
 
-export async function deleteQuery({
+export async function deleteJSQuery({
   workspaceId,
   appId,
   queryId,

@@ -346,5 +346,12 @@ export function SQLEditor(props: WebloomSQLEditorProps) {
 export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'>;
 export function CodeInput(props: CodeInputProps) {
   const setup = useMemo(() => baseSetup(), []);
-  return <WebloomCodeEditor setup={setup} {...props} />;
+
+  return (
+    <WebloomCodeEditor
+      setup={setup}
+      {...props}
+      className="border-input bg-background ring-offset-background focus-visible:ring-ring min-h-[200px] w-full overflow-auto rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    />
+  );
 }

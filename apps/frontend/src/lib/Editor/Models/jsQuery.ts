@@ -1,4 +1,4 @@
-import { makeObservable, observable, action, computed } from 'mobx';
+import { makeObservable, observable, action, computed, toJS } from 'mobx';
 import { Snapshotable } from './interface';
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
@@ -8,7 +8,7 @@ import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
 import { concat } from 'lodash';
-import { JsQueryI } from '@/api/jsQueries.api';
+import { JsQueryI, updateJSquery } from '@/api/jsQueries.api';
 
 const inspectorConfig: EntityInspectorConfig = [
   {
@@ -93,7 +93,19 @@ export class WebloomJSQuery
   workspaceId: number;
   createdAt: JsQueryI['createdAt'];
   updatedAt: JsQueryI['updatedAt'];
+  // as inconvenient as it is, this makes things consistent across all queries
+  dataSource = {
+    dataSource: {
+      type: 'jsQuery',
+    },
+  };
   private readonly queryClient: QueryClient;
+  updateQueryMutator: MobxMutation<
+    Awaited<ReturnType<typeof updateJSquery>>,
+    FetchXError,
+    void,
+    void
+  >;
   queryRunner: MobxMutation<
     Awaited<{
       data: unknown;
@@ -136,6 +148,26 @@ export class WebloomJSQuery
       entityActionConfig: QueryActions,
     });
     this.queryClient = queryClient;
+    this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
+      mutationFn: () => {
+        return updateJSquery({
+          appId,
+          workspaceId,
+          queryId: this.id,
+          dto: {
+            id: this.id,
+            settings: toJS(this.rawValues.settings),
+            query: this.rawValues.query as string,
+          },
+        });
+      },
+      onSuccess: (data) => {
+        this.updateQuery(data);
+      },
+      onError: (error) => {
+        console.error('error', error);
+      },
+    }));
     this.queryRunner = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
         // call worker and wait for promise
