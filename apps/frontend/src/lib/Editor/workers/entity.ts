@@ -17,7 +17,7 @@ import {
 import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
 import { getArrayPaths } from '../evaluation/utils';
-import { WebloomDisposable } from '../Models/interfaces';
+import { WebloomDisposable } from '../Models/interface';
 
 export class Entity implements WebloomDisposable {
   private readonly evaluablePaths: Set<string>;

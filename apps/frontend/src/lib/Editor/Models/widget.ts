@@ -17,7 +17,7 @@ import {
   getGridBoundingRect,
 } from '../utils';
 
-import { Snapshotable, WebloomDisposable } from './interfaces';
+import { Snapshotable, WebloomDisposable } from './interface';
 import { debounce, reduce } from 'lodash';
 import { klona } from 'klona';
 import { Entity } from './entity';

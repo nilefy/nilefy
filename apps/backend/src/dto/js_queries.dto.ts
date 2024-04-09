@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { jsQueries } from '../drizzle/schema/data_sources.schema';
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { jsQueries } from '@webloom/database';
 
 export const jsQuerySchema = createSelectSchema(jsQueries, {
   settings: z.unknown(),

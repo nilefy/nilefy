@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { JsQueryDb, JsQueryDto, UpdateJsQueryDto } from '../dto/js_queries.dto';
-import { jsQueries } from '../drizzle/schema/data_sources.schema';
 import { AppDto } from '../dto/apps.dto';
+import { DatabaseI, jsQueries } from '@webloom/database';
 
 @Injectable()
 export class JsQueriesService {

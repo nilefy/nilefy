@@ -12,7 +12,7 @@ import {
   WorkerResponse,
 } from '../workers/common/interface';
 import { debounce } from 'lodash';
-import { WebloomDisposable } from './interfaces';
+import { WebloomDisposable } from './interface';
 import { EditorState } from './editor';
 // @ts-expect-error no types
 import structuredClone from '@ungap/structured-clone';

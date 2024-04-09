@@ -25,7 +25,9 @@ export class WorkspacesService {
       .returning();
     return workspace[0];
   }
-
+  async getUserWorkspaces(userId: number): Promise<WorkspaceDto[]> {
+    const workspaces = await this.db.query.workspaces.findMany({}).returning();
+  }
   async update(id: number, ws: UpdateWorkspaceDb): Promise<WorkspaceDto> {
     const workspace = await this.db
       .update(schema.workspaces)

@@ -11,7 +11,7 @@ import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-import { WebloomDisposable } from './interfaces';
+import { WebloomDisposable } from './interface';
 import { QueriesManager } from './queriesManager';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { EvaluationContext } from '../evaluation/interface';

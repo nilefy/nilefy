@@ -17,7 +17,7 @@ import {
 import { WorkerBroker } from './workerBroker';
 import { CursorManager } from './cursorManager';
 
-import { WebloomDisposable } from './interfaces';
+import { WebloomDisposable } from './interface';
 import { WebloomWidgets } from '@/pages/Editor/Components';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;

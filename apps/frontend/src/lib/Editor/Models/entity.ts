@@ -7,7 +7,7 @@ import {
   toJS,
 } from 'mobx';
 
-import { RuntimeEvaluable, WebloomDisposable } from './interfaces';
+import { RuntimeEvaluable, WebloomDisposable } from './interface';
 import { get, isArray, set } from 'lodash';
 import { klona } from 'klona';
 import { WorkerRequest } from '../workers/common/interface';

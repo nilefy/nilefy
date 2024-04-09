@@ -1,5 +1,5 @@
 import { makeObservable, observable, action, toJS, computed } from 'mobx';
-import { Snapshotable } from './interfaces';
+import { Snapshotable } from './interface';
 import { CompleteQueryI, runQuery as runQueryApi } from '@/api/queries.api';
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
