@@ -73,7 +73,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
       <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input
-          defaultValue={query.id}
+          value={query.id}
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
         <div className="ml-auto flex flex-row items-center">
