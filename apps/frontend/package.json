@@ -83,7 +83,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.344.0",
     "match-sorter": "^6.3.4",
-    "mobbing-query": "^1.0.6",
+    "mobbing-query": "^1.0.7",
     "mobx": "^6.12.0",
     "mobx-react-lite": "^4.0.5",
     "mobx-utils": "^6.0.8",
