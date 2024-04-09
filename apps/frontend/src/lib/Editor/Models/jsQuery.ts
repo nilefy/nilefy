@@ -170,7 +170,7 @@ export class WebloomJSQuery
     }));
     this.queryRunner = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
-        // call worker and wait for promise
+        return this.workerBroker.jsQueryExecutionRequest(this.id);
       },
       onMutate: () => {
         this.setValue('queryState', 'loading');
@@ -180,8 +180,8 @@ export class WebloomJSQuery
         this.setValue('error', error.message);
       },
       onSuccess: (data) => {
-        this.setValue('data', data.data);
-        this.setValue('error', data.error);
+        this.setValue('data', data);
+        this.setValue('error', undefined);
         this.setValue('queryState', 'success');
       },
     }));

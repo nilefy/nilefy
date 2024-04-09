@@ -147,6 +147,9 @@ export class MainThreadBroker {
       case 'fulfillAction':
         this.handleFulfillActionExecution(body);
         break;
+      case 'runJSQuery':
+        this.editorState.evaluationManager.runJSQuery(body.queryId, body.id);
+        break;
       default:
         break;
     }

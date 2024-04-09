@@ -14,6 +14,15 @@ export type WorkerActionExecutionResponse = {
   event: 'ActionExecution';
 };
 
+export type FulfillJSQueryResponse = {
+  event: 'fulfillJSQuery';
+  body: {
+    id: string;
+    value?: unknown;
+    error?: unknown;
+  };
+};
+
 export type DependencyUpdateResponse = {
   body: {
     dependencyUpdates: Record<string, Diff<any>[]>;
@@ -24,6 +33,7 @@ export type DependencyUpdateResponse = {
 export type WorkerResponse =
   | EvaluationUpdateResponse
   | WorkerActionExecutionResponse
+  | FulfillJSQueryResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -38,6 +48,7 @@ export type WorkerRequest =
   | EntityEventExecutionRequest
   | EntityActionExecutionRequest
   | FulfillActionRequest
+  | RunJSQueryRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -105,6 +116,14 @@ export type EntityActionExecutionRequest = {
   body: {
     id: string;
     actionName: string;
+  };
+};
+
+export type RunJSQueryRequest = {
+  event: 'runJSQuery';
+  body: {
+    id: string;
+    queryId: string;
   };
 };
 

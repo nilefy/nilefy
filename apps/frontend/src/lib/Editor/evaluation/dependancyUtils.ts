@@ -23,62 +23,102 @@ export const analyzeDependancies = ({
   entityId,
   keys,
   isAction = false,
+  isPossiblyJSBinding = true,
 }: {
   code: unknown;
   toProperty?: string;
   entityId: string;
   keys: AnalysisContext;
   isAction?: boolean;
+  isPossiblyJSBinding?: boolean;
 }) => {
   if (typeof code !== 'string')
     return { toProperty, dependencies: [], isCode: false };
   const entityNames = new Set(Object.keys(keys));
-
   const dependencies: Array<DependencyRelation> = [];
-  const matches = code.matchAll(bindingRegexGlobal);
-  const errors: unknown[] = [];
   let isCode = false;
-  for (const match of matches) {
-    isCode = true;
-    const expression = match[1];
-    const wrappedExpression = isAction
-      ? functionActionWrapper(expression)
-      : functionExpressionWrapper(expression);
-    try {
-      const { references: dependanciesInExpression } =
-        extractIdentifierInfoFromCode(wrappedExpression);
-      main_loop: for (const dependancy of dependanciesInExpression) {
-        const dependancyParts = dependancy.split('.');
-        const dependancyName = dependancyParts[0];
-        const fullPath = dependancyParts.slice(1).join('.');
-        if (!entityNames.has(dependancyName)) continue;
-        const pathPermutation = calcPathPermutations(fullPath);
-        for (const path of pathPermutation) {
-          if (keys[dependancyName].has(path)) {
-            // TODO remove dependent part of the object, since it's not of any use
-            dependencies.push({
-              dependent: {
-                entityId,
-                path: toProperty,
-              },
-              dependency: {
-                entityId: dependancyName,
-                path,
-              },
-            });
-            continue main_loop;
-          }
-        }
-      }
-    } catch (e: unknown) {
-      errors.push(e);
+  if (isPossiblyJSBinding) {
+    const matches = code.matchAll(bindingRegexGlobal);
+    const errors: unknown[] = [];
+    for (const match of matches) {
+      isCode = true;
+      const expression = match[1];
+      const wrappedExpression = isAction
+        ? functionActionWrapper(expression)
+        : functionExpressionWrapper(expression);
+      _analyzeDependencies({
+        code: wrappedExpression,
+        entityNames,
+        keys,
+        dependencies,
+        errors,
+        entityId,
+        toProperty,
+      });
     }
+  } else {
+    isCode = true;
+    const wrappedCode = functionActionWrapper(code);
+    _analyzeDependencies({
+      code: wrappedCode,
+      entityNames,
+      keys,
+      dependencies,
+      errors: [],
+      entityId,
+      toProperty,
+    });
   }
-  // console.log('errors in analysis', errors);
   // todo return errors and do something with them
   return { toProperty, dependencies, isCode };
 };
-
+const _analyzeDependencies = ({
+  code,
+  entityNames,
+  keys,
+  dependencies,
+  errors,
+  entityId,
+  toProperty,
+}: {
+  code: string;
+  entityNames: Set<string>;
+  keys: AnalysisContext;
+  dependencies: DependencyRelation[];
+  errors: unknown[];
+  entityId: string;
+  toProperty: string;
+}) => {
+  try {
+    const { references: dependanciesInExpression } =
+      extractIdentifierInfoFromCode(code);
+    main_loop: for (const dependancy of dependanciesInExpression) {
+      const dependancyParts = dependancy.split('.');
+      const dependancyName = dependancyParts[0];
+      const fullPath = dependancyParts.slice(1).join('.');
+      if (!entityNames.has(dependancyName)) continue;
+      const pathPermutation = calcPathPermutations(fullPath);
+      for (const path of pathPermutation) {
+        if (keys[dependancyName].has(path)) {
+          // TODO remove dependent part of the object, since it's not of any use
+          dependencies.push({
+            dependent: {
+              entityId,
+              path: toProperty,
+            },
+            dependency: {
+              entityId: dependancyName,
+              path,
+            },
+          });
+          continue main_loop;
+        }
+      }
+    }
+  } catch (e: unknown) {
+    errors.push(e);
+  }
+};
 const calcPathPermutations = (path: string) => {
   const parts = path.split('.');
   const permutations: string[] = [];
