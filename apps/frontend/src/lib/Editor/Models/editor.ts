@@ -140,6 +140,7 @@ export class EditorState implements WebloomDisposable {
     pages: pages = [],
     currentPageId = '',
     queries = [],
+    jsQueries = [],
     appId,
     workspaceId,
     currentUser,
@@ -152,6 +153,10 @@ export class EditorState implements WebloomDisposable {
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
+      'workerBroker' | 'queryClient' | 'workspaceId'
+    >[];
+    jsQueries: Omit<
+      ConstructorParameters<typeof WebloomJSQuery>[0],
       'workerBroker' | 'queryClient' | 'workspaceId'
     >[];
     appId: number;
@@ -185,6 +190,12 @@ export class EditorState implements WebloomDisposable {
           name: q.id,
         };
       }),
+      ...jsQueries.map((q) => {
+        return {
+          type: EDITOR_CONSTANTS.JS_QUERY_BASE_NAME,
+          name: q.id,
+        };
+      }),
     ]);
     // create resources needed for the editor
     pages.forEach((page, index) => {
@@ -208,6 +219,15 @@ export class EditorState implements WebloomDisposable {
     }
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
+        ...q,
+        queryClient: this.queryClient,
+        workerBroker: this.workerBroker,
+        appId,
+        workspaceId,
+      });
+    });
+    jsQueries.forEach((q) => {
+      this.queries[q.id] = new WebloomJSQuery({
         ...q,
         queryClient: this.queryClient,
         workerBroker: this.workerBroker,

@@ -1,5 +1,6 @@
 import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
@@ -28,17 +29,24 @@ export const appLoader =
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
     });
+
+    const jsQueriesQuery = useJSQueries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
     const values = await Promise.all([
       queryClient.fetchQuery(appQuery),
       queryClient.fetchQuery(queriesQuery),
+      queryClient.fetchQuery(jsQueriesQuery),
     ]);
-    const [app, queries] = values;
+    const [app, queries, jsQueries] = values;
     const tree = app.defaultPage.tree;
     editorStore.init({
       name: app.name,
       workspaceId: app.workspaceId,
       appId: app.id,
       queries,
+      jsQueries,
       // TODO: get the current user from the token
       currentUser: 'Super User',
       currentPageId: app.defaultPage.id.toString(),

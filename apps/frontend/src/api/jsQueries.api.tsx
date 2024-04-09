@@ -1,4 +1,5 @@
 import { fetchX } from '@/utils/fetch';
+import { UndefinedInitialDataOptions } from '@tanstack/react-query';
 
 export type JsQueryI = {
   id: string;
@@ -32,6 +33,21 @@ export async function indexJSqueries({
   );
   return (await res.json()) as JsQueryI[];
 }
+const JS_QUERY_KEY = 'jsQueries';
+export const useJSQueries = ({
+  workspaceId,
+  appId,
+}: {
+  workspaceId: number;
+  appId: number;
+}): UndefinedInitialDataOptions<JsQueryI[], Error, JsQueryI[]> => ({
+  queryKey: [JS_QUERY_KEY, { workspaceId, appId }],
+  queryFn: async () => {
+    const data = await indexJSqueries({ workspaceId, appId });
+    return data;
+  },
+  staleTime: 0,
+});
 
 export async function createJSquery({
   workspaceId,
