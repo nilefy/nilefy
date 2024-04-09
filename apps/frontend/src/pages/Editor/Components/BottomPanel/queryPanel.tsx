@@ -530,8 +530,15 @@ export const QueryPanel = observer(function QueryPanel() {
             query={queries[editorStore.selectedQueryId]}
           />
         ) : (
-          <div className="h-full w-full flex-row items-center justify-center ">
-            <p>select or create new query</p>
+          <div className="flex h-full w-full flex-col items-center justify-start gap-2 p-10 py-6 text-center">
+            <h2 className="text-lg font-semibold">Connect to a data source</h2>
+            <div>
+              <p>
+                Select a data source to start creating queries. To know more
+                about data sources and queries, you can read the documentation{' '}
+                <a href="">here</a>
+              </p>
+            </div>
           </div>
         )}
       </div>
