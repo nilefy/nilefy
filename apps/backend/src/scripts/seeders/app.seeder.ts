@@ -49,7 +49,7 @@ export async function appSeeder(
         },
         col: 0,
         row: 0,
-        columnsCount: 32,
+        columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
         rowsCount: 0,
       }),
     ),
