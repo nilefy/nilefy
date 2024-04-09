@@ -11,6 +11,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 
 import { ToolTipWrapper } from '../tooltipWrapper';
+import { StringSchema } from '@/lib/Editor/validations';
 
 export type WebloomButtonProps = {
   text: string;
@@ -75,8 +76,8 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          label: 'Text',
         },
+        validation: StringSchema('Click me'),
       },
     ],
   },
@@ -88,7 +89,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         label: 'onClick',
         type: 'inlineCodeInput',
         options: {
-          label: 'onClick',
+          placeholder: 'onClick',
         },
         isEvent: true,
       },

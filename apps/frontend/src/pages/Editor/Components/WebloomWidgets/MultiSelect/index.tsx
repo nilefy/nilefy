@@ -68,7 +68,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'label',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label',
+          placeholder: 'Label',
         },
       },
       {
@@ -76,7 +76,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'options',
         type: 'inlineCodeInput',
         options: {
-          label: 'Options',
+          placeholder: 'Options',
         },
         validation: zodToJsonSchema(
           z

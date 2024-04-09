@@ -19,7 +19,7 @@ export type EntityActionSetter = {
 export type EntityActionSideEffect<T extends Entity> = {
   type: 'SIDE_EFFECT';
   name: string;
-  fn: (entity: T, ...args: unknown[]) => void;
+  fn: (entity: T, ...args: unknown[]) => any | Promise<any>;
 };
 
 export type EntityActionRawSideEffect = {

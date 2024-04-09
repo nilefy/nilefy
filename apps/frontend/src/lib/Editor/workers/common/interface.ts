@@ -2,15 +2,25 @@ import { EntityTypes } from '../../interface';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
 
-export type EventExecutionResult = {
+export type ActionExecutionPayload = {
+  entityId: string;
   id: string;
   actionName: string;
   args: unknown[];
 };
 
-export type WorkerEventExecutionResponse = {
-  body: EventExecutionResult[];
-  event: 'EventExecution';
+export type WorkerActionExecutionResponse = {
+  body: ActionExecutionPayload[];
+  event: 'ActionExecution';
+};
+
+export type FulfillJSQueryResponse = {
+  event: 'fulfillJSQuery';
+  body: {
+    id: string;
+    value?: unknown;
+    error?: unknown;
+  };
 };
 
 export type DependencyUpdateResponse = {
@@ -22,7 +32,8 @@ export type DependencyUpdateResponse = {
 
 export type WorkerResponse =
   | EvaluationUpdateResponse
-  | WorkerEventExecutionResponse
+  | WorkerActionExecutionResponse
+  | FulfillJSQueryResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -36,6 +47,8 @@ export type WorkerRequest =
   | ChangePageRequest
   | EntityEventExecutionRequest
   | EntityActionExecutionRequest
+  | FulfillActionRequest
+  | RunJSQueryRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -84,7 +97,14 @@ export type EntityEventExecutionRequest = {
     eventName: string;
   };
 };
-
+export type FulfillActionRequest = {
+  event: 'fulfillAction';
+  body: {
+    id: string;
+    value?: unknown;
+    error?: unknown;
+  };
+};
 export type RemoveEntityRequest = {
   event: 'removeEntity';
   body: {
@@ -96,6 +116,14 @@ export type EntityActionExecutionRequest = {
   body: {
     id: string;
     actionName: string;
+  };
+};
+
+export type RunJSQueryRequest = {
+  event: 'runJSQuery';
+  body: {
+    id: string;
+    queryId: string;
   };
 };
 

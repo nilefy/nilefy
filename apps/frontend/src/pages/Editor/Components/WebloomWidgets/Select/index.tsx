@@ -157,7 +157,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'labelText',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label',
+          placeholder: 'Label',
         },
       },
       {
@@ -165,7 +165,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'labelPosition',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label Position',
+          placeholder: 'Label Position',
         },
         validation: zodToJsonSchema(z.enum(['left', 'top']).default('left')),
       },
@@ -174,7 +174,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'tooltip',
         type: 'inlineCodeInput',
         options: {
-          label: 'Tooltip',
+          placeholder: 'Tooltip',
         },
       },
       {
@@ -182,7 +182,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'placeholder',
         type: 'inlineCodeInput',
         options: {
-          label: 'Placeholder',
+          placeholder: 'Placeholder',
         },
       },
       {
@@ -190,7 +190,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'defaultValue',
         type: 'inlineCodeInput',
         options: {
-          label: 'Default Value',
+          placeholder: 'Default Value',
         },
       },
       {
@@ -198,7 +198,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'disabled',
         type: 'inlineCodeInput',
         options: {
-          label: 'Disabled',
+          placeholder: 'Disabled',
         },
         validation: zodToJsonSchema(z.boolean().default(false)),
       },
@@ -207,7 +207,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
         path: 'options',
         type: 'inlineCodeInput',
         options: {
-          label: 'Options',
+          placeholder: 'Options',
         },
         validation: zodToJsonSchema(
           z

@@ -1,7 +1,7 @@
 import { action, computed, makeObservable, observable } from 'mobx';
 import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
-import { evaluate } from '../evaluation';
+import { evaluate, evaluateAsync } from '../evaluation';
 import { EditorState } from './editor';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { bindingRegexGlobal } from '../evaluation/utils';
@@ -67,7 +67,38 @@ export class EvaluationManager {
     // We don't expect return values from events.
     evaluate(code, context, true);
   }
-
+  async runJSQuery(queryId: string, id: string) {
+    const entity = this.editor.getEntityById(queryId);
+    const query = entity.unevalValues.query as string;
+    const res = analyzeDependancies({
+      code: query,
+      entityId: queryId,
+      keys: this.editor.context,
+      isPossiblyJSBinding: false,
+    });
+    const { dependencies } = res;
+    const context: Record<string, unknown> = {};
+    for (const item of dependencies) {
+      const { entityId, path } = item.dependency;
+      const fullPath = `${entityId}.${path}`;
+      const entity = this.editor.getEntityById(entityId);
+      const value = get(
+        this.lastEvaluatedForest,
+        fullPath,
+        get(entity.unevalValues, path, get(entity.actions, path)),
+      );
+      set(context, fullPath, value);
+    }
+    const { value, errors } = await evaluateAsync(query, context);
+    this.editor.mainThreadBroker.postMessage({
+      event: 'fulfillJSQuery',
+      body: {
+        id: id,
+        value,
+        error: errors,
+      },
+    });
+  }
   /**
    * @description this method evaluates the whole forest of the dependency graph.
    * it shouldn't be used to execute actions or events.

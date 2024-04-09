@@ -1,8 +1,7 @@
 import { action, makeObservable, observable, runInAction } from 'mobx';
+import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
-
 import { DependencyManager } from './dependencyManager';
-
 import { get, isArray, keys, set } from 'lodash';
 import {
   ajv,
@@ -18,7 +17,7 @@ import {
 import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
 import { getArrayPaths } from '../evaluation/utils';
-import { WebloomDisposable } from '../Models/interfaces';
+import { WebloomDisposable } from '../Models/interface';
 
 export class Entity implements WebloomDisposable {
   private readonly evaluablePaths: Set<string>;
@@ -244,11 +243,7 @@ export class Entity implements WebloomDisposable {
       if (configItem.type === 'SETTER') {
         actions[key] = (value: unknown) => {
           if (this.metaValues.has(configItem.path)) {
-            return this.mainThreadBroker.addEvent({
-              id: this.id,
-              actionName: key,
-              args: [value],
-            });
+            return this.createPromiseForAction(this.id, key, [value]);
           }
           runInAction(() => {
             const path = configItem.path;
@@ -261,14 +256,27 @@ export class Entity implements WebloomDisposable {
         };
       } else if (configItem.type === 'SIDE_EFFECT') {
         actions[key] = (...args: unknown[]) => {
-          this.mainThreadBroker.addEvent({
-            id: this.id,
-            actionName: key,
-            args,
-          });
+          this.createPromiseForAction(this.id, key, args);
         };
       }
     }
     return actions;
+  };
+
+  createPromiseForAction = (
+    entityId: string,
+    actionName: string,
+    args: unknown[] = [],
+  ) => {
+    return new Promise((resolve, reject) => {
+      this.mainThreadBroker.addAction({
+        entityId,
+        actionName,
+        args,
+        id: nanoid(),
+        resolve,
+        reject,
+      });
+    });
   };
 }

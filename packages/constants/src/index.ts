@@ -5,6 +5,7 @@ const EDITOR_CONSTANTS = {
   ROOT_NODE_ID: '0',
   PREVIEW_NODE_ID: '1',
   GLOBALS_ID: "WebloomGlobals",
+  JS_QUERY_BASE_NAME: 'jsQuery',
 } as const;
 const SOCKET_EVENTS = {
   DELETE_NODE: 'deleteNode',

@@ -1,63 +1,22 @@
 import {
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-} from '@codemirror/autocomplete';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  foldKeymap,
-  indentOnInput,
-  syntaxHighlighting,
-} from '@codemirror/language';
-import { lintKeymap } from '@codemirror/lint';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { EditorState } from '@codemirror/state';
-import {
-  crosshairCursor,
-  dropCursor,
-  highlightSpecialChars,
-  keymap,
-  placeholder,
-  rectangularSelection,
-} from '@codemirror/view';
-import {
   WebloomCodeEditor,
   WebloomCodeEditorProps,
+  baseSetup,
   inlineTheme,
   jsTemplatePlugin,
 } from '.';
 import { Omit } from 'lodash';
 import { useMemo } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { placeholder } from '@codemirror/view';
 
 export const inlineSetupCallback = (
   placeholderText: string = 'Enter something',
 ) => [
-  highlightSpecialChars(),
-  history(),
-  dropCursor(),
-  EditorState.allowMultipleSelections.of(true),
-  indentOnInput(),
-  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  bracketMatching(),
-  closeBrackets(),
-  rectangularSelection(),
-  crosshairCursor(),
-  placeholder(placeholderText),
+  ...baseSetup(),
   inlineTheme,
-  highlightSelectionMatches(),
   jsTemplatePlugin,
-  keymap.of([
-    ...closeBracketsKeymap,
-    ...defaultKeymap,
-    ...searchKeymap,
-    ...historyKeymap,
-    ...foldKeymap,
-    ...completionKeymap,
-    ...lintKeymap,
-  ]),
+  placeholder(placeholderText),
 ];
 
 export type WebloomInlineEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {

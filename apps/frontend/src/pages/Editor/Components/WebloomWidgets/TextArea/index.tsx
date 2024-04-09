@@ -134,7 +134,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'labelText',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label',
+          placeholder: 'Label',
         },
         validation: zodToJsonSchema(z.string().default('Label')),
       },
@@ -143,7 +143,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'labelPosition',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label Position',
+          placeholder: 'Label Position',
         },
         validation: zodToJsonSchema(z.enum(['left', 'top']).default('left')),
       },
@@ -152,7 +152,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'tooltip',
         type: 'inlineCodeInput',
         options: {
-          label: 'Tooltip',
+          placeholder: 'Tooltip',
         },
         validation: zodToJsonSchema(z.string().default('')),
       },
@@ -161,7 +161,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'placeholder',
         type: 'inlineCodeInput',
         options: {
-          label: 'Placeholder',
+          placeholder: 'Placeholder',
         },
         validation: zodToJsonSchema(z.string().default('')),
       },
@@ -170,7 +170,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'defaultValue',
         type: 'inlineCodeInput',
         options: {
-          label: 'Default Value',
+          placeholder: 'Default Value',
         },
         validation: zodToJsonSchema(z.string().optional().default('')),
       },
@@ -179,7 +179,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'disabled',
         type: 'inlineCodeInput',
         options: {
-          label: 'Disabled',
+          placeholder: 'Disabled',
         },
         validation: zodToJsonSchema(z.boolean().default(false)),
       },
@@ -188,7 +188,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'caption',
         type: 'inlineCodeInput',
         options: {
-          label: 'Caption',
+          placeholder: 'Caption',
         },
         validation: zodToJsonSchema(z.string().default('')),
       },
@@ -197,7 +197,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'maxLength',
         type: 'inlineCodeInput',
         options: {
-          label: 'Max Length',
+          placeholder: 'Max Length',
         },
         validation: zodToJsonSchema(z.number().default(400)),
       },
@@ -206,7 +206,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         path: 'minLength',
         type: 'inlineCodeInput',
         options: {
-          label: 'Min Length',
+          placeholder: 'Min Length',
         },
         validation: zodToJsonSchema(z.number().default(0)),
       },
@@ -220,7 +220,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         label: 'onTextChange',
         type: 'inlineCodeInput',
         options: {
-          label: 'onTextChange',
+          placeholder: 'onTextChange',
         },
       },
       {
@@ -228,7 +228,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         label: 'onFocus',
         type: 'inlineCodeInput',
         options: {
-          label: 'onFocus',
+          placeholder: 'onFocus',
         },
       },
       {
@@ -236,7 +236,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextAreaProps> = [
         label: 'onBlur',
         type: 'inlineCodeInput',
         options: {
-          label: 'onBlur',
+          placeholder: 'onBlur',
         },
       },
     ],

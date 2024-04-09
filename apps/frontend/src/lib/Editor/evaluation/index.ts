@@ -6,7 +6,7 @@ import {
   functionExpressionWrapper,
   sanitizeScript,
 } from './utils';
-
+const AsyncFunction = async function () {}.constructor;
 export const evaluate = (
   code: string,
   evaluationContext: Record<string, unknown>,
@@ -74,8 +74,32 @@ export const evaluate = (
     errors: errors.length ? errors : null,
   };
 };
-
-const evaluationFormControls = new Set(['sql', 'inlineCodeInput']);
+export const evaluateAsync = async (
+  code: string,
+  evaluationContext: Record<string, unknown>,
+): Promise<{
+  value: unknown;
+  errors: string[] | null;
+}> => {
+  code = sanitizeScript(code);
+  try {
+    return {
+      // @ts-expect-error no types
+      value: await new AsyncFunction(
+        'context',
+        `with(context) { return await (${functionActionWrapper(code)}) }`,
+      )(evaluationContext),
+      errors: null,
+    };
+  } catch (e: unknown) {
+    const error = e as Error;
+    return {
+      value: null,
+      errors: [error.name + ': ' + error.message],
+    };
+  }
+};
+const evaluationFormControls = new Set(['sql', 'inlineCodeInput', 'codeInput']);
 
 export const getEvaluablePathsFromInspectorConfig = memoize(
   (config: EntityInspectorConfig | undefined) => {

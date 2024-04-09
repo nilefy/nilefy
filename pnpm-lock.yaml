@@ -480,8 +480,8 @@ importers:
         specifier: ^6.3.4
         version: 6.3.4
       mobbing-query:
-        specifier: ^1.0.4
-        version: 1.0.4(@tanstack/query-core@5.27.5)(mobx@6.12.0)
+        specifier: ^1.0.7
+        version: 1.0.7(@tanstack/query-core@5.27.5)(mobx@6.12.0)
       mobx:
         specifier: ^6.12.0
         version: 6.12.0
@@ -495,7 +495,7 @@ importers:
         specifier: ^9.3.1
         version: 9.3.1
       nanoid:
-        specifier: ^5.0.2
+        specifier: ^5.0.3
         version: 5.0.3
       re-resizable:
         specifier: ^6.9.11
@@ -15142,8 +15142,8 @@ packages:
       obliterator: 2.0.4
     dev: false
 
-  /mobbing-query@1.0.4(@tanstack/query-core@5.27.5)(mobx@6.12.0):
-    resolution: {integrity: sha512-VlXIjVL+WfBNPhQrTNN0TrIm2VwWR7uWmWSnPfiH4ThpJm1PqDfQW+AYFSZ1v+aVSzDvU8fFNWaIZ72N1wdW/A==}
+  /mobbing-query@1.0.7(@tanstack/query-core@5.27.5)(mobx@6.12.0):
+    resolution: {integrity: sha512-8J4IMuHiBrW+n3x23UX6nPP9vJEJoXiYg7xVM/w4v6UiIQ8I2PdHL7RUogZGhs0YU8uK9Kfh9v+6xBPlHszugg==}
     peerDependencies:
       '@tanstack/query-core': ^5.0.0
       mobx: ^6.0.0

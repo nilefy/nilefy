@@ -11,7 +11,7 @@ import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
 import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-import { WebloomDisposable } from './interfaces';
+import { WebloomDisposable } from './interface';
 import { QueriesManager } from './queriesManager';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { EvaluationContext } from '../evaluation/interface';
@@ -20,6 +20,7 @@ import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
 import { entries, values } from 'lodash';
+import { WebloomJSQuery } from './jsQuery';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -28,7 +29,7 @@ export class EditorState implements WebloomDisposable {
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
-  queries: Record<string, WebloomQuery> = {};
+  queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   workerBroker: WorkerBroker;
   currentPageId: string = '';
@@ -139,6 +140,7 @@ export class EditorState implements WebloomDisposable {
     pages: pages = [],
     currentPageId = '',
     queries = [],
+    jsQueries = [],
     appId,
     workspaceId,
     currentUser,
@@ -151,6 +153,10 @@ export class EditorState implements WebloomDisposable {
     currentPageId: string;
     queries: Omit<
       ConstructorParameters<typeof WebloomQuery>[0],
+      'workerBroker' | 'queryClient' | 'workspaceId'
+    >[];
+    jsQueries: Omit<
+      ConstructorParameters<typeof WebloomJSQuery>[0],
       'workerBroker' | 'queryClient' | 'workspaceId'
     >[];
     appId: number;
@@ -184,6 +190,12 @@ export class EditorState implements WebloomDisposable {
           name: q.id,
         };
       }),
+      ...jsQueries.map((q) => {
+        return {
+          type: EDITOR_CONSTANTS.JS_QUERY_BASE_NAME,
+          name: q.id,
+        };
+      }),
     ]);
     // create resources needed for the editor
     pages.forEach((page, index) => {
@@ -207,6 +219,15 @@ export class EditorState implements WebloomDisposable {
     }
     queries.forEach((q) => {
       this.queries[q.id] = new WebloomQuery({
+        ...q,
+        queryClient: this.queryClient,
+        workerBroker: this.workerBroker,
+        appId,
+        workspaceId,
+      });
+    });
+    jsQueries.forEach((q) => {
+      this.queries[q.id] = new WebloomJSQuery({
         ...q,
         queryClient: this.queryClient,
         workerBroker: this.workerBroker,
@@ -343,16 +364,32 @@ export class EditorState implements WebloomDisposable {
       queryClient: this.queryClient,
     });
   }
-
+  addJSQuery(
+    query: Omit<
+      ConstructorParameters<typeof WebloomJSQuery>[0],
+      'workerBroker' | 'queryClient' | 'workspaceId'
+    >,
+  ) {
+    this.queries[query.id] = new WebloomJSQuery({
+      ...query,
+      appId: this.appId,
+      workspaceId: this.workspaceId,
+      workerBroker: this.workerBroker,
+      queryClient: this.queryClient,
+    });
+  }
   removePage(id: string) {
     delete this.pages[id];
   }
 
   removeQuery(id: string) {
+    const query = this.queries[id];
+    const type =
+      query instanceof WebloomQuery ? query.dataSource.name : query.entityType;
     updateOrderMap(
       [
         {
-          type: this.queries[id].dataSource.name,
+          type: type,
           name: id,
         },
       ],

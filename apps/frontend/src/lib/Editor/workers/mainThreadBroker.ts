@@ -1,12 +1,19 @@
 import { action, makeObservable, observable, reaction, toJS } from 'mobx';
 import { EditorState } from './editor';
 import {
-  EventExecutionResult,
+  ActionExecutionPayload,
+  FulfillActionRequest,
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
 import { diff, Diff } from 'deep-diff';
 import { klona } from 'klona';
+import { omit } from 'lodash';
+
+export type PromisedActionExecutionPayload = ActionExecutionPayload & {
+  resolve: (value: unknown) => void;
+  reject: (reason: unknown) => void;
+};
 export class MainThreadBroker {
   private disposables: (() => void)[] = [];
   private worker = self;
@@ -23,11 +30,16 @@ export class MainThreadBroker {
     string,
     Record<string, string[]>
   > = {};
-  actionsQueue: EventExecutionResult[] = [];
+  actionsQueue: PromisedActionExecutionPayload[] = [];
+  pendingActionsQueue: PromisedActionExecutionPayload[] = [];
   constructor(private editorState: EditorState) {
     makeObservable(this, {
       receiveMessage: action.bound,
       actionsQueue: observable,
+      pendingActionsQueue: observable,
+      addAction: action,
+      handleActionExecution: action,
+      handleFulfillActionExecution: action,
     });
     const messageEventHandler = (e: MessageEvent) => {
       const { data } = e;
@@ -59,7 +71,7 @@ export class MainThreadBroker {
             .entityToEntityDependencies,
         this.handleDependenciesUpdate,
       ),
-      reaction(() => this.actionsQueue.length, this.handleEventExecution, {
+      reaction(() => this.actionsQueue.length, this.handleActionExecution, {
         delay: 10,
       }),
     );
@@ -132,22 +144,51 @@ export class MainThreadBroker {
           console.error('Error in actionExecution:', error);
         }
         break;
+      case 'fulfillAction':
+        this.handleFulfillActionExecution(body);
+        break;
+      case 'runJSQuery':
+        this.editorState.evaluationManager.runJSQuery(body.queryId, body.id);
+        break;
+      default:
+        break;
     }
   };
-  addEvent(eventResult: EventExecutionResult) {
-    console.log('eventResult', eventResult);
-    this.actionsQueue.push(eventResult);
+  addAction(actionPayload: PromisedActionExecutionPayload) {
+    this.actionsQueue.push(actionPayload);
   }
   postMessage(req: WorkerResponse) {
     this.worker.postMessage(req);
   }
-  handleEventExecution = () => {
-    const actions = toJS(this.actionsQueue);
+  handleActionExecution = () => {
+    const actions = toJS(this.actionsQueue).map((action) => {
+      return omit(action, ['resolve', 'reject']);
+    });
+    this.pendingActionsQueue = [
+      ...this.pendingActionsQueue,
+      ...this.actionsQueue,
+    ];
     this.actionsQueue = [];
     this.postMessage({
-      event: 'EventExecution',
+      event: 'ActionExecution',
       body: actions,
     });
+  };
+
+  handleFulfillActionExecution = (body: FulfillActionRequest['body']) => {
+    // I don't think we have to fulfill in order since if the action is awaited there will be no other actions after it
+    const action = this.pendingActionsQueue.find(
+      (action) => action.id === body.id,
+    );
+    if (!action) return;
+    if (body.error) {
+      action.reject(body.error);
+    } else {
+      action.resolve(body.value);
+    }
+    this.pendingActionsQueue = this.pendingActionsQueue.filter(
+      (action) => action.id !== body.id,
+    );
   };
   handleDependenciesUpdate = () => {
     const serializedEntityToEntityDependencies = klona(

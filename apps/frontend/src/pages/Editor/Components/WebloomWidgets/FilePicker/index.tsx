@@ -65,7 +65,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomFilePickerProps> = [
         label: 'Label',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label',
+          placeholder: 'Label',
         },
         path: 'label',
       },

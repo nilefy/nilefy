@@ -16,6 +16,7 @@ import {
   workspaceDataSources,
   dataSources,
   queries,
+  jsQueries,
 } from './data_sources.schema';
 import { components, pages } from './appsState.schema';
 
@@ -59,6 +60,7 @@ const userUpdateDataSourceRelation = 'lastUpdatedDataSource';
 const userQueriesRelation = 'userQueries';
 const userUpdateQueryRelation = 'lastUpdatedQuery';
 const appQueriesRelation = 'appQueries';
+const appJsQueriesRelation = 'appjsquery';
 const wsDataSourceQueriesRelation = 'dataSourceQueriesRelation';
 
 const componentsToPageRelation = 'componentsToPage';
@@ -185,6 +187,9 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
   queries: many(queries, {
     relationName: appQueriesRelation,
   }),
+  jsQueries: many(jsQueries, {
+    relationName: appJsQueriesRelation,
+  }),
   pages: many(pages, {
     relationName: pagesToappsRelation,
   }),
@@ -242,6 +247,14 @@ export const queriesRelations = relations(queries, ({ one }) => ({
     fields: [queries.dataSourceId],
     references: [workspaceDataSources.id],
     relationName: wsDataSourceQueriesRelation,
+  }),
+}));
+
+export const jsQueriesRelations = relations(jsQueries, ({ one }) => ({
+  app: one(apps, {
+    fields: [jsQueries.appId],
+    references: [apps.id],
+    relationName: appJsQueriesRelation,
   }),
 }));
 

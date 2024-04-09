@@ -52,6 +52,104 @@ export const QueryConfigPanel = observer(({ id }: { id: string }) => {
 });
 
 import { LoadingButton } from '@/components/loadingButton';
+import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
+
+const ActiveQueryItem = observer(function ActiveQueryItem({
+  query,
+}: {
+  query: WebloomQuery | WebloomJSQuery;
+}) {
+  const jsonResultRef = useRef<HTMLDivElement>(null);
+  const { workspaceId, appId } = useParams();
+  const { data: dataSources } = api.dataSources.index.useQuery({
+    workspaceId: +(workspaceId as string),
+  });
+  const saveCallback = useCallback(() => {
+    query.updateQueryMutator.mutate();
+  }, [query]);
+  return (
+    <div className="h-full w-full">
+      {/* HEADER */}
+      <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
+        {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
+        <Input
+          defaultValue={query.id}
+          className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
+        />
+        <div className="ml-auto flex flex-row items-center">
+          <LoadingButton
+            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
+            buttonProps={{
+              variant: 'ghost',
+              type: 'button',
+              className: 'mr-auto',
+              onClick: saveCallback,
+            }}
+          >
+            <>
+              <SaveIcon /> Save
+            </>
+          </LoadingButton>
+          <Button
+            variant={'ghost'}
+            disabled={query.queryRunner.state.isPending}
+            onClick={() => {
+              if (!workspaceId || !appId) {
+                throw new Error('workspaceId or appId is not defined!');
+              }
+              query.queryRunner.mutate();
+            }}
+          >
+            <Play /> run
+          </Button>
+        </div>
+      </div>
+      {/*FORM*/}
+      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
+        <div className="flex flex-col gap-4 p-4">
+          {query instanceof WebloomQuery ? (
+            <Label className="flex items-center gap-4">
+              Data Source
+              <Select
+                value={query.dataSourceId.toString()}
+                onValueChange={(e) => {
+                  query.setDataSource(e);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={query?.dataSource.name} />
+                </SelectTrigger>
+                <SelectContent>
+                  {dataSources
+                    ?.filter(
+                      (dataSource) =>
+                        dataSource.dataSource.name ===
+                        query.dataSource.dataSource.name,
+                    )
+                    .map((dataSource) => (
+                      <SelectItem
+                        key={dataSource.name}
+                        value={dataSource.id.toString()}
+                      >
+                        {dataSource.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </Label>
+          ) : null}
+          <QueryConfigPanel id={query.id} />
+
+          <QueryPreview
+            ref={jsonResultRef}
+            key={query.id + 'preview'}
+            queryValues={query.rawValues as QueryRawValues}
+          />
+        </div>
+      </ScrollArea>
+    </div>
+  );
+});
 
 const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
   forwardRef(function QueryPreview(props, ref) {
@@ -93,112 +191,6 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
   }),
 );
 
-const QueryItem = observer(function QueryItem({
-  query,
-}: {
-  query: WebloomQuery;
-}) {
-  const jsonResultRef = useRef<HTMLDivElement>(null);
-  const { workspaceId, appId } = useParams();
-  const { data: dataSources } = api.dataSources.index.useQuery({
-    workspaceId: +(workspaceId as string),
-  });
-  const [curDataSource, setCurDataSource] = useState<string>(() =>
-    query.dataSource.id.toString(),
-  );
-
-  return (
-    <div className="h-full w-full">
-      {/* HEADER */}
-      <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
-        {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
-        <Input
-          defaultValue={query.id}
-          className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
-        />
-        <div className="ml-auto flex flex-row items-center">
-          <LoadingButton
-            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
-            buttonProps={{
-              variant: 'ghost',
-              type: 'button',
-              className: 'mr-auto',
-              onClick: () => {
-                editorStore.queriesManager.updateQuery.mutate({
-                  workspaceId: +workspaceId!,
-                  appId: +appId!,
-                  queryId: query.id,
-                  dto: {
-                    query: query.rawConfig as Record<string, unknown>,
-                    dataSourceId: +curDataSource,
-                  },
-                });
-              },
-            }}
-          >
-            <>
-              <SaveIcon /> Save
-            </>
-          </LoadingButton>
-          <Button
-            variant={'ghost'}
-            disabled={query.queryRunner.state.isPending}
-            onClick={() => {
-              if (!workspaceId || !appId) {
-                throw new Error('workspaceId or appId is not defined!');
-              }
-              query.queryRunner.mutate();
-            }}
-          >
-            <Play /> run
-          </Button>
-        </div>
-      </div>
-      {/*FORM*/}
-      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
-        <div className="flex flex-col gap-4 p-4">
-          <Label className="flex items-center gap-4">
-            Data Source
-            <Select
-              value={curDataSource}
-              onValueChange={(e) => {
-                setCurDataSource(e);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={query?.dataSource.name} />
-              </SelectTrigger>
-              <SelectContent>
-                {dataSources
-                  ?.filter(
-                    (dataSource) =>
-                      dataSource.dataSource.name ===
-                      query.dataSource.dataSource.name,
-                  )
-                  .map((dataSource) => (
-                    <SelectItem
-                      key={dataSource.name}
-                      value={dataSource.id.toString()}
-                    >
-                      {dataSource.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </Label>
-          <QueryConfigPanel id={query.id} />
-
-          <QueryPreview
-            ref={jsonResultRef}
-            key={query.id + 'preview'}
-            queryValues={query.rawValues as QueryRawValues}
-          />
-        </div>
-      </ScrollArea>
-    </div>
-  );
-});
-
 export const QueryPanel = observer(function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
@@ -231,7 +223,7 @@ export const QueryPanel = observer(function QueryPanel() {
 
   const sortQueries = useCallback(
     (
-      queries: WebloomQuery[],
+      queries: (WebloomQuery | WebloomJSQuery)[],
       sortingCriteria: 'id' | 'dateModified' | 'source',
       sortingOrder: 'asc' | 'desc' | null,
     ) => {
@@ -409,6 +401,20 @@ export const QueryPanel = observer(function QueryPanel() {
                 />
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  editorStore.queriesManager.addJSquery.mutate({
+                    appId: +appId!,
+                    workspaceId: +workspaceId!,
+                    dto: {
+                      query: '',
+                      settings: {},
+                    },
+                  });
+                }}
+              >
+                JS Query
+              </DropdownMenuItem>
               {filteredDatasources.map((item) => (
                 // ADD NEW QUERY
                 <DropdownMenuItem
@@ -525,13 +531,19 @@ export const QueryPanel = observer(function QueryPanel() {
       {/* ITEM */}
       <div className="h-full w-full border-l">
         {editorStore.selectedQueryId ? (
-          <QueryItem
-            key={queries[editorStore.selectedQueryId].id}
-            query={queries[editorStore.selectedQueryId]}
+          <ActiveQueryItem
+            query={editorStore.queries[editorStore.selectedQueryId]}
           />
         ) : (
-          <div className="h-full w-full flex-row items-center justify-center ">
-            <p>select or create new query</p>
+          <div className="flex h-full w-full flex-col items-center justify-start gap-2 p-10 py-6 text-center">
+            <h2 className="text-lg font-semibold">Connect to a data source</h2>
+            <div>
+              <p>
+                Select a data source to start creating queries. To know more
+                about data sources and queries, you can read the documentation{' '}
+                <a href="">here</a>
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -464,7 +464,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
         label: 'Data',
         type: 'inlineCodeInput',
         options: {
-          label: 'Data',
+          placeholder: 'Data',
         },
         validation: zodToJsonSchema(
           z
