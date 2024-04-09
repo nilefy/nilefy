@@ -53,7 +53,6 @@ type FormControlOptions = {
   color: InspectorColorProps;
   event: InspectorEvents;
   sqlEditor: {
-    value?: string;
     placeholder?: string;
   };
   list: undefined;
@@ -63,6 +62,7 @@ type FormControlOptions = {
   datePicker: InspectorDatePickerProps;
   array: ArrayInputProps;
   keyValue: undefined;
+  codeInput: undefined;
 };
 
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
@@ -103,9 +103,7 @@ export type ConditionalOptionalFormControlOptions<T> = T extends undefined
 type InspectorFormControlsTypes = keyof FormControlOptions;
 
 type InlineCodeInputProps = {
-  label: string;
   placeholder?: string;
-  value?: string;
 };
 export type BoundingRect = {
   left: number;
@@ -202,7 +200,7 @@ export type {
   SelectOptions,
 };
 
-export type EntityTypes = 'query' | 'widget' | 'globals';
+export type EntityTypes = 'query' | 'widget' | 'globals' | 'jsQuery';
 
 export type EntityPathErrors = {
   /**

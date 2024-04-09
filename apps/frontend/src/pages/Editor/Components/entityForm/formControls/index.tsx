@@ -12,4 +12,5 @@ export const InspectorFormControls = {
   datePicker: lazy(() => import('./datePicker')),
   array: lazy(() => import('./array')),
   keyValue: lazy(() => import('./keyValue')),
+  codeInput: lazy(() => import('./codeInput')),
 } as const;

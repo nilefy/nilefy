@@ -61,7 +61,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          label: 'Text',
         },
         validation: StringSchema('Text'),
       },

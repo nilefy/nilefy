@@ -76,7 +76,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          label: 'Text',
         },
         validation: StringSchema('Click me'),
       },
@@ -90,7 +89,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         label: 'onClick',
         type: 'inlineCodeInput',
         options: {
-          label: 'onClick',
+          placeholder: 'onClick',
         },
         isEvent: true,
       },

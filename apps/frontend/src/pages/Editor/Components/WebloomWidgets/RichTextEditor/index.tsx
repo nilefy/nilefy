@@ -194,7 +194,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextEditorProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter text',
-          label: 'Text',
         },
       },
     ],

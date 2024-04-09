@@ -163,7 +163,6 @@ export const queryConfigForm = {
           type: 'inlineCodeInput',
           options: {
             placeholder: '/api/v1/users',
-            label: 'Endpoint',
           },
           validation: zodToJsonSchema(endPointSchema),
         },
@@ -199,7 +198,6 @@ export const queryConfigForm = {
           type: 'inlineCodeInput',
           options: {
             placeholder: '{"key": "value"}',
-            label: 'Body',
           },
           validation: zodToJsonSchema(
             z.union([z.string(), z.record(z.unknown())]).default(''),

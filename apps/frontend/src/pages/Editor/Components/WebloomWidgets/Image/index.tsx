@@ -76,7 +76,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
         label: 'Source',
         type: 'inlineCodeInput',
         options: {
-          label: 'Source',
+          placeholder: 'Source',
         },
         path: 'src',
       },
@@ -84,7 +84,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
         label: 'Alt Text',
         type: 'inlineCodeInput',
         options: {
-          label: 'Alt Text',
+          placeholder: 'Alt Text',
         },
         path: 'altText',
       },
@@ -92,7 +92,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
         label: 'Tooltip',
         type: 'inlineCodeInput',
         options: {
-          label: 'Tooltip',
+          placeholder: 'Tooltip',
         },
         path: 'tooltip',
       },
@@ -121,7 +121,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
         label: 'onClick',
         type: 'inlineCodeInput',
         options: {
-          label: 'onClick',
+          placeholder: 'onClick',
         },
         isEvent: true,
       },

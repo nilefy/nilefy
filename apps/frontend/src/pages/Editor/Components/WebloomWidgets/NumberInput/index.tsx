@@ -127,7 +127,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter placeholder',
-          label: 'Placeholder',
         },
         validation: StringSchema('Write something'),
       },
@@ -142,7 +141,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         type: 'inlineCodeInput',
         options: {
           placeholder: 'Enter label',
-          label: 'Label',
         },
         validation: StringSchema('Label'),
       },
@@ -156,7 +154,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         label: 'onTextChange',
         type: 'inlineCodeInput',
         options: {
-          label: 'onTextChange',
+          placeholder: 'onTextChange',
         },
       },
       {
@@ -164,7 +162,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         label: 'onFocus',
         type: 'inlineCodeInput',
         options: {
-          label: 'onFocus',
+          placeholder: 'onFocus',
         },
       },
       {
@@ -172,7 +170,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         label: 'onBlur',
         type: 'inlineCodeInput',
         options: {
-          label: 'onBlur',
+          placeholder: 'onBlur',
         },
       },
       {
@@ -180,7 +178,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         label: 'onSubmit',
         type: 'inlineCodeInput',
         options: {
-          label: 'onSubmit',
+          placeholder: 'onSubmit',
         },
       },
     ],

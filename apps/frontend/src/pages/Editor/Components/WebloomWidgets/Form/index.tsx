@@ -67,7 +67,7 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
           isEvent: true,
           path: 'onSubmit',
           options: {
-            label: 'onSubmit',
+            placeholder: 'onSubmit',
           },
         },
       ],

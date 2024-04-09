@@ -170,7 +170,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
         path: 'dataSource',
         type: 'inlineCodeInput',
         options: {
-          label: 'Data Source',
+          placeholder: 'Data Source',
         },
         validation: zodToJsonSchema(webloomChartProps.shape.dataSource),
       },
@@ -271,7 +271,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
               type: 'inlineCodeInput',
               path: 'name',
               options: {
-                label: 'Name',
+                placeholder: 'Enter name',
               },
             },
             {
@@ -319,7 +319,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
         label: 'Tooltip',
         type: 'inlineCodeInput',
         options: {
-          label: 'Tooltip',
+          placeholder: 'Tooltip',
         },
       },
       {
@@ -356,7 +356,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
         label: 'Title',
         type: 'inlineCodeInput',
         options: {
-          label: 'Title',
+          placeholder: 'Title',
         },
       },
       {
@@ -364,7 +364,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
         label: 'X-axis Name',
         type: 'inlineCodeInput',
         options: {
-          label: 'X-axis Name',
+          placeholder: 'X-axis Name',
         },
       },
       {
@@ -372,7 +372,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
         label: 'Y-axis Name',
         type: 'inlineCodeInput',
         options: {
-          label: 'Y-axis Name',
+          placeholder: 'Y-axis Name',
         },
       },
       {

@@ -56,7 +56,6 @@ export const queryConfigForm = {
           type: 'inlineCodeInput',
           options: {
             placeholder: 'select * from table;',
-            label: 'Query',
           },
           validation: zodToJsonSchema(query),
         },

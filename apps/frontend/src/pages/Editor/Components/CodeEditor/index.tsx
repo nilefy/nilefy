@@ -26,6 +26,50 @@ import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
+import {
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from '@codemirror/autocomplete';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+} from '@codemirror/language';
+import { lintKeymap } from '@codemirror/lint';
+import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import {
+  crosshairCursor,
+  dropCursor,
+  highlightSpecialChars,
+  keymap,
+  rectangularSelection,
+} from '@codemirror/view';
+export const baseSetup = () => [
+  highlightSpecialChars(),
+  history(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+  rectangularSelection(),
+  crosshairCursor(),
+  highlightSelectionMatches(),
+  keymap.of([
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+    ...completionKeymap,
+    ...lintKeymap,
+  ]),
+];
 
 export const inlineTheme = EditorView.baseTheme({
   '&': {
@@ -297,4 +341,10 @@ export function SQLEditor(props: WebloomSQLEditorProps) {
       templateAutocompletionOnly
     />
   );
+}
+
+export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'>;
+export function CodeInput(props: CodeInputProps) {
+  const setup = useMemo(() => baseSetup(), []);
+  return <WebloomCodeEditor setup={setup} {...props} />;
 }

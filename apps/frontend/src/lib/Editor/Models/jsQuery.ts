@@ -1,0 +1,220 @@
+import { makeObservable, observable, action, computed } from 'mobx';
+import { Snapshotable } from './interface';
+import { Entity } from './entity';
+import { WorkerBroker } from './workerBroker';
+
+import { QueryClient } from '@tanstack/query-core';
+import { MobxMutation } from 'mobbing-query';
+import { FetchXError } from '@/utils/fetch';
+import { EntityInspectorConfig } from '../interface';
+import { concat } from 'lodash';
+import { JsQueryI } from '@/api/jsQueries.api';
+
+const inspectorConfig: EntityInspectorConfig = [
+  {
+    sectionName: 'General',
+    children: [{ path: 'query', label: 'Query', type: 'codeInput' }],
+  },
+];
+
+export type JSQueryRawValues = {
+  /**
+   * @description data returned from the query
+   * @NOTE start with undefined
+   */
+  data: unknown;
+
+  /**
+   * if the plugin returned error will be here
+   */
+  error?: string;
+
+  // JS queries also have a query state because they are async by nature
+  queryState: 'idle' | 'loading' | 'success' | 'error';
+
+  query: string;
+};
+
+const QueryActions = {
+  run: {
+    type: 'SIDE_EFFECT',
+    name: 'run',
+    fn: async (entity: WebloomJSQuery) => {
+      await entity.run();
+    },
+  },
+  reset: {
+    type: 'SIDE_EFFECT',
+    name: 'reset',
+    fn: (entity: WebloomJSQuery) => {
+      entity.reset();
+    },
+  },
+};
+
+const defaultQueryInspectorConfig: EntityInspectorConfig = [
+  {
+    sectionName: 'Trigger Mode',
+    children: [
+      {
+        path: 'triggerMode',
+        type: 'select',
+        label: 'Trigger Mode',
+        options: {
+          items: [
+            {
+              label: 'On App Load',
+              value: 'onAppLoad',
+            },
+            {
+              label: 'Manual',
+              value: 'manually',
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export class WebloomJSQuery
+  extends Entity
+  implements
+    Snapshotable<
+      Omit<
+        ConstructorParameters<typeof WebloomJSQuery>[0],
+        | keyof ConstructorParameters<typeof Entity>[0]
+        | 'queryClient'
+        | 'workspaceId'
+      >
+    >
+{
+  appId: JsQueryI['appId'];
+  workspaceId: number;
+  createdAt: JsQueryI['createdAt'];
+  updatedAt: JsQueryI['updatedAt'];
+  private readonly queryClient: QueryClient;
+  queryRunner: MobxMutation<
+    Awaited<{
+      data: unknown;
+      error: string;
+    }>,
+    FetchXError,
+    void,
+    void
+  >;
+
+  constructor({
+    query,
+    settings = {},
+    id,
+    appId,
+    workspaceId,
+    createdAt,
+    updatedAt,
+    workerBroker,
+    queryClient,
+  }: Omit<JsQueryI, 'createdById' | 'updatedById'> & {
+    workerBroker: WorkerBroker;
+    queryClient: QueryClient;
+    workspaceId: number;
+  }) {
+    super({
+      id,
+      rawValues: {
+        query: query,
+        data: undefined,
+        queryState: 'idle',
+        error: undefined,
+        settings,
+      },
+      workerBroker,
+      publicAPI: new Set(['data', 'queryState']),
+      entityType: 'jsQuery',
+      inspectorConfig: concat(inspectorConfig, defaultQueryInspectorConfig),
+      // @ts-expect-error TODO: fix this
+      entityActionConfig: QueryActions,
+    });
+    this.queryClient = queryClient;
+    this.queryRunner = new MobxMutation(this.queryClient, () => ({
+      mutationFn: () => {
+        // call worker and wait for promise
+      },
+      onMutate: () => {
+        this.setValue('queryState', 'loading');
+      },
+      onError: (error) => {
+        this.setValue('queryState', 'error');
+        this.setValue('error', error.message);
+      },
+      onSuccess: (data) => {
+        this.setValue('data', data.data);
+        this.setValue('error', data.error);
+        this.setValue('queryState', 'success');
+      },
+    }));
+    this.workspaceId = workspaceId;
+    this.appId = appId;
+    this.workspaceId = workspaceId;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    makeObservable(this, {
+      createdAt: observable,
+      updatedAt: observable,
+      updateQuery: action,
+      setQueryState: action,
+      reset: action.bound,
+      triggerMode: computed,
+    });
+  }
+  get triggerMode() {
+    return this.rawValues.triggerMode as 'onAppLoad' | 'manually';
+  }
+  setQueryState(state: 'idle' | 'loading' | 'success' | 'error') {
+    this.rawValues.queryState = state;
+  }
+
+  // TODO: make it handle id update
+  updateQuery(
+    dto: Omit<
+      Partial<JsQueryI & { rawValues: Partial<JSQueryRawValues> }>,
+      'id'
+    >,
+  ) {
+    if (dto.query) this.rawValues.query = dto.query;
+    if (dto.updatedAt) this.updatedAt = dto.updatedAt;
+    if (dto.rawValues) {
+      this.rawValues.data = dto.rawValues.data;
+      this.rawValues.error = dto.rawValues.error;
+    }
+  }
+
+  /**
+   * trigger the query async, but don't return the promise
+   */
+  async run() {
+    await this.queryRunner.mutateAsync();
+  }
+
+  /**
+   * Clear the data and error properties of the query.
+   */
+  reset() {
+    this.rawValues.data = undefined;
+    this.rawValues.queryState = 'idle';
+    this.rawValues.statusCode = undefined;
+    this.rawValues.error = undefined;
+  }
+
+  get snapshot() {
+    return {
+      id: this.id,
+      query: this.rawValues.query as string,
+      triggerMode: this.triggerMode,
+      appId: this.appId,
+      updatedAt: this.updatedAt,
+      createdAt: this.createdAt,
+      workspaceId: this.workspaceId,
+    };
+  }
+}

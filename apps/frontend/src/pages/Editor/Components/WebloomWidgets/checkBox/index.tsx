@@ -75,7 +75,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomCheckBoxProps> = [
         path: 'label',
         type: 'inlineCodeInput',
         options: {
-          label: 'Label',
+          placeholder: 'Label',
         },
       },
       {
@@ -83,7 +83,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomCheckBoxProps> = [
         path: 'disabled',
         type: 'inlineCodeInput',
         options: {
-          label: 'Disabled',
+          placeholder: 'Disabled',
         },
         validation: zodToJsonSchema(z.boolean().default(false)),
       },

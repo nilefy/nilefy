@@ -111,7 +111,7 @@ export const jsQueries = pgTable(
       .references(() => apps.id)
       .notNull(),
     /**
-     * query **un-evaluated** configuration(cannot run query with this config, needs to get the evaluated config the from front-end)
+     * query **un-evaluated**: js queries are always ran on the client side
      */
     query: text('query'),
     /**
