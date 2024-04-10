@@ -88,7 +88,9 @@
     "mobx-react-lite": "^4.0.5",
     "mobx-utils": "^6.0.8",
     "mock-socket": "^9.3.1",
+    "moment": "^2.30.1",
     "nanoid": "^5.0.3",
+    "numbro": "^2.5.0",
     "re-resizable": "^6.9.11",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
@@ -110,6 +112,7 @@
     "tinymce": "^5.10.9",
     "toposort": "^2.0.2",
     "unescape-js": "^1.1.4",
+    "uuid": "^9.0.1",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.3",
     "zustand": "^4.4.4"

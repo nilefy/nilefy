@@ -7,8 +7,11 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries } from 'lodash';
+import { defaultLibraries, WebloomLibraries } from './libraries';
+
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
+
 // The worker maintains its version of the state
 // They are kept in sync by autorunners
 // The worker is responsible for evaluation, widget events, and dependency analysis
@@ -21,6 +24,10 @@ export class EditorState {
   dependencyManager: DependencyManager;
   evaluationManager: EvaluationManager;
   mainThreadBroker: MainThreadBroker;
+  /**
+   * maps namespaces to exports from libraries
+   */
+  libraries: WebloomLibraries = { ...defaultLibraries };
   constructor() {
     makeObservable(this, {
       pages: observable,
