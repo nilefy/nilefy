@@ -150,12 +150,24 @@ export class MainThreadBroker {
       case 'runJSQuery':
         this.editorState.evaluationManager.runJSQuery(body.queryId, body.id);
         break;
+      case 'installLibrary':
+        this.installLibrary(body.url, body.defaultName);
+        break;
       default:
         break;
     }
   };
   addAction(actionPayload: PromisedActionExecutionPayload) {
     this.actionsQueue.push(actionPayload);
+  }
+  async installLibrary(url: string, defaultName: string) {
+    const lib = await this.editorState.installLibrary(url, defaultName);
+    this.postMessage({
+      event: 'fulfillLibraryInstall',
+      body: {
+        jsLibrary: lib,
+      },
+    });
   }
   postMessage(req: WorkerResponse) {
     this.worker.postMessage(req);

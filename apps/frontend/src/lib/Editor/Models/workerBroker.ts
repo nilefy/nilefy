@@ -8,6 +8,7 @@ import {
 } from 'mobx';
 import {
   FulfillJSQueryResponse,
+  FulFillLibraryInstallResponse,
   WorkerActionExecutionResponse,
   WorkerRequest,
   WorkerResponse,
@@ -18,6 +19,8 @@ import { EditorState } from './editor';
 // @ts-expect-error no types
 import structuredClone from '@ungap/structured-clone';
 import { nanoid } from 'nanoid';
+import { JSLibrary } from '../libraries';
+import { getNewEntityName } from '../entitiesNameSeed';
 
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
@@ -28,6 +31,11 @@ export class WorkerBroker implements WebloomDisposable {
     resolve: (value: unknown) => void;
     reject: (reason: unknown) => void;
   }> = [];
+  // Can only be one pending install library request at a time
+  pendingInstallLibraryRequest: {
+    resolve: (value: unknown) => void;
+    reject: (reason: unknown) => void;
+  } | null = null;
   constructor(private readonly editorState: EditorState) {
     this.editorState = editorState;
     this.worker = new Worker(
@@ -46,6 +54,8 @@ export class WorkerBroker implements WebloomDisposable {
       jsQueryExecutionRequest: action,
       pendingJSQueryExecution: observable,
       fulfillJSQuery: action,
+      pendingInstallLibraryRequest: observable,
+      installLibrary: action,
     });
 
     this.queue = [];
@@ -118,10 +128,43 @@ export class WorkerBroker implements WebloomDisposable {
       case 'fulfillJSQuery':
         this.fulfillJSQuery(body);
         break;
+      case 'fulfillLibraryInstall':
+        this.fulfillInstallLibrary(body);
+        break;
       default:
         break;
     }
   }
+  uninstallLibrary = (url: string) => {
+    this.queue.push({
+      event: 'uninstallLibrary',
+      body: { url },
+    });
+  };
+  installLibrary = (url: string) => {
+    if (this.pendingInstallLibraryRequest) {
+      throw new Error('There is already a pending install library request');
+    }
+    const promise = new Promise((resolve, reject) => {
+      this.pendingInstallLibraryRequest = {
+        resolve,
+        reject,
+      };
+    });
+    this.queue.push({
+      event: 'installLibrary',
+      body: { url, defaultName: getNewEntityName('jsLibrary', false) },
+    });
+    setTimeout(() => {
+      if (this.pendingInstallLibraryRequest) {
+        this.pendingInstallLibraryRequest.reject(
+          new Error('Library install request timed out'),
+        );
+        this.pendingInstallLibraryRequest = null;
+      }
+    }, 5000);
+    return promise as Promise<JSLibrary>;
+  };
 
   fulfillJSQuery = (body: FulfillJSQueryResponse['body']) => {
     const { id, value, error } = body;
@@ -136,7 +179,16 @@ export class WorkerBroker implements WebloomDisposable {
       (item) => item.id !== id,
     );
   };
-
+  fulfillInstallLibrary = (body: FulFillLibraryInstallResponse['body']) => {
+    if (!this.pendingInstallLibraryRequest) return;
+    if (body.error) {
+      this.pendingInstallLibraryRequest.reject(body.error);
+      this.pendingInstallLibraryRequest = null;
+      return;
+    }
+    this.pendingInstallLibraryRequest.resolve(body.jsLibrary as JSLibrary);
+    this.pendingInstallLibraryRequest = null;
+  };
   handleActionExecution = async (
     body: WorkerActionExecutionResponse['body'],
   ) => {

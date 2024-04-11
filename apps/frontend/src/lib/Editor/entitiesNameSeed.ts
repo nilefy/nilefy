@@ -3,12 +3,16 @@ import { defaultLibraries } from './libraries';
 
 let entityOrder: Record<string, Set<number>> = {};
 
-export function getNewEntityName(type: string): string {
+export function getNewEntityName(
+  type: string,
+  sideEffect: boolean = true,
+): string {
   if (!entityOrder[type]) {
     entityOrder[type] = new Set();
   }
   const order =
     (entityOrder[type].size ? Math.max(...entityOrder[type]) : 0) + 1;
+  if (!sideEffect) return `${type}${order}`;
   entityOrder[type].add(order);
   return `${type}${order}`;
 }

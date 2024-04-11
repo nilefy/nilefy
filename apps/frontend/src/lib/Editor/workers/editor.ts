@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, computed, comparer } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  comparer,
+  runInAction,
+} from 'mobx';
 import { Entity } from './entity';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
@@ -7,8 +14,8 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries } from 'lodash';
-import { WebloomLibraries } from './libraries';
-import { defaultLibraries } from '../libraries';
+import { installLibrary, WebloomLibraries } from './libraries';
+import { defaultLibraries, JSLibrary } from '../libraries';
 
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
@@ -181,5 +188,17 @@ export class EditorState {
   }
   changePage(id: string) {
     this.currentPageId = id;
+  }
+  async installLibrary(url: string, defaultName: string): Promise<JSLibrary> {
+    const lib = await installLibrary(url, defaultName);
+    runInAction(() => {
+      this.libraries[lib.name] = lib.library;
+    });
+    return {
+      availabeAs: lib.name,
+      isDefault: false,
+      name: lib.name,
+      path: url,
+    };
   }
 }

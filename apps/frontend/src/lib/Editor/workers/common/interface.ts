@@ -1,4 +1,5 @@
 import { EntityTypes } from '../../interface';
+import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
 
@@ -34,6 +35,7 @@ export type WorkerResponse =
   | EvaluationUpdateResponse
   | WorkerActionExecutionResponse
   | FulfillJSQueryResponse
+  | FulFillLibraryInstallResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -49,6 +51,8 @@ export type WorkerRequest =
   | EntityActionExecutionRequest
   | FulfillActionRequest
   | RunJSQueryRequest
+  | InstallLibraryRequest
+  | UninstallLibraryRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -127,6 +131,36 @@ export type RunJSQueryRequest = {
   };
 };
 
+export type InstallLibraryRequest = {
+  event: 'installLibrary';
+  body: {
+    url: string;
+    defaultName: string;
+  };
+};
+
+export type UpdateLibraryNameRequest = {
+  event: 'updateLibraryName';
+  body: {
+    url: string;
+    name: string;
+  };
+};
+
+export type UninstallLibraryRequest = {
+  event: 'uninstallLibrary';
+  body: {
+    url: string;
+  };
+};
+
+export type FulFillLibraryInstallResponse = {
+  event: 'fulfillLibraryInstall';
+  body: {
+    jsLibrary?: JSLibrary;
+    error?: unknown;
+  };
+};
 export type BatchRequest = {
   event: 'batch';
   body: WorkerRequest[];

@@ -6,6 +6,7 @@ import {
   computed,
   comparer,
   toJS,
+  runInAction,
 } from 'mobx';
 import { WebloomPage } from './page';
 import { WebloomQuery } from './query';
@@ -74,6 +75,7 @@ export class EditorState implements WebloomDisposable {
       bottomPanelMode: observable,
       setBottomPanelMode: action,
       libraries: observable,
+      installLibrary: action,
     });
     this.workerBroker = new WorkerBroker(this);
   }
@@ -391,7 +393,6 @@ export class EditorState implements WebloomDisposable {
   removePage(id: string) {
     delete this.pages[id];
   }
-
   removeQuery(id: string) {
     const query = this.queries[id];
     const type =
@@ -408,6 +409,35 @@ export class EditorState implements WebloomDisposable {
     delete this.queries[id];
   }
 
+  async installLibrary(url: string) {
+    try {
+      const jsLib = await this.workerBroker.installLibrary(url);
+      console.log(jsLib);
+      runInAction(() => {
+        this.libraries[jsLib.name] = new JSLibrary(jsLib);
+      });
+      return {
+        isSuccess: true,
+        library: jsLib,
+      };
+    } catch (e) {
+      // todo better way to check the type of the error
+      if (
+        e instanceof Error &&
+        e.message === 'Library install request timed out'
+      ) {
+        return {
+          isSuccess: false,
+          isError: true,
+          error: new Error('Library install request timed out'),
+        };
+      }
+      return {
+        isSuccess: false,
+        error: e,
+      };
+    }
+  }
   snapshot() {
     return {
       pages: Object.values(this.pages).map((page) => page.snapshot),

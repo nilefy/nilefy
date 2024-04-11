@@ -1,29 +1,60 @@
-import { difference } from 'lodash';
-
+import { isObjectLike, keys } from 'lodash';
+const validIdentifierRegex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
+const guessName = (url: string) => {
+  const parts = url.split('/');
+  return parts[parts.length - 1].split('.')[0];
+};
+const isValidIdentifier = (name: string) => {
+  return validIdentifierRegex.test(name);
+};
 export type WebloomLibraries = Record<string, unknown>;
+/**
+ *
+ * @description I don't really know how secure this is
+ *
+ */
+async function installUMD(url: string) {
+  const pkg = { exports: {} };
+  const response = await fetch(url);
+  const script = await response.text();
+  const func = Function('module', 'exports', script);
+  func.call(pkg, pkg, pkg.exports);
 
-export const installLibrary = async (url: string) => {
+  return pkg.exports;
+}
+export const installLibrary = async (url: string, defaultName: string) => {
+  let name = guessName(url);
+  if (!isValidIdentifier(name)) {
+    name = defaultName;
+  }
   try {
-    const globalKeys = Object.keys(self);
-    // @ts-expect-error somewhy the type of self is not correct
-    self.importScripts(url);
-    const newKeys = Object.keys(self);
-    const diff = difference(newKeys, globalKeys);
-    const libName = diff[0];
-    const lib = self[libName as keyof typeof self];
-    delete self[libName as keyof typeof self];
-    return {
-      library: lib,
-      name: libName,
-    };
+    let lib = await import(/* @vite-ignore */ url);
+    if (lib.default) {
+      if (isObjectLike(lib.default)) {
+        lib = {
+          ...lib.default,
+          ...lib,
+        };
+      } else {
+        lib = lib.default;
+      }
+    }
+    if (keys(lib).length > 0) {
+      return {
+        library: lib,
+        name,
+      };
+    } else {
+      const lib = await installUMD(url);
+      if (keys(lib).length > 0) {
+        return {
+          library: lib,
+          name,
+        };
+      }
+      throw new Error('Failed to install library');
+    }
   } catch (e) {
-    // esm modules path
-    const lib = await import(/* @vite-ignore */ url);
-    // todo: some code to try to infer the name of the library
-    return {
-      library: lib,
-      // todo this should be changed asap because it'll cause name conflicts
-      name: 'unknown',
-    };
+    throw new Error('Failed to install library');
   }
 };
