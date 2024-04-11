@@ -1,3 +1,6 @@
+import { keys } from 'lodash';
+import { defaultLibraries } from './workers/libraries';
+
 let entityOrder: Record<string, Set<number>> = {};
 
 export function getNewEntityName(type: string): string {
@@ -14,6 +17,10 @@ export function getNewEntityName(type: string): string {
  * init map when start a new app, from old existing data
  */
 export function seedOrderMap(entities: { type: string; name: string }[]) {
+  entities = [
+    ...keys(defaultLibraries).map((i) => ({ name: i, type: 'library' })),
+    ...entities,
+  ];
   entityOrder = {};
   entities.forEach(({ type, name }) => {
     const nameRe = new RegExp(`${type}\\d+`);

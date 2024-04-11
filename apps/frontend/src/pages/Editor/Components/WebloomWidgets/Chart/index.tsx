@@ -122,7 +122,7 @@ const WebloomChart = observer(function WebloomChart() {
 
 const config: WidgetConfig = {
   name: 'Charts',
-  icon: <BarChartBig />,
+  icon: BarChartBig,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,

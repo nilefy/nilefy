@@ -168,7 +168,7 @@ export const WebloomTextEditor = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Text Editor',
-  icon: <MousePointerSquare />,
+  icon: MousePointerSquare,
   isCanvas: false,
   layoutConfig: {
     colsCount: 15,

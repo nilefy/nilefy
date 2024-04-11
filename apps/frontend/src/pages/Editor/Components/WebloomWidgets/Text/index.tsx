@@ -22,7 +22,7 @@ const WebloomText = observer(() => {
 });
 const config: WidgetConfig = {
   name: 'Text',
-  icon: <Type />,
+  icon: Type,
   isCanvas: false,
   layoutConfig: {
     colsCount: 2,

@@ -28,7 +28,7 @@ export const installLibrary = async (url: string) => {
     };
   } catch (e) {
     // esm modules path
-    const lib = await import(url);
+    const lib = await import(/* @vite-ignore */ url);
     // todo: some code to try to infer the name of the library
     return {
       library: lib,

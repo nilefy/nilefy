@@ -46,7 +46,7 @@ const WebloomButton = observer(function WebloomButton() {
 });
 const config: WidgetConfig = {
   name: 'Button',
-  icon: <MousePointerSquare />,
+  icon: MousePointerSquare,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

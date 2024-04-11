@@ -79,7 +79,7 @@ const WebloomInput = observer(() => {
 });
 const config: WidgetConfig = {
   name: 'Input',
-  icon: <TextCursorInput />,
+  icon: TextCursorInput,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

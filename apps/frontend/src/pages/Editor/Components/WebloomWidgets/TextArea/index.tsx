@@ -90,7 +90,7 @@ const WebloomTextArea = observer(function WebloomTextArea() {
 
 const config: WidgetConfig = {
   name: 'textarea',
-  icon: <TextCursorInput />,
+  icon: TextCursorInput,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,

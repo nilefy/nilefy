@@ -72,7 +72,7 @@ const WebloomNumberInput = observer(function WebloomNumberInput() {
 
 const config: WidgetConfig = {
   name: 'Number Input',
-  icon: <TextCursorInput />,
+  icon: TextCursorInput,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

@@ -76,7 +76,7 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
   component: WebloomForm,
   publicAPI: new Set(['data']),
   config: {
-    icon: <FileText />,
+    icon: FileText,
     isCanvas: true,
     name: 'Form',
     layoutConfig: {
