@@ -19,11 +19,21 @@ import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
-import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
+import {
+  getNewEntityName,
+  seedOrderMap,
+  updateOrderMap,
+} from '../entitiesNameSeed';
 import { entries, values } from 'lodash';
 import { WebloomJSQuery } from './jsQuery';
 import { JSLibrary } from './jsLibrary';
 import { defaultLibrariesMeta } from '../libraries';
+import {
+  createJSLibrary,
+  deleteJSLibrary,
+  JSLibraryI,
+  updateJSLibrary,
+} from '@/api/JSLibraries.api';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -76,6 +86,8 @@ export class EditorState implements WebloomDisposable {
       setBottomPanelMode: action,
       libraries: observable,
       installLibrary: action,
+      updateLibraryName: action,
+      uninstallLibrary: action,
     });
     this.workerBroker = new WorkerBroker(this);
   }
@@ -149,6 +161,7 @@ export class EditorState implements WebloomDisposable {
     appId,
     workspaceId,
     currentUser,
+    jsLibraries = [],
   }: {
     name: string;
     pages: Optional<
@@ -164,11 +177,13 @@ export class EditorState implements WebloomDisposable {
       ConstructorParameters<typeof WebloomJSQuery>[0],
       'workerBroker' | 'queryClient' | 'workspaceId'
     >[];
+    jsLibraries: JSLibraryI[];
     appId: number;
     workspaceId: number;
     currentUser: string;
   }) {
     this.dispose();
+    console.log(jsLibraries);
     this.appId = appId;
     this.workspaceId = workspaceId;
     this.name = name;
@@ -247,10 +262,19 @@ export class EditorState implements WebloomDisposable {
         workspaceId,
       });
     });
+    jsLibraries.forEach((lib) => {
+      this.libraries[lib.id] = new JSLibrary({
+        availabeAs: lib.id,
+        isDefault: false,
+        name: lib.id,
+        url: lib.url,
+      });
+    });
     this.workerBroker.postMessege({
       event: 'init',
       body: {
         currentPageId: this.currentPageId,
+        libraries: jsLibraries,
         globals: {
           unevalValues: this.globals.rawValues,
           id: this.globals.id,
@@ -408,11 +432,65 @@ export class EditorState implements WebloomDisposable {
     );
     delete this.queries[id];
   }
-
+  uninstallLibrary(id: string) {
+    delete this.libraries[id];
+    this.workerBroker.postMessege({
+      event: 'uninstallLibrary',
+      body: {
+        id,
+      },
+    });
+    // todo handle update server state gracefully
+    deleteJSLibrary({
+      workspaceId: this.workspaceId,
+      appId: this.appId,
+      libraryId: id,
+    });
+  }
+  updateLibraryName(id: string, newName: string) {
+    const lib = this.libraries[id];
+    delete this.libraries[id];
+    this.libraries[newName] = lib;
+    this.workerBroker.postMessege({
+      event: 'updateLibraryName',
+      body: {
+        id,
+        newName,
+      },
+    });
+    // todo handle update server state gracefully
+    updateJSLibrary({
+      workspaceId: this.workspaceId,
+      appId: this.appId,
+      libraryId: id,
+      dto: {
+        id: newName,
+      },
+    });
+  }
   async installLibrary(url: string) {
     try {
       const jsLib = await this.workerBroker.installLibrary(url);
-      console.log(jsLib);
+      const name = getNewEntityName(jsLib.name);
+      if (jsLib.name !== name) {
+        this.workerBroker.postMessege({
+          event: 'updateLibraryName',
+          body: {
+            id: jsLib.name,
+            newName: name,
+          },
+        });
+        jsLib.name = name;
+      }
+      // todo handle update server state gracefully
+      await createJSLibrary({
+        appId: this.appId,
+        workspaceId: this.workspaceId,
+        dto: {
+          id: jsLib.name,
+          url: jsLib.url,
+        },
+      });
       runInAction(() => {
         this.libraries[jsLib.name] = new JSLibrary(jsLib);
       });

@@ -1,4 +1,5 @@
 import { isObjectLike, keys } from 'lodash';
+import { InstallLibraryRequest } from './common/interface';
 const validIdentifierRegex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
 const guessName = (url: string) => {
   const parts = url.split('/');
@@ -22,10 +23,14 @@ async function installUMD(url: string) {
 
   return pkg.exports;
 }
-export const installLibrary = async (url: string, defaultName: string) => {
-  let name = guessName(url);
-  if (!isValidIdentifier(name)) {
-    name = defaultName;
+export const installLibrary = async (body: InstallLibraryRequest['body']) => {
+  const { url, defaultName, name } = body;
+  let newName = guessName(url);
+  if (!isValidIdentifier(newName)) {
+    newName = defaultName || '';
+  }
+  if (name) {
+    newName = name;
   }
   try {
     let lib = await import(/* @vite-ignore */ url);
@@ -42,14 +47,14 @@ export const installLibrary = async (url: string, defaultName: string) => {
     if (keys(lib).length > 0) {
       return {
         library: lib,
-        name,
+        name: newName,
       };
     } else {
       const lib = await installUMD(url);
       if (keys(lib).length > 0) {
         return {
           library: lib,
-          name,
+          name: newName,
         };
       }
       throw new Error('Failed to install library');

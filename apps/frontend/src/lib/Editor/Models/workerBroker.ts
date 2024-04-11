@@ -135,12 +135,6 @@ export class WorkerBroker implements WebloomDisposable {
         break;
     }
   }
-  uninstallLibrary = (url: string) => {
-    this.queue.push({
-      event: 'uninstallLibrary',
-      body: { url },
-    });
-  };
   installLibrary = (url: string) => {
     if (this.pendingInstallLibraryRequest) {
       throw new Error('There is already a pending install library request');

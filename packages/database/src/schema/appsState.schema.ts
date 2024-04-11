@@ -103,8 +103,6 @@ export const jsLibraries = pgTable(
     appId: integer('app_id')
       .references(() => apps.id)
       .notNull(),
-    name: varchar('name').notNull(),
-    availableAs : varchar('available_as').notNull(),
     url: varchar('url').notNull(),
     ...timeStamps,
     ...whoToBlame,

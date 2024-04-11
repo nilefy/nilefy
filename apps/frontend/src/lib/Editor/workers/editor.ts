@@ -9,13 +9,20 @@ import {
 import { Entity } from './entity';
 import { DependencyManager } from './dependencyManager';
 import { EvaluationManager } from './evaluationManager';
-import { AddEntityRequest, EntityConfigBody } from './common/interface';
+import {
+  AddEntityRequest,
+  EntityConfigBody,
+  InstallLibraryRequest,
+  UninstallLibraryRequest,
+  UpdateLibraryNameRequest,
+} from './common/interface';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries } from 'lodash';
 import { installLibrary, WebloomLibraries } from './libraries';
 import { defaultLibraries, JSLibrary } from '../libraries';
+import { JSLibraryI } from '@/api/JSLibraries.api';
 
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
@@ -58,6 +65,10 @@ export class EditorState {
       init: action,
       addEntity: action,
       removeEntity: action,
+      libraries: observable,
+      installLibrary: action,
+      updateLibraryName: action,
+      uninstallLibrary: action,
     });
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
@@ -73,16 +84,18 @@ export class EditorState {
     this.mainThreadBroker = new MainThreadBroker(this);
   }
 
-  init({
+  async init({
     currentPageId,
     queries,
     pages,
     globals,
+    libraries,
   }: {
     currentPageId: string;
     queries: Record<string, EntityConfigBody>;
     pages: Record<string, Record<string, EntityConfigBody>>;
     globals: EntityConfigBody;
+    libraries: JSLibraryI[];
   }) {
     this.currentPageId = currentPageId;
     entries(queries).forEach(([_, query]) => {
@@ -94,7 +107,16 @@ export class EditorState {
     this.otherEntities[EDITOR_CONSTANTS.GLOBALS_ID] = new Entity(
       this.normalizeEntityConfig(globals),
     );
-    this.dependencyManager.initAnalysis();
+    // if this takes too long, this might be a problem because the initial evaluation will be delayed
+    const libs = await Promise.all(
+      libraries.map((lib) => installLibrary({ url: lib.url, name: lib.id })),
+    );
+    runInAction(() => {
+      libs.forEach((lib) => {
+        this.libraries[lib.name] = lib.library;
+      });
+      this.dependencyManager.initAnalysis();
+    });
   }
 
   get context() {
@@ -189,8 +211,18 @@ export class EditorState {
   changePage(id: string) {
     this.currentPageId = id;
   }
-  async installLibrary(url: string, defaultName: string): Promise<JSLibrary> {
-    const lib = await installLibrary(url, defaultName);
+  updateLibraryName(body: UpdateLibraryNameRequest['body']) {
+    const lib = this.libraries[body.id];
+    delete this.libraries[body.id];
+    this.libraries[body.newName] = lib;
+  }
+  uninstallLibrary(body: UninstallLibraryRequest['body']) {
+    delete this.libraries[body.id];
+  }
+  async installLibrary(
+    body: InstallLibraryRequest['body'],
+  ): Promise<JSLibrary> {
+    const lib = await installLibrary(body);
     runInAction(() => {
       this.libraries[lib.name] = lib.library;
     });
@@ -198,7 +230,7 @@ export class EditorState {
       availabeAs: lib.name,
       isDefault: false,
       name: lib.name,
-      path: url,
+      url: body.url,
     };
   }
 }

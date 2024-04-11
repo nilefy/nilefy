@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate, evaluateAsync } from '../evaluation';
@@ -106,6 +106,7 @@ export class EvaluationManager {
   get evaluatedForest() {
     performance.mark('start-evaluatedForest');
     const sortedGraph = this.editor.dependencyManager.graph;
+    console.log(toJS(this.editor.libraries));
     const evalTree: Record<string, unknown> = { ...this.editor.libraries };
     const runtimeErrors: Record<string, Record<string, string[]>> = {};
     const evaluationValidationErrors: Record<

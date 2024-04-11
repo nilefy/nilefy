@@ -7,7 +7,7 @@ import {
   JsLibraryDb,
   JsLibraryDto,
   UpdateJsLibraryDto,
-} from 'src/dto/js_libraries.dto';
+} from '../dto/js_libraries.dto';
 
 @Injectable()
 export class JsLibrariesService {
@@ -22,16 +22,16 @@ export class JsLibrariesService {
     appId,
     jsLibraryId,
     updatedById,
-    query,
+    library,
   }: {
     appId: JsLibraryDto['appId'];
     jsLibraryId: JsLibraryDto['id'];
     updatedById: JsLibraryDto['updatedById'];
-    query: UpdateJsLibraryDto;
+    library: UpdateJsLibraryDto;
   }): Promise<JsLibraryDto> {
     const [q] = await this.db
       .update(jsLibraries)
-      .set({ ...query, updatedById, updatedAt: sql`now()` })
+      .set({ ...library, updatedById, updatedAt: sql`now()` })
       .where(and(eq(jsLibraries.id, jsLibraryId), eq(jsLibraries.appId, appId)))
       .returning();
     if (!q)

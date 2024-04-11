@@ -8,7 +8,7 @@ import momentPackageJson from 'moment/package.json';
 import numbroPackageJson from 'numbro/package.json';
 import uuidPackageJson from 'uuid/package.json';
 export interface JSLibrary {
-  path: string;
+  url: string;
   name: string;
   availabeAs: string;
   version?: string;
@@ -23,28 +23,28 @@ export const defaultLibraries = {
 };
 export const defaultLibrariesMeta: Record<string, JSLibrary> = {
   lodash: {
-    path: '',
+    url: '',
     name: 'lodash',
     availabeAs: '_',
     version: lodashPackageJson.version,
     isDefault: true,
   },
   moment: {
-    path: '',
+    url: '',
     name: 'moment',
     availabeAs: 'moment',
     version: momentPackageJson.version,
     isDefault: true,
   },
   numbro: {
-    path: '',
+    url: '',
     name: 'numbro',
     availabeAs: 'numbro',
     version: numbroPackageJson.version,
     isDefault: true,
   },
   UUID: {
-    path: '',
+    url: '',
     name: 'uuid',
     availabeAs: 'UUID',
     version: uuidPackageJson.version,

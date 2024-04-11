@@ -15,14 +15,14 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 
+import { JsLibrariesService } from './js_libraries.service';
 import {
   AddJsLibraryDto,
   addJsLibrarySchema,
   JsLibraryDto,
   UpdateJsLibraryDto,
   updateJsLibrarySchema,
-} from 'src/dto/js_libraries.dto';
-import { JsLibrariesService } from './js_libraries.service';
+} from '../dto/js_libraries.dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -36,11 +36,11 @@ export class JsLibrariesController {
   })
   async add(
     @Param('appId', ParseIntPipe) appId: number,
-    @Body(new ZodValidationPipe(addJsLibrarySchema)) query: AddJsLibraryDto,
+    @Body(new ZodValidationPipe(addJsLibrarySchema)) library: AddJsLibraryDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<JsLibraryDto> {
     return await this.jsLibrariesService.create({
-      ...query,
+      ...library,
       createdById: req.user.userId,
       appId,
     });
@@ -77,14 +77,14 @@ export class JsLibrariesController {
     @Param('appId', ParseIntPipe) appId: number,
     @Param('libraryId') libraryId: string,
     @Body(new ZodValidationPipe(updateJsLibrarySchema))
-    query: UpdateJsLibraryDto,
+    library: UpdateJsLibraryDto,
     @Req() req: ExpressAuthedRequest,
   ) {
     return await this.jsLibrariesService.update({
       appId,
       jsLibraryId: libraryId,
       updatedById: req.user.userId,
-      query,
+      library,
     });
   }
 }

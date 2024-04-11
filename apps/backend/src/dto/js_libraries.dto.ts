@@ -9,9 +9,7 @@ export const jsLibrariesDb = createInsertSchema(jsLibraries);
 
 export const addJsLibrarySchema = jsLibrariesDb.pick({
   id: true,
-  name: true,
   url: true,
-  availableAs: true,
 });
 
 export const updateJsLibrarySchema = addJsLibrarySchema.partial();

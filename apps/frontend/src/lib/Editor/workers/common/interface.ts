@@ -1,3 +1,4 @@
+import { JSLibraryI } from '@/api/JSLibraries.api';
 import { EntityTypes } from '../../interface';
 import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
@@ -53,6 +54,7 @@ export type WorkerRequest =
   | RunJSQueryRequest
   | InstallLibraryRequest
   | UninstallLibraryRequest
+  | UpdateLibraryNameRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -81,6 +83,7 @@ export type InitRequest = {
     queries: Record<string, EntityConfigBody>;
     pages: Record<string, Record<string, EntityConfigBody>>;
     globals: EntityConfigBody;
+    libraries: JSLibraryI[];
   };
   event: 'init';
 };
@@ -135,22 +138,23 @@ export type InstallLibraryRequest = {
   event: 'installLibrary';
   body: {
     url: string;
-    defaultName: string;
+    defaultName?: string;
+    name?: string;
   };
 };
 
 export type UpdateLibraryNameRequest = {
   event: 'updateLibraryName';
   body: {
-    url: string;
-    name: string;
+    newName: string;
+    id: string;
   };
 };
 
 export type UninstallLibraryRequest = {
   event: 'uninstallLibrary';
   body: {
-    url: string;
+    id: string;
   };
 };
 
