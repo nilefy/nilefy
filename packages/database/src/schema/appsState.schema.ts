@@ -96,3 +96,21 @@ export const components = pgTable(
 //   return {
 //   };
 // });
+export const jsLibraries = pgTable(
+  'app_js_libraries',
+  {
+    id: text('id').notNull(),
+    appId: integer('app_id')
+      .references(() => apps.id)
+      .notNull(),
+    name: varchar('name').notNull(),
+    availableAs : varchar('available_as').notNull(),
+    url: varchar('url').notNull(),
+    ...timeStamps,
+    ...whoToBlame,
+
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id, t.appId] }),
+  }),
+);

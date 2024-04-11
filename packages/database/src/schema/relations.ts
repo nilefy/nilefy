@@ -18,7 +18,7 @@ import {
   queries,
   jsQueries,
 } from './data_sources.schema';
-import { components, pages } from './appsState.schema';
+import { components, jsLibraries, pages } from './appsState.schema';
 
 // to remove Disambiguating relations
 // @link https://orm.drizzle.team/docs/rqb#disambiguating-relations
@@ -61,6 +61,7 @@ const userQueriesRelation = 'userQueries';
 const userUpdateQueryRelation = 'lastUpdatedQuery';
 const appQueriesRelation = 'appQueries';
 const appJsQueriesRelation = 'appjsquery';
+const appJsLibrariesRelation = 'appjsLibraries';
 const wsDataSourceQueriesRelation = 'dataSourceQueriesRelation';
 
 const componentsToPageRelation = 'componentsToPage';
@@ -190,6 +191,11 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
   jsQueries: many(jsQueries, {
     relationName: appJsQueriesRelation,
   }),
+  jsLibraries: many(jsLibraries,{
+    relationName: appJsLibrariesRelation,
+  
+  }),
+
   pages: many(pages, {
     relationName: pagesToappsRelation,
   }),
@@ -255,6 +261,14 @@ export const jsQueriesRelations = relations(jsQueries, ({ one }) => ({
     fields: [jsQueries.appId],
     references: [apps.id],
     relationName: appJsQueriesRelation,
+  }),
+}));
+
+export const jsLibrariesRelations = relations(jsLibraries, ({ one }) => ({
+  app: one(apps, {
+    fields: [jsLibraries.appId],
+    references: [apps.id],
+    relationName: appJsLibrariesRelation,
   }),
 }));
 
