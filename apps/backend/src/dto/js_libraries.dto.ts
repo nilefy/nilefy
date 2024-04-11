@@ -16,11 +16,8 @@ export const addJsLibrarySchema = jsLibrariesDb.pick({
 
 export const updateJsLibrarySchema = addJsLibrarySchema.partial();
 
-/**
- * type of js Query insert
- */
 export type JsLibraryDb = z.infer<typeof jsLibrariesDb>;
 
-export class AddJsQueryDto extends createZodDto(addJsLibrarySchema) {}
-export class UpdateJsQueryDto extends createZodDto(updateJsLibrarySchema) {}
-export class JsQueryDto extends createZodDto(jsLibrariesSchema) {}
+export class AddJsLibraryDto extends createZodDto(addJsLibrarySchema) {}
+export class UpdateJsLibraryDto extends createZodDto(updateJsLibrarySchema) {}
+export class JsLibraryDto extends createZodDto(jsLibrariesSchema) {}
