@@ -7,7 +7,8 @@ import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries } from 'lodash';
-import { defaultLibraries, WebloomLibraries } from './libraries';
+import { WebloomLibraries } from './libraries';
+import { defaultLibraries } from '../libraries';
 
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;

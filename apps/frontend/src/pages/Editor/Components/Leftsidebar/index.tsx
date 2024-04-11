@@ -5,7 +5,9 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useSize } from '@/lib/Editor/hooks';
 
 import { editorStore } from '@/lib/Editor/Models';
-import { ComponentTreeItem } from './ComponentsViewer';
+import { ComponentTreeItem } from './componentsViewer';
+import { PageSelector } from './pageSelector';
+import { Libraries } from './libraries';
 
 type LeftSidebarTabs = 'Pages' | 'Libraries' | 'Components';
 
@@ -17,6 +19,22 @@ const ComponentsTab = observer(() => {
           return <ComponentTreeItem key={node} id={node} />;
         })}
       </div>
+    </TabsContent>
+  );
+});
+
+const PagesTab = observer(() => {
+  return (
+    <TabsContent value="Pages">
+      <PageSelector />
+    </TabsContent>
+  );
+});
+
+const LibrariesTab = observer(() => {
+  return (
+    <TabsContent value="Libraries">
+      <Libraries />
     </TabsContent>
   );
 });
@@ -40,9 +58,9 @@ export const LeftSidebar = observer(() => {
         <ScrollArea>
           <ScrollBar orientation="horizontal" />
           <TabsList className="flex w-full  gap-2 p-6 leading-4">
-            <TabsTrigger value="page">Components</TabsTrigger>
-            <TabsTrigger value="inspect">Pages</TabsTrigger>
-            <TabsTrigger value="insert">Libraries</TabsTrigger>
+            <TabsTrigger value="Components">Components</TabsTrigger>
+            <TabsTrigger value="Pages">Pages</TabsTrigger>
+            <TabsTrigger value="Libraries">Libraries</TabsTrigger>
           </TabsList>
         </ScrollArea>
         <div className="h-full" ref={scrollArea}>
@@ -53,6 +71,8 @@ export const LeftSidebar = observer(() => {
             scrollAreaViewPortClassName="h-full w-full px-3 pt-2 [&>div]:!block"
           >
             <ComponentsTab />
+            <PagesTab />
+            <LibrariesTab />
           </ScrollArea>
         </div>
       </Tabs>

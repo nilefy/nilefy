@@ -21,6 +21,8 @@ import { Entity } from './entity';
 import { seedOrderMap, updateOrderMap } from '../entitiesNameSeed';
 import { entries, values } from 'lodash';
 import { WebloomJSQuery } from './jsQuery';
+import { JSLibrary } from './jsLibrary';
+import { defaultLibrariesMeta } from '../libraries';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -31,6 +33,7 @@ export class EditorState implements WebloomDisposable {
   pages: Record<string, WebloomPage> = {};
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
+  libraries: Record<string, JSLibrary> = {};
   workerBroker: WorkerBroker;
   currentPageId: string = '';
   initting = false;
@@ -44,7 +47,6 @@ export class EditorState implements WebloomDisposable {
    * application name
    */
   name: string = 'New Application';
-
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -71,6 +73,7 @@ export class EditorState implements WebloomDisposable {
       setSelectedQueryId: action,
       bottomPanelMode: observable,
       setBottomPanelMode: action,
+      libraries: observable,
     });
     this.workerBroker = new WorkerBroker(this);
   }
@@ -167,6 +170,13 @@ export class EditorState implements WebloomDisposable {
     this.appId = appId;
     this.workspaceId = workspaceId;
     this.name = name;
+    this.libraries = entries(defaultLibrariesMeta).reduce(
+      (acc, [name, lib]) => {
+        acc[name] = new JSLibrary(lib);
+        return acc;
+      },
+      {} as Record<string, JSLibrary>,
+    );
     this.queryClient = new QueryClient();
     this.queriesManager = new QueriesManager(this.queryClient, this);
     this.globals = new WebloomGlobal({

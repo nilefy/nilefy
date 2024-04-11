@@ -1,14 +1,4 @@
-import moment from 'moment';
-import numbro from 'numbro';
-import UUID from 'crypto';
-import _, { difference } from 'lodash';
-
-export const defaultLibraries = {
-  _: _,
-  moment: moment,
-  numbro: numbro,
-  UUID: UUID,
-};
+import { difference } from 'lodash';
 
 export type WebloomLibraries = Record<string, unknown>;
 

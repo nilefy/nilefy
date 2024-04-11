@@ -3,7 +3,7 @@ import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomWidgets } from '../..';
+import { WebloomWidgets } from '..';
 import { cn } from '@/lib/cn';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import { commandManager } from '@/actions/CommandManager';
@@ -45,7 +45,7 @@ const AccordionContent = React.forwardRef<
     )}
     {...props}
   >
-    <div className="pb-1 pt-0">{children}</div>
+    <div className="py-0">{children}</div>
   </AccordionPrimitive.Content>
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
@@ -140,6 +140,7 @@ const SettingsPopover = observer(({ id }: { id: string }) => {
   return (
     <Popover>
       <PopoverTrigger
+        asChild
         onClick={(e) => {
           e.stopPropagation();
         }}

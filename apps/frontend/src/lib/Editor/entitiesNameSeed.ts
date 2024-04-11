@@ -1,5 +1,5 @@
 import { keys } from 'lodash';
-import { defaultLibraries } from './workers/libraries';
+import { defaultLibraries } from './libraries';
 
 let entityOrder: Record<string, Set<number>> = {};
 
