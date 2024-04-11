@@ -1,6 +1,5 @@
 import { Inspector } from '@/pages/Editor/Components/FixedLeftSidebar/inspector';
 import { ModeToggle } from '@/components/mode-toggle';
-import { PageSelector } from '@/pages/Editor/Components/FixedLeftSidebar/pageSelector';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
 import { LogOut } from 'lucide-react';
@@ -14,7 +13,6 @@ export function FixedLeftSidebar() {
       {/*paths*/}
       <div className="flex flex-col items-center justify-center gap-4">
         <Inspector />
-        <PageSelector />
         <BugsCount />
       </div>
       <div className="mt-auto flex items-center justify-center">

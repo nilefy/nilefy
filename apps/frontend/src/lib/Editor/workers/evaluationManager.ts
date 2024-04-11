@@ -190,7 +190,6 @@ export class EvaluationManager {
         set(evalTree, `${entityId}.${path}`, get(entity.unevalValues, path));
       }
     }
-    // remove libraries
     for (const lib of keys(this.editor.libraries)) {
       delete evalTree[lib];
     }
