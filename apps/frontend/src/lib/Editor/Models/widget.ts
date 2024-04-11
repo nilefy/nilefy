@@ -173,8 +173,9 @@ export class WebloomWidget
   }
   get childrenHasSelected(): boolean {
     if (this.nodes.length === 0) return this.isTheOnlySelected;
-    return this.nodes.some(
-      (node) => this.page.widgets[node].childrenHasSelected,
+    return (
+      this.nodes.some((node) => this.page.widgets[node].childrenHasSelected) ||
+      this.isTheOnlySelected
     );
   }
   get descendants(): string[] {
