@@ -82,7 +82,7 @@
     "jwt-decode": "^4.0.0",
     "klona": "^2.0.6",
     "lodash": "^4.17.21",
-    "lucide-react": "^0.344.0",
+    "lucide-react": "^0.367.0",
     "match-sorter": "^6.3.4",
     "mobbing-query": "^1.0.7",
     "mobx": "^6.12.0",

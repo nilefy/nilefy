@@ -3,7 +3,7 @@ import {
   Widget,
   WidgetConfig,
 } from '@/lib/Editor/interface';
-import { Loader2, MousePointerSquare } from 'lucide-react';
+import { Loader2, SquareMousePointer } from 'lucide-react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
@@ -46,7 +46,7 @@ const WebloomButton = observer(function WebloomButton() {
 });
 const config: WidgetConfig = {
   name: 'Button',
-  icon: MousePointerSquare,
+  icon: SquareMousePointer,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
