@@ -265,26 +265,7 @@ export class AppsService {
         return { ...page, appId: appId, createdById: createdById };
       });
 
-      console.log('pages to insert from app.service');
-      console.log(pagesToInsert);
-      console.log('importAppJson print whole dto:');
-      console.log(importAppDto);
-
-      // const [p] = await this.pagesService.importPages(pagesToInsert, {
-      //   tx: tx,
-      // });
-      // p;
-      // const [rootComponent] =
-      //   await this.componentsService.importTreeForPageImport(
-      //     {
-      //       components: importAppDb.defaultPage.tree,
-      //       pageId: p.id,
-      //       userId: createdById,
-      //     },
-      //     { tx: tx },
-      //   );
-      // return rootComponent;
-
+      this.pagesService.importPage(pagesToInsert, { tx: tx });
       /*
       
       - insert components into db and store their id's
