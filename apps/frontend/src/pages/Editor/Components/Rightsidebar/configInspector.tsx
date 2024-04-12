@@ -19,6 +19,7 @@ import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
+import { useAutoRun } from '@/lib/Editor/hooks';
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
@@ -57,12 +58,12 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
     },
     [setValue],
   );
-  useEffect(() => {
+  useAutoRun(() => {
     setValue(node.id);
-  }, [node.id]);
+  });
   if (!node) return null;
-  const incoming = node.connections.dependencies;
-  const outgoing = node.connections.dependents;
+  const incoming = node.connections.dependencies || [];
+  const outgoing = node.connections.dependents || [];
   const selectCallback = useCallback((id: string) => {
     commandManager.executeCommand(new RemoteSelectEntity(id));
   }, []);

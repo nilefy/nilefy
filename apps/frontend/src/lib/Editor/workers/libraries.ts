@@ -1,4 +1,4 @@
-import { isObjectLike, keys } from 'lodash';
+import { difference, isObjectLike, keys } from 'lodash';
 import { InstallLibraryRequest } from './common/interface';
 const validIdentifierRegex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
 const guessName = (url: string) => {
@@ -26,6 +26,7 @@ async function installUMD(url: string) {
 export const installLibrary = async (body: InstallLibraryRequest['body']) => {
   const { url, defaultName, name } = body;
   let newName = guessName(url);
+  const globalKeys = keys(self);
   if (!isValidIdentifier(newName)) {
     newName = defaultName || '';
   }
@@ -61,5 +62,11 @@ export const installLibrary = async (body: InstallLibraryRequest['body']) => {
     }
   } catch (e) {
     throw new Error('Failed to install library');
+  } finally {
+    const newGlobalKeys = keys(self);
+    const diff = difference(newGlobalKeys, globalKeys);
+    diff.forEach((key) => {
+      delete self[key as keyof typeof self];
+    });
   }
 };
