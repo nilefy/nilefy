@@ -46,6 +46,7 @@ type RowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
+import { useAutoRun } from '@/lib/Editor/hooks';
 
 //Types
 declare module '@tanstack/react-table' {
@@ -143,27 +144,24 @@ const WebloomTable = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
   const props = widget.finalValues as WebloomTableProps;
-  const { columns = [], data = [] } = props;
+  const { columns = [] } = props;
   //  to run only once when the component is mounted
-  useEffect(
-    () =>
-      autorun(() => {
-        setTableData(toJS(data));
-        // merging predefined cols and cols generated from data
-        const cols = generateColumnsFromData(data[0]);
-        runInAction(() => {
-          cols.forEach((propCol) => {
-            const exists = columns.find((col) => col.id === propCol.id);
-            if (!exists) {
-              columns.push(propCol);
-            }
-          });
-          onPropChange({ key: 'columns', value: cols });
-        });
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  useAutoRun(() => {
+    const data = toJS(props.data) || [];
+    setTableData(toJS(data));
+    console.log('data', toJS(data));
+    // merging predefined cols and cols generated from data
+    const cols = generateColumnsFromData(data[0]);
+    runInAction(() => {
+      cols.forEach((propCol) => {
+        const exists = columns.find((col) => col.id === propCol.id);
+        if (!exists) {
+          columns.push(propCol);
+        }
+      });
+      onPropChange({ key: 'columns', value: cols });
+    });
+  });
 
   // sorting options
   const [sorting, setSorting] = useState<SortingState>([]);
