@@ -1,5 +1,5 @@
 import { Editor } from '@tinymce/tinymce-react';
-import { MousePointerSquare } from 'lucide-react';
+import { SquareMousePointer } from 'lucide-react';
 import {
   EntityInspectorConfig,
   Widget,
@@ -168,7 +168,7 @@ export const WebloomTextEditor = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Text Editor',
-  icon: <MousePointerSquare />,
+  icon: SquareMousePointer,
   isCanvas: false,
   layoutConfig: {
     colsCount: 15,

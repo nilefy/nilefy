@@ -17,7 +17,6 @@ function InsertTab() {
   const filteredWidgetsKeys = useMemo(() => {
     return matchSorter(Object.keys(WebloomWidgets), search);
   }, [search]);
-
   return (
     <TabsContent value="insert">
       <div className="w- flex h-full w-full flex-col gap-3 py-4 ">
@@ -35,6 +34,8 @@ function InsertTab() {
           {filteredWidgetsKeys.map((name) => {
             const config =
               WebloomWidgets[name as keyof typeof WebloomWidgets].config;
+
+            const Icon = config.icon;
             return (
               <button
                 title={name}
@@ -48,7 +49,7 @@ function InsertTab() {
                 >
                   <div className=" hover:bg-secondary flex w-24 flex-col items-center justify-center gap-2 rounded-sm p-4 ">
                     <div className="flex h-full w-full items-center justify-center">
-                      {config.icon}
+                      <Icon />
                     </div>
                     <div className="flex h-full w-full items-center justify-center overflow-visible text-ellipsis whitespace-nowrap font-medium leading-3 text-gray-500">
                       {config.name}

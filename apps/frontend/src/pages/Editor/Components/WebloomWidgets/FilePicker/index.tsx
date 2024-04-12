@@ -41,7 +41,7 @@ const WebloomFilePicker = observer(() => {
 });
 const config: WidgetConfig = {
   name: 'File Picker',
-  icon: <UploadCloud />,
+  icon: UploadCloud,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

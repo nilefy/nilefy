@@ -413,7 +413,7 @@ const WebloomTable = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Table',
-  icon: <TableIcon />,
+  icon: TableIcon,
   isCanvas: false,
   resizingDirection: 'Both',
   layoutConfig: {

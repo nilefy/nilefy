@@ -3,6 +3,7 @@ import { EditorState } from './editor';
 import {
   ActionExecutionPayload,
   FulfillActionRequest,
+  InstallLibraryRequest,
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
@@ -150,12 +151,30 @@ export class MainThreadBroker {
       case 'runJSQuery':
         this.editorState.evaluationManager.runJSQuery(body.queryId, body.id);
         break;
+      case 'installLibrary':
+        this.installLibrary(body);
+        break;
+      case 'updateLibraryName':
+        this.editorState.updateLibraryName(body);
+        break;
+      case 'uninstallLibrary':
+        this.editorState.uninstallLibrary(body);
+        break;
       default:
         break;
     }
   };
   addAction(actionPayload: PromisedActionExecutionPayload) {
     this.actionsQueue.push(actionPayload);
+  }
+  async installLibrary(body: InstallLibraryRequest['body']) {
+    const lib = await this.editorState.installLibrary(body);
+    this.postMessage({
+      event: 'fulfillLibraryInstall',
+      body: {
+        jsLibrary: lib,
+      },
+    });
   }
   postMessage(req: WorkerResponse) {
     this.worker.postMessage(req);

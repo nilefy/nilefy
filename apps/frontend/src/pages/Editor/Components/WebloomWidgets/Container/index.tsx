@@ -121,7 +121,7 @@ export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
 
 export const config: WidgetConfig = {
   name: 'Container',
-  icon: <BoxSelect />,
+  icon: BoxSelect,
   isCanvas: true,
   layoutConfig: {
     colsCount: 10,

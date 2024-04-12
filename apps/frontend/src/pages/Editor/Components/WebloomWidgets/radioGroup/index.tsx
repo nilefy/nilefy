@@ -52,7 +52,7 @@ const WebloomRadio = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Radio',
-  icon: <CircleDot />,
+  icon: CircleDot,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

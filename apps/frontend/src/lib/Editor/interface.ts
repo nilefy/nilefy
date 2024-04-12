@@ -1,9 +1,16 @@
 import { InputProps } from '@/components/ui/input';
-import { ReactNode } from 'react';
+import {
+  Component,
+  ExoticComponent,
+  FunctionComponent,
+  ReactElement,
+  ReactNode,
+} from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
 import { NewWidgePayload } from './Models/page';
+import { LucideProps } from 'lucide-react';
 
 type BaseControlProps = {
   label: string;
@@ -156,7 +163,7 @@ export interface LayoutConfig {
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
-  icon: ReactNode;
+  icon: FunctionComponent<LucideProps>;
   name: string;
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;

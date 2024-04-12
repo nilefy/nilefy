@@ -51,7 +51,7 @@ const WebloomImage = observer(function WebloomImage() {
 
 const config: WidgetConfig = {
   name: 'Image',
-  icon: <Image />,
+  icon: Image,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,

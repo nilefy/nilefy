@@ -1,12 +1,6 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { BookOpenText, Pin, PinOff, Plus, Search } from 'lucide-react';
+
+import { Pin, PinOff, Plus, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../../../components/ui/button';
@@ -29,8 +23,6 @@ export function PageSelector() {
     isError,
     error,
   } = api.pages.index.useQuery(+(workspaceId as string), +(appId as string));
-  const [isOpen, setIsOpen] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
   const [newPageBeingCreated, setNewPageBeingCreated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,62 +50,37 @@ export function PageSelector() {
   }
 
   return (
-    <Sheet
-      key={'left'}
-      open={!isPinned ? isOpen : isPinned}
-      onOpenChange={(open) => {
-        if (!open || isPinned) {
-          setSearchQuery('');
-        }
-        setIsOpen(open);
-      }}
-      modal={false}
-    >
-      <SheetTrigger className="flex items-center justify-center" title="Pages">
-        <BookOpenText className="h-8 w-8 rotate-0 scale-100 cursor-pointer transition-all" />
-      </SheetTrigger>
-      <SheetContent side={'left'} className="left-14">
-        <SheetHeader>
-          <SheetTitle>Pages</SheetTitle>
-          <div className="flex flex-row justify-end ">
-            <Button
-              title={'Add Page'}
-              onClick={() => setNewPageBeingCreated(true)}
-              variant="ghost"
-            >
-              <Plus />
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsOpen(true);
-                setIsPinned(!isPinned);
-              }}
-            >
-              {isPinned ? <PinOff /> : <Pin />}
-            </Button>
-            <Button
-              title={'Search'}
-              onClick={() => setShowSearch(!showSearch)}
-              variant="ghost"
-            >
-              <Search />
-            </Button>
-          </div>
-          <div>
-            {showSearch && (
-              <Input
-                type="search"
-                className="mb-2 w-full self-center"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-            )}
-          </div>
-        </SheetHeader>
-        <ul className="flex h-full w-full flex-col gap-3 overflow-y-auto">
-          {/* <SortableList
+    <div className="h-full w-full">
+      <div className="flex flex-row justify-end">
+        <Button
+          title={'Add Page'}
+          onClick={() => setNewPageBeingCreated(true)}
+          variant="ghost"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+
+        <Button
+          title={'Search'}
+          onClick={() => setShowSearch(!showSearch)}
+          variant="ghost"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      </div>
+      <div>
+        {showSearch && (
+          <Input
+            type="search"
+            className="mb-2 w-full self-center"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        )}
+      </div>
+      <ul className="flex h-full w-full flex-col gap-3 overflow-y-auto">
+        {/* <SortableList
             items={filteredPages}
             onSortEnd={(p1, p2) => {
               //TODO: make sure the setSortedPages is done correctly
@@ -149,25 +116,24 @@ export function PageSelector() {
               />
             )}
           /> */}
-          {filteredPages.map((item) => (
-            <Page
-              key={item.id}
-              workspaceId={+(workspaceId as string)}
-              appId={+(appId as string)}
-              page={item}
-            />
-          ))}
+        {filteredPages.map((item) => (
+          <Page
+            key={item.id}
+            workspaceId={+(workspaceId as string)}
+            appId={+(appId as string)}
+            page={item}
+          />
+        ))}
 
-          {newPageBeingCreated && (
-            <div className="w-[100%]">
-              <AddingPageHandler
-                setNewPageBeingCreated={setNewPageBeingCreated}
-              />
-            </div>
-          )}
-        </ul>
-      </SheetContent>
-    </Sheet>
+        {newPageBeingCreated && (
+          <div className="w-[100%]">
+            <AddingPageHandler
+              setNewPageBeingCreated={setNewPageBeingCreated}
+            />
+          </div>
+        )}
+      </ul>
+    </div>
   );
 }
 

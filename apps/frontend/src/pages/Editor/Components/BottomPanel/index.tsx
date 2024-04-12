@@ -10,7 +10,7 @@ export const BottomPanel = observer(() => {
     ActiveComponent = DebugPanel;
   }
   return (
-    <div className="flex h-full w-full border-l">
+    <div className="flex h-full w-full">
       <ActiveComponent />
     </div>
   );

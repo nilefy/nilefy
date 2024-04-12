@@ -16,6 +16,7 @@ import { DataSourcesModule } from './data_sources/data_sources.module';
 import { DataQueriesModule } from './data_queries/data_queries.module';
 import { EmailModule } from './email/email.module';
 import { JsQueriesModule } from './js_queries/js_queries.module';
+import { JsLibrariesModule } from './js_libraries/js_libraries.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { JsQueriesModule } from './js_queries/js_queries.module';
     DataQueriesModule,
     EmailModule,
     JsQueriesModule,
+    JsLibrariesModule,
   ],
 })
 export class AppModule {}

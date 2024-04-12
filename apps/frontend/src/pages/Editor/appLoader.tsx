@@ -1,5 +1,6 @@
 import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
@@ -34,12 +35,17 @@ export const appLoader =
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
     });
+    const jsLibrariesQuery = useJSLibraries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
     const values = await Promise.all([
       queryClient.fetchQuery(appQuery),
       queryClient.fetchQuery(queriesQuery),
       queryClient.fetchQuery(jsQueriesQuery),
+      queryClient.fetchQuery(jsLibrariesQuery),
     ]);
-    const [app, queries, jsQueries] = values;
+    const [app, queries, jsQueries, jsLibraries] = values;
     const tree = app.defaultPage.tree;
     editorStore.init({
       name: app.name,
@@ -47,6 +53,7 @@ export const appLoader =
       appId: app.id,
       queries,
       jsQueries,
+      jsLibraries,
       // TODO: get the current user from the token
       currentUser: 'Super User',
       currentPageId: app.defaultPage.id.toString(),

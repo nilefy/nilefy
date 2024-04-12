@@ -57,7 +57,7 @@ const WebloomCheckBoxGroup = observer(function WebloomCheckBoxGroup() {
 
 const config: WidgetConfig = {
   name: 'Check Box Group',
-  icon: <ListChecks />,
+  icon: ListChecks,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

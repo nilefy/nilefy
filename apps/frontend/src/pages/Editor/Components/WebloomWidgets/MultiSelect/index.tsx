@@ -38,7 +38,7 @@ const WebloomMultiSelect = observer(function WebloomMultiSelect() {
 
 const config: WidgetConfig = {
   name: 'MultiSelect',
-  icon: <CopyCheck />,
+  icon: CopyCheck,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

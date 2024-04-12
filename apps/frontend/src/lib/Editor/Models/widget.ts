@@ -24,7 +24,6 @@ import { Entity } from './entity';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePropAction } from '@/actions/Editor/changeProps';
 import { EntityActionConfig } from '../evaluation/interface';
-import { WidgetSelection } from '@/actions/Editor/selection';
 const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
   scrollIntoView: {
     type: 'SIDE_EFFECT',
@@ -168,8 +167,16 @@ export class WebloomWidget
       resizeDirection: computed,
       layoutMode: computed,
       descendants: computed,
+      childrenHasSelected: computed,
       unselectSelf: action,
     });
+  }
+  get childrenHasSelected(): boolean {
+    if (this.nodes.length === 0) return this.isTheOnlySelected;
+    return (
+      this.nodes.some((node) => this.page.widgets[node].childrenHasSelected) ||
+      this.isTheOnlySelected
+    );
   }
   get descendants(): string[] {
     if (this.nodes.length === 0) return [];

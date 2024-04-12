@@ -49,7 +49,7 @@ const WebloomCheckBox = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Check Box',
-  icon: <CheckSquare />,
+  icon: CheckSquare,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,

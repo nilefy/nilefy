@@ -1,4 +1,6 @@
+import { JSLibraryI } from '@/api/JSLibraries.api';
 import { EntityTypes } from '../../interface';
+import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
 
@@ -34,6 +36,7 @@ export type WorkerResponse =
   | EvaluationUpdateResponse
   | WorkerActionExecutionResponse
   | FulfillJSQueryResponse
+  | FulFillLibraryInstallResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -49,6 +52,9 @@ export type WorkerRequest =
   | EntityActionExecutionRequest
   | FulfillActionRequest
   | RunJSQueryRequest
+  | InstallLibraryRequest
+  | UninstallLibraryRequest
+  | UpdateLibraryNameRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -77,6 +83,7 @@ export type InitRequest = {
     queries: Record<string, EntityConfigBody>;
     pages: Record<string, Record<string, EntityConfigBody>>;
     globals: EntityConfigBody;
+    libraries: JSLibraryI[];
   };
   event: 'init';
 };
@@ -127,6 +134,37 @@ export type RunJSQueryRequest = {
   };
 };
 
+export type InstallLibraryRequest = {
+  event: 'installLibrary';
+  body: {
+    url: string;
+    defaultName?: string;
+    name?: string;
+  };
+};
+
+export type UpdateLibraryNameRequest = {
+  event: 'updateLibraryName';
+  body: {
+    newName: string;
+    id: string;
+  };
+};
+
+export type UninstallLibraryRequest = {
+  event: 'uninstallLibrary';
+  body: {
+    id: string;
+  };
+};
+
+export type FulFillLibraryInstallResponse = {
+  event: 'fulfillLibraryInstall';
+  body: {
+    jsLibrary?: JSLibrary;
+    error?: unknown;
+  };
+};
 export type BatchRequest = {
   event: 'batch';
   body: WorkerRequest[];

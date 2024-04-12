@@ -103,7 +103,7 @@ const WebloomSelect = observer(function WebloomSelect() {
 
 const config: WidgetConfig = {
   name: 'Select',
-  icon: <CheckSquare />,
+  icon: CheckSquare,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,
