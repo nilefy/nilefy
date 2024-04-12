@@ -10,15 +10,21 @@ export const createComponentDb = createInsertSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
 });
 
-export const ImportComponentDb = createInsertSchema(componentsDrizzle).extend({
-  type: z.string(),
-  props: z.record(z.string(), z.unknown()),
-  parentId: z.string(),
-  col: z.number(),
-  row: z.number(),
-  columnsCount: z.number(),
-  rowsCount: z.number(),
+export const importComponentsDb = z.object({
+  components: z.array(
+    createInsertSchema(componentsDrizzle).extend({
+      type: z.string(),
+      props: z.record(z.string(), z.unknown()),
+      parentId: z.string(),
+      col: z.number(),
+      row: z.number(),
+      columnsCount: z.number(),
+      rowsCount: z.number(),
+      pageId: z.number(),
+    }),
+  ),
   pageId: z.number(),
+  userId: z.number(),
 });
 
 export const updateComponentDb = createComponentDb
@@ -34,6 +40,7 @@ export type ComponentDto = z.infer<typeof componentSchema>;
  * insert in the db interface
  */
 export type CreateComponentDb = z.infer<typeof createComponentDb>;
+export type ImportComponentsDb = z.infer<typeof importComponentsDb>;
 export type UpdateComponentDb = z.infer<typeof updateComponentDb>;
 
 // FRONTEND NODE TYPE

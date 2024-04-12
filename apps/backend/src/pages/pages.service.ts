@@ -242,31 +242,34 @@ export class PagesService {
   ) {
     console.log('pages from import pages:');
     console.log(pagesToInsert);
-    const [p] = await (options?.tx ? options.tx : this.db)
+    const insertedPages = await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values(pagesToInsert)
       .returning();
-    p;
-    const [rootComponent] =
-      await this.componentsService.createTreeForPageImport(
-        p.id,
-        p.createdById,
-        [],
-        { tx: options?.tx },
-      );
+    insertedPages;
+    console.log('p::::::::');
+    console.log(insertedPages);
+    return insertedPages;
+    // const [rootComponent] =
+    //   await this.componentsService.createTreeForPageImport(
+    //     p.id,
+    //     p.createdById,
+    //     [],
+    //     { tx: options?.tx },
+    //   );
 
-    return {
-      ...p,
-      tree: {
-        [rootComponent.id]: {
-          ...rootComponent,
-          id: rootComponent.id,
-          parentId: rootComponent.parentId ?? rootComponent.id,
-          props: rootComponent.props as WebloomNode['props'],
-          nodes: [],
-        },
-      } satisfies WebloomTree,
-    };
+    // return {
+    //   ...p,
+    //   tree: {
+    //     [rootComponent.id]: {
+    //       ...rootComponent,
+    //       id: rootComponent.id,
+    //       parentId: rootComponent.parentId ?? rootComponent.id,
+    //       props: rootComponent.props as WebloomNode['props'],
+    //       nodes: [],
+    //     },
+    //   } satisfies WebloomTree,
+    // };
   }
 
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
