@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { editorStore } from '@/lib/Editor/Models';
 import { AccordionContent } from '@radix-ui/react-accordion';
 import { entries } from 'lodash';
-import { CloudDownload } from 'lucide-react';
+import { CloudDownload, Trash } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
@@ -109,21 +109,53 @@ export const Libraries = observer(() => {
             value={libraryName}
             className="border-0"
           >
-            <AccordionTrigger className="py-3 text-sm hover:no-underline">
-              <div className="flex w-full justify-start gap-2 px-2">
+            <AccordionTrigger
+              arrowPosition="left"
+              className="group py-3 text-sm hover:no-underline"
+            >
+              <div className="flex h-8 w-full items-center justify-start gap-2 px-2">
                 <span className="w-1/4  truncate text-start font-normal">
                   {libraryName}
                 </span>
                 <span className="ml-auto shrink-0 font-normal">
                   {library.version ?? ''}
                 </span>
+                {library.isDefault ? null : (
+                  <Button
+                    variant="destructive"
+                    asChild
+                    className="hidden h-fit w-fit px-2 group-hover:block"
+                    onClick={() => {
+                      editorStore.uninstallLibrary(libraryName);
+                    }}
+                    title="Remove library"
+                  >
+                    <div>
+                      <Trash className="h-4 w-4" />
+                    </div>
+                  </Button>
+                )}
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="flex flex-col gap-2">
               <div className="ml-2 flex items-center gap-2 px-2 text-sm">
                 <div className="w-full truncate font-normal">Available as:</div>
                 <Input
                   value={library.availabeAs}
+                  onChange={() => {
+                    //do nothing
+                  }}
+                />
+              </div>
+              <div className="ml-2 flex items-center gap-2 px-2 text-sm">
+                <Label
+                  htmlFor="library-url"
+                  className="w-full truncate font-normal"
+                >
+                  URL
+                </Label>
+                <Input
+                  value={library.url}
                   onChange={() => {
                     //do nothing
                   }}
