@@ -451,6 +451,8 @@ export class EditorState implements WebloomDisposable {
     const lib = this.libraries[id];
     delete this.libraries[id];
     this.libraries[newName] = lib;
+    this.libraries[newName].name = newName;
+    this.libraries[newName].availabeAs = newName;
     this.workerBroker.postMessege({
       event: 'updateLibraryName',
       body: {
@@ -481,6 +483,7 @@ export class EditorState implements WebloomDisposable {
           },
         });
         jsLib.name = name;
+        jsLib.availabeAs = name;
       }
       // todo handle update server state gracefully
       await createJSLibrary({

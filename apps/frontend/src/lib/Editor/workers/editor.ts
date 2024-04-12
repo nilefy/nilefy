@@ -65,7 +65,6 @@ export class EditorState {
       init: action,
       addEntity: action,
       removeEntity: action,
-      libraries: observable,
       installLibrary: action,
       updateLibraryName: action,
       uninstallLibrary: action,
