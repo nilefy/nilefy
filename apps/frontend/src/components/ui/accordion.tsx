@@ -23,8 +23,8 @@ const AccordionTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
     arrowPosition?: 'left' | 'right';
   }
->(({ className, children, ...props }, ref) => {
-  if (props.arrowPosition === 'left') {
+>(({ className, children, arrowPosition, ...props }, ref) => {
+  if (arrowPosition === 'left') {
     return (
       <AccordionPrimitive.Header className="flex">
         <AccordionPrimitive.Trigger
