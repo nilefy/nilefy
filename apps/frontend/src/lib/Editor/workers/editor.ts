@@ -65,6 +65,7 @@ export class EditorState {
       init: action,
       addEntity: action,
       removeEntity: action,
+      libraries: observable.ref,
       installLibrary: action,
       updateLibraryName: action,
       uninstallLibrary: action,
@@ -214,9 +215,12 @@ export class EditorState {
     const lib = this.libraries[body.id];
     delete this.libraries[body.id];
     this.libraries[body.newName] = lib;
+    const newLibs = { ...this.libraries };
+    this.libraries = newLibs;
   }
   uninstallLibrary(body: UninstallLibraryRequest['body']) {
     delete this.libraries[body.id];
+    this.libraries = { ...this.libraries };
   }
   async installLibrary(
     body: InstallLibraryRequest['body'],
@@ -224,6 +228,7 @@ export class EditorState {
     const lib = await installLibrary(body);
     runInAction(() => {
       this.libraries[lib.name] = lib.library;
+      this.libraries = { ...this.libraries };
     });
     return {
       availabeAs: lib.name,
