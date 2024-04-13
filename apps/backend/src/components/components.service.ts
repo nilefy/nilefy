@@ -11,7 +11,6 @@ import {
   ComponentDto,
   createComponentDb,
   CreateComponentDb,
-  ImportComponentsDb,
   UpdateComponentDb,
   WebloomTree,
 } from '../dto/components.dto';
@@ -141,21 +140,28 @@ export class ComponentsService {
     return tree;
   }
 
-  async importTreeForPageImport(
-    importTreeDto: ImportComponentsDb,
+  async createTreeForPageImport(
+    pageId: PageDto['id'],
+    createdById: PageDto['createdById'],
+    componentsDto: CreateComponentDb[],
     options?: {
       tx?: PgTrans;
     },
   ) {
     console.log('from createTreeForPageImport: ');
-    console.log(importTreeDto.pageId);
+    console.log(componentsDto);
+    pageId;
+    componentsDto;
+    options;
+
+    console.log('from createTreeForPageImport: ');
     const [t] = await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values({
         id: EDITOR_CONSTANTS.ROOT_NODE_ID,
         type: 'WebloomContainer',
-        pageId: importTreeDto.pageId,
-        createdById: importTreeDto.userId,
+        pageId: pageId,
+        createdById: createdById,
         parentId: null,
         props: {
           className: 'h-full w-full',
@@ -168,15 +174,41 @@ export class ComponentsService {
       })
       .returning();
 
-    console.log('components from inside importTreePageImport');
-    // const [tree] = await (options?.tx ? options.tx : this.db)
-    //   .insert(components)
-    //   .values(importTreeDto.components)
-    //   .returning();
-    // console.log(tree);
     console.log('output tree:');
     console.log(t);
 
+    const [ta] = await (options?.tx ? options.tx : this.db)
+      .insert(components)
+      .values({
+        id: 'WebloomContainer16',
+        type: 'WebloomContainer',
+        pageId: pageId,
+        createdById: createdById,
+        parentId: '0',
+        props: { color: '#a883f2', layoutMode: 'fixed' },
+        col: 0,
+        row: 0,
+        columnsCount: 10,
+        rowsCount: 40,
+      })
+      .returning();
     return [t];
   }
 }
+
+type ImportTreeDto = {
+  [key: string]: {
+    id: string;
+    nodes: string[];
+    parentId: string;
+    props: {
+      [key: string]: any;
+    };
+    type: string;
+    col: number;
+    row: number;
+    columnsCount: number;
+    rowsCount: number;
+    columnWidth: number;
+  };
+};

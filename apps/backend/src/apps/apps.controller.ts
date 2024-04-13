@@ -100,7 +100,7 @@ export class AppsController {
 
       console.log('before');
 
-      // todo: uncomment after enabling AuthGuard
+      // todo: uncomment after done
       // let userId = req.user.userId;
       const userId = 1;
 
@@ -113,9 +113,8 @@ export class AppsController {
       console.log('hello');
       console.log('type: ' + typeof createAppDto);
 
-      console.log(createAppDto);
-
-      return await this.appsService.importAppJSON(createAppDto);
+      const app = await this.appsService.importAppJSON(createAppDto);
+      console.log(app);
     } catch (e) {
       console.log('An Error has occured while importing the app!');
       () => {

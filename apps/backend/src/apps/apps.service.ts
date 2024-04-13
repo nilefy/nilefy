@@ -10,7 +10,6 @@ import {
   AppsRetDto,
   CreateAppDb,
   CreateAppRetDto,
-  importAppDb,
   ImportAppDb,
   UpdateAppDb,
 } from '../dto/apps.dto';
@@ -20,14 +19,12 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
-import { ComponentsService } from '../components/components.service';
 
 @Injectable()
 export class AppsService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
-    private componentsService: ComponentsService,
   ) {}
 
   // TODO: copy app state
@@ -189,7 +186,6 @@ export class AppsService {
   }
 
   async exportAppJSON(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
-    // todo: don't return deleted
     const app = await this.findOne(workspaceId, appId);
     console.log(app);
     if (app['deletedAt']) {
@@ -240,17 +236,21 @@ export class AppsService {
     return simplifiedObject;
   }
 
-  async importAppJSON(importAppDto: ImportssAppDto) {
-    console.log('hello from App Json');
+  async importAppJSON(
+    importAppDb: ImportAppDb & {
+      pages: Page[];
+      defaultPage: DefaultPage;
+    },
+  ) {
     let app;
     this.db.transaction(async (tx) => {
       const createdApps = await tx
         .insert(apps)
         .values({
-          name: importAppDto.name,
-          description: importAppDto.description,
-          workspaceId: importAppDto.workspaceId,
-          createdById: importAppDto.createdById,
+          name: importAppDb.name,
+          description: importAppDb.description,
+          workspaceId: importAppDb.workspaceId,
+          createdById: importAppDb.createdById,
         })
         .returning({
           appId: apps.id,
@@ -261,11 +261,12 @@ export class AppsService {
       const appId = app.appId;
       const createdById = app.createdById;
 
-      const pagesToInsert = importAppDto.pagesToBeImported.map((page) => {
+      const pagesToInsert = importAppDb.pages.map((page) => {
+        console.log(page);
         return { ...page, appId: appId, createdById: createdById };
       });
 
-      this.pagesService.importPage(pagesToInsert, { tx: tx });
+      this.pagesService.importPages(pagesToInsert, { tx: tx });
       /*
       
       - insert components into db and store their id's
@@ -273,6 +274,14 @@ export class AppsService {
       - add the nodes' id's to the root component
 
       */
+
+      console.log(pagesToInsert);
+
+      const defaultPage = importAppDb.defaultPage;
+      console.log('hi');
+      console.log(defaultPage);
+      console.log('tree:');
+      console.log(defaultPage.tree);
 
       // await tx.insert(pages).values(pagesToInsert);
 
@@ -314,7 +323,3 @@ type Page = {
   deletedAt?: Date | null;
   deletedById?: Date | null;
 };
-
-importAppDb;
-
-type ImportssAppDto = typeof ImportAppDb;
