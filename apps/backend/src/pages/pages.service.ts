@@ -240,13 +240,9 @@ export class PagesService {
     }[],
     options?: { tx?: PgTrans },
   ) {
-<<<<<<< HEAD
     console.log('pages from import pages:');
     console.log(pagesToInsert);
     const insertedPages = await (options?.tx ? options.tx : this.db)
-=======
-    const [p] = await (options?.tx ? options.tx : this.db)
->>>>>>> parent of 76d7d54 (feat(backend/export app): Add import all pages instead of just one)
       .insert(pages)
       .values(pagesToInsert[0])
       .returning();
