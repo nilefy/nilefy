@@ -5,6 +5,7 @@ import { evaluate, evaluateAsync } from '../evaluation';
 import { EditorState } from './editor';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { bindingRegexGlobal } from '../evaluation/utils';
+import log from 'loglevel';
 
 export class EvaluationManager {
   editor: EditorState;
@@ -199,7 +200,7 @@ export class EvaluationManager {
       'start-evaluatedForest',
       'end-evaluatedForest',
     );
-    console.log('perf eval', duration.duration);
+    log.info('perf eval', duration.duration);
     this.lastEvaluatedForest = evalTree;
     return {
       evalTree,

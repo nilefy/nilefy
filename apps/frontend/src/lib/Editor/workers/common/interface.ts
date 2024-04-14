@@ -3,6 +3,7 @@ import { EntityTypes } from '../../interface';
 import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
+import ts from 'typescript';
 
 export type ActionExecutionPayload = {
   entityId: string;
@@ -37,6 +38,8 @@ export type WorkerResponse =
   | WorkerActionExecutionResponse
   | FulfillJSQueryResponse
   | FulFillLibraryInstallResponse
+  | AutocompleteResponse
+  | LintResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
@@ -55,6 +58,9 @@ export type WorkerRequest =
   | InstallLibraryRequest
   | UninstallLibraryRequest
   | UpdateLibraryNameRequest
+  | AutocompleteRequest
+  | UpdateTSFileRequest
+  | LintRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -168,4 +174,48 @@ export type FulFillLibraryInstallResponse = {
 export type BatchRequest = {
   event: 'batch';
   body: WorkerRequest[];
+};
+
+export type AutocompleteRequest = {
+  event: 'autoComplete';
+  body: {
+    fileName: string;
+    // we send the fileContent despite the fact that the worker already has it, is because the updates are throttled
+    // and we need to make sure that the worker has the latest content
+    fileContent: string;
+    position: number;
+    requestId: string;
+  };
+};
+
+export type AutocompleteResponse = {
+  event: 'fulfillAutoComplete';
+  body: {
+    requestId: string;
+    completions: ts.WithMetadata<ts.CompletionInfo> | undefined;
+  };
+};
+
+export type LintRequest = {
+  event: 'lint';
+  body: {
+    fileName: string;
+    fileContent: string;
+  };
+};
+
+export type LintResponse = {
+  event: 'fulfillLint';
+  body: {
+    requestId: string;
+    diagnostics: ts.Diagnostic[];
+  };
+};
+
+export type UpdateTSFileRequest = {
+  event: 'updateTSFile';
+  body: {
+    fileName: string;
+    content: string;
+  };
 };

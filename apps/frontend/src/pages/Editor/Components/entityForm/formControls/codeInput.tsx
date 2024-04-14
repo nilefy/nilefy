@@ -3,7 +3,7 @@ import { EntityFormControlContext } from '..';
 import { CodeInput } from '../../CodeEditor';
 
 const InspectorCodeInput = () => {
-  const { onChange, value, onFocus, onBlur } = useContext(
+  const { onChange, value, onFocus, onBlur, entityId, path } = useContext(
     EntityFormControlContext,
   );
 
@@ -17,6 +17,7 @@ const InspectorCodeInput = () => {
       onChange={onChange}
       onFocus={onFocus}
       onBlur={onBlur}
+      fileName={`${entityId}.${path}`}
     />
   );
 };

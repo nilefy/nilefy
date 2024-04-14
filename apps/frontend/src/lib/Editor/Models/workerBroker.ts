@@ -7,6 +7,8 @@ import {
   toJS,
 } from 'mobx';
 import {
+  AutocompleteRequest,
+  AutocompleteResponse,
   FulfillJSQueryResponse,
   FulFillLibraryInstallResponse,
   WorkerActionExecutionResponse,
@@ -21,21 +23,27 @@ import structuredClone from '@ungap/structured-clone';
 import { nanoid } from 'nanoid';
 import { JSLibrary } from '../libraries';
 import { getNewEntityName } from '../entitiesNameSeed';
+import log from 'loglevel';
 
+export type PendingRequest<TValue = unknown, TError = unknown> = {
+  resolve: (value: TValue) => void;
+  reject: (reason: TError) => void;
+  id: string;
+};
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
   private disposables: (() => void)[] = [];
-  pendingJSQueryExecution: Array<{
-    id: string;
-    resolve: (value: unknown) => void;
-    reject: (reason: unknown) => void;
-  }> = [];
+  pendingJSQueryExecution: Array<PendingRequest> = [];
   // Can only be one pending install library request at a time
   pendingInstallLibraryRequest: {
-    resolve: (value: unknown) => void;
+    resolve: (value: JSLibrary) => void;
     reject: (reason: unknown) => void;
   } | null = null;
+  // todo do we need more than one pending auto complete request?
+  pendingAutoCompleteRequests: Array<
+    PendingRequest<AutocompleteResponse['body']['completions']>
+  > = [];
   constructor(private readonly editorState: EditorState) {
     this.editorState = editorState;
     this.worker = new Worker(
@@ -56,6 +64,8 @@ export class WorkerBroker implements WebloomDisposable {
       fulfillJSQuery: action,
       pendingInstallLibraryRequest: observable,
       installLibrary: action,
+      autoCompleteRequest: action,
+      fulfillAutoComplete: action,
     });
 
     this.queue = [];
@@ -106,9 +116,21 @@ export class WorkerBroker implements WebloomDisposable {
     });
   }
 
+  async fulfillAutoComplete(body: AutocompleteResponse['body']) {
+    const { requestId, completions } = body;
+    const request = this.pendingAutoCompleteRequests.find(
+      (item) => item.id === requestId,
+    );
+    if (!request) return;
+    request.resolve(completions);
+    this.pendingAutoCompleteRequests = this.pendingAutoCompleteRequests.filter(
+      (item) => item.id !== requestId,
+    );
+  }
+
   receiveMessage(res: WorkerResponse) {
     const { event, body } = res;
-    console.log('worker sent', event, body);
+    log.info('worker sent', event, body);
     switch (event) {
       case 'EvaluationUpdate':
         this.editorState.applyEvalForestPatch(
@@ -131,10 +153,14 @@ export class WorkerBroker implements WebloomDisposable {
       case 'fulfillLibraryInstall':
         this.fulfillInstallLibrary(body);
         break;
+      case 'fulfillAutoComplete':
+        this.fulfillAutoComplete(body);
+        break;
       default:
         break;
     }
   }
+
   installLibrary = (url: string) => {
     if (this.pendingInstallLibraryRequest) {
       throw new Error('There is already a pending install library request');
@@ -157,7 +183,7 @@ export class WorkerBroker implements WebloomDisposable {
         this.pendingInstallLibraryRequest = null;
       }
     }, 5000);
-    return promise as Promise<JSLibrary>;
+    return promise;
   };
 
   fulfillJSQuery = (body: FulfillJSQueryResponse['body']) => {
@@ -180,7 +206,7 @@ export class WorkerBroker implements WebloomDisposable {
       this.pendingInstallLibraryRequest = null;
       return;
     }
-    this.pendingInstallLibraryRequest.resolve(body.jsLibrary as JSLibrary);
+    this.pendingInstallLibraryRequest.resolve(body.jsLibrary!);
     this.pendingInstallLibraryRequest = null;
   };
   handleActionExecution = async (
@@ -207,7 +233,20 @@ export class WorkerBroker implements WebloomDisposable {
     }
   };
   private debouncePostMessege = debounce(this._postMessege, 100);
-
+  autoCompleteRequest = async (autoCompleteRequest: AutocompleteRequest) => {
+    const id = autoCompleteRequest.body.requestId;
+    const promise = new Promise<AutocompleteResponse['body']['completions']>(
+      (resolve, reject) => {
+        this.pendingAutoCompleteRequests.push({
+          resolve,
+          reject,
+          id,
+        });
+        this.queue.push(autoCompleteRequest);
+      },
+    );
+    return await promise;
+  };
   dispose() {
     this.disposables.forEach((fn) => fn());
   }

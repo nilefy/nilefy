@@ -2,8 +2,10 @@ import { action, makeObservable, observable, reaction, toJS } from 'mobx';
 import { EditorState } from './editor';
 import {
   ActionExecutionPayload,
+  AutocompleteRequest,
   FulfillActionRequest,
   InstallLibraryRequest,
+  LintRequest,
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
@@ -160,9 +162,27 @@ export class MainThreadBroker {
       case 'uninstallLibrary':
         this.editorState.uninstallLibrary(body);
         break;
+      case 'autoComplete':
+        this.handleAutoCompleteRequest(body);
+        break;
+      case 'lint':
+        this.handleLintRequest(body);
+        break;
+      case 'updateTSFile':
+        this.editorState.tsServer.setFile(body.fileName, body.content);
+        break;
       default:
         break;
     }
+  };
+
+  handleAutoCompleteRequest = (body: AutocompleteRequest['body']) => {
+    const res = this.editorState.tsServer.handleAutoCompleteRequest(body);
+    this.postMessage(res);
+  };
+  handleLintRequest = (body: LintRequest['body']) => {
+    const res = this.editorState.tsServer.handleLintRequest(body);
+    this.postMessage(res);
   };
   addAction(actionPayload: PromisedActionExecutionPayload) {
     this.actionsQueue.push(actionPayload);

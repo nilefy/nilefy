@@ -23,6 +23,7 @@ import { entries } from 'lodash';
 import { installLibrary, WebloomLibraries } from './libraries';
 import { defaultLibraries, JSLibrary } from '../libraries';
 import { JSLibraryI } from '@/api/JSLibraries.api';
+import { TypeScriptServer } from './tsServer';
 
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
@@ -43,6 +44,7 @@ export class EditorState {
    * maps namespaces to exports from libraries
    */
   libraries: WebloomLibraries = { ...defaultLibraries };
+  tsServer!: TypeScriptServer;
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -97,6 +99,7 @@ export class EditorState {
     globals: EntityConfigBody;
     libraries: JSLibraryI[];
   }) {
+    this.tsServer = TypeScriptServer.getInstance();
     this.currentPageId = currentPageId;
     entries(queries).forEach(([_, query]) => {
       this.addQuery(this.normalizeEntityConfig(query));

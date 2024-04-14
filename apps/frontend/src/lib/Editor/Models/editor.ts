@@ -183,7 +183,6 @@ export class EditorState implements WebloomDisposable {
     currentUser: string;
   }) {
     this.dispose();
-    console.log(jsLibraries);
     this.appId = appId;
     this.workspaceId = workspaceId;
     this.name = name;

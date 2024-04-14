@@ -1,12 +1,4 @@
-import { RegExpCursor } from '@codemirror/search';
-import {
-  Decoration,
-  DecorationSet,
-  ViewPlugin,
-  EditorView,
-  ViewUpdate,
-  placeholder,
-} from '@codemirror/view';
+import { EditorView, ViewUpdate, placeholder } from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
@@ -26,109 +18,8 @@ import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
-import {
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-} from '@codemirror/autocomplete';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  foldKeymap,
-  indentOnInput,
-  syntaxHighlighting,
-} from '@codemirror/language';
-import { lintKeymap } from '@codemirror/lint';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import {
-  crosshairCursor,
-  dropCursor,
-  highlightSpecialChars,
-  keymap,
-  rectangularSelection,
-} from '@codemirror/view';
-export const baseSetup = () => [
-  highlightSpecialChars(),
-  history(),
-  dropCursor(),
-  EditorState.allowMultipleSelections.of(true),
-  indentOnInput(),
-  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  bracketMatching(),
-  closeBrackets(),
-  rectangularSelection(),
-  crosshairCursor(),
-  highlightSelectionMatches(),
-  keymap.of([
-    ...closeBracketsKeymap,
-    ...defaultKeymap,
-    ...searchKeymap,
-    ...historyKeymap,
-    ...foldKeymap,
-    ...completionKeymap,
-    ...lintKeymap,
-  ]),
-];
+import { blockCodeEditorExtensionsSetup } from './extensions';
 
-export const inlineTheme = EditorView.baseTheme({
-  '&': {
-    backgroundColor: 'hsl(var(--background))',
-  },
-
-  '&.cm-focused .cm-selectionBackground, ::selection': {
-    backgroundColor: '#c0c0c0',
-  },
-  '&.cm-focused': {
-    outline: 'none',
-  },
-  '.cm-jstemplate': {
-    backgroundColor: '#85edff49',
-  },
-});
-// HIGHLIGHT JS TEMPLATEs
-const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
-
-// TODO: fix this, new lines breaks the plugin
-/**
- * extension that adds new class to use in the mark
- */
-export const jsTemplatePlugin = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = this.getDeco(view);
-    }
-    getDeco(view: EditorView) {
-      // TODO: Why do we need two backslashes before the curly braces?
-      const templateRegexString = '\\{\\{([\\s\\S]*?)\\}\\}';
-      const { state } = view;
-      const decos = [];
-      for (const part of view.visibleRanges) {
-        const cursor = new RegExpCursor(
-          state.doc,
-          templateRegexString,
-          {},
-          part.from,
-          part.to,
-        );
-        for (const match of cursor) {
-          const { from, to } = match;
-          decos.push(templateMarkDeco.range(from, to));
-        }
-      }
-      return Decoration.set(decos);
-    }
-    update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = this.getDeco(update.view);
-      }
-    }
-  },
-  {
-    decorations: (instance) => instance.decorations,
-  },
-);
 const External = Annotation.define<boolean>();
 
 /**
@@ -317,12 +208,10 @@ export const inlineSetupCallback = (
   placeholderText: string = 'Enter something',
 ) => [
   placeholder(placeholderText),
-  inlineTheme,
   basicSetup,
   sql({
     dialect: PostgreSQL,
   }),
-  jsTemplatePlugin,
 ];
 
 export type WebloomSQLEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
@@ -343,14 +232,20 @@ export function SQLEditor(props: WebloomSQLEditorProps) {
   );
 }
 
-export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'>;
+export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'> & {
+  fileName: string;
+};
 export function CodeInput(props: CodeInputProps) {
-  const setup = useMemo(() => baseSetup(), []);
+  const { fileName, ...rest } = props;
+  const setup = useMemo(
+    () => blockCodeEditorExtensionsSetup({ theme: 'light', fileName }),
+    [fileName],
+  );
 
   return (
     <WebloomCodeEditor
       setup={setup}
-      {...props}
+      {...rest}
       className="border-input bg-background ring-offset-background focus-visible:ring-ring min-h-[200px] w-full overflow-auto rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
     />
   );
