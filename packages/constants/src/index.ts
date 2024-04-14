@@ -6,6 +6,7 @@ const EDITOR_CONSTANTS = {
   PREVIEW_NODE_ID: '1',
   GLOBALS_ID: "WebloomGlobals",
   JS_QUERY_BASE_NAME: 'jsQuery',
+  JS_AUTOCOMPLETE_FILE_NAME: "webloom-autocomplete",
 } as const;
 const SOCKET_EVENTS = {
   DELETE_NODE: 'deleteNode',

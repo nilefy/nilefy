@@ -1,6 +1,7 @@
 import { createDefaultMapFromCDN } from '@typescript/vfs';
 import ts from 'typescript';
 import { tsServerCompilerOptions } from '.';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 type FileName = string;
 type FileContent = string;
@@ -28,6 +29,11 @@ export class TSFS {
       ts,
     );
     this.fs = new Map([...this.defaultLibs, ...this.fs]);
+
+    this.fs.set(
+      '/' + EDITOR_CONSTANTS.JS_AUTOCOMPLETE_FILE_NAME + '.d.ts',
+      ' ',
+    );
     this.initted = true;
   }
 }

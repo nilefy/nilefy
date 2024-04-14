@@ -13,6 +13,7 @@ import {
 } from '../common/interface';
 import { concat } from 'lodash';
 import log from 'loglevel';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 // todo maybe give user control over this
 export const tsServerCompilerOptions: ts.CompilerOptions = {
   lib: ['esnext'],
@@ -20,7 +21,6 @@ export const tsServerCompilerOptions: ts.CompilerOptions = {
   noImplicitAny: false,
   allowJs: true,
   strict: false,
-  skipLibCheck: true,
 };
 
 const addTSExtension = (fileName: string) => {
@@ -33,7 +33,9 @@ export class TypeScriptServer {
   vfs!: TSFS;
   system!: ts.System;
   env!: VirtualTypeScriptEnvironment;
-  rootFiles: string[] = [];
+  rootFiles: string[] = [
+    '/' + EDITOR_CONSTANTS.JS_AUTOCOMPLETE_FILE_NAME + '.d.ts',
+  ];
   initted = false;
   static instance: TypeScriptServer;
 
