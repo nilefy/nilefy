@@ -3,6 +3,7 @@ import { Omit } from 'lodash';
 import { useMemo } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { inlineCodeEditorExtensionsSetup } from './extensions';
+import { useTheme } from '@/components/theme-provider';
 
 export type WebloomInlineEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
   placeholder?: string;
@@ -11,15 +12,16 @@ export type WebloomInlineEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
 };
 export const WebloomInlineEditor = (props: WebloomInlineEditorProps) => {
   const { placeholder, fileName, isEvent, ...rest } = props;
+  const theme = useTheme().activeTheme;
   const inlineSetup = useMemo(
     () =>
       inlineCodeEditorExtensionsSetup({
-        theme: 'light',
+        theme,
         placeholderText: placeholder,
         fileName: fileName,
         isEvent,
       }),
-    [fileName, placeholder, isEvent],
+    [fileName, placeholder, isEvent, theme],
   );
   return (
     <WebloomCodeEditor

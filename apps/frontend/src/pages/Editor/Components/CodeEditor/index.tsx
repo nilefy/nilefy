@@ -18,6 +18,7 @@ import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
 import { blockCodeEditorExtensionsSetup } from './extensions';
+import { useTheme } from '@/components/theme-provider';
 
 const External = Annotation.define<boolean>();
 
@@ -236,9 +237,10 @@ export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'> & {
 };
 export function CodeInput(props: CodeInputProps) {
   const { fileName, ...rest } = props;
+  const theme = useTheme().activeTheme;
   const setup = useMemo(
-    () => blockCodeEditorExtensionsSetup({ theme: 'light', fileName }),
-    [fileName],
+    () => blockCodeEditorExtensionsSetup({ theme, fileName }),
+    [fileName, theme],
   );
 
   return (
