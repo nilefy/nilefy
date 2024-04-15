@@ -15,7 +15,7 @@ import {
   transformErrorToMessage,
 } from '@/lib/Editor/validations';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
-import { EntityInspectorConfig, PublicApi } from '../interface';
+import { EntityInspectorConfig, FunctionArgs, PublicApi } from '../interface';
 import {
   getEvaluablePathsFromInspectorConfig,
   getGenericArrayPath,
@@ -29,11 +29,13 @@ import { EditorState } from './editor';
 const defaultType = (path: string) => `const ${path}: unknown;`;
 const functionType = (
   path: string,
-  args: string | [string, string][] | undefined,
+  args: FunctionArgs | undefined,
   returns: string | undefined,
 ) => {
   if (Array.isArray(args)) {
-    args = args.map(([name, type]) => `${name}: ${type}`).join(', ');
+    args = args
+      .map((item) => `${item.name}${item.optional ? '?' : ''}: ${item.type}`)
+      .join(', ');
   }
   if (!args) args = '';
   if (!returns) returns = 'void';

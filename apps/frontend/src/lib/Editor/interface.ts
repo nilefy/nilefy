@@ -198,11 +198,22 @@ export type StaticPublicApiItem = {
   typeSignature: string;
 };
 
-export type FunctionPublicApiItem = {
-  type: 'function';
-  args?: string | [string, string][];
+export type FunctionArgs =
+  | {
+      optional?: boolean;
+      name: string;
+      type: string;
+    }[]
+  | string;
+
+export type FunctionType = {
+  args?: FunctionArgs;
   returns?: string;
 };
+
+export type FunctionPublicApiItem = {
+  type: 'function';
+} & FunctionType;
 export type PublicApi = Record<string, PublicApiItem>;
 
 export type Widget<TWidgetProps extends Record<string, unknown>> = {

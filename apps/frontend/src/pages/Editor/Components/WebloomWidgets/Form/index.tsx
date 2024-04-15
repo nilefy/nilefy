@@ -79,6 +79,14 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
       description: 'Data of the form',
       type: 'dynamic',
     },
+    reset: {
+      description: 'Reset the form',
+      type: 'function',
+    },
+    submit: {
+      description: 'Submit the form',
+      type: 'function',
+    },
   },
   config: {
     icon: FileText,

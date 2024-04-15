@@ -239,7 +239,12 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
     setValue: {
       description: 'Set input value',
       type: 'function',
-      args: [['value', 'string']],
+      args: [
+        {
+          name: 'value',
+          type: 'string',
+        },
+      ],
     },
   },
   metaProps: new Set(['value']),

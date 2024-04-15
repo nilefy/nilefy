@@ -44,6 +44,10 @@ const tsWorkerFacet = Facet.define<TSWorker, TSWorker>({
   static: true,
 });
 
+const isInline = Facet.define<boolean, boolean>({
+  combine: (values) => values.some(Boolean),
+  static: true,
+});
 /**
  * A CompletionSource that returns completions to show at the current cursor position (via tsserver)
  */
@@ -71,7 +75,6 @@ const completionSource = async (
       body: {
         requestId: nanoid(),
         fileName,
-        fileContent: content,
         position: pos,
       },
     };
@@ -161,10 +164,14 @@ const updateTSFileThrottled = throttle((code: string, view: EditorView) => {
 }, 100);
 
 // Export a function that will build & return an Extension
-export function typescript(fileName: string): Extension {
+export function typescript(
+  fileName: string,
+  inline: boolean = false,
+): Extension {
   return [
     tsWorkerFacet.of(editorStore.workerBroker.tsServer),
     fileNameFacet.of(fileName),
+    isInline.of(inline),
     javascript({ typescript: true, jsx: false }),
     autocompletion({
       activateOnTyping: true,
