@@ -232,5 +232,6 @@ export class WorkerBroker implements WebloomDisposable {
 
   dispose() {
     this.disposables.forEach((fn) => fn());
+    this.worker.terminate();
   }
 }

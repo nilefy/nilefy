@@ -24,7 +24,7 @@ import {
   seedOrderMap,
   updateOrderMap,
 } from '../entitiesNameSeed';
-import { entries, keys, values } from 'lodash';
+import { entries, values } from 'lodash';
 import { WebloomJSQuery } from './jsQuery';
 import { JSLibrary } from './jsLibrary';
 import { defaultLibrariesMeta } from '../libraries';
@@ -45,7 +45,7 @@ export class EditorState implements WebloomDisposable {
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
-  workerBroker: WorkerBroker;
+  workerBroker!: WorkerBroker;
   currentPageId: string = '';
   initting = false;
   queryClient!: QueryClient;
@@ -89,7 +89,6 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
     });
-    this.workerBroker = new WorkerBroker(this);
   }
   setBottomPanelMode(mode: BottomPanelMode) {
     this.bottomPanelMode = mode;
@@ -184,6 +183,7 @@ export class EditorState implements WebloomDisposable {
   }) {
     try {
       this.dispose();
+      this.workerBroker = new WorkerBroker(this);
       this.appId = appId;
       this.workspaceId = workspaceId;
       this.name = name;
