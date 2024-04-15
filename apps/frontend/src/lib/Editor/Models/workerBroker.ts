@@ -32,7 +32,7 @@ export type PendingRequest<TValue = unknown, TError = unknown> = {
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
-  tsServer: TSServerBroker = new TSServerBroker(this);
+  tsServer: TSServerBroker;
   private disposables: (() => void)[] = [];
   pendingJSQueryExecution: Array<PendingRequest> = [];
   // Can only be one pending install library request at a time
@@ -79,6 +79,7 @@ export class WorkerBroker implements WebloomDisposable {
         () => this.worker.removeEventListener('message', handler),
       ],
     );
+    this.tsServer = new TSServerBroker(this);
   }
   postMessegeInBatch(req: WorkerRequest) {
     this.queue.push(req);
