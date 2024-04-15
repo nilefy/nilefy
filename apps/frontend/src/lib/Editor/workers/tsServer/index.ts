@@ -226,6 +226,9 @@ export class TypeScriptServer {
     this.fileToShift.delete(fileName);
   }
   shiftPosition(fileName: string, position: number) {
+    return position + (this.fileToShift.get(fileName) ?? 0);
+  }
+  unShiftPosition(fileName: string, position: number) {
     return position - (this.fileToShift.get(fileName) ?? 0);
   }
   handleAutoCompleteRequest(
@@ -233,7 +236,7 @@ export class TypeScriptServer {
   ): AutocompleteResponse {
     try {
       body.fileName = addTSExtension(body.fileName);
-      body.position = this.shiftPosition(body.fileName, body.position);
+      body.position = this.unShiftPosition(body.fileName, body.position);
       const { fileName, position, requestId } = body;
 
       const completions = this.env.languageService.getCompletionsAtPosition(
@@ -298,6 +301,7 @@ export class TypeScriptServer {
   quickInfo(body: TSQuickInfoRequest['body']): TSQuickInfoResponse {
     try {
       body.fileName = addTSExtension(body.fileName);
+      body.position = this.shiftPosition(body.fileName, body.position);
       const { fileName, position } = body;
       this.createIfNotExists(fileName);
       const info = this.env.languageService.getQuickInfoAtPosition(
