@@ -222,7 +222,6 @@ export class TypeScriptServer {
   }
   updateGlobalContextFile(content: string) {
     console.log('updating global context file');
-    console.log(content);
     this._setFile({
       fileName: GLOBAL_CONTEXT_FILE,
       content,
@@ -338,7 +337,6 @@ export class TypeScriptServer {
           };
         });
         for (const file of files) {
-          console.log('binding', this.env.getSourceFile(file.fileName)?.text);
           tsErrors = [
             ...tsErrors,
             ...convertToCodeMirrorDiagnostic(
