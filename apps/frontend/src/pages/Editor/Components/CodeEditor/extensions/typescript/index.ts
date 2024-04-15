@@ -160,6 +160,7 @@ const lintDiagnostics = async (state: EditorState): Promise<Diagnostic[]> => {
   const fileName = getFileName(state);
   const isInline = state.facet(isInlineFacet);
   const docLength = state.doc.length;
+  if (isInline && !state.field(isCurrentlyInBindingState)) return [];
   if (!fileName) return [];
   const diagnostics = (await ts.lintDiagnosticRequest({
     fileName,
@@ -184,6 +185,7 @@ const hoverTooltipSource = async (
   const ts = state.facet(tsWorkerFacet);
   const fileName = state.facet(fileNameFacet);
   const isInline = state.facet(isInlineFacet);
+  if (isInline && !state.field(isCurrentlyInBindingState)) return null;
   const quickInfo = await ts.quickInfo({
     fileName,
     position: pos,
