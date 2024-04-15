@@ -5,13 +5,15 @@ import {
   AutocompleteRequest,
   FulfillActionRequest,
   InstallLibraryRequest,
-  LintRequest,
+  LintDiagnosticRequest,
+  TSQuickInfoRequest,
   WorkerRequest,
   WorkerResponse,
 } from './common/interface';
 import { diff, Diff } from 'deep-diff';
 import { klona } from 'klona';
 import { omit } from 'lodash';
+import { log } from 'loglevel';
 
 export type PromisedActionExecutionPayload = ActionExecutionPayload & {
   resolve: (value: unknown) => void;
@@ -46,8 +48,6 @@ export class MainThreadBroker {
     });
     const messageEventHandler = (e: MessageEvent) => {
       const { data } = e;
-      const { event, body } = data as WorkerRequest;
-      console.log('worker received', event, body);
       this.receiveMessage(data);
     };
     const errorHandler = (e: ErrorEvent) => {
@@ -81,6 +81,7 @@ export class MainThreadBroker {
   }
 
   receiveMessage(req: WorkerRequest) {
+    log('worker received', req);
     if (req.event === 'batch') {
       req.body.forEach(this.eventSwitch);
     } else {
@@ -169,20 +170,40 @@ export class MainThreadBroker {
         this.handleLintRequest(body);
         break;
       case 'updateTSFile':
-        this.editorState.tsServer.setFile(body.fileName, body.content);
+        this.editorState.tsServer.then((ts) =>
+          ts.setFile(body.fileName, body.content),
+        );
+        break;
+      case 'quickInfo':
+        this.handleQuickInfoRequest(body);
+        break;
+      case 'removeTsFile':
+        this.editorState.tsServer.then((ts) => ts.deleteFile(body.fileName));
         break;
       default:
         break;
     }
   };
 
-  handleAutoCompleteRequest = (body: AutocompleteRequest['body']) => {
-    const res = this.editorState.tsServer.handleAutoCompleteRequest(body);
-    this.postMessage(res);
+  handleQuickInfoRequest = (body: TSQuickInfoRequest['body']) => {
+    this.editorState.tsServer.then((ts) => {
+      const res = ts.quickInfo(body);
+      this.postMessage(res);
+    });
   };
-  handleLintRequest = (body: LintRequest['body']) => {
-    const res = this.editorState.tsServer.handleLintRequest(body);
-    this.postMessage(res);
+
+  handleAutoCompleteRequest = (body: AutocompleteRequest['body']) => {
+    this.editorState.tsServer.then((ts) => {
+      const res = ts.handleAutoCompleteRequest(body);
+      this.postMessage(res);
+    });
+  };
+  handleLintRequest = (body: LintDiagnosticRequest['body']) => {
+    this.editorState.tsServer.then((ts) => {
+      const res = ts.handleLintRequest(body);
+      console.log('lint res', res);
+      this.postMessage(res);
+    });
   };
   addAction(actionPayload: PromisedActionExecutionPayload) {
     this.actionsQueue.push(actionPayload);
@@ -197,6 +218,7 @@ export class MainThreadBroker {
     });
   }
   postMessage(req: WorkerResponse) {
+    log('sending from worker', req);
     this.worker.postMessage(req);
   }
   handleActionExecution = () => {

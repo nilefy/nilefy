@@ -12,7 +12,7 @@ import { get, isArray, set } from 'lodash';
 import { klona } from 'klona';
 import { WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
-import { EntityInspectorConfig, EntityTypes } from '../interface';
+import { EntityInspectorConfig, EntityTypes, PublicApi } from '../interface';
 import {
   ajv,
   extractValidators,
@@ -39,7 +39,7 @@ const applyDiff = (
 
 export class Entity implements RuntimeEvaluable, WebloomDisposable {
   readonly entityType: EntityTypes;
-  public readonly publicAPI: Set<string>;
+  public readonly publicAPI: PublicApi;
   private dispoables: Array<() => void> = [];
   public readonly inspectorConfig: EntityInspectorConfig;
   public values: Record<string, unknown>;
@@ -72,7 +72,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     workerBroker,
     rawValues,
     inspectorConfig = [],
-    publicAPI = new Set(),
+    publicAPI = {},
     entityType: entityType,
     entityActionConfig = {},
     evaluablePaths = [],
@@ -83,7 +83,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     rawValues: Record<string, unknown>;
     inspectorConfig?: EntityInspectorConfig;
     evaluablePaths?: string[];
-    publicAPI?: Set<string>;
+    publicAPI?: PublicApi;
     workerBroker: WorkerBroker;
     entityActionConfig?: EntityActionConfig;
     metaValues?: Set<string>;
@@ -145,7 +145,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     this.codePaths = new Set<string>();
     this.inspectorConfig = inspectorConfig;
 
-    this.workerBroker.postMessege({
+    this.workerBroker.postMessegeInBatch({
       event: 'addEntity',
       body: {
         entityType: this.entityType,
@@ -204,7 +204,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
 
   dispose() {
     this.dispoables.forEach((dispose) => dispose());
-    this.workerBroker.postMessege({
+    this.workerBroker.postMessegeInBatch({
       event: 'removeEntity',
       body: {
         id: this.id,
@@ -213,7 +213,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   }
 
   syncRawValuesWithEvaluationWorker = (path: string) => {
-    this.workerBroker.postMessege({
+    this.workerBroker.postMessegeInBatch({
       event: 'updateEntity',
       body: {
         value: toJS(get(this.rawValues, path)),
@@ -337,7 +337,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     return actions;
   };
   remoteExecuteAction = (actionName: string) => {
-    this.workerBroker.postMessege({
+    this.workerBroker.postMessegeInBatch({
       event: 'entityActionExecution',
       body: {
         id: this.id,
@@ -356,14 +356,14 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       if (args.length === 0) {
         await action();
       } else await action(...args);
-      this.workerBroker.postMessege({
+      this.workerBroker.postMessegeInBatch({
         event: 'fulfillAction',
         body: {
           id: actionId,
         },
       });
     } catch (e) {
-      this.workerBroker.postMessege({
+      this.workerBroker.postMessegeInBatch({
         event: 'fulfillAction',
         body: {
           id: actionId,

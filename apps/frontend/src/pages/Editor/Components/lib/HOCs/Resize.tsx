@@ -8,7 +8,7 @@ export const WithResize = <P extends { id: string }>(
 ) => {
   const ResizableComponent: React.FC<P> = (props) => {
     const widget = editorStore.currentPage.getWidgetById(props.id);
-    const isActive = widget.isHovered || widget.isSelected;
+    const isActive = widget.isHovered || widget.isSelected || widget.isResizing;
     const hasErrors = widget.hasErrors;
     let color = '#a9c0ff';
     if (hasErrors) {

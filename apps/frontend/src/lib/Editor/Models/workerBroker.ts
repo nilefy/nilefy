@@ -7,8 +7,6 @@ import {
   toJS,
 } from 'mobx';
 import {
-  AutocompleteRequest,
-  AutocompleteResponse,
   FulfillJSQueryResponse,
   FulFillLibraryInstallResponse,
   WorkerActionExecutionResponse,
@@ -24,6 +22,7 @@ import { nanoid } from 'nanoid';
 import { JSLibrary } from '../libraries';
 import { getNewEntityName } from '../entitiesNameSeed';
 import log from 'loglevel';
+import { TSServerBroker } from './tsServerBroker';
 
 export type PendingRequest<TValue = unknown, TError = unknown> = {
   resolve: (value: TValue) => void;
@@ -33,6 +32,7 @@ export type PendingRequest<TValue = unknown, TError = unknown> = {
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
+  tsServer: TSServerBroker = new TSServerBroker(this);
   private disposables: (() => void)[] = [];
   pendingJSQueryExecution: Array<PendingRequest> = [];
   // Can only be one pending install library request at a time
@@ -40,23 +40,23 @@ export class WorkerBroker implements WebloomDisposable {
     resolve: (value: JSLibrary) => void;
     reject: (reason: unknown) => void;
   } | null = null;
-  // todo do we need more than one pending auto complete request?
-  pendingAutoCompleteRequests: Array<
-    PendingRequest<AutocompleteResponse['body']['completions']>
-  > = [];
+
   constructor(private readonly editorState: EditorState) {
     this.editorState = editorState;
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),
       { type: 'module' },
     );
-
+    this.worker.postMessage({
+      event: 'ping',
+      body: {},
+    });
     makeObservable(this, {
       // @ts-expect-error mobx decorators please
       queue: observable,
       debouncePostMessege: action.bound,
       receiveMessage: action,
-      postMessege: action,
+      postMessegeInBatch: action,
       _postMessege: action,
       handleActionExecution: action,
       jsQueryExecutionRequest: action,
@@ -64,8 +64,6 @@ export class WorkerBroker implements WebloomDisposable {
       fulfillJSQuery: action,
       pendingInstallLibraryRequest: observable,
       installLibrary: action,
-      autoCompleteRequest: action,
-      fulfillAutoComplete: action,
     });
 
     this.queue = [];
@@ -82,8 +80,11 @@ export class WorkerBroker implements WebloomDisposable {
       ],
     );
   }
-  postMessege(req: WorkerRequest) {
+  postMessegeInBatch(req: WorkerRequest) {
     this.queue.push(req);
+  }
+  postMessege(req: WorkerRequest) {
+    this.worker.postMessage(req);
   }
   async jsQueryExecutionRequest(queryId: string) {
     const promise = new Promise((resolve, reject) => {
@@ -110,22 +111,11 @@ export class WorkerBroker implements WebloomDisposable {
     runInAction(() => {
       this.queue = [];
     });
+    log.info('posting message to worker', queueCopy);
     this.worker.postMessage({
       event: 'batch',
       body: queueCopy,
     });
-  }
-
-  async fulfillAutoComplete(body: AutocompleteResponse['body']) {
-    const { requestId, completions } = body;
-    const request = this.pendingAutoCompleteRequests.find(
-      (item) => item.id === requestId,
-    );
-    if (!request) return;
-    request.resolve(completions);
-    this.pendingAutoCompleteRequests = this.pendingAutoCompleteRequests.filter(
-      (item) => item.id !== requestId,
-    );
   }
 
   receiveMessage(res: WorkerResponse) {
@@ -154,7 +144,13 @@ export class WorkerBroker implements WebloomDisposable {
         this.fulfillInstallLibrary(body);
         break;
       case 'fulfillAutoComplete':
-        this.fulfillAutoComplete(body);
+        this.tsServer.fulfillAutoComplete(body);
+        break;
+      case 'fulfillLint':
+        this.tsServer.fulfillLint(body);
+        break;
+      case 'fulfillQuickInfo':
+        this.tsServer.fulfillQuickInfo(body);
         break;
       default:
         break;
@@ -165,7 +161,7 @@ export class WorkerBroker implements WebloomDisposable {
     if (this.pendingInstallLibraryRequest) {
       throw new Error('There is already a pending install library request');
     }
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<JSLibrary>((resolve, reject) => {
       this.pendingInstallLibraryRequest = {
         resolve,
         reject,
@@ -233,20 +229,7 @@ export class WorkerBroker implements WebloomDisposable {
     }
   };
   private debouncePostMessege = debounce(this._postMessege, 100);
-  autoCompleteRequest = async (autoCompleteRequest: AutocompleteRequest) => {
-    const id = autoCompleteRequest.body.requestId;
-    const promise = new Promise<AutocompleteResponse['body']['completions']>(
-      (resolve, reject) => {
-        this.pendingAutoCompleteRequests.push({
-          resolve,
-          reject,
-          id,
-        });
-        this.queue.push(autoCompleteRequest);
-      },
-    );
-    return await promise;
-  };
+
   dispose() {
     this.disposables.forEach((fn) => fn());
   }

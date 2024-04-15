@@ -7,9 +7,8 @@ const InspectorCodeInput = () => {
     EntityFormControlContext,
   );
 
-  // TODO: we convert non string value to js template, until the validation code could handle this case
   const correctValue =
-    typeof value === 'string' ? value : `{{${JSON.stringify(value ?? '')}}}`;
+    typeof value === 'string' ? value : `${JSON.stringify(value ?? '')}`;
 
   return (
     <CodeInput

@@ -1,15 +1,21 @@
-import { action, makeObservable, observable, runInAction } from 'mobx';
+import {
+  action,
+  computed,
+  makeObservable,
+  observable,
+  runInAction,
+} from 'mobx';
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
 import { DependencyManager } from './dependencyManager';
-import { get, isArray, keys, set } from 'lodash';
+import { entries, get, isArray, keys, set } from 'lodash';
 import {
   ajv,
   extractValidators,
   transformErrorToMessage,
 } from '@/lib/Editor/validations';
 import { analyzeDependancies } from '../evaluation/dependancyUtils';
-import { EntityInspectorConfig } from '../interface';
+import { EntityInspectorConfig, PublicApi } from '../interface';
 import {
   getEvaluablePathsFromInspectorConfig,
   getGenericArrayPath,
@@ -18,7 +24,22 @@ import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
 import { getArrayPaths } from '../evaluation/utils';
 import { WebloomDisposable } from '../Models/interface';
+import { EditorState } from './editor';
 
+const defaultType = (path: string) => `const ${path}: unknown;`;
+const functionType = (
+  path: string,
+  args: string | [string, string][] | undefined,
+  returns: string | undefined,
+) => {
+  if (Array.isArray(args)) {
+    args = args.map(([name, type]) => `${name}: ${type}`).join(', ');
+  }
+  if (!args) args = '';
+  if (!returns) returns = 'void';
+  return `const ${path}: (${args}) => ${returns};`;
+};
+const typedEntity = (path: string, type: string) => `const ${path}: ${type};`;
 export class Entity implements WebloomDisposable {
   private readonly evaluablePaths: Set<string>;
   public unevalValues: Record<string, unknown>;
@@ -27,13 +48,15 @@ export class Entity implements WebloomDisposable {
    * merged rawVales and values(contains all props evaluated and not-evaluated)
    * use it to get the real values of some entity
    */
+  private editorState: EditorState;
   public dependencyManager: DependencyManager;
   public validator?: ReturnType<typeof ajv.compile>;
   public inspectorConfig: Record<string, unknown>[] | undefined;
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
-  public readonly publicAPI: Set<string>;
+  public readonly publicAPI: PublicApi;
   public actions: Record<string, (...args: unknown[]) => void> = {};
   private mainThreadBroker: MainThreadBroker;
+  public pathToType: Record<string, string> | null = null;
   // these are the props that are set by the setter, we map the path to the old value.
   public setterProps: Record<string, unknown> = {};
   private metaValues: Set<string>;
@@ -44,9 +67,10 @@ export class Entity implements WebloomDisposable {
     unevalValues,
     evaluablePaths = [],
     inspectorConfig = [],
-    publicAPI = new Set(),
+    publicAPI = {},
     actionsConfig = {},
     metaValues = new Set(),
+    editorState,
   }: {
     id: string;
     dependencyManager: DependencyManager;
@@ -54,9 +78,10 @@ export class Entity implements WebloomDisposable {
     unevalValues: Record<string, unknown>;
     inspectorConfig: EntityInspectorConfig;
     evaluablePaths?: string[];
-    publicAPI?: Set<string>;
+    publicAPI?: PublicApi;
     actionsConfig?: EntityActionRawConfig;
     metaValues?: Set<string>;
+    editorState: EditorState;
   }) {
     makeObservable(this, {
       id: observable,
@@ -71,14 +96,22 @@ export class Entity implements WebloomDisposable {
       applyDependencyUpdate: action,
       setValues: action,
       initDependecies: action,
+      tsType: computed,
+      pathToType: observable,
     });
     this.metaValues = metaValues;
     this.mainThreadBroker = mainThreadBroker;
+    this.editorState = editorState;
     this.actions = this.processActionConfig(actionsConfig);
     this.publicAPI = publicAPI;
     // add actions to the publicAPI
     for (const actionName in this.actions) {
-      this.publicAPI.add(actionName);
+      if (this.publicAPI[actionName]) continue;
+      this.publicAPI[actionName] = {
+        type: 'function',
+        args: 'unknown',
+        returns: 'unknown',
+      };
     }
     this.id = id;
     this.dependencyManager = dependencyManager;
@@ -91,6 +124,31 @@ export class Entity implements WebloomDisposable {
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
     this.initDependecies();
+    this.initTypes();
+  }
+
+  initTypes() {
+    const pathToType = entries(this.publicAPI)
+      .map(([path, item]) => {
+        if (item.type === 'static') {
+          return [path, typedEntity(path, item.typeSignature)] as const;
+        }
+        if (item.type === 'function') {
+          return [path, functionType(path, item.args, item.returns)] as const;
+        } else {
+          return [path, defaultType(path)] as const;
+        }
+      })
+      .reduce(
+        (acc, [path, type]) => {
+          acc[path] = type;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+    runInAction(() => {
+      this.pathToType = pathToType;
+    });
   }
 
   initDependecies() {
@@ -121,10 +179,10 @@ export class Entity implements WebloomDisposable {
     let _path = path;
     const isGenericArrayPath = _path.includes('[*]');
     const valueIsArray = isArray(get(this.unevalValues, _path));
+    // if path is the entire array we need to check if the path of that array can be generic
     if (valueIsArray) {
       const arr = get(this.unevalValues, _path) as Record<string, unknown>[];
       _path += '[*]';
-      // this.dependencyManager.dependencyGraph.removePath(this.id + '.' + _path);
       if (arr.length === 0) return null;
 
       const pathesToAnalyze = keys(arr[0]).map((key) => `${_path}.${key}`);
@@ -211,8 +269,13 @@ export class Entity implements WebloomDisposable {
     this.dependencyManager.removeRelationshipsForEntity(this.id);
   }
 
-  dispose() {
+  async dispose() {
     this.clearDependents();
+    const keysToBeRemovedFromTsServer = this.allEvaluablePaths;
+    const tsServer = await this.editorState.tsServer;
+    for (const key of keysToBeRemovedFromTsServer) {
+      tsServer.deleteFile(this.id + '.' + key);
+    }
   }
 
   setValue(path: string, value: unknown) {
@@ -279,4 +342,47 @@ export class Entity implements WebloomDisposable {
       });
     });
   };
+
+  get tsType(): string | null {
+    let generatedType = '';
+    // types haven't been initialized yet
+    if (!this.pathToType) return null;
+    for (const path in this.pathToType) {
+      generatedType += this.pathToType[path] + '\n';
+    }
+    const finalType = `declare namespace ${this.id} {
+      ${generatedType}
+    }`;
+    return finalType;
+  }
+
+  /**
+   * get all the paths that can be evaluated including the array paths
+   * currently handles only one level of array paths
+   */
+  get allEvaluablePaths() {
+    const genericArrayPaths = new Set<string>();
+    const correctPaths = new Set<string>();
+    for (const path of this.evaluablePaths) {
+      if (path.includes('[*]')) {
+        genericArrayPaths.add(path);
+      } else {
+        correctPaths.add(path);
+      }
+    }
+    for (const path of genericArrayPaths) {
+      const [arrayPath, evaluablePath] = path.split('[*]');
+      const arr = get(this.unevalValues, arrayPath, []) as Record<
+        string,
+        unknown
+      >[];
+      if (!arr.length) continue;
+      let i = 0;
+      for (const key in arr[0]) {
+        correctPaths.add(`${evaluablePath}[${i}].${key}`);
+        i++;
+      }
+    }
+    return [...correctPaths];
+  }
 }

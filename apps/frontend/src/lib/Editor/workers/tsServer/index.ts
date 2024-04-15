@@ -1,30 +1,37 @@
-import ts, { WithMetadata } from 'typescript';
+import ts, {
+  DiagnosticCategory,
+  flattenDiagnosticMessageText,
+} from 'typescript';
 import {
   createSystem,
   createVirtualTypeScriptEnvironment,
   VirtualTypeScriptEnvironment,
 } from '@typescript/vfs';
-import { TSFS } from './tsfs';
+import { GLOBAL_CONTEXT_FILE, TSFS } from './tsfs';
 import {
   AutocompleteRequest,
   AutocompleteResponse,
-  LintRequest,
-  LintResponse,
+  LintDiagnosticRequest,
+  LintDiagnosticResponse,
+  TSQuickInfoRequest,
+  TSQuickInfoResponse,
 } from '../common/interface';
 import { concat } from 'lodash';
 import log from 'loglevel';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { makeObservable, observable } from 'mobx';
+import { Diagnostic } from '@codemirror/lint';
 // todo maybe give user control over this
 export const tsServerCompilerOptions: ts.CompilerOptions = {
-  lib: ['esnext'],
+  lib: ['es6'],
   // we don't want the user to type strict typescript, rather the types are there to help them
   noImplicitAny: false,
   allowJs: true,
   strict: false,
+  skipLibCheck: true,
 };
 
 const addTSExtension = (fileName: string) => {
-  if (!fileName.endsWith('.ts')) {
+  if (!fileName.endsWith('.ts') && !fileName.endsWith('.d.ts')) {
     return fileName + '.ts';
   }
   return fileName;
@@ -33,20 +40,20 @@ export class TypeScriptServer {
   vfs!: TSFS;
   system!: ts.System;
   env!: VirtualTypeScriptEnvironment;
-  rootFiles: string[] = [
-    '/' + EDITOR_CONSTANTS.JS_AUTOCOMPLETE_FILE_NAME + '.d.ts',
-  ];
+  rootFiles: string[] = [GLOBAL_CONTEXT_FILE];
   initted = false;
   static instance: TypeScriptServer;
-
-  static getInstance() {
-    if (this.instance) {
-      return this.instance;
+  constructor() {
+    makeObservable(this, {
+      initted: observable,
+    });
+  }
+  static async getInstance() {
+    if (TypeScriptServer.instance === undefined) {
+      TypeScriptServer.instance = new TypeScriptServer();
+      await TypeScriptServer.instance.init();
     }
-    const instance = new TypeScriptServer();
-    instance.init();
-    this.instance = instance;
-    return instance;
+    return TypeScriptServer.instance;
   }
 
   async init() {
@@ -64,9 +71,13 @@ export class TypeScriptServer {
     log.info('ts server initialized');
     this.initted = true;
   }
-
+  createIfNotExists(fileName: string) {
+    fileName = addTSExtension(fileName);
+    if (this.env.getSourceFile(fileName) === undefined) {
+      this.env.createFile(fileName, ' ');
+    }
+  }
   setFile(fileName: string, content: string) {
-    if (!this.initted) return;
     fileName = addTSExtension(fileName);
     if (content === '') {
       // we don't want to remove files unless deleteFile is explicitly called
@@ -80,24 +91,20 @@ export class TypeScriptServer {
     }
   }
 
+  updateGlobalContextFile(content: string) {
+    console.log('updating global context file');
+    this.setFile(GLOBAL_CONTEXT_FILE, content);
+  }
   deleteFile(fileName: string) {
     if (!this.initted) return;
     fileName = addTSExtension(fileName);
+    if (this.env.getSourceFile(fileName) === undefined) return;
     this.env.updateFile(fileName, '');
   }
 
   handleAutoCompleteRequest(
     body: AutocompleteRequest['body'],
   ): AutocompleteResponse {
-    if (!this.initted)
-      return {
-        event: 'fulfillAutoComplete',
-        body: {
-          requestId: body.requestId,
-          // @ts-expect-error todo figure out the best way to handle this
-          completions: [] as WithMetadata<ts.CompletionEntry>,
-        },
-      };
     body.fileName = addTSExtension(body.fileName);
     const { fileName, fileContent, position, requestId } = body;
     this.setFile(fileName, fileContent);
@@ -105,8 +112,11 @@ export class TypeScriptServer {
       fileName,
       position,
       //todo figure the best options for ux
-      {},
+      {
+        includeInlayVariableTypeHints: true,
+      },
     );
+
     return {
       event: 'fulfillAutoComplete',
       body: {
@@ -116,30 +126,80 @@ export class TypeScriptServer {
     };
   }
 
-  handleLintRequest(body: LintRequest['body']): LintResponse {
-    if (!this.initted)
+  handleLintRequest(
+    body: LintDiagnosticRequest['body'],
+  ): LintDiagnosticResponse {
+    try {
+      body.fileName = addTSExtension(body.fileName);
+      const { fileName, requestId } = body;
+      this.createIfNotExists(fileName);
+      const tsErrors = concat(
+        this.env.languageService.getSyntacticDiagnostics(fileName),
+        this.env.languageService.getSemanticDiagnostics(fileName),
+      );
+      //todo filter out the errors that are not related to the user code
       return {
         event: 'fulfillLint',
         body: {
-          requestId: 'todo',
-          diagnostics: [],
+          diagnostics: convertToCodeMirrorDiagnostic(tsErrors),
+          requestId: requestId,
         },
       };
-    body.fileName = addTSExtension(body.fileName);
-    const { fileName, fileContent } = body;
-    this.setFile(fileName, fileContent);
-    const tsErrors = concat(
-      this.env.languageService.getSyntacticDiagnostics(fileName),
-      this.env.languageService.getSemanticDiagnostics(fileName),
-    );
-
-    //todo filter out the errors that are not related to the user code
-    return {
-      event: 'fulfillLint',
-      body: {
-        diagnostics: tsErrors,
-        requestId: 'todo',
-      },
-    };
+    } catch (_) {
+      return {
+        event: 'fulfillLint',
+        body: {
+          diagnostics: [],
+          requestId: body.requestId,
+        },
+      };
+    }
+  }
+  quickInfo(body: TSQuickInfoRequest['body']): TSQuickInfoResponse {
+    try {
+      body.fileName = addTSExtension(body.fileName);
+      const { fileName, position } = body;
+      this.createIfNotExists(fileName);
+      const info = this.env.languageService.getQuickInfoAtPosition(
+        fileName,
+        position,
+      );
+      return {
+        event: 'fulfillQuickInfo',
+        body: {
+          requestId: body.requestId,
+          info,
+        },
+      };
+    } catch (_) {
+      return {
+        event: 'fulfillQuickInfo',
+        body: {
+          requestId: body.requestId,
+          info: undefined,
+        },
+      };
+    }
   }
 }
+
+const convertToCodeMirrorDiagnostic = (
+  tsErrors: ts.Diagnostic[],
+): Array<Diagnostic> =>
+  tsErrors
+    .filter((d) => d.start !== undefined && d.length !== undefined)
+    .map((d) => {
+      let severity: 'info' | 'warning' | 'error' = 'info';
+      if (d.category === DiagnosticCategory.Error) {
+        severity = 'error';
+      } else if (d.category === DiagnosticCategory.Warning) {
+        severity = 'warning';
+      }
+
+      return {
+        from: d.start!, // `!` is fine because of the `.filter()` before the `.map()`
+        to: d.start! + d.length!, // `!` is fine because of the `.filter()` before the `.map()`
+        severity,
+        message: flattenDiagnosticMessageText(d.messageText, '\n', 0),
+      };
+    });

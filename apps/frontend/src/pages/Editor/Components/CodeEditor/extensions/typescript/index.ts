@@ -19,17 +19,13 @@ import {
 } from '@codemirror/state';
 import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view';
 import throttle from 'lodash/throttle';
-import {
-  DiagnosticCategory,
-  displayPartsToString,
-  flattenDiagnosticMessageText,
-} from 'typescript';
+import { displayPartsToString } from 'typescript';
 import { onChangeCallback } from '../onChange';
 import { editorStore } from '@/lib/Editor/Models';
 import { AutocompleteRequest } from '@/lib/Editor/workers/common/interface';
 import { nanoid } from 'nanoid';
 
-type TSWorker = (typeof editorStore)['workerBroker'];
+type TSWorker = (typeof editorStore)['workerBroker']['tsServer'];
 
 const fileNameFacet = Facet.define<string, string>({
   compare: (a, b) => a === b,
@@ -104,28 +100,11 @@ const completionSource = async (
 const lintDiagnostics = async (state: EditorState): Promise<Diagnostic[]> => {
   const ts = state.facet(tsWorkerFacet);
   const fileName = state.facet(fileNameFacet);
-  // todo get diagnostics
-  const diagnostics = [];
-
-  return diagnostics
-    .filter((d) => d.start !== undefined && d.length !== undefined)
-    .map((d) => {
-      let severity: 'info' | 'warning' | 'error' = 'info';
-      if (d.category === DiagnosticCategory.Error) {
-        severity = 'error';
-      } else if (d.category === DiagnosticCategory.Warning) {
-        severity = 'warning';
-      }
-
-      return {
-        from: d.start!, // `!` is fine because of the `.filter()` before the `.map()`
-        to: d.start! + d.length!, // `!` is fine because of the `.filter()` before the `.map()`
-        severity,
-        message: flattenDiagnosticMessageText(d.messageText, '\n', 0),
-      };
-    });
+  const diagnostics = (await ts.lintDiagnosticRequest(
+    fileName,
+  )) as Diagnostic[];
+  return diagnostics;
 };
-
 /**
  * A HoverTooltipSource that returns a Tooltip to show at a given cursor position (via tsserver)
  */
@@ -135,8 +114,7 @@ const hoverTooltipSource = async (
 ): Promise<Tooltip | null> => {
   const ts = state.facet(tsWorkerFacet);
   const fileName = state.facet(fileNameFacet);
-  // todo get quickInfo
-  const quickInfo = {};
+  const quickInfo = await ts.quickInfo(fileName, pos);
   if (!quickInfo) {
     return null;
   }
@@ -144,6 +122,7 @@ const hoverTooltipSource = async (
   return {
     pos,
     create() {
+      //todo syntax highlight the tooltip
       const dom = document.createElement('div');
       dom.setAttribute('class', 'cm-quickinfo-tooltip');
       dom.textContent =
@@ -178,14 +157,13 @@ export async function setDiagnostics(
 const updateTSFileThrottled = throttle((code: string, view: EditorView) => {
   const ts = view.state.facet(tsWorkerFacet);
   const fileName = view.state.facet(fileNameFacet);
-  // Don't `await` because we do not want to block
-  // ts.env().then(env => env.updateFile(ts.entrypoint, code || " ")); // tsserver deletes the file if the text content is empty; we can't let that happen
+  ts.updateFile(fileName, code);
 }, 100);
 
 // Export a function that will build & return an Extension
 export function typescript(fileName: string): Extension {
   return [
-    tsWorkerFacet.of(editorStore.workerBroker),
+    tsWorkerFacet.of(editorStore.workerBroker.tsServer),
     fileNameFacet.of(fileName),
     javascript({ typescript: true, jsx: false }),
     autocompletion({
@@ -194,20 +172,28 @@ export function typescript(fileName: string): Extension {
       override: [completionSource],
     }),
     linter((view) => lintDiagnostics(view.state)),
-    // hoverTooltip((view, pos) => hoverTooltipSource(view.state, pos), {
-    //   hideOnChange: true,
-    // }),
-    EditorView.updateListener.of(({ view, docChanged }) => {
-      // We're not doing this in the `onChangeCallback` extension because we do not want TS file updates to be debounced (we want them throttled)
-
+    hoverTooltip((view, pos) => hoverTooltipSource(view.state, pos), {
+      hideOnChange: true,
+    }),
+    EditorView.updateListener.of(({ view, docChanged, focusChanged }) => {
       if (docChanged) {
         // Update tsserver's view of this file
         updateTSFileThrottled(view.state.sliceDoc(0), view);
       }
+      if (focusChanged) {
+        if (view.hasFocus) {
+          // Update tsserver's view of this file
+          updateTSFileThrottled(view.state.sliceDoc(0), view);
+          // setDiagnostics(view.state).then((spec) => view.dispatch(spec));
+        } else {
+          // // Remove the file from tsserver's view
+          // const ts = view.state.facet(tsWorkerFacet);
+          // ts.removeFile(fileName);
+        }
+      }
     }),
-    onChangeCallback(async (_code, view) => {
-      // No need to debounce here because this callback is already debounced
 
+    onChangeCallback(async (_code, view) => {
       // Re-compute lint diagnostics via tsserver
       view.dispatch(await setDiagnostics(view.state));
     }),

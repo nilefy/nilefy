@@ -17,7 +17,8 @@ export const WithPopover = <P extends { id: string }>(
     const popoverRef = useRef<HTMLDivElement>(null);
 
     const widget = editorStore.currentPage.getWidgetById(props.id);
-    const isActive = widget.isHovered || widget.isTheOnlySelected;
+    const isActive =
+      widget.isHovered || widget.isTheOnlySelected || widget.isResizing;
     const hasErrors = widget.hasErrors;
     const { floatingStyles, update } = useFloating({
       open: isActive,

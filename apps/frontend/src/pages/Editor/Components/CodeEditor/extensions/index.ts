@@ -1,7 +1,7 @@
 import { lineNumbers, placeholder } from '@codemirror/view';
 import { appearance } from './appearance';
 import { baseSetup } from './base';
-import { typescript } from './autocompletion';
+import { typescript } from './typescript';
 
 type CodeEditorExtensionsSetup = {
   theme?: 'light' | 'dark';

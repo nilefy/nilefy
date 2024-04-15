@@ -218,7 +218,30 @@ const WebloomInputWidget: Widget<WebloomInputProps> = {
   component: WebloomInput,
   config,
   initialProps,
-  publicAPI: new Set(['value']),
+  publicAPI: {
+    value: {
+      description: 'Input widget',
+      type: 'static',
+      typeSignature: 'string',
+    },
+    focus: {
+      description: 'Focus on input',
+      type: 'function',
+    },
+    blur: {
+      description: 'Blur input',
+      type: 'function',
+    },
+    clearValue: {
+      description: 'Clear input value',
+      type: 'function',
+    },
+    setValue: {
+      description: 'Set input value',
+      type: 'function',
+      args: [['value', 'string']],
+    },
+  },
   metaProps: new Set(['value']),
   inspectorConfig,
 };

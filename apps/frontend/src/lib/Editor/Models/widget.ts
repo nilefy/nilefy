@@ -430,7 +430,7 @@ export class WebloomWidget
 
   handleEvent(event: string) {
     if (!this.rawValues[event]) return;
-    this.workerBroker.postMessege({
+    this.workerBroker.postMessegeInBatch({
       event: 'eventExecution',
       body: {
         eventName: event,

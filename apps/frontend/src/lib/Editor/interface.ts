@@ -178,10 +178,37 @@ export type PrimitiveWidget = {
 export type ComposedWidget = {
   isComposed: true;
 };
+
+export type PublicApiItem = {
+  /**
+   * @description this will be placed in jsdoc of the generated type
+   */
+  description?: string;
+} & (DynamicPublicApiItem | StaticPublicApiItem | FunctionPublicApiItem);
+
+export type DynamicPublicApiItem = {
+  /**
+   * used to generate type at runtime, example: jsquery.data <--- data is only known at runtime so we need to generate the type at runtime
+   */
+  type: 'dynamic';
+};
+
+export type StaticPublicApiItem = {
+  type: 'static';
+  typeSignature: string;
+};
+
+export type FunctionPublicApiItem = {
+  type: 'function';
+  args?: string | [string, string][];
+  returns?: string;
+};
+export type PublicApi = Record<string, PublicApiItem>;
+
 export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
   initialProps: TWidgetProps;
-  publicAPI?: Set<string>;
+  publicAPI?: PublicApi;
   metaProps?: Set<string>;
   inspectorConfig: EntityInspectorConfig<TWidgetProps>;
   blueprint?: {

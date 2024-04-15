@@ -74,7 +74,12 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
     },
   ],
   component: WebloomForm,
-  publicAPI: new Set(['data']),
+  publicAPI: {
+    data: {
+      description: 'Data of the form',
+      type: 'dynamic',
+    },
+  },
   config: {
     icon: FileText,
     isCanvas: true,

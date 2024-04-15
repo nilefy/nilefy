@@ -514,6 +514,16 @@ export const QueryPanel = observer(function QueryPanel() {
                         variant={'ghost'}
                         onClick={() => {
                           if (!workspaceId || !appId) throw new Error();
+                          const query = editorStore.getQueryById(item.id);
+                          if (!query) throw new Error('Query not found');
+                          if (query instanceof WebloomJSQuery) {
+                            editorStore.queriesManager.deleteJSquery.mutate({
+                              workspaceId: +workspaceId,
+                              appId: +appId,
+                              queryId: item.id,
+                            });
+                            return;
+                          }
                           editorStore.queriesManager.deleteQuery.mutate({
                             workspaceId: +workspaceId,
                             appId: +appId,

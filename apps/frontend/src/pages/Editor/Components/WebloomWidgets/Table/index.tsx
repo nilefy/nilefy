@@ -549,7 +549,6 @@ const WebloomTableWidget: Widget<WebloomTableProps> = {
   config,
   initialProps,
   inspectorConfig,
-  publicAPI: new Set(),
   metaProps: new Set(['selectedRow', 'selectedRowIndex']),
 };
 

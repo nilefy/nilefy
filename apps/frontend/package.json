@@ -81,8 +81,10 @@
     "fast-equals": "^5.0.1",
     "immer": "^10.0.3",
     "invariant": "^2.2.4",
+    "json-to-ts": "^1.7.0",
     "jwt-decode": "^4.0.0",
     "klona": "^2.0.6",
+    "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "loglevel": "^1.9.1",
     "lucide-react": "^0.367.0",
@@ -119,6 +121,7 @@
     "uuid": "^9.0.1",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.3",
+    "zod-to-ts": "^1.2.0",
     "zustand": "^4.4.4"
   },
   "devDependencies": {
@@ -130,7 +133,6 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/invariant": "^2.2.37",
     "@types/lodash": "^4.14.202",
-    "@types/loglevel": "^1.6.3",
     "@types/node": "^20.8.7",
     "@types/react": "^18.2.31",
     "@types/react-color": "^3.0.10",

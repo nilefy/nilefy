@@ -4,6 +4,7 @@ import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
 import ts from 'typescript';
+import { Diagnostic } from '@codemirror/lint';
 
 export type ActionExecutionPayload = {
   entityId: string;
@@ -39,11 +40,12 @@ export type WorkerResponse =
   | FulfillJSQueryResponse
   | FulFillLibraryInstallResponse
   | AutocompleteResponse
-  | LintResponse
+  | LintDiagnosticResponse
+  | TSQuickInfoResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
-  'dependencyManager' | 'mainThreadBroker'
+  'dependencyManager' | 'mainThreadBroker' | 'editorState'
 >;
 export type WorkerRequest =
   | InitRequest
@@ -60,7 +62,9 @@ export type WorkerRequest =
   | UpdateLibraryNameRequest
   | AutocompleteRequest
   | UpdateTSFileRequest
-  | LintRequest
+  | LintDiagnosticRequest
+  | TSQuickInfoRequest
+  | RemoveTSFileRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -196,19 +200,19 @@ export type AutocompleteResponse = {
   };
 };
 
-export type LintRequest = {
+export type LintDiagnosticRequest = {
   event: 'lint';
   body: {
     fileName: string;
-    fileContent: string;
+    requestId: string;
   };
 };
 
-export type LintResponse = {
+export type LintDiagnosticResponse = {
   event: 'fulfillLint';
   body: {
     requestId: string;
-    diagnostics: ts.Diagnostic[];
+    diagnostics: Diagnostic[];
   };
 };
 
@@ -217,5 +221,29 @@ export type UpdateTSFileRequest = {
   body: {
     fileName: string;
     content: string;
+  };
+};
+
+export type TSQuickInfoRequest = {
+  event: 'quickInfo';
+  body: {
+    fileName: string;
+    position: number;
+    requestId: string;
+  };
+};
+
+export type TSQuickInfoResponse = {
+  event: 'fulfillQuickInfo';
+  body: {
+    requestId: string;
+    info: ts.QuickInfo | undefined;
+  };
+};
+
+export type RemoveTSFileRequest = {
+  event: 'removeTsFile';
+  body: {
+    fileName: string;
   };
 };
