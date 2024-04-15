@@ -32,7 +32,7 @@ const wrappers = {
     };
   },
   expression: (content: string) => {
-    const beforeLine = `(function () { return `;
+    const beforeLine = `(function () { return  `;
     const afterLine = ' })();';
     return {
       content: `${beforeLine}${content}${afterLine}`,
@@ -222,6 +222,7 @@ export class TypeScriptServer {
   }
   updateGlobalContextFile(content: string) {
     console.log('updating global context file');
+    console.log(content);
     this._setFile({
       fileName: GLOBAL_CONTEXT_FILE,
       content,
@@ -304,33 +305,62 @@ export class TypeScriptServer {
   handleLintRequest(
     body: LintDiagnosticRequest['body'],
   ): LintDiagnosticResponse {
+    const defaultResponse: LintDiagnosticResponse = {
+      event: 'fulfillLint',
+      body: {
+        diagnostics: [],
+        requestId: body.requestId,
+      },
+    };
     try {
-      body.fileName = addTSExtension(body.fileName);
       const { fileName, requestId } = body;
-      this.createIfNotExists(fileName);
-      const tsErrors = concat(
-        this.env.languageService.getSyntacticDiagnostics(fileName),
-        this.env.languageService.getSemanticDiagnostics(fileName),
-      );
+      let tsErrors: Diagnostic[] = [];
+
+      if (!body.binding) {
+        const tempFileName = addTSExtension(fileName);
+        this.createIfNotExists(tempFileName);
+        tsErrors = convertToCodeMirrorDiagnostic(
+          concat(
+            this.env.languageService.getSyntacticDiagnostics(tempFileName),
+            this.env.languageService.getSemanticDiagnostics(tempFileName),
+          ),
+          this.fileToShift.get(tempFileName) ?? 0,
+        );
+      }
+      if (body.binding) {
+        const orgFile = this.originalBindingFilesContent.get(fileName);
+        if (orgFile === undefined) return defaultResponse;
+        const files = orgFile?.bindingPositions.map((val, i) => {
+          const fileNameIndexed = getBindingName(fileName, i);
+          return {
+            start: this.fileToShift.get(fileNameIndexed)! - val,
+            fileName: fileNameIndexed,
+          };
+        });
+        for (const file of files) {
+          console.log('binding', this.env.getSourceFile(file.fileName)?.text);
+          tsErrors = [
+            ...tsErrors,
+            ...convertToCodeMirrorDiagnostic(
+              concat(
+                this.env.languageService.getSyntacticDiagnostics(file.fileName),
+                this.env.languageService.getSemanticDiagnostics(file.fileName),
+              ),
+              file.start,
+            ),
+          ];
+        }
+      }
       //todo filter out the errors that are not related to the user code
       return {
         event: 'fulfillLint',
         body: {
-          diagnostics: convertToCodeMirrorDiagnostic(
-            tsErrors,
-            this.fileToShift.get(fileName) ?? 0,
-          ),
+          diagnostics: tsErrors,
           requestId: requestId,
         },
       };
     } catch (_) {
-      return {
-        event: 'fulfillLint',
-        body: {
-          diagnostics: [],
-          requestId: body.requestId,
-        },
-      };
+      return defaultResponse;
     }
   }
   quickInfo(body: TSQuickInfoRequest['body']): TSQuickInfoResponse {

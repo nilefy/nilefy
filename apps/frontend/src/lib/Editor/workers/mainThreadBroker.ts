@@ -206,7 +206,6 @@ export class MainThreadBroker {
   handleLintRequest = (body: LintDiagnosticRequest['body']) => {
     this.editorState.tsServer.then((ts) => {
       const res = ts.handleLintRequest(body);
-      console.log('lint res', res);
       this.postMessage(res);
     });
   };

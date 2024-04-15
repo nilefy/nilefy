@@ -46,7 +46,7 @@ const tsWorkerFacet = Facet.define<TSWorker, TSWorker>({
 
   static: true,
 });
-const isActionFacet = Facet.define<boolean, boolean>({
+const isEventFacet = Facet.define<boolean, boolean>({
   combine: (values) => values.some(Boolean),
   static: true,
 });
@@ -240,9 +240,7 @@ const updateTSFileThrottled = throttle((view: EditorView) => {
   ts.updateFile({
     content: code,
     fileName,
-    binding: isInline
-      ? { isEvent: view.state.field(isCurrentlyInBindingState) }
-      : undefined,
+    binding: isInline ? { isEvent: view.state.facet(isEventFacet) } : undefined,
   });
 }, 100);
 
@@ -256,7 +254,7 @@ export function typescript(
     tsWorkerFacet.of(editorStore.workerBroker.tsServer),
     fileNameFacet.of(fileName),
     isInlineFacet.of(inline),
-    isActionFacet.of(isAction),
+    isEventFacet.of(isAction),
     isCurrentlyInBindingState,
     javascript({ typescript: true, jsx: false }),
     autocompletion({
