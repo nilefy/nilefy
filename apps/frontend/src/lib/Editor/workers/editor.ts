@@ -5,6 +5,7 @@ import {
   computed,
   comparer,
   runInAction,
+  reaction,
 } from 'mobx';
 import { Entity } from './entity';
 import { DependencyManager } from './dependencyManager';
@@ -19,10 +20,11 @@ import {
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
-import { entries } from 'lodash';
+import { entries, keys, values } from 'lodash';
 import { installLibrary, WebloomLibraries } from './libraries';
 import { defaultLibraries, JSLibrary } from '../libraries';
 import { JSLibraryI } from '@/api/JSLibraries.api';
+import { TypeScriptServer } from './tsServer';
 
 export type EntityConfig = ConstructorParameters<typeof Entity>[0];
 type EntityConfigRecord = Record<string, EntityConfigBody>;
@@ -43,6 +45,9 @@ export class EditorState {
    * maps namespaces to exports from libraries
    */
   libraries: WebloomLibraries = { ...defaultLibraries };
+  tsServer!: Promise<TypeScriptServer>;
+  private disposables: (() => void)[] = [];
+
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -69,10 +74,19 @@ export class EditorState {
       installLibrary: action,
       updateLibraryName: action,
       uninstallLibrary: action,
+      tsGlobalFile: computed,
     });
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
     this.mainThreadBroker = new MainThreadBroker(this);
+    this.disposables.push(
+      reaction(
+        () => this.tsGlobalFile,
+        (newContent) => {
+          this.tsServer.then((ts) => ts.updateGlobalContextFile(newContent));
+        },
+      ),
+    );
   }
 
   cleanUp() {
@@ -82,6 +96,7 @@ export class EditorState {
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
     this.mainThreadBroker = new MainThreadBroker(this);
+    this.disposables.forEach((fn) => fn());
   }
 
   async init({
@@ -97,6 +112,7 @@ export class EditorState {
     globals: EntityConfigBody;
     libraries: JSLibraryI[];
   }) {
+    this.tsServer = TypeScriptServer.getInstance();
     this.currentPageId = currentPageId;
     entries(queries).forEach(([_, query]) => {
       this.addQuery(this.normalizeEntityConfig(query));
@@ -122,7 +138,7 @@ export class EditorState {
   get context() {
     const context: AnalysisContext = {};
     entries(this.entities).forEach(([id, entity]) => {
-      context[id] = entity.publicAPI;
+      context[id] = new Set(keys(entity.publicAPI));
     });
     return context;
   }
@@ -134,7 +150,15 @@ export class EditorState {
       ...this.otherEntities,
     };
   }
-
+  get tsGlobalFile() {
+    const file: string[] = [];
+    values(this.entities).forEach((entity) => {
+      if (entity.tsType) {
+        file.push(entity.tsType);
+      }
+    });
+    return file.join('\n');
+  }
   getEntityById(id: string) {
     return this.currentPage[id] || this.queries[id] || this.otherEntities[id];
   }
@@ -206,6 +230,7 @@ export class EditorState {
       ...config,
       dependencyManager: this.dependencyManager,
       mainThreadBroker: this.mainThreadBroker,
+      editorState: this,
     };
   }
   changePage(id: string) {

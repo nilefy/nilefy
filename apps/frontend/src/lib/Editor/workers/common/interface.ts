@@ -3,6 +3,8 @@ import { EntityTypes } from '../../interface';
 import { JSLibrary } from '../../libraries';
 import { EntityConfig } from '../editor';
 import { Diff } from 'deep-diff';
+import ts from 'typescript';
+import { Diagnostic } from '@codemirror/lint';
 
 export type ActionExecutionPayload = {
   entityId: string;
@@ -37,10 +39,13 @@ export type WorkerResponse =
   | WorkerActionExecutionResponse
   | FulfillJSQueryResponse
   | FulFillLibraryInstallResponse
+  | AutocompleteResponse
+  | LintDiagnosticResponse
+  | TSQuickInfoResponse
   | DependencyUpdateResponse;
 export type EntityConfigBody = Omit<
   EntityConfig,
-  'dependencyManager' | 'mainThreadBroker'
+  'dependencyManager' | 'mainThreadBroker' | 'editorState'
 >;
 export type WorkerRequest =
   | InitRequest
@@ -55,6 +60,11 @@ export type WorkerRequest =
   | InstallLibraryRequest
   | UninstallLibraryRequest
   | UpdateLibraryNameRequest
+  | AutocompleteRequest
+  | UpdateTSFileRequest
+  | LintDiagnosticRequest
+  | TSQuickInfoRequest
+  | RemoveTSFileRequest
   | BatchRequest;
 export type EvaluationUpdateResponse = {
   body: {
@@ -168,4 +178,76 @@ export type FulFillLibraryInstallResponse = {
 export type BatchRequest = {
   event: 'batch';
   body: WorkerRequest[];
+};
+
+export type Binding = {
+  isEvent: boolean;
+};
+export type AutocompleteRequest = {
+  event: 'autoComplete';
+  body: {
+    fileName: string;
+    position: number;
+    requestId: string;
+    binding?: Binding;
+  };
+};
+
+export type AutocompleteResponse = {
+  event: 'fulfillAutoComplete';
+  body: {
+    requestId: string;
+    completions: ts.WithMetadata<ts.CompletionInfo> | undefined;
+  };
+};
+
+export type LintDiagnosticRequest = {
+  event: 'lint';
+  body: {
+    fileName: string;
+    requestId: string;
+    binding?: Binding;
+  };
+};
+
+export type LintDiagnosticResponse = {
+  event: 'fulfillLint';
+  body: {
+    requestId: string;
+    diagnostics: Diagnostic[];
+  };
+};
+
+export type UpdateTSFileRequest = {
+  event: 'updateTSFile';
+  body: {
+    fileName: string;
+    content: string;
+    binding?: Binding;
+  };
+};
+
+export type TSQuickInfoRequest = {
+  event: 'quickInfo';
+  body: {
+    fileName: string;
+    position: number;
+    requestId: string;
+    binding?: Binding;
+  };
+};
+
+export type TSQuickInfoResponse = {
+  event: 'fulfillQuickInfo';
+  body: {
+    requestId: string;
+    info: ts.QuickInfo | undefined;
+  };
+};
+
+export type RemoveTSFileRequest = {
+  event: 'removeTsFile';
+  body: {
+    fileName: string;
+  };
 };

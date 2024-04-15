@@ -50,6 +50,6 @@ export class JsQueriesService {
       .returning({
         id: jsQueries.id,
       });
-    return [q];
+    return q;
   }
 }

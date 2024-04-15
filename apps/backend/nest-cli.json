@@ -11,6 +11,7 @@
         }
       }
     ],
+    
     "deleteOutDir": true,
     "builder": "swc",
     "typeCheck": false

@@ -38,14 +38,14 @@ export const ErrorPopover = observer(
             <ScrollArea>
               <div className="p-2 text-sm text-gray-600">
                 <ul>
-                  {errors?.inputValidationErrors?.map((error) => (
-                    <li key={error}>{error}</li>
+                  {errors?.inputValidationErrors?.map((error, i) => (
+                    <li key={error + i}>{error}</li>
                   ))}
-                  {errors?.evaluationValidationErrors?.map((error) => (
-                    <li key={error}>{error}</li>
+                  {errors?.evaluationValidationErrors?.map((error, i) => (
+                    <li key={error + i}>{error}</li>
                   ))}
-                  {errors?.runtimeErros?.map((error) => (
-                    <li key={error}>{error}</li>
+                  {errors?.runtimeErros?.map((error, i) => (
+                    <li key={error + i}>{error}</li>
                   ))}
                 </ul>
               </div>

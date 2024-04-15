@@ -72,7 +72,13 @@ export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
   initialProps,
-  publicAPI: new Set(['text']),
+  publicAPI: {
+    text: {
+      description: 'Text of the widget',
+      type: 'static',
+      typeSignature: 'string',
+    },
+  },
   inspectorConfig,
 };
 

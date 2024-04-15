@@ -1,36 +1,30 @@
-import {
-  WebloomCodeEditor,
-  WebloomCodeEditorProps,
-  baseSetup,
-  inlineTheme,
-  jsTemplatePlugin,
-} from '.';
+import { WebloomCodeEditor, WebloomCodeEditorProps } from '.';
 import { Omit } from 'lodash';
 import { useMemo } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { placeholder } from '@codemirror/view';
-
-export const inlineSetupCallback = (
-  placeholderText: string = 'Enter something',
-) => [
-  ...baseSetup(),
-  inlineTheme,
-  jsTemplatePlugin,
-  placeholder(placeholderText),
-];
+import { inlineCodeEditorExtensionsSetup } from './extensions';
 
 export type WebloomInlineEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
   placeholder?: string;
+  fileName: string;
+  isEvent?: boolean;
 };
 export const WebloomInlineEditor = (props: WebloomInlineEditorProps) => {
+  const { placeholder, fileName, isEvent, ...rest } = props;
   const inlineSetup = useMemo(
-    () => inlineSetupCallback(props.placeholder),
-    [props.placeholder],
+    () =>
+      inlineCodeEditorExtensionsSetup({
+        theme: 'light',
+        placeholderText: placeholder,
+        fileName: fileName,
+        isEvent,
+      }),
+    [fileName, placeholder, isEvent],
   );
   return (
     <WebloomCodeEditor
       setup={inlineSetup}
-      {...props}
+      {...rest}
       templateAutocompletionOnly
     />
   );
@@ -48,6 +42,7 @@ export const WebloonInlineInputFormControl = (
           onChange={props.onChange}
           onFocus={props.onFocus}
           onBlur={props.onBlur}
+          fileName={props.fileName}
         />
         <ScrollBar orientation="horizontal" />
       </ScrollArea>

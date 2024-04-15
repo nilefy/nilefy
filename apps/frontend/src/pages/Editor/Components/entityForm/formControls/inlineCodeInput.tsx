@@ -4,9 +4,8 @@ import { EntityFormControlContext } from '..';
 import { WebloonInlineInputFormControl } from '@/pages/Editor/Components/CodeEditor/inlineEditor';
 
 const InspectorInlineCodeInput = (props: InlineCodeInputProps) => {
-  const { onChange, value, onFocus, onBlur } = useContext(
-    EntityFormControlContext,
-  );
+  const { onChange, value, onFocus, onBlur, entityId, path, isEvent } =
+    useContext(EntityFormControlContext);
 
   // TODO: we convert non string value to js template, until the validation code could handle this case
   const correctValue =
@@ -19,6 +18,8 @@ const InspectorInlineCodeInput = (props: InlineCodeInputProps) => {
       onFocus={onFocus}
       onBlur={onBlur}
       placeholder={props.placeholder}
+      fileName={`${entityId}_${path}`}
+      isEvent={isEvent}
     />
   );
 };

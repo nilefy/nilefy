@@ -139,7 +139,17 @@ export class WebloomQuery
         error: undefined,
       },
       workerBroker,
-      publicAPI: new Set(['data', 'queryState']),
+      publicAPI: {
+        data: {
+          type: 'dynamic',
+          description: 'Data returned from the query',
+        },
+        queryState: {
+          type: 'static',
+          typeSignature: 'string',
+          description: 'State of the query',
+        },
+      },
       entityType: 'query',
       inspectorConfig: concat(
         [],

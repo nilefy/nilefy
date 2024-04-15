@@ -36,7 +36,33 @@ export class WebloomGlobal extends Entity {
       rawValues: globals,
       entityType: 'globals',
       workerBroker,
-      publicAPI: new Set(Object.keys(globals)),
+      //todo add the correct public api
+      publicAPI: {
+        alert: {
+          type: 'function',
+          args: [
+            {
+              name: 'message',
+              type: 'string',
+            },
+            {
+              name: 'variant',
+              type: '"default" | "destructive"',
+              optional: true,
+            },
+          ],
+        },
+        currentUser: {
+          description: 'Current user',
+          type: 'static',
+          typeSignature: 'string',
+        },
+        currentPageName: {
+          description: 'Current page name',
+          type: 'static',
+          typeSignature: 'string',
+        },
+      },
       // @ts-expect-error fn is not defined in the type
       entityActionConfig: WebloomGlobalsActions,
     });

@@ -141,7 +141,17 @@ export class WebloomJSQuery
         settings,
       },
       workerBroker,
-      publicAPI: new Set(['data', 'queryState']),
+      publicAPI: {
+        data: {
+          type: 'dynamic',
+          description: 'Data returned from the query',
+        },
+        queryState: {
+          type: 'static',
+          typeSignature: 'string',
+          description: 'State of the query',
+        },
+      },
       entityType: 'jsQuery',
       inspectorConfig: concat(inspectorConfig, defaultQueryInspectorConfig),
       // @ts-expect-error TODO: fix this

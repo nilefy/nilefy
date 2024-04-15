@@ -21,34 +21,42 @@ import structuredClone from '@ungap/structured-clone';
 import { nanoid } from 'nanoid';
 import { JSLibrary } from '../libraries';
 import { getNewEntityName } from '../entitiesNameSeed';
+import log from 'loglevel';
+import { TSServerBroker } from './tsServerBroker';
 
+export type PendingRequest<TValue = unknown, TError = unknown> = {
+  resolve: (value: TValue) => void;
+  reject: (reason: TError) => void;
+  id: string;
+};
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
+  tsServer: TSServerBroker;
   private disposables: (() => void)[] = [];
-  pendingJSQueryExecution: Array<{
-    id: string;
-    resolve: (value: unknown) => void;
-    reject: (reason: unknown) => void;
-  }> = [];
+  pendingJSQueryExecution: Array<PendingRequest> = [];
   // Can only be one pending install library request at a time
   pendingInstallLibraryRequest: {
-    resolve: (value: unknown) => void;
+    resolve: (value: JSLibrary) => void;
     reject: (reason: unknown) => void;
   } | null = null;
+
   constructor(private readonly editorState: EditorState) {
     this.editorState = editorState;
     this.worker = new Worker(
       new URL('../workers/evaluation.worker.ts', import.meta.url),
       { type: 'module' },
     );
-
+    this.worker.postMessage({
+      event: 'ping',
+      body: {},
+    });
     makeObservable(this, {
       // @ts-expect-error mobx decorators please
       queue: observable,
       debouncePostMessege: action.bound,
       receiveMessage: action,
-      postMessege: action,
+      postMessegeInBatch: action,
       _postMessege: action,
       handleActionExecution: action,
       jsQueryExecutionRequest: action,
@@ -71,9 +79,14 @@ export class WorkerBroker implements WebloomDisposable {
         () => this.worker.removeEventListener('message', handler),
       ],
     );
+    this.tsServer = new TSServerBroker(this);
+  }
+  postMessegeInBatch(req: WorkerRequest) {
+    this.queue.push(req);
   }
   postMessege(req: WorkerRequest) {
-    this.queue.push(req);
+    log.info('posting message to worker', req);
+    this.worker.postMessage(req);
   }
   async jsQueryExecutionRequest(queryId: string) {
     const promise = new Promise((resolve, reject) => {
@@ -100,7 +113,7 @@ export class WorkerBroker implements WebloomDisposable {
     runInAction(() => {
       this.queue = [];
     });
-    this.worker.postMessage({
+    this.postMessege({
       event: 'batch',
       body: queueCopy,
     });
@@ -108,7 +121,7 @@ export class WorkerBroker implements WebloomDisposable {
 
   receiveMessage(res: WorkerResponse) {
     const { event, body } = res;
-    console.log('worker sent', event, body);
+    log.info('worker sent', event, body);
     switch (event) {
       case 'EvaluationUpdate':
         this.editorState.applyEvalForestPatch(
@@ -131,15 +144,25 @@ export class WorkerBroker implements WebloomDisposable {
       case 'fulfillLibraryInstall':
         this.fulfillInstallLibrary(body);
         break;
+      case 'fulfillAutoComplete':
+        this.tsServer.fulfillAutoComplete(body);
+        break;
+      case 'fulfillLint':
+        this.tsServer.fulfillLint(body);
+        break;
+      case 'fulfillQuickInfo':
+        this.tsServer.fulfillQuickInfo(body);
+        break;
       default:
         break;
     }
   }
+
   installLibrary = (url: string) => {
     if (this.pendingInstallLibraryRequest) {
       throw new Error('There is already a pending install library request');
     }
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<JSLibrary>((resolve, reject) => {
       this.pendingInstallLibraryRequest = {
         resolve,
         reject,
@@ -157,7 +180,7 @@ export class WorkerBroker implements WebloomDisposable {
         this.pendingInstallLibraryRequest = null;
       }
     }, 5000);
-    return promise as Promise<JSLibrary>;
+    return promise;
   };
 
   fulfillJSQuery = (body: FulfillJSQueryResponse['body']) => {
@@ -180,7 +203,7 @@ export class WorkerBroker implements WebloomDisposable {
       this.pendingInstallLibraryRequest = null;
       return;
     }
-    this.pendingInstallLibraryRequest.resolve(body.jsLibrary as JSLibrary);
+    this.pendingInstallLibraryRequest.resolve(body.jsLibrary!);
     this.pendingInstallLibraryRequest = null;
   };
   handleActionExecution = async (
@@ -210,5 +233,6 @@ export class WorkerBroker implements WebloomDisposable {
 
   dispose() {
     this.disposables.forEach((fn) => fn());
+    this.worker.terminate();
   }
 }

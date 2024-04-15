@@ -14,6 +14,8 @@ import { WorkspaceSettingsLayout } from '@/pages/workspace/workspace';
 import { ProfileSettings } from '@/pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import log from 'loglevel';
+
 // import DatabaseTable from './pages/built-in-db/db';
 // import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
@@ -31,6 +33,12 @@ import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { startWorker } from '../mocks/browser';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
+
+if (process.env.NODE_ENV !== 'production') {
+  log.enableAll();
+} else {
+  log.disableAll(false);
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {

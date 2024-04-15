@@ -112,7 +112,13 @@ export const WebloomRadioWidget: Widget<WebloomRadioProps> = {
   config,
   initialProps,
   inspectorConfig,
-  publicAPI: new Set(['value']),
+  publicAPI: {
+    value: {
+      description: 'Value of the radio',
+      type: 'static',
+      typeSignature: 'string',
+    },
+  },
   metaProps: new Set(['value']),
 };
 
