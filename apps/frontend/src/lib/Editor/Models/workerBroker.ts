@@ -85,6 +85,7 @@ export class WorkerBroker implements WebloomDisposable {
     this.queue.push(req);
   }
   postMessege(req: WorkerRequest) {
+    log.info('posting message to worker', req);
     this.worker.postMessage(req);
   }
   async jsQueryExecutionRequest(queryId: string) {
@@ -112,8 +113,7 @@ export class WorkerBroker implements WebloomDisposable {
     runInAction(() => {
       this.queue = [];
     });
-    log.info('posting message to worker', queueCopy);
-    this.worker.postMessage({
+    this.postMessege({
       event: 'batch',
       body: queueCopy,
     });

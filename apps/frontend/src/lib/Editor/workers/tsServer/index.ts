@@ -22,12 +22,17 @@ import { makeObservable, observable } from 'mobx';
 import { Diagnostic } from '@codemirror/lint';
 // todo maybe give user control over this
 export const tsServerCompilerOptions: ts.CompilerOptions = {
-  lib: ['es6'],
+  lib: ['ESNext'],
   // we don't want the user to type strict typescript, rather the types are there to help them
   noImplicitAny: false,
   allowJs: true,
   strict: false,
   skipLibCheck: true,
+  module: ts.ModuleKind.ESNext,
+  moduleResolution: ts.ModuleResolutionKind.NodeNext,
+  rootDir: '/',
+  moduleDetection: ts.ModuleDetectionKind.Force,
+  target: ts.ScriptTarget.ESNext,
 };
 
 const addTSExtension = (fileName: string) => {
@@ -35,6 +40,10 @@ const addTSExtension = (fileName: string) => {
     return fileName + '.ts';
   }
   return fileName;
+};
+
+const addExportsNothing = (content: string) => {
+  return content + '\nexport {}';
 };
 export class TypeScriptServer {
   vfs!: TSFS;
@@ -77,7 +86,7 @@ export class TypeScriptServer {
       this.env.createFile(fileName, ' ');
     }
   }
-  setFile(fileName: string, content: string) {
+  setFile(fileName: string, content: string, addExports = true) {
     fileName = addTSExtension(fileName);
     if (content === '') {
       // we don't want to remove files unless deleteFile is explicitly called
@@ -87,13 +96,16 @@ export class TypeScriptServer {
     if (existingFile === undefined) {
       this.env.createFile(fileName, content);
     } else {
-      this.env.updateFile(fileName, content);
+      this.env.updateFile(
+        fileName,
+        addExports ? addExportsNothing(content) : content,
+      );
     }
   }
 
   updateGlobalContextFile(content: string) {
     console.log('updating global context file');
-    this.setFile(GLOBAL_CONTEXT_FILE, content);
+    this.setFile(GLOBAL_CONTEXT_FILE, content, false);
   }
   deleteFile(fileName: string) {
     if (!this.initted) return;
@@ -106,8 +118,7 @@ export class TypeScriptServer {
     body: AutocompleteRequest['body'],
   ): AutocompleteResponse {
     body.fileName = addTSExtension(body.fileName);
-    const { fileName, fileContent, position, requestId } = body;
-    this.setFile(fileName, fileContent);
+    const { fileName, position, requestId } = body;
     const completions = this.env.languageService.getCompletionsAtPosition(
       fileName,
       position,

@@ -186,7 +186,6 @@ export type AutocompleteRequest = {
     fileName: string;
     // we send the fileContent despite the fact that the worker already has it, is because the updates are throttled
     // and we need to make sure that the worker has the latest content
-    fileContent: string;
     position: number;
     requestId: string;
   };
