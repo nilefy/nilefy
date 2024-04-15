@@ -232,16 +232,17 @@ export async function setDiagnostics(
  */
 const updateTSFileThrottled = throttle((view: EditorView) => {
   const ts = view.state.facet(tsWorkerFacet);
-  const isInline = view.state.facet(isInlineFacet);
-  //todo maybe we should? idk
-  // we don't want to update the file if it's an inline binding
-  if (isInline) return;
+
   const fileName = getFileName(view.state);
   const code = getContent(view.state);
+  const isInline = view.state.facet(isInlineFacet);
   if (!fileName || !code) return;
   ts.updateFile({
     content: code,
     fileName,
+    binding: isInline
+      ? { isEvent: view.state.field(isCurrentlyInBindingState) }
+      : undefined,
   });
 }, 100);
 

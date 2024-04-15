@@ -84,18 +84,14 @@ const extractBindingsWithPositions = (content: string) => {
   const matches = content.matchAll(bindingRegexGlobal);
   for (const match of matches) {
     bindings.push({
-      content: match[0],
-      start: match.index!,
+      content: match[1],
+      start: content.indexOf(match[1], match.index),
     });
   }
   return bindings;
 };
 
-const wrapCode = (
-  fileName: string,
-  content: string,
-  type: keyof typeof wrappers,
-) => {
+const wrapCode = (content: string, type: keyof typeof wrappers) => {
   const res = wrappers[type](content);
   return {
     content: wrapExportNothing(res.content),
@@ -107,8 +103,18 @@ const wrapCode = (
 const wrapExportNothing = (content: string) => {
   return content + '\nexport {}';
 };
+const getBindingName = (fileName: string, index: number) => {
+  return `/${fileName}_${index}.ts`;
+};
 export class TypeScriptServer {
   fileToShift: Map<string, number> = new Map();
+  originalBindingFilesContent: Map<
+    string,
+    {
+      content: string;
+      bindingPositions: number[];
+    }
+  > = new Map();
   vfs!: TypeScriptVirtualFileSystem;
   system!: ts.System;
   env!: VirtualTypeScriptEnvironment;
@@ -158,7 +164,6 @@ export class TypeScriptServer {
   }: {
     fileName: string;
     content: string;
-    addExports?: boolean;
     isBinding?: boolean;
     isEvent?: boolean;
   }) {
@@ -171,7 +176,7 @@ export class TypeScriptServer {
       // we don't want to remove files unless deleteFile is explicitly called
       content = ' ';
     }
-    const wrapped = wrapCode(fileName, content, 'query');
+    const wrapped = wrapCode(content, 'query');
     this.fileToShift.set(fileName, wrapped.shift);
     this._setFile({
       fileName,
@@ -193,7 +198,7 @@ export class TypeScriptServer {
     const i = 0;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const bindingFileName = `${fileName}_${i}.ts`;
+      const bindingFileName = getBindingName(fileName, i);
       if (this.env.getSourceFile(bindingFileName) === undefined) {
         break;
       }
@@ -203,13 +208,17 @@ export class TypeScriptServer {
     const bindings = extractBindingsWithPositions(content);
     for (const [i, binding] of bindings.entries()) {
       const wrappedCode = wrapCode(
-        fileName + `_${i}`,
         binding.content,
         isEvent ? 'event' : 'expression',
       );
-      this.env.createFile(`${fileName}_${i}.ts`, wrappedCode.content);
-      this.fileToShift.set(`${fileName}_${i}.ts`, wrappedCode.shift);
+      this.env.createFile(getBindingName(fileName, i), wrappedCode.content);
+      this.fileToShift.set(getBindingName(fileName, i), wrappedCode.shift);
     }
+
+    this.originalBindingFilesContent.set(fileName, {
+      content,
+      bindingPositions: bindings.map((b) => b.start),
+    });
   }
   updateGlobalContextFile(content: string) {
     console.log('updating global context file');
@@ -219,11 +228,11 @@ export class TypeScriptServer {
     });
   }
   deleteFile(fileName: string) {
-    if (!this.initted) return;
     fileName = addTSExtension(fileName);
     if (this.env.getSourceFile(fileName) === undefined) return;
     this.env.updateFile(fileName, '');
     this.fileToShift.delete(fileName);
+    this.originalBindingFilesContent.delete(fileName);
   }
   shiftPosition(fileName: string, position: number) {
     return position + (this.fileToShift.get(fileName) ?? 0);
@@ -231,21 +240,47 @@ export class TypeScriptServer {
   unShiftPosition(fileName: string, position: number) {
     return position - (this.fileToShift.get(fileName) ?? 0);
   }
+  /**
+   *
+   * @param fileName
+   * @param position the cursor position in the editor
+   */
+  getPositionInBindingFile(fileName: string, position: number) {
+    fileName = removeTsExtension(fileName);
+    const bindingFile = this.originalBindingFilesContent.get(fileName);
+    if (bindingFile === undefined) {
+      return { fileName, position };
+    }
+    const { bindingPositions } = bindingFile;
+    let bindingIndex = 0;
+    for (const [i, pos] of bindingPositions.entries()) {
+      if (position >= pos) {
+        bindingIndex = i;
+      }
+    }
+    if (position > bindingPositions[bindingPositions.length - 1])
+      bindingIndex = bindingPositions.length - 1;
+    const fileNameWithIndex = getBindingName(fileName, bindingIndex);
+    const positionInFile = position - bindingPositions[bindingIndex];
+
+    return { fileName: fileNameWithIndex, position: positionInFile };
+  }
+
   handleAutoCompleteRequest(
     body: AutocompleteRequest['body'],
   ): AutocompleteResponse {
     try {
+      const res = this.getPositionInBindingFile(body.fileName, body.position);
+      body.fileName = res.fileName;
+      body.position = res.position;
       body.fileName = addTSExtension(body.fileName);
-      body.position = this.unShiftPosition(body.fileName, body.position);
+      body.position = this.shiftPosition(body.fileName, body.position);
       const { fileName, position, requestId } = body;
-
       const completions = this.env.languageService.getCompletionsAtPosition(
         fileName,
         position,
         //todo figure the best options for ux
-        {
-          includeInlayVariableTypeHints: true,
-        },
+        {},
       );
 
       return {
@@ -300,6 +335,9 @@ export class TypeScriptServer {
   }
   quickInfo(body: TSQuickInfoRequest['body']): TSQuickInfoResponse {
     try {
+      const res = this.getPositionInBindingFile(body.fileName, body.position);
+      body.fileName = res.fileName;
+      body.position = res.position;
       body.fileName = addTSExtension(body.fileName);
       body.position = this.shiftPosition(body.fileName, body.position);
       const { fileName, position } = body;

@@ -174,6 +174,8 @@ export class MainThreadBroker {
           ts.setFile({
             fileName: body.fileName,
             content: body.content,
+            isBinding: !!body.binding,
+            isEvent: !!body.binding?.isEvent,
           }),
         );
         break;

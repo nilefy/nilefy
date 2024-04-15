@@ -223,6 +223,7 @@ export type UpdateTSFileRequest = {
   body: {
     fileName: string;
     content: string;
+    binding?: Binding;
   };
 };
 
