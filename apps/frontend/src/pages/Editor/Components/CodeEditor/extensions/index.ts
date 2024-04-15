@@ -18,16 +18,21 @@ export const codeEditorExtensionsSetup = ({
 type InlineCodeEditorExtensionsSetup = {
   theme?: 'light' | 'dark';
   placeholderText?: string;
+  fileName: string;
+  isEvent?: boolean;
 };
 
 export const inlineCodeEditorExtensionsSetup = ({
   theme = 'light',
   placeholderText = 'Enter something',
+  fileName,
+  isEvent: isAction,
 }: InlineCodeEditorExtensionsSetup) => {
   return [
     ...baseSetup(),
     ...appearance({ theme, inline: true }),
     placeholder(placeholderText),
+    typescript(fileName, true, isAction),
   ];
 };
 

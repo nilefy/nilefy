@@ -88,6 +88,7 @@
     "lodash": "^4.17.21",
     "loglevel": "^1.9.1",
     "lucide-react": "^0.367.0",
+    "lz-string": "^1.5.0",
     "match-sorter": "^6.3.4",
     "mobbing-query": "^1.0.7",
     "mobx": "^6.12.0",

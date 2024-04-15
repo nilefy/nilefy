@@ -2,11 +2,14 @@ import { nanoid } from 'nanoid';
 import {
   AutocompleteRequest,
   AutocompleteResponse,
+  LintDiagnosticRequest,
   LintDiagnosticResponse,
+  TSQuickInfoRequest,
   TSQuickInfoResponse,
+  UpdateTSFileRequest,
 } from '../workers/common/interface';
 import { PendingRequest, WorkerBroker } from './workerBroker';
-
+type OmitRequestId<T> = Omit<T, 'requestId'>;
 export class TSServerBroker {
   // todo do we need more than one pending auto complete request?
   pendingAutoCompleteRequest: PendingRequest<
@@ -33,25 +36,30 @@ export class TSServerBroker {
     this.pendingAutoCompleteRequest.resolve(completions);
     this.pendingAutoCompleteRequest = null;
   }
-  autoCompleteRequest = (autoCompleteRequest: AutocompleteRequest) => {
+  autoCompleteRequest = (
+    autoCompleteRequest: OmitRequestId<AutocompleteRequest>,
+  ) => {
     if (this.pendingAutoCompleteRequest) {
       return this.pendingAutoCompletePromise;
     }
+    const id = nanoid();
     const promise = new Promise<AutocompleteResponse['body']['completions']>(
       (resolve, reject) => {
         this.pendingAutoCompleteRequest = {
           resolve,
           reject,
-          id: nanoid(),
+          id,
         };
       },
     );
-    this.workerBroker.postMessege(autoCompleteRequest);
+    this.workerBroker.postMessege({ ...autoCompleteRequest });
     this.pendingAutoCompletePromise = promise;
     return promise;
   };
 
-  lintDiagnosticRequest = async (fileName: string) => {
+  lintDiagnosticRequest = async (
+    req: OmitRequestId<LintDiagnosticRequest['body']>,
+  ) => {
     if (this.pendingLintDiagnosticRequest) {
       return await this.lintDiagnosticPromise;
     }
@@ -67,7 +75,7 @@ export class TSServerBroker {
     );
     this.workerBroker.postMessege({
       event: 'lint',
-      body: { fileName, requestId: id },
+      body: { requestId: id, ...req },
     });
     this.lintDiagnosticPromise = promise;
     return await promise;
@@ -80,10 +88,10 @@ export class TSServerBroker {
     this.pendingLintDiagnosticRequest = null;
   };
 
-  updateFile(fileName: string, content: string) {
+  updateFile(req: UpdateTSFileRequest['body']) {
     this.workerBroker.postMessege({
       event: 'updateTSFile',
-      body: { fileName, content },
+      body: { ...req },
     });
   }
 
@@ -94,7 +102,7 @@ export class TSServerBroker {
     });
   }
 
-  quickInfo = (fileName: string, position: number) => {
+  quickInfo = (req: OmitRequestId<TSQuickInfoRequest['body']>) => {
     if (this.pendingQuickInfoRequest) {
       return this.pendingQuickInfoPromise;
     }
@@ -110,7 +118,7 @@ export class TSServerBroker {
     );
     this.workerBroker.postMessege({
       event: 'quickInfo',
-      body: { fileName, position, requestId: id },
+      body: { ...req, requestId: id },
     });
     this.pendingQuickInfoPromise = promise;
     return promise;

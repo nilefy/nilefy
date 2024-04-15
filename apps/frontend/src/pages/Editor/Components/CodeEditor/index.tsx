@@ -13,7 +13,6 @@ import {
   StateField,
 } from '@codemirror/state';
 
-import { webLoomContext } from './autoComplete';
 import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
@@ -107,7 +106,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
   );
 
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext, javascript()];
+    const extensions = [setup, javascript()];
     if (props.templateAutocompletionOnly) {
       extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {

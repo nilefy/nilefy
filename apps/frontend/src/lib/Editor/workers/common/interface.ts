@@ -180,14 +180,16 @@ export type BatchRequest = {
   body: WorkerRequest[];
 };
 
+export type Binding = {
+  isEvent: boolean;
+};
 export type AutocompleteRequest = {
   event: 'autoComplete';
   body: {
     fileName: string;
-    // we send the fileContent despite the fact that the worker already has it, is because the updates are throttled
-    // and we need to make sure that the worker has the latest content
     position: number;
     requestId: string;
+    binding?: Binding;
   };
 };
 
@@ -204,6 +206,7 @@ export type LintDiagnosticRequest = {
   body: {
     fileName: string;
     requestId: string;
+    binding?: Binding;
   };
 };
 
@@ -229,6 +232,7 @@ export type TSQuickInfoRequest = {
     fileName: string;
     position: number;
     requestId: string;
+    binding?: Binding;
   };
 };
 

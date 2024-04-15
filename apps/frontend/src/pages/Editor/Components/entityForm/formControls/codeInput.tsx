@@ -16,7 +16,7 @@ const InspectorCodeInput = () => {
       onChange={onChange}
       onFocus={onFocus}
       onBlur={onBlur}
-      fileName={`${entityId}.${path}`}
+      fileName={`${entityId}_${path}`}
     />
   );
 };

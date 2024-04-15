@@ -35,6 +35,7 @@ export const EntityFormControlContext = createContext<{
   value: unknown;
   onFocus: () => void;
   onBlur: () => void;
+  isEvent?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }>({} as any);
 export const FormSectionView = (props: {
@@ -132,8 +133,18 @@ export const EntityFormControl = observer(
         value: value,
         onFocus,
         onBlur,
+        isEvent: control.isEvent,
       }),
-      [onChange, id, entityId, control.path, onFocus, onBlur, value],
+      [
+        onChange,
+        id,
+        entityId,
+        control.path,
+        onFocus,
+        onBlur,
+        value,
+        control.isEvent,
+      ],
     );
     return (
       <EntityFormControlContext.Provider value={contextValue}>

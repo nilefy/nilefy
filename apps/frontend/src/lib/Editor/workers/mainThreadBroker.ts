@@ -171,7 +171,10 @@ export class MainThreadBroker {
         break;
       case 'updateTSFile':
         this.editorState.tsServer.then((ts) =>
-          ts.setFile(body.fileName, body.content),
+          ts.setFile({
+            fileName: body.fileName,
+            content: body.content,
+          }),
         );
         break;
       case 'quickInfo':

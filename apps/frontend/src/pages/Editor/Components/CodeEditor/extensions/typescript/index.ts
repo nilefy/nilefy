@@ -15,6 +15,7 @@ import {
   EditorState,
   Extension,
   Facet,
+  StateField,
   TransactionSpec,
 } from '@codemirror/state';
 import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view';
@@ -24,6 +25,8 @@ import { onChangeCallback } from '../onChange';
 import { editorStore } from '@/lib/Editor/Models';
 import { AutocompleteRequest } from '@/lib/Editor/workers/common/interface';
 import { nanoid } from 'nanoid';
+import { RegExpCursor } from '@codemirror/search';
+import { clamp } from 'lodash';
 
 type TSWorker = (typeof editorStore)['workerBroker']['tsServer'];
 
@@ -43,8 +46,57 @@ const tsWorkerFacet = Facet.define<TSWorker, TSWorker>({
 
   static: true,
 });
+const isActionFacet = Facet.define<boolean, boolean>({
+  combine: (values) => values.some(Boolean),
+  static: true,
+});
 
-const isInline = Facet.define<boolean, boolean>({
+const getFileName = (state: EditorState): string => {
+  return state.facet(fileNameFacet);
+};
+
+const getContent = (state: EditorState): string => {
+  return state.doc.toString();
+};
+
+const getFileNameAndContent = (
+  state: EditorState,
+): { fileName: string; content: string } => {
+  const fileName = getFileName(state);
+  const content = getContent(state);
+  return { fileName, content };
+};
+
+const isCurrentlyInBindingState = StateField.define<boolean>({
+  create() {
+    return false;
+  },
+
+  update(_, transaction) {
+    if (!transaction.state.facet(isInlineFacet)) return false;
+    // determine the current binding
+    const doc = transaction.newDoc;
+    const anchor = transaction.newSelection?.main.anchor;
+    if (!anchor) return false;
+    const bindingRegexString = '\\{\\{([\\s\\S]*?)\\}\\}';
+    const cursor = new RegExpCursor(
+      transaction.state.doc,
+      bindingRegexString,
+      {},
+      0,
+      doc.length,
+    );
+    for (const match of cursor) {
+      const { from, to } = match;
+      if (from <= anchor && to >= anchor) {
+        return true;
+      }
+    }
+    return false;
+  },
+});
+
+const isInlineFacet = Facet.define<boolean, boolean>({
   combine: (values) => values.some(Boolean),
   static: true,
 });
@@ -55,20 +107,20 @@ const completionSource = async (
   ctx: CompletionContext,
 ): Promise<CompletionResult | null> => {
   const { state, pos } = ctx;
+
   const ts = state.facet(tsWorkerFacet);
-  const fileName = state.facet(fileNameFacet);
-  const content = ctx.state.doc.toString();
+  const isInline = state.facet(isInlineFacet);
+  const { fileName, content } = getFileNameAndContent(state);
+
   const lastCharacter = content.charAt(pos - 1);
   //Prevent completions from appearing on certain characters
 
-  if (
-    ['"', "'", ';', '(', ')', '{', ',', ' ', '=', '<', '>'].includes(
-      lastCharacter,
-    )
-  ) {
+  if (['"', "'", ';', '(', ')', '{', '<', '>'].includes(lastCharacter)) {
     return { from: ctx.pos, options: [] };
   }
-
+  if (isInline && !state.field(isCurrentlyInBindingState)) {
+    return null;
+  }
   try {
     const autoCompleteRequest: AutocompleteRequest = {
       event: 'autoComplete',
@@ -76,6 +128,9 @@ const completionSource = async (
         requestId: nanoid(),
         fileName,
         position: pos,
+        binding: isInline
+          ? { isEvent: state.field(isCurrentlyInBindingState) }
+          : undefined,
       },
     };
     const completions = await ts.autoCompleteRequest(autoCompleteRequest);
@@ -102,11 +157,22 @@ const completionSource = async (
  */
 const lintDiagnostics = async (state: EditorState): Promise<Diagnostic[]> => {
   const ts = state.facet(tsWorkerFacet);
-  const fileName = state.facet(fileNameFacet);
-  const diagnostics = (await ts.lintDiagnosticRequest(
+  const fileName = getFileName(state);
+  const isInline = state.facet(isInlineFacet);
+  const docLength = state.doc.length;
+  if (!fileName) return [];
+  const diagnostics = (await ts.lintDiagnosticRequest({
     fileName,
-  )) as Diagnostic[];
-  return diagnostics;
+    binding: isInline
+      ? { isEvent: state.field(isCurrentlyInBindingState) }
+      : undefined,
+  })) as Diagnostic[];
+
+  return diagnostics.map((d) => {
+    d.from = clamp(d.from, 0, docLength);
+    d.to = clamp(d.to, 0, docLength);
+    return d;
+  });
 };
 /**
  * A HoverTooltipSource that returns a Tooltip to show at a given cursor position (via tsserver)
@@ -117,7 +183,14 @@ const hoverTooltipSource = async (
 ): Promise<Tooltip | null> => {
   const ts = state.facet(tsWorkerFacet);
   const fileName = state.facet(fileNameFacet);
-  const quickInfo = await ts.quickInfo(fileName, pos);
+  const isInline = state.facet(isInlineFacet);
+  const quickInfo = await ts.quickInfo({
+    fileName,
+    position: pos,
+    binding: isInline
+      ? { isEvent: state.field(isCurrentlyInBindingState) }
+      : undefined,
+  });
   if (!quickInfo) {
     return null;
   }
@@ -157,21 +230,33 @@ export async function setDiagnostics(
 /**
  * A (throttled) function that updates the view of the currently open "file" on TSServer
  */
-const updateTSFileThrottled = throttle((code: string, view: EditorView) => {
+const updateTSFileThrottled = throttle((view: EditorView) => {
   const ts = view.state.facet(tsWorkerFacet);
-  const fileName = view.state.facet(fileNameFacet);
-  ts.updateFile(fileName, code);
+  const isInline = view.state.facet(isInlineFacet);
+  //todo maybe we should? idk
+  // we don't want to update the file if it's an inline binding
+  if (isInline) return;
+  const fileName = getFileName(view.state);
+  const code = getContent(view.state);
+  if (!fileName || !code) return;
+  ts.updateFile({
+    content: code,
+    fileName,
+  });
 }, 100);
 
 // Export a function that will build & return an Extension
 export function typescript(
   fileName: string,
   inline: boolean = false,
+  isAction: boolean = false,
 ): Extension {
   return [
     tsWorkerFacet.of(editorStore.workerBroker.tsServer),
     fileNameFacet.of(fileName),
-    isInline.of(inline),
+    isInlineFacet.of(inline),
+    isActionFacet.of(isAction),
+    isCurrentlyInBindingState,
     javascript({ typescript: true, jsx: false }),
     autocompletion({
       activateOnTyping: true,
@@ -185,12 +270,12 @@ export function typescript(
     EditorView.updateListener.of(({ view, docChanged, focusChanged }) => {
       if (docChanged) {
         // Update tsserver's view of this file
-        updateTSFileThrottled(view.state.sliceDoc(0), view);
+        updateTSFileThrottled(view);
       }
       if (focusChanged) {
         if (view.hasFocus) {
           // Update tsserver's view of this file
-          updateTSFileThrottled(view.state.sliceDoc(0), view);
+          updateTSFileThrottled(view);
           // setDiagnostics(view.state).then((spec) => view.dispatch(spec));
         } else {
           // // Remove the file from tsserver's view
@@ -199,7 +284,6 @@ export function typescript(
         }
       }
     }),
-
     onChangeCallback(async (_code, view) => {
       // Re-compute lint diagnostics via tsserver
       view.dispatch(await setDiagnostics(view.state));

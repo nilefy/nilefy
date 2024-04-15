@@ -6,20 +6,25 @@ import { inlineCodeEditorExtensionsSetup } from './extensions';
 
 export type WebloomInlineEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
   placeholder?: string;
+  fileName: string;
+  isEvent?: boolean;
 };
 export const WebloomInlineEditor = (props: WebloomInlineEditorProps) => {
+  const { placeholder, fileName, isEvent, ...rest } = props;
   const inlineSetup = useMemo(
     () =>
       inlineCodeEditorExtensionsSetup({
         theme: 'light',
-        placeholderText: props.placeholder,
+        placeholderText: placeholder,
+        fileName: fileName,
+        isEvent,
       }),
-    [props.placeholder],
+    [fileName, placeholder, isEvent],
   );
   return (
     <WebloomCodeEditor
       setup={inlineSetup}
-      {...props}
+      {...rest}
       templateAutocompletionOnly
     />
   );
@@ -37,6 +42,7 @@ export const WebloonInlineInputFormControl = (
           onChange={props.onChange}
           onFocus={props.onFocus}
           onBlur={props.onBlur}
+          fileName={props.fileName}
         />
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
