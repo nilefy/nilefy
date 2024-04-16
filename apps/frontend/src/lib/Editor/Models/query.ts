@@ -149,6 +149,14 @@ export class WebloomQuery
           typeSignature: 'string',
           description: 'State of the query',
         },
+        run: {
+          type: 'function',
+          description: 'Run the query',
+        },
+        reset: {
+          type: 'function',
+          description: 'Reset the query',
+        },
       },
       entityType: 'query',
       inspectorConfig: concat(

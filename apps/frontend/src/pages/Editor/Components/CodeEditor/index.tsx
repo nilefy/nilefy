@@ -199,7 +199,10 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     <div
       id={props.id}
       ref={editor}
-      className={cn('w-full h-full', props.className)}
+      className={cn(
+        'w-full h-full [&[contenteditable]]:focus:border-none [&[contenteditable]]:focus:outline-none [&[contenteditable]]:active:border-none [&[contenteditable]]:active:outline-none        ',
+        props.className,
+      )}
     />
   );
 }

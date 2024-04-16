@@ -232,19 +232,27 @@ export async function setDiagnostics(
 /**
  * A (throttled) function that updates the view of the currently open "file" on TSServer
  */
-const updateTSFileThrottled = throttle((view: EditorView) => {
-  const ts = view.state.facet(tsWorkerFacet);
+const updateTSFileThrottled = throttle(
+  (view: EditorView) => {
+    const ts = view.state.facet(tsWorkerFacet);
 
-  const fileName = getFileName(view.state);
-  const code = getContent(view.state);
-  const isInline = view.state.facet(isInlineFacet);
-  if (!fileName || !code) return;
-  ts.updateFile({
-    content: code,
-    fileName,
-    binding: isInline ? { isEvent: view.state.facet(isEventFacet) } : undefined,
-  });
-}, 100);
+    const fileName = getFileName(view.state);
+    const code = getContent(view.state);
+    const isInline = view.state.facet(isInlineFacet);
+    if (!fileName || !code) return;
+    ts.updateFile({
+      content: code,
+      fileName,
+      binding: isInline
+        ? { isEvent: view.state.facet(isEventFacet) }
+        : undefined,
+    });
+  },
+  100,
+  {
+    trailing: true,
+  },
+);
 
 // Export a function that will build & return an Extension
 export function typescript(
