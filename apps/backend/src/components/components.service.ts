@@ -253,7 +253,7 @@ export class ComponentsService {
     //     props: { color: '#a883f2', layoutMode: 'fixed' },
     //     col: 0,
     //     row: 0,
-    //     columnsCount: 10,
+    //     columnsCount: 20,
     //     rowsCount: 40,
     //   })
     //   .returning();
