@@ -19,7 +19,7 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
-import { ComponentsService } from 'src/components/components.service';
+import { ComponentsService } from '../components/components.service';
 
 @Injectable()
 export class AppsService {
@@ -269,7 +269,9 @@ export class AppsService {
         return { ...page, appId: appId, createdById: createdById };
       });
 
-      let importedPages = await this.pagesService.importPages(pagesToInsert, { tx: tx });
+      const importedPages = await this.pagesService.importPages(pagesToInsert, {
+        tx: tx,
+      });
       /*
       
       - insert components into db and store their id's
@@ -280,15 +282,16 @@ export class AppsService {
 
       // console.log(pagesToInsert);
       const defaultPage = importAppDb.defaultPage;
-      console.log('!!!default page Tree:');
-      console.log(defaultPage.tree);
-      console.log('end of default page');
-      // await this.componentsService.createTreeForPageImport(
-      //   importedPages.id,
-      //   importedPages.createdById,
-      //   defaultPage.tree,
-      //   { tx: tx },
-      // );
+      // console.log('!!!default page Tree:');
+      // console.log(defaultPage.tree);
+      // console.log('end of default page');
+      await this.componentsService.createTreeForPageImport(
+        importedPages.id,
+        importedPages.createdById,
+        defaultPage.tree,
+        { tx: tx },
+      );
+    });
     return app;
   }
 }

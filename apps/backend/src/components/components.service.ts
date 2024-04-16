@@ -143,7 +143,24 @@ export class ComponentsService {
   async createTreeForPageImport(
     pageId: PageDto['id'],
     createdById: PageDto['createdById'],
-    componentsDto: CreateComponentDb[],
+    componentsDto:
+      | ImportTreeDto
+      | {
+          [key: string]: {
+            id: string;
+            nodes: string[];
+            parentId: string;
+            props: {
+              [key: string]: any;
+            };
+            type: string;
+            col: number;
+            row: number;
+            columnsCount: number;
+            rowsCount: number;
+            columnWidth: number;
+          };
+        },
     options?: {
       tx?: PgTrans;
     },
@@ -154,7 +171,6 @@ export class ComponentsService {
     componentsDto;
     options;
 
-    console.log('from createTreeForPageImport: ');
     const [t] = await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values({
@@ -174,24 +190,73 @@ export class ComponentsService {
       })
       .returning();
 
-    console.log('output tree:');
-    console.log(t);
+    for (const key in componentsDto) {
+      if (componentsDto.hasOwnProperty(key)) {
+        try {
+          if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) continue;
+          const obj = componentsDto[key];
+          await (options?.tx ? options.tx : this.db)
+            .insert(components)
+            .values({
+              ...obj,
+              pageId: pageId,
+              createdById: createdById,
+              id: key,
+              parentId: obj.parentId,
+            })
+            .returning();
+        } catch (e) {
+          console.log('error in createTreeForPageImport: ' + e);
+        }
+      }
+    }
 
-    const [ta] = await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values({
-        id: 'WebloomContainer16',
-        type: 'WebloomContainer',
-        pageId: pageId,
-        createdById: createdById,
-        parentId: '0',
-        props: { color: '#a883f2', layoutMode: 'fixed' },
-        col: 0,
-        row: 0,
-        columnsCount: 10,
-        rowsCount: 40,
-      })
-      .returning();
+    const tree = await this.getTreeForPage(pageId);
+    console.log('Tree from db:');
+    console.log(tree);
+
+    const keys = Object.keys(componentsDto);
+    ///
+    /// nodes: keys.filter((k) => k !== EDITOR_CONSTANTS.ROOT_NODE_ID),
+    ///
+
+    // const [s] = await (options?.tx ? options.tx : this.db)
+    //   .insert(components)
+    //   .values({
+    //     id: componentsDto,
+    //     type: 'WebloomContainer',
+    //     pageId: pageId,
+    //     createdById: createdById,
+    //     parentId: null,
+    //     props: {
+    //       className: 'h-full w-full',
+    //       isCanvas: 'true',
+    //     },
+    //     col: 0,
+    //     row: 0,
+    //     columnsCount: 32,
+    //     rowsCount: 0,
+    //   })
+    //   .returning();
+
+    // console.log('output tree:');
+    // console.log(t);
+
+    // const [ta] = await (options?.tx ? options.tx : this.db)
+    //   .insert(components)
+    //   .values({
+    //     id: 'WebloomContainer16',
+    //     type: 'WebloomContainer',
+    //     pageId: pageId,
+    //     createdById: createdById,
+    //     parentId: '0',
+    //     props: { color: '#a883f2', layoutMode: 'fixed' },
+    //     col: 0,
+    //     row: 0,
+    //     columnsCount: 10,
+    //     rowsCount: 40,
+    //   })
+    //   .returning();
     return [t];
   }
 }

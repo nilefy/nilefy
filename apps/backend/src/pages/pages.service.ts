@@ -246,26 +246,27 @@ export class PagesService {
       .values(pagesToInsert)
       .returning();
     p;
-    const [rootComponent] =
-      await this.componentsService.createTreeForPageImport(
-        p.id,
-        p.createdById,
-        [],
-        { tx: options?.tx },
-      );
+    // const [rootComponent] =
+    //   await this.componentsService.createTreeForPageImport(
+    //     p.id,
+    //     p.createdById,
+    //     [],
+    //     { tx: options?.tx },
+    //   );
 
-    return {
-      ...p,
-      tree: {
-        [rootComponent.id]: {
-          ...rootComponent,
-          id: rootComponent.id,
-          parentId: rootComponent.parentId ?? rootComponent.id,
-          props: rootComponent.props as WebloomNode['props'],
-          nodes: [],
-        },
-      } satisfies WebloomTree,
-    };
+    // return {
+    //   ...p,
+    //   tree: {
+    //     [rootComponent.id]: {
+    //       ...rootComponent,
+    //       id: rootComponent.id,
+    //       parentId: rootComponent.parentId ?? rootComponent.id,
+    //       props: rootComponent.props as WebloomNode['props'],
+    //       nodes: [],
+    //     },
+    //   } satisfies WebloomTree,
+    // };
+    return p;
   }
 
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
