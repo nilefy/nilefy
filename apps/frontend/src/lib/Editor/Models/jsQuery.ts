@@ -151,6 +151,14 @@ export class WebloomJSQuery
           typeSignature: 'string',
           description: 'State of the query',
         },
+        run: {
+          type: 'function',
+          description: 'Run the query',
+        },
+        reset: {
+          type: 'function',
+          description: 'Reset the query',
+        },
       },
       entityType: 'jsQuery',
       inspectorConfig: concat(inspectorConfig, defaultQueryInspectorConfig),
