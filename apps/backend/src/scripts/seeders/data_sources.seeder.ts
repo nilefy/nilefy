@@ -63,31 +63,12 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           break;
         case 'google cloud storage':
           {
-            dataSourceConfig = [];
-            queryConfig = [];
+            dataSourceConfig = GCSConfigForm;
+            queryConfig = GCSQueryConfigForm;
             image =
               'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
             description =
               'Connect to GCS buckets and perform various operations on them.';
-          }
-          break;
-          {
-            dataSourceConfig = [];
-            queryConfig = [];
-            image = 'https://www.svgrepo.com/show/373644/graphql.svg';
-            description = 'Connect with GraphQL endpoints to run queries.';
-          }
-          break;
-        case 'google cloud storage':
-          {
-            dataSourceConfig = GCSConfigForm;
-            queryConfig = GCSQueryConfigForm;
-          }
-          break;
-        case 'google cloud storage':
-          {
-            dataSourceConfig = GCSConfigForm;
-            queryConfig = GCSQueryConfigForm;
           }
           break;
         default: {
