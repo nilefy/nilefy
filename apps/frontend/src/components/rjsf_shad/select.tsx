@@ -80,7 +80,7 @@ export default function SelectWidget<
         name={id}
         aria-describedby={ariaDescribedByIds<T>(id)}
         onValueChange={_onChange}
-        value={formValue.selectedIndex?.toString()}
+        defaultValue={String(value)}
       >
         <SelectTrigger className="w-full">
           <SelectValue

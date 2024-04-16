@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { generateFakeWorkspace } from '../faker/workspace.faker';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import { workspaces } from '../../drizzle/schema/schema';
+import { DatabaseI, usersToWorkspaces, workspaces } from '@webloom/database';
 import { UserDto } from '../../dto/users.dto';
 
 export async function workspaceSeeder(db: DatabaseI, userids: UserDto['id'][]) {
@@ -14,9 +13,14 @@ export async function workspaceSeeder(db: DatabaseI, userids: UserDto['id'][]) {
     },
   );
 
-  return await db
+  const wss = await db
     .insert(workspaces)
     .values(fakeWorkspaces)
     .returning()
     .onConflictDoNothing();
+  await db
+    .insert(usersToWorkspaces)
+    .values(wss.map((ws) => ({ userId: ws.createdById, workspaceId: ws.id })))
+    .returning();
+  return wss;
 }

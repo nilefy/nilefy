@@ -1,6 +1,7 @@
 import { FetchXError, fetchX } from '@/utils/fetch';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -20,6 +21,17 @@ export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
 export type PluginConfigT = {
   schema: RJSFSchema;
   uiSchema?: UiSchema;
+};
+
+export type DataSourceTestConnectionRet = {
+  /**
+   * connection state
+   */
+  connected: boolean;
+  /**
+   * if the plugin wants to return message with the connection test result
+   */
+  msg?: string;
 };
 
 export type GlobalDataSourceI = {
@@ -137,19 +149,69 @@ async function update({
   return await res.json();
 }
 
-function useGlobalDataSources() {
-  return useQuery({
-    queryKey: [DATASOURCES_QUERY_KEY],
-    queryFn: GlobalDataSourceIndex,
-  });
+async function testDsConnection({
+  workspaceId,
+  dataSourceId,
+  dto,
+}: {
+  workspaceId: number;
+  dataSourceId: WsDataSourceI['id'];
+  dto: {
+    config: WsDataSourceI['config'];
+  };
+}): Promise<DataSourceTestConnectionRet> {
+  const res = await fetchX(
+    `workspaces/${workspaceId}/data-sources/${dataSourceId}/testConnection`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      body: JSON.stringify(dto),
+    },
+  );
+  return await res.json();
 }
 
-function useWsDataSources(workspaceId: number) {
-  return useQuery({
+export type GlobalDataSourceIndexRet = Awaited<
+  ReturnType<typeof GlobalDataSourceIndex>
+>;
+
+export function globalDataSourcesQuery(): UndefinedInitialDataOptions<
+  GlobalDataSourceIndexRet,
+  FetchXError,
+  GlobalDataSourceIndexRet
+> {
+  return {
+    queryKey: [DATASOURCES_QUERY_KEY],
+    queryFn: GlobalDataSourceIndex,
+  };
+}
+
+function useGlobalDataSources() {
+  return useQuery(globalDataSourcesQuery());
+}
+
+type WsDataSourcesIndexRet = Awaited<ReturnType<typeof index>>;
+
+export function wsDataSourcesQuery({
+  workspaceId,
+}: {
+  workspaceId: WsDataSourceI['workspaceId'];
+}): UndefinedInitialDataOptions<
+  WsDataSourcesIndexRet,
+  FetchXError,
+  WsDataSourcesIndexRet
+> {
+  return {
     queryKey: [DATASOURCES_QUERY_KEY, { workspaceId }],
-    queryFn: () => index({ workspaceId }),
+    queryFn: async () => index({ workspaceId }),
     staleTime: 0,
-  });
+  };
+}
+
+function useWsDataSources(...rest: Parameters<typeof wsDataSourcesQuery>) {
+  return useQuery(wsDataSourcesQuery(...rest));
 }
 
 function useDataSource(workspaceId: number, dataSourceId: number) {
@@ -174,6 +236,20 @@ function useInsertDatasource(
         queryKey: [DATASOURCES_QUERY_KEY],
       });
     },
+    ...options,
+  });
+  return mutate;
+}
+
+function useTestDatasourceConnection(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof testDsConnection>>,
+    FetchXError,
+    Parameters<typeof testDsConnection>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: testDsConnection,
     ...options,
   });
   return mutate;
@@ -225,6 +301,7 @@ export const dataSources = {
   insert: { useMutation: useInsertDatasource },
   update: { useMutation: useUpdateDataSource },
   delete: { useMutation: useDeleteDatasource },
+  testConnection: { useMutation: useTestDatasourceConnection },
 };
 
 export const globalDataSource = {

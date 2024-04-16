@@ -2,12 +2,13 @@ import { editorStore } from '@/lib/Editor/Models';
 import { ClipboardDataT, UndoableCommand } from '../types';
 import { getWidgetsBoundingRect, normalize } from '@/lib/Editor/utils';
 import { Point } from '@/types';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WidgetTypes } from '@/pages/Editor/Components';
 import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { RemoteTypes } from '../types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 
 export class PasteAction implements UndoableCommand {
   private parent: string;
@@ -23,22 +24,10 @@ export class PasteAction implements UndoableCommand {
       nodes: new Map(data.nodes),
     };
     this.mousePos = mousePos;
-
-    let parent = editorStore.currentPage.rootWidget.id;
-    for (const id of editorStore.currentPage.selectedNodeIds) {
-      const { x, y, width, height } =
-        editorStore.currentPage.getWidgetById(id).pixelDimensions;
-      if (
-        mousePos.x > x &&
-        mousePos.x < x + width &&
-        mousePos.y > y &&
-        mousePos.y < y + height
-      ) {
-        parent = id;
-        break;
-      }
-    }
-    this.parent = parent;
+    const hoveredWidget = editorStore.currentPage.getWidgetById(
+      editorStore.currentPage.hoveredWidgetId || EDITOR_CONSTANTS.ROOT_NODE_ID,
+    );
+    this.parent = hoveredWidget.canvasParent.id;
   }
 
   paste(node: string, parent: string, change?: WebloomGridDimensions) {
@@ -51,7 +40,6 @@ export class PasteAction implements UndoableCommand {
 
     snapshot.id = id;
     snapshot.parentId = parent;
-
     if (change) {
       snapshot.col = change.col;
       snapshot.row = change.row;
@@ -85,7 +73,6 @@ export class PasteAction implements UndoableCommand {
       const row = normalize((newDims.y - py) / gridrow, gridrow);
       const columnsCount = normalize(oldDims.width, gridCol) / gridCol;
       const rowsCount = normalize(oldDims.height / gridrow, gridrow);
-
       this.paste(widget.id, this.parent, { col, row, columnsCount, rowsCount });
     }
 

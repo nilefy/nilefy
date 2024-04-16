@@ -2,7 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 const queryRetSchema = z.object({
-  status: z
+  statusCode: z
     .number()
     .describe(
       'the status code returned from the other backend or 505 from our server',

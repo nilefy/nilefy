@@ -11,21 +11,28 @@ import {
   LineElement,
   Title,
 } from 'chart.js';
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { useContext } from 'react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 import { BarChartBig } from 'lucide-react';
 import { ToolTipWrapper } from '../tooltipWrapper';
+
+import { calculateAggregation } from './aggergationMethods';
+import { WebloomChartProps, webloomChartProps } from './interface';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { keys } from 'lodash';
 import {
-  ArrayFieldItemType,
-  chartDatasets,
-} from '@/components/rjsf_shad/arrayFieldItemTemplate';
-import { agg } from './agg';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 ChartJS.register(
   LinearScale,
@@ -38,54 +45,17 @@ ChartJS.register(
   LineElement,
   Title,
 );
-
-/**
- * fields that you want to be on the configForm
- */
-const webloomChartProps = z.object({
-  data: z.object({
-    dataSource: z.array(z.record(z.unknown())),
-    chartType: z.enum([
-      'bar',
-      'line',
-      'scatter' /**'pie', 'doughnut', 'radar'**/,
-    ]),
-    // direction: z.enum(['vertical', 'horizontal']),
-    /**
-     * which column user wants to be in x-axis
-     * @note: y-axis data is configured through datasets
-     */
-    xAxisValue: z.string(),
-    datasets: chartDatasets,
-  }),
-  tooltip: z.string().optional(),
-  layout: z.object({
-    /**
-     * @link https://www.chartjs.org/docs/latest/configuration/legend.html#position
-     * @note none will remove the legend
-     */
-    legendPosition: z
-      .enum(['top', 'left', 'bottom', 'right', 'none'])
-      .default('top'),
-    title: z.string().optional(),
-    xAxisName: z.string().optional(),
-    yAxisName: z.string().optional(),
-    xAxisType: z.enum(['default', 'date']).default('default'),
-  }),
-});
-
-export type WebloomChartProps = z.infer<typeof webloomChartProps>;
-
 // TODO: direction
 const WebloomChart = observer(function WebloomChart() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomChartProps;
+
   return (
     <ToolTipWrapper text={props.tooltip}>
       <div className="relative h-full w-full">
         <Chart
-          type={props.data.chartType}
+          type={props.chartType}
           options={{
             responsive: true,
             maintainAspectRatio: false,
@@ -94,14 +64,14 @@ const WebloomChart = observer(function WebloomChart() {
             scales: {
               x: {
                 title: {
-                  display: props.layout.xAxisName !== undefined,
-                  text: props.layout.xAxisName,
+                  display: props.xAxisName !== undefined,
+                  text: props.xAxisName,
                 },
               },
               y: {
                 title: {
-                  display: props.layout.yAxisName !== undefined,
-                  text: props.layout.yAxisName,
+                  display: props.yAxisName !== undefined,
+                  text: props.yAxisName,
                 },
               },
             },
@@ -110,17 +80,17 @@ const WebloomChart = observer(function WebloomChart() {
                * @link https://www.chartjs.org/docs/latest/configuration/legend.html#configuration-options
                */
               legend: {
-                display: props.layout.legendPosition !== 'none',
+                display: props.legendPosition !== 'none',
                 position:
-                  props.layout.legendPosition === 'none'
+                  props.legendPosition === 'none'
                     ? 'top'
-                    : props.layout.legendPosition,
+                    : props.legendPosition,
               },
               // title configuration
               // @link https://www.chartjs.org/docs/latest/configuration/title.html
               title: {
-                display: props.layout.title !== undefined,
-                text: props.layout.title,
+                display: props.title !== undefined,
+                text: props.title,
                 font: {
                   size: 18,
                 },
@@ -130,16 +100,14 @@ const WebloomChart = observer(function WebloomChart() {
           data={{
             // x-axis-value
             labels: [
-              ...new Set(
-                props.data.dataSource.map((row) => row[props.data.xAxisValue]),
-              ),
+              ...new Set(props.dataSource.map((row) => row[props.xAxisValue])),
             ],
-            datasets: props.data.datasets.map((ds) => ({
+            datasets: props.datasets.map((ds) => ({
               type: ds.chartType,
               label: ds.name,
-              data: agg(
-                props.data.dataSource,
-                props.data.xAxisValue,
+              data: calculateAggregation(
+                props.dataSource,
+                props.xAxisValue,
                 ds.yValue,
                 ds.aggMethod,
               ),
@@ -154,7 +122,7 @@ const WebloomChart = observer(function WebloomChart() {
 
 const config: WidgetConfig = {
   name: 'Charts',
-  icon: <BarChartBig />,
+  icon: BarChartBig,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,
@@ -165,73 +133,274 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomChartProps = {
-  data: {
-    dataSource: [
-      { year: 2010, count: 10 },
-      { year: 2011, count: 20 },
-      { year: 2012, count: 15 },
-      { year: 2013, count: 25 },
-      { year: 2014, count: 22 },
-      { year: 2015, count: 30 },
-      { year: 2016, count: 28 },
-    ],
-    datasets: [
-      {
-        name: 'dataset 1',
-        yValue: 'count',
-        aggMethod: 'sum',
-        chartType: 'bar',
-        color: '#165DFF',
-      },
-    ],
-    chartType: 'bar',
-    // direction: 'vertical',
-    xAxisValue: 'year',
-  },
+const initialProps: WebloomChartProps = {
+  dataSource: [
+    { year: 2010, count: 10 },
+    { year: 2011, count: 20 },
+    { year: 2012, count: 15 },
+    { year: 2013, count: 25 },
+    { year: 2014, count: 22 },
+    { year: 2015, count: 30 },
+    { year: 2016, count: 28 },
+  ],
+  datasets: [
+    {
+      name: 'dataset 1',
+      yValue: 'count',
+      aggMethod: 'sum',
+      chartType: 'bar',
+      color: '#165DFF',
+    },
+  ],
+  chartType: 'bar',
+  // direction: 'vertical',
+  xAxisValue: 'year',
+
   tooltip: '',
-  layout: {
-    legendPosition: 'top',
-    xAxisType: 'default',
-  },
+  legendPosition: 'top',
+  xAxisType: 'default',
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomChartProps),
-  uiSchema: {
-    data: {
-      dataSource: {
-        'ui:widget': 'inlineCodeInput',
+const inspectorConfig: EntityInspectorConfig<WebloomChartProps> = [
+  {
+    sectionName: 'Content',
+    children: [
+      {
+        label: 'Data Source',
+        path: 'dataSource',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Data Source',
+        },
+        validation: zodToJsonSchema(webloomChartProps.shape.dataSource),
       },
-      datasets: {
-        items: {
-          'ui:options': {
-            'ui:itemType': ArrayFieldItemType.ChartItem,
-          },
-          name: {
-            'ui:widget': 'inlineCodeInput',
-          },
-          // TODO: use custom component
-          yValue: {
-            'ui:label': 'Dataset values',
-          },
-          color: {
-            'ui:widget': 'colorPicker',
+      {
+        label: 'Chart Type',
+        path: 'chartType',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Bar',
+              value: 'bar',
+            },
+            {
+              label: 'Line',
+              value: 'line',
+            },
+            {
+              label: 'Scatter',
+              value: 'scatter',
+            },
+          ],
+        },
+      },
+      {
+        label: 'X-axis value',
+        path: 'xAxisValue',
+        type: 'select',
+        options: {
+          path: 'dataSource',
+          convertToOptions(value) {
+            return keys(
+              (value as WebloomChartProps['dataSource'][])[0] || [],
+            ).map((key) => ({
+              label: key,
+              value: key,
+            }));
           },
         },
       },
-      xAxisValue: {
-        'ui:widget': 'chartDynamicXValue',
+      {
+        label: 'Datasets',
+        path: 'datasets',
+        type: 'array',
+        options: {
+          newItemDefaultValue: {
+            name: 'dataset 1',
+            yValue: 'count',
+            aggMethod: 'sum',
+            chartType: 'bar',
+            color: '#165DFF',
+          },
+          SubFormWrapper: ({
+            onDelete,
+            children,
+            value,
+          }: {
+            onDelete: () => void;
+            children: React.ReactNode;
+            value: WebloomChartProps['datasets'][number];
+          }) => {
+            return (
+              <DropdownMenu>
+                <div className="flex h-full w-full justify-between rounded-md border-2 p-2">
+                  <DropdownMenuTrigger className="h-full w-full ">
+                    <div className="flex h-9 w-full min-w-full items-center gap-3 px-3 align-baseline leading-3">
+                      <div className="flex w-fit flex-row items-center  gap-3">
+                        <div
+                          className="h-6 w-6 rounded-sm"
+                          style={{ backgroundColor: value.color }}
+                        ></div>
+                        <div className="">{value.name ?? 'unconfigured'}</div>
+                      </div>
+                      <div className="ml-auto font-semibold text-gray-500">
+                        {value.aggMethod ?? 'unconfigured'}
+                      </div>
+                    </div>
+                  </DropdownMenuTrigger>
+                </div>
+
+                <DropdownMenuContent side="left" className="space-y-4 p-4">
+                  {children}
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onDelete();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          },
+          subform: [
+            {
+              label: 'Name',
+              type: 'inlineCodeInput',
+              path: 'name',
+              options: {
+                placeholder: 'Enter name',
+              },
+            },
+            {
+              label: 'Aggregation Method',
+              type: 'select',
+              path: 'aggMethod',
+              options: {
+                items: [
+                  { label: 'Sum', value: 'sum' },
+                  { label: 'Average', value: 'average' },
+                  { label: 'Count', value: 'count' },
+                  { label: 'Max', value: 'max' },
+                  { label: 'Min', value: 'min' },
+                ],
+              },
+            },
+            {
+              label: 'Chart type',
+              type: 'select',
+              path: 'chartType',
+              options: {
+                items: [
+                  { label: 'Bar', value: 'bar' },
+                  { label: 'Line', value: 'line' },
+                  { label: 'Scatter', value: 'scatter' },
+                ],
+              },
+            },
+            {
+              label: 'Color',
+              type: 'color',
+              path: 'color',
+            },
+          ],
+        },
+        validation: zodToJsonSchema(webloomChartProps.shape.datasets),
       },
-    },
+    ],
   },
-};
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'tooltip',
+        label: 'Tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Tooltip',
+        },
+      },
+      {
+        path: 'legendPosition',
+        label: 'Legend Position',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Top',
+              value: 'top',
+            },
+            {
+              label: 'Left',
+              value: 'left',
+            },
+            {
+              label: 'Bottom',
+              value: 'bottom',
+            },
+            {
+              label: 'Right',
+              value: 'right',
+            },
+            {
+              label: 'None',
+              value: 'none',
+            },
+          ],
+        },
+      },
+      {
+        path: 'title',
+        label: 'Title',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Title',
+        },
+      },
+      {
+        path: 'xAxisName',
+        label: 'X-axis Name',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'X-axis Name',
+        },
+      },
+      {
+        path: 'yAxisName',
+        label: 'Y-axis Name',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Y-axis Name',
+        },
+      },
+      {
+        path: 'xAxisType',
+        label: 'X-axis Type',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Default',
+              value: 'default',
+            },
+            {
+              label: 'Date',
+              value: 'date',
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
 
 const WebloomChartWidget: Widget<WebloomChartProps> = {
   component: WebloomChart,
   config,
-  defaultProps,
-  schema,
+  initialProps,
+  inspectorConfig,
 };
 
 export { WebloomChartWidget };

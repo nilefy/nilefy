@@ -1,15 +1,22 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateWsDataSourceDb,
   WsDataSourceDto,
   UpdateWsDataSourceDto,
-  WsDataSourceP,
   DataSourceConnectionDto,
   WsDataSourcesDto,
+  DataSourceDto,
 } from '../dto/data_sources.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { workspaceDataSources } from '../drizzle/schema/data_sources.schema';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
+import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
+import { getQueryService } from './plugins/common/service';
+import { DatabaseI, workspaceDataSources } from '@webloom/database';
 
 @Injectable()
 export class DataSourcesService {
@@ -155,5 +162,34 @@ export class DataSourcesService {
       .returning();
     if (!ds) throw new NotFoundException();
     return ds;
+  }
+  async testConnection(
+    {
+      workspaceId,
+      dataSourceId,
+    }: {
+      dataSourceId: DataSourceDto['id'];
+      workspaceId: WsDataSourceDto['workspaceId'];
+    },
+    config: Record<string, unknown>,
+  ): TestConnectionT {
+    const ds = await this.getOne(workspaceId, dataSourceId);
+    const service = this.getService(ds.dataSource.name);
+    if (service.testConnection) {
+      const res = await service.testConnection(config);
+      if (res.connected) {
+        return res;
+      } else {
+        throw new BadRequestException(res.msg);
+      }
+    } else {
+      throw new BadRequestException(
+        "this data source doesn't support test connection functionality",
+      );
+    }
+  }
+
+  private getService(dataSourceName: string): QueryRunnerI {
+    return getQueryService(dataSourceName);
   }
 }

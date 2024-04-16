@@ -1,11 +1,9 @@
 import { generateFakeApp } from '../faker/app.faker';
 import { faker } from '@faker-js/faker';
-import { apps } from '../../drizzle/schema/schema';
 import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import { components, pages } from '../../drizzle/schema/appsState.schema';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { apps, components, DatabaseI, pages } from '@webloom/database';
 
 export async function appSeeder(
   db: DatabaseI,
@@ -51,7 +49,7 @@ export async function appSeeder(
         },
         col: 0,
         row: 0,
-        columnsCount: 32,
+        columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
         rowsCount: 0,
       }),
     ),

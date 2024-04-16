@@ -1,32 +1,46 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
-import { Point } from '@/types';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
   WebloomGridDimensions,
   WebloomPixelDimensions,
-  WidgetSetters,
+  LayoutMode,
+  WIDGET_SECTIONS,
+  EntityInspectorConfig,
+  ResizeDirection,
 } from '../interface';
 import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  normalize,
 } from '../utils';
-import {
-  handleHoverCollision,
-  handleLateralCollisions,
-  handleParentCollisions,
-} from '../collisions';
-import { Snapshotable } from './interfaces';
-import { DependencyManager } from './dependencyManager';
-import { cloneDeep } from 'lodash';
-import { EvaluationManager } from './evaluationManager';
-import { Entity } from './entity';
-import { WidgetsEventHandler } from '@/components/rjsf_shad/eventHandler';
 
+import { Snapshotable, WebloomDisposable } from './interface';
+import { debounce, reduce } from 'lodash';
+import { klona } from 'klona';
+import { Entity } from './entity';
+import { commandManager } from '@/actions/CommandManager';
+import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { EntityActionConfig } from '../evaluation/interface';
+const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
+  scrollIntoView: {
+    type: 'SIDE_EFFECT',
+    name: 'scrollIntoView',
+    fn: (entity: WebloomWidget) => {
+      entity.dom?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      });
+    },
+  },
+};
+
+const normalizeWidgetActions = (actions: EntityActionConfig<WebloomWidget>) => {
+  return { ...defaultWidgetActions, ...actions };
+};
 export class WebloomWidget
   extends Entity
   implements
@@ -37,9 +51,19 @@ export class WebloomWidget
       > & {
         pageId: string;
       }
-    >
+    >,
+    WebloomDisposable
 {
   isRoot = false;
+  /**
+   * @description This is the runtime connection to the thing the widget can do like focus, submit, etc. Widgets have to set this up themselves because the api is
+   * different for each widget
+   * @example
+   * ```
+   *  widget.api.focus()
+   * ```
+   */
+  api: Record<string, (...args: unknown[]) => void> = {};
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
@@ -49,61 +73,65 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
-  setters: Record<string, (arg: unknown) => void>;
-
+  metaProps: Set<string>;
   constructor({
     type,
     parentId,
-    row,
-    col,
+    row = 0,
+    col = 0,
     page,
     id = getNewEntityName(type),
     nodes = [],
     rowsCount,
     columnsCount,
     props,
-    evaluationManger,
-    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
     page: WebloomPage;
-    row: number;
-    col: number;
+    row?: number;
+    col?: number;
     id?: string;
     nodes?: string[];
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependents?: Set<string>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
   }) {
+    const widgetConfig = WebloomWidgets[type];
+    const _props = props ?? widgetConfig.initialProps;
+    const rawValues = {
+      ..._props,
+      layoutMode: widgetConfig.config.layoutConfig.layoutMode,
+    };
     super({
-      dependencyManager,
-      evaluationManger,
+      workerBroker: page.workerBroker,
       id,
-      rawValues: props ?? {},
-      schema: WebloomWidgets[type].schema,
+      rawValues,
+      inspectorConfig: widgetConfig.inspectorConfig as EntityInspectorConfig,
+      entityType: 'widget',
+      publicAPI: widgetConfig.publicAPI,
+      // @ts-expect-error fda
+      entityActionConfig: normalizeWidgetActions(
+        widgetConfig.config.widgetActions ?? {},
+      ),
+      metaValues: widgetConfig.metaProps,
     });
+    this.metaProps = widgetConfig.metaProps ?? new Set();
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const baseWidget = WebloomWidgets[this.type as WidgetTypes];
-    this.setters = this.genSetters(baseWidget.setters);
-    const { config } = WebloomWidgets[type];
-    this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
-    this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
+    this.rowsCount = rowsCount ?? widgetConfig.config.layoutConfig.rowsCount;
+    this.columnsCount =
+      columnsCount ?? widgetConfig.config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-
     makeObservable(this, {
       nodes: observable,
       parentId: observable,
-      dom: observable,
+      dom: observable.ref,
       type: observable,
       col: observable,
       row: observable,
@@ -111,6 +139,7 @@ export class WebloomWidget
       rowsCount: observable,
       setDimensions: action,
       gridSize: computed.struct,
+      selfGridSize: computed.struct,
       boundingRect: computed.struct,
       setDom: action,
       pixelDimensions: computed.struct,
@@ -124,29 +153,140 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      setValue: override,
+      innerRowsCount: computed,
+      actualRowsCount: computed,
+      innerContainerDimensions: computed,
+      innerContainerPixelDimensions: computed,
+      isSelected: computed,
+      isDragging: computed,
+      isResizing: computed,
+      isHovered: computed,
+      isVisible: computed,
+      isTheOnlySelected: computed,
+      resizeDirection: computed,
+      layoutMode: computed,
+      descendants: computed,
+      childrenHasSelected: computed,
+      unselectSelf: action,
     });
+  }
+  get childrenHasSelected(): boolean {
+    if (this.nodes.length === 0) return this.isTheOnlySelected;
+    return (
+      this.nodes.some((node) => this.page.widgets[node].childrenHasSelected) ||
+      this.isTheOnlySelected
+    );
+  }
+  get descendants(): string[] {
+    if (this.nodes.length === 0) return [];
+    return [
+      ...this.nodes.flatMap((node) => this.page.widgets[node].descendants),
+      ...this.nodes,
+    ];
+  }
+  get resizeDirection(): ResizeDirection {
+    const direction = WebloomWidgets[this.type].config.resizingDirection;
+    if (this.layoutMode === 'auto' && direction === 'Both') return 'Horizontal';
+    return direction;
   }
   get columnWidth(): number {
     if (this.isRoot)
-      return this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+      // flooring to avoid floating point errors and because integers are just nice
+      return Math.floor(this.page.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS);
     if (this.isCanvas)
-      return this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS;
+      return Math.max(
+        Math.floor(
+          this.pixelDimensions.width / EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+        ),
+        2,
+      );
     return 0;
   }
+  setValue(path: string, value: unknown): void {
+    if (!this.metaProps.has(path)) {
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new ChangePropAction(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
   get gridBoundingRect() {
     return getGridBoundingRect(this.gridDimensions);
   }
+  get innerRowsCount() {
+    let min = 0;
+    if (this.layoutMode === 'auto') {
+      min = 20;
+    } else {
+      min = this.rowsCount;
+    }
+    return this.nodes.reduce((prev, cur) => {
+      return Math.max(
+        prev,
+        this.page.widgets[cur].row + this.page.widgets[cur].rowsCount,
+      );
+    }, min);
+  }
+
+  get actualRowsCount() {
+    if (this.layoutMode === 'auto') {
+      return this.innerRowsCount;
+    } else return this.rowsCount;
+  }
   setDom(dom: HTMLElement) {
     this.dom = dom;
   }
+  get scrollableContainer(): HTMLDivElement | null {
+    if (this.isCanvas) return this.getDomSection(WIDGET_SECTIONS.SCROLL_AREA);
+    return this.canvasParent.scrollableContainer;
+  }
+  get resizer(): HTMLDivElement | null {
+    return this.getDomSection(WIDGET_SECTIONS.RESIZER);
+  }
 
+  get canvas(): HTMLDivElement | null {
+    return this.getDomSection(WIDGET_SECTIONS.CANVAS);
+  }
+
+  getDomSection(section: keyof typeof WIDGET_SECTIONS) {
+    return this.dom?.querySelector(
+      `[data-type="${section}"]`,
+    ) as HTMLDivElement;
+  }
+
+  get layoutMode() {
+    return this.getValue('layoutMode') as LayoutMode;
+  }
+  get isSelected() {
+    return this.page.selectedNodeIds.has(this.id);
+  }
+  get isDragging() {
+    return this.page.draggedWidgetId === this.id;
+  }
+  get isResizing() {
+    return this.page.resizedWidgetId === this.id;
+  }
+  get isHovered() {
+    return this.page.hoveredWidgetId === this.id;
+  }
+  get isVisible() {
+    return !this.isDragging;
+  }
   /**
    *
-   * @description a snapshot of the widget that can be used to recreate the widget,
-   * all computed properties are omitted. this can also be sent to the server to save the widget
+   * @returns a snapshot of the widget that can be used to recreate the widget, all computed properties are omitted. this can also be sent to the server to save the widget
    */
   get snapshot() {
     return {
@@ -155,7 +295,15 @@ export class WebloomWidget
       pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: cloneDeep(this.rawValues),
+      props: reduce(
+        klona(this.rawValues),
+        (acc, value, key) => {
+          if (this.metaProps.has(key)) return acc;
+          acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      ),
       type: this.type,
       col: this.col,
       row: this.row,
@@ -169,6 +317,13 @@ export class WebloomWidget
     this.col = dimensions.col ?? this.col;
     this.columnsCount = dimensions.columnsCount ?? this.columnsCount;
     this.rowsCount = dimensions.rowsCount ?? this.rowsCount;
+  }
+  get scrollTop() {
+    return this.scrollableContainer?.scrollTop ?? 0;
+  }
+  get cumlativScrollTop(): number {
+    if (this.isRoot) return this.scrollTop;
+    return this.scrollTop + this.canvasParent.cumlativScrollTop;
   }
 
   get pixelDimensions(): WebloomPixelDimensions {
@@ -188,7 +343,9 @@ export class WebloomWidget
       this.canvasParent.pixelDimensions,
     );
   }
-
+  /**
+   * returns the outer height
+   */
   get relativePixelDimensions(): WebloomPixelDimensions {
     if (this.isRoot) return this.pixelDimensions;
     return convertGridToPixel(
@@ -203,8 +360,24 @@ export class WebloomWidget
       row: this.row,
       col: this.col,
       columnsCount: this.columnsCount,
-      rowsCount: this.rowsCount,
+      rowsCount: this.actualRowsCount,
     };
+  }
+  get innerContainerDimensions() {
+    return {
+      row: this.row,
+      col: this.col,
+      columnsCount: this.columnsCount,
+      rowsCount: this.innerRowsCount,
+    };
+  }
+
+  get innerContainerPixelDimensions() {
+    return convertGridToPixel(
+      this.innerContainerDimensions,
+      this.gridSize as [number, number],
+      this.canvasParent.pixelDimensions,
+    );
   }
 
   get parent() {
@@ -217,7 +390,9 @@ export class WebloomWidget
     if (parent.isCanvas) return parent;
     return parent.canvasParent;
   }
-
+  get isTheOnlySelected() {
+    return this.page.selectedNodeIds.size === 1 && this.isSelected;
+  }
   addChild(nodeId: string) {
     this.nodes.push(nodeId);
     this.nodes.sort((a, b) => {
@@ -230,78 +405,10 @@ export class WebloomWidget
   }
 
   get gridSize(): [number, number] {
-    const parent = this.canvasParent;
-    return [EDITOR_CONSTANTS.ROW_HEIGHT, parent.columnWidth!];
+    return this.canvasParent.selfGridSize;
   }
-
-  getDropCoordinates(
-    startPosition: Point,
-    delta: Point,
-    overId: string,
-    draggedId: string,
-    forShadow = false,
-  ) {
-    const mousePos = this.page.mousePosition;
-    const [gridrow, gridcol] = this.gridSize as [number, number];
-    const normalizedDelta = {
-      x: normalize(delta.x, gridcol),
-      y: normalize(delta.y, gridrow),
-    };
-    const newPosition = {
-      x: startPosition.x + normalizedDelta.x,
-      y: startPosition.y + normalizedDelta.y,
-    }; // -> this is the absolute position in pixels (normalized to the grid)
-    const overEl = this.page.getWidgetById(overId);
-    const parent = this.canvasParent;
-    const parentBoundingRect = parent.boundingRect;
-    const position = {
-      x: newPosition.x - parentBoundingRect.left,
-      y: newPosition.y - parentBoundingRect.top,
-    }; // -> this is the position in pixels relative to the parent (normalized to the grid)
-    // Transform the postion to grid units (columns and rows)
-    const gridPosition = {
-      x: Math.round(position.x / gridcol),
-      y: Math.round(position.y / gridrow),
-    }; // -> this is the position in grid units (columns and rows)
-    let dimensions = {
-      col: gridPosition.x,
-      row: gridPosition.y,
-      columnsCount: this.columnsCount,
-      rowsCount: this.rowsCount,
-    };
-
-    if (overId !== EDITOR_CONSTANTS.ROOT_NODE_ID && overId !== draggedId) {
-      dimensions = handleHoverCollision(
-        dimensions,
-        parent.pixelDimensions,
-        overEl.boundingRect,
-        [gridrow, gridcol],
-        !!overEl.isCanvas,
-        mousePos,
-        forShadow,
-      );
-    }
-    dimensions = handleLateralCollisions(
-      this.id,
-      overId,
-      draggedId,
-      parent.nodes,
-      dimensions,
-      mousePos,
-    );
-    dimensions = handleParentCollisions(
-      dimensions,
-      parent.pixelDimensions,
-      parentBoundingRect,
-      [gridrow, gridcol],
-      forShadow,
-    );
-    dimensions.columnsCount = Math.min(
-      EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
-      dimensions.columnsCount,
-    );
-    dimensions.rowsCount = Math.min(parent.rowsCount, dimensions.rowsCount);
-    return dimensions;
+  get selfGridSize(): [number, number] {
+    return [EDITOR_CONSTANTS.ROW_HEIGHT, this.columnWidth];
   }
 
   removeSelf() {
@@ -318,23 +425,31 @@ export class WebloomWidget
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
+    });
+  }
+
+  handleEvent(event: string) {
+    if (!this.rawValues[event]) return;
+    this.workerBroker.postMessegeInBatch({
+      event: 'eventExecution',
+      body: {
+        eventName: event,
+        id: this.id,
+      },
     });
   }
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
+  unselectSelf() {
+    this.page.setSelectedNodeIds((prev) => {
+      return new Set([...prev].filter((i) => i !== this.id));
+    });
+  }
 
-  private genSetters(
-    settersConfig?: WidgetSetters,
-  ): Record<string, (arg: unknown) => void> {
-    const res: Record<string, (arg: unknown) => void> = {};
-    if (!settersConfig) return res;
-    for (const k in settersConfig) {
-      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
-    }
-    return res;
+  dispose() {
+    this.unselectSelf();
+    super.dispose();
   }
 }

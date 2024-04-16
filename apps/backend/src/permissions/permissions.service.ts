@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { asc } from 'drizzle-orm';
-import { permissions } from '../drizzle/schema/schema';
 import { PermissionDto } from '../dto/permissions.dto';
+import { DatabaseI, permissions } from '@webloom/database';
 
 @Injectable()
 export class PermissionsService {

@@ -1,81 +1,139 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ElementType, useCallback, useMemo } from 'react';
 import { WebloomWidgets, WidgetContext } from '..';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuPortal,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { Grid, WebloomAdapter } from '.';
-import { commandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
-import { observer } from 'mobx-react-lite';
 
-export const WebloomElement = observer(function WebloomElement({
+import { observer } from 'mobx-react-lite';
+import { cn } from '@/lib/cn';
+import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
+import { flow, flowRight } from 'lodash';
+import {
+  WithDeletePopover,
+  WithDnd,
+  WithLayout,
+  WithPopover,
+  WithResize,
+  WithSelection,
+} from './HOCs';
+
+const RenderedElement = observer(
+  ({ id, isVisible }: { id: string; isVisible: boolean }) => {
+    const widget = editorStore.currentPage.getWidgetById(id);
+    const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
+    if (widget.isCanvas) {
+      const innerContainerStyle = {
+        width: widget.innerContainerPixelDimensions.width + 'px',
+        height: widget.innerContainerPixelDimensions.height + 'px',
+      } as const;
+      const outerContainerStyle = {
+        width: widget.relativePixelDimensions.width + 'px',
+        height: widget.relativePixelDimensions.height + 'px',
+      } as const;
+
+      return (
+        <WebloomWidget
+          innerContainerStyle={innerContainerStyle}
+          outerContainerStyle={outerContainerStyle}
+          isVisibile={isVisible}
+        >
+          {widget.nodes.map((nodeId) => (
+            <WebloomElement id={nodeId} key={nodeId} />
+          ))}
+        </WebloomWidget>
+      );
+    }
+    return (
+      <WidgetWrapper id={id} isVisible={isVisible}>
+        <WebloomWidget>
+          {widget.nodes.map((nodeId) => (
+            <WebloomElement id={nodeId} key={nodeId} />
+          ))}
+        </WebloomWidget>
+      </WidgetWrapper>
+    );
+  },
+);
+
+export const WebloomElementBase = observer(function WebloomElement({
   id,
-  isPreview,
 }: {
   id: string;
-  isPreview: boolean;
 }) {
-  const tree = editorStore.currentPage.getWidgetById(id);
+  const widget = editorStore.currentPage.getWidgetById(id);
   const onPropChange = useCallback(
     ({ value, key }: { value: unknown; key: string }) => {
-      tree.setValue(key, value);
+      widget.setValue(key, value);
     },
-    [tree],
+    [widget],
   );
-
   const contextValue = useMemo(() => {
     return {
       onPropChange,
       id,
     };
   }, [onPropChange, id]);
-  const WebloomWidget = WebloomWidgets[tree.type].component as ElementType;
-  if (id === EDITOR_CONSTANTS.PREVIEW_NODE_ID) return null;
-  const RenderedElement = observer(() => {
-    return (
-      <WebloomAdapter
-        draggable={!isPreview}
-        droppable={!isPreview}
-        resizable={!isPreview}
-        isPreview={isPreview}
-        key={id}
-        id={id}
-      >
-        {tree.isCanvas && <Grid id={id} />}
-        <WidgetContext.Provider value={contextValue}>
-          <WebloomWidget>
-            {tree.nodes.map((nodeId) => (
-              <WebloomElement id={nodeId} key={nodeId} isPreview={isPreview} />
-            ))}
-          </WebloomWidget>
-        </WidgetContext.Provider>
-      </WebloomAdapter>
-    );
-  });
 
-  if (isPreview) return <RenderedElement />;
+  const isVisible = widget.isVisible;
+
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <RenderedElement />
-      </ContextMenuTrigger>
-      <ContextMenuPortal>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onMouseDown={() => {
-              commandManager.executeCommand(new DeleteAction());
-            }}
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenuPortal>
-    </ContextMenu>
+    <WidgetContext.Provider value={contextValue}>
+      <RenderedElement id={id} isVisible={isVisible} />
+    </WidgetContext.Provider>
   );
 });
+
+const WidgetWrapper = observer(
+  // eslint-disable-next-line react/display-name
+  ({
+    id,
+    children,
+    isVisible,
+  }: {
+    id: string;
+    children: React.ReactNode;
+    isVisible: boolean;
+  }) => {
+    return (
+      <div
+        style={{
+          visibility: isVisible ? 'visible' : 'hidden',
+        }}
+        className="target relative h-full w-full touch-none overflow-hidden outline-none"
+        data-id={id}
+        data-type={WIDGET_SECTIONS.CANVAS}
+      >
+        {
+          //this is to prevent widgets from capturing focus when drag is happening
+          (editorStore.currentPage.isDragging ||
+            editorStore.currentPage.isResizing) && (
+            <div className="absolute left-0 top-0 z-10 h-full w-full"></div>
+          )
+        }
+        <div
+          key={id}
+          className={cn(
+            {
+              hidden: !isVisible,
+            },
+            {
+              flex: isVisible,
+            },
+            'w-full h-full',
+          )}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  },
+);
+export const ProductionWebloomElement: React.FC<{ id: string }> =
+  flow(WithLayout)(WebloomElementBase);
+
+export const WebloomElement: React.FC<{ id: string }> = flowRight(
+  WithLayout,
+  WithResize,
+  WithDnd,
+  WithPopover,
+  WithSelection,
+  WithDeletePopover,
+)(WebloomElementBase);

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
-
+type ActiveTheme = Exclude<Theme, 'system'>;
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -10,11 +10,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
+  activeTheme: ActiveTheme;
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: 'system',
+  activeTheme: 'light',
   setTheme: () => null,
 };
 
@@ -29,7 +31,9 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-
+  const [currentValue, setCurrentValue] = useState<ActiveTheme>(
+    theme as ActiveTheme,
+  );
   useEffect(() => {
     const root = window.document.documentElement;
 
@@ -40,7 +44,7 @@ export function ThemeProvider({
         .matches
         ? 'dark'
         : 'light';
-
+      setCurrentValue(systemTheme);
       root.classList.add(systemTheme);
       return;
     }
@@ -53,7 +57,9 @@ export function ThemeProvider({
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
+      if (theme !== 'system') setCurrentValue(theme);
     },
+    activeTheme: currentValue,
   };
 
   return (

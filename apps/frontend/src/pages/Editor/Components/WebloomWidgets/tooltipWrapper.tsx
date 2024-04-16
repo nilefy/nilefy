@@ -17,7 +17,9 @@ export function ToolTipWrapper({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="h-full w-full">{children}</TooltipTrigger>
+        <TooltipTrigger className="h-full w-full" asChild>
+          {children}
+        </TooltipTrigger>
         <TooltipContent>
           <p>{text}</p>
         </TooltipContent>

@@ -1,15 +1,16 @@
 import { faker } from '@faker-js/faker';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import {
-  permissionsToRoles,
-  roles,
-  usersToRoles,
-} from '../../drizzle/schema/schema';
+
 import { PermissionDto } from '../../dto/permissions.dto';
 import { CreateRoleDb, RoleInsertI } from '../../dto/roles.dto';
 import { generateFakeRole } from '../faker/role.faker';
 import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
+import {
+  DatabaseI,
+  permissionsToRoles,
+  roles,
+  usersToRoles,
+} from '@webloom/database';
 
 export async function rolesSeeder(
   db: DatabaseI,

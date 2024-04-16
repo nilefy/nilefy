@@ -1,168 +1,131 @@
-import ResizeAction from '@/Actions/Editor/Resize';
-import { commandManager } from '@/Actions/CommandManager';
+import ResizeAction, { ResizingKeys } from '@/actions/Editor/Resize';
+import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
-import { useEffect, useMemo } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useCallback, useMemo } from 'react';
+
 import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';
 
-const handlePositions = {
+const cornerPositions = {
   'top-left': [0, 0],
   'top-right': [0, 1],
   'bottom-left': [1, 0],
   'bottom-right': [1, 1],
+} as const;
+const mainDirectionPositions = {
   top: [0, 0.5],
   bottom: [1, 0.5],
   left: [0.5, 0],
   right: [0.5, 1],
 } as const;
+const borderStyles: {
+  [key in keyof typeof mainDirectionPositions]: string;
+} = {
+  top: 'after:absolute after:w-[16px] after:h-[7px] after:border after:rounded-full after:z-10 after:bg-white after:top-[calc(50%-2.5px)] after:left-[calc(50%-8px)] after:border-solid after:border-[1px] after:border-[#a9c0ff] after:outline-solid after:outline-white after:outline-[1px] absolute h-[12px] left-[-4px] w-[calc(100%+8px)] cursor-row-resize top-[-8.5px] before:absolute before:top-1/2 before:right-0 before:left-0 before:h-[1px] before:absolute before:content-[""] ',
+  bottom:
+    'after:absolute after:w-[16px] after:h-[7px] after:border after:rounded-full after:z-10 after:bg-white after:top-[calc(50%-2.5px)] after:left-[calc(50%-8px)] after:border-solid after:border-[1px] after:border-[#a9c0ff] after:outline-solid after:outline-white after:outline-[1px] absolute h-[12px] left-[-4px] w-[calc(100%+8px)] cursor-row-resize bottom-[-6.5px] before:absolute before:top-1/2 before:right-0 before:left-0 before:h-[1px] before:absolute before:content-[""] ',
+  left: 'after:absolute after:w-[7px] after:h-[16px] after:border after:rounded-full after:z-10 after:bg-white after:top-[calc(50%-8px)] after:left-[calc(50%-2.5px)] after:border-solid after:border-[1px] after:border-[#a9c0ff] after:outline-solid after:outline-white after:outline-[1px] absolute w-[12px] top-[-3px] h-[calc(100%+7px)] cursor-col-resize left-[-8.5px] before:absolute before:left-1/2 before:bottom-0 before:top-0 before:w-[1px] before:absolute before:content-[""] ',
+  right:
+    'after:absolute after:w-[7px] after:h-[16px] after:border after:rounded-full after:z-10 after:bg-white after:top-[calc(50%-8px)] after:left-[calc(50%-2.5px)] after:border-solid after:border-[1px] after:border-[#a9c0ff] after:outline-solid after:outline-white after:outline-[1px] absolute w-[12px] top-[-3px] h-[calc(100%+7px)] cursor-col-resize right-[-6.5px] before:absolute before:left-1/2 before:bottom-0 before:top-0 before:w-[1px] before:absolute before:content-[""]',
+};
+const cornerStyles: {
+  [key in keyof typeof cornerPositions]: string;
+} = {
+  'bottom-left':
+    'absolute w-[10px] h-[10px] left-[-5px] bottom-[-5px] cursor-sw-resize',
+  'bottom-right':
+    'absolute w-[10px] h-[10px] right-[-5px] bottom-[-5px] cursor-se-resize',
+  'top-left':
+    'absolute w-[10px] h-[10px] left-[-5px] top-[-5px] cursor-nw-resize',
+  'top-right':
+    'absolute w-[10px] h-[10px] right-[-5px] top-[-5px] cursor-ne-resize',
+};
 
-const cursors = {
-  'top-left': 'nwse-resize',
-  'top-right': 'nesw-resize',
-  'bottom-left': 'nesw-resize',
-  'bottom-right': 'nwse-resize',
-  top: 'ns-resize',
-  bottom: 'ns-resize',
-  left: 'ew-resize',
-  right: 'ew-resize',
+const isMainDirection = (
+  key: string,
+): key is keyof typeof mainDirectionPositions => {
+  return key in mainDirectionPositions;
+};
+const handlePositions = {
+  ...cornerPositions,
+  ...mainDirectionPositions,
 } as const;
 
-export const ResizeHandlers = observer(function ResizeHandlers() {
-  const selectedIds = editorStore.currentPage.selectedNodeIds;
-  const selectedIdsArray = Array.from(selectedIds);
-  useHotkeys('esc', () => {
-    commandManager.executeCommand(ResizeAction.cancel());
-  });
-  useEffect(() => {
-    const resizeHandler = (e: MouseEvent) => {
-      if (ResizeAction.resizingKey === null) return;
-      e.stopPropagation();
-      commandManager.executeCommand(
-        ResizeAction.move({
-          x: e.clientX,
-          y: e.clientY,
-        }),
-      );
-    };
-    const resizeEndHandler = (e: MouseEvent) => {
-      e.stopPropagation();
-      commandManager.executeCommand(
-        ResizeAction.end({
-          x: e.clientX,
-          y: e.clientY,
-        }),
-      );
-    };
+export const ResizeHandles = observer(function Handles({ id }: { id: string }) {
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const direction = widget.resizeDirection;
+  const allowedResizingHandles = useMemo(() => {
+    if (direction === 'Both') {
+      return Object.keys(handlePositions);
+    }
+    if (direction === 'Horizontal') {
+      return ['left', 'right'];
+    }
 
-    window.addEventListener('pointermove', resizeHandler);
-    window.addEventListener('pointerup', resizeEndHandler);
-    return () => {
-      window.removeEventListener('pointermove', resizeHandler);
-      window.removeEventListener('pointerup', resizeEndHandler);
-    };
+    return ['top', 'bottom'];
+  }, [direction]);
+
+  const isDragging = widget.isDragging;
+  const isSelected = widget.isSelected;
+  const isHovered = widget.isHovered;
+  const isVisible = !isDragging && (isSelected || isHovered);
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent, key: ResizingKeys) => {
+      e.stopPropagation();
+      const dims = widget.pixelDimensions;
+      commandManager.executeCommand(
+        ResizeAction.start(id, key, {
+          width: dims.width,
+          height: dims.height,
+          x: dims.x,
+          y: dims.y,
+        }),
+      );
+    },
+    [id, widget],
+  );
+  const handleResizeMouseUp = useCallback((e: React.MouseEvent) => {
+    commandManager.executeCommand(
+      ResizeAction.end({
+        x: e.clientX,
+        y: e.clientY,
+      }),
+    );
   }, []);
   return (
-    <>
-      {selectedIdsArray.map((id) => (
-        <Handles key={id} id={id} />
-      ))}
-    </>
-  );
-});
-
-const Handles = observer(function Handles({ id }: { id: string }) {
-  const node = editorStore.currentPage.getWidgetById(id);
-  const dims = node.pixelDimensions;
-
-  const direction = WebloomWidgets[node.type].config.resizingDirection;
-  const componentHandles = useMemo(
-    () =>
-      Object.entries(handlePositions).filter(([key]) => {
-        if (direction === 'Both') return true;
-        if (direction === 'Horizontal') {
-          return key === 'left' || key === 'right';
-        }
-        if (direction === 'Vertical') {
-          return key === 'top' || key === 'bottom';
-        }
-        return false;
-      }),
-    [direction],
-  );
-  const isDragging = editorStore.currentPage.draggedWidgetId === id;
-  const handleSize = 8;
-  const handleStyle: React.CSSProperties = {
-    position: 'absolute',
-    width: handleSize,
-    height: handleSize,
-    backgroundColor: 'white',
-    border: '1px solid black',
-    borderRadius: '50%',
-  };
-  const padding = 3;
-  return (
-    !isDragging && (
-      <div
-        className="touch-none select-none"
-        style={{
-          position: 'absolute',
-          top: dims.y,
-          left: dims.x,
-        }}
-      >
-        {componentHandles.map(([key, [y, x]]) => {
-          const width = dims.width;
-          const height = dims.height;
-          let left = 0;
-          if (x === 0) {
-            left = -handleSize / 2 - padding;
-          } else if (x === 1) {
-            left = width - handleSize / 2 + padding;
-          } else {
-            left = width / 2 - handleSize / 2;
-          }
-          let top = 0;
-          if (y === 0) {
-            top = -handleSize / 2 - padding;
-          } else if (y === 1) {
-            top = height - handleSize / 2 + padding;
-          } else {
-            top = height / 2 - handleSize / 2;
-          }
-          return (
-            <div
-              key={key}
-              className={`absolute touch-none ${key}`}
-              style={{
-                ...handleStyle,
-                top,
-                left,
-                cursor: cursors[key as keyof typeof cursors],
-              }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                commandManager.executeCommand(
-                  ResizeAction.start(id, key as keyof typeof cursors, {
-                    width: dims.width,
-                    height: dims.height,
-                    x: dims.x,
-                    y: dims.y,
-                  }),
-                );
-              }}
-              onPointerUp={(e) =>
-                commandManager.executeCommand(
-                  ResizeAction.end({
-                    x: e.clientX,
-                    y: e.clientY,
-                  }),
-                )
-              }
-            ></div>
-          );
-        })}
-      </div>
+    isVisible && (
+      <>
+        {allowedResizingHandles
+          .filter((key) => isMainDirection(key))
+          .map((key) => {
+            return (
+              <div
+                key={key}
+                id={'RESIZE_HANDLER' + widget.id + key}
+                className={borderStyles[key]}
+                onMouseDown={(e) => {
+                  handleResizeMouseDown(e, key);
+                }}
+                onMouseUp={handleResizeMouseUp}
+              ></div>
+            );
+          })}
+        {allowedResizingHandles
+          .filter((key) => !isMainDirection(key))
+          .map((key) => {
+            return (
+              <div
+                key={key}
+                id={'RESIZE_HANDLER' + widget.id + key}
+                className={cornerStyles[key as keyof typeof cornerStyles]}
+                onMouseDown={(e) => {
+                  handleResizeMouseDown(e, key as ResizingKeys);
+                }}
+                onMouseUp={handleResizeMouseUp}
+              ></div>
+            );
+          })}
+      </>
     )
   );
 });

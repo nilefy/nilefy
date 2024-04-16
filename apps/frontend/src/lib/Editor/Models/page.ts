@@ -12,20 +12,25 @@ import {
   convertGridToPixel,
   getBoundingRect,
   getGridBoundingRect,
-  isSameCoords,
   normalizeCoords,
 } from '../utils';
-import { EvaluationManager } from './evaluationManager';
-import { DependencyManager } from './dependencyManager';
+import { WorkerBroker } from './workerBroker';
+import { CursorManager } from './cursorManager';
+
+import { WebloomDisposable } from './interface';
+import { WebloomWidgets } from '@/pages/Editor/Components';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
-
-export class WebloomPage {
+export type NewWidgePayload = Omit<
+  ConstructorParameters<typeof WebloomWidget>[0],
+  'page'
+>;
+export class WebloomPage implements WebloomDisposable {
   id: string;
   name: string;
   handle: string;
   widgets: Record<string, WebloomWidget> = {};
-  mouseOverWidgetId: string | null = null;
+  hoveredWidgetId: string | null = null;
   /**
    * please note that those node always in the same level in the widgets tree
    */
@@ -35,34 +40,30 @@ export class WebloomPage {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
+  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
   };
   width: number = 0;
   height: number = 0;
-  // drilled from the editor
-  evaluationManger: EvaluationManager;
-  dependencyManager: DependencyManager;
-
+  readonly workerBroker: WorkerBroker;
   constructor({
     id,
     name,
     handle,
     widgets,
-    evaluationManger,
-    dependencyManager,
+    workerBroker,
   }: {
     id: string;
     name: string;
     handle: string;
     widgets: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
+    workerBroker: WorkerBroker;
   }) {
     makeObservable(this, {
       widgets: observable,
-      mouseOverWidgetId: observable,
+      hoveredWidgetId: observable,
       selectedNodeIds: observable,
       selectedNodesSize: computed,
       firstSelectedWidget: computed,
@@ -73,11 +74,11 @@ export class WebloomPage {
       shadowElement: observable,
       removeWidget: action,
       addWidget: action,
+      _addWidget: action,
       setDraggedWidgetId: action,
       setResizedWidgetId: action,
       setNewNode: action,
       setNewNodeTranslate: action,
-      setOverWidgetId: action,
       setSelectedNodeIds: action,
       setShadowElement: action,
       moveWidgetIntoGrid: action,
@@ -93,10 +94,16 @@ export class WebloomPage {
       setPageDimensions: action,
       adjustDimensions: action,
       snapshot: computed,
+      isDragging: computed,
+      isResizing: computed,
+      clearSelectedNodes: action,
+      setHoveredWidgetId: action,
+      removeSelectedNode: action,
+      selectAll: action,
     });
+
     this.id = id;
-    this.evaluationManger = evaluationManger;
-    this.dependencyManager = dependencyManager;
+    this.workerBroker = workerBroker;
     this.name = name;
     this.handle = handle;
     const widgetMap: Record<string, WebloomWidget> = {};
@@ -105,17 +112,27 @@ export class WebloomPage {
       widgetMap[widget.id] = new WebloomWidget({
         ...widget,
         page: this,
-        evaluationManger: this.evaluationManger,
-        dependencyManager: this.dependencyManager,
       });
     });
     this.widgets = widgetMap;
+
     // set the height of the page to the height of the root node because the root node is the tallest node in the page.
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
+
+    this.cursorManager = new CursorManager(this);
+  }
+  selectAll() {
+    this.selectedNodeIds = new Set(this.rootWidget.nodes);
   }
 
+  clearSelectedNodes() {
+    this.selectedNodeIds.clear();
+  }
+  setHoveredWidgetId(id: string | null) {
+    this.hoveredWidgetId = id;
+  }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;
   setSelectedNodeIds(
@@ -130,7 +147,9 @@ export class WebloomPage {
     this.selectedNodeIds.clear();
     tempIds.forEach((id) => this.selectedNodeIds.add(id));
   }
-
+  removeSelectedNode(id: string) {
+    this.selectedNodeIds.delete(id);
+  }
   get firstSelectedWidget() {
     return [...this.selectedNodeIds][0];
   }
@@ -159,9 +178,7 @@ export class WebloomPage {
   setNewNodeTranslate(point: Point | null) {
     this.newNodeTranslate = point;
   }
-  setOverWidgetId(id: string | null) {
-    this.mouseOverWidgetId = id;
-  }
+
   setShadowElement(element: ShadowElement | null) {
     this.shadowElement = element;
   }
@@ -172,20 +189,42 @@ export class WebloomPage {
    * @description adds a widget to the page.
    */
   addWidget(
-    widgetArgs: Omit<
-      ConstructorParameters<typeof WebloomWidget>[0],
-      'page' | 'evaluationManger' | 'dependencyManager'
-    >,
-  ) {
+    widgetArgs: Omit<ConstructorParameters<typeof WebloomWidget>[0], 'page'>,
+  ): string {
     const widget = new WebloomWidget({
       ...widgetArgs,
       page: this,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
     });
-    this.widgets[widget.id] = widget;
+    this._addWidget(widget);
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
+    const widgetConfig = WebloomWidgets[widgetArgs.type];
+    const ops: (() => void)[] = [];
+    // handle composed widgets
+    if (widgetConfig.blueprint) {
+      for (const child of widgetConfig.blueprint.children) {
+        let newCol = child.col || 0;
+        // This is kind of implicit, but whoever writes the config expects the col to be relative to the parent layout and this does that.
+        const newColPrecentage =
+          (newCol / widgetConfig.config.layoutConfig.colsCount) * 100;
+        newCol = Math.round((newColPrecentage / 100) * parent.columnsCount);
+        const id = this.addWidget({
+          ...child,
+          parentId: widget.id,
+          col: newCol,
+        });
+        if (child.onAttach) {
+          ops.push(() => {
+            child.onAttach!(this.widgets[id]);
+          });
+        }
+      }
+    }
+    ops.forEach((op) => op());
+    return widget.id;
+  }
+  _addWidget(widget: WebloomWidget) {
+    this.widgets[widget.id] = widget;
   }
   getWidgetById(id: string) {
     return this.widgets[id];
@@ -204,7 +243,12 @@ export class WebloomPage {
   setNewNode(node: WebloomWidget | null) {
     this.newNode = node;
   }
-
+  get isDragging() {
+    return this.draggedWidgetId !== null;
+  }
+  get isResizing() {
+    return this.resizedWidgetId !== null;
+  }
   /**
    *
    * @param id
@@ -240,7 +284,7 @@ export class WebloomPage {
       const parent = this.widgets[node.parentId];
       if (parent) parent.removeChild(nodeId);
       // remove from page
-      this.widgets[nodeId].cleanup();
+      this.widgets[nodeId].dispose();
       delete this.widgets[nodeId];
     }
     // return the stack of deleted widgets for undo
@@ -337,8 +381,12 @@ export class WebloomPage {
           },
         };
       } else {
+        const entity = this.getWidgetById(parent.id);
         const originalParentCoords = this.moveWidgetIntoGrid(parent.id, {
-          rowsCount: parent.rowsCount + newParentRowCount,
+          rowsCount:
+            entity.layoutMode === 'fixed'
+              ? undefined
+              : parent.rowsCount + newParentRowCount,
         });
         return {
           ...changedNodesOriginalCoords,
@@ -425,5 +473,9 @@ export class WebloomPage {
 
   snapshotWidgets() {
     return Object.values(this.widgets).map((widget) => widget.snapshot);
+  }
+  dispose(): void {
+    Object.values(this.widgets).forEach((widget) => widget.dispose());
+    this.cursorManager.dispose();
   }
 }

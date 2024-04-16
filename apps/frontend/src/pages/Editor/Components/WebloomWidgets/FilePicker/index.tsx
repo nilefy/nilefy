@@ -1,9 +1,12 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { UploadCloud } from 'lucide-react';
 import { ComponentPropsWithoutRef, useContext } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
@@ -38,7 +41,7 @@ const WebloomFilePicker = observer(() => {
 });
 const config: WidgetConfig = {
   name: 'File Picker',
-  icon: <UploadCloud />,
+  icon: UploadCloud,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
@@ -49,39 +52,33 @@ const config: WidgetConfig = {
   resizingDirection: 'Horizontal',
 };
 
-const defaultProps: WebloomFilePickerProps = {
+const initialProps: WebloomFilePickerProps = {
   value: undefined,
   label: 'Label',
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      label: {
-        type: 'string',
-        default: '',
+const inspectorConfig: EntityInspectorConfig<WebloomFilePickerProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Label',
+        },
+        path: 'label',
       },
-      value: {
-        type: 'string',
-      },
-    },
-    required: ['label'],
+    ],
   },
-  uiSchema: {
-    label: {
-      'ui:label': 'Label',
-      'ui:widget': 'inlineCodeInput',
-    },
-    value: { 'ui:widget': 'hidden' },
-  },
-};
+];
 
 const WebloomFilePickerWidget: Widget<WebloomFilePickerProps> = {
   component: WebloomFilePicker,
+  metaProps: new Set(['value']),
   config,
-  defaultProps,
-  schema,
+  initialProps,
+  inspectorConfig,
 };
 
 export { WebloomFilePickerWidget };

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import { permissions } from '../../drizzle/schema/schema';
+
 import { permissionTypes } from '../../dto/permissionsTypes';
+import { DatabaseI, permissions } from '@webloom/database';
 
 export async function permissionsSeeder(db: DatabaseI) {
   console.log('running PERMISSIONS seeder');

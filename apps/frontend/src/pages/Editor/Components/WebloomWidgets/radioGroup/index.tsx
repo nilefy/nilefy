@@ -1,24 +1,23 @@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Widget, WidgetConfig, selectOptions } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+  selectOptions,
+} from '@/lib/Editor/interface';
 import { CircleDot } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import { Label } from '@/components/ui/label';
-import {
-  EventTypes,
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
+import { z } from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 export type WebloomRadioProps = {
   options: selectOptions[];
   label: string;
   value: string;
-  events: WidgetsEventHandler;
 };
 
 const WebloomRadio = observer(() => {
@@ -30,18 +29,19 @@ const WebloomRadio = observer(() => {
       <Label>{props.label}</Label>
       <RadioGroup
         value={props.value}
+        loop={true}
         onValueChange={(e) => {
           onPropChange({
             key: 'value',
             value: e,
           });
           // execute user defined actions
-          editorStore.executeActions(id, 'change');
+          // editorStore.executeActions(id, 'change');
         }}
       >
         {props.options.map((option: selectOptions) => (
           <div className="flex items-center space-x-2" key={option.value}>
-            <RadioGroupItem id={option.value} value={option.value} />
+            <RadioGroupItem value={option.value} />
             <Label htmlFor={option.value}>{option.label}</Label>
           </div>
         ))}
@@ -52,7 +52,7 @@ const WebloomRadio = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Radio',
-  icon: <CircleDot />,
+  icon: CircleDot,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
@@ -63,7 +63,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomRadioProps = {
+const initialProps: WebloomRadioProps = {
   options: [
     { value: 'Option 1', label: 'Option 1' },
     { value: 'Option 2', label: 'Option 2' },
@@ -71,61 +71,55 @@ const defaultProps: WebloomRadioProps = {
   ],
   label: 'Radio',
   value: 'Option 1',
-  events: [],
 };
 
-const Events: EventTypes = {
-  change: 'Change',
-};
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      label: {
-        type: 'string',
-        default: defaultProps.label,
-      },
-      options: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            value: {
-              type: 'string',
-            },
-            label: {
-              type: 'string',
-            },
-          },
+const inspectorConfig: EntityInspectorConfig<WebloomRadioProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        path: 'label',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Label',
         },
       },
-      value: {
-        type: 'string',
+      {
+        label: 'Options',
+        path: 'options',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Options',
+        },
+        validation: zodToJsonSchema(
+          z
+            .array(
+              z.object({
+                label: z.string(),
+                value: z.string(),
+              }),
+            )
+            .default([]),
+        ),
       },
-      events: widgetsEventHandlerJsonSchema,
-    },
-    required: ['events', 'label', 'options'],
+    ],
   },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    events: genEventHandlerUiSchema(Events),
-    label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
-    },
-    options: {
-      'ui:widget': 'inlineCodeInput',
-    },
-  },
-};
+];
 
 export const WebloomRadioWidget: Widget<WebloomRadioProps> = {
   component: WebloomRadio,
   config,
-  defaultProps,
-  schema,
+  initialProps,
+  inspectorConfig,
+  publicAPI: {
+    value: {
+      description: 'Value of the radio',
+      type: 'static',
+      typeSignature: 'string',
+    },
+  },
+  metaProps: new Set(['value']),
 };
 
 export { WebloomRadio };

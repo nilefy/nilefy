@@ -1,6 +1,6 @@
 // import { z } from 'zod';
 import { createSelectSchema } from 'drizzle-zod';
-import { permissions as permissionsDrizzle } from '../drizzle/schema/schema';
+import { permissions as permissionsDrizzle } from '@webloom/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const permissionsSchema = createSelectSchema(permissionsDrizzle);

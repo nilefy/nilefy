@@ -1,5 +1,6 @@
 import { UndoableCommand, Command, isUndoableCommand } from './types';
 import { WebloomWebSocket } from './ws';
+import log from 'loglevel';
 
 export class CommandManager {
   // history is just a stack
@@ -24,7 +25,7 @@ export class CommandManager {
   public disconnectFromConnectedEditor() {
     if (this.socket === null) return;
     if (this.socket.socketState !== 1) return;
-    console.log('closing connection');
+    log.info('closing connection');
     this.socket.closeConnection();
     this.socket = null;
   }
@@ -34,7 +35,7 @@ export class CommandManager {
     if (cmd === null) return;
     const ret = cmd.execute();
     if (ret && this.socket !== null && this.socket.getState() === 'connected') {
-      console.log('method returned value i will send to remote', ret);
+      log.info('method returned value i will send to remote', ret);
       this.socket.sendMessage(JSON.stringify(ret));
     }
     if (cmd instanceof UndoableCommand || isUndoableCommand(cmd)) {
@@ -51,7 +52,7 @@ export class CommandManager {
     }
     const ret = cmd.undo();
     if (ret && this.socket !== null && this.socket.getState() === 'connected') {
-      console.log('method returned value from undo i will send to remote', ret);
+      log.info('method returned value from undo i will send to remote', ret);
       this.socket.sendMessage(JSON.stringify(ret));
     }
   }
