@@ -451,7 +451,7 @@ importers:
         version: 2.1.1(ajv@8.12.0)
       chart.js:
         specifier: ^4.4.1
-        version: 4.4.2
+        version: 4.4.1
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -538,7 +538,7 @@ importers:
         version: 18.2.0
       react-chartjs-2:
         specifier: ^5.2.0
-        version: 5.2.0(chart.js@4.4.2)(react@18.2.0)
+        version: 5.2.0(chart.js@4.4.1)(react@18.2.0)
       react-color:
         specifier: ^2.19.3
         version: 2.19.3(react@18.2.0)
@@ -2377,12 +2377,15 @@ packages:
 
   /@codemirror/language@6.10.1:
     resolution: {integrity: sha512-5GrXzrhq6k+gL5fjkAwt90nYDmjlzTIJV8THnxNFtNKWotMIlzzN+CpqxqwXOECnUdOndmSeWntVrVcv5axWRQ==}
+  /@codemirror/language@6.10.1:
+    resolution: {integrity: sha512-5GrXzrhq6k+gL5fjkAwt90nYDmjlzTIJV8THnxNFtNKWotMIlzzN+CpqxqwXOECnUdOndmSeWntVrVcv5axWRQ==}
     dependencies:
       '@codemirror/state': 6.4.1
       '@codemirror/view': 6.26.3
       '@lezer/common': 1.2.1
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.0
+      style-mod: 4.1.2
       style-mod: 4.1.2
     dev: false
 
@@ -3978,6 +3981,8 @@ packages:
       ajv: 6.12.6
       debug: 4.3.4
       espree: 9.6.1
+      globals: 13.24.0
+      ignore: 5.3.1
       globals: 13.24.0
       ignore: 5.3.1
       import-fresh: 3.3.0
@@ -7594,6 +7599,7 @@ packages:
       eslint: 8.57.0
       graphemer: 1.4.0
       ignore: 5.3.1
+      ignore: 5.3.1
       natural-compare: 1.4.0
       semver: 7.6.0
       ts-api-utils: 1.3.0(typescript@5.4.5)
@@ -7786,6 +7792,7 @@ packages:
       '@typescript-eslint/types': 7.7.0
       '@typescript-eslint/typescript-estree': 7.7.0(typescript@5.4.5)
       eslint: 8.57.0
+      semver: 7.6.0
       semver: 7.6.0
     transitivePeerDependencies:
       - supports-color
@@ -9023,9 +9030,9 @@ packages:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
     dev: true
 
-  /chart.js@4.4.2:
-    resolution: {integrity: sha512-6GD7iKwFpP5kbSD4MeRRRlTnQvxfQREy36uEtm1hzHzcOqwWx0YEHuspuoNlslu+nciLIB7fjjsHkUv/FzFcOg==}
-    engines: {pnpm: '>=8'}
+  /chart.js@4.4.1:
+    resolution: {integrity: sha512-C74QN1bxwV1v2PEujhmKjOZ7iUM4w6BWs23Md/6aOZZSlwMzeCIDGuZay++rBgChYru7/+QFeoQW0fQoP534Dg==}
+    engines: {pnpm: '>=7'}
     dependencies:
       '@kurkle/color': 0.3.2
     dev: false
@@ -10915,6 +10922,7 @@ packages:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.57.0)
       '@eslint-community/regexpp': 4.10.0
+      '@eslint-community/regexpp': 4.10.0
       '@eslint/eslintrc': 2.1.4
       '@eslint/js': 8.57.0
       '@humanwhocodes/config-array': 0.11.14
@@ -10937,7 +10945,9 @@ packages:
       find-up: 5.0.0
       glob-parent: 6.0.2
       globals: 13.24.0
+      globals: 13.24.0
       graphemer: 1.4.0
+      ignore: 5.3.1
       ignore: 5.3.1
       imurmurhash: 0.1.4
       is-glob: 4.0.3
@@ -12586,6 +12596,11 @@ packages:
   /ignore@5.3.1:
     resolution: {integrity: sha512-5Fytz/IraMjqpwfd34ke28PTVMjZjJG2MPn5t7OE4eUCUNf8BAa7b5WUS9/Qvr6mwOQS7Mk6vdsMno5he+T8Xw==}
     engines: {node: '>= 4'}
+
+  /ignore@5.3.1:
+    resolution: {integrity: sha512-5Fytz/IraMjqpwfd34ke28PTVMjZjJG2MPn5t7OE4eUCUNf8BAa7b5WUS9/Qvr6mwOQS7Mk6vdsMno5he+T8Xw==}
+    engines: {node: '>= 4'}
+    dev: true
 
   /image-size@1.1.1:
     resolution: {integrity: sha512-541xKlUw6jr/6gGuk92F+mYM5zaFAc5ahphvkqvNe2bQ6gVBkd6bfrmVJ2t4KDAfikAYZyIqTnktX3i6/aQDrQ==}
@@ -16826,13 +16841,13 @@ packages:
       pure-color: 1.3.0
     dev: false
 
-  /react-chartjs-2@5.2.0(chart.js@4.4.2)(react@18.2.0):
+  /react-chartjs-2@5.2.0(chart.js@4.4.1)(react@18.2.0):
     resolution: {integrity: sha512-98iN5aguJyVSxp5U3CblRLH67J8gkfyGNbiK3c+l1QI/G4irHMPQw44aEPmjVag+YKTyQ260NcF82GTQ3bdscA==}
     peerDependencies:
       chart.js: ^4.1.1
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      chart.js: 4.4.2
+      chart.js: 4.4.1
       react: 18.2.0
     dev: false
 
@@ -17807,6 +17822,7 @@ packages:
     engines: {node: '>= 10.13.0'}
     dependencies:
       '@types/json-schema': 7.0.15
+      '@types/json-schema': 7.0.15
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
@@ -17898,6 +17914,14 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+
+  /semver@7.6.0:
+    resolution: {integrity: sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -20060,6 +20084,7 @@ packages:
       '@webassemblyjs/wasm-parser': 1.12.1
       acorn: 8.11.3
       acorn-import-assertions: 1.9.0(acorn@8.11.3)
+      browserslist: 4.23.0
       browserslist: 4.23.0
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.16.0
