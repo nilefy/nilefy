@@ -4,6 +4,7 @@ import {
   makeObservable,
   observable,
   runInAction,
+  toJS,
 } from 'mobx';
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
@@ -25,6 +26,7 @@ import { MainThreadBroker } from './mainThreadBroker';
 import { getArrayPaths } from '../evaluation/utils';
 import { WebloomDisposable } from '../Models/interface';
 import { EditorState } from './editor';
+import { jsonToTs } from './tsServer/conversions';
 
 const defaultType = (path: string) => `const ${path}: unknown;`;
 const functionType = (
@@ -58,7 +60,6 @@ export class Entity implements WebloomDisposable {
   public readonly publicAPI: PublicApi;
   public actions: Record<string, (...args: unknown[]) => void> = {};
   private mainThreadBroker: MainThreadBroker;
-  public pathToType: Record<string, string> | null = null;
   // these are the props that are set by the setter, we map the path to the old value.
   public setterProps: Record<string, unknown> = {};
   private metaValues: Set<string>;
@@ -99,7 +100,7 @@ export class Entity implements WebloomDisposable {
       setValues: action,
       initDependecies: action,
       tsType: computed,
-      pathToType: observable,
+      pathToType: computed,
     });
     this.metaValues = metaValues;
     this.mainThreadBroker = mainThreadBroker;
@@ -126,17 +127,32 @@ export class Entity implements WebloomDisposable {
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
     this.initDependecies();
-    this.initTypes();
   }
 
-  initTypes() {
+  get pathToType() {
     const pathToType = entries(this.publicAPI)
       .map(([path, item]) => {
         if (item.type === 'static') {
           return [path, typedEntity(path, item.typeSignature)] as const;
-        }
-        if (item.type === 'function') {
+        } else if (item.type === 'function') {
           return [path, functionType(path, item.args, item.returns)] as const;
+        } else if (item.type === 'dynamic') {
+          return [
+            path,
+            typedEntity(
+              path,
+              jsonToTs(
+                path,
+                toJS(
+                  get(
+                    this.editorState.evaluationManager.evaluatedForest,
+                    [this.id, path],
+                    get(this.unevalValues, path),
+                  ),
+                ),
+              ),
+            ),
+          ] as const;
         } else {
           return [path, defaultType(path)] as const;
         }
@@ -148,9 +164,8 @@ export class Entity implements WebloomDisposable {
         },
         {} as Record<string, string>,
       );
-    runInAction(() => {
-      this.pathToType = pathToType;
-    });
+    console.log(pathToType);
+    return pathToType;
   }
 
   initDependecies() {

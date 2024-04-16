@@ -1,10 +1,11 @@
-import { sampleSize } from 'lodash';
-import JsonToTs from 'json-to-ts';
+import JsonToTs from 'nilefy-json-to-ts';
 const SAMPLE_SIZE = 30;
 
 export function jsonToTs(typeName: string, json: any) {
+  if (!json) return 'undefined';
   if (Array.isArray(json)) {
-    json = sampleSize(json, SAMPLE_SIZE);
+    json = json.slice(0, SAMPLE_SIZE);
   }
-  return JsonToTs(json, { rootName: typeName }).join('\n');
+  const res = JsonToTs(json, { named: false, dedupe: false })[0];
+  return res;
 }
