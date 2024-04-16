@@ -147,9 +147,10 @@ export class PagesService {
   async findOne(appId: number, pageId: number): Promise<CreatePageRetDto> {
     const p = await this.db.query.pages.findFirst({
       where: and(
+        isNull(pages.deletedAt),
+        isNull(pages.deletedById),
         eq(pages.appId, appId),
         eq(pages.id, pageId),
-        isNull(pages.deletedAt),
       ),
     });
     if (!p)
@@ -240,8 +241,6 @@ export class PagesService {
     }[],
     options?: { tx?: PgTrans },
   ) {
-    console.log('pages from import pages:');
-    console.log(pagesToInsert);
     const [p] = await (options?.tx ? options.tx : this.db)
       .insert(pages)
       .values(pagesToInsert)

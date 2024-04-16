@@ -19,12 +19,14 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import { pages } from '../drizzle/schema/appsState.schema';
+import { ComponentsService } from 'src/components/components.service';
 
 @Injectable()
 export class AppsService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
+    private componentsService: ComponentsService,
   ) {}
 
   // TODO: copy app state
@@ -243,7 +245,8 @@ export class AppsService {
     },
   ) {
     let app;
-    this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
+      // create app in db
       const createdApps = await tx
         .insert(apps)
         .values({
@@ -256,17 +259,17 @@ export class AppsService {
           appId: apps.id,
           createdById: apps.createdById,
         });
+      // get the app id, and user id
       app = createdApps[0];
-
       const appId = app.appId;
       const createdById = app.createdById;
 
+      // create the pages in the db
       const pagesToInsert = importAppDb.pages.map((page) => {
-        console.log(page);
         return { ...page, appId: appId, createdById: createdById };
       });
 
-      this.pagesService.importPages(pagesToInsert, { tx: tx });
+      let importedPages = await this.pagesService.importPages(pagesToInsert, { tx: tx });
       /*
       
       - insert components into db and store their id's
@@ -275,18 +278,17 @@ export class AppsService {
 
       */
 
-      console.log(pagesToInsert);
-
+      // console.log(pagesToInsert);
       const defaultPage = importAppDb.defaultPage;
-      console.log('hi');
-      console.log(defaultPage);
-      console.log('tree:');
+      console.log('!!!default page Tree:');
       console.log(defaultPage.tree);
-
-      // await tx.insert(pages).values(pagesToInsert);
-
-      // await this.pagesService.importPages();
-    });
+      console.log('end of default page');
+      // await this.componentsService.createTreeForPageImport(
+      //   importedPages.id,
+      //   importedPages.createdById,
+      //   defaultPage.tree,
+      //   { tx: tx },
+      // );
     return app;
   }
 }

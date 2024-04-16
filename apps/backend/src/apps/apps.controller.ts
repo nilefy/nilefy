@@ -83,6 +83,7 @@ export class AppsController {
     const app = await this.appsService.exportAppJSON(workspaceId, appId);
 
     const appJson = JSON.stringify(app);
+
     const stream: Readable = Readable.from([appJson]);
 
     return new StreamableFile(stream);
