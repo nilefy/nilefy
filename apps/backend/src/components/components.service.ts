@@ -9,7 +9,6 @@ import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
 import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
-  createComponentDb,
   CreateComponentDb,
   UpdateComponentDb,
   WebloomTree,
@@ -165,12 +164,6 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    console.log('from createTreeForPageImport: ');
-    console.log(componentsDto);
-    pageId;
-    componentsDto;
-    options;
-
     const [t] = await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values({
@@ -210,53 +203,6 @@ export class ComponentsService {
         }
       }
     }
-
-    const tree = await this.getTreeForPage(pageId);
-    console.log('Tree from db:');
-    console.log(tree);
-
-    const keys = Object.keys(componentsDto);
-    ///
-    /// nodes: keys.filter((k) => k !== EDITOR_CONSTANTS.ROOT_NODE_ID),
-    ///
-
-    // const [s] = await (options?.tx ? options.tx : this.db)
-    //   .insert(components)
-    //   .values({
-    //     id: componentsDto,
-    //     type: 'WebloomContainer',
-    //     pageId: pageId,
-    //     createdById: createdById,
-    //     parentId: null,
-    //     props: {
-    //       className: 'h-full w-full',
-    //       isCanvas: 'true',
-    //     },
-    //     col: 0,
-    //     row: 0,
-    //     columnsCount: 32,
-    //     rowsCount: 0,
-    //   })
-    //   .returning();
-
-    // console.log('output tree:');
-    // console.log(t);
-
-    // const [ta] = await (options?.tx ? options.tx : this.db)
-    //   .insert(components)
-    //   .values({
-    //     id: 'WebloomContainer16',
-    //     type: 'WebloomContainer',
-    //     pageId: pageId,
-    //     createdById: createdById,
-    //     parentId: '0',
-    //     props: { color: '#a883f2', layoutMode: 'fixed' },
-    //     col: 0,
-    //     row: 0,
-    //     columnsCount: 20,
-    //     rowsCount: 40,
-    //   })
-    //   .returning();
     return [t];
   }
 }
