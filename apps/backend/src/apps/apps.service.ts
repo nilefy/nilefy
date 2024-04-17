@@ -52,8 +52,6 @@ export class AppsService {
   async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
     const app = await this.db.transaction(async (tx) => {
       const [app] = await tx.insert(apps).values(createAppDto).returning();
-      // create default page for the app
-      [].forEach;
       const page = await this.pagesService.create(
         {
           name: 'page 1',
@@ -194,15 +192,6 @@ export class AppsService {
       return null;
     }
 
-    // todo: remove deleted pages (TypeScript type error)
-    // for (const page of app.pages) {
-    //   if (page.hasOwnProperty('deletedAt')) {
-    //     if (page['deletedAt'] != null) {
-    //       continue;
-    //     }
-    //   }
-    // }
-
     const omittedFields = [
       'id',
       'appId',
@@ -246,7 +235,6 @@ export class AppsService {
   ) {
     let app;
     await this.db.transaction(async (tx) => {
-      // create app in db
       const createdApps = await tx
         .insert(apps)
         .values({
@@ -259,32 +247,16 @@ export class AppsService {
           appId: apps.id,
           createdById: apps.createdById,
         });
-      // get the app id, and user id
       app = createdApps[0];
       const appId = app.appId;
       const createdById = app.createdById;
-
-      // create the pages in the db
       const pagesToInsert = importAppDb.pages.map((page) => {
         return { ...page, appId: appId, createdById: createdById };
       });
-
       const importedPages = await this.pagesService.importPages(pagesToInsert, {
         tx: tx,
       });
-      /*
-      
-      - insert components into db and store their id's
-
-      - add the nodes' id's to the root component
-
-      */
-
-      // console.log(pagesToInsert);
       const defaultPage = importAppDb.defaultPage;
-      // console.log('!!!default page Tree:');
-      // console.log(defaultPage.tree);
-      // console.log('end of default page');
       await this.componentsService.createTreeForPageImport(
         importedPages.id,
         importedPages.createdById,
