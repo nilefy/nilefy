@@ -34,8 +34,7 @@ import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
-// auth guard is on hold for this [PR] for testing purposes
-// @UseGuards(JwtGuard)
+@UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -72,13 +71,11 @@ export class AppsController {
   @Header('Content-Type', 'application/json')
   @Header('Content-Disposition', 'attachment; filename="webloom_app_5.json"')
   @ApiCreatedResponse({
-    description: 'get workspace app',
     type: AppRetDto,
   })
   async exportOne(
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
-    // @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
     const app = await this.appsService.exportAppJSON(workspaceId, appId);
 
@@ -98,12 +95,7 @@ export class AppsController {
   ) {
     try {
       const jsonData = JSON.parse(file.buffer.toString());
-
-      console.log('before');
-
-      // todo: uncomment after done
-      // let userId = req.user.userId;
-      const userId = 1;
+      const userId = req.user.userId;
 
       const createAppDto = {
         ...jsonData,
@@ -111,11 +103,7 @@ export class AppsController {
         createdById: userId,
       };
 
-      console.log('hello');
-      console.log('type: ' + typeof createAppDto);
-
-      const app = await this.appsService.importAppJSON(createAppDto);
-      console.log(app);
+      await this.appsService.importAppJSON(createAppDto);
     } catch (e) {
       console.log('An Error has occured while importing the app!');
       () => {
