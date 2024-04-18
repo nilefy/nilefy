@@ -5,34 +5,27 @@
     "lint": {
       "cache": false
     },
-    "e2e":{
+    "e2e": {
       "persistent": true,
       "cache": false
     },
-    "e2e:build":{
+    "e2e:build": {
       "cache": true,
       "dependsOn": ["db:reset", "build"],
       "dotEnv": [".env.test"]
     },
-    "start":{
-      "dependsOn": [
-        "build"
-      ],
+    "start": {
+      "dependsOn": ["build"],
       "cache": true,
       "persistent": true
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ]
-      
+      "dependsOn": ["^build"]
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "dotEnv": [".env"]
     },
     "db:push": {
@@ -53,6 +46,10 @@
     "test": {},
     "test:watch": {
       "cache": false
+    },
+    "start:prod": {
+      "cache": true,
+      "persistent": true
     }
   }
 }
