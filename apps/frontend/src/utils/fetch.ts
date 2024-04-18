@@ -9,12 +9,12 @@ export async function fetchX(...args: Parameters<typeof fetch>) {
   // if url starts with / add "api", if the url starts with http add nothing, if the url starts with https add nothing, if the url starts with anything else add "api\"
   let endpoint = url;
   if (typeof url === 'string' && url.startsWith('/')) {
-    endpoint = `api${url}`;
+    endpoint = `/api${url}`;
   } else {
     try {
       new URL(url as string);
     } catch {
-      endpoint = `api/${url}`;
+      endpoint = `/api/${url}`;
     }
   }
   const res = await fetch(endpoint, {
