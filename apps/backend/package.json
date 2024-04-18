@@ -23,7 +23,6 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.7.0",
     "@nestjs/common": "^10.2.9",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.2.9",
@@ -43,7 +42,6 @@
     "drizzle-orm": "^0.29.3",
     "drizzle-zod": "^0.5.1",
     "lodash": "4.17.21",
-    "mock-gcs": "^1.2.0",
     "morgan": "^1.10.0",
     "nanoid": "3",
     "nestjs-zod": "^3.0.0",
