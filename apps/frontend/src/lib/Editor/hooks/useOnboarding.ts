@@ -30,14 +30,42 @@ type WebloomStep = Omit<DriveStep, 'element'> & {
     | DriveStep['element']
     | (() => Promise<DriveStep['element']> | DriveStep['element']);
 };
+// Groups are skipped together when the next button is clicked
+type StepGroup = {
+  steps: WebloomStep[];
+  sideEffect?: () => void;
+  undoSideEffect?: () => void;
+};
 type WebloomDriverConfig = Omit<
   Config,
   'steps' | 'onNextClick' | 'onPrevClick'
 > & {
-  steps: WebloomStep[];
+  steps: (WebloomStep | StepGroup)[];
 };
-
-const webloomDriver = (config: WebloomDriverConfig) => {
+type ProcessedStep = WebloomStep & {
+  groupSideEffect?: () => void;
+  groupUndoSideEffect?: () => void;
+  jumpForward?: number;
+  jumpBackward?: number;
+};
+const webloomDriver = (_config: WebloomDriverConfig) => {
+  const config: Omit<WebloomDriverConfig, 'steps'> & {
+    steps: ProcessedStep[];
+  } = {
+    ..._config,
+    steps: _config.steps.flatMap((step) => {
+      if ('steps' in step) {
+        return step.steps.map((s, i) => ({
+          ...s,
+          groupSideEffect: step.sideEffect,
+          groupUndoSideEffect: step.undoSideEffect,
+          jumpForward: step.steps.length - i,
+          jumpBackward: i + 1,
+        }));
+      }
+      return step;
+    }),
+  };
   const stepsCopy = cloneDeep(config.steps);
   const state: {
     disposeOnceNext: (() => void) | null;
@@ -55,9 +83,6 @@ const webloomDriver = (config: WebloomDriverConfig) => {
   const setupStep = async (index: number) => {
     dispose();
     attachListeners(index);
-    await processStep(index);
-  };
-  const processStep = async (index: number) => {
     const steps = cloneDeep(stepsCopy);
     if (steps[index].element instanceof Function) {
       steps[index].element = await steps[index].element();
@@ -67,20 +92,35 @@ const webloomDriver = (config: WebloomDriverConfig) => {
   const customNextWithSideEffects: Config['onNextClick'] = async () => {
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
-    const newIndex = index + 1;
+    let jump = 1;
+    let groupSideEffect: (() => void) | undefined;
+    if (config.steps[index].jumpForward) {
+      jump = config.steps[index].jumpForward!;
+      groupSideEffect = config.steps[index].groupSideEffect;
+    }
+    const newIndex = index + jump;
     const step = config.steps[index];
-    step.sideEffect && step.sideEffect();
+    if (groupSideEffect) groupSideEffect();
+    else if (step.sideEffect) step.sideEffect();
     await setupStep(newIndex);
-    driverInstance.moveNext();
+    driverInstance.moveTo(newIndex);
   };
   const customPrevWithSideEffects: Config['onPrevClick'] = async () => {
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
-    const newIndex = index - 1;
-    const step = config.steps[index];
-    step.undoSideEffect && step.undoSideEffect();
+    let jump = -1;
+    let groupUndoSideEffect: (() => void) | undefined;
+    const prev = index - 1;
+    const step = config.steps[prev];
+    if (step.jumpBackward) {
+      jump = -step.jumpBackward!;
+      groupUndoSideEffect = step.groupUndoSideEffect;
+    }
+    const newIndex = index + jump;
+    if (groupUndoSideEffect) groupUndoSideEffect();
+    else if (step.undoSideEffect) step.undoSideEffect();
     await setupStep(newIndex);
-    driverInstance.movePrevious();
+    driverInstance.moveTo(newIndex);
   };
   const customNext = async () => {
     const index = driverInstance.getActiveIndex();
@@ -97,7 +137,7 @@ const webloomDriver = (config: WebloomDriverConfig) => {
     driverInstance.movePrevious();
   };
   const attachListeners = (index: number) => {
-    const step = config.steps[index];
+    const step = stepsCopy[index];
     if (step.onceNext) {
       state.disposeOnceNext = when(step.onceNext, () => {
         customNext();
@@ -126,7 +166,7 @@ const webloomDriver = (config: WebloomDriverConfig) => {
   return driverInstance;
 };
 
-const steps: WebloomStep[] = [
+const steps: (WebloomStep | StepGroup)[] = [
   {
     popover: {
       title: 'Welcome to Nilefy',
@@ -135,6 +175,7 @@ const steps: WebloomStep[] = [
       showButtons: ['next', 'close'],
     },
   },
+  //todo ensure that the insert tab is selected
   {
     element: '#right-sidebar',
     popover: {
@@ -144,31 +185,50 @@ const steps: WebloomStep[] = [
     },
   },
   {
-    element: '#new-WebloomButton-widget',
-    popover: {
-      title: 'Drag',
-      description: 'try dragging this widget',
-      showButtons: ['previous', 'close'],
+    sideEffect: () => {
+      editorStore.currentPage.addWidget({
+        type: 'WebloomButton',
+        parentId: '0',
+        row: 20,
+        col: 20,
+      });
     },
-    sideEffect() {},
-    onceNext: () => {
-      return editorStore.currentPage.isPrematureDragging;
+    undoSideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      editorStore.currentPage.removeWidget(widgetId);
     },
-  },
-  {
-    element: () => editorStore.currentPage.rootWidget.dom!,
-    popover: {
-      title: 'Drop',
-      description: 'Now drop it into the canvas',
-      side: 'top',
-      showButtons: ['close'],
-    },
-    onceNext: () => {
-      return keys(editorStore.currentPage.widgets).length > 1;
-    },
-    oncePrev: () => {
-      return !editorStore.currentPage.isPrematureDragging;
-    },
+    steps: [
+      {
+        element: '#new-WebloomButton-widget',
+        popover: {
+          title: 'Drag',
+          description: 'try dragging this widget',
+          showButtons: ['previous', 'close', 'next'],
+        },
+        onceNext: () => {
+          return editorStore.currentPage.isPrematureDragging;
+        },
+      },
+      {
+        element: () => editorStore.currentPage.rootWidget.dom!,
+        popover: {
+          title: 'Drop',
+          description: 'Now drop it into the canvas',
+          side: 'top',
+          showButtons: ['close', 'next'],
+        },
+        onceNext: () => {
+          return keys(editorStore.currentPage.widgets).length > 1;
+        },
+        oncePrev: () => {
+          return !editorStore.currentPage.isPrematureDragging;
+        },
+        undoSideEffect: () => {
+          const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+          editorStore.currentPage.removeWidget(widgetId);
+        },
+      },
+    ],
   },
   {
     element: async () => {
@@ -180,12 +240,15 @@ const steps: WebloomStep[] = [
     popover: {
       title: 'Select Widget',
       description: 'Now click on the widget you just dropped',
-      showButtons: ['close'],
+      showButtons: ['close', 'previous'],
     },
     onceNext: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       return widget.isTheOnlySelected;
+    },
+    undoSideEffect: () => {
+      editorStore.currentPage.clearSelectedNodes();
     },
   },
   {
