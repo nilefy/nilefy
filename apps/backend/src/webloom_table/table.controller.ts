@@ -78,6 +78,7 @@ export class WebloomDbController {
     workspaceId: number,
     @Param('id', ParseIntPipe) tableId: number,
   ) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.webloomDbService.delete(workspaceId, tableId);
   }
 }

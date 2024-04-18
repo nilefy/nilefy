@@ -205,6 +205,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       this.db.transaction(async (tx) => {
+        // eslint-disable-next-line drizzle/enforce-delete-with-where
         await this.componentsService.delete(socket.pageId, nodesId, { tx });
         await Promise.all(
           sideEffects.map((c) => {

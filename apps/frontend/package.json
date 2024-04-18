@@ -1,13 +1,13 @@
 {
-  "name": "frontend",
-  "description": "frontend ",
+  "name": "nilefy",
+  "description": "Nilefy: Low code platform for developers",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview --port 5173",
+    "dev": "vite --clearScreen false",
+    "build": "tsc && vite build",
+    "serve": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

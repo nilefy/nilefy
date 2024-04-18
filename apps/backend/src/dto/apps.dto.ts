@@ -43,13 +43,7 @@ export class AppDto extends createZodDto(appSchema) {}
 export class CreateAppDto extends createZodDto(createAppSchema) {}
 export class UpdateAppDto extends createZodDto(updateAppSchema) {}
 
-export const createAppRetSchema = appSchema.extend({
-  pages: z.array(
-    pageSchema.extend({
-      tree: z.record(z.string(), z.unknown()),
-    }),
-  ),
-});
+export const createAppRetSchema = appSchema;
 export class CreateAppRetDto extends createZodDto(createAppRetSchema) {}
 
 export const appRetSchema = appSchema.extend({
