@@ -15,7 +15,6 @@ export function generateFakeWorkspace(
     updatedById: faker.helpers.arrayElement([...ids, null]),
     deletedById: faker.helpers.arrayElement([...ids, null]),
     createdAt: faker.date.past(),
-    deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),
   };
 }
