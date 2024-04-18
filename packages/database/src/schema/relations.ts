@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations } from "drizzle-orm";
 import {
   users,
   workspaces,
@@ -11,61 +11,60 @@ import {
   permissionsToRoles,
   roles,
   accounts,
-} from './schema';
+} from "./schema";
 import {
   workspaceDataSources,
   dataSources,
   queries,
   jsQueries,
-} from './data_sources.schema';
-import { components, jsLibraries, pages } from './appsState.schema';
+} from "./data_sources.schema";
+import { components, jsLibraries, pages } from "./appsState.schema";
 
 // to remove Disambiguating relations
 // @link https://orm.drizzle.team/docs/rqb#disambiguating-relations
 // users
-const userWorkspaceRelation = 'userWorkspaces';
-const userAppRelation = 'userApps';
-const userWebloomTablesRelation = 'userTables';
-const userUserInWorkspacesRelation = 'userworkspaceUsers';
-const workspaceUserInWorkspacesRelation = 'workspaceworkspaceUsers';
+const userWorkspaceRelation = "userWorkspaces";
+const userAppRelation = "userApps";
+const userWebloomTablesRelation = "userTables";
+const userUserInWorkspacesRelation = "userworkspaceUsers";
+const workspaceUserInWorkspacesRelation = "workspaceworkspaceUsers";
 // workspaces
-const workspaceAppsRelation = 'workspaceApps';
-const workspaceWebloomTablesRelation = 'workspaceWebloomTables';
-const userUpdateWorkspaceRelation = 'lastUpdatedWorkspaces';
-const userDeleteWorkspaceRelation = 'DeletedWorkspaces';
-const userUpdateAppRelation = 'lastUpdatedApps';
-const userDeleteAppRelation = 'DeletedApps';
-const webloomTablesColumnsRelation = 'webloomTablesColumns';
+const workspaceAppsRelation = "workspaceApps";
+const workspaceWebloomTablesRelation = "workspaceWebloomTables";
+const userUpdateWorkspaceRelation = "lastUpdatedWorkspaces";
+const userUpdateAppRelation = "lastUpdatedApps";
+const userDeleteAppRelation = "DeletedApps";
+const webloomTablesColumnsRelation = "webloomTablesColumns";
 // groups
 // const userUsersInGroupRelation = 'useruserInGroup';
 // const groupUsersInGroupRelation = 'groupuserInGroup';
 // const groupGroupRolesRelation = 'groupgroupRoles';
 // const roleGroupRolesRelation = 'rolegroupRoles';
 // roles
-const userUsersInRoleRelation = 'userUsersInRole';
-const roleUsersInRoleRelation = 'roleUsersInRole';
-const workspaceRolesRelation = 'workspaceRoles';
+const userUsersInRoleRelation = "userUsersInRole";
+const roleUsersInRoleRelation = "roleUsersInRole";
+const workspaceRolesRelation = "workspaceRoles";
 // permissions
-const permissionPermissionsInRoleRelation = 'permissionpermissionsInRole';
-const rolePermissionsInRoleRelation = 'rolepermissionsInRole';
+const permissionPermissionsInRoleRelation = "permissionpermissionsInRole";
+const rolePermissionsInRoleRelation = "rolepermissionsInRole";
 
 // apps
-const pagesToappsRelation = 'pagesinapp';
+const pagesToappsRelation = "pagesinapp";
 
 // data sources/queries
-const dataSourceWorkspaceRelation = 'dataSource';
-const workspaceDataSourcesRelation = 'workspaceDataSources';
-const userDataSourceRelation = 'userDataSource';
-const userUpdateDataSourceRelation = 'lastUpdatedDataSource';
-const userQueriesRelation = 'userQueries';
-const userUpdateQueryRelation = 'lastUpdatedQuery';
-const appQueriesRelation = 'appQueries';
-const appJsQueriesRelation = 'appjsquery';
-const appJsLibrariesRelation = 'appjsLibraries';
-const wsDataSourceQueriesRelation = 'dataSourceQueriesRelation';
+const dataSourceWorkspaceRelation = "dataSource";
+const workspaceDataSourcesRelation = "workspaceDataSources";
+const userDataSourceRelation = "userDataSource";
+const userUpdateDataSourceRelation = "lastUpdatedDataSource";
+const userQueriesRelation = "userQueries";
+const userUpdateQueryRelation = "lastUpdatedQuery";
+const appQueriesRelation = "appQueries";
+const appJsQueriesRelation = "appjsquery";
+const appJsLibrariesRelation = "appjsLibraries";
+const wsDataSourceQueriesRelation = "dataSourceQueriesRelation";
 
-const componentsToPageRelation = 'componentsToPage';
-const componentParentRelation = 'componentParent';
+const componentsToPageRelation = "componentsToPage";
+const componentParentRelation = "componentParent";
 
 export const usersRelations = relations(users, ({ many }) => {
   return {
@@ -83,9 +82,6 @@ export const usersRelations = relations(users, ({ many }) => {
     }),
     DeletedApps: many(apps, {
       relationName: userDeleteAppRelation,
-    }),
-    lastDeletedWorkspaces: many(workspaces, {
-      relationName: userDeleteWorkspaceRelation,
     }),
 
     /**
@@ -143,11 +139,6 @@ export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
     references: [users.id],
     relationName: userUpdateWorkspaceRelation,
   }),
-  deletedBy: one(users, {
-    fields: [workspaces.deletedById],
-    references: [users.id],
-    relationName: userDeleteWorkspaceRelation,
-  }),
   apps: many(apps, { relationName: workspaceAppsRelation }),
   webloomTables: many(webloomTables, {
     relationName: workspaceWebloomTablesRelation,
@@ -191,9 +182,8 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
   jsQueries: many(jsQueries, {
     relationName: appJsQueriesRelation,
   }),
-  jsLibraries: many(jsLibraries,{
+  jsLibraries: many(jsLibraries, {
     relationName: appJsLibrariesRelation,
-  
   }),
 
   pages: many(pages, {
@@ -217,7 +207,7 @@ export const webloomTableRelations = relations(
       references: [workspaces.id],
       relationName: workspaceWebloomTablesRelation,
     }),
-  }),
+  })
 );
 
 export const webloomColumnRelations = relations(webloomColumns, ({ one }) => ({
@@ -298,7 +288,7 @@ export const workspaceDataSourcesRelations = relations(
     dataSourceQueries: many(queries, {
       relationName: wsDataSourceQueriesRelation,
     }),
-  }),
+  })
 );
 
 export const dataSourcesRelations = relations(dataSources, ({ many }) => ({
@@ -359,7 +349,7 @@ export const permissionsToRolesRelations = relations(
       references: [roles.id],
       relationName: rolePermissionsInRoleRelation,
     }),
-  }),
+  })
 );
 
 export const usersToRolesRelations = relations(usersToRoles, ({ one }) => ({
@@ -401,7 +391,7 @@ export const usersToWorkspacesRelations = relations(
       references: [workspaces.id],
       relationName: workspaceUserInWorkspacesRelation,
     }),
-  }),
+  })
 );
 
 export const pagesRelations = relations(pages, ({ many, one }) => {

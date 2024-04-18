@@ -199,7 +199,6 @@ export const workspaces = pgTable("workspaces", {
   imageUrl: text("imageUrl"),
   ...timeStamps,
   updatedById: integer("updated_by_id").references(() => users.id),
-  deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
 export const usersToWorkspaces = pgTable(
