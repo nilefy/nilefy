@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "lint": "eslint src .vitest --fix",
-    "typecheck": "tsc --project tsconfig.json --noEmit"
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "clear": "rm -rf node_modules dist .turbo"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.10.2",

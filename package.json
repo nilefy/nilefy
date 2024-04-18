@@ -5,18 +5,22 @@
   "main": "index.js",
   "scripts": {
     "dev": "dotenv turbo dev",
+    "build": "dotenv turbo run build --filter=!docs",
+    "start:backend:prod": "dotenv turbo start:prod --filter=backend",
+    "start:docker": "pnpm start:backend:prod",
     "start": "dotenv turbo start",
     "docs:start": "dotenv turbo run start --workspace=docs",
     "dev:docs": "dotenv turbo dev --workspace=docs",
     "lint": "turbo lint",
-    "db:push": "dotenv turbo db:push",
-    "db:studio": "cd apps/backend && pnpm db:studio",
-    "db:seed": "dotenv turbo db:seed",
+    "db:push": "cd packages/database && dotenv -e ../../.env pnpm db:push",
+    "db:studio": "cd packages/database && dotenv -e ../../.env pnpm db:studio",
+    "db:seed": "cd apps/backend && dotenv -e ../../.env pnpm db:seed",
     "db:reset": "dotenv turbo db:reset",
     "typecheck": "turbo typecheck",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e\""
+    "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e\"",
+    "clear": "turbo run clear"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -29,7 +33,7 @@
     "concurrently": "^8.2.2",
     "dotenv": "^16.3.1",
     "dotenv-cli": "^7.3.0",
-    "turbo": "^1.12.4",
+    "turbo": "^1.13.2",
     "typescript": "^5.2.2",
     "wait-on": "^7.2.0"
   },

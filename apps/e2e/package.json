@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "e2e": "playwright test --ui",
-    "e2e:ui": "playwright test --ui"
+    "e2e:ui": "playwright test --ui",
+    "clear": "rm -rf node_modules dist .turbo"
   },
   "keywords": [],
   "author": "",

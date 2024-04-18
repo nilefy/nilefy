@@ -19,5 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "moduleResolution": "Node"
-  }
+  },
+  "exclude": ["node_modules"],
+  "include": ["src/**/*"]
 }
