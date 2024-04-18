@@ -1,4 +1,4 @@
-import ResizeAction, { ResizingKeys } from '@/actions/Editor/Resize';
+import ResizeAction, { ResizingKeys } from '@/actions/editor/Resize';
 import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
 import { useCallback, useMemo } from 'react';

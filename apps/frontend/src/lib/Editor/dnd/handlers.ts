@@ -18,7 +18,7 @@ import {
   handleParentCollisions,
 } from '../collisions';
 import { commandManager } from '@/actions/CommandManager';
-import DragAction from '@/actions/Editor/Drag';
+import DragAction from '@/actions/editor/Drag';
 import { toJS } from 'mobx';
 import { uniqueId } from 'lodash';
 function snapCenterToCursor({

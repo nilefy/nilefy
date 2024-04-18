@@ -1,5 +1,5 @@
 import { commandManager } from '@/actions/CommandManager';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { DeleteAction } from '@/actions/editor/Delete';
 import {
   ContextMenu,
   ContextMenuContent,

@@ -18,7 +18,7 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
-import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
+import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
 import { useAutoRun } from '@/lib/Editor/hooks';
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;

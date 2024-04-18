@@ -22,7 +22,7 @@ import { debounce, reduce } from 'lodash';
 import { klona } from 'klona';
 import { Entity } from './entity';
 import { commandManager } from '@/actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { ChangePropAction } from '@/actions/editor/changeProps';
 import { EntityActionConfig } from '../evaluation/interface';
 const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
   scrollIntoView: {

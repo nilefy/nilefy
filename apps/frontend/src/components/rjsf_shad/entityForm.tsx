@@ -9,7 +9,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import invariant from 'invariant';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { commandManager } from '@/actions/CommandManager';
-import { ChangePropAction } from '@/actions/Editor/changeProps';
+import { ChangePropAction } from '@/actions/editor/changeProps';
 
 export type EntityFormContextT = {
   entityId: string;

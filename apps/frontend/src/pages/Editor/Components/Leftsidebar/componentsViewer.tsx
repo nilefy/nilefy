@@ -7,12 +7,12 @@ import { WebloomWidgets } from '..';
 import { cn } from '@/lib/cn';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import { commandManager } from '@/actions/CommandManager';
-import { RemoteSelectEntity } from '@/actions/Editor/remoteSelectEntity';
-import { WidgetSelection } from '@/actions/Editor/selection';
+import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
+import { WidgetSelection } from '@/actions/editor/selection';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { PopoverTrigger } from '@radix-ui/react-popover';
 import { Button } from '@/components/ui/button';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { DeleteAction } from '@/actions/editor/Delete';
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
