@@ -1,0 +1,20 @@
+{
+  "name": "@tooling/nestjs-webpack",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "files": [
+    "webpack.config.js"
+  ],
+  "scripts": {
+    "clear": "rm -rf node_modules dist .turbo"
+  },
+  "dependencies": {
+    "@swc/cli": "0.3.12",
+    "@swc/core": "1.4.15",
+    "swc-loader": "0.2.6"
+  },
+  "peerDependencies": {
+    "@nestjs/cli": "^10.3.2"
+  }
+}
