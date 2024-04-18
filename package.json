@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "dotenv turbo dev",
+    "build": "dotenv turbo run build --filter=!docs",
+    "start:docker": "dotenv turbo start:prod --filter=backend",
     "start": "dotenv turbo start",
     "docs:start": "dotenv turbo run start --workspace=docs",
     "dev:docs": "dotenv turbo dev --workspace=docs",

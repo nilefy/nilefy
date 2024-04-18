@@ -1,5 +1,5 @@
 import { commandManager } from '@/actions/CommandManager';
-import ResizeAction from '@/actions/Editor/Resize';
+import ResizeAction from '@/actions/editor/Resize';
 import { useEffect } from 'react';
 
 export const useInitResizing = () => {
