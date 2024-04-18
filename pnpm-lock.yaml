@@ -464,6 +464,9 @@ importers:
       deep-diff:
         specifier: ^1.0.2
         version: 1.0.2
+      driver.js:
+        specifier: ^1.3.1
+        version: 1.3.1
       fast-equals:
         specifier: ^5.0.1
         version: 5.0.1
@@ -10570,6 +10573,10 @@ packages:
     dependencies:
       wordwrap: 1.0.0
     dev: true
+
+  /driver.js@1.3.1:
+    resolution: {integrity: sha512-MvUdXbqSgEsgS/H9KyWb5Rxy0aE6BhOVT4cssi2x2XjmXea6qQfgdx32XKVLLSqTaIw7q/uxU5Xl3NV7+cN6FQ==}
+    dev: false
 
   /drizzle-kit@0.20.13:
     resolution: {integrity: sha512-j9oZSQXNWG+KBJm0Sg3S/zJpncHGKnpqNfFuM4NUxUMGTcihDHhP9SW6Jncqwb5vsP1Xm0a8JLm3PZUIspC/oA==}

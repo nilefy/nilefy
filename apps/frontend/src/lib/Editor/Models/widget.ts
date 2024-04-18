@@ -275,6 +275,7 @@ export class WebloomWidget
   get isDragging() {
     return this.page.draggedWidgetId === this.id;
   }
+
   get isResizing() {
     return this.page.resizedWidgetId === this.id;
   }

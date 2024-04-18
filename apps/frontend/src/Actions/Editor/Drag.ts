@@ -3,7 +3,7 @@ import { RemoteTypes, UndoableCommand, UpdateNodesPayload } from '../types';
 
 import { DraggedItem } from '@/lib/Editor/dnd/interface';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
+import { WidgetTypes } from '@/pages/Editor/Components';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
