@@ -1,3 +1,4 @@
+import { Document, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 export const configSchema = z.object({
@@ -35,6 +36,7 @@ const query = z.discriminatedUnion('operation', [
     filter: z.record(z.string(), z.unknown()),
     update: z.record(z.string(), z.unknown()),
     multiple: z.boolean().optional(),
+    returnDoc: z.boolean().optional(),
   }),
   z.object({
     operation: z.literal('Replace Document'),
@@ -42,6 +44,7 @@ const query = z.discriminatedUnion('operation', [
     collection: z.string().min(1),
     filter: z.record(z.string(), z.unknown()),
     replacement: z.record(z.string(), z.unknown()),
+    returnDoc: z.boolean().optional(),
   }),
   z.object({
     operation: z.literal('Delete Document'),
@@ -49,12 +52,22 @@ const query = z.discriminatedUnion('operation', [
     collection: z.string().min(1),
     filter: z.record(z.string(), z.unknown()),
     multiple: z.boolean().optional(),
+    returnDoc: z.boolean().optional(),
   }),
 ]);
 
 export const querySchema = z.object({
   query: query,
 });
+
+export type UpdateDocRetT = {
+  id: ObjectId | null;
+  documents: (Document | null)[];
+};
+export type DeleteDocRetT = {
+  deletedCount: number;
+  documents: (Document | null)[];
+};
 
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;

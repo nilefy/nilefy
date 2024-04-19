@@ -1,4 +1,4 @@
-import { QueryT } from './types';
+import { DeleteDocRetT, QueryT, UpdateDocRetT } from './types';
 import { mongodb as OPERATIONS } from '../common/operations';
 import { MongoClient, ObjectId, Document } from 'mongodb';
 
@@ -77,67 +77,147 @@ export const countDocuments = async (
     .countDocuments(filter);
 };
 
-// TODO: add return the document option
 export const updateDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.UPDATE_DOC }>,
   client: MongoClient,
-): Promise<ObjectId | null> => {
-  const { database, collection, filter, update, multiple } = query;
+): Promise<UpdateDocRetT> => {
+  const { database, collection, filter, update, multiple, returnDoc } = query;
   if (!multiple) {
+    if (!returnDoc) {
+      const doc = await client
+        .db(database)
+        .collection(collection)
+        .updateOne(filter, update, {
+          // set the upsert option to insert a document if no documents match the filter
+          upsert: false,
+        });
+      return {
+        id: doc.upsertedId,
+        documents: [],
+      };
+    }
     const doc = await client
       .db(database)
       .collection(collection)
-      .updateOne(filter, update, {
-        // set the upsert option to insert a document if no documents match the filter
+      .findOneAndUpdate(filter, update, {
         upsert: false,
       });
-    return doc.upsertedId;
+    return {
+      id: doc ? doc._id : null,
+      documents: [doc],
+    };
   }
-  const docs = await client
+
+  const docs = await findDocument(
+    {
+      operation: 'Find Document',
+      database,
+      collection,
+      filter,
+      multiple: true,
+    },
+    client,
+  );
+  const ret = await client
     .db(database)
     .collection(collection)
     .updateMany(filter, update, {
       upsert: false,
     });
-  return docs.upsertedId;
+
+  if (ret.upsertedId) {
+    docs.push(
+      await findDocument(
+        {
+          operation: 'Find Document',
+          database,
+          collection,
+          filter: {
+            _id: ret.upsertedId,
+          },
+        },
+        client,
+      ),
+    );
+  }
+  return {
+    id: ret.upsertedId,
+    documents: docs,
+  };
 };
 
-/**
- * TODO: add return the document option
- *
- * The value of the _id field remains the same unless you explicitly specify a new value for _id in the replacement document
- */
+// The value of the _id field remains the same unless you explicitly specify a new value for _id in the replacement document
 export const replaceDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.REPLACE_DOC }>,
   client: MongoClient,
-): Promise<ObjectId | null> => {
-  const { database, collection, filter, replacement } = query;
-  const doc = await client
-    .db(database)
-    .collection(collection)
-    .replaceOne(filter, replacement, {
-      // set the upsert option to insert a document if no documents match the filter
-      upsert: false,
-    });
-  return doc.upsertedId;
-};
-
-// TODO: add return the document option
-export const deleteDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.DELETE_DOC }>,
-  client: MongoClient,
-): Promise<number> => {
-  const { database, collection, filter, multiple } = query;
-  if (!multiple) {
+): Promise<UpdateDocRetT> => {
+  const { database, collection, filter, replacement, returnDoc } = query;
+  if (!returnDoc) {
     const doc = await client
       .db(database)
       .collection(collection)
-      .deleteOne(filter);
-    return doc.deletedCount;
+      .replaceOne(filter, replacement, {
+        // set the upsert option to insert a document if no documents match the filter
+        upsert: false,
+      });
+    return {
+      id: doc.upsertedId,
+      documents: [],
+    };
   }
-  const docs = await client
+  const doc = await client
+    .db(database)
+    .collection(collection)
+    .findOneAndReplace(filter, replacement, {
+      upsert: false,
+    });
+  return {
+    id: doc ? doc._id : null,
+    documents: [doc],
+  };
+};
+
+export const deleteDocument = async (
+  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.DELETE_DOC }>,
+  client: MongoClient,
+): Promise<DeleteDocRetT> => {
+  const { database, collection, filter, multiple, returnDoc } = query;
+  if (!multiple) {
+    if (!returnDoc) {
+      const doc = await client
+        .db(database)
+        .collection(collection)
+        .deleteOne(filter);
+      return {
+        deletedCount: doc.deletedCount,
+        documents: [null],
+      };
+    }
+    const doc = await client
+      .db(database)
+      .collection(collection)
+      .findOneAndDelete(filter);
+    return {
+      deletedCount: +(doc !== null),
+      documents: [doc],
+    };
+  }
+  const docs = await findDocument(
+    {
+      operation: 'Find Document',
+      database,
+      collection,
+      filter,
+      multiple: true,
+    },
+    client,
+  );
+  const ret = await client
     .db(database)
     .collection(collection)
     .deleteMany(filter);
-  return docs.deletedCount;
+  return {
+    deletedCount: ret.deletedCount,
+    documents: docs,
+  };
 };
