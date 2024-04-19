@@ -1,41 +1,38 @@
 import {
   Body,
   Controller,
-  Get,
-  HttpException,
-  Param,
+  InternalServerErrorException,
   Post,
 } from '@nestjs/common';
 import { EncryptionService } from './encryption.service';
+import { DecryptStringDto, EncryptStringDto } from '../dto/encryption.dto';
 
 @Controller('encryption')
 export class EncryptionController {
   constructor(readonly encryptionService: EncryptionService) {}
-  @Post()
-  async encrypt(@Body('plain') plainText: string): Promise<string> {
-    const encryptedText = this.encryptionService.encrypt(plainText);
+  @Post('encrypt')
+  async encrypt(@Body() encryptStringDto: EncryptStringDto): Promise<string> {
+    console.log('encryptStringDto', encryptStringDto);
+    const encryptedText = this.encryptionService.encrypt(
+      encryptStringDto.plain?.toString(),
+    );
     if (!encryptedText) {
-      throw new HttpException(
-        'Encrypted text not found: ' +
-          encryptedText?.toString() +
-          ' for plain text: ' +
-          plainText,
-        404,
+      throw new InternalServerErrorException(
+        'An error has occured while encrypting the text',
       );
     }
     return encryptedText;
   }
 
-  @Post()
-  async decrypt(@Body('encrypted') plainText: string): Promise<string> {
-    const encryptedText = this.encryptionService.encrypt(plainText);
+  @Post('decrypt')
+  async decrypt(@Body() decryptStringDto: DecryptStringDto): Promise<string> {
+    console.log(decryptStringDto);
+    const encryptedText = this.encryptionService.decrypt(
+      decryptStringDto.ciphered,
+    );
     if (!encryptedText) {
-      throw new HttpException(
-        'Encrypted text not found: ' +
-          encryptedText?.toString() +
-          ' for plain text: ' +
-          plainText,
-        404,
+      throw new InternalServerErrorException(
+        'An error has occured while decrypting the text',
       );
     }
     return encryptedText;

@@ -34,16 +34,16 @@ export class EncryptionService {
       return iv.toString(this.encoding) + encrypted.toString(this.encoding);
     } catch (e) {
       throw new HttpException(
-        'an error has occured/ encryption service: ' + e + '. KEY: ' + this.KEY,
+        'an error has occured encryption service: ' + e,
         404,
       );
     }
   }
   decrypt(cipherText: string) {
-    const { encryptedDataString, ivString } =
-      this.splitEncryptedText(cipherText);
-
     try {
+      const { encryptedDataString, ivString } =
+        this.splitEncryptedText(cipherText);
+
       const iv = Buffer.from(ivString, this.encoding);
       const encryptedText = Buffer.from(encryptedDataString, this.encoding);
 
