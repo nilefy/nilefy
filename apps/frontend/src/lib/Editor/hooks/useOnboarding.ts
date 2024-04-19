@@ -5,7 +5,7 @@ import { cloneDeep, isUndefined, keys } from 'lodash';
 import { useEffect, useRef } from 'react';
 import { editorStore } from '../Models';
 import { commandManager } from '@/actions/CommandManager';
-import DragAction from '@/actions/Editor/Drag';
+import DragAction from '@/actions/editor/Drag';
 
 type WebloomStep = Omit<DriveStep, 'element'> & {
   /**

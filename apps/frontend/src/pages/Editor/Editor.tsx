@@ -24,7 +24,7 @@ import {
 } from '@/lib/Editor/hooks';
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 import { BottomPanel } from './Components/BottomPanel';
-import { LeftSidebar } from './Components/Leftsidebar';
+import { LeftSidebar } from './Components/LeftSidebar';
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
