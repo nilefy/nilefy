@@ -1,6 +1,8 @@
 import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
+import scrollIntoView from 'scroll-into-view-if-needed';
+
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
@@ -29,10 +31,11 @@ const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
     type: 'SIDE_EFFECT',
     name: 'scrollIntoView',
     fn: (entity: WebloomWidget) => {
-      entity.dom?.scrollIntoView({
+      scrollIntoView(entity.dom!, {
+        scrollMode: 'if-needed',
+        skipOverflowHiddenElements: true,
         behavior: 'smooth',
         block: 'center',
-        inline: 'center',
       });
     },
   },

@@ -41,7 +41,12 @@ export const Editor = observer(() => {
   }, [editorRef]);
   const throttledResize = useThrottle(handleResize, 100);
   return (
-    <div className=" flex h-full max-h-full w-full flex-col overflow-hidden bg-transparent">
+    <div
+      className=" flex h-full max-h-full w-full flex-col bg-transparent"
+      style={{
+        overflow: 'clip',
+      }}
+    >
       <div className="h-fit w-full">
         <EditorHeader />
       </div>
