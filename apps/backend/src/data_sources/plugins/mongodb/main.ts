@@ -1,6 +1,7 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { configSchema, ConfigT, QueryT } from './types';
+import { mongodb as OPERATIONS } from '../common/operations';
 import { MongoClient } from 'mongodb';
 
 export default class MongoDBQueryService
@@ -29,19 +30,19 @@ export default class MongoDBQueryService
 
   async runQuery(query: QueryT['query'], client: MongoClient) {
     switch (query.operation) {
-      case 'Create Document':
+      case OPERATIONS.CREATE_DOC:
         return;
-      case 'Find Document':
+      case OPERATIONS.FIND_DOC:
         return;
-      case 'View Database Collections':
+      case OPERATIONS.VIEW_COLLECTIONS:
         return;
-      case 'View Collection Documents':
+      case OPERATIONS.VIEW_DOCS:
         return;
-      case 'Update Document':
+      case OPERATIONS.UPDATE_DOC:
         return;
-      case 'Replace Document':
+      case OPERATIONS.REPLACE_DOC:
         return;
-      case 'Delete Document':
+      case OPERATIONS.DELETE_DOC:
         return;
     }
   }
