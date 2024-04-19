@@ -1,9 +1,43 @@
-import { Controller, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import { EncryptionService } from './encryption.service';
 
-@Controller('enc')
+@Controller('encryption')
 export class EncryptionController {
-  @Get('/')
-  async getEncryption(): Promise<string> {
-    return 'encryption';
+  constructor(readonly encryptionService: EncryptionService) {}
+  @Post()
+  async encrypt(@Body('plain') plainText: string): Promise<string> {
+    const encryptedText = this.encryptionService.encrypt(plainText);
+    if (!encryptedText) {
+      throw new HttpException(
+        'Encrypted text not found: ' +
+          encryptedText?.toString() +
+          ' for plain text: ' +
+          plainText,
+        404,
+      );
+    }
+    return encryptedText;
+  }
+
+  @Post()
+  async decrypt(@Body('encrypted') plainText: string): Promise<string> {
+    const encryptedText = this.encryptionService.encrypt(plainText);
+    if (!encryptedText) {
+      throw new HttpException(
+        'Encrypted text not found: ' +
+          encryptedText?.toString() +
+          ' for plain text: ' +
+          plainText,
+        404,
+      );
+    }
+    return encryptedText;
   }
 }

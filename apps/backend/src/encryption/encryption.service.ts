@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from 'src/evn.validation';
 import * as crypto from 'crypto';
@@ -19,7 +23,8 @@ export class EncryptionService {
   encrypt(plaintext: string) {
     try {
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-cbc', this.KEY, iv);
+      const key_in_bytes = Buffer.from(this.KEY, 'base64');
+      const cipher = crypto.createCipheriv('aes-256-cbc', key_in_bytes, iv);
 
       const encrypted = Buffer.concat([
         cipher.update(plaintext, 'utf-8'),
@@ -28,7 +33,10 @@ export class EncryptionService {
 
       return iv.toString(this.encoding) + encrypted.toString(this.encoding);
     } catch (e) {
-      console.error(e);
+      throw new HttpException(
+        'an error has occured/ encryption service: ' + e + '. KEY: ' + this.KEY,
+        404,
+      );
     }
   }
   decrypt(cipherText: string) {
@@ -39,12 +47,15 @@ export class EncryptionService {
       const iv = Buffer.from(ivString, this.encoding);
       const encryptedText = Buffer.from(encryptedDataString, this.encoding);
 
-      const decipher = crypto.createDecipheriv('aes-256-cbc', this.KEY, iv);
+      const key_in_bytes = Buffer.from(this.KEY, 'base64');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key_in_bytes, iv);
 
       const decrypted = decipher.update(encryptedText);
       return Buffer.concat([decrypted, decipher.final()]).toString();
     } catch (e) {
-      console.error(e);
+      throw new InternalServerErrorException(
+        'an error has occured/ decryption service: ' + e,
+      );
     }
   }
 }
