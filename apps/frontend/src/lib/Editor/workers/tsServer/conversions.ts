@@ -13,6 +13,32 @@ export function jsonToTs(typeName: string, json: any) {
     }`;
     return res;
   } catch (_) {
-    return 'unknown';
+    return inferPrimitives(json);
   }
+}
+
+
+export function inferPrimitives(json: any) {
+  if (typeof json === 'string') {
+    return 'string';
+  }
+  if (typeof json === 'number') {
+    return 'number';
+  }
+  if (typeof json === 'boolean') {
+    return 'boolean';
+  }
+  if (json === null) {
+    return 'null';
+  }
+  if(json === undefined) {
+    return 'undefined';
+  }
+  if (Array.isArray(json)) {
+    return 'array';
+  }
+  if (typeof json === 'object') {
+    return 'object';
+  }
+  return 'unknown';
 }

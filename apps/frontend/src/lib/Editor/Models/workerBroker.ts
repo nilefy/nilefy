@@ -75,7 +75,15 @@ export class WorkerBroker implements WebloomDisposable {
     this.disposables.push(
       ...[
         () => this.worker.terminate(),
-        reaction(() => this.queue.length, this.debouncePostMessege),
+        reaction(
+          () => {
+            return this.queue.length;
+          },
+          this.debouncePostMessege,
+          {
+            fireImmediately: true,
+          },
+        ),
         () => this.worker.removeEventListener('message', handler),
       ],
     );

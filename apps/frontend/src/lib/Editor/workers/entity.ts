@@ -164,7 +164,6 @@ export class Entity implements WebloomDisposable {
         },
         {} as Record<string, string>,
       );
-    console.log(pathToType);
     return pathToType;
   }
 
