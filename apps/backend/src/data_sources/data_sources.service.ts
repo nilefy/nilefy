@@ -27,11 +27,7 @@ export class DataSourcesService {
   ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
-    console.log('before:');
-    console.log(dataSourceDto.config.value);
-    this.encryptValues(dataSourceDto);
-    console.log('After');
-    console.log(dataSourceDto.config);
+    // this.encryptValues(dataSourceDto);
     const [dataSource] = await this.db
       .insert(workspaceDataSources)
       .values(dataSourceDto)
@@ -212,6 +208,18 @@ export class DataSourcesService {
         obj.hasOwnProperty('value')
       ) {
         obj['value'] = this.encryptionService.encrypt(obj['value'] as string);
+      }
+    }
+  }
+  printConfig(obj: any, indent: number = 0) {
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+        const indentation = ' '.repeat(indent * 2);
+        console.log(`${indentation}${key}:`, value);
+        if (typeof value === 'object' && value !== null) {
+          this.printConfig(value, indent + 1);
+        }
       }
     }
   }
