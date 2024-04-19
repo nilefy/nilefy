@@ -12,6 +12,10 @@ import {
   pluginConfigForm as restApiConfigForm,
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
+import {
+  pluginConfigForm as mongodbConfigForm,
+  queryConfigForm as mongodbQueryConfigForm,
+} from '../../data_sources/plugins/mongodb/types';
 import { DatabaseI, dataSources as dataSourcesSchema } from '@webloom/database';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
@@ -47,6 +51,14 @@ export async function dataSourcesSeeder(db: DatabaseI) {
               'Connect with REST API endpoints and create queries to interact with it.';
           }
           break;
+        case 'mongodb':
+          {
+            dataSourceConfig = mongodbConfigForm;
+            queryConfig = mongodbQueryConfigForm;
+            image = 'https://www.svgrepo.com/show/373845/mongo.svg';
+            description = 'Connect to MongoDB to read and write data.';
+          }
+          break;
         case 'azure blob storage':
           {
             dataSourceConfig = [];
@@ -65,13 +77,6 @@ export async function dataSourcesSeeder(db: DatabaseI) {
               'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
             description =
               'Connect to GCS buckets and perform various operations on them.';
-          }
-          break;
-          {
-            dataSourceConfig = [];
-            queryConfig = [];
-            image = 'https://www.svgrepo.com/show/373644/graphql.svg';
-            description = 'Connect with GraphQL endpoints to run queries.';
           }
           break;
         default: {
