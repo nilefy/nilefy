@@ -42,7 +42,7 @@ export class EditorState implements WebloomDisposable {
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
-  queryPanel: {
+  queryPanel!: {
     addMenuOpen: boolean;
   };
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};

@@ -7,19 +7,35 @@ import { editorStore } from '../Models';
 import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/editor/Drag';
 
+const asyncQuerySelector = async (
+  selector: string,
+  interval: number = 20,
+  retries: number = 15,
+) => {
+  let i = 0;
+  while (i < retries) {
+    const element = document.querySelector(selector);
+    if (element) return element;
+    await new Promise((resolve) => setTimeout(resolve, interval));
+    i++;
+  }
+  return null;
+};
+
+type SideEffect = () => Promise<void> | void;
 type WebloomStep = Omit<DriveStep, 'element'> & {
   /**
    *
    * @description Side effect to be executed when next button is clicked
    */
-  sideEffect?: () => void;
+  sideEffect?: SideEffect;
   /**
    *
    * @description Side effect to be executed when previous button is clicked
    */
-  undoSideEffect?: () => void;
+  undoSideEffect?: SideEffect;
   /**
-   * @description runs before oncePrev
+   * @description Ideally every effect should have a corresponding undo effect.
    * @returns observes changes in the editor state and returns true if next step should be the current step
    */
   onceNext?: () => boolean;
@@ -28,6 +44,10 @@ type WebloomStep = Omit<DriveStep, 'element'> & {
    * @returns observes changes in the editor state and returns true if previous step should be the current step
    */
   oncePrev?: () => boolean;
+  /**
+   * @description if set to true, the active interaction will be disabled
+   */
+  disableActiveInteraction?: boolean;
   element?:
     | DriveStep['element']
     | (() => Promise<DriveStep['element']> | DriveStep['element']);
@@ -35,8 +55,8 @@ type WebloomStep = Omit<DriveStep, 'element'> & {
 // Groups are skipped together when the next button is clicked
 type StepGroup = {
   steps: WebloomStep[];
-  sideEffect?: () => void;
-  undoSideEffect?: () => void;
+  sideEffect?: SideEffect;
+  undoSideEffect?: SideEffect;
 };
 type WebloomDriverConfig = Omit<
   Config,
@@ -45,8 +65,8 @@ type WebloomDriverConfig = Omit<
   steps: (WebloomStep | StepGroup)[];
 };
 type ProcessedStep = WebloomStep & {
-  groupSideEffect?: () => void;
-  groupUndoSideEffect?: () => void;
+  groupSideEffect?: SideEffect;
+  groupUndoSideEffect?: SideEffect;
   jumpForward?: number;
   jumpBackward?: number;
 };
@@ -82,6 +102,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     state.disposeOnceNext && state.disposeOnceNext();
     state.disposeOncePrev && state.disposeOncePrev();
   };
+
   const setupStep = async (index: number) => {
     dispose();
     attachListeners(index);
@@ -91,27 +112,41 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     }
     config.steps[index] = steps[index];
   };
+  const setDisableActiveInteraction = (index: number) => {
+    // When this function is called it's either a string or an element never a function
+    const element = config.steps[index].element as DriveStep['element'];
+    const stepDisableActiveInteraction =
+      config.steps[index].disableActiveInteraction;
+    const elemObj =
+      typeof element === 'string' ? document.querySelector(element) : element;
+    if (isUndefined(elemObj)) return;
+    if (stepDisableActiveInteraction === true) {
+      // https://github.com/kamranahmedse/driver.js/blob/master/src/highlight.ts#L162
+      elemObj?.classList.add('driver-no-interaction');
+    }
+  };
   const customNextWithSideEffects: Config['onNextClick'] = async () => {
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     let jump = 1;
-    let groupSideEffect: (() => void) | undefined;
+    let groupSideEffect: SideEffect | undefined;
     if (config.steps[index].jumpForward) {
       jump = config.steps[index].jumpForward!;
       groupSideEffect = config.steps[index].groupSideEffect;
     }
     const newIndex = index + jump;
     const step = config.steps[index];
-    if (groupSideEffect) groupSideEffect();
-    else if (step.sideEffect) step.sideEffect();
+    if (groupSideEffect) await groupSideEffect();
+    else if (step.sideEffect) await step.sideEffect();
     await setupStep(newIndex);
     driverInstance.moveTo(newIndex);
+    setDisableActiveInteraction(newIndex);
   };
   const customPrevWithSideEffects: Config['onPrevClick'] = async () => {
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     let jump = -1;
-    let groupUndoSideEffect: (() => void) | undefined;
+    let groupUndoSideEffect: SideEffect | undefined;
     const prev = index - 1;
     const step = config.steps[prev];
     if (step.jumpBackward) {
@@ -119,10 +154,11 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
       groupUndoSideEffect = step.groupUndoSideEffect;
     }
     const newIndex = index + jump;
-    if (groupUndoSideEffect) groupUndoSideEffect();
-    else if (step.undoSideEffect) step.undoSideEffect();
+    if (groupUndoSideEffect) await groupUndoSideEffect();
+    else if (step.undoSideEffect) await step.undoSideEffect();
     await setupStep(newIndex);
     driverInstance.moveTo(newIndex);
+    setDisableActiveInteraction(newIndex);
   };
   const customNext = async () => {
     const index = driverInstance.getActiveIndex();
@@ -130,6 +166,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     const newIndex = index + 1;
     await setupStep(newIndex);
     driverInstance.moveNext();
+    setDisableActiveInteraction(newIndex);
   };
   const customPrev = async () => {
     const index = driverInstance.getActiveIndex();
@@ -137,6 +174,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     const newIndex = index - 1;
     await setupStep(newIndex);
     driverInstance.movePrevious();
+    setDisableActiveInteraction(newIndex);
   };
   const attachListeners = (index: number) => {
     const step = stepsCopy[index];
@@ -185,6 +223,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       description:
         'This is the widgets panels where you can drag and drop widgets to the canvas',
     },
+    disableActiveInteraction: true,
   },
   {
     sideEffect: () => {
@@ -261,6 +300,7 @@ const steps: (WebloomStep | StepGroup)[] = [
     onceNext: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
+      if (!widget) return false;
       return widget.isTheOnlySelected;
     },
     undoSideEffect: () => {
@@ -274,6 +314,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       description:
         'You can inspect and edit the properties of the selected widget here',
     },
+    disableActiveInteraction: true,
   },
   {
     element: () => {
@@ -299,12 +340,17 @@ const steps: (WebloomStep | StepGroup)[] = [
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       const text = widget.finalValues.text as string;
-      return text === 'Hello World';
+      return text.trim() === 'Hello World';
     },
     sideEffect: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       widget.setValue('text', '{{"Hello World"}}');
+    },
+    undoSideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      widget.setValue('text', '');
     },
   },
   {
@@ -318,6 +364,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       title: 'Binding 3/3',
       description: `You can see the code you wrote has been automatically evaluated and rendered`,
     },
+    disableActiveInteraction: true,
   },
   {
     element: '#bottom-panel',
@@ -326,12 +373,19 @@ const steps: (WebloomStep | StepGroup)[] = [
       description: `You can add datasources and queries here, Datasources are like blueprint for queries, Nilefy
       has many built-in datasources, you can also create your own. Queries are used to fetch data from datasources`,
     },
+    disableActiveInteraction: true,
   },
   {
     element: '#add-new-query-trigger',
     popover: {
       title: 'Datasources and Queries 2/5',
       description: `Click here to add a new query`,
+    },
+    sideEffect: () => {
+      editorStore.setQueryPanelAddMenuOpen(true);
+    },
+    undoSideEffect: () => {
+      editorStore.setQueryPanelAddMenuOpen(false);
     },
     onceNext: () => {
       return editorStore.queryPanel.addMenuOpen;
@@ -342,13 +396,38 @@ const steps: (WebloomStep | StepGroup)[] = [
     popover: {
       title: 'Datasources and Queries 3/5',
       description: `Select new JS Query`,
+      nextBtnText: 'Skip',
+    },
+    sideEffect: async () => {
+      await editorStore.queriesManager.addJSquery.mutateAsync({
+        dto: {
+          settings: {},
+          query: '',
+        },
+      });
+      await asyncQuerySelector('#query-form');
+      editorStore.setQueryPanelAddMenuOpen(false);
+    },
+    undoSideEffect: async () => {
+      await editorStore.queriesManager.deleteJSquery.mutateAsync({
+        queryId: keys(editorStore.queries)[0],
+      });
+      editorStore.setQueryPanelAddMenuOpen(true);
     },
     onceNext: () => {
       return keys(editorStore.queries).length > 0;
     },
+    oncePrev: () => {
+      return (
+        keys(editorStore.queries).length !== 0 &&
+        !editorStore.queryPanel.addMenuOpen
+      );
+    },
   },
   {
-    element: '#query-form',
+    element: async () => {
+      return (await asyncQuerySelector('#query-form'))!;
+    },
     popover: {
       title: 'Datasources and Queries 4/5',
       description: `You just made your first query, JS queries are used to return data and/or perform side effects`,

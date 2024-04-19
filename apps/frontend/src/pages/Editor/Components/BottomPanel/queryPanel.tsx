@@ -204,7 +204,7 @@ export const QueryPanel = observer(function QueryPanel() {
     'id' | 'source' | 'dateModified'
   >('id');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
-  const { workspaceId, appId } = useParams();
+  const { workspaceId } = useParams();
 
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
@@ -415,8 +415,6 @@ export const QueryPanel = observer(function QueryPanel() {
                 id="add-new-js-query"
                 onClick={() => {
                   editorStore.queriesManager.addJSquery.mutate({
-                    appId: +appId!,
-                    workspaceId: +workspaceId!,
                     dto: {
                       query: '',
                       settings: {},
@@ -431,10 +429,7 @@ export const QueryPanel = observer(function QueryPanel() {
                 <DropdownMenuItem
                   key={item.dataSource.type}
                   onClick={() => {
-                    if (!workspaceId || !appId) throw new Error();
                     editorStore.queriesManager.addQuery.mutate({
-                      workspaceId: +workspaceId,
-                      appId: +appId,
                       dto: {
                         dataSourceId: item.id,
                         id: getNewEntityName(item.name),
@@ -521,20 +516,15 @@ export const QueryPanel = observer(function QueryPanel() {
                         size={'icon'}
                         variant={'ghost'}
                         onClick={() => {
-                          if (!workspaceId || !appId) throw new Error();
                           const query = editorStore.getQueryById(item.id);
                           if (!query) throw new Error('Query not found');
                           if (query instanceof WebloomJSQuery) {
                             editorStore.queriesManager.deleteJSquery.mutate({
-                              workspaceId: +workspaceId,
-                              appId: +appId,
                               queryId: item.id,
                             });
                             return;
                           }
                           editorStore.queriesManager.deleteQuery.mutate({
-                            workspaceId: +workspaceId,
-                            appId: +appId,
                             queryId: item.id,
                           });
                         }}
