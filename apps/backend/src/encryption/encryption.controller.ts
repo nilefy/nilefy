@@ -1,4 +1,9 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 
-@Controller('encryption')
-export class EncryptionController {}
+@Controller('enc')
+export class EncryptionController {
+  @Get('/')
+  async getEncryption(): Promise<string> {
+    return 'encryption';
+  }
+}
