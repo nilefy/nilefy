@@ -3,6 +3,15 @@ import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { configSchema, ConfigT, QueryT } from './types';
 import { mongodb as OPERATIONS } from '../common/operations';
 import { MongoClient } from 'mongodb';
+import {
+  createDocument,
+  deleteDocument,
+  findDocument,
+  replaceDocument,
+  updateDocument,
+  viewCollections,
+  countDocuments,
+} from './operations';
 
 export default class MongoDBQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -15,6 +24,7 @@ export default class MongoDBQueryService
       configSchema.parse(dataSourceConfig);
       const client = this.connect(dataSourceConfig);
       const data = await this.runQuery(query.query.query, client);
+      await client.close();
       return {
         statusCode: 200,
         data,
@@ -31,19 +41,19 @@ export default class MongoDBQueryService
   async runQuery(query: QueryT['query'], client: MongoClient) {
     switch (query.operation) {
       case OPERATIONS.CREATE_DOC:
-        return;
+        return createDocument(query, client);
       case OPERATIONS.FIND_DOC:
-        return;
+        return findDocument(query, client);
       case OPERATIONS.VIEW_COLLECTIONS:
-        return;
-      case OPERATIONS.VIEW_DOCS:
-        return;
+        return viewCollections(query, client);
+      case OPERATIONS.COUNT_DOCS:
+        return countDocuments(query, client);
       case OPERATIONS.UPDATE_DOC:
-        return;
+        return updateDocument(query, client);
       case OPERATIONS.REPLACE_DOC:
-        return;
+        return replaceDocument(query, client);
       case OPERATIONS.DELETE_DOC:
-        return;
+        return deleteDocument(query, client);
     }
   }
 
