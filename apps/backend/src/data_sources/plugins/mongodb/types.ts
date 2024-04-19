@@ -1,5 +1,6 @@
 import { Document, ObjectId } from 'mongodb';
 import { z } from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 export const configSchema = z.object({
   uri: z.string().min(1),
@@ -72,6 +73,185 @@ export type DeleteDocRetT = {
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
 
-// TODO
-export const pluginConfigForm = {};
-export const queryConfigForm = {};
+export const pluginConfigForm = {
+  schema: zodToJsonSchema(configSchema, 'configSchema'),
+  uiSchema: {
+    uri: {
+      'ui:widget': 'textarea',
+      'ui:title': 'Connection String',
+      'ui:placeholder': 'Enter Connection String URI',
+    },
+  },
+};
+
+const operations = [
+  'Create Document',
+  'Find Document',
+  'View Database Collections',
+  'Count Documents',
+  'Update Document',
+  'Replace Document',
+  'Delete Document',
+];
+export const queryConfigForm = {
+  schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: operations,
+            default: operations[0],
+          },
+        },
+        required: ['operation'],
+        dependencies: {
+          operation: {
+            oneOf: [
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[0]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  documents: {
+                    type: 'array',
+                  },
+                },
+                required: ['collection', 'documents'],
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[1]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  filter: {
+                    type: 'object',
+                  },
+                  multiple: {
+                    type: 'boolean',
+                  },
+                },
+                required: ['collection', 'filter'],
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[2]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                },
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[3]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  filter: {
+                    type: 'object',
+                  },
+                },
+                required: ['collection'],
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[4]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  filter: {
+                    type: 'object',
+                  },
+                  update: {
+                    type: 'object',
+                  },
+                  multiple: {
+                    type: 'boolean',
+                  },
+                  'return document': {
+                    type: 'boolean',
+                  },
+                },
+                required: ['collection', 'filter', 'update'],
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[5]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  filter: {
+                    type: 'object',
+                  },
+                  replacement: {
+                    type: 'object',
+                  },
+                  'return document': {
+                    type: 'boolean',
+                  },
+                },
+                required: ['collection', 'filter', 'replacement'],
+              },
+              {
+                properties: {
+                  operation: {
+                    enum: [operations[6]],
+                  },
+                  database: {
+                    type: 'string',
+                  },
+                  collection: {
+                    type: 'string',
+                  },
+                  filter: {
+                    type: 'object',
+                  },
+                  multiple: {
+                    type: 'boolean',
+                  },
+                  'return document': {
+                    type: 'boolean',
+                  },
+                },
+                required: ['collection', 'filter'],
+              },
+            ],
+          },
+        },
+      },
+    },
+    required: ['query'],
+    additionalProperties: false,
+  },
+};
