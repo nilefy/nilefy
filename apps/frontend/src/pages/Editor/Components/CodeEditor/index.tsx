@@ -194,7 +194,6 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       });
     }
   }, [value, view]);
-
   return (
     <div
       id={props.id}

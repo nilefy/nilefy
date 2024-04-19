@@ -4,6 +4,8 @@ import 'driver.js/dist/driver.css';
 import { cloneDeep, isUndefined, keys } from 'lodash';
 import { useEffect, useRef } from 'react';
 import { editorStore } from '../Models';
+import { commandManager } from '@/actions/CommandManager';
+import DragAction from '@/actions/Editor/Drag';
 
 type WebloomStep = Omit<DriveStep, 'element'> & {
   /**
@@ -186,12 +188,19 @@ const steps: (WebloomStep | StepGroup)[] = [
   },
   {
     sideEffect: () => {
-      editorStore.currentPage.addWidget({
-        type: 'WebloomButton',
-        parentId: '0',
-        row: 20,
-        col: 20,
-      });
+      commandManager.executeCommand(
+        new DragAction({
+          parentId: '0',
+          draggedItem: {
+            isNew: true,
+            type: 'WebloomButton',
+          },
+          endPosition: {
+            col: 15,
+            row: 30,
+          },
+        }),
+      );
     },
     undoSideEffect: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
@@ -204,6 +213,7 @@ const steps: (WebloomStep | StepGroup)[] = [
           title: 'Drag',
           description: 'try dragging this widget',
           showButtons: ['previous', 'close', 'next'],
+          nextBtnText: 'Skip',
         },
         onceNext: () => {
           return editorStore.currentPage.isPrematureDragging;
@@ -216,6 +226,7 @@ const steps: (WebloomStep | StepGroup)[] = [
           description: 'Now drop it into the canvas',
           side: 'top',
           showButtons: ['close', 'next'],
+          nextBtnText: 'Skip',
         },
         onceNext: () => {
           return keys(editorStore.currentPage.widgets).length > 1;
@@ -240,7 +251,12 @@ const steps: (WebloomStep | StepGroup)[] = [
     popover: {
       title: 'Select Widget',
       description: 'Now click on the widget you just dropped',
-      showButtons: ['close', 'previous'],
+      showButtons: ['close', 'previous', 'next'],
+      nextBtnText: 'Skip',
+    },
+    sideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      editorStore.currentPage.setSelectedNodeIds(new Set([widgetId]));
     },
     onceNext: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
@@ -257,6 +273,58 @@ const steps: (WebloomStep | StepGroup)[] = [
       title: 'Inspecting widgets',
       description:
         'You can inspect and edit the properties of the selected widget here',
+    },
+  },
+  {
+    element: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      return document.querySelector(`#${widgetId}-text`)!;
+    },
+    popover: {
+      title: 'Bindings 1/2',
+      description: `Binding are pieces of code that are surrounded by double curly braces, they are used to bind data to the widget`,
+    },
+  },
+  {
+    element: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      return document.querySelector(`#${widgetId}-text`)!;
+    },
+    popover: {
+      title: 'Bindings 2/2',
+      description: `Try writing {{'Hello World'}}`,
+      nextBtnText: 'Skip',
+    },
+    onceNext: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      const text = widget.finalValues.text as string;
+      return text === 'Hello World';
+    },
+    sideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      widget.setValue('text', '{{"Hello World"}}');
+    },
+  },
+  {
+    element: async () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      await when(() => widget.dom !== null);
+      return widget.dom!;
+    },
+    popover: {
+      title: 'Binding 3/3',
+      description: `You can see the code you wrote has been automatically evaluated and rendered`,
+    },
+  },
+  {
+    element: '#bottom-panel',
+    popover: {
+      title: 'Datasources and Queries 1/4',
+      description: `You can add datasources and queries here, Datasources are like blueprint for queries, Nilefy
+      has many built-in datasources, you can also create your own. Queries are used to fetch data from datasources`,
     },
   },
 ];

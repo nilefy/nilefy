@@ -4,9 +4,8 @@ import { EntityFormControlContext } from '..';
 import { WebloonInlineInputFormControl } from '@/pages/Editor/Components/CodeEditor/inlineEditor';
 
 const InspectorInlineCodeInput = (props: InlineCodeInputProps) => {
-  const { onChange, value, onFocus, onBlur, entityId, path, isEvent } =
+  const { onChange, value, onFocus, onBlur, entityId, path, isEvent, id } =
     useContext(EntityFormControlContext);
-
   // TODO: we convert non string value to js template, until the validation code could handle this case
   const correctValue =
     typeof value === 'string' ? value : `{{${JSON.stringify(value ?? '')}}}`;
@@ -20,6 +19,7 @@ const InspectorInlineCodeInput = (props: InlineCodeInputProps) => {
       placeholder={props.placeholder}
       fileName={`${entityId}_${path}`}
       isEvent={isEvent}
+      id={id}
     />
   );
 };
