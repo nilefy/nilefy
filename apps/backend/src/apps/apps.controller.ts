@@ -116,6 +116,7 @@ export class AppsController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('id', ParseIntPipe) appId: number,
   ) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.appsService.delete({
       workspaceId,
       appId,

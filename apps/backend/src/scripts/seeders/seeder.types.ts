@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { dataSources as dataSourcesDrizzle } from '@webloom/database';
 import { DatabaseI } from '@webloom/database';
 
-export type SeederI<T> = (db: DatabaseI) => Promise<T>;
+export type SeederI<T> = (db: DatabaseI, count: number) => Promise<T>;
 
 export const dataSourcesEnum = z.enum([
   'database',

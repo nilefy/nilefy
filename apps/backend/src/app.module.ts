@@ -17,9 +17,15 @@ import { DataQueriesModule } from './data_queries/data_queries.module';
 import { EmailModule } from './email/email.module';
 import { JsQueriesModule } from './js_queries/js_queries.module';
 import { JsLibrariesModule } from './js_libraries/js_libraries.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '../..', 'frontend', 'dist'),
+      exclude: ['/api/(.*)'],
+    }),
     AuthModule,
     UsersModule,
     WebloomTableModule,

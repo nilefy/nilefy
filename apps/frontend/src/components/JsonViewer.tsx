@@ -9,7 +9,7 @@ import {
 import { editorStore } from '@/lib/Editor/Models';
 
 import { commandManager } from '@/actions/CommandManager';
-import { WidgetSelection } from '@/actions/Editor/selection';
+import { WidgetSelection } from '@/actions/editor/selection';
 import { observer } from 'mobx-react-lite';
 
 // TODO: add real JSON type, you can copy it from `typefest`

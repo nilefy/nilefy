@@ -15,15 +15,17 @@
     "db:migrate": "pnpm db:generate && ts-node ./src/scripts/migrate"
   },
   "dependencies": {
+    "@webloom/constants": "workspace:*",
+    "@webloom/permissions": "workspace:*"
+  },
+  "peerDependencies": {
     "drizzle-orm": "^0.29.3",
-    "@webloom/constants": "workspace:^",
-    "@webloom/permissions": "workspace:*",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "drizzle-kit": "^0.20.13"
   },
   "devDependencies": {
     "tsup": "^8.0.1",
     "@types/pg": "^8.10.9",
-    "drizzle-kit": "^0.20.13",
     "ts-node": "^10.9.1"
   }
 }

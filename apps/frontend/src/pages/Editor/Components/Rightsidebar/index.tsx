@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { WebloomWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
 import { commandManager } from '@/actions/CommandManager';
-import { DeleteAction } from '@/actions/Editor/Delete';
+import { DeleteAction } from '@/actions/editor/Delete';
 import { observer } from 'mobx-react-lite';
 import { WidgetConfigPanel } from './configInspector';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
