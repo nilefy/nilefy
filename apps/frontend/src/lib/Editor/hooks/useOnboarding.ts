@@ -339,8 +339,11 @@ const steps: (WebloomStep | StepGroup)[] = [
     onceNext: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
-      const text = widget.finalValues.text as string;
-      return text.trim() === 'Hello World';
+      const text = widget.rawValues.text as string;
+      return (
+        text.trim() === "{{'Hello World'}}" ||
+        text.trim() === '{{"Hello World"}}'
+      );
     },
     sideEffect: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
@@ -350,7 +353,7 @@ const steps: (WebloomStep | StepGroup)[] = [
     undoSideEffect: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
-      widget.setValue('text', '');
+      widget.setValue('text', 'Button');
     },
   },
   {
