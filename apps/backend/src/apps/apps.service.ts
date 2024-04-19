@@ -26,7 +26,7 @@ import {
   queries as drizzleQueries,
 } from '@webloom/database';
 import { alias } from 'drizzle-orm/pg-core';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
 
 @Injectable()
 export class AppsService {

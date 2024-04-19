@@ -17,12 +17,21 @@ import { and, eq, sql } from 'drizzle-orm';
 import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
 import { DatabaseI, workspaceDataSources } from '@webloom/database';
+import { EncryptionService } from '../encryption/encryption.service';
 
 @Injectable()
 export class DataSourcesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    readonly encryptionService: EncryptionService,
+  ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
+    console.log('before:');
+    console.log(dataSourceDto.config.value);
+    this.encryptValues(dataSourceDto);
+    console.log('After');
+    console.log(dataSourceDto.config);
     const [dataSource] = await this.db
       .insert(workspaceDataSources)
       .values(dataSourceDto)
@@ -191,5 +200,19 @@ export class DataSourcesService {
 
   private getService(dataSourceName: string): QueryRunnerI {
     return getQueryService(dataSourceName);
+  }
+
+  private encryptValues(obj: { [key: string]: any }) {
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        this.encryptValues(obj[key] as { [key: string]: any });
+      } else if (
+        key === 'encryption' &&
+        obj[key] === true &&
+        obj.hasOwnProperty('value')
+      ) {
+        obj['value'] = this.encryptionService.encrypt(obj['value'] as string);
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { UserDto } from 'src/dto/users.dto';
+import { UserDto } from '../../dto/users.dto';
 
 /**
  * omited the id to let the db handle it

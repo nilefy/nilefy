@@ -11,11 +11,11 @@ import {
 import { AppDto } from '../dto/apps.dto';
 import { Server, WebSocket } from 'ws';
 import { ComponentsService } from '../components/components.service';
-import { PayloadUser, RequestUser } from 'src/auth/auth.types';
+import { PayloadUser, RequestUser } from '../auth/auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
 import { pick } from 'lodash';
 import { WebloomNode, frontKnownKeys } from '../dto/components.dto';
 import { DatabaseI } from '@webloom/database';

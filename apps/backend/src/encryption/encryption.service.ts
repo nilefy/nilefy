@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EnvSchema } from 'src/evn.validation';
+import { EnvSchema } from '../evn.validation';
 import * as crypto from 'crypto';
 
 @Injectable()

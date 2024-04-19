@@ -1,12 +1,17 @@
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
+const password = z.object({
+  encrypted: z.boolean().default(true),
+  value: z.string().optional(),
+});
+
 export const configSchema = z.object({
   user: z.string().min(1),
   host: z.string().min(1),
   port: z.number().default(5432),
   database: z.string().min(1),
-  password: z.string(),
+  password: password,
   ssl: z.boolean().default(false),
   sslCertificate: z.enum(['ca', 'self-signed', 'none']).optional(),
   connectionOptions: z.string().optional(),
@@ -40,7 +45,7 @@ export const pluginConfigForm = {
     },
     password: {
       'ui:widget': 'password',
-      'ui:placeholder': 'Enter password',
+      'ui:placeholder': 'Enter password (will be AES encrypted)',
     },
   },
 };
