@@ -108,7 +108,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
         </div>
       </div>
       {/*FORM*/}
-      <ScrollArea className="h-[calc(100%-3rem)] w-full ">
+      <ScrollArea className="h-full w-full" id="query-form">
         <div className="flex flex-col gap-4 p-4">
           {query instanceof WebloomQuery ? (
             <Label className="flex items-center gap-4">
@@ -391,9 +391,16 @@ export const QueryPanel = observer(function QueryPanel() {
           </div>
 
           {/* ADD QUERY DROP DOWN */}
-          <DropdownMenu>
-            <DropdownMenuTrigger>+ Add</DropdownMenuTrigger>
-            <DropdownMenuContent>
+          <DropdownMenu
+            open={editorStore.queryPanel.addMenuOpen}
+            onOpenChange={(open) => {
+              editorStore.setQueryPanelAddMenuOpen(open);
+            }}
+          >
+            <DropdownMenuTrigger id="add-new-query-trigger">
+              + Add
+            </DropdownMenuTrigger>
+            <DropdownMenuContent id="add-new-query-content">
               <DropdownMenuLabel>
                 <DebouncedInput
                   type="search"
@@ -405,6 +412,7 @@ export const QueryPanel = observer(function QueryPanel() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                id="add-new-js-query"
                 onClick={() => {
                   editorStore.queriesManager.addJSquery.mutate({
                     appId: +appId!,

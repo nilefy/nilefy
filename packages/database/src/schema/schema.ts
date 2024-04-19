@@ -11,6 +11,7 @@ import {
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { permissionsTypes } from "@webloom/permissions";
+import { boolean } from "drizzle-orm/pg-core";
 
 /**
  * spread them to easy create createdAt and updatedAt fields
@@ -47,6 +48,7 @@ export const users = pgTable("users", {
   conformationToken: varchar("conformation_token", {
     length: 256,
   }),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   ...timeStamps,
   ...softDelete,
 });

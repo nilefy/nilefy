@@ -322,11 +322,39 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#bottom-panel',
     popover: {
-      title: 'Datasources and Queries 1/4',
+      title: 'Datasources and Queries 1/5',
       description: `You can add datasources and queries here, Datasources are like blueprint for queries, Nilefy
       has many built-in datasources, you can also create your own. Queries are used to fetch data from datasources`,
     },
   },
+  {
+    element: '#add-new-query-trigger',
+    popover: {
+      title: 'Datasources and Queries 2/5',
+      description: `Click here to add a new query`,
+    },
+    onceNext: () => {
+      return editorStore.queryPanel.addMenuOpen;
+    },
+  },
+  {
+    element: '#add-new-js-query',
+    popover: {
+      title: 'Datasources and Queries 3/5',
+      description: `Select new JS Query`,
+    },
+    onceNext: () => {
+      return keys(editorStore.queries).length > 0;
+    },
+  },
+  {
+    element: '#query-form',
+    popover: {
+      title: 'Datasources and Queries 4/5',
+      description: `You just made your first query, JS queries are used to return data and/or perform side effects`,
+    },
+  },
+  //todo complete the rest of the steps
 ];
 
 export const useOnboarding = (enabled: boolean) => {
@@ -341,6 +369,17 @@ export const useOnboarding = (enabled: boolean) => {
       disableActiveInteraction: false,
       showButtons: [],
       steps,
+      onDestroyed: () => {
+        // todo communicate with the backend to mark the onboarding as completed
+      },
+      onDestroyStarted: () => {
+        if (
+          driverInstance.hasNextStep() &&
+          confirm('Are you sure you want to skip the onboarding tour?')
+        ) {
+          driverInstance.destroy();
+        }
+      },
     });
     instance.current = driverInstance;
     instance.current?.drive();
