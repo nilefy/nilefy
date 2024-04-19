@@ -40,6 +40,7 @@ function InsertTab() {
               <button
                 title={name}
                 key={name}
+                id={`new-${name}-widget`}
                 className=" flex cursor-grab items-center justify-center"
               >
                 <NewNodeAdapter
@@ -108,7 +109,11 @@ export const RightSidebar = observer(() => {
     else setOpenedTab('insert');
   }, [selectedElementsSize]);
   return (
-    <div className="right-sidebar h-full w-full p-2" key="right-sidebar">
+    <div
+      className="right-sidebar h-full w-full p-2"
+      key="right-sidebar"
+      id="right-sidebar"
+    >
       <Tabs
         value={openedTab}
         onValueChange={(value) => setOpenedTab(value as RightSidebarTabs)}

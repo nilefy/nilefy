@@ -12,3 +12,4 @@ export { useWebloomHover } from './useWebloomHover';
 export { useWebloomDragCore } from './useWebloomDrag';
 export { useExposeWidgetApi } from './useExposeWidgetApi';
 export { useAutoRun } from './useAutoRun';
+export { useOnboarding } from './useOnboarding';

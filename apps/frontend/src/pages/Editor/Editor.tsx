@@ -17,10 +17,14 @@ import { EditorHeader } from './editorHeader';
 
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
-import { useInitResizing, useMousePosition } from '@/lib/Editor/hooks';
+import {
+  useInitResizing,
+  useMousePosition,
+  useOnboarding,
+} from '@/lib/Editor/hooks';
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 import { BottomPanel } from './Components/BottomPanel';
-import { LeftSidebar } from './Components/Leftsidebar';
+import { LeftSidebar } from './Components/LeftSidebar';
 
 export const Editor = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -28,6 +32,7 @@ export const Editor = observer(() => {
   useEditorHotKeys(editorStore, commandManager);
   useInitResizing();
   useMousePosition();
+  // useOnboarding(true);
   const handleResize = useCallback(() => {
     if (!editorRef.current) return;
     const width = editorRef.current?.clientWidth;
@@ -36,11 +41,16 @@ export const Editor = observer(() => {
   }, [editorRef]);
   const throttledResize = useThrottle(handleResize, 100);
   return (
-    <div className=" flex h-full max-h-full w-full flex-col overflow-hidden bg-transparent">
+    <div
+      className=" flex h-full max-h-full w-full flex-col bg-transparent"
+      style={{
+        overflow: 'clip',
+      }}
+    >
       <div className="h-fit w-full">
         <EditorHeader />
       </div>
-      <div className="flex h-full w-full">
+      <div className="flex h-full w-full" id="main-editor">
         <FixedLeftSidebar />
         <WebloomElementShadow />
 
