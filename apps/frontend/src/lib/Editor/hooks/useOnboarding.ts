@@ -24,9 +24,7 @@ const asyncQuerySelector = async (
 };
 
 type SideEffect = () => Promise<void> | void;
-type WebloomPopover = DriveStep['popover'] & {
-  description: string | (() => string);
-};
+
 type WebloomStep = Omit<DriveStep, 'element' | 'popover'> & {
   popover?: Omit<NonNullable<DriveStep['popover']>, 'description'> & {
     description: string | (() => string);
@@ -475,7 +473,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       const json = await res.json();
       WebloomGlobals.alert("data fetched");
       // You can return the data you fetched to use in other entities
-      return json.slice(0, 3);
+      return json.slice(0, 2);
       `;
       const query = editorStore.queries[id];
       query.setValue('query', code);
