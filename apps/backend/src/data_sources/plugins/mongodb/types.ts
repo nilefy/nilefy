@@ -1,4 +1,4 @@
-import { Document, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
@@ -37,7 +37,6 @@ const query = z.discriminatedUnion('operation', [
     filter: z.record(z.string(), z.unknown()),
     update: z.record(z.string(), z.unknown()),
     multiple: z.boolean().optional(),
-    returnDoc: z.boolean().optional(),
   }),
   z.object({
     operation: z.literal('Replace Document'),
@@ -45,7 +44,6 @@ const query = z.discriminatedUnion('operation', [
     collection: z.string().min(1),
     filter: z.record(z.string(), z.unknown()),
     replacement: z.record(z.string(), z.unknown()),
-    returnDoc: z.boolean().optional(),
   }),
   z.object({
     operation: z.literal('Delete Document'),
@@ -53,7 +51,6 @@ const query = z.discriminatedUnion('operation', [
     collection: z.string().min(1),
     filter: z.record(z.string(), z.unknown()),
     multiple: z.boolean().optional(),
-    returnDoc: z.boolean().optional(),
   }),
 ]);
 
@@ -62,12 +59,10 @@ export const querySchema = z.object({
 });
 
 export type UpdateDocRetT = {
-  id: ObjectId | null;
-  documents: (Document | null)[];
+  updatedIds: (ObjectId | null)[];
 };
 export type DeleteDocRetT = {
   deletedCount: number;
-  documents: (Document | null)[];
 };
 
 export type ConfigT = z.infer<typeof configSchema>;
@@ -194,9 +189,6 @@ export const queryConfigForm = {
                   multiple: {
                     type: 'boolean',
                   },
-                  'return document': {
-                    type: 'boolean',
-                  },
                 },
                 required: ['collection', 'filter', 'update'],
               },
@@ -217,9 +209,6 @@ export const queryConfigForm = {
                   replacement: {
                     type: 'object',
                   },
-                  'return document': {
-                    type: 'boolean',
-                  },
                 },
                 required: ['collection', 'filter', 'replacement'],
               },
@@ -238,9 +227,6 @@ export const queryConfigForm = {
                     type: 'object',
                   },
                   multiple: {
-                    type: 'boolean',
-                  },
-                  'return document': {
                     type: 'boolean',
                   },
                 },

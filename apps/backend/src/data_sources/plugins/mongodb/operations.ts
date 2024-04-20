@@ -2,26 +2,24 @@ import { DeleteDocRetT, QueryT, UpdateDocRetT } from './types';
 import { mongodb as OPERATIONS } from '../common/operations';
 import { MongoClient, ObjectId, Document } from 'mongodb';
 
+/**
+ * if db name is not provided, it uses database name from connection string
+ * if it is not provided in the connection string, db "test" is used by default
+ */
+
 export const createDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.CREATE_DOC }>,
   client: MongoClient,
 ): Promise<(ObjectId | null)[]> => {
   const { database, collection, documents } = query;
-  if (documents.length > 1) {
-    const docs = await client
-      .db(database)
-      .collection(collection)
-      .insertMany(documents, {
-        // prevent additional documents from being inserted if one fails
-        ordered: true,
-      });
-    return Object.values(docs);
-  }
-  const doc = await client
+  const docs = await client
     .db(database)
     .collection(collection)
-    .insertOne(documents[0]);
-  return [doc.insertedId];
+    .insertMany(documents, {
+      // prevent additional documents from being inserted if one fails
+      ordered: true,
+    });
+  return Object.values(docs.insertedIds);
 };
 
 // TODO: sort and projection options
@@ -81,21 +79,8 @@ export const updateDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.UPDATE_DOC }>,
   client: MongoClient,
 ): Promise<UpdateDocRetT> => {
-  const { database, collection, filter, update, multiple, returnDoc } = query;
+  const { database, collection, filter, update, multiple } = query;
   if (!multiple) {
-    if (!returnDoc) {
-      const doc = await client
-        .db(database)
-        .collection(collection)
-        .updateOne(filter, update, {
-          // set the upsert option to insert a document if no documents match the filter
-          upsert: false,
-        });
-      return {
-        id: doc.upsertedId,
-        documents: [],
-      };
-    }
     const doc = await client
       .db(database)
       .collection(collection)
@@ -103,46 +88,23 @@ export const updateDocument = async (
         upsert: false,
       });
     return {
-      id: doc ? doc._id : null,
-      documents: [doc],
+      updatedIds: [doc ? doc._id : null],
     };
   }
-
-  const docs = await findDocument(
-    {
-      operation: 'Find Document',
-      database,
-      collection,
-      filter,
-      multiple: true,
-    },
-    client,
-  );
+  const coll = client.db(database).collection(collection);
+  const cursor = coll.find(filter);
+  const ids = (await cursor.toArray()).map((doc) => doc._id);
   const ret = await client
     .db(database)
     .collection(collection)
     .updateMany(filter, update, {
       upsert: false,
     });
-
   if (ret.upsertedId) {
-    docs.push(
-      await findDocument(
-        {
-          operation: 'Find Document',
-          database,
-          collection,
-          filter: {
-            _id: ret.upsertedId,
-          },
-        },
-        client,
-      ),
-    );
+    ids.push(ret.upsertedId);
   }
   return {
-    id: ret.upsertedId,
-    documents: docs,
+    updatedIds: ids,
   };
 };
 
@@ -150,74 +112,37 @@ export const updateDocument = async (
 export const replaceDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.REPLACE_DOC }>,
   client: MongoClient,
-): Promise<UpdateDocRetT> => {
-  const { database, collection, filter, replacement, returnDoc } = query;
-  if (!returnDoc) {
-    const doc = await client
-      .db(database)
-      .collection(collection)
-      .replaceOne(filter, replacement, {
-        // set the upsert option to insert a document if no documents match the filter
-        upsert: false,
-      });
-    return {
-      id: doc.upsertedId,
-      documents: [],
-    };
-  }
+): Promise<ObjectId | null> => {
+  const { database, collection, filter, replacement } = query;
   const doc = await client
     .db(database)
     .collection(collection)
     .findOneAndReplace(filter, replacement, {
+      // set the upsert option to insert a document if no documents match the filter
       upsert: false,
     });
-  return {
-    id: doc ? doc._id : null,
-    documents: [doc],
-  };
+  return doc ? doc._id : null;
 };
 
 export const deleteDocument = async (
   query: Extract<QueryT['query'], { operation: typeof OPERATIONS.DELETE_DOC }>,
   client: MongoClient,
 ): Promise<DeleteDocRetT> => {
-  const { database, collection, filter, multiple, returnDoc } = query;
+  const { database, collection, filter, multiple } = query;
   if (!multiple) {
-    if (!returnDoc) {
-      const doc = await client
-        .db(database)
-        .collection(collection)
-        .deleteOne(filter);
-      return {
-        deletedCount: doc.deletedCount,
-        documents: [null],
-      };
-    }
-    const doc = await client
+    const ret = await client
       .db(database)
       .collection(collection)
-      .findOneAndDelete(filter);
+      .deleteOne(filter);
     return {
-      deletedCount: +(doc !== null),
-      documents: [doc],
+      deletedCount: ret.deletedCount,
     };
   }
-  const docs = await findDocument(
-    {
-      operation: 'Find Document',
-      database,
-      collection,
-      filter,
-      multiple: true,
-    },
-    client,
-  );
   const ret = await client
     .db(database)
     .collection(collection)
     .deleteMany(filter);
   return {
     deletedCount: ret.deletedCount,
-    documents: docs,
   };
 };
