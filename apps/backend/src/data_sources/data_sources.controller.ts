@@ -99,7 +99,7 @@ export class DataSourcesController {
     });
   }
 
-  @Get(':dataSourceId')
+  @Get(':dataSourceId') // #A03 #1
   @ApiCreatedResponse({
     description: 'get data source connection',
     type: DataSourceConnectionDto,
