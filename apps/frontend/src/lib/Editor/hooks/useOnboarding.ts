@@ -7,6 +7,7 @@ import { editorStore } from '../Models';
 import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/editor/Drag';
 import { updateOnBoardingStatus } from '@/api/users.api';
+import scrollIntoView from 'scroll-into-view-if-needed';
 
 const asyncQuerySelector = async (
   selector: string,
@@ -74,8 +75,7 @@ type ProcessedStep = WebloomStep & {
   jumpForward?: number;
   jumpBackward?: number;
 };
-//todo fix library's highlight not scrolling to the element issue
-// maybe monkey patch the library
+
 const webloomDriver = (_config: WebloomDriverConfig) => {
   const config: Omit<WebloomDriverConfig, 'steps'> & {
     steps: ProcessedStep[];
@@ -506,6 +506,15 @@ const steps: (WebloomStep | StepGroup)[] = [
       const id = keys(editorStore.queries)[0];
       const query = editorStore.queries[id];
       return query.getValue('data') !== undefined;
+    },
+    onHighlightStarted: (a) => {
+      // somewhy the library doesn't scroll to the element, so I have to do it manually
+      scrollIntoView(a as HTMLElement, {
+        behavior: 'smooth',
+        scrollMode: 'if-needed',
+        block: 'center',
+        inline: 'center',
+      });
     },
   },
   {
