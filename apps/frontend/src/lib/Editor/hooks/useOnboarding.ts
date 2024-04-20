@@ -74,6 +74,8 @@ type ProcessedStep = WebloomStep & {
   jumpForward?: number;
   jumpBackward?: number;
 };
+//todo fix library's highlight not scrolling to the element issue
+// maybe monkey patch the library
 const webloomDriver = (_config: WebloomDriverConfig) => {
   const config: Omit<WebloomDriverConfig, 'steps'> & {
     steps: ProcessedStep[];
@@ -581,6 +583,15 @@ const steps: (WebloomStep | StepGroup)[] = [
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       widget.setValue('data', '');
     },
+    moveToNextWhen: () => {
+      const tableId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      const table = editorStore.currentPage.getWidgetById(tableId);
+      return (
+        (table.rawValues.data as string).trim() ===
+        `{{${keys(editorStore.queries)[0]}.data}}`
+      );
+    },
+    disableActiveInteraction: false,
   },
   {
     element: () => {
