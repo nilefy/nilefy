@@ -94,6 +94,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             </>
           </LoadingButton>
           <Button
+            id="run-query-button"
             variant={'ghost'}
             disabled={query.queryRunner.state.isPending}
             onClick={() => {
@@ -168,6 +169,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
+          id="query-preview-json"
           className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
         >
           <ReactJson

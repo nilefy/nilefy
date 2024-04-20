@@ -21,3 +21,10 @@ export function loaderAuth() {
     }
   }
 }
+
+export const getUser = () => {
+  const token = getToken();
+  if (!token) return null;
+  const decoded = jwtDecode<JwtPayload>(token);
+  return decoded;
+};

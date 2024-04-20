@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import { editorStore } from '../Models';
 import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/editor/Drag';
+import { updateOnBoardingStatus } from '@/api/users.api';
 
 const asyncQuerySelector = async (
   selector: string,
@@ -23,7 +24,13 @@ const asyncQuerySelector = async (
 };
 
 type SideEffect = () => Promise<void> | void;
-type WebloomStep = Omit<DriveStep, 'element'> & {
+type WebloomPopover = DriveStep['popover'] & {
+  description: string | (() => string);
+};
+type WebloomStep = Omit<DriveStep, 'element' | 'popover'> & {
+  popover?: Omit<NonNullable<DriveStep['popover']>, 'description'> & {
+    description: string | (() => string);
+  };
   /**
    *
    * @description Side effect to be executed when next button is clicked
@@ -101,12 +108,20 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     state.disposeMoveNextWhen && state.disposeMoveNextWhen();
     state.disposeMovePrevWhen && state.disposeMovePrevWhen();
   };
-
+  const isLastStep = (index: number) => {
+    return index === stepsCopy.length - 1;
+  };
+  const onLastStep = () => {
+    driverInstance.destroy();
+  };
   const setupStep = async (index: number) => {
     attachListeners(index);
     const steps = cloneDeep(stepsCopy);
     if (steps[index].element instanceof Function) {
       steps[index].element = await steps[index].element();
+    }
+    if (steps[index]?.popover?.description instanceof Function) {
+      steps[index].popover.description = steps[index].popover.description();
     }
     config.steps[index] = steps[index];
   };
@@ -134,10 +149,12 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
       groupSideEffect = config.steps[index].groupSideEffect;
     }
     const newIndex = index + jump;
+    if (isLastStep(index)) return onLastStep();
     const step = config.steps[index];
     if (groupSideEffect) await groupSideEffect();
     else if (step.sideEffect) await step.sideEffect();
     await setupStep(newIndex);
+
     driverInstance.moveTo(newIndex);
     setDisableActiveInteraction(newIndex);
   };
@@ -165,6 +182,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     const newIndex = index + 1;
+    if (isLastStep(index)) return onLastStep();
     await setupStep(newIndex);
     driverInstance.moveNext();
     setDisableActiveInteraction(newIndex);
@@ -212,8 +230,9 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     popover: {
       title: 'Welcome to Nilefy',
-      description:
-        'This is an onboarding tour to help you get started, you can skip this tour at any time',
+      description: `
+        This is an interactive onboarding tour to help you get started with Nilefy. You can skip this tour by clicking the close button. Additionally, you can skip individual steps by clicking the skip button or navigate using the keyboard arrow keys.
+        `,
       showButtons: ['next', 'close'],
     },
   },
@@ -221,7 +240,7 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#right-sidebar',
     popover: {
-      title: 'Right Sidebar',
+      title: 'Inserting Widgets',
       description:
         'This is the widgets panels where you can drag and drop widgets to the canvas',
     },
@@ -374,7 +393,7 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#bottom-panel',
     popover: {
-      title: 'Datasources and Queries 1/6',
+      title: 'Datasources and Queries 1/10',
       description: `You can add datasources and queries here, Datasources are like blueprint for queries, Nilefy
       has many built-in datasources, you can also create your own. Queries are used to fetch data from datasources`,
     },
@@ -383,8 +402,9 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#add-new-query-trigger',
     popover: {
-      title: 'Datasources and Queries 2/6',
+      title: 'Datasources and Queries 2/10',
       description: `Click here to add a new query`,
+      nextBtnText: 'Skip',
     },
     sideEffect: () => {
       editorStore.setQueryPanelAddMenuOpen(true);
@@ -399,7 +419,7 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#add-new-js-query',
     popover: {
-      title: 'Datasources and Queries 3/6',
+      title: 'Datasources and Queries 3/10',
       description: `Select new JS Query`,
       nextBtnText: 'Skip',
     },
@@ -434,20 +454,156 @@ const steps: (WebloomStep | StepGroup)[] = [
       return (await asyncQuerySelector('#query-form'))!;
     },
     popover: {
-      title: 'Datasources and Queries 4/6',
+      title: 'Datasources and Queries 4/10',
       description: `You just made your first query, JS queries are used to return data and/or perform side effects`,
     },
   },
   {
     element: () => {
       const id = keys(editorStore.queries)[0];
-      return document.querySelector(`${id}-query`)!;
+      return document.querySelector(`#${id}-query`)!;
     },
     popover: {
-      title: 'Datasources and Queries 5/6',
+      title: 'Datasources and Queries 5/10',
       description: `You can write your query here, let's show you a simple query`,
     },
+    sideEffect: () => {
+      const id = keys(editorStore.queries)[0];
+      const code = `// You can call actions on other entities, we're calling the alert action on the WebloomGlobals entity
+      WebloomGlobals.alert("fetching data");
+      const res = await fetch('https://jsonplaceholder.typicode.com/todos');
+      const json = await res.json();
+      WebloomGlobals.alert("data fetched");
+      // You can return the data you fetched to use in other entities
+      return json.slice(0, 3);
+      `;
+      const query = editorStore.queries[id];
+      query.setValue('query', code);
+    },
+    undoSideEffect: () => {
+      const id = keys(editorStore.queries)[0];
+      const query = editorStore.queries[id];
+      query.setValue('query', '');
+    },
     disableActiveInteraction: true,
+  },
+  {
+    element: '#run-query-button',
+    popover: {
+      title: 'Datasources and Queries 6/10',
+      description: `Click the run button to execute the query`,
+      nextBtnText: 'Skip',
+    },
+    sideEffect: async () => {
+      const id = keys(editorStore.queries)[0];
+      await editorStore.queries[id].run();
+    },
+    undoSideEffect: () => {
+      const id = keys(editorStore.queries)[0];
+      editorStore.queries[id].reset();
+    },
+    moveToNextWhen: () => {
+      const id = keys(editorStore.queries)[0];
+      const query = editorStore.queries[id];
+      return query.getValue('data') !== undefined;
+    },
+  },
+  {
+    element: '#query-preview-json',
+    popover: {
+      title: 'Datasources and Queries 6/10',
+      description: `You can see the data returned by the query here`,
+    },
+    disableActiveInteraction: true,
+  },
+  {
+    popover: {
+      title: 'Datasources and Queries 7/10',
+      description: `You can use the data returned by the query in your widgets by binding it to the widget, we'll create a table widget for you
+        so you can see how it's done`,
+    },
+    sideEffect: () => {
+      commandManager.executeCommand(
+        new DragAction({
+          parentId: '0',
+          draggedItem: {
+            isNew: true,
+            type: 'Table',
+          },
+          endPosition: {
+            col: 6,
+            row: 60,
+          },
+        }),
+      );
+    },
+    undoSideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      editorStore.currentPage.removeWidget(widgetId);
+    },
+  },
+  {
+    element: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      return editorStore.currentPage.getWidgetById(widgetId).dom!;
+    },
+    popover: {
+      title: 'Datasources and Queries 8/10',
+      description: "This is the table widget, currently it's empty",
+    },
+    disableActiveInteraction: true,
+    sideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      editorStore.currentPage.setSelectedNodeIds(new Set([widgetId]));
+    },
+    undoSideEffect: () => {
+      editorStore.currentPage.clearSelectedNodes();
+    },
+  },
+  {
+    element: async () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      return (await asyncQuerySelector(`#${widgetId}-data`))!;
+    },
+    popover: {
+      title: 'Datasources and Queries 9/10',
+      description: () =>
+        `Now bind the data returned by the query to the table widget, write {{${
+          keys(editorStore.queries)[0]
+        }.data}}`,
+      nextBtnText: 'Skip',
+    },
+    sideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      widget.setValue('data', `{{${keys(editorStore.queries)[0]}.data}}`);
+    },
+    undoSideEffect: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      const widget = editorStore.currentPage.getWidgetById(widgetId);
+      widget.setValue('data', '');
+    },
+  },
+  {
+    element: () => {
+      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[1];
+      return editorStore.currentPage.getWidgetById(widgetId).dom!;
+    },
+    popover: {
+      title: 'Datasources and Queries 10/10',
+      description: `You can see the data has been automatically rendered`,
+    },
+    disableActiveInteraction: true,
+  },
+  {
+    element: document.body,
+    popover: {
+      title: 'Congratulations',
+      align: 'center',
+      side: 'over',
+      description: `You've completed the onboarding tour, you can always revisit this tour by clicking the help button in the top right corner`,
+      showButtons: ['close'],
+    },
   },
 ];
 
@@ -464,13 +620,15 @@ export const useOnboarding = (enabled: boolean) => {
       showButtons: [],
       steps,
       onDestroyed: () => {
-        // todo communicate with the backend to mark the onboarding as completed
+        updateOnBoardingStatus({ onboardingCompleted: true });
       },
       onDestroyStarted: () => {
         if (
           driverInstance.hasNextStep() &&
           confirm('Are you sure you want to skip the onboarding tour?')
         ) {
+          driverInstance.destroy();
+        } else if (!driverInstance.hasNextStep()) {
           driverInstance.destroy();
         }
       },
