@@ -45,6 +45,7 @@
     "drizzle-zod": "^0.5.1",
     "lodash": "4.17.21",
     "mock-gcs": "^1.2.0",
+    "mongodb": "^6.5.0",
     "morgan": "^1.10.0",
     "nanoid": "3",
     "nestjs-zod": "^3.0.0",

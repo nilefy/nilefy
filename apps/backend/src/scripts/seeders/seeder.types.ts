@@ -13,7 +13,7 @@ export const dataSourcesEnum = z.enum([
 ]);
 
 export const dataSources = {
-  database: ['PostgreSQL'],
+  database: ['PostgreSQL', 'MongoDB'],
   api: ['REST API'],
   'cloud storage': ['Azure Blob Storage', 'Google Cloud Storage'],
   plugin: [],
