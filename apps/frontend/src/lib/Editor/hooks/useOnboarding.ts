@@ -31,19 +31,18 @@ type WebloomStep = Omit<DriveStep, 'element'> & {
   sideEffect?: SideEffect;
   /**
    *
-   * @description Side effect to be executed when previous button is clicked
+   * @description Side effect to be executed when previous button is clicked, Ideally every effect should have a corresponding undo effect.
    */
   undoSideEffect?: SideEffect;
   /**
-   * @description Ideally every effect should have a corresponding undo effect.
    * @returns observes changes in the editor state and returns true if next step should be the current step
    */
-  onceNext?: () => boolean;
+  moveToNextWhen?: () => boolean;
   /**
    *
    * @returns observes changes in the editor state and returns true if previous step should be the current step
    */
-  oncePrev?: () => boolean;
+  moveToPrevWhen?: () => boolean;
   /**
    * @description if set to true, the active interaction will be disabled
    */
@@ -90,21 +89,20 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
   };
   const stepsCopy = cloneDeep(config.steps);
   const state: {
-    disposeOnceNext: (() => void) | null;
-    disposeOncePrev: (() => void) | null;
+    disposeMoveNextWhen: (() => void) | null;
+    disposeMovePrevWhen: (() => void) | null;
   } = {
-    disposeOnceNext: null,
-    disposeOncePrev: null,
+    disposeMoveNextWhen: null,
+    disposeMovePrevWhen: null,
   };
 
   const driverInstance = driver();
   const dispose = () => {
-    state.disposeOnceNext && state.disposeOnceNext();
-    state.disposeOncePrev && state.disposeOncePrev();
+    state.disposeMoveNextWhen && state.disposeMoveNextWhen();
+    state.disposeMovePrevWhen && state.disposeMovePrevWhen();
   };
 
   const setupStep = async (index: number) => {
-    dispose();
     attachListeners(index);
     const steps = cloneDeep(stepsCopy);
     if (steps[index].element instanceof Function) {
@@ -126,6 +124,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     }
   };
   const customNextWithSideEffects: Config['onNextClick'] = async () => {
+    dispose();
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     let jump = 1;
@@ -143,6 +142,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     setDisableActiveInteraction(newIndex);
   };
   const customPrevWithSideEffects: Config['onPrevClick'] = async () => {
+    dispose();
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     let jump = -1;
@@ -161,6 +161,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     setDisableActiveInteraction(newIndex);
   };
   const customNext = async () => {
+    dispose();
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     const newIndex = index + 1;
@@ -169,6 +170,7 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
     setDisableActiveInteraction(newIndex);
   };
   const customPrev = async () => {
+    dispose();
     const index = driverInstance.getActiveIndex();
     if (isUndefined(index)) return;
     const newIndex = index - 1;
@@ -178,15 +180,15 @@ const webloomDriver = (_config: WebloomDriverConfig) => {
   };
   const attachListeners = (index: number) => {
     const step = stepsCopy[index];
-    if (step.onceNext) {
-      state.disposeOnceNext = when(step.onceNext, () => {
+    if (step.moveToNextWhen) {
+      state.disposeMoveNextWhen = when(step.moveToNextWhen, () => {
         customNext();
       });
     }
-    if (step.oncePrev) {
-      state.disposeOncePrev = when(step.oncePrev, () => {
+    if (step.moveToPrevWhen) {
+      state.disposeMovePrevWhen = when(step.moveToPrevWhen, () => {
         //for sanity sake
-        if (step.onceNext && step.onceNext()) {
+        if (step.moveToNextWhen && step.moveToNextWhen()) {
           return customNext();
         }
         customPrev();
@@ -254,7 +256,7 @@ const steps: (WebloomStep | StepGroup)[] = [
           showButtons: ['previous', 'close', 'next'],
           nextBtnText: 'Skip',
         },
-        onceNext: () => {
+        moveToNextWhen: () => {
           return editorStore.currentPage.isPrematureDragging;
         },
       },
@@ -267,10 +269,10 @@ const steps: (WebloomStep | StepGroup)[] = [
           showButtons: ['close', 'next'],
           nextBtnText: 'Skip',
         },
-        onceNext: () => {
+        moveToNextWhen: () => {
           return keys(editorStore.currentPage.widgets).length > 1;
         },
-        oncePrev: () => {
+        moveToPrevWhen: () => {
           return !editorStore.currentPage.isPrematureDragging;
         },
         undoSideEffect: () => {
@@ -297,7 +299,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       editorStore.currentPage.setSelectedNodeIds(new Set([widgetId]));
     },
-    onceNext: () => {
+    moveToNextWhen: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       if (!widget) return false;
@@ -336,7 +338,7 @@ const steps: (WebloomStep | StepGroup)[] = [
       description: `Try writing {{'Hello World'}}`,
       nextBtnText: 'Skip',
     },
-    onceNext: () => {
+    moveToNextWhen: () => {
       const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
       const widget = editorStore.currentPage.getWidgetById(widgetId);
       const text = widget.rawValues.text as string;
@@ -372,7 +374,7 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#bottom-panel',
     popover: {
-      title: 'Datasources and Queries 1/5',
+      title: 'Datasources and Queries 1/6',
       description: `You can add datasources and queries here, Datasources are like blueprint for queries, Nilefy
       has many built-in datasources, you can also create your own. Queries are used to fetch data from datasources`,
     },
@@ -381,7 +383,7 @@ const steps: (WebloomStep | StepGroup)[] = [
   {
     element: '#add-new-query-trigger',
     popover: {
-      title: 'Datasources and Queries 2/5',
+      title: 'Datasources and Queries 2/6',
       description: `Click here to add a new query`,
     },
     sideEffect: () => {
@@ -390,14 +392,14 @@ const steps: (WebloomStep | StepGroup)[] = [
     undoSideEffect: () => {
       editorStore.setQueryPanelAddMenuOpen(false);
     },
-    onceNext: () => {
+    moveToNextWhen: () => {
       return editorStore.queryPanel.addMenuOpen;
     },
   },
   {
     element: '#add-new-js-query',
     popover: {
-      title: 'Datasources and Queries 3/5',
+      title: 'Datasources and Queries 3/6',
       description: `Select new JS Query`,
       nextBtnText: 'Skip',
     },
@@ -417,10 +419,10 @@ const steps: (WebloomStep | StepGroup)[] = [
       });
       editorStore.setQueryPanelAddMenuOpen(true);
     },
-    onceNext: () => {
+    moveToNextWhen: () => {
       return keys(editorStore.queries).length > 0;
     },
-    oncePrev: () => {
+    moveToPrevWhen: () => {
       return (
         keys(editorStore.queries).length !== 0 &&
         !editorStore.queryPanel.addMenuOpen
@@ -432,11 +434,21 @@ const steps: (WebloomStep | StepGroup)[] = [
       return (await asyncQuerySelector('#query-form'))!;
     },
     popover: {
-      title: 'Datasources and Queries 4/5',
+      title: 'Datasources and Queries 4/6',
       description: `You just made your first query, JS queries are used to return data and/or perform side effects`,
     },
   },
-  //todo complete the rest of the steps
+  {
+    element: () => {
+      const id = keys(editorStore.queries)[0];
+      return document.querySelector(`${id}-query`)!;
+    },
+    popover: {
+      title: 'Datasources and Queries 5/6',
+      description: `You can write your query here, let's show you a simple query`,
+    },
+    disableActiveInteraction: true,
+  },
 ];
 
 export const useOnboarding = (enabled: boolean) => {
