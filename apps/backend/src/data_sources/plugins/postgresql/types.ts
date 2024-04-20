@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
-export const configSchema = z.object({
+export const configSchemaCore = z.object({
   user: z.string().min(1),
   host: z.string().min(1),
   port: z.number().default(5432),
@@ -10,6 +10,15 @@ export const configSchema = z.object({
   ssl: z.boolean().default(false),
   sslCertificate: z.enum(['ca', 'self-signed', 'none']).optional(),
   connectionOptions: z.string().optional(),
+});
+
+export const encryptionConfigSchema = z.object({
+  encryptFields: z.array(z.string()),
+});
+
+export const configSchema = z.object({
+  configSchemaCore: configSchemaCore,
+  encryptionConfig: encryptionConfigSchema,
 });
 
 const query = z.string().default('');
@@ -21,7 +30,7 @@ export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
 
 export const pluginConfigForm = {
-  schema: zodToJsonSchema(configSchema, 'configSchema'),
+  schema: zodToJsonSchema(configSchemaCore, 'configSchema'),
   uiSchema: {
     host: {
       'ui:placeholder': 'localhost',
