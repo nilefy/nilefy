@@ -37,6 +37,10 @@ export class WebloomPage implements WebloomDisposable {
   selectedNodeIds: Set<string>;
   draggedWidgetId: string | null = null;
   resizedWidgetId: string | null = null;
+  /**
+   * widget is dragging but hasn't touched the canvas yet
+   */
+  isPrematureDragging: boolean = false;
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
@@ -100,6 +104,8 @@ export class WebloomPage implements WebloomDisposable {
       setHoveredWidgetId: action,
       removeSelectedNode: action,
       selectAll: action,
+      isPrematureDragging: observable,
+      setIsPermatureDragging: action,
     });
 
     this.id = id;
@@ -132,6 +138,9 @@ export class WebloomPage implements WebloomDisposable {
   }
   setHoveredWidgetId(id: string | null) {
     this.hoveredWidgetId = id;
+  }
+  setIsPermatureDragging(isDragging: boolean) {
+    this.isPrematureDragging = isDragging;
   }
   setSelectedNodeIds(ids: Set<string>): void;
   setSelectedNodeIds(cb: (ids: Set<string>) => Set<string>): void;

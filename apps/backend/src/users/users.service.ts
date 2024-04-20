@@ -72,4 +72,18 @@ export class UsersService {
     }
     return updatedUser;
   }
+
+  async updateOnboarding(userId: number, onboardingCompleted = true) {
+    const update = await this.db
+      .update(users)
+      .set({ onboardingCompleted })
+      .where(eq(users.id, userId))
+      .returning({
+        onboardingCompleted: users.onboardingCompleted,
+      });
+    if (!update) {
+      throw new NotFoundException('User not found');
+    }
+    return update[0];
+  }
 }

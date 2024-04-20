@@ -42,6 +42,9 @@ export class EditorState implements WebloomDisposable {
    * @description [id]: page
    */
   pages: Record<string, WebloomPage> = {};
+  queryPanel: {
+    addMenuOpen: boolean;
+  };
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
@@ -76,6 +79,7 @@ export class EditorState implements WebloomDisposable {
       removeQuery: action,
       removePage: action,
       init: action,
+      queryPanel: observable,
       applyEvalForestPatch: action.bound,
       applyEntityToEntityDependencyPatch: action.bound,
       currentPageErrors: computed,
@@ -88,8 +92,14 @@ export class EditorState implements WebloomDisposable {
       installLibrary: action,
       updateLibraryName: action,
       uninstallLibrary: action,
+      setQueryPanelAddMenuOpen: action,
     });
   }
+
+  setQueryPanelAddMenuOpen(open: boolean) {
+    this.queryPanel.addMenuOpen = open;
+  }
+
   setBottomPanelMode(mode: BottomPanelMode) {
     this.bottomPanelMode = mode;
   }
@@ -184,6 +194,9 @@ export class EditorState implements WebloomDisposable {
     try {
       this.dispose();
       this.workerBroker = new WorkerBroker(this);
+      this.queryPanel = {
+        addMenuOpen: false,
+      };
       this.appId = appId;
       this.workspaceId = workspaceId;
       this.name = name;

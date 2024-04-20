@@ -9,6 +9,8 @@ import {
 import { UsersService } from './users.service';
 import {
   UpdateUserDto,
+  UpdateUserOnboardingDto,
+  updateUserOnboardingSchema,
   UpdateUserRetDto,
   updateUserSchema,
 } from '../dto/users.dto';
@@ -38,5 +40,21 @@ export class UsersController {
       );
     }
     return await this.usersService.update(req.user.userId, data);
+  }
+  @UseGuards(JwtGuard)
+  @Put('set-onboarding')
+  @ApiCreatedResponse({
+    description: 'update onboarding',
+    type: UpdateUserOnboardingDto,
+  })
+  async updateOnboarding(
+    @Request() req: ExpressAuthedRequest,
+    @Body(new ZodValidationPipe(updateUserOnboardingSchema))
+    data: UpdateUserOnboardingDto,
+  ): Promise<UpdateUserOnboardingDto> {
+    return await this.usersService.updateOnboarding(
+      req.user.userId,
+      data.onboardingCompleted || false,
+    );
   }
 }

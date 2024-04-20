@@ -13,6 +13,10 @@ import {
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
 import {
+  pluginConfigForm as GCSConfigForm,
+  queryConfigForm as GCSQueryConfigForm,
+} from '../../data_sources/plugins/gcs/types';
+import {
   pluginConfigForm as mongodbConfigForm,
   queryConfigForm as mongodbQueryConfigForm,
 } from '../../data_sources/plugins/mongodb/types';
@@ -71,8 +75,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           break;
         case 'google cloud storage':
           {
-            dataSourceConfig = [];
-            queryConfig = [];
+            dataSourceConfig = GCSConfigForm;
+            queryConfig = GCSQueryConfigForm;
             image =
               'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
             description =

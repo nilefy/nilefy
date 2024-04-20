@@ -44,6 +44,7 @@ export const WebloonInlineInputFormControl = (
           onChange={props.onChange}
           onFocus={props.onFocus}
           onBlur={props.onBlur}
+          id={props.id}
           fileName={props.fileName}
         />
         <ScrollBar orientation="horizontal" />

@@ -100,7 +100,7 @@ export const EntityFormControl = observer(
   (props: { control: FormControl; entityId: string }) => {
     const { onFocus: _onFocus, onBlur } = useContext(EntityFormContext);
     const { control, entityId } = props;
-    const id = entityId + control.path;
+    const id = entityId + '-' + control.path;
     const Component =
       InspectorFormControls[control.type as keyof typeof InspectorFormControls];
     const options = useMemo(

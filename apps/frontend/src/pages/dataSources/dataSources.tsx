@@ -424,7 +424,7 @@ export function DataSourceView() {
 
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   {/*TODO: re-enable when the back is ready  */}
                   <TabsTrigger value="prod" disabled={true}>
                     Production
