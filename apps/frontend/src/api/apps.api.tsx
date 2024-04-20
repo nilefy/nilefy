@@ -117,6 +117,7 @@ type WebloomTree = Record<
 export type AppCompleteT = AppI & {
   pages: PageI[];
   defaultPage: PageI & { tree: WebloomTree };
+  onBoardingCompleted: boolean;
 };
 
 async function one({

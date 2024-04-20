@@ -5,7 +5,8 @@ import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-import { loaderAuth } from '@/utils/loaders';
+import { JwtPayload } from '@/types/auth.types';
+import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
 import { Suspense, useEffect } from 'react';
 import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
@@ -17,6 +18,7 @@ export const appLoader =
     if (notAuthed) {
       return notAuthed;
     }
+    const currentUser = getUser() as JwtPayload;
     const workspaceId = params.workspaceId;
     const appId = params.appId;
     if (!workspaceId || !appId) {
@@ -54,8 +56,9 @@ export const appLoader =
       queries,
       jsQueries,
       jsLibraries,
-      // TODO: get the current user from the token
-      currentUser: 'Super User',
+      currentUser: currentUser?.username,
+      // TODO: i don't think we should store this info here but whatever right?
+      onBoardingCompleted: app.onBoardingCompleted,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         {

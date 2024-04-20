@@ -61,6 +61,7 @@ export class EditorState implements WebloomDisposable {
    * application name
    */
   name: string = 'New Application';
+  onBoardingCompleted: boolean = false;
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -171,6 +172,7 @@ export class EditorState implements WebloomDisposable {
     workspaceId,
     currentUser,
     jsLibraries = [],
+    onBoardingCompleted,
   }: {
     name: string;
     pages: Optional<
@@ -190,6 +192,7 @@ export class EditorState implements WebloomDisposable {
     appId: number;
     workspaceId: number;
     currentUser: string;
+    onBoardingCompleted: boolean;
   }) {
     try {
       this.dispose();
@@ -200,6 +203,7 @@ export class EditorState implements WebloomDisposable {
       this.appId = appId;
       this.workspaceId = workspaceId;
       this.name = name;
+      this.onBoardingCompleted = onBoardingCompleted;
       this.libraries = entries(defaultLibrariesMeta).reduce(
         (acc, [name, lib]) => {
           acc[name] = new JSLibrary(lib);

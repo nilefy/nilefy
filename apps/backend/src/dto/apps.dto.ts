@@ -72,6 +72,7 @@ export const appRetSchema = appSchema.extend({
       username: true,
     })
     .nullable(),
+  onBoardingCompleted: z.boolean(),
 });
 export class AppRetDto extends createZodDto(appRetSchema) {}
 

@@ -32,7 +32,7 @@ export const Editor = observer(() => {
   useEditorHotKeys(editorStore, commandManager);
   useInitResizing();
   useMousePosition();
-  useOnboarding(true);
+  useOnboarding(!editorStore.onBoardingCompleted);
   const handleResize = useCallback(() => {
     if (!editorRef.current) return;
     const width = editorRef.current?.clientWidth;

@@ -68,8 +68,9 @@ export class AppsController {
   async findOne(
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
+    @Req() req: ExpressAuthedRequest,
   ): Promise<AppRetDto> {
-    return await this.appsService.findOne(workspaceId, appId);
+    return await this.appsService.findOne(req.user.userId, workspaceId, appId);
   }
 
   @Post(':id/clone')
