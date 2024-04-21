@@ -333,6 +333,16 @@ export class EditorState implements WebloomDisposable {
     }
   }
 
+  /**
+   * kinda of hook after the worker init the application(after first evaluation cycle)
+   *
+   * could be used for things that needs app to be inited first like running queries
+   */
+  afterInit() {
+    Object.values(this.queries).forEach((q) => {
+      if (q.triggerMode === 'onAppLoad') void q.run();
+    });
+  }
   // TODO: add support for queries
   get currentPageErrors() {
     const errors: Record<string, InstanceType<typeof Entity>['errors']> = {};

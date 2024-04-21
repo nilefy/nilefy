@@ -32,6 +32,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from '../entityForm';
+import { LoadingButton } from '@/components/loadingButton';
+import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
+
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
   return (
@@ -50,9 +53,6 @@ export const QueryConfigPanel = observer(({ id }: { id: string }) => {
     </div>
   );
 });
-
-import { LoadingButton } from '@/components/loadingButton';
-import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
 
 const ActiveQueryItem = observer(function ActiveQueryItem({
   query,
@@ -168,6 +168,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         </TabsList>
         <TabsContent
           value="json"
+          id="query-preview-json"
           className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
         >
           <ReactJson
