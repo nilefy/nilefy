@@ -14,67 +14,82 @@ import { merge } from 'lodash';
 import { getNewEntityName } from '../entitiesNameSeed';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 
+type OmitWorkspaceAndAppId<T> = Omit<T, 'workspaceId' | 'appId'>;
+
 /**
  * @description This class is responsible for managing tanstack queries not our queries
  */
 export class QueriesManager {
   private readonly queryClient;
   private readonly editor: EditorState;
+  private readonly workspaceId: number;
+  private readonly appId: number;
   public addJSquery: MobxMutation<
     Awaited<ReturnType<typeof createJSquery>>,
     FetchXError,
-    Omit<Parameters<typeof createJSquery>[0], 'dto'> & {
+    Omit<
+      Parameters<typeof createJSquery>[0],
+      'dto' | 'workspaceId' | 'appId'
+    > & {
       dto: Omit<Parameters<typeof createJSquery>[0]['dto'], 'id'>;
     }
   >;
   public deleteJSquery: MobxMutation<
     Awaited<ReturnType<typeof deleteJSQuery>>,
     FetchXError,
-    Parameters<typeof deleteJSQuery>[0]
+    OmitWorkspaceAndAppId<Parameters<typeof deleteJSQuery>[0]>
   >;
   public updateJSquery: MobxMutation<
     Awaited<ReturnType<typeof updateJSquery>>,
     FetchXError,
-    Parameters<typeof updateJSquery>[0]
+    OmitWorkspaceAndAppId<Parameters<typeof updateJSquery>[0]>
   >;
   public addQuery: MobxMutation<
     Awaited<ReturnType<typeof addQuery>>,
     FetchXError,
-    Parameters<typeof addQuery>[0]
+    OmitWorkspaceAndAppId<Parameters<typeof addQuery>[0]>
   >;
   public deleteQuery: MobxMutation<
     Awaited<ReturnType<typeof deleteQuery>>,
     FetchXError,
-    Parameters<typeof deleteQuery>[0]
+    OmitWorkspaceAndAppId<Parameters<typeof deleteQuery>[0]>
   >;
   public updateQuery: MobxMutation<
     Awaited<ReturnType<typeof updateQuery>>,
     FetchXError,
-    Parameters<typeof updateQuery>[0]
+    OmitWorkspaceAndAppId<Parameters<typeof updateQuery>[0]>
   >;
 
   constructor(queryClient: QueryClient, editor: EditorState) {
     this.editor = editor;
     this.queryClient = queryClient;
+    this.workspaceId = editor.workspaceId;
+    this.appId = editor.appId;
     this.addQuery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof addQuery>[0]) => {
-        return addQuery(vars);
+      mutationFn: (
+        vars: OmitWorkspaceAndAppId<Parameters<typeof addQuery>[0]>,
+      ) => {
+        return addQuery(this.addWorkspaceAndAppId(vars));
       },
       onSuccess: (data) => {
         this.editor.addQuery(data);
       },
     }));
     this.deleteQuery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof deleteQuery>[0]) => {
-        return deleteQuery(vars);
+      mutationFn: (
+        vars: OmitWorkspaceAndAppId<Parameters<typeof deleteQuery>[0]>,
+      ) => {
+        return deleteQuery(this.addWorkspaceAndAppId(vars));
       },
       onSuccess: (data) => {
         this.editor.removeQuery(data.id);
       },
     }));
     this.updateQuery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof updateQuery>[0]) => {
-        return updateQuery(vars);
+      mutationFn: (
+        vars: OmitWorkspaceAndAppId<Parameters<typeof updateQuery>[0]>,
+      ) => {
+        return updateQuery(this.addWorkspaceAndAppId(vars));
       },
       onSuccess: (data) => {
         (this.editor.getQueryById(data.id) as WebloomQuery).updateQuery(data);
@@ -82,12 +97,17 @@ export class QueriesManager {
     }));
     this.addJSquery = new MobxMutation(this.queryClient, () => ({
       mutationFn: (
-        vars: Omit<Parameters<typeof createJSquery>[0], 'dto'> & {
+        vars: Omit<
+          Parameters<typeof createJSquery>[0],
+          'dto' | 'workspaceId' | 'appId'
+        > & {
           dto: Omit<Parameters<typeof createJSquery>[0]['dto'], 'id'>;
         },
       ) => {
         return createJSquery(
           merge(vars, {
+            workspaceId: this.workspaceId,
+            appId: this.appId,
             dto: { id: getNewEntityName(EDITOR_CONSTANTS.JS_QUERY_BASE_NAME) },
           }),
         );
@@ -97,20 +117,27 @@ export class QueriesManager {
       },
     }));
     this.deleteJSquery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof deleteJSQuery>[0]) => {
-        return deleteJSQuery(vars);
+      mutationFn: (
+        vars: OmitWorkspaceAndAppId<Parameters<typeof deleteJSQuery>[0]>,
+      ) => {
+        return deleteJSQuery(this.addWorkspaceAndAppId(vars));
       },
       onSuccess: (data) => {
         this.editor.removeQuery(data.id);
       },
     }));
     this.updateJSquery = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (vars: Parameters<typeof updateJSquery>[0]) => {
-        return updateJSquery(vars);
+      mutationFn: (
+        vars: OmitWorkspaceAndAppId<Parameters<typeof updateJSquery>[0]>,
+      ) => {
+        return updateJSquery(this.addWorkspaceAndAppId(vars));
       },
       onSuccess: (data) => {
         (this.editor.getQueryById(data.id) as WebloomJSQuery).updateQuery(data);
       },
     }));
+  }
+  addWorkspaceAndAppId<T extends Record<string, unknown>>(vars: T) {
+    return { ...vars, workspaceId: this.workspaceId, appId: this.appId };
   }
 }

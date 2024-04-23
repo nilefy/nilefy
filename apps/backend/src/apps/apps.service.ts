@@ -24,6 +24,7 @@ import {
   pages,
   components,
   queries as drizzleQueries,
+  users,
 } from '@webloom/database';
 import { alias } from 'drizzle-orm/pg-core';
 import { PageDto } from 'src/dto/pages.dto';
@@ -100,6 +101,7 @@ export class AppsService {
     return newApp;
   }
 
+  // TODO: document this function
   private async copyPageToAnotherPage(
     tx: PgTrans,
     oldAppId: number,
@@ -176,9 +178,20 @@ export class AppsService {
   }
 
   async findOne(
+    currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
     appId: AppDto['id'],
   ): Promise<AppRetDto> {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, currentUser),
+      columns: {
+        id: true,
+        onboardingCompleted: true,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException();
+    }
     const app = await this.db.query.apps.findFirst({
       where: and(
         eq(apps.id, appId),
@@ -221,7 +234,11 @@ export class AppsService {
       app.id,
       app.pages[0].id,
     );
-    return { ...app, defaultPage };
+    return {
+      ...app,
+      onBoardingCompleted: user.onboardingCompleted ?? false,
+      defaultPage,
+    };
   }
 
   async update(

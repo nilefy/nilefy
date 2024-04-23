@@ -19,13 +19,13 @@
     "@webloom/permissions": "workspace:*"
   },
   "peerDependencies": {
-    "drizzle-orm": "^0.29.3",
-    "pg": "^8.11.3",
-    "drizzle-kit": "^0.20.13"
+    "drizzle-kit": "^0.20.17",
+    "drizzle-orm": "^0.30.8",
+    "pg": "^8.11.5"
   },
   "devDependencies": {
-    "tsup": "^8.0.1",
-    "@types/pg": "^8.10.9",
-    "ts-node": "^10.9.1"
+    "@types/pg": "^8.11.5",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.2"
   }
 }
