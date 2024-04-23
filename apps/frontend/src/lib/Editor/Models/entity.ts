@@ -26,6 +26,7 @@ import {
 import { memoizeDebounce } from '../utils';
 import { getEvaluablePathsFromInspectorConfig } from '../evaluation';
 import { getArrayPaths } from '../evaluation/utils';
+import _ from 'lodash';
 
 const applyDiff = (
   obj: Record<string, unknown>,
@@ -311,6 +312,21 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       };
     }
     return null;
+  }
+
+  /**
+   *
+   * @param event the config path
+   */
+  handleEvent(event: string) {
+    if (!_.get(this.rawValues, event)) return;
+    this.workerBroker.postMessegeInBatch({
+      event: 'eventExecution',
+      body: {
+        eventName: event,
+        id: this.id,
+      },
+    });
   }
 
   processActionConfig = (config: EntityActionConfig) => {
