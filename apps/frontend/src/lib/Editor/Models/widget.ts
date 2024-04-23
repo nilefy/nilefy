@@ -432,17 +432,6 @@ export class WebloomWidget
     });
   }
 
-  handleEvent(event: string) {
-    if (!this.rawValues[event]) return;
-    this.workerBroker.postMessegeInBatch({
-      event: 'eventExecution',
-      body: {
-        eventName: event,
-        id: this.id,
-      },
-    });
-  }
-
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
