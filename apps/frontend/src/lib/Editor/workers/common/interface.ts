@@ -34,6 +34,11 @@ export type DependencyUpdateResponse = {
   event: 'DependencyUpdate';
 };
 
+export type InitResponse = {
+  body: undefined;
+  event: 'InitSuccess';
+};
+
 export type WorkerResponse =
   | EvaluationUpdateResponse
   | WorkerActionExecutionResponse
@@ -42,7 +47,9 @@ export type WorkerResponse =
   | AutocompleteResponse
   | LintDiagnosticResponse
   | TSQuickInfoResponse
-  | DependencyUpdateResponse;
+  | DependencyUpdateResponse
+  | InitResponse;
+
 export type EntityConfigBody = Omit<
   EntityConfig,
   'dependencyManager' | 'mainThreadBroker' | 'editorState'

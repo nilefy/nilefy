@@ -133,6 +133,11 @@ export class EditorState {
       });
       this.dependencyManager.initAnalysis();
     });
+
+    this.mainThreadBroker.postMessage({
+      event: 'InitSuccess',
+      body: undefined,
+    });
   }
 
   get context() {
