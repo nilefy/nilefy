@@ -246,20 +246,20 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       }
       set(this.finalValues, path, value);
     }
-    this.debouncedSyncRawValuesWithEvaluationWorker(path);
+    this.syncRawValuesWithEvaluationWorker(path);
   }
   pushIntoArray(path: string, value: unknown) {
     let array = get(this.rawValues, path) as unknown[];
     if (!array) set(this.rawValues, path, []);
     array = get(this.rawValues, path) as unknown[];
     array.push(value);
-    this.debouncedSyncRawValuesWithEvaluationWorker(path);
+    this.syncRawValuesWithEvaluationWorker(path);
   }
   removeElementFromArray(path: string, index: number) {
     const array = get(this.rawValues, path) as unknown[];
     if (!isArray(array)) return;
     array.splice(index, 1);
-    this.debouncedSyncRawValuesWithEvaluationWorker(path);
+    this.syncRawValuesWithEvaluationWorker(path);
   }
   getValue(key: string) {
     return get(this.finalValues, key, get(this.rawValues, key));

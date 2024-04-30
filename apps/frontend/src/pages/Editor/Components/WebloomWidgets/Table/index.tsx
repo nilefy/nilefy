@@ -149,7 +149,6 @@ const WebloomTable = observer(() => {
   useAutoRun(() => {
     const data = toJS(props.data) || [];
     setTableData(toJS(data));
-    console.log('data', toJS(data));
     // merging predefined cols and cols generated from data
     const cols = generateColumnsFromData(data[0]);
     runInAction(() => {
@@ -549,7 +548,7 @@ const WebloomTableWidget: Widget<WebloomTableProps> = {
   config,
   initialProps,
   inspectorConfig,
-  metaProps: new Set(['selectedRow', 'selectedRowIndex']),
+  metaProps: new Set(['selectedRow', 'selectedRowIndex', 'columns']),
 };
 
 export { WebloomTableWidget };

@@ -321,7 +321,6 @@ export class WebloomQuery
       'id'
     >,
   ) {
-    console.log('🪵 [query.ts:316] ~ token ~ \x1b[0;32mdto\x1b[0m = ', dto);
     if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
