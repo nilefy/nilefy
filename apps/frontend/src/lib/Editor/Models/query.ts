@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, toJS, computed } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  toJS,
+  computed,
+  autorun,
+} from 'mobx';
 import { Snapshotable } from './interface';
 import {
   CompleteQueryI,
@@ -13,6 +20,10 @@ import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
 import { concat } from 'lodash';
+
+const onSuccessKey = 'config.onSuccess';
+const onFailureKey = 'config.onFailure';
+const onMutateKey = 'config.onMutate';
 
 export type QueryRawValues = {
   /**
@@ -32,7 +43,22 @@ export type QueryRawValues = {
    * if the plugin returned error will be here
    */
   error?: string;
-  config: CompleteQueryI['query'];
+  config: CompleteQueryI['query'] & {
+    /**
+     * carry on success event handler
+     * TODO: event handlers should be defined in one place as array
+     */
+    onSuccess: string;
+    /**
+     * carry on failure event handler
+     */
+    onFaliure: string;
+    /**
+     * @NOTE: will run once the runne fire
+     * carry on mutate event handler
+     */
+    onMutate: string;
+  };
   queryState: 'idle' | 'loading' | 'success' | 'error';
 };
 
@@ -54,6 +80,38 @@ const QueryActions = {
 };
 
 const defaultQueryInspectorConfig: EntityInspectorConfig = [
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: onSuccessKey,
+        label: 'onSuccess',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("onSuccess")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onFailureKey,
+        label: 'onFailure',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("failed")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onMutateKey,
+        label: 'onMutate',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("query started working")}}',
+        },
+        isEvent: true,
+      },
+    ],
+  },
   {
     sectionName: 'Trigger Mode',
     children: [
@@ -201,17 +259,23 @@ export class WebloomQuery
       },
       onMutate: () => {
         this.setValue('queryState', 'loading');
+        // TODO: the event handler runs before the worker gets the data batch(so those handlers get old data)
+        this.handleEvent(onMutateKey);
       },
       onError: (error) => {
         this.setValue('queryState', 'error');
         this.setValue('error', error.message);
         this.setValue('status', 505);
+        // TODO
+        this.handleEvent(onFailureKey);
       },
       onSuccess: (data) => {
         this.setValue('data', data.data);
         this.setValue('status', data.status);
         this.setValue('error', data.error);
         this.setValue('queryState', 'success');
+        // TODO:
+        this.handleEvent(onSuccessKey);
       },
     }));
     this.workspaceId = workspaceId;

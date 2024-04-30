@@ -14,6 +14,7 @@ import { diff, Diff } from 'deep-diff';
 import { klona } from 'klona';
 import { omit } from 'lodash';
 import { log } from 'loglevel';
+import _ from 'lodash';
 
 export type PromisedActionExecutionPayload = ActionExecutionPayload & {
   resolve: (value: unknown) => void;
@@ -134,7 +135,7 @@ export class MainThreadBroker {
           if (!entity) return;
           this.editorState.evaluationManager.executeEvent(
             entity.id,
-            entity.unevalValues[body.eventName] as string,
+            _.get(entity.unevalValues, body.eventName) as string,
           );
         } catch (error) {
           console.error('Error in eventExecution:', error);
