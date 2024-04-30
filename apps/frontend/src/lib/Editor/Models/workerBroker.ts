@@ -161,6 +161,11 @@ export class WorkerBroker implements WebloomDisposable {
       case 'fulfillQuickInfo':
         this.tsServer.fulfillQuickInfo(body);
         break;
+      case 'InitSuccess':
+        {
+          this.editorState.afterInit();
+        }
+        break;
       default:
         break;
     }

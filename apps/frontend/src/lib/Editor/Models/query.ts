@@ -235,6 +235,7 @@ export class WebloomQuery
           dto: {
             dataSourceId: this.dataSourceId,
             query: toJS(this.rawConfig) as Record<string, unknown>,
+            triggerMode: this.triggerMode,
           },
         });
       },
@@ -295,15 +296,6 @@ export class WebloomQuery
       dataSourceId: observable,
       appId: observable,
     });
-    // todo: schedule after first evaluation
-    // if (this.triggerMode === 'onAppLoad') {
-    //   this.queryRunner.mutate();
-    // }
-    autorun(() =>
-      console.log(
-        `query ${this.id} autorun raw: ${this.rawValues} final: ${this.finalValues}`,
-      ),
-    );
   }
   get triggerMode() {
     return this.rawValues.triggerMode as 'onAppLoad' | 'manually';
