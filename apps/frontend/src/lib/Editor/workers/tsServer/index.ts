@@ -41,7 +41,7 @@ const wrappers = {
     };
   },
   event: (content: string) => {
-    const beforeLine = `(async function (): void { `;
+    const beforeLine = `(async function (): Promise<void> { `;
     const afterLine = ' })();';
     return {
       content: `${beforeLine}${content}${afterLine}`,
