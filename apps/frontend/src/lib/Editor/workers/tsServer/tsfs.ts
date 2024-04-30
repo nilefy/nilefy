@@ -5,6 +5,11 @@ import { keys } from 'lodash';
 export const GLOBAL_CONTEXT_FILE =
   '/' + EDITOR_CONSTANTS.JS_AUTOCOMPLETE_FILE_NAME + '.d.ts';
 
+// We don't want to include the entire lib.dom.d.ts file, so we just include the types we need
+//todo add fetch
+const injectedTypes = `
+
+`;
 type FileName = string;
 type FileContent = string;
 /**

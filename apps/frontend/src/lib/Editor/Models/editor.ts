@@ -152,8 +152,7 @@ export class EditorState implements WebloomDisposable {
     Object.values(this.pages).forEach((page) => page.dispose());
     Object.values(this.queries).forEach((query) => query.dispose());
     this.globals = undefined;
-    // react strict mode causes this to be called twice
-    process.env.NODE_ENV === 'production' ? this.workerBroker.dispose() : null;
+    this.workerBroker?.dispose();
     this.pages = {};
     this.queries = {};
     this.currentPageId = '';

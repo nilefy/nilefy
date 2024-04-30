@@ -32,6 +32,7 @@ export type PendingRequest<TValue = unknown, TError = unknown> = {
 export class WorkerBroker implements WebloomDisposable {
   public readonly worker: Worker;
   private queue: WorkerRequest[];
+  private isFirstEvaluation = true;
   tsServer: TSServerBroker;
   private disposables: (() => void)[] = [];
   pendingJSQueryExecution: Array<PendingRequest> = [];
@@ -137,6 +138,10 @@ export class WorkerBroker implements WebloomDisposable {
           body.runtimeErrorUpdates,
           body.validationErrorUpdates,
         );
+        if (this.isFirstEvaluation) {
+          this.isFirstEvaluation = false;
+          this.editorState.afterInit();
+        }
         break;
       case 'DependencyUpdate':
         this.editorState.applyEntityToEntityDependencyPatch(
@@ -160,11 +165,6 @@ export class WorkerBroker implements WebloomDisposable {
         break;
       case 'fulfillQuickInfo':
         this.tsServer.fulfillQuickInfo(body);
-        break;
-      case 'InitSuccess':
-        {
-          this.editorState.afterInit();
-        }
         break;
       default:
         break;
@@ -246,6 +246,7 @@ export class WorkerBroker implements WebloomDisposable {
 
   dispose() {
     this.disposables.forEach((fn) => fn());
+    this.isFirstEvaluation = true;
     this.worker.terminate();
   }
 }

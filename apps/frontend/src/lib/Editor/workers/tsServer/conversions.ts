@@ -17,7 +17,6 @@ export function jsonToTs(typeName: string, json: any) {
   }
 }
 
-
 export function inferPrimitives(json: any) {
   if (typeof json === 'string') {
     return 'string';
@@ -31,7 +30,7 @@ export function inferPrimitives(json: any) {
   if (json === null) {
     return 'null';
   }
-  if(json === undefined) {
+  if (json === undefined) {
     return 'undefined';
   }
   if (Array.isArray(json)) {
