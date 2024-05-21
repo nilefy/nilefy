@@ -3,7 +3,7 @@ import { RemoteTypes, UndoableCommand, UpdateNodesPayload } from '../types';
 
 import { DraggedItem } from '@/lib/Editor/dnd/interface';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
+import { WidgetTypes } from '@/pages/Editor/Components';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
@@ -12,15 +12,7 @@ import { WebloomPage } from '@/lib/Editor/Models/page';
 export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
 >[0];
-const normalizeDims = (
-  dims: Partial<WebloomGridDimensions>,
-  type: WidgetTypes,
-): WebloomGridDimensions => {
-  const { config } = WebloomWidgets[type];
-  dims.columnsCount = config.layoutConfig.colsCount;
-  dims.rowsCount = config.layoutConfig.rowsCount;
-  return dims as WebloomGridDimensions;
-};
+
 class DragAction implements UndoableCommand {
   private oldParentId?: string;
   private parentId: string;
@@ -33,20 +25,12 @@ class DragAction implements UndoableCommand {
   private endPosition: WebloomGridDimensions;
   constructor(options: {
     draggedItem: DraggedItem;
-    endPosition: Partial<WebloomGridDimensions> & {
-      col: number;
-      row: number;
-    };
+    endPosition: WebloomGridDimensions;
     parentId: string;
   }) {
     this.isNew = options.draggedItem.isNew;
     this.parentId = options.parentId;
-    this.endPosition = normalizeDims(
-      options.endPosition,
-      options.draggedItem.isNew
-        ? options.draggedItem.type
-        : editorStore.currentPage.getWidgetById(options.draggedItem.id).type,
-    );
+    this.endPosition = options.endPosition;
     if (!options.draggedItem.isNew) {
       this.oldParentId = editorStore.currentPage.getWidgetById(
         options.draggedItem.id,
