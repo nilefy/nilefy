@@ -13,9 +13,9 @@ export class EditorPage {
   };
   rootCanvas: Locator;
   readonly workspaceId: string;
-  constructor(page: Page, workspaceId: string) {
+  constructor(page: Page) {
     this.page = page;
-    this.workspaceId = workspaceId;
+    this.workspaceId = 'test';
     this.rightSidebar = {
       insert: page.getByRole('button', { name: 'Insert' }),
       inspect: page.getByRole('button', { name: 'Inspect' }),
