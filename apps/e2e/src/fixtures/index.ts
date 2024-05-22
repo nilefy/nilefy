@@ -13,15 +13,8 @@ export type WebloomFixtures = {
 // eslint-disable-next-line
 export const test = baseTest.extend<WebloomFixtures, {
     workerStorageState: string;
-    activeWorkspaceId: string;
   }
 >({
-  editorPage: async ({ page, activeWorkspaceId }, use) => {
-    const editorPage = new EditorPage(page, activeWorkspaceId);
-    await editorPage.boot();
-    await use(editorPage);
-    await editorPage.dispose();
-  },
   // Use the same storage state for all tests in this worker.
   storageState: ({ workerStorageState }, use) => use(workerStorageState),
 
@@ -60,4 +53,10 @@ export const test = baseTest.extend<WebloomFixtures, {
     },
     { scope: 'worker' },
   ],
+  editorPage: async ({ page }, use) => {
+    const editorPage = new EditorPage(page);
+    await editorPage.boot();
+    await use(editorPage);
+    await editorPage.dispose();
+  },
 });
