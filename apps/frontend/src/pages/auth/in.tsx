@@ -71,7 +71,11 @@ export function SignIn() {
       </p>
       <div>
         <Link
-          to={'/api/auth/login/google'}
+          to={
+            import.meta.env.DEV
+              ? 'http://localhost:3000/api/auth/login/google'
+              : '/api/auth/login/google'
+          }
           className={buttonVariants({
             variant: 'outline',
           })}

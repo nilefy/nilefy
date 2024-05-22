@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import z from 'zod';
 
 const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']),
   JWT_SECRET: z.string().min(8),
   RESEND_API_KEY: z.string(),
   RESEND_SEND_FROM_EMAIL: z.string(),
@@ -9,7 +10,6 @@ const envSchema = z.object({
   DB_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  NODE_ENV: z.string(),
   ENCRYPTION_KEY: z.string(),
   BASE_URL_FE: z.string(),
   BASE_URL_BE: z.string(),
