@@ -6,6 +6,7 @@ import {
   users,
   usersToRoles,
   workspaces,
+  usersToWorkspaces,
 } from '@webloom/database';
 import { genSalt, hash } from 'bcrypt';
 export const acquireAccount = async (id: number) => {
@@ -22,6 +23,8 @@ export const acquireAccount = async (id: number) => {
         email: email,
         username: username,
         password: passwordHashed,
+        // todo: remove this when we add tests for onboarding
+        onboardingCompleted: true,
         emailVerified: new Date(),
       })
       .returning()
@@ -34,6 +37,10 @@ export const acquireAccount = async (id: number) => {
       .returning()
       .onConflictDoNothing()
   )[0]!;
+  await db
+    .insert(usersToWorkspaces)
+    .values({ userId: user.id, workspaceId: workspace.id })
+    .returning();
   const allPermissions = await db.select().from(permissions);
   const res = (
     await db

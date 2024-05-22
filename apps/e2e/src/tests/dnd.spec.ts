@@ -1,4 +1,4 @@
-import { test } from '../fixtures';
+import { expect, test } from '../fixtures';
 
 test(
   '1. Should be able to drag and drop widgets from the sidebar',
@@ -7,7 +7,7 @@ test(
   },
   async ({ editorPage }) => {
     await editorPage.dragAndDropWidget('Text');
-    await editorPage.dragAndDropWidget('Button');
-    await editorPage.dragAndDropWidget('Image');
+    const widget = editorPage.rootCanvas.getByText('Text', { exact: true });
+    expect(widget).toBeVisible();
   },
 );

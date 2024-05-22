@@ -4,7 +4,7 @@ import path from 'path';
 import { acquireAccount } from '../utils';
 import { EditorPage } from './editor';
 //todo env var
-const baseURL = 'http://localhost:5173';
+const baseURL = 'http://localhost:4173';
 export * from '@playwright/test';
 
 export type WebloomFixtures = {

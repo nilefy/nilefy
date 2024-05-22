@@ -18,7 +18,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e\""
+    "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build --filter=!docs && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start --filter=!docs\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e  \""
   },
   "engines": {
     "node": ">=18.0.0",

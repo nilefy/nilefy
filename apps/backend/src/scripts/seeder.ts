@@ -2,7 +2,7 @@ import { configDotenv } from 'dotenv';
 import { userSeeder } from './seeders/user.seeder';
 import { workspaceSeeder } from './seeders/workspace.seeder';
 import { appSeeder } from './seeders/app.seeder';
-// import { permissionsSeeder } from './seeders/permissions.seeder';
+import { permissionsSeeder } from './seeders/permissions.seeder';
 // import { rolesSeeder } from './seeders/roles.seeder';
 import { dataSourcesSeeder } from './seeders/data_sources.seeder';
 import { dbConnect } from '@webloom/database';
@@ -10,7 +10,7 @@ import { dbConnect } from '@webloom/database';
 
 async function main() {
   configDotenv();
-  const count = 20000;
+  const count = 5;
   const dbUrl = process.env.DB_URL;
   if (!dbUrl) throw new Error('missing env var to run seeder (DB_URL)');
   const [db, client] = await dbConnect(dbUrl);
@@ -21,7 +21,7 @@ async function main() {
     const workspaces = await workspaceSeeder(db, userIds.length, userIds);
     const workspaceIds = workspaces.map((w) => w.id);
     // TODO: re-enable roles seeder
-    // const permissions = await permissionsSeeder(db);
+    await permissionsSeeder(db);
     // const permissionIds = permissions.map((p) => p.id);
     // const [adminId, ...rest] = userIds;
     // await rolesSeeder(db, adminId, rest, workspaceIds, permissionIds);

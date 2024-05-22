@@ -12,19 +12,18 @@ export class EditorPage {
     Page: Locator;
   };
   rootCanvas: Locator;
-  readonly workspaceId: string;
   constructor(page: Page) {
     this.page = page;
-    this.workspaceId = 'test';
     this.rightSidebar = {
-      insert: page.getByRole('button', { name: 'Insert' }),
-      inspect: page.getByRole('button', { name: 'Inspect' }),
-      Page: page.getByRole('button', { name: 'Page' }),
+      insert: page.getByRole('tab', { name: 'Insert' }),
+      inspect: page.getByRole('tab', { name: 'Inspect' }),
+      Page: page.getByRole('tab', { name: 'Page' }),
     };
-    this.rootCanvas = page.locator("[data-testid='0']");
+    //todo add a test id
+    this.rootCanvas = page.locator('.overflow-hidden > div > div > .relative');
   }
   async boot() {
-    await this.page.goto(`/${this.workspaceId}`);
+    await this.page.goto(`/`);
     const createButton = this.page
       .getByRole('button', {
         name: 'create new app',
@@ -40,26 +39,42 @@ export class EditorPage {
       })
       .click();
 
-    const editButton = this.page.getByRole('button', { name: 'Edit' });
+    const editButton = this.page.getByRole('link', { name: 'Edit' });
     await editButton.click();
     const newAppInEditor = this.page.getByText(this.appName);
     await expect(newAppInEditor).toBeVisible();
   }
   async dispose() {
     await this.page.goto('/');
-    const menu = this.page.getByRole('button', {
-      expanded: false,
-    });
+    const menu = this.page.locator('ul').getByRole('button');
     await menu.click();
-    const deleteButton = this.page.getByRole('button', { name: 'Delete' });
+    const deleteButton = this.page.getByRole('menuitem', { name: 'Delete' });
     await deleteButton.click();
+    await this.page.getByRole('button', { name: 'Delete' }).click();
   }
 
   async dragAndDropWidget(widgetName: string, x: number = 0, y: number = 0) {
     await this.rightSidebar.insert.click();
-    const widget = this.page.getByRole('button', { name: widgetName });
-    await widget.dragTo(this.rootCanvas, {
-      targetPosition: { x, y },
+    const widget = this.page.getByRole('button', {
+      name: widgetName,
+      exact: true,
     });
+    await drag(this.page, widget, this.rootCanvas, x, y);
   }
 }
+const drag = async (
+  page: Page,
+  draggable: Locator,
+  droppable: Locator,
+  x = 0,
+  y = 0,
+) => {
+  const box = (await droppable.boundingBox())!;
+  await draggable.hover();
+
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + x, box.y + box.height / 2 + y, {
+    steps: 5,
+  });
+  await page.mouse.up();
+};
