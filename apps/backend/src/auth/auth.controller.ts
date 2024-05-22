@@ -9,6 +9,7 @@ import {
   Res,
   Param,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInGoogleOAuthGuard } from './google.guard';
@@ -55,11 +56,17 @@ export class AuthController {
     @Req() req: GoogleAuthedRequest,
     @Res() response: Response,
   ) {
-    const frontURL = new URL('/signin', this.configService.get('BASE_URL_FE'));
+    const frontURL = new URL(
+      '/signin',
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : undefined,
+    );
     frontURL.searchParams.set(
       'token',
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
+    Logger.debug(frontURL);
     response.redirect(302, frontURL.toString());
   }
 
@@ -69,7 +76,12 @@ export class AuthController {
     @Param('email') email: string,
     @Param('token') token: string,
   ) {
-    const frontURL = new URL('/signin', this.configService.get('BASE_URL_FE'));
+    const frontURL = new URL(
+      '/signin',
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : undefined,
+    );
     try {
       const msg = await this.authService.confirm(email, token);
       frontURL.searchParams.set('msg', msg);

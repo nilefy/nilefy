@@ -7,8 +7,9 @@ async function main() {
   try {
     await migrate(db, { migrationsFolder: "drizzle" });
   } catch (err) {
+    console.error(err);
+  } finally {
     await client.end();
-    throw err;
   }
 }
 

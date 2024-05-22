@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { SignUpSchema } from '@/api/auth';
 import { signUpSchema } from '@/api/auth';
 import { useSignUp } from '@/hooks/useSignUp';
+
 export function SignUp() {
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),
@@ -42,8 +43,11 @@ export function SignUp() {
       </p>
       <div>
         <Link
-          // TODO: move this hardcoded value to .env or smth
-          to={'http://localhost:3000/auth/login/google'}
+          to={
+            import.meta.env.DEV
+              ? 'http://localhost:3000/api/auth/login/google'
+              : '/api/auth/login/google'
+          }
           className={buttonVariants({
             variant: 'outline',
           })}

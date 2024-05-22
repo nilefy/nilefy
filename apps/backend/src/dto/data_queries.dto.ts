@@ -49,7 +49,6 @@ export class DeleteDatasourceQueriesDto extends createZodDto(
 export const appQueriesSchema = querySchema
   .pick({
     id: true,
-    name: true,
     query: true,
     triggerMode: true,
   })
