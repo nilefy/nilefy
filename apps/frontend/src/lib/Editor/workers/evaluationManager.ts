@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, toJS } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate, evaluateAsync } from '../evaluation';

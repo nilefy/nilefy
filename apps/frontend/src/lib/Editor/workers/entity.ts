@@ -9,7 +9,7 @@ import {
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
 import { DependencyManager } from './dependencyManager';
-import { entries, get, isArray, keys, set } from 'lodash';
+import { entries, get, isArray, keys, set, unset } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -295,7 +295,7 @@ export class Entity implements WebloomDisposable {
   }
 
   setValue(path: string, value: unknown) {
-    if (deepEqual(this.setterProps[path], value)) {
+    if (value !== undefined && deepEqual(this.setterProps[path], value)) {
       return;
     } else {
       delete this.setterProps[path];

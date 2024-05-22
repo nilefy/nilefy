@@ -250,10 +250,10 @@ export class WebloomJSQuery
    * Clear the data and error properties of the query.
    */
   reset() {
-    this.rawValues.data = undefined;
-    this.rawValues.queryState = 'idle';
-    this.rawValues.statusCode = undefined;
-    this.rawValues.error = undefined;
+    this.setValue('data', undefined);
+    this.setValue('queryState', 'idle');
+    this.setValue('error', undefined);
+    this.setValue('statusCode', undefined);
   }
 
   get snapshot() {
