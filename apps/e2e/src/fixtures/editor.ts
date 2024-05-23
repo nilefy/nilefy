@@ -6,21 +6,15 @@ export class EditorPage {
   readonly page: Page;
   appId!: string;
   appName!: string;
-  rightSidebar: {
-    insert: Locator;
-    inspect: Locator;
-    Page: Locator;
+  rightSidebar!: {
+    insertButton: Locator;
+    inspectButton: Locator;
+    PageButton: Locator;
+    ispectOnePanel: Locator;
   };
-  rootCanvas: Locator;
+  rootCanvas!: Locator;
   constructor(page: Page) {
     this.page = page;
-    this.rightSidebar = {
-      insert: page.getByRole('tab', { name: 'Insert' }),
-      inspect: page.getByRole('tab', { name: 'Inspect' }),
-      Page: page.getByRole('tab', { name: 'Page' }),
-    };
-    //todo add a test id
-    this.rootCanvas = page.locator('.overflow-hidden > div > div > .relative');
   }
   async boot() {
     await this.page.goto(`/`);
@@ -43,6 +37,14 @@ export class EditorPage {
     await editButton.click();
     const newAppInEditor = this.page.getByText(this.appName);
     await expect(newAppInEditor).toBeVisible();
+    this.rightSidebar = {
+      insertButton: this.page.getByRole('tab', { name: 'Insert' }),
+      inspectButton: this.page.getByRole('tab', { name: 'Inspect' }),
+      PageButton: this.page.getByRole('tab', { name: 'Page' }),
+      ispectOnePanel: this.page.getByTestId('one-item-inspection-panel'),
+    };
+    //todo add a test id
+    this.rootCanvas = this.page.getByTestId('0');
   }
   async dispose() {
     await this.page.goto('/');
@@ -52,14 +54,31 @@ export class EditorPage {
     await deleteButton.click();
     await this.page.getByRole('button', { name: 'Delete' }).click();
   }
-
-  async dragAndDropWidget(widgetName: string, x: number = 0, y: number = 0) {
-    await this.rightSidebar.insert.click();
+  async selectWidget(id: string) {
+    (await this.getWidget(id)).click();
+  }
+  async getWidget(id: string) {
+    const widget = this.page.getByTestId(id);
+    if (!(await widget.isVisible())) {
+      throw new Error(`widget with id ${id} not found`);
+    }
+    return widget;
+  }
+  unselectAll() {
+    this.page.getByTestId('0').click();
+  }
+  async dragAndDropNewWidget(widgetName: string, x: number = 0, y: number = 0) {
+    await this.rightSidebar.insertButton.click();
     const widget = this.page.getByRole('button', {
       name: widgetName,
       exact: true,
     });
     await drag(this.page, widget, this.rootCanvas, x, y);
+    const id = await this.rootCanvas
+      .locator('[data-id]')
+      .last()
+      .getAttribute('data-id');
+    return id;
   }
 }
 const drag = async (

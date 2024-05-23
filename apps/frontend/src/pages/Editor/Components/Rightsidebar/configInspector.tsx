@@ -27,7 +27,7 @@ export const WidgetConfigPanel = observer(() => {
     .inspectorConfig as EntityInspectorConfig;
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="one-item-inspection-panel">
       <ConfigPanelHeader node={selectedNode} />
       <EntityForm>
         <div className="h-full w-full ">

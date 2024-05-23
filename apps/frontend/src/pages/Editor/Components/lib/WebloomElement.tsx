@@ -99,6 +99,7 @@ const WidgetWrapper = observer(
         }}
         className="target relative h-full w-full touch-none overflow-hidden outline-none"
         data-id={id}
+        data-testid={id}
         data-type={WIDGET_SECTIONS.CANVAS}
       >
         {

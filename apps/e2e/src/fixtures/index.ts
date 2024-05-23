@@ -55,8 +55,11 @@ export const test = baseTest.extend<WebloomFixtures, {
   ],
   editorPage: async ({ page }, use) => {
     const editorPage = new EditorPage(page);
-    await editorPage.boot();
-    await use(editorPage);
-    await editorPage.dispose();
+    try {
+      await editorPage.boot();
+      await use(editorPage);
+    } finally {
+      await editorPage.dispose();
+    }
   },
 });
