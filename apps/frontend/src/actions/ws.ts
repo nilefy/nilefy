@@ -29,7 +29,11 @@ export class WebloomWebSocket {
 
   public connectWebSocket() {
     try {
-      this.socket = new WebSocket('ws://localhost:3000');
+      const https = window.location.protocol === 'https:';
+
+      this.socket = new WebSocket(
+        https ? `wss://${window.location.host}` : `ws://localhost:3000`,
+      );
       this.assignListeners();
     } catch (ig) {
       this.reconnect();

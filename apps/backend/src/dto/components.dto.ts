@@ -58,7 +58,6 @@ export type WebloomNode = {
 export const frontKnownKeysSchema = componentSchema.pick({
   id: true,
   parentId: true,
-  isCanvas: true,
   props: true,
   type: true,
   col: true,

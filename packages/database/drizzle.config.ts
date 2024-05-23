@@ -7,4 +7,6 @@ export default {
     connectionString: process.env.DB_URL as string,
   },
   out: "./drizzle",
+  verbose: true,
+  strict: true,
 } satisfies Config;
