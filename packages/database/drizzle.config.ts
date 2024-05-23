@@ -8,5 +8,5 @@ export default {
   },
   out: "./drizzle",
   verbose: true,
-  strict: true,
+  strict: false,
 } satisfies Config;

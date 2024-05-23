@@ -57,6 +57,13 @@ export class EditorPage {
   async selectWidget(id: string) {
     (await this.getWidget(id)).click();
   }
+  async getInputValue(id: string, field: string) {
+    await this.selectWidget(id);
+    const input = this.rightSidebar.ispectOnePanel
+      .locator(`#${id}-${field}`)
+      .getByRole('textbox');
+    return await input.innerText();
+  }
   async fillInput(id: string, field: string, value: string) {
     await this.selectWidget(id);
     const input = this.rightSidebar.ispectOnePanel
