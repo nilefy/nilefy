@@ -5,5 +5,10 @@ test(
   {
     tag: ['@evaluation', '@editor'],
   },
-  async ({ editorPage }) => {},
+  async ({ editorPage }) => {
+    const id = await editorPage.dragAndDropNewWidget('Text');
+    await editorPage.fillInput(id!, 'text', `{{'Hello World'}}`);
+    const widget = await editorPage.getWidget(id!);
+    await expect(widget).toHaveText('Hello World');
+  },
 );
