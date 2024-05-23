@@ -65,3 +65,24 @@ test(
     await expect(widget2).toHaveText(text);
   },
 );
+
+test(
+  "5. Setters should be able to update the value of a widget's property",
+  {
+    tag: ['@evaluation', '@editor'],
+  },
+  async ({ editorPage }) => {
+    const textId = await editorPage.dragAndDropNewWidget('Text');
+    const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 100);
+    const newText = 'Hello World';
+    await editorPage.fillInput(
+      buttonId!,
+      'onClick',
+      `{{${textId}.setText("${newText}")}}`,
+    );
+    const button = await editorPage.getWidget(buttonId!);
+    await button.click();
+    const textWidget = await editorPage.getWidget(textId!);
+    await expect(textWidget).toHaveText(newText);
+  },
+);
