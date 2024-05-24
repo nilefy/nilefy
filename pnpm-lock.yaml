@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       concurrently:
         specifier: ^8.2.2
@@ -131,9 +135,6 @@ importers:
       ws:
         specifier: ^8.14.2
         version: 8.15.0
-      zod:
-        specifier: ^3.23.8
-        version: 3.23.8
       zod-to-json-schema:
         specifier: ^3.23.0
         version: 3.23.0(zod@3.23.8)
@@ -347,6 +348,9 @@ importers:
       '@nilefy/constants':
         specifier: workspace:^
         version: link:../../packages/constants
+      '@nilefy/permissions':
+        specifier: workspace:^
+        version: link:../../packages/permissions
       '@radix-ui/react-accordion':
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@18.2.17)(@types/react@18.2.31)(react-dom@18.2.0)(react@18.2.0)
@@ -614,9 +618,6 @@ importers:
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
-      zod:
-        specifier: ^3.23.8
-        version: 3.23.8
       zod-to-json-schema:
         specifier: ^3.23.0
         version: 3.23.0(zod@3.23.8)

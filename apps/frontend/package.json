@@ -68,6 +68,7 @@
     "@uiw/react-codemirror": "^4.21.20",
     "@ungap/structured-clone": "^1.2.0",
     "@nilefy/constants": "workspace:^",
+    "@nilefy/permissions": "workspace:^",
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.1",
     "ajv": "^8.12.0",
@@ -123,7 +124,6 @@
     "toposort": "^2.0.2",
     "unescape-js": "^1.1.4",
     "uuid": "^9.0.1",
-    "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.0",
     "zod-to-ts": "^1.2.0",
     "zustand": "^4.4.4"
