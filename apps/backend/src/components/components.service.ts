@@ -6,10 +6,10 @@ import {
   ComponentDto,
   CreateComponentDb,
   UpdateComponentDb,
-  WebloomTree,
+  NilefyTree,
 } from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { components, DatabaseI, PgTrans } from '@webloom/database';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { components, DatabaseI, PgTrans } from '@nilefy/database';
 
 @Injectable()
 export class ComponentsService {
@@ -90,7 +90,7 @@ export class ComponentsService {
       .returning();
   }
 
-  async getTreeForPage(pageId: PageDto['id']): Promise<WebloomTree> {
+  async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
@@ -112,7 +112,7 @@ export class ComponentsService {
       throw new BadRequestException(
         'page should contain at least one component(root)',
       ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
-    const tree: WebloomTree = {};
+    const tree: NilefyTree = {};
     rows.forEach((row) => {
       tree[row.id] = {
         id: row.id,

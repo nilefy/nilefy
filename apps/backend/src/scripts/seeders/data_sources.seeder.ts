@@ -20,7 +20,7 @@ import {
   pluginConfigForm as mongodbConfigForm,
   queryConfigForm as mongodbQueryConfigForm,
 } from '../../data_sources/plugins/mongodb/types';
-import { DatabaseI, dataSources as dataSourcesSchema } from '@webloom/database';
+import { DatabaseI, dataSources as dataSourcesSchema } from '@nilefy/database';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');

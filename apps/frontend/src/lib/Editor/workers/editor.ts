@@ -17,7 +17,7 @@ import {
   UninstallLibraryRequest,
   UpdateLibraryNameRequest,
 } from './common/interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
 import { entries, keys, values } from 'lodash';

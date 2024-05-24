@@ -3,7 +3,7 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { JsQueryDb, JsQueryDto, UpdateJsQueryDto } from '../dto/js_queries.dto';
 import { AppDto } from '../dto/apps.dto';
-import { DatabaseI, jsQueries } from '@webloom/database';
+import { DatabaseI, jsQueries } from '@nilefy/database';
 
 @Injectable()
 export class JsQueriesService {

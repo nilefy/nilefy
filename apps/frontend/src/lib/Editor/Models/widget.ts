@@ -4,7 +4,7 @@ import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import scrollIntoView from 'scroll-into-view-if-needed';
 
 import { WebloomPage } from './page';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   WebloomGridDimensions,
   WebloomPixelDimensions,

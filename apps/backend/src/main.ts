@@ -12,8 +12,8 @@ async function bootstrap() {
   app.use(morgan('dev'));
   app.useWebSocketAdapter(new WsAdapter(app));
   const config = new DocumentBuilder()
-    .setTitle('WEBLOOM')
-    .setDescription('webloom api')
+    .setTitle('NILEFY')
+    .setDescription('nilefy api')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

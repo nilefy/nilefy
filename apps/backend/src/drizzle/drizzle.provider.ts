@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { TConfigService } from '../evn.validation';
 
-import { dbConnect } from '@webloom/database';
+import { dbConnect } from '@nilefy/database';
 
 export const DrizzleAsyncProvider = 'drizzleProvider';
 

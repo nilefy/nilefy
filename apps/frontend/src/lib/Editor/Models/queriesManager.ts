@@ -12,7 +12,7 @@ import { WebloomJSQuery } from './jsQuery';
 import { WebloomQuery } from './query';
 import { merge } from 'lodash';
 import { getNewEntityName } from '../entitiesNameSeed';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 type OmitWorkspaceAndAppId<T> = Omit<T, 'workspaceId' | 'appId'>;
 

@@ -6,7 +6,7 @@ import {
   DataSourceP,
 } from '../dto/data_sources.dto';
 import { eq } from 'drizzle-orm';
-import { DatabaseI, dataSources } from '@webloom/database';
+import { DatabaseI, dataSources } from '@nilefy/database';
 
 @Injectable()
 export class GlobalDataSourcesService {

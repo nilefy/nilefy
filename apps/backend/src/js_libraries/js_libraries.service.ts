@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
-import { DatabaseI, jsLibraries } from '@webloom/database';
+import { DatabaseI, jsLibraries } from '@nilefy/database';
 import {
   JsLibraryDb,
   JsLibraryDto,

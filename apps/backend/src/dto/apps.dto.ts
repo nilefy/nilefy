@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { apps as appsDrizzle } from '@webloom/database';
+import { apps as appsDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 import { pageSchema } from './pages.dto';
 import { userSchema } from './users.dto';

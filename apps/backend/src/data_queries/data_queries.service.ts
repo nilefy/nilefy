@@ -13,7 +13,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
-import { DatabaseI, queries } from '@webloom/database';
+import { DatabaseI, queries } from '@nilefy/database';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {

@@ -1,6 +1,6 @@
 import z from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { users as usersDrizzle } from '@webloom/database';
+import { users as usersDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const userSchema = createSelectSchema(usersDrizzle);

@@ -25,7 +25,7 @@ import {
   components,
   queries as drizzleQueries,
   users,
-} from '@webloom/database';
+} from '@nilefy/database';
 import { alias } from 'drizzle-orm/pg-core';
 import { PageDto } from 'src/dto/pages.dto';
 

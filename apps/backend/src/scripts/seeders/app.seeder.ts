@@ -1,8 +1,8 @@
 import { generateFakeApp } from '../faker/app.faker';
 import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { apps, components, DatabaseI, pages } from '@webloom/database';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { apps, components, DatabaseI, pages } from '@nilefy/database';
 import { chunkArray } from '../utils';
 
 export async function appSeeder(

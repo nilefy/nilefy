@@ -8,7 +8,7 @@ import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { RemoteTypes } from '../types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export class PasteAction implements UndoableCommand {
   private parent: string;

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { generateFakeUser } from '../faker/user.faker';
-import { users as usersSchema } from '@webloom/database';
+import { users as usersSchema } from '@nilefy/database';
 import { SeederI } from './seeder.types';
 import { UserDto } from '../../dto/users.dto';
 import { genSalt, hash } from 'bcrypt';

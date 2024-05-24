@@ -10,7 +10,7 @@ import {
   permissionsToRoles,
   roles,
   usersToRoles,
-} from '@webloom/database';
+} from '@nilefy/database';
 
 export async function rolesSeeder(
   db: DatabaseI,

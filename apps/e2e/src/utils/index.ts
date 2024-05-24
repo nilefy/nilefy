@@ -8,7 +8,7 @@ import {
   workspaces,
   usersToWorkspaces,
   apps,
-} from '@webloom/database';
+} from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 

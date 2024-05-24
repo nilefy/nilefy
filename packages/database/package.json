@@ -1,5 +1,5 @@
 {
-  "name": "@webloom/database",
+  "name": "@nilefy/database",
   "version": "0.0.0",
   "private": true,
   "main": "dist/index.js",
@@ -15,8 +15,8 @@
     "db:migrate": "pnpm db:generate && ts-node ./src/scripts/migrate"
   },
   "dependencies": {
-    "@webloom/constants": "workspace:*",
-    "@webloom/permissions": "workspace:*"
+    "@nilefy/constants": "workspace:*",
+    "@nilefy/permissions": "workspace:*"
   },
   "peerDependencies": {
     "drizzle-kit": "^0.20.17",

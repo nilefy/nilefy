@@ -16,9 +16,9 @@ import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
 import { WebloomNode, WebloomTree } from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { alias } from 'drizzle-orm/pg-core';
-import { DatabaseI, pages, PgTrans, components } from '@webloom/database';
+import { DatabaseI, pages, PgTrans, components } from '@nilefy/database';
 @Injectable()
 export class PagesService {
   constructor(

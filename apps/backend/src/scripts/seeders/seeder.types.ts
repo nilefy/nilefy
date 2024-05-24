@@ -1,7 +1,7 @@
 import { InferInsertModel } from 'drizzle-orm';
 import { z } from 'zod';
-import { dataSources as dataSourcesDrizzle } from '@webloom/database';
-import { DatabaseI } from '@webloom/database';
+import { dataSources as dataSourcesDrizzle } from '@nilefy/database';
+import { DatabaseI } from '@nilefy/database';
 
 export type SeederI<T> = (db: DatabaseI, count: number) => Promise<T>;
 

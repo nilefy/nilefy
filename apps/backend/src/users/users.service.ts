@@ -3,7 +3,7 @@ import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
 import { genSalt, hash } from 'bcrypt';
-import { accounts, DatabaseI, users } from '@webloom/database';
+import { accounts, DatabaseI, users } from '@nilefy/database';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 
 @Injectable()

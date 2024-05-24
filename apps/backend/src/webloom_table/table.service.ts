@@ -14,7 +14,7 @@ import {
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
-import * as schema from '@webloom/database';
+import * as schema from '@nilefy/database';
 
 @Injectable()
 export class WebloomDbService {
