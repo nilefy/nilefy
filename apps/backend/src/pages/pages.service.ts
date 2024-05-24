@@ -15,7 +15,7 @@ import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { WebloomNode, WebloomTree } from '../dto/components.dto';
+import { WebloomNode, NilefyTree } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { alias } from 'drizzle-orm/pg-core';
 import { DatabaseI, pages, PgTrans, components } from '@nilefy/database';
@@ -30,6 +30,9 @@ export class PagesService {
     return sql`(select (COALESCE(max(${pages.index}) , 0) + 1) from pages where pages.app_id = ${appId})`;
   }
 
+  /**
+   * create page with the default root component
+   */
   async create(
     pageDto: Omit<CreatePageDb, 'index' | 'handle' | 'index'> & {
       handle?: PageDto['handle'];
@@ -78,7 +81,7 @@ export class PagesService {
           props: rootComponent.props as WebloomNode['props'],
           nodes: [],
         },
-      } satisfies WebloomTree,
+      } satisfies NilefyTree,
     };
   }
 

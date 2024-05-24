@@ -44,7 +44,7 @@ export class AppsService {
     createdById: UserDto['id'];
     workspaceId: AppDto['workspaceId'];
     appId: AppDto['id'];
-  }): Promise<CreateAppRetDto> {
+  }): Promise<Omit<CreateAppRetDto, 'pages'>> {
     const newApp = await this.db.transaction(async (tx) => {
       const apps2 = alias(apps, 'apps2');
       const createAppSql = sql<AppDto>`
@@ -135,24 +135,34 @@ export class AppsService {
     return newPage;
   }
 
-  async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
-    const app = await this.db.transaction(async (tx) => {
-      const [app] = await tx.insert(apps).values(createAppDto).returning();
-      // create default page for the app
-      const page = await this.pagesService.create(
-        {
-          name: 'page 1',
-          createdById: createAppDto.createdById,
-          appId: app.id,
-        },
-        {
-          tx: tx,
-        },
-      );
-      return { ...app, pages: [page] };
-    });
+  async create(
+    createAppDto: CreateAppDb,
+    options?: { tx?: PgTrans },
+  ): Promise<CreateAppRetDto> {
+    return await (options?.tx
+      ? this.createHelper(createAppDto, options.tx)
+      : this.db.transaction(async (tx) => {
+          return await this.createHelper(createAppDto, tx);
+        }));
+  }
 
-    return app;
+  private async createHelper(
+    createAppDto: CreateAppDb,
+    tx: PgTrans,
+  ): Promise<CreateAppRetDto> {
+    const [app] = await tx.insert(apps).values(createAppDto).returning();
+    // create default page for the app
+    const page = await this.pagesService.create(
+      {
+        name: 'page 1',
+        createdById: createAppDto.createdById,
+        appId: app.id,
+      },
+      {
+        tx: tx,
+      },
+    );
+    return { ...app, pages: [page] };
   }
 
   async findAll(workspaceId: AppDto['workspaceId']): Promise<AppsRetDto[]> {

@@ -6,12 +6,16 @@ import {
   WorkspaceDto,
 } from '../dto/workspace.dto';
 import { and, eq, sql } from 'drizzle-orm';
-import * as schema from '@webloom/database';
+import * as schema from '@nilefy/database';
 import { UserDto } from '../dto/users.dto';
+import { RolesService } from '../roles/roles.service';
 
 @Injectable()
 export class WorkspacesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: schema.DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: schema.DatabaseI,
+    private readonly rolesService: RolesService,
+  ) {}
 
   async index(userId: UserDto['id']): Promise<WorkspaceDto[]> {
     const ws = (
@@ -25,6 +29,11 @@ export class WorkspacesService {
     return ws;
   }
 
+  /**
+   * for business logic: create default roles for the workspace
+   *
+   * PLEASE NOTE: the db queries will run in db transaction, and the method can accept another tx instance or create one internally
+   */
   async create(
     ws: CreateWorkspaceDb,
     options?: { tx: schema.PgTrans },
@@ -36,13 +45,19 @@ export class WorkspacesService {
         }));
   }
 
+  /**
+   * create workspace/assign user to workspace/create default roles for the workspace
+   */
   private async createHelper(ws: CreateWorkspaceDb, tx: schema.PgTrans) {
-    const workspace = await tx.insert(schema.workspaces).values(ws).returning();
+    const [workspace] = await tx
+      .insert(schema.workspaces)
+      .values(ws)
+      .returning();
     await tx
       .insert(schema.usersToWorkspaces)
-      .values({ userId: ws.createdById, workspaceId: workspace[0].id })
-      .returning();
-    return workspace[0];
+      .values({ userId: ws.createdById, workspaceId: workspace.id });
+    await this.rolesService.createDefault(ws.createdById, workspace.id, { tx });
+    return workspace;
   }
 
   async update(id: number, ws: UpdateWorkspaceDb): Promise<WorkspaceDto> {
