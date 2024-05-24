@@ -1,4 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
+import { clearApps } from '../utils';
 /**
  * @description assumes the user is logged in
  */
@@ -46,26 +47,24 @@ export class EditorPage {
     //todo add a test id
     this.rootCanvas = this.page.getByTestId('0');
   }
-  async dispose() {
-    await this.page.goto('/');
-    const menu = this.page.locator('ul').getByRole('button');
-    await menu.click();
-    const deleteButton = this.page.getByRole('menuitem', { name: 'Delete' });
-    await deleteButton.click();
-    await this.page.getByRole('button', { name: 'Delete' }).click();
+  async dispose(index: number) {
+    const username = `user${index}`;
+    console.log('disposing', username);
+    clearApps(username);
   }
-  async selectWidget(id: string) {
+  async singleSelect(id: string) {
     (await this.getWidget(id)).click();
+    await expect(this.rightSidebar.ispectOnePanel).toBeVisible();
   }
   async getInputValue(id: string, field: string) {
-    await this.selectWidget(id);
+    await this.singleSelect(id);
     const input = this.rightSidebar.ispectOnePanel
       .locator(`#${id}-${field}`)
       .getByRole('textbox');
     return await input.innerText();
   }
   async fillInput(id: string, field: string, value: string) {
-    await this.selectWidget(id);
+    await this.singleSelect(id);
     const input = this.rightSidebar.ispectOnePanel
       .locator(`#${id}-${field}`)
       .getByRole('textbox');
@@ -73,15 +72,16 @@ export class EditorPage {
   }
   async getWidget(id: string) {
     const widget = this.page.getByTestId(id);
-    if (!(await widget.isVisible())) {
-      throw new Error(`widget with id ${id} not found`);
-    }
     return widget;
   }
   unselectAll() {
     this.page.getByTestId('0').click();
   }
-  async dragAndDropNewWidget(widgetName: string, x: number = 0, y: number = 0) {
+  async dragAndDropNewWidget(
+    widgetName: string,
+    x: number = 0,
+    y: number = 0,
+  ): Promise<string> {
     await this.rightSidebar.insertButton.click();
     const widget = this.page.getByRole('button', {
       name: widgetName,
@@ -92,7 +92,8 @@ export class EditorPage {
       .locator('[data-id]')
       .last()
       .getAttribute('data-id');
-    return id;
+    expect(id).not.toBe(null);
+    return id!;
   }
 }
 const drag = async (

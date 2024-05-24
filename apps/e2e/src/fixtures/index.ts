@@ -59,7 +59,7 @@ export const test = baseTest.extend<WebloomFixtures, {
       await editorPage.boot();
       await use(editorPage);
     } finally {
-      await editorPage.dispose();
+      await editorPage.dispose(test.info().parallelIndex);
     }
   },
 });

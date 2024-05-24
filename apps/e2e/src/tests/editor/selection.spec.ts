@@ -7,7 +7,7 @@ test(
   },
   async ({ editorPage }) => {
     const id = await editorPage.dragAndDropNewWidget('Text');
-    await editorPage.selectWidget(id!);
+    await editorPage.singleSelect(id!);
     await expect(editorPage.rightSidebar.ispectOnePanel).toBeVisible();
   },
 );

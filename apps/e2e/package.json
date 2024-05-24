@@ -12,7 +12,8 @@
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
     "@webloom/database": "workspace:*",
-    "bcrypt": "^5.1.1"
+    "bcrypt": "^5.1.1",
+    "drizzle-orm": "^0.30.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",

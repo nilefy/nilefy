@@ -86,3 +86,68 @@ test(
     await expect(textWidget).toHaveText(newText);
   },
 );
+
+test(
+  '6. Set values should reflect to other widgets that depend on it',
+  {
+    tag: ['@evaluation', '@editor'],
+  },
+  async ({ editorPage }) => {
+    const textId1 = await editorPage.dragAndDropNewWidget('Text');
+    const textId2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+    const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 200);
+    const newText = 'Hello World';
+    await editorPage.fillInput(
+      buttonId!,
+      'onClick',
+      `{{${textId1}.setText("${newText}")}}`,
+    );
+    await editorPage.fillInput(textId2!, 'text', `{{${textId1}.text}}`);
+    const button = await editorPage.getWidget(buttonId!);
+    await button.click();
+    const textWidget = await editorPage.getWidget(textId2!);
+    await expect(textWidget).toHaveText(newText);
+  },
+);
+
+test(
+  '7. Set value should be ignored if the widget property has changed',
+  {
+    tag: ['@evaluation', '@editor'],
+  },
+  async ({ editorPage }) => {
+    const textId = await editorPage.dragAndDropNewWidget('Text');
+    const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 100);
+    const setText = 'Hello World';
+    await editorPage.fillInput(
+      buttonId!,
+      'onClick',
+      `{{${textId}.setText("${setText}")}}`,
+    );
+    const button = await editorPage.getWidget(buttonId!);
+    await button.click();
+    const newText = 'I am new text';
+    await editorPage.fillInput(textId!, 'text', newText);
+    const textWidget = await editorPage.getWidget(textId!);
+    await expect(textWidget).toHaveText(newText);
+  },
+);
+
+test(
+  '8. Should re-evaluate the expression if binding resolves to undefined after it resolved to a value before',
+  {
+    tag: ['@evaluation', '@editor'],
+  },
+  async ({ editorPage }) => {
+    const textId1 = await editorPage.dragAndDropNewWidget('Text');
+    const textId2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+    const defaultText = await editorPage.getInputValue(textId1!, 'text');
+    const newText = 'Hello World';
+    await editorPage.fillInput(textId2!, 'text', `{{${textId1}.text}}`);
+    await editorPage.fillInput(textId1!, 'text', newText);
+    const textWidget = await editorPage.getWidget(textId2!);
+    await expect(textWidget).toHaveText(newText);
+    await editorPage.fillInput(textId1!, 'text', '{{undefined}}');
+    await expect(textWidget).toHaveText(defaultText);
+  },
+);

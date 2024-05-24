@@ -280,6 +280,9 @@ importers:
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
+      drizzle-orm:
+        specifier: ^0.30.8
+        version: 0.30.8(@types/pg@8.11.5)(pg@8.11.5)(react@18.2.0)
     devDependencies:
       '@playwright/test':
         specifier: ^1.44.1
