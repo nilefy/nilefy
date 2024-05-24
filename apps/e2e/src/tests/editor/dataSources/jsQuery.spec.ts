@@ -67,19 +67,18 @@ test(
     await editorPage.fillQueryInput(
       id!,
       'query',
-      'return new Promise((resolve) => setTimeout(() => resolve(), 50))',
+      'return new Promise((resolve) => setTimeout(() => resolve(), 300))',
     );
     const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 100);
     await editorPage.fillWidgetInput(buttonId, 'onClick', `{{${id}.run()}}`);
     const button = await editorPage.getWidget(buttonId);
     await button.click();
     await expect(textWidget).toHaveText('loading');
-    await wait(100);
     await expect(textWidget).toHaveText('success');
     await editorPage.fillQueryInput(
       id!,
       'query',
-      'return new Promise((_, reject) => setTimeout(() => reject(), 50))',
+      'return new Promise((_, reject) => setTimeout(() => reject(), 300))',
     );
     await button.click();
     await expect(textWidget).toHaveText('loading');
