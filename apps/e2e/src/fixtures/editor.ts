@@ -13,6 +13,10 @@ export class EditorPage {
     PageButton: Locator;
     ispectOnePanel: Locator;
   };
+  bottomPanel!: {
+    addNewQuery: Locator;
+  };
+  queryItems!: Locator;
   rootCanvas!: Locator;
   constructor(page: Page) {
     this.page = page;
@@ -44,13 +48,28 @@ export class EditorPage {
       PageButton: this.page.getByRole('tab', { name: 'Page' }),
       ispectOnePanel: this.page.getByTestId('one-item-inspection-panel'),
     };
-    //todo add a test id
     this.rootCanvas = this.page.getByTestId('0');
+    this.bottomPanel = {
+      addNewQuery: this.page.getByRole('button', { name: '+ Add' }),
+    };
+    this.queryItems = this.page.getByTestId('query-item');
   }
   async dispose(index: number) {
     const username = `user${index}`;
     console.log('disposing', username);
     clearApps(username);
+  }
+
+  async addNewJsQuery() {
+    await this.bottomPanel.addNewQuery.click();
+    await this.page.getByRole('menuitem', { name: 'JS Query' }).click();
+    const queryItem = this.queryItems.last();
+    await expect(queryItem).toBeVisible();
+    return queryItem.getAttribute('data-id');
+  }
+  async selectQuery(id: string) {
+    const queryItem = this.page.locator(`[data-id="${id}"]`);
+    await queryItem.click();
   }
   async singleSelect(id: string) {
     (await this.getWidget(id)).click();
@@ -63,11 +82,16 @@ export class EditorPage {
       .getByRole('textbox');
     return await input.innerText();
   }
-  async fillInput(id: string, field: string, value: string) {
+  async fillWidgetInput(id: string, field: string, value: string) {
     await this.singleSelect(id);
     const input = this.rightSidebar.ispectOnePanel
       .locator(`#${id}-${field}`)
       .getByRole('textbox');
+    await input.fill(value);
+  }
+  async fillQueryInput(id: string, field: string, value: string) {
+    await this.selectQuery(id);
+    const input = this.page.locator(`#${id}-${field}`).getByRole('textbox');
     await input.fill(value);
   }
   async getWidget(id: string) {

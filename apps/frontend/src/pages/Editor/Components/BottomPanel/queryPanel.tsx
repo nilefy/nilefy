@@ -217,13 +217,8 @@ export const QueryPanel = observer(function QueryPanel() {
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
   );
 
-  /**
-   * toggle the selection
-   */
   const handleItemClick = (itemId: string) => {
-    editorStore.setSelectedQueryId((prevSelectedItemId) =>
-      prevSelectedItemId === itemId ? null : itemId,
-    );
+    editorStore.setSelectedQueryId(itemId);
   };
 
   const sortQueries = useCallback(
@@ -479,6 +474,8 @@ export const QueryPanel = observer(function QueryPanel() {
                   { 'bg-primary/10': item.id === editorStore.selectedQueryId },
                   'flex w-full items-center',
                 )}
+                data-testid={'query-item'}
+                data-id={item.id}
                 key={item.id}
               >
                 {editingItemId === item.id ? (

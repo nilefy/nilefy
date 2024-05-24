@@ -107,7 +107,8 @@ export const RightSidebar = observer(() => {
   useLayoutEffect(() => {
     if (selectedElementsSize > 0) setOpenedTab('inspect');
     else setOpenedTab('insert');
-  }, [selectedElementsSize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElementsSize, editorStore.currentPage.firstSelectedWidget]);
   return (
     <div
       className="right-sidebar h-full w-full p-2"

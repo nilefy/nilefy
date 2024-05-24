@@ -7,7 +7,7 @@ test(
   },
   async ({ editorPage }) => {
     const id = await editorPage.dragAndDropNewWidget('Text');
-    await editorPage.fillInput(id!, 'text', `{{'Hello World'}}`);
+    await editorPage.fillWidgetInput(id!, 'text', `{{'Hello World'}}`);
     const widget = await editorPage.getWidget(id!);
     await expect(widget).toHaveText('Hello World');
   },
@@ -22,8 +22,8 @@ test(
     const id1 = await editorPage.dragAndDropNewWidget('Text');
     const id2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
     const shared = 'Hello';
-    await editorPage.fillInput(id1!, 'text', shared);
-    await editorPage.fillInput(id2!, 'text', `{{${id1}.text}}`);
+    await editorPage.fillWidgetInput(id1!, 'text', shared);
+    await editorPage.fillWidgetInput(id2!, 'text', `{{${id1}.text}}`);
     const widget2 = await editorPage.getWidget(id2!);
     await expect(widget2).toHaveText(shared);
   },
@@ -39,9 +39,9 @@ test(
     const id2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
     const id3 = await editorPage.dragAndDropNewWidget('Text', 0, 200);
     const shared = 'Hello';
-    await editorPage.fillInput(id1!, 'text', shared);
-    await editorPage.fillInput(id2!, 'text', `{{${id1}.text}}`);
-    await editorPage.fillInput(id3!, 'text', `{{${id2}.text}}`);
+    await editorPage.fillWidgetInput(id1!, 'text', shared);
+    await editorPage.fillWidgetInput(id2!, 'text', `{{${id1}.text}}`);
+    await editorPage.fillWidgetInput(id3!, 'text', `{{${id2}.text}}`);
     const widget3 = await editorPage.getWidget(id3!);
     await expect(widget3).toHaveText(shared);
   },
@@ -56,8 +56,8 @@ test(
     const id1 = await editorPage.dragAndDropNewWidget('Text');
     const id2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
     const text = await editorPage.getInputValue(id1!, 'text');
-    await editorPage.fillInput(id1!, 'text', `{{${id2}.text}}`);
-    await editorPage.fillInput(id2!, 'text', `{{${id1}.text}}`);
+    await editorPage.fillWidgetInput(id1!, 'text', `{{${id2}.text}}`);
+    await editorPage.fillWidgetInput(id2!, 'text', `{{${id1}.text}}`);
     const widget1 = await editorPage.getWidget(id1!);
     const widget2 = await editorPage.getWidget(id2!);
     // the current behavior is to show default value when there is a cyclic dependency
@@ -75,7 +75,7 @@ test(
     const textId = await editorPage.dragAndDropNewWidget('Text');
     const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 100);
     const newText = 'Hello World';
-    await editorPage.fillInput(
+    await editorPage.fillWidgetInput(
       buttonId!,
       'onClick',
       `{{${textId}.setText("${newText}")}}`,
@@ -97,12 +97,12 @@ test(
     const textId2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
     const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 200);
     const newText = 'Hello World';
-    await editorPage.fillInput(
+    await editorPage.fillWidgetInput(
       buttonId!,
       'onClick',
       `{{${textId1}.setText("${newText}")}}`,
     );
-    await editorPage.fillInput(textId2!, 'text', `{{${textId1}.text}}`);
+    await editorPage.fillWidgetInput(textId2!, 'text', `{{${textId1}.text}}`);
     const button = await editorPage.getWidget(buttonId!);
     await button.click();
     const textWidget = await editorPage.getWidget(textId2!);
@@ -119,7 +119,7 @@ test(
     const textId = await editorPage.dragAndDropNewWidget('Text');
     const buttonId = await editorPage.dragAndDropNewWidget('Button', 0, 100);
     const setText = 'Hello World';
-    await editorPage.fillInput(
+    await editorPage.fillWidgetInput(
       buttonId!,
       'onClick',
       `{{${textId}.setText("${setText}")}}`,
@@ -127,7 +127,7 @@ test(
     const button = await editorPage.getWidget(buttonId!);
     await button.click();
     const newText = 'I am new text';
-    await editorPage.fillInput(textId!, 'text', newText);
+    await editorPage.fillWidgetInput(textId!, 'text', newText);
     const textWidget = await editorPage.getWidget(textId!);
     await expect(textWidget).toHaveText(newText);
   },
@@ -143,11 +143,11 @@ test(
     const textId2 = await editorPage.dragAndDropNewWidget('Text', 0, 100);
     const defaultText = await editorPage.getInputValue(textId1!, 'text');
     const newText = 'Hello World';
-    await editorPage.fillInput(textId2!, 'text', `{{${textId1}.text}}`);
-    await editorPage.fillInput(textId1!, 'text', newText);
+    await editorPage.fillWidgetInput(textId2!, 'text', `{{${textId1}.text}}`);
+    await editorPage.fillWidgetInput(textId1!, 'text', newText);
     const textWidget = await editorPage.getWidget(textId2!);
     await expect(textWidget).toHaveText(newText);
-    await editorPage.fillInput(textId1!, 'text', '{{undefined}}');
+    await editorPage.fillWidgetInput(textId1!, 'text', '{{undefined}}');
     await expect(textWidget).toHaveText(defaultText);
   },
 );

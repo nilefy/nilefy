@@ -9,7 +9,7 @@ import {
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
 import { DependencyManager } from './dependencyManager';
-import { entries, get, isArray, keys, set, unset } from 'lodash';
+import { entries, get, isArray, keys, set } from 'lodash';
 import {
   ajv,
   extractValidators,
