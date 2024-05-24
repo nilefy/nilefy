@@ -51,6 +51,7 @@ import { Label } from '@/components/ui/label';
 import { Group, GroupMetaSchema, groupMetaSchema } from '@/api/groups.api';
 import { User } from '@/api/users.api';
 import { api } from '@/api';
+import { permissionsTypes } from '@nilefy/permissions';
 
 // type BuiltinPermissions =
 
@@ -282,7 +283,7 @@ export function GroupsManagement() {
         <p>{groups.data.length} groups</p>
         <InsertGroupDialog />
       </div>
-      <div className="flex h-2/3 w-full justify-between bg-primary/5 p-2">
+      <div className="bg-primary/5 flex h-2/3 w-full justify-between p-2">
         <div className="flex w-[20%] max-w-[20%] flex-col gap-4 overflow-y-auto border-r pr-2">
           <Input placeholder="search by name" />
           {groups.data.map((group) => (
@@ -303,16 +304,7 @@ export function GroupsManagement() {
   );
 }
 
-const permissionTypes = z.enum([
-  'Workspaces-Read',
-  'Workspaces-Write',
-  'Workspaces-Delete',
-  // APPS
-  'Apps-Read',
-  'Apps-Write',
-  'Apps-Delete',
-]);
-type PermissionTypes = z.infer<typeof permissionTypes>;
+type PermissionTypes = z.infer<typeof permissionsTypes>;
 
 type Permission = {
   id: number;

@@ -10,7 +10,7 @@ import {
   unique,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { permissionsTypes } from "@webloom/permissions";
+import { permissionsTypes } from "@nilefy/permissions";
 import { boolean } from "drizzle-orm/pg-core";
 
 /**
@@ -135,7 +135,6 @@ export const roles = pgTable(
       .references(() => workspaces.id)
       .notNull(),
     ...timeStamps,
-    ...softDelete,
     ...whoToBlame,
   },
   (t) => ({
