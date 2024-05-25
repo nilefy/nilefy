@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   AppQueriesDto,
   QueryDb,
@@ -13,12 +13,12 @@ import {
 } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
-import { queries } from '../drizzle/schema/data_sources.schema';
 import { getQueryService } from '../data_sources/plugins/common/service';
 import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
+import { DatabaseI, queries } from '@webloom/database';
 import { ComponentsService } from '../components/components.service';
 
 export type CompleteQueryI = QueryDto & {
@@ -72,6 +72,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {
@@ -110,6 +111,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {

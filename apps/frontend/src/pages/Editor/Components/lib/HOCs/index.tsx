@@ -1,5 +1,5 @@
-import { commandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
+import { commandManager } from '@/actions/CommandManager';
+import { DeleteAction } from '@/actions/editor/Delete';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -16,7 +16,7 @@ import { CSSProperties, useRef } from 'react';
 export { WithDrag, WithDrop, WithDnd } from './Dnd';
 export { WithResize } from './Resize';
 export { WithSelection } from './Selection';
-
+export { WithPopover } from './Popover';
 export const WithLayout = <P extends { id: string }>(
   WrappedComponent: React.FC<P>,
 ) => {

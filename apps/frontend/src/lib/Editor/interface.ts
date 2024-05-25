@@ -1,12 +1,18 @@
 import { InputProps } from '@/components/ui/input';
-import { ReactNode } from 'react';
-import { EntitySchema } from './Models/entity';
+import {
+  Component,
+  ExoticComponent,
+  FunctionComponent,
+  ReactElement,
+  ReactNode,
+} from 'react';
+import { JsonSchema7Type } from 'zod-to-json-schema';
+import { EntityActionConfig } from './evaluation/interface';
+import { WebloomWidget } from './Models/widget';
+import { NewWidgePayload } from './Models/page';
+import { LucideProps } from 'lucide-react';
 
 type BaseControlProps = {
-  /**
-   * form control id
-   */
-  id: string;
   label: string;
 };
 
@@ -15,10 +21,16 @@ type InspectorInputProps = Partial<
   Pick<InputProps, 'type' | 'placeholder' | 'max' | 'min'>
 >;
 
-type InspectorSelectProps = {
+type InspectorStaticSelectProps = {
   items: { label: string; value: string }[];
-  placeholder?: string;
 };
+type InspectorDynamicSelectProps = {
+  path: string;
+  convertToOptions: (value: unknown) => { label: string; value: string }[];
+};
+type InspectorSelectProps = {
+  placeholder?: string;
+} & (InspectorStaticSelectProps | InspectorDynamicSelectProps);
 
 type InspectorColorProps = {
   color: string;
@@ -26,16 +38,21 @@ type InspectorColorProps = {
 
 type InspectorEvents = Record<string, never>;
 
-type InspectorListProps = {
-  value?: unknown[];
-};
-
-type InspectorCheckboxProps = {
-  //  label: string;
-};
 type InspectorDatePickerProps = {
   date: Date;
 };
+export type ArrayInputProps<T = any> = {
+  subform: FormControl[];
+  SubFormWrapper?: React.FC<{
+    onDelete: () => void;
+    children: ReactNode;
+    value: T;
+  }>;
+  FormWrapper?: React.FC<{ children: ReactNode }>;
+  newItemDefaultValue: Record<string, unknown>;
+  addButtonText?: string;
+};
+
 // config panel types
 type FormControlOptions = {
   input: InspectorInputProps;
@@ -43,43 +60,57 @@ type FormControlOptions = {
   color: InspectorColorProps;
   event: InspectorEvents;
   sqlEditor: {
-    value?: string;
     placeholder?: string;
   };
-  list: InspectorListProps;
-  checkbox: InspectorCheckboxProps;
+  list: undefined;
+  checkbox: undefined;
   inlineCodeInput: InlineCodeInputProps;
-  heightMode: {
-    label: string;
-  };
+  chartDatasets: undefined;
   datePicker: InspectorDatePickerProps;
+  array: ArrayInputProps;
+  keyValue: undefined;
+  codeInput: undefined;
 };
 
-type WidgetInspectorConfig = EntitySchema;
-
 type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-// type WidgetInspectorConfig<TProps> = {
-//   sectionName: string;
-//   hidden?: (props: TProps) => boolean;
-//   children: MappedTypeToArray<{
-//     [key in keyof Omit<TProps, 'value'>]: {
-//       [key2 in InspectorFormControls]: {
-//         type: key2;
-//         key: key;
-//         options: Omit<FormControlOptions[key2], 'value'>;
-//         hidden?: (props: key) => boolean;
-//         label: string;
-//       } & BaseControlProps;
-//     }[InspectorFormControls];
-//   }>;
-// }[];
+type EntityInspectorConfig<
+  TProps extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  sectionName: string;
+  hidden?: (props: TProps) => boolean;
+  deps?: TProps[];
+  children: MappedTypeToArray<{
+    [key in keyof TProps]: {
+      [key2 in InspectorFormControlsTypes]: FormControl<key2, TProps, key>;
+    }[InspectorFormControlsTypes];
+  }>;
+}[];
 
-type InspectorFormControls = keyof FormControlOptions;
+export type FormControl<
+  FormControlType extends
+    InspectorFormControlsTypes = InspectorFormControlsTypes,
+  TProps extends Record<string, unknown> = Record<string, unknown>,
+  Key extends keyof TProps = keyof TProps,
+> = {
+  type: FormControlType;
+  isEvent?: boolean;
+  path: Key;
+
+  hidden?(props: TProps): boolean;
+  validation?: JsonSchema7Type;
+} & BaseControlProps &
+  ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;
+
+export type ConditionalOptionalFormControlOptions<T> = T extends undefined
+  ? object
+  : {
+      options: T;
+    };
+
+type InspectorFormControlsTypes = keyof FormControlOptions;
 
 type InlineCodeInputProps = {
-  label: string;
   placeholder?: string;
-  value?: string;
 };
 export type BoundingRect = {
   left: number;
@@ -132,52 +163,73 @@ export interface LayoutConfig {
 }
 export type ResizeDirection = 'Horizontal' | 'Vertical' | 'Both';
 export interface WidgetConfig {
-  icon: ReactNode;
+  icon: FunctionComponent<LucideProps>;
   name: string;
   layoutConfig: LayoutConfig;
   isCanvas?: boolean;
   resizingDirection: ResizeDirection;
+  widgetActions?: EntityActionConfig<WebloomWidget>;
 }
-// key is the id of the node and the array are keys of props
-/**
- * @example {"nodeId" : {"propName": ["dependancy1", "dependancy2"]}}
- */
-export type EntityDependancy = Record<string, Record<string, Set<string>>>;
 
-/**
- * the setters for those paths will be automatically genertaed and put on the execution context when needed
- * @example
- * setVisibility: {
-          path: "isVisible",
-          type: "string",
-        },
- */
-type WidgetSetters<Props> = {
-  [
-    /**
-     * setter key
-     */
-    k: string
-  ]: {
-    /**
-     * use lodash path syntax
-     */
-    path: keyof Props;
-    /**
-     * only used for type completation WON'T BE VALIDATED
-     */
-    type: string;
-  };
+export type PrimitiveWidget = {
+  isComposed: false;
 };
 
-export type Widget<WidgetProps> = {
-  component: React.ElementType;
+export type ComposedWidget = {
+  isComposed: true;
+};
+
+export type PublicApiItem = {
+  /**
+   * @description this will be placed in jsdoc of the generated type
+   */
+  description?: string;
+} & (DynamicPublicApiItem | StaticPublicApiItem | FunctionPublicApiItem);
+
+export type DynamicPublicApiItem = {
+  /**
+   * used to generate type at runtime, example: jsquery.data <--- data is only known at runtime so we need to generate the type at runtime
+   */
+  type: 'dynamic';
+};
+
+export type StaticPublicApiItem = {
+  type: 'static';
+  typeSignature: string;
+};
+
+export type FunctionArgs =
+  | {
+      optional?: boolean;
+      name: string;
+      type: string;
+    }[]
+  | string;
+
+export type FunctionType = {
+  args?: FunctionArgs;
+  returns?: string;
+};
+
+export type FunctionPublicApiItem = {
+  type: 'function';
+} & FunctionType;
+export type PublicApi = Record<string, PublicApiItem>;
+
+export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
-  defaultProps: WidgetProps;
-  schema: WidgetInspectorConfig;
-  setters?: WidgetSetters<WidgetProps>;
+  initialProps: TWidgetProps;
+  publicAPI?: PublicApi;
+  metaProps?: Set<string>;
+  inspectorConfig: EntityInspectorConfig<TWidgetProps>;
+  blueprint?: {
+    children: (Omit<NewWidgePayload, 'parentId' | 'id'> & {
+      onAttach?: (widget: WebloomWidget) => void;
+    })[];
+  };
+  component: React.ElementType;
 };
-export type selectOptions = {
+type SelectOptions = {
   value: string;
   label: string;
 };
@@ -186,16 +238,44 @@ export type {
   BaseControlProps,
   InspectorInputProps,
   InspectorSelectProps,
-  InspectorListProps,
-  InspectorCheckboxProps,
-  WidgetInspectorConfig,
-  InspectorFormControls,
+  EntityInspectorConfig,
+  InspectorFormControlsTypes,
   InlineCodeInputProps,
   InspectorColorProps,
-  WidgetSetters,
+  SelectOptions,
 };
+
+export type EntityTypes = 'query' | 'widget' | 'globals' | 'jsQuery';
+
+export type EntityPathErrors = {
+  /**
+   * key is the path of the property
+   */
+  evaluationValidationErrors?: string[];
+  runtimeErrors?: string[];
+};
+/**
+ * key is the entityId
+ */
+export type EntityErrorsRecord = Record<
+  string,
+  Record<string, EntityPathErrors>
+>;
 export const WIDGET_SECTIONS = {
   SCROLL_AREA: 'SCROLL_AREA',
   CANVAS: 'CANVAS',
   RESIZER: 'RESIZER',
 } as const;
+export type selectOptions = {
+  value: string;
+  label: string;
+};
+
+/**
+ * @description These are the values that are passed to the widget when it is first created, they differ from
+ * default values. You can write code instead of static values here as well. Just make sure to add the paths of
+ * those values to the evaluablePaths array in the widget.
+ */
+export type InitialProps<T extends Record<string, unknown>> = {
+  [K in keyof T]: T[K] | string;
+};

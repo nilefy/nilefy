@@ -1,6 +1,8 @@
-import { makeObservable, observable, computed, action } from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
-import { getNewEntityName } from '@/lib/Editor/widgetName';
+import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
+import scrollIntoView from 'scroll-into-view-if-needed';
+
 import { WebloomPage } from './page';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import {
@@ -8,6 +10,8 @@ import {
   WebloomPixelDimensions,
   LayoutMode,
   WIDGET_SECTIONS,
+  EntityInspectorConfig,
+  ResizeDirection,
 } from '../interface';
 import {
   convertGridToPixel,
@@ -15,12 +19,31 @@ import {
   getGridBoundingRect,
 } from '../utils';
 
-import { Snapshotable } from './interfaces';
-import { DependencyManager } from './dependencyManager';
-import { cloneDeep } from 'lodash';
-import { EvaluationManager } from './evaluationManager';
+import { Snapshotable, WebloomDisposable } from './interface';
+import { debounce, reduce } from 'lodash';
+import { klona } from 'klona';
 import { Entity } from './entity';
+import { commandManager } from '@/actions/CommandManager';
+import { ChangePropAction } from '@/actions/editor/changeProps';
+import { EntityActionConfig } from '../evaluation/interface';
+const defaultWidgetActions: EntityActionConfig<WebloomWidget> = {
+  scrollIntoView: {
+    type: 'SIDE_EFFECT',
+    name: 'scrollIntoView',
+    fn: (entity: WebloomWidget) => {
+      scrollIntoView(entity.dom!, {
+        scrollMode: 'if-needed',
+        skipOverflowHiddenElements: true,
+        behavior: 'smooth',
+        block: 'center',
+      });
+    },
+  },
+};
 
+const normalizeWidgetActions = (actions: EntityActionConfig<WebloomWidget>) => {
+  return { ...defaultWidgetActions, ...actions };
+};
 export class WebloomWidget
   extends Entity
   implements
@@ -31,9 +54,19 @@ export class WebloomWidget
       > & {
         pageId: string;
       }
-    >
+    >,
+    WebloomDisposable
 {
   isRoot = false;
+  /**
+   * @description This is the runtime connection to the thing the widget can do like focus, submit, etc. Widgets have to set this up themselves because the api is
+   * different for each widget
+   * @example
+   * ```
+   *  widget.api.focus()
+   * ```
+   */
+  api: Record<string, (...args: unknown[]) => void> = {};
   dom: HTMLElement | null;
   nodes: string[];
   parentId: string;
@@ -43,57 +76,61 @@ export class WebloomWidget
   columnsCount: number;
   rowsCount: number;
   page: WebloomPage;
-  setters: Record<string, (arg: unknown) => void>;
-
+  metaProps: Set<string>;
   constructor({
     type,
     parentId,
-    row,
-    col,
+    row = 0,
+    col = 0,
     page,
     id = getNewEntityName(type),
     nodes = [],
     rowsCount,
     columnsCount,
     props,
-    evaluationManger,
-    dependencyManager,
   }: {
     type: WidgetTypes;
     parentId: string;
     page: WebloomPage;
-    row: number;
-    col: number;
+    row?: number;
+    col?: number;
     id?: string;
     nodes?: string[];
     rowsCount?: number;
     columnsCount?: number;
     props?: Record<string, unknown>;
-    dependents?: Set<string>;
-    evaluationManger: EvaluationManager;
-    dependencyManager: DependencyManager;
   }) {
-    const { config } = WebloomWidgets[type];
+    const widgetConfig = WebloomWidgets[type];
+    const _props = props ?? widgetConfig.initialProps;
+    const rawValues = {
+      ..._props,
+      layoutMode: widgetConfig.config.layoutConfig.layoutMode,
+    };
     super({
-      dependencyManager,
-      evaluationManger,
+      workerBroker: page.workerBroker,
       id,
-      rawValues: { ...props, layoutMode: config.layoutConfig.layoutMode } ?? {},
-      schema: WebloomWidgets[type].schema,
+      rawValues,
+      inspectorConfig: widgetConfig.inspectorConfig as EntityInspectorConfig,
+      entityType: 'widget',
+      publicAPI: widgetConfig.publicAPI,
+      // @ts-expect-error fda
+      entityActionConfig: normalizeWidgetActions(
+        widgetConfig.config.widgetActions ?? {},
+      ),
+      metaValues: widgetConfig.metaProps,
     });
+    this.metaProps = widgetConfig.metaProps ?? new Set();
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
     this.nodes = nodes;
     this.parentId = parentId;
     this.page = page;
     this.type = type;
-    const baseWidget = WebloomWidgets[this.type as WidgetTypes];
-    this.setters = this.genSetters(baseWidget.setters);
-    this.rowsCount = rowsCount ?? config.layoutConfig.rowsCount;
-    this.columnsCount = columnsCount ?? config.layoutConfig.colsCount;
+    this.rowsCount = rowsCount ?? widgetConfig.config.layoutConfig.rowsCount;
+    this.columnsCount =
+      columnsCount ?? widgetConfig.config.layoutConfig.colsCount;
     this.row = row;
     this.col = col;
-
     makeObservable(this, {
       nodes: observable,
       parentId: observable,
@@ -119,6 +156,7 @@ export class WebloomWidget
       isRoot: observable,
       gridBoundingRect: computed.struct,
       removeChild: action,
+      setValue: override,
       innerRowsCount: computed,
       actualRowsCount: computed,
       innerContainerDimensions: computed,
@@ -128,9 +166,33 @@ export class WebloomWidget
       isResizing: computed,
       isHovered: computed,
       isVisible: computed,
+      isTheOnlySelected: computed,
+      resizeDirection: computed,
+      layoutMode: computed,
+      descendants: computed,
+      childrenHasSelected: computed,
+      unselectSelf: action,
     });
   }
-
+  get childrenHasSelected(): boolean {
+    if (this.nodes.length === 0) return this.isTheOnlySelected;
+    return (
+      this.nodes.some((node) => this.page.widgets[node].childrenHasSelected) ||
+      this.isTheOnlySelected
+    );
+  }
+  get descendants(): string[] {
+    if (this.nodes.length === 0) return [];
+    return [
+      ...this.nodes.flatMap((node) => this.page.widgets[node].descendants),
+      ...this.nodes,
+    ];
+  }
+  get resizeDirection(): ResizeDirection {
+    const direction = WebloomWidgets[this.type].config.resizingDirection;
+    if (this.layoutMode === 'auto' && direction === 'Both') return 'Horizontal';
+    return direction;
+  }
   get columnWidth(): number {
     if (this.isRoot)
       // flooring to avoid floating point errors and because integers are just nice
@@ -144,6 +206,22 @@ export class WebloomWidget
       );
     return 0;
   }
+  setValue(path: string, value: unknown): void {
+    if (!this.metaProps.has(path)) {
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new ChangePropAction(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
@@ -168,7 +246,6 @@ export class WebloomWidget
   get actualRowsCount() {
     if (this.layoutMode === 'auto') {
       return this.innerRowsCount;
-      // NOTE: this depends on `handleVerticalExpansion` will not inc rowsCount in the fixed case
     } else return this.rowsCount;
   }
   setDom(dom: HTMLElement) {
@@ -201,6 +278,7 @@ export class WebloomWidget
   get isDragging() {
     return this.page.draggedWidgetId === this.id;
   }
+
   get isResizing() {
     return this.page.resizedWidgetId === this.id;
   }
@@ -221,7 +299,15 @@ export class WebloomWidget
       pageId: this.page.id,
       parentId: this.parentId,
       columnWidth: this.columnWidth,
-      props: cloneDeep(this.rawValues),
+      props: reduce(
+        klona(this.rawValues),
+        (acc, value, key) => {
+          if (this.metaProps.has(key)) return acc;
+          acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      ),
       type: this.type,
       col: this.col,
       row: this.row,
@@ -308,7 +394,9 @@ export class WebloomWidget
     if (parent.isCanvas) return parent;
     return parent.canvasParent;
   }
-
+  get isTheOnlySelected() {
+    return this.page.selectedNodeIds.size === 1 && this.isSelected;
+  }
   addChild(nodeId: string) {
     this.nodes.push(nodeId);
     this.nodes.sort((a, b) => {
@@ -341,38 +429,20 @@ export class WebloomWidget
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
-      evaluationManger: this.evaluationManger,
-      dependencyManager: this.dependencyManager,
     });
   }
 
   get isCanvas() {
     return WebloomWidgets[this.type].config.isCanvas;
   }
-
-  /**
-   * meanted to be used just once when creating the widget
-   */
-  private genSetters(
-    settersConfig?: (typeof WebloomWidgets)[WidgetTypes]['setters'],
-  ): Record<string, (arg: unknown) => void> {
-    const res: Record<string, (arg: unknown) => void> = {};
-    if (!settersConfig) return res;
-    for (const k in settersConfig) {
-      res[k] = (arg: unknown) => this.setValue(settersConfig[k].path, arg);
-    }
-    return res;
+  unselectSelf() {
+    this.page.setSelectedNodeIds((prev) => {
+      return new Set([...prev].filter((i) => i !== this.id));
+    });
   }
 
-  /**
-   * if doesn't exist add it if not overwrite existing one
-   * @param key setter key
-   * @param setter the funcion to run
-   * TODO: also take the signature for autocompletion
-   */
-  appendSetters(setters: { key: string; setter: (...args: any[]) => void }[]) {
-    setters.forEach(({ key, setter }) => {
-      this.setters[key] = setter;
-    });
+  dispose() {
+    this.unselectSelf();
+    super.dispose();
   }
 }

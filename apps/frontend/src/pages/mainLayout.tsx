@@ -10,6 +10,7 @@ import { useAuthStore } from '@/hooks/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/useSignOut';
 import { loaderAuth } from '@/utils/loaders';
+import { LogoName } from '@/components/ui/logo';
 
 const dashboardPaths = [
   {
@@ -72,7 +73,9 @@ export function Dashboard() {
     <div className="flex h-screen w-screen overflow-hidden">
       {/*dashbaord nav*/}
       <div className="flex h-full w-max flex-col gap-5 p-3">
-        {/*TODO: LOGO*/}
+        <NavLink to="/">
+          <LogoName />
+        </NavLink>
         <NavLink to={`/${workspaceId}`}>
           <Wind size={30} />
         </NavLink>

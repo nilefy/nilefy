@@ -4,8 +4,6 @@ import {
   dataSourcesEnum,
   DataSourceT,
 } from '../seeders/seeder.types';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import * as schema from '../../drizzle/schema/data_sources.schema';
 import {
   pluginConfigForm as postgresConfigForm,
   queryConfigForm as postgresQueryConfigForm,
@@ -14,6 +12,15 @@ import {
   pluginConfigForm as restApiConfigForm,
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
+import {
+  pluginConfigForm as GCSConfigForm,
+  queryConfigForm as GCSQueryConfigForm,
+} from '../../data_sources/plugins/gcs/types';
+import {
+  pluginConfigForm as mongodbConfigForm,
+  queryConfigForm as mongodbQueryConfigForm,
+} from '../../data_sources/plugins/mongodb/types';
+import { DatabaseI, dataSources as dataSourcesSchema } from '@webloom/database';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -48,6 +55,14 @@ export async function dataSourcesSeeder(db: DatabaseI) {
               'Connect with REST API endpoints and create queries to interact with it.';
           }
           break;
+        case 'mongodb':
+          {
+            dataSourceConfig = mongodbConfigForm;
+            queryConfig = mongodbQueryConfigForm;
+            image = 'https://www.svgrepo.com/show/373845/mongo.svg';
+            description = 'Connect to MongoDB to read and write data.';
+          }
+          break;
         case 'azure blob storage':
           {
             dataSourceConfig = [];
@@ -60,19 +75,12 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           break;
         case 'google cloud storage':
           {
-            dataSourceConfig = [];
-            queryConfig = [];
+            dataSourceConfig = GCSConfigForm;
+            queryConfig = GCSQueryConfigForm;
             image =
               'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
             description =
               'Connect to GCS buckets and perform various operations on them.';
-          }
-          break;
-          {
-            dataSourceConfig = [];
-            queryConfig = [];
-            image = 'https://www.svgrepo.com/show/373644/graphql.svg';
-            description = 'Connect with GraphQL endpoints to run queries.';
           }
           break;
         default: {
@@ -92,5 +100,5 @@ export async function dataSourcesSeeder(db: DatabaseI) {
     });
   });
 
-  await db.insert(schema.dataSources).values(ds);
+  await db.insert(dataSourcesSchema).values(ds);
 }

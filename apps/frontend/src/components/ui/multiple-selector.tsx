@@ -165,7 +165,6 @@ const MultipleSelector = React.forwardRef<
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-
     const [selected, setSelected] = React.useState<Option[]>(value || []);
     const [options, setOptions] = React.useState<GroupOption>(
       transToGroupOption(arrayDefaultOptions, groupBy),
@@ -415,7 +414,7 @@ const MultipleSelector = React.forwardRef<
               </div>
             </div>
           </PopoverTrigger>
-          <PopoverContent className="p-0 w-48">
+          <PopoverContent className="w-48 p-0">
             <CommandList>
               {isLoading ? (
                 <>{loadingIndicator}</>

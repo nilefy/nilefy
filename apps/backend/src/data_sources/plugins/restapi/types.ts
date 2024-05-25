@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 const authUnion = z.discriminatedUnion('auth_type', [
   z.object({
@@ -16,9 +16,9 @@ const authUnion = z.discriminatedUnion('auth_type', [
   }),
 ]);
 
-const headersSchema = z.array(
-  z.tuple([z.string().describe('Key'), z.string().describe('Value')]),
-);
+const headersSchema = z
+  .array(z.object({ key: z.string(), value: z.string() }))
+  .default([]);
 
 export const configSchema = z.object({
   base_url: z.string().url({
@@ -29,24 +29,17 @@ export const configSchema = z.object({
    * headers that will be sent with every request
    * @note plugin headers has low percendence than query headers
    */
-  headers: headersSchema,
+  headers: z.tuple([z.string().describe('Key'), z.string().describe('Value')]),
 });
 
-const endpointMethods = z.union([
-  z.literal('GET'),
-  z.literal('POST'),
-  z.literal('PUT'),
-  z.literal('DELETE'),
-]);
-
-export const querySchema = z.object({
-  endpoint: z.string(),
-  method: endpointMethods,
-  headers: headersSchema,
-  params: headersSchema,
-  // TODO: the plugin needs to be able to handle any body type
-  body: z.union([z.string(), z.record(z.unknown())]),
-});
+const endpointMethods = z
+  .union([
+    z.literal('GET'),
+    z.literal('POST'),
+    z.literal('PUT'),
+    z.literal('DELETE'),
+  ])
+  .default('GET');
 
 export type ConfigT = z.infer<typeof configSchema>;
 export type QueryT = z.infer<typeof querySchema>;
@@ -149,30 +142,68 @@ export const pluginConfigForm = {
     },
   },
 };
+const endPointSchema = z.string().default('');
 
+export const querySchema = z.object({
+  endpoint: endPointSchema,
+  method: endpointMethods,
+  headers: headersSchema,
+  params: headersSchema,
+  // TODO: the plugin needs to be able to handle any body type
+  body: z.union([z.string(), z.record(z.unknown())]),
+});
 export const queryConfigForm = {
-  schema: zodToJsonSchema(querySchema, 'querySchema'),
-  uiSchema: {
-    endpoint: {
-      'ui:title': 'End-Point',
-      'ui:placeholder': '/users',
+  formConfig: [
+    {
+      sectionName: 'Basic',
+      children: [
+        {
+          path: 'config.endpoint',
+          label: 'Endpoint',
+          type: 'inlineCodeInput',
+          options: {
+            placeholder: '/api/v1/users',
+          },
+          validation: zodToJsonSchema(endPointSchema),
+        },
+        {
+          path: 'config.method',
+          label: 'Method',
+          type: 'select',
+          options: {
+            items: [
+              { label: 'GET', value: 'GET' },
+              { label: 'POST', value: 'POST' },
+              { label: 'PUT', value: 'PUT' },
+              { label: 'DELETE', value: 'DELETE' },
+            ],
+          },
+          validation: zodToJsonSchema(endpointMethods),
+        },
+        {
+          path: 'config.headers',
+          label: 'Headers',
+          type: 'keyValue',
+          validation: zodToJsonSchema(headersSchema),
+        },
+        {
+          path: 'config.params',
+          label: 'Params',
+          type: 'keyValue',
+          validation: zodToJsonSchema(headersSchema),
+        },
+        {
+          path: 'config.body',
+          label: 'Body',
+          type: 'inlineCodeInput',
+          options: {
+            placeholder: '{"key": "value"}',
+          },
+          validation: zodToJsonSchema(
+            z.union([z.string(), z.record(z.unknown())]).default(''),
+          ),
+        },
+      ],
     },
-
-    method: {
-      'ui:title': 'Method',
-    },
-    headers: {
-      'ui:title': 'Headers',
-      'ui:options': {
-        orderable: false,
-      },
-    },
-    params: {
-      'ui:title': 'Params',
-    },
-    body: {
-      'ui:title': 'Body',
-      'ui:placeholder': '{"msg", "body"}',
-    },
-  },
+  ],
 };

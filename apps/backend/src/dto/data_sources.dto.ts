@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  dataSources,
-  workspaceDataSources,
-} from '../drizzle/schema/data_sources.schema';
+import { dataSources, workspaceDataSources } from '@webloom/database';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { createZodDto } from 'nestjs-zod';
 

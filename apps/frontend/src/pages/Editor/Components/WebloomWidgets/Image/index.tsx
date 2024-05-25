@@ -1,18 +1,14 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Image } from 'lucide-react';
 import { useContext } from 'react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 import { ToolTipWrapper } from '../tooltipWrapper';
-import {
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
 
 /**
  * fields that you want to be on the configForm
@@ -27,17 +23,14 @@ export type WebloomImageProps = {
   src?: string | undefined;
   altText?: string | undefined;
   tooltip?: string | undefined;
-  events: WidgetsEventHandler;
+  onClick?: string;
 };
-
-const webloomImageEvents = {
-  onClick: 'onClick',
-} as const;
 
 const WebloomImage = observer(function WebloomImage() {
   const { id } = useContext(WidgetContext);
+  const widget = editorStore.currentPage.getWidgetById(id);
   const { src, altText, tooltip, objectFit } =
-    editorStore.currentPage.getWidgetById(id).finalValues as WebloomImageProps;
+    widget.finalValues as WebloomImageProps;
 
   return (
     <ToolTipWrapper text={tooltip}>
@@ -49,12 +42,7 @@ const WebloomImage = observer(function WebloomImage() {
           style={{
             objectFit,
           }}
-          onClick={() => {
-            editorStore.executeActions<typeof webloomImageEvents>(
-              id,
-              'onClick',
-            );
-          }}
+          onClick={() => widget.handleEvent('onClick')}
         />
       </div>
     </ToolTipWrapper>
@@ -63,7 +51,7 @@ const WebloomImage = observer(function WebloomImage() {
 
 const config: WidgetConfig = {
   name: 'Image',
-  icon: <Image />,
+  icon: Image,
   isCanvas: false,
   layoutConfig: {
     colsCount: 10,
@@ -74,61 +62,78 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomImageProps = {
+const initialProps: WebloomImageProps = {
   // TODO: change this url
   src: 'https://assets.appsmith.com/widgets/default.png',
   objectFit: 'contain',
-  events: [],
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      src: {
-        type: 'string',
+const inspectorConfig: EntityInspectorConfig<WebloomImageProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Source',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Source',
+        },
+        path: 'src',
       },
-      altText: {
-        type: 'string',
+      {
+        label: 'Alt Text',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Alt Text',
+        },
+        path: 'altText',
       },
-      tooltip: {
-        type: 'string',
+      {
+        label: 'Tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Tooltip',
+        },
+        path: 'tooltip',
       },
-      objectFit: {
-        type: 'string',
-        enum: ['contain', 'cover', 'none', 'fill', 'scale-down'],
-        default: 'contain',
+      {
+        label: 'Object Fit',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Contain', value: 'contain' },
+            { label: 'Cover', value: 'cover' },
+            { label: 'None', value: 'none' },
+            { label: 'Fill', value: 'fill' },
+            { label: 'Scale Down', value: 'scale-down' },
+          ],
+        },
+        path: 'objectFit',
       },
-      events: widgetsEventHandlerJsonSchema,
-    },
-    required: ['events', 'objectFit'],
+    ],
   },
-  uiSchema: {
-    src: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:placeholder': 'URL',
-    },
-    altText: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    tooltip: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    events: genEventHandlerUiSchema(webloomImageEvents),
+
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onClick',
+        label: 'onClick',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onClick',
+        },
+        isEvent: true,
+      },
+    ],
   },
-};
+];
 
 const WebloomImageWidget: Widget<WebloomImageProps> = {
   component: WebloomImage,
   config,
-  defaultProps,
-  schema,
-  setters: {
-    setImageUrl: {
-      path: 'src',
-      type: 'string',
-    },
-  },
+  initialProps,
+  inspectorConfig,
 };
 
 export { WebloomImageWidget };

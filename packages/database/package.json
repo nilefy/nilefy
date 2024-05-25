@@ -1,0 +1,31 @@
+{
+  "name": "@webloom/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.ts --dts --watch",
+    "build": "tsup src/index.ts --dts",
+    "db:push": "drizzle-kit push:pg",
+    "db:reset": "ts-node ./src/scripts/reset && pnpm db:push",
+    "db:studio": "drizzle-kit studio --verbose",
+    "db:generate": "drizzle-kit generate:pg",
+    "db:migrate": "pnpm db:generate && ts-node ./src/scripts/migrate"
+  },
+  "dependencies": {
+    "@webloom/constants": "workspace:*",
+    "@webloom/permissions": "workspace:*"
+  },
+  "peerDependencies": {
+    "drizzle-kit": "^0.20.17",
+    "drizzle-orm": "^0.30.8",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.5",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.2"
+  }
+}

@@ -12,11 +12,12 @@ import { JwtService } from '@nestjs/jwt';
 import { hash, genSalt, compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { users } from '../drizzle/schema/schema';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
 import { EmailService } from '../email/email.service';
+import { DatabaseI, users } from '@webloom/database';
 
 @Injectable()
 export class AuthService {

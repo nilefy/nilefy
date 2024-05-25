@@ -1,21 +1,22 @@
 import { faker } from '@faker-js/faker';
 import { generateFakeUser } from '../faker/user.faker';
-import { users as usersSchema } from '../../drizzle/schema/schema';
+import { users as usersSchema } from '@webloom/database';
 import { SeederI } from './seeder.types';
 import { UserDto } from '../../dto/users.dto';
 import { genSalt, hash } from 'bcrypt';
+import { chunkArray } from '../utils';
 
 /**
  * index `[0]` is the admin
  */
-export const userSeeder: SeederI<UserDto[]> = async (db) => {
+export const userSeeder: SeederI<UserDto[]> = async (db, count) => {
   console.log('running USERS seeder');
   const salt = await genSalt(10);
   const password = await hash('password', salt);
   const fakeUsers = faker.helpers.multiple(() => generateFakeUser(password), {
-    count: 10,
+    count: count - 1,
   });
-
+  const usersChunks = chunkArray(fakeUsers, 1000);
   const admin = (
     await db
       .insert(usersSchema)
@@ -28,10 +29,11 @@ export const userSeeder: SeederI<UserDto[]> = async (db) => {
       .returning()
       .onConflictDoNothing()
   )[0];
-  const users = await db
-    .insert(usersSchema)
-    .values(fakeUsers)
-    .onConflictDoNothing()
-    .returning();
-  return [admin, ...users];
+  const users = await Promise.all(
+    usersChunks.map((u) =>
+      db.insert(usersSchema).values(u).onConflictDoNothing().returning(),
+    ),
+  );
+  const res = [admin].concat(...users);
+  return res;
 };

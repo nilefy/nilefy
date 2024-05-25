@@ -1,17 +1,17 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useCallback, useContext, useEffect, useRef } from 'react';
+import { useContext, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import {
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
+import { useExposeWidgetApi } from '@/lib/Editor/hooks';
+import { StringSchema } from '@/lib/Editor/validations';
 
 export type WebloomInputProps = {
   label: string;
@@ -19,14 +19,11 @@ export type WebloomInputProps = {
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
   value?: number;
-  events: WidgetsEventHandler;
+  onChange?: string;
+  onFocus?: string;
+  onBlur?: string;
+  onSubmit?: string;
 };
-
-const webloomNumberInputEvents = {
-  onChange: 'onChange',
-  onFocus: 'onFocus',
-  onBlur: 'onBlur',
-} as const;
 
 const WebloomNumberInput = observer(function WebloomNumberInput() {
   const { onPropChange, id } = useContext(WidgetContext);
@@ -34,28 +31,16 @@ const WebloomNumberInput = observer(function WebloomNumberInput() {
   const props = widget.finalValues as WebloomInputProps;
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const clearValue = useCallback(() => {
-    onPropChange({
-      key: 'value',
-      value: 0,
-    });
-  }, [onPropChange]);
-
-  useEffect(() => {
-    widget.appendSetters([
-      {
-        key: 'focus',
-        setter: () => {
-          if (!inputRef || !inputRef.current) return;
-          inputRef.current.focus();
-        },
-      },
-      {
-        key: 'clearValue',
-        setter: clearValue,
-      },
-    ]);
-  }, [clearValue]);
+  useExposeWidgetApi(id, {
+    focus: () => {
+      if (!inputRef.current) return;
+      inputRef.current.focus();
+    },
+    blur: () => {
+      if (!inputRef.current) return;
+      inputRef.current.blur();
+    },
+  });
 
   return (
     <div className="flex w-full items-center justify-center gap-2">
@@ -72,23 +57,14 @@ const WebloomNumberInput = observer(function WebloomNumberInput() {
             key: 'value',
             value: e.target.value,
           });
-          editorStore.executeActions<typeof webloomNumberInputEvents>(
-            id,
-            'onChange',
-          );
+          widget.handleEvent('onChange');
         }}
-        onFocus={() =>
-          editorStore.executeActions<typeof webloomNumberInputEvents>(
-            id,
-            'onFocus',
-          )
-        }
-        onBlur={() =>
-          editorStore.executeActions<typeof webloomNumberInputEvents>(
-            id,
-            'onBlur',
-          )
-        }
+        onFocus={() => {
+          widget.handleEvent('onFocus');
+        }}
+        onBlur={() => {
+          widget.handleEvent('onBlur');
+        }}
       />
     </div>
   );
@@ -96,7 +72,7 @@ const WebloomNumberInput = observer(function WebloomNumberInput() {
 
 const config: WidgetConfig = {
   name: 'Number Input',
-  icon: <TextCursorInput />,
+  icon: TextCursorInput,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
@@ -105,72 +81,136 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Horizontal',
+  widgetActions: {
+    focus: {
+      fn(entity) {
+        entity.api.focus();
+      },
+      name: 'focus',
+      type: 'SIDE_EFFECT',
+    },
+    blur: {
+      fn(entity) {
+        entity.api.blur();
+      },
+      name: 'blur',
+      type: 'SIDE_EFFECT',
+    },
+    clearValue: {
+      type: 'SETTER',
+      path: 'value',
+      value: '',
+      name: 'clearValue',
+    },
+    setValue: {
+      type: 'SETTER',
+      path: 'value',
+      name: 'setValue',
+    },
+  },
 };
 
-const defaultProps: WebloomInputProps = {
+const initialProps: WebloomInputProps = {
   placeholder: 'Enter text',
   value: 0,
   label: 'Label',
   disabled: false,
-  events: [],
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      placeholder: {
-        type: 'string',
+const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
+  {
+    sectionName: 'Basic',
+    children: [
+      {
+        path: 'placeholder',
+        label: 'Placeholder',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter placeholder',
+        },
+        validation: StringSchema('Write something'),
       },
-      label: {
-        type: 'string',
-      },
-      disabled: {
-        type: 'boolean',
-        default: false,
-      },
-      autoFocus: {
-        type: 'boolean',
-        default: false,
-      },
-      events: widgetsEventHandlerJsonSchema,
-      value: {
-        type: 'number',
-      },
-    },
-    required: ['events', 'label'],
+    ],
   },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    placeholder: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Placeholder',
-      'ui:placeholder': 'Enter placeholder',
-    },
-    label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
-    },
-    events: genEventHandlerUiSchema(webloomNumberInputEvents),
+  {
+    sectionName: 'Label',
+    children: [
+      {
+        path: 'label',
+        label: 'Label',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter label',
+        },
+        validation: StringSchema('Label'),
+      },
+    ],
   },
-};
+  {
+    sectionName: 'Events',
+    children: [
+      {
+        path: 'onChange',
+        label: 'onTextChange',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onTextChange',
+        },
+      },
+      {
+        path: 'onFocus',
+        label: 'onFocus',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onFocus',
+        },
+      },
+      {
+        path: 'onBlur',
+        label: 'onBlur',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onBlur',
+        },
+      },
+      {
+        path: 'onSubmit',
+        label: 'onSubmit',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onSubmit',
+        },
+      },
+    ],
+  },
+];
 
 const WebloomNumberInputWidget: Widget<WebloomInputProps> = {
   component: WebloomNumberInput,
-  config,
-  defaultProps,
-  schema,
-  setters: {
-    setValue: {
-      path: 'value',
-      type: 'number',
+  metaProps: new Set(['value']),
+  publicAPI: {
+    focus: {
+      type: 'function',
     },
-    setDisabled: {
-      path: 'disabled',
-      type: 'boolean',
+    blur: {
+      type: 'function',
+    },
+    clearValue: {
+      type: 'function',
+    },
+    setValue: {
+      type: 'function',
+      args: [
+        {
+          name: 'value',
+          type: 'number',
+        },
+      ],
     },
   },
+  config,
+  initialProps,
+  inspectorConfig,
 };
 
 export { WebloomNumberInputWidget };

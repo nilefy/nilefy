@@ -1,13 +1,17 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
-import { accounts, users } from '../drizzle/schema/schema';
 import { genSalt, hash } from 'bcrypt';
+import { accounts, DatabaseI, users } from '@webloom/database';
+import { WorkspacesService } from '../workspaces/workspaces.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(DrizzleAsyncProvider) private readonly db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private readonly db: DatabaseI,
+    private readonly workspacesService: WorkspacesService,
+  ) {}
 
   async findOne(email: string) {
     const u = await this.db.query.users.findFirst({
@@ -29,6 +33,15 @@ export class UsersService {
       if (user.accounts) {
         await tx.insert(accounts).values({ userId: u.id, ...user.accounts });
       }
+      await this.workspacesService.create(
+        {
+          name: 'New Workspace',
+          createdById: u.id,
+        },
+        {
+          tx: tx,
+        },
+      );
       return u;
     });
   }
@@ -58,5 +71,21 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return updatedUser;
+  }
+
+  async updateOnboarding(userId: number, onboardingCompleted = true) {
+    const update = (
+      await this.db
+        .update(users)
+        .set({ onboardingCompleted })
+        .where(eq(users.id, userId))
+        .returning({
+          onboardingCompleted: users.onboardingCompleted,
+        })
+    )[0];
+    if (!update) {
+      throw new NotFoundException('User not found');
+    }
+    return update;
   }
 }

@@ -4,24 +4,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  DatabaseI,
-  DrizzleAsyncProvider,
-  PgTrans,
-} from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreatePageDb,
   CreatePageRetDto,
   PageDto,
   UpdatePageDb,
 } from '../dto/pages.dto';
-import { pages } from '../drizzle/schema/appsState.schema';
 import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
 import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
 import { WebloomNode, WebloomTree } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { alias } from 'drizzle-orm/pg-core';
+import { DatabaseI, pages, PgTrans, components } from '@webloom/database';
 @Injectable()
 export class PagesService {
   constructor(
@@ -63,7 +60,7 @@ export class PagesService {
           },
           col: 0,
           row: 0,
-          columnsCount: 32,
+          columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
           rowsCount: 0,
         },
       ],
@@ -89,27 +86,32 @@ export class PagesService {
     appId,
     id: pageId,
     createdById,
-  }: Pick<PageDto, 'id' | 'createdById' | 'appId'>): Promise<PageDto[]> {
-    // TODO: clone the tree state as well
-    const origin = await this.db.query.pages.findFirst({
-      columns: {
-        id: true,
-        name: true,
-        handle: true,
-      },
-      where: and(eq(pages.appId, appId), eq(pages.id, pageId)),
+  }: Pick<PageDto, 'id' | 'createdById' | 'appId'>): Promise<PageDto> {
+    return await this.db.transaction(async (tx) => {
+      const pages2 = alias(pages, 'p2');
+      const copyPage = sql`
+      insert into ${pages} (app_id, created_by_id, handle, name, disabled, visible, index)
+      select ${appId}, ${createdById}, ${pages2.handle} || ' (copy)', ${pages2.name} || ' (copy)', ${pages2.enabled}, ${pages2.visible}, (${this.getNewPageIndexInApp(appId)})
+      from ${pages} as ${pages2}
+      where ${pages2.id} = ${pageId} and ${pages2.appId} = ${appId}
+      returning *;
+      `;
+      const newPage = (await tx.execute(copyPage))
+        .rows[0] as unknown as PageDto;
+      if (!newPage) {
+        throw new NotFoundException('no app or page with those ids');
+      }
+      const components2 = alias(components, 'c2');
+      const copyComponents = sql`
+      insert into ${components} (created_by_id, id, type, props, parent_id, col, row, columns_count, rows_count, page_id)
+      select ${createdById}, ${components2.id}, ${components2.type}, ${components2.props}, ${components2.parentId} , ${components2.col}, ${components2.row}, ${components2.columnsCount}, ${components2.rowsCount}, ${newPage.id}
+      from ${components} as ${components2}
+      where ${components2.pageId} = ${pageId}
+      order by ${components2.createdAt} ASC;
+      `;
+      await tx.execute(copyComponents);
+      return newPage;
     });
-    if (!origin) throw new NotFoundException('no app or page with those ids');
-    return await this.db
-      .insert(pages)
-      .values({
-        name: origin.name + '(copy)',
-        handle: origin.handle + '(copy)',
-        createdById,
-        appId,
-        index: this.getNewPageIndexInApp(appId),
-      })
-      .returning();
   }
 
   async index(appId: number): Promise<PageDto[]> {

@@ -1,24 +1,27 @@
-import zodToJsonSchema from 'zod-to-json-schema';
-import { Widget, WidgetConfig, WIDGET_SECTIONS } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+  WIDGET_SECTIONS,
+} from '@/lib/Editor/interface';
 import { BoxSelect } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
+import { useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 
-import { useContext } from 'react';
 import { WidgetContext } from '../..';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Grid } from '../../lib';
 import { cn } from '@/lib/cn';
 
 import z from 'zod';
-import { RJSFSchema } from '@rjsf/utils';
 
 const webloomContainerProps = z.object({
   color: z.string(),
   layoutMode: z.enum(['fixed', 'auto']),
 });
-type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
+export type WebloomContainerProps = z.infer<typeof webloomContainerProps>;
 
 const WebloomContainer = observer(
   ({
@@ -49,10 +52,13 @@ const WebloomContainer = observer(
 
     return (
       <ScrollArea
-        className="relative h-full w-full"
+        // temporary styles till we implement custom styles
+        className={cn('relative h-full w-full', {
+          'shadow-md ': !entity.isRoot,
+        })}
         scrollAreaViewPortClassName={cn({
           hidden: !isVisibile,
-          'rounded-md': !entity.isRoot,
+          'rounded-md border border-gray-200': !entity.isRoot,
         })}
         style={{
           ...outerContainerStyle,
@@ -61,8 +67,9 @@ const WebloomContainer = observer(
         }}
       >
         <div
-          className="relative bg-gray-300"
+          className="relative bg-gray-100"
           data-id={id}
+          data-testid={id}
           data-type={WIDGET_SECTIONS.CANVAS}
           style={{
             ...innerContainerStyle,
@@ -77,25 +84,45 @@ const WebloomContainer = observer(
     );
   },
 );
-
-export const defaultProps: WebloomContainerProps = {
-  color: '#a883f2',
+export const initialProps: WebloomContainerProps = {
+  color: 'white',
   layoutMode: 'fixed',
 };
-
-export const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomContainerProps) as RJSFSchema,
-  uiSchema: {
-    color: {
-      'ui:widget': 'colorPicker',
-      'ui:title': 'Color',
-    },
+export const inspectorConfig: EntityInspectorConfig<WebloomContainerProps> = [
+  {
+    sectionName: 'Color',
+    children: [
+      {
+        path: 'color',
+        label: 'Color',
+        type: 'color',
+        options: {
+          color: 'white',
+        },
+      },
+    ],
   },
-};
+  {
+    sectionName: 'Layout',
+    children: [
+      {
+        path: 'layoutMode',
+        label: 'Layout Mode',
+        type: 'select',
+        options: {
+          items: [
+            { value: 'fixed', label: 'Fixed' },
+            { value: 'auto', label: 'Auto' },
+          ],
+        },
+      },
+    ],
+  },
+];
 
 export const config: WidgetConfig = {
   name: 'Container',
-  icon: <BoxSelect />,
+  icon: BoxSelect,
   isCanvas: true,
   layoutConfig: {
     colsCount: 10,
@@ -109,8 +136,8 @@ export const config: WidgetConfig = {
 };
 export const WebloomContainerWidget: Widget<WebloomContainerProps> = {
   component: WebloomContainer,
-  defaultProps,
-  schema,
+  initialProps,
+  inspectorConfig,
   config,
 };
 export { WebloomContainer };

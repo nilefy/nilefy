@@ -1,19 +1,15 @@
-import { commandManager } from '@/Actions/CommandManager';
+import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { useJSLibraries } from '@/api/JSLibraries.api';
+import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-import { loaderAuth } from '@/utils/loaders';
+import { JwtPayload } from '@/types/auth.types';
+import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
-import { Suspense, useEffect, useRef } from 'react';
-import {
-  Await,
-  defer,
-  useAsyncValue,
-  useLoaderData,
-  useParams,
-} from 'react-router-dom';
-import { queryClient } from '@/index';
+import { Suspense, useEffect } from 'react';
+import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
 
 export const appLoader =
   (queryClient: QueryClient) =>
@@ -22,6 +18,7 @@ export const appLoader =
     if (notAuthed) {
       return notAuthed;
     }
+    const currentUser = getUser() as JwtPayload;
     const workspaceId = params.workspaceId;
     const appId = params.appId;
     if (!workspaceId || !appId) {
@@ -35,39 +32,33 @@ export const appLoader =
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
     });
-    const values = Promise.all([
+
+    const jsQueriesQuery = useJSQueries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
+    const jsLibrariesQuery = useJSLibraries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
+    const values = await Promise.all([
       queryClient.fetchQuery(appQuery),
       queryClient.fetchQuery(queriesQuery),
+      queryClient.fetchQuery(jsQueriesQuery),
+      queryClient.fetchQuery(jsLibrariesQuery),
     ]);
-    return defer({
-      values,
-    });
-  };
-
-type AppLoaderProps = {
-  /**
-   * does this app needs to connect to websocket connection?
-   */
-  initWs: boolean;
-  children: React.ReactNode;
-};
-
-const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
-  const { workspaceId, appId } = useParams();
-  const [app, queries] = useAsyncValue() as [
-    app: AppCompleteT,
-    queries: Awaited<ReturnType<typeof getQueries>>,
-  ];
-  const tree = app.defaultPage.tree;
-  // todo : put the init state inside the editor store itself
-  const inited = useRef(false);
-  if (!inited.current) {
+    const [app, queries, jsQueries, jsLibraries] = values;
+    const tree = app.defaultPage.tree;
     editorStore.init({
-      workspaceId: +(workspaceId as string),
-      appId: +(appId as string),
-      queryClient,
       name: app.name,
+      workspaceId: app.workspaceId,
+      appId: app.id,
       queries,
+      jsQueries,
+      jsLibraries,
+      currentUser: currentUser?.username,
+      // TODO: i don't think we should store this info here but whatever right?
+      onBoardingCompleted: app.onBoardingCompleted,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         {
@@ -83,8 +74,25 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
         })),
       ],
     });
-    inited.current = true;
-  }
+    return defer({
+      values,
+    });
+  };
+
+type AppLoaderProps = {
+  /**
+   * does this app needs to connect to websocket connection?
+   */
+  initWs: boolean;
+  children: React.ReactNode;
+};
+
+const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
+  const [app] = useAsyncValue() as [
+    app: AppCompleteT,
+    queries: Awaited<ReturnType<typeof getQueries>>,
+  ];
+
   useEffect(() => {
     if (initWs) commandManager.connectToEditor(app.id, app.defaultPage.id);
     return () => {

@@ -1,38 +1,28 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
-
-const webloomTextProps = z.object({
-  text: z.string(),
-  textColor: z.string(),
-});
-export type WebloomTextProps = z.infer<typeof webloomTextProps>;
+import { StringSchema } from '@/lib/Editor/validations';
+export type WebloomTextProps = {
+  text: string;
+};
 
 const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTextProps;
-  return (
-    <span
-      className="h-full w-full break-all text-4xl"
-      style={{
-        color: props.textColor,
-      }}
-    >
-      {props.text}
-    </span>
-  );
-});
 
+  return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
+});
 const config: WidgetConfig = {
   name: 'Text',
-  icon: <Type />,
+  icon: Type,
   isCanvas: false,
   layoutConfig: {
     colsCount: 2,
@@ -41,41 +31,55 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
-};
-
-const defaultProps: WebloomTextProps = {
-  text: 'Text',
-  textColor: '#FFF',
-};
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomTextProps),
-  uiSchema: {
-    text: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:placeholder': 'Enter text',
-      'ui:title': 'Text',
+  widgetActions: {
+    setText: {
+      type: 'SETTER',
+      name: 'setText',
+      path: 'text',
     },
-    textColor: {
-      'ui:widget': 'colorPicker',
+    testSideEffect: {
+      type: 'SIDE_EFFECT',
+      name: 'testSideEffect',
+      fn: (entity, ...args: unknown[]) => {
+        console.log('testSideEffect', entity, args);
+      },
     },
   },
 };
+
+const initialProps: WebloomTextProps = {
+  text: 'Text',
+};
+
+const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        path: 'text',
+        label: 'Text',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter text',
+        },
+        validation: StringSchema('Text'),
+      },
+    ],
+  },
+];
+
 export const WebloomTextWidget: Widget<WebloomTextProps> = {
   component: WebloomText,
   config,
-  defaultProps,
-  schema,
-  setters: {
-    setText: {
-      path: 'text',
-      type: 'string',
-    },
-    setTextColor: {
-      path: 'textColor',
-      type: 'string',
+  initialProps,
+  publicAPI: {
+    text: {
+      description: 'Text of the widget',
+      type: 'static',
+      typeSignature: 'string',
     },
   },
+  inspectorConfig,
 };
 
 export { WebloomText };

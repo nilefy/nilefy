@@ -17,5 +17,6 @@ export function generateFakeUser(userPassword: string): Omit<UserDto, 'id'> {
     avatar: null,
     conformationToken: null,
     emailVerified: null,
+    onboardingCompleted: false,
   };
 }
