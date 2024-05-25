@@ -34,7 +34,7 @@ import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
-@UseGuards(JwtGuard)
+// @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -95,7 +95,9 @@ export class AppsController {
   ) {
     try {
       const jsonData = JSON.parse(file.buffer.toString());
-      const userId = req.user.userId;
+      // ! modify later
+      // const userId = req.user.userId;
+      const userId = 1;
 
       const createAppDto = {
         ...jsonData,

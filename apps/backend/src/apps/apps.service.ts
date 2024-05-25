@@ -220,11 +220,9 @@ export class AppsService {
       }
     };
 
-    const simplifiedObject = JSON.parse(JSON.stringify(app));
+    omitFields(app);
 
-    omitFields(simplifiedObject);
-
-    return simplifiedObject;
+    return app;
   }
 
   async importAppJSON(
