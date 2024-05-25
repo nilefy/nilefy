@@ -12,6 +12,7 @@
     "dev:docs": "dotenv turbo dev --workspace=docs",
     "lint": "turbo lint",
     "db:push": "cd packages/database && dotenv -e ../../.env pnpm db:push",
+    "db:check": "cd packages/database && dotenv -e ../../.env pnpm db:check",
     "db:studio": "cd packages/database && dotenv -e ../../.env pnpm db:studio",
     "db:seed": "dotenv turbo db:seed",
     "db:reset": "dotenv turbo db:reset",
@@ -19,6 +20,7 @@
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build --filter=!docs && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start --filter=!docs\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e  \"",
+    "db:generate": "cd packages/database && dotenv -e ../../.env pnpm db:generate",
     "db:migrate": "cd packages/database && dotenv -e ../../.env pnpm db:migrate"
   },
   "engines": {
