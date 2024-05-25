@@ -156,7 +156,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.close();
       return;
     }
-
     try {
       await this.db.transaction(async (tx) => {
         return await Promise.all(

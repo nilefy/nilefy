@@ -10,6 +10,8 @@ import {
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { components, DatabaseI, PgTrans, queries } from '@webloom/database';
+import { QueryDto } from '../dto/data_queries.dto';
+import { AppDto } from '../dto/apps.dto';
 
 @Injectable()
 export class ComponentsService {
@@ -75,6 +77,21 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    // id/name is changed
+    const newId = dto.props.name;
+    if (newId && newId !== componentId) {
+      // there is a component with this new id
+      const component = await this.getComponent(newId);
+      if (component) {
+        throw new BadRequestException();
+      }
+      const { appId } = (await this.getComponent(componentId))!;
+      const query = await this.getQueryById(newId, appId);
+      if (query) {
+        // there is a query with this id
+        throw new BadRequestException();
+      }
+    }
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
     // so we need to keep this condition true => accept root updates but discard the `parentId` update
@@ -82,6 +99,7 @@ export class ComponentsService {
       .update(components)
       .set({
         ...dto,
+        id: newId,
         parentId:
           componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
         updatedAt: sql`now()`,
@@ -132,5 +150,48 @@ export class ComponentsService {
       }
     });
     return tree;
+  }
+
+  async getComponent(
+    componentId: ComponentDto['id'],
+  ): Promise<{ id: ComponentDto['id']; appId: AppDto['id'] } | undefined> {
+    const ret = await this.db.query.components.findFirst({
+      where: eq(components.id, componentId),
+      columns: {
+        id: true,
+      },
+      with: {
+        page: {
+          with: {
+            app: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (ret) {
+      return {
+        id: ret.id,
+        appId: ret.page.app.id,
+      };
+    }
+    return ret;
+  }
+
+  async getQueryById(
+    queryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<QueryDto['id'] | undefined> {
+    return (
+      await this.db.query.queries.findFirst({
+        where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
   }
 }

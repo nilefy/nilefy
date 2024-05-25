@@ -20,6 +20,7 @@ import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
 import { useAutoRun } from '@/lib/Editor/hooks';
+
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
@@ -55,6 +56,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue(e.target.value);
+      editorStore.currentPage.getWidgetById(node.id).setValue('name', e.target.value);
     },
     [setValue],
   );
@@ -137,7 +139,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         onChange={onChange}
         onBlur={(e) => {
           // commandManager.executeCommand(
-          //   new ChangePropAction(node.id, true, 'name', e.currentTarget.value),
+          //   new ChangePropAction(node.id),
           // );
         }}
       />
