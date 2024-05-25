@@ -155,6 +155,7 @@ export class WebloomQuery
   dataSourceId: CompleteQueryI['dataSourceId'];
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
+  queryName: string;
   private readonly queryClient: QueryClient;
   queryRunner: MobxMutation<
     Awaited<ReturnType<typeof runQueryApi>>,
@@ -225,6 +226,7 @@ export class WebloomQuery
       // @ts-expect-error TODO: fix this
       entityActionConfig: QueryActions,
     });
+    this.queryName = this.id;
     this.queryClient = queryClient;
     this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
@@ -233,6 +235,7 @@ export class WebloomQuery
           workspaceId,
           queryId: this.id,
           dto: {
+            id: this.queryName,
             dataSourceId: this.dataSourceId,
             query: toJS(this.rawConfig) as Record<string, unknown>,
             triggerMode: this.triggerMode,
@@ -306,12 +309,9 @@ export class WebloomQuery
   setDataSource(dataSourceId: string) {
     this.dataSourceId = +dataSourceId;
   }
-  // TODO: make it handle id update
+
   updateQuery(
-    dto: Omit<
-      Partial<CompleteQueryI & { rawValues: Partial<QueryRawValues> }>,
-      'id'
-    >,
+    dto: Partial<CompleteQueryI & { rawValues: Partial<QueryRawValues> }>,
   ) {
     if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
@@ -322,6 +322,11 @@ export class WebloomQuery
       this.rawValues.error = dto.rawValues.error;
       this.rawValues.statusCode = dto.rawValues.statusCode;
     }
+    if (dto.id) this.id = dto.id;
+  }
+
+  setQueryName(name: string) {
+    this.queryName = name;
   }
 
   /**

@@ -200,6 +200,7 @@ export const QueryPanel = observer(function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemValue, setEditingItemValue] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState('all');
   const [sortingCriteria, setSortingCriteria] = useState<
@@ -479,15 +480,28 @@ export const QueryPanel = observer(function QueryPanel() {
                 key={item.id}
               >
                 {editingItemId === item.id ? (
-                  <Input
-                    type="text"
-                    value={item.id}
-                    className="w-full"
-                    // TODO: enable rename
-                    // onChange={(e) => renameItem(item, e)}
-                    autoFocus
-                    onBlur={() => setEditingItemId(null)}
-                  />
+                    <Input
+                      type="text"
+                      value={editingItemValue!}
+                      className="w-full"
+                      onChange={(e) => {
+                        setEditingItemValue(e.target.value);
+                      }}
+                      autoFocus
+                      onBlur={(e) => {
+                        setEditingItemId(null);
+                        setEditingItemValue(null);
+                        try {
+                          const query = editorStore.getQueryById(item.id);
+                          query.setQueryName(e.target.value);
+                          query.updateQueryMutator.mutate();
+                        }
+                        catch {
+                          // TODO: error message
+                          e.target.value = item.id;
+                        }
+                      }}
+                    />
                 ) : (
                   <>
                     <div
@@ -502,7 +516,11 @@ export const QueryPanel = observer(function QueryPanel() {
                       <Button
                         size={'icon'}
                         variant={'ghost'}
-                        onClick={() => setEditingItemId(item.id)}
+                        onClick={() => {
+                            setEditingItemId(item.id);
+                            setEditingItemValue(item.id);
+                          }
+                        }
                       >
                         <Pencil size={16} />
                       </Button>

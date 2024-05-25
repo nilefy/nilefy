@@ -90,7 +90,6 @@ export const components = pgTable(
       foreignColumns: [t.id, t.pageId],
     })
     .onDelete('cascade')
-    .onUpdate('cascade')
   }),
 );
 

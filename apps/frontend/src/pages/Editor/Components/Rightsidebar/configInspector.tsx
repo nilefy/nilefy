@@ -56,7 +56,6 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue(e.target.value);
-      editorStore.currentPage.getWidgetById(node.id).setValue('name', e.target.value);
     },
     [setValue],
   );
@@ -138,9 +137,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         value={value}
         onChange={onChange}
         onBlur={(e) => {
-          // commandManager.executeCommand(
-          //   new ChangePropAction(node.id),
-          // );
+          editorStore.currentPage.getWidgetById(node.id).setValue('name', e.target.value);
         }}
       />
     </div>
