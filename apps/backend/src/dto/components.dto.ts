@@ -13,7 +13,7 @@ export const createComponentDb = createInsertSchema(componentsDrizzle).extend({
 export const updateComponentDb = createComponentDb
   .partial()
   // we don't support move the app from workspace to another one right now if we want to support this feature this `omit` should be deleted
-  .omit({ pageId: true })
+  .omit({ pageId: true, id: true })
   .extend({
     updatedById: z.number(),
   });

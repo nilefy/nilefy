@@ -2,7 +2,6 @@ import {
   Injectable,
   Inject,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
@@ -19,7 +18,6 @@ import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
 import { DatabaseI, queries } from '@webloom/database';
-import { ComponentsService } from '../components/components.service';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -32,7 +30,6 @@ export class DataQueriesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private dataSourcesService: DataSourcesService,
-    private componentsService: ComponentsService,
   ) {}
 
   async runQuery(
@@ -167,19 +164,6 @@ export class DataQueriesService {
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
   }): Promise<CompleteQueryI> {
-    if (query.id && query.id !== queryId) {
-      try {
-        await this.getQuery(appId, query.id);
-        // there is a query with this new id
-        throw new BadRequestException();
-      } catch {}
-      const ret = await this.componentsService.getComponent(query.id);
-      if (ret) {
-        // there is a component with this new id
-        throw new BadRequestException();
-      }
-    }
-
     const [q] = await this.db
       .update(queries)
       .set({ ...query, updatedById, updatedAt: sql`now()` })

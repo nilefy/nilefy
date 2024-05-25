@@ -117,6 +117,7 @@ export const EntityFormControl = observer(
 
     const onChange = useCallback(
       (newValue: unknown) => {
+        console.log(control.path);
         editorStore.getEntityById(entityId)!.setValue(control.path, newValue);
       },
       [control.path, entityId],
