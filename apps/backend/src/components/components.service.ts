@@ -169,6 +169,15 @@ export class ComponentsService {
       if (componentsDto.hasOwnProperty(key)) {
         try {
           const obj = componentsDto[key];
+          // if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+          //   obj = {
+          //     ...obj,
+          //     pageId: pageId,
+          //     createdById: createdById,
+          //     parentId: null,
+          //   };
+          //   continue;
+          // }
           arr.push({
             ...obj,
             pageId: pageId,
@@ -177,54 +186,33 @@ export class ComponentsService {
             parentId: obj.parentId,
           });
         } catch (e) {
-          console.log('error in createTreeForPageImport: ' + e);
+          console.log('error in createTreeForPageImport method :   ' + e);
         }
       }
     }
-    const t = await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values(arr)
-      .returning();
-    // const [t] = await (options?.tx ? options.tx : this.db)
-    //   .insert(components)
-    //   .values({
-    //     id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    //     type: 'WebloomContainer',
-    //     pageId: pageId,
-    //     createdById: createdById,
-    //     parentId: null,
-    //     props: {
-    //       className: 'h-full w-full',
-    //       isCanvas: 'true',
-    //     },
-    //     col: 0,
-    //     row: 0,
-    //     columnsCount: 32,
-    //     rowsCount: 0,
-    //   })
-    //   .returning();
+    console.log('initial array: ');
+    console.log(arr);
+    const batchSize = 100;
+    const t = [];
+    for (let i = 0; i < arr.length; i += batchSize) {
+      const batch = arr.slice(i, i + batchSize);
 
-    // for (const key in componentsDto) {
-    //   if (componentsDto.hasOwnProperty(key)) {
-    //     try {
-    //       if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) continue;
-    //       const obj = componentsDto[key];
-    //       await (options?.tx ? options.tx : this.db)
-    //         .insert(components)
-    //         .values({
-    //           ...obj,
-    //           pageId: pageId,
-    //           createdById: createdById,
-    //           id: key,
-    //           parentId: obj.parentId,
-    //         })
-    //         .returning();
-    //     } catch (e) {
-    //       console.log('error in createTreeForPageImport: ' + e);
-    //     }
-    //   }
-    // }
-    return t;
+      try {
+        t.push(
+          ...(await (options?.tx ? options.tx : this.db)
+            .insert(components)
+            .values(batch)
+            .returning()),
+        );
+        console.log(`Processed batch ${Math.floor(i / batchSize) + 1}`);
+      } catch (e) {
+        console.error('Error processing batch:', e);
+      }
+    }
+    console.log('returned array: ');
+    console.log(t);
+    console.log(t.length);
+    return [t];
   }
 }
 
