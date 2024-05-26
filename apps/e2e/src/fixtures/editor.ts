@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { clearApps } from '../utils';
+import { EDITOR_CONSTANTS } from '@webloom/constants';
 /**
  * @description assumes the user is logged in
  */
@@ -49,7 +50,7 @@ export class EditorPage {
       PageButton: this.page.getByRole('tab', { name: 'Page' }),
       ispectOnePanel: this.page.getByTestId('one-item-inspection-panel'),
     };
-    this.rootCanvas = this.page.getByTestId('0');
+    this.rootCanvas = this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID);
     this.bottomPanel = {
       addNewQuery: this.page.getByRole('button', { name: '+ Add' }),
     };
@@ -69,9 +70,19 @@ export class EditorPage {
     await expect(queryItem).toBeVisible();
     return queryItem.getAttribute('data-id');
   }
+  async deleteQuery(id: string) {
+    const queryItem = this.getQueryMenuItem(id);
+    //todo better selector
+    const deleteButton = queryItem.getByRole('button').nth(1);
+    await deleteButton.click();
+    await expect(queryItem).not.toBeVisible();
+  }
   async selectQuery(id: string) {
-    const queryItem = this.page.locator(`[data-id="${id}"]`);
+    const queryItem = this.getQueryMenuItem(id);
     await queryItem.click();
+  }
+  getQueryMenuItem(id: string) {
+    return this.page.locator(`[data-id="${id}"]`);
   }
   async singleSelect(id: string) {
     (await this.getWidget(id)).click();
@@ -101,7 +112,7 @@ export class EditorPage {
     return widget;
   }
   unselectAll() {
-    this.page.getByTestId('0').click();
+    this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID).click();
   }
   async dragAndDropNewWidget(
     widgetName: string,
@@ -120,6 +131,18 @@ export class EditorPage {
       .getAttribute('data-id');
     expect(id).not.toBe(null);
     return id!;
+  }
+  async dragAndDropExistingWidget(
+    widgetId: string,
+    targetId: string,
+    x: number = 0,
+    y: number = 0,
+  ) {
+    const widget = this.page.getByTestId(widgetId);
+    const target = this.page.getByTestId(targetId);
+    await drag(this.page, widget, target, x, y);
+    const id = await target.locator('[data-id]').last().getAttribute('data-id');
+    expect(id).toBe(widgetId);
   }
 }
 const drag = async (

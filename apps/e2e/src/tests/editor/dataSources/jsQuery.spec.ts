@@ -140,3 +140,40 @@ test(
     await expect(textWidget).toHaveText('test');
   },
 );
+
+test(
+  "6. Trigger Mode: It shouldn't run on startup if trigger mode is set to 'Manual'",
+  {
+    tag: ['@editor', '@dataSources', '@evaluation'],
+  },
+  async ({ editorPage, page }) => {
+    const id = await editorPage.addNewJsQuery();
+    await editorPage.fillQueryInput(id!, 'query', 'return [{a: "test"}]');
+    const textId = await editorPage.dragAndDropNewWidget('Text');
+    const defaultText = await editorPage.getInputValue(textId, 'text');
+    await editorPage.fillWidgetInput(textId, 'text', `{{${id}.data[0].a}}`);
+    const triggerMode = page.getByLabel('Trigger Mode');
+    await triggerMode.click();
+    await page.getByLabel('Manual').click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.reload();
+    const textWidget = await editorPage.getWidget(textId);
+    // wait for first evaluation to finish
+    await wait(300);
+    await expect(textWidget).toHaveText(defaultText);
+  },
+);
+
+test(
+  '7. Should be able to delete a query',
+  {
+    tag: ['@editor', '@dataSources'],
+  },
+  async ({ editorPage, page }) => {
+    const id = await editorPage.addNewJsQuery();
+    await editorPage.deleteQuery(id!);
+    await page.reload();
+    const queryItem = editorPage.getQueryMenuItem(id!);
+    await expect(queryItem).not.toBeVisible();
+  },
+);
