@@ -18,6 +18,7 @@ export class EditorPage {
   };
   queryItems!: Locator;
   rootCanvas!: Locator;
+  quickInfoTooltip!: Locator;
   constructor(page: Page) {
     this.page = page;
   }
@@ -53,6 +54,7 @@ export class EditorPage {
       addNewQuery: this.page.getByRole('button', { name: '+ Add' }),
     };
     this.queryItems = this.page.getByTestId('query-item');
+    this.quickInfoTooltip = this.page.locator('.cm-tooltip-hover');
   }
   async dispose(index: number) {
     const username = `user${index}`;

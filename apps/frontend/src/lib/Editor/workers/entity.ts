@@ -4,12 +4,11 @@ import {
   makeObservable,
   observable,
   runInAction,
-  toJS,
 } from 'mobx';
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
 import { DependencyManager } from './dependencyManager';
-import { entries, get, isArray, keys, set } from 'lodash';
+import { get, isArray, keys, set } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -130,41 +129,25 @@ export class Entity implements WebloomDisposable {
   }
 
   get pathToType() {
-    const pathToType = entries(this.publicAPI)
-      .map(([path, item]) => {
+    const ret = Object.entries(this.publicAPI).reduce(
+      (acc, [path, item]) => {
         if (item.type === 'static') {
-          return [path, typedEntity(path, item.typeSignature)] as const;
+          acc[path] = typedEntity(path, item.typeSignature);
         } else if (item.type === 'function') {
-          return [path, functionType(path, item.args, item.returns)] as const;
+          acc[path] = functionType(path, item.args, item.returns);
         } else if (item.type === 'dynamic') {
-          return [
+          acc[path] = typedEntity(
             path,
-            typedEntity(
-              path,
-              jsonToTs(
-                path,
-                toJS(
-                  get(
-                    this.editorState.evaluationManager.evaluatedForest,
-                    [this.id, path],
-                    get(this.unevalValues, path),
-                  ),
-                ),
-              ),
-            ),
-          ] as const;
+            jsonToTs(path, get(this.unevalValues, path)),
+          );
         } else {
-          return [path, defaultType(path)] as const;
+          acc[path] = defaultType(path);
         }
-      })
-      .reduce(
-        (acc, [path, type]) => {
-          acc[path] = type;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-    return pathToType;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+    return ret;
   }
 
   initDependecies() {

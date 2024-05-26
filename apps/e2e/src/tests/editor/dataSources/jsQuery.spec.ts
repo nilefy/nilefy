@@ -86,3 +86,37 @@ test(
     await expect(textWidget).toHaveText('error');
   },
 );
+
+test(
+  '4. It should be able to infer the return type of the query',
+  {
+    tag: ['@editor', '@dataSources', '@evaluation', '@autoCompletion'],
+  },
+  async ({ editorPage }) => {
+    const id = await editorPage.addNewJsQuery();
+    const toBeHovered = 'verySpecificVariableName';
+    await editorPage.fillQueryInput(
+      id!,
+      'query',
+      `return [{${toBeHovered}: "John Doe"}]`,
+    );
+    const buttonId = await editorPage.dragAndDropNewWidget('Button');
+    const textId = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+    await editorPage.fillWidgetInput(
+      textId,
+      'text',
+      `{{${id}.data[0].${toBeHovered}}}`,
+    );
+    await editorPage.fillWidgetInput(buttonId, 'onClick', `{{${id}.run()}}`);
+    const button = await editorPage.getWidget(buttonId);
+    await button.click();
+    await editorPage.singleSelect(textId);
+    const toBeHoveredToken =
+      editorPage.rightSidebar.ispectOnePanel.getByText(toBeHovered);
+    await toBeHoveredToken.click();
+    await toBeHoveredToken.hover();
+    const hoverTooltip = editorPage.quickInfoTooltip;
+    const expected = `(property) ${toBeHovered}: string`;
+    await expect(hoverTooltip).toHaveText(expected);
+  },
+);
