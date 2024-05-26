@@ -108,9 +108,7 @@ export class AppsController {
       await this.appsService.importAppJSON(createAppDto);
     } catch (e) {
       console.log('An Error has occured while importing the app!');
-      () => {
-        console.log(e);
-      };
+      console.log(e);
     }
   }
 

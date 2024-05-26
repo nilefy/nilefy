@@ -164,45 +164,68 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    const [t] = await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values({
-        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-        type: 'WebloomContainer',
-        pageId: pageId,
-        createdById: createdById,
-        parentId: null,
-        props: {
-          className: 'h-full w-full',
-          isCanvas: 'true',
-        },
-        col: 0,
-        row: 0,
-        columnsCount: 32,
-        rowsCount: 0,
-      })
-      .returning();
-
+    const arr = [];
     for (const key in componentsDto) {
       if (componentsDto.hasOwnProperty(key)) {
         try {
-          if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) continue;
           const obj = componentsDto[key];
-          await (options?.tx ? options.tx : this.db)
-            .insert(components)
-            .values({
-              ...obj,
-              pageId: pageId,
-              createdById: createdById,
-              id: key,
-              parentId: obj.parentId,
-            })
-            .returning();
+          arr.push({
+            ...obj,
+            pageId: pageId,
+            createdById: createdById,
+            id: key,
+            parentId: obj.parentId,
+          });
         } catch (e) {
           console.log('error in createTreeForPageImport: ' + e);
         }
       }
     }
+    console.log(arr);
+
+    const [t] = await (options?.tx ? options.tx : this.db)
+      .insert(components)
+      .values(arr)
+      .returning();
+    // const [t] = await (options?.tx ? options.tx : this.db)
+    //   .insert(components)
+    //   .values({
+    //     id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    //     type: 'WebloomContainer',
+    //     pageId: pageId,
+    //     createdById: createdById,
+    //     parentId: null,
+    //     props: {
+    //       className: 'h-full w-full',
+    //       isCanvas: 'true',
+    //     },
+    //     col: 0,
+    //     row: 0,
+    //     columnsCount: 32,
+    //     rowsCount: 0,
+    //   })
+    //   .returning();
+
+    // for (const key in componentsDto) {
+    //   if (componentsDto.hasOwnProperty(key)) {
+    //     try {
+    //       if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) continue;
+    //       const obj = componentsDto[key];
+    //       await (options?.tx ? options.tx : this.db)
+    //         .insert(components)
+    //         .values({
+    //           ...obj,
+    //           pageId: pageId,
+    //           createdById: createdById,
+    //           id: key,
+    //           parentId: obj.parentId,
+    //         })
+    //         .returning();
+    //     } catch (e) {
+    //       console.log('error in createTreeForPageImport: ' + e);
+    //     }
+    //   }
+    // }
     return [t];
   }
 }
