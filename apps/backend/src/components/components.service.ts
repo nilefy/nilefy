@@ -181,9 +181,7 @@ export class ComponentsService {
         }
       }
     }
-    console.log(arr);
-
-    const [t] = await (options?.tx ? options.tx : this.db)
+    const t = await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values(arr)
       .returning();
@@ -226,7 +224,7 @@ export class ComponentsService {
     //     }
     //   }
     // }
-    return [t];
+    return t;
   }
 }
 
