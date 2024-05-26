@@ -65,6 +65,7 @@ export class JsQueriesController {
     @Param('appId', ParseIntPipe) appId: number,
     @Param('queryId') queryId: string,
   ) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.jsQueriesService.delete(appId, queryId);
   }
 

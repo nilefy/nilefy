@@ -1,11 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  action,
-  toJS,
-  computed,
-  autorun,
-} from 'mobx';
+import { makeObservable, observable, action, toJS, computed } from 'mobx';
 import { Snapshotable } from './interface';
 import {
   CompleteQueryI,

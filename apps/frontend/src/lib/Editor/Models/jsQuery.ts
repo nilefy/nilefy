@@ -126,6 +126,7 @@ export class WebloomJSQuery
     updatedAt,
     workerBroker,
     queryClient,
+    triggerMode,
   }: Omit<JsQueryI, 'createdById' | 'updatedById'> & {
     workerBroker: WorkerBroker;
     queryClient: QueryClient;
@@ -139,6 +140,7 @@ export class WebloomJSQuery
         queryState: 'idle',
         error: undefined,
         settings,
+        triggerMode: triggerMode ?? 'manually',
       },
       workerBroker,
       publicAPI: {
@@ -176,6 +178,7 @@ export class WebloomJSQuery
             id: this.id,
             settings: toJS(this.rawValues.settings),
             query: this.rawValues.query as string,
+            triggerMode: this.triggerMode,
           },
         });
       },

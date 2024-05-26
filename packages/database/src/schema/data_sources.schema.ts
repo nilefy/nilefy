@@ -119,6 +119,9 @@ export const jsQueries = pgTable(
      * this should be improved in the future by extracting the structured data out of it, but i think it will make the trick for now
      */
     settings: json('settings'),
+    triggerMode: queriesTriggerMode('trigger_mode')
+    .default('manually')
+    .notNull(),
     createdById: integer('created_by_id')
       .references(() => users.id)
       .notNull(),

@@ -120,3 +120,23 @@ test(
     await expect(hoverTooltip).toHaveText(expected);
   },
 );
+
+test(
+  "5. Trigger Mode: It should be able to run on startup if trigger mode is set to 'On App Load'",
+  {
+    tag: ['@editor', '@dataSources', '@evaluation'],
+  },
+  async ({ editorPage, page }) => {
+    const id = await editorPage.addNewJsQuery();
+    await editorPage.fillQueryInput(id!, 'query', 'return [{a: "test"}]');
+    const textId = await editorPage.dragAndDropNewWidget('Text');
+    await editorPage.fillWidgetInput(textId, 'text', `{{${id}.data[0].a}}`);
+    const triggerMode = page.getByLabel('Trigger Mode');
+    await triggerMode.click();
+    await page.getByLabel('On App Load').click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.reload();
+    const textWidget = await editorPage.getWidget(textId);
+    await expect(textWidget).toHaveText('test');
+  },
+);
