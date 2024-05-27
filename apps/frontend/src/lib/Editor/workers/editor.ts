@@ -74,7 +74,6 @@ export class EditorState {
       installLibrary: action,
       updateLibraryName: action,
       uninstallLibrary: action,
-      tsGlobalFile: computed,
     });
     this.dependencyManager = new DependencyManager({ editor: this });
     this.evaluationManager = new EvaluationManager(this);
@@ -215,6 +214,7 @@ export class EditorState {
   addEntity(body: AddEntityRequest['body']) {
     switch (body.entityType) {
       case 'query':
+      case 'jsQuery':
         this.addQuery(this.normalizeEntityConfig(body.config));
         break;
       case 'widget':

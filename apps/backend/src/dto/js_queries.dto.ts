@@ -16,6 +16,7 @@ export const addJsQuerySchema = jsQueryDb.pick({
   id: true,
   query: true,
   settings: true,
+  triggerMode: true,
 });
 
 export const updateJsQuerySchema = addJsQuerySchema.partial();
