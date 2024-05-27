@@ -78,8 +78,8 @@ export class ComponentsService {
     },
   ) {
     // id/name is changed
-    const newId = dto.props.name;
-    if (newId && newId !== componentId) {
+    if (dto.props && dto.props.name !== componentId) {
+      const newId = dto.props.name as string;
       // there is a component with this new id
       const component = await this.getComponent(newId);
       if (component) {
@@ -99,7 +99,7 @@ export class ComponentsService {
       .update(components)
       .set({
         ...dto,
-        id: newId,
+        id: (dto.props?.name as string) ?? componentId,
         parentId:
           componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
         updatedAt: sql`now()`,

@@ -137,7 +137,9 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         value={value}
         onChange={onChange}
         onBlur={(e) => {
-          editorStore.currentPage.getWidgetById(node.id).setValue('name', e.target.value);
+          editorStore.currentPage
+            .getWidgetById(node.id)
+            .setValue('name', e.target.value);
         }}
       />
     </div>
