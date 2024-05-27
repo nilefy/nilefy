@@ -199,24 +199,4 @@ export class ComponentsService {
       })
     )?.id;
   }
-
-  async setChildren(
-    pageId: PageDto['id'],
-    componentId: ComponentDto['id'],
-    newId: ComponentDto['id'],
-  ) {
-    return await this.db
-      .update(components)
-      .set({
-        parentId: newId,
-        updatedAt: sql`now()`,
-      })
-      .where(
-        and(
-          eq(components.pageId, pageId),
-          eq(components.parentId, componentId),
-        ),
-      )
-      .returning();
-  }
 }
