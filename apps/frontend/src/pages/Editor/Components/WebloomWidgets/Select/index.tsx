@@ -230,6 +230,13 @@ export const WebloomSelectWidget: Widget<WebloomSelectProps> = {
   initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
+  publicAPI: {
+    value: {
+      description: 'Value of the selected option',
+      type: 'static',
+      typeSignature: 'string',
+    },
+  },
 };
 
 export { WebloomSelect };

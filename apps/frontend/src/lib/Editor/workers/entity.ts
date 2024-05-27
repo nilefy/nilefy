@@ -27,6 +27,19 @@ import { WebloomDisposable } from '../Models/interface';
 import { EditorState } from './editor';
 import { jsonToTs } from './tsServer/conversions';
 
+const addDescriptionIfPresent = (
+  type: string,
+  description: string | undefined,
+) => {
+  if (!description) return type;
+  return `
+  /**
+   * ${description}
+   * */
+  ${type}
+  `;
+};
+
 const defaultType = (path: string) => `const ${path}: unknown;`;
 const functionType = (
   path: string,
@@ -132,13 +145,19 @@ export class Entity implements WebloomDisposable {
     const ret = Object.entries(this.publicAPI).reduce(
       (acc, [path, item]) => {
         if (item.type === 'static') {
-          acc[path] = typedEntity(path, item.typeSignature);
+          acc[path] = addDescriptionIfPresent(
+            typedEntity(path, item.typeSignature),
+            item.description,
+          );
         } else if (item.type === 'function') {
-          acc[path] = functionType(path, item.args, item.returns);
+          acc[path] = addDescriptionIfPresent(
+            functionType(path, item.args, item.returns),
+            item.description,
+          );
         } else if (item.type === 'dynamic') {
-          acc[path] = typedEntity(
-            path,
-            jsonToTs(path, get(this.unevalValues, path)),
+          acc[path] = addDescriptionIfPresent(
+            typedEntity(path, jsonToTs(path, get(this.unevalValues, path))),
+            item.description,
           );
         } else {
           acc[path] = defaultType(path);
