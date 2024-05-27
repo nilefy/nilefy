@@ -16,6 +16,7 @@ export const useEditorHotKeys = (
   const mousePos = useEditorMousePosition();
   useHotkeys('esc', () => {
     commandManager.executeCommand(ResizeAction.cancel());
+    editorStore.currentPage.setSelectedNodeIds(new Set());
   });
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
