@@ -9,7 +9,7 @@ import * as appStateSchema from "./schema/appsState.schema";
 import * as ds_schema from "./schema/data_sources.schema";
 import * as relations from "./schema/relations";
 import { PgTransaction } from "drizzle-orm/pg-core";
-import { ExtractTablesWithRelations } from "drizzle-orm";
+import { ExtractTablesWithRelations, sql } from "drizzle-orm";
 export * from "./schema/schema";
 export * from "./schema/appsState.schema";
 export * from "./schema/data_sources.schema";
@@ -38,5 +38,18 @@ export async function dbConnect(
     schema: { ...schema, ...appStateSchema, ...ds_schema, ...relations },
     logger: false,
   });
+  await db.execute(sql`
+      ALTER TABLE components
+      DROP CONSTRAINT IF EXISTS components_parent_id_page_id_components_id_page_id_fk
+  `);
+  await db.execute(sql`  
+      ALTER TABLE components
+      ADD CONSTRAINT components_parent_id_page_id_components_id_page_id_fk
+      FOREIGN KEY (parent_id, page_id)
+      REFERENCES components(id, page_id)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
+      DEFERRABLE INITIALLY DEFERRED;
+  `); 
   return [db, client];
 }

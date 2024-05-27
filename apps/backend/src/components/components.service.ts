@@ -92,6 +92,11 @@ export class ComponentsService {
         throw new BadRequestException();
       }
     }
+
+    await this.db.execute(
+      sql`SET CONSTRAINTS components_parent_id_page_id_components_id_page_id_fk DEFERRED`,
+    );
+
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
     // so we need to keep this condition true => accept root updates but discard the `parentId` update
@@ -193,5 +198,25 @@ export class ComponentsService {
         },
       })
     )?.id;
+  }
+
+  async setChildren(
+    pageId: PageDto['id'],
+    componentId: ComponentDto['id'],
+    newId: ComponentDto['id'],
+  ) {
+    return await this.db
+      .update(components)
+      .set({
+        parentId: newId,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(components.pageId, pageId),
+          eq(components.parentId, componentId),
+        ),
+      )
+      .returning();
   }
 }
