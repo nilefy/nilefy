@@ -1,17 +1,19 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { EmailModule } from '../email/email.module';
+import { TConfigService } from '../evn.validation';
+import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UsersModule } from '../users/users.module';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { SignInGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
-import { PassportModule } from '@nestjs/passport';
-import { TConfigService } from '../evn.validation';
-import { EmailModule } from '../email/email.module';
-
+import { DataSourcesModule } from '../data_sources/data_sources.module';
+import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 @Module({
   imports: [
+    DataSourcesModule,
     PassportModule,
     UsersModule,
     EmailModule,
@@ -27,6 +29,11 @@ import { EmailModule } from '../email/email.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SignInGoogleStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    SignInGoogleStrategy,
+    JwtStrategy,
+    GoogleSheetsQueryService,
+  ],
 })
 export class AuthModule {}

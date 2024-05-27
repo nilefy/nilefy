@@ -40,6 +40,7 @@ export class DataQueriesService {
       query.dataSourceId,
     );
     const service = this.getService(ds.dataSource.name);
+    console.log('running query', query, ds, evaluatedQuery);
     return await service.run(ds.config, {
       name: query.id,
       query: evaluatedQuery,

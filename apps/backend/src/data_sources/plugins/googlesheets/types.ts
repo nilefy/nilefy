@@ -2,46 +2,29 @@ import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
 export const configSchema = z.object({
-  scope: z.union([
-    z.object({
-      value: z.literal('https://www.googleapis.com/auth/spreadsheets.readonly'),
-      label: z.literal('Read'),
-      description: z.literal('Read access to all Google Sheets'),
-    }),
-    z.object({
-      value: z.literal('https://www.googleapis.com/auth/spreadsheets'),
-      label: z.literal('Write'),
-      description: z.literal('Write access to all Google Sheets'),
-    }),
-    z.object({
-      value: z.literal('https://www.googleapis.com/auth/drive'),
-      label: z.literal('Read / Write / Delete'),
-      description: z.literal(
-        'Read, write, and delete access to all Google Drive files',
-      ),
-    }),
-    z.object({
-      value: z.literal('https://www.googleapis.com/auth/drive.file'),
-      label: z.literal('Read / Write / Delete'),
-      description: z.literal(
-        'Read, write, and delete access to files created by this app',
-      ),
-    }),
-    z.object({
-      value: z.literal('https://www.googleapis.com/auth/drive.readonly'),
-      label: z.literal('Read'),
-      description: z.literal('Read-only access to all Google Drive files'),
-    }),
+  scope: z.enum([
+    'Read / Write / Delete | Selected Google Sheets',
+    'Read / Write / Delete | All Google Sheets',
+    'Read / Write | All Google Sheets',
+    'Read | All Google Sheets',
   ]),
-
-  client_id: z.string().min(1),
-  client_secret: z.string().min(1),
-  access_token: z.string().min(1),
+  access_token: z.string().optional(),
+  refresh_token: z.string().optional(),
 });
 
-export const querySchema = z.object({
-  sheetId: z.string().min(1),
-  range: z.string().min(1),
+const querySchema = z.object({
+  spreadsheet_id: z.string(),
+  spreadsheet_range: z.string(),
+  where_operation: z.string(),
+  where_field: z.string(),
+  where_value: z.string(),
+  order_field: z.string(),
+  order_type: z.string(),
+  body: z.string(),
+  sheet: z.string(),
+  row_index: z.string(),
+  operation: z.string(),
+  rows: z.array(z.unknown()),
 });
 
 export type ConfigT = z.infer<typeof configSchema>;
@@ -53,29 +36,39 @@ export const pluginConfigForm = {
     scope: {
       'ui:placeholder': 'Choose an option',
       'ui:title': 'Scope',
-    },
-    client_id: {
-      'ui:placeholder': 'Enter client id',
-      'ui:widget': 'hidden',
-    },
-    client_secret: {
-      'ui:placeholder': 'Enter client secret',
-      'ui:widget': 'hidden',
+      'ui:widget': 'select',
+      'ui:options': {
+        enum_titles: [
+          'Read / Write / Delete | Selected Google Sheets',
+          'Read / Write / Delete | All Google Sheets',
+          'Read / Write | All Google Sheets',
+          'Read | All Google Sheets',
+        ],
+      },
     },
     access_token: {
-      'ui:placeholder': 'Enter access token',
+      'ui:widget': 'hidden',
+    },
+    refresh_token: {
       'ui:widget': 'hidden',
     },
   },
 };
 
+const operationOptions = z.union([
+  z.literal('info'),
+  z.literal('read'),
+  z.literal('append'),
+  z.literal('update'),
+  z.literal('delete_row'),
+]);
 export const queryConfigForm = {
   formConfig: [
     {
       sectionName: 'Basic',
       children: [
         {
-          path: 'config.query',
+          path: 'config.spreadsheet_id',
           label: 'Sheet Id',
           type: 'input',
           options: {
@@ -84,7 +77,7 @@ export const queryConfigForm = {
           },
         },
         {
-          path: 'config.query',
+          path: 'config.spreadsheet_range',
           label: 'Range',
           type: 'input',
           options: {
@@ -92,13 +85,29 @@ export const queryConfigForm = {
             label: 'Range',
           },
         },
+        {
+          path: 'config.operation',
+          label: 'Operation',
+          type: 'select',
+          options: {
+            items: [
+              { value: 'info', label: 'Get spreadsheet info' },
+              { value: 'read', label: 'Read data from a spreadsheet' },
+              { value: 'append', label: 'Append data to a spreadsheet' },
+              { value: 'update', label: 'Update data to a spreadsheet' },
+              { value: 'delete', label: 'Delete row from a spreadsheet' },
+            ],
+          },
+          validation: zodToJsonSchema(operationOptions),
+        },
       ],
     },
   ],
 };
-export const scopeMap = {
-  'Read / Write / Delete | Selected Google Sheets':
+export const scopeMap: Record<string, string[]> = {
+  'Read / Write / Delete | Selected Google Sheets': [
     'https://www.googleapis.com/auth/drive.file',
+  ],
   'Read / Write / Delete | All Google Sheets': [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive',

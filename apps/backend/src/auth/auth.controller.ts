@@ -1,76 +1,43 @@
 import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  UseGuards,
-  Req,
-  UsePipes,
-  Res,
-  Param,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Redirect,
+  Req,
+  Res,
   UnauthorizedException,
+  UseGuards,
+  UsePipes,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignInGoogleOAuthGuard } from './google.guard';
-import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { Request, Response } from 'express';
 import {
-  signUpSchema,
-  signInSchema,
   CreateUserDto,
   LoginUserDto,
+  signInSchema,
+  signUpSchema,
 } from '../dto/users.dto';
-import { GoogleAuthedRequest } from './auth.types';
-import { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
-import axios from 'axios';
-import { AuthGuard } from '@nestjs/passport';
-
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { AuthService } from './auth.service';
+import { GoogleAuthedRequest } from './auth.types';
+import { SignInGoogleOAuthGuard } from './google.guard';
+import { DataSourcesService } from '../data_sources/data_sources.service';
+import { scopeMap } from '../data_sources/plugins/googlesheets/types';
+import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 @Controller('auth')
 export class AuthController {
   constructor(
+    private dataSourcesService: DataSourcesService,
     private authService: AuthService,
+    private googleSheetsQueryService: GoogleSheetsQueryService,
     private configService: ConfigService<EnvSchema, true>,
   ) {}
-  @Get('googlesheets')
-  @UseGuards(SignInGoogleOAuthGuard)
-  googleLogin() {}
-
-  @Get('login/google-redirect')
-  @UseGuards(AuthGuard('google'))
-  googleLoginCallback(@Req() req: any, @Res() res: any) {
-    const googleToken = req.user.accessToken;
-    const googleRefreshToken = req.user.refreshToken;
-    // console.log(req);
-    res.cookie('access_token', googleToken, { httpOnly: true });
-    res.cookie('refresh_token', googleRefreshToken, {
-      httpOnly: true,
-    });
-
-    res.redirect('http://localhost:3000/auth/profile');
-  }
-
-  //   @UseGuards(SignInGoogleOAuthGuard)
-  @Get('profile')
-  async getProfile(@Req() req: any) {
-    // console.log(req);
-    const accessToken = req.cookies['access_token'];
-    if (accessToken) {
-      return (
-        await axios.get(
-          `https://sheets.googleapis.com/v4/spreadsheets/1N9USlPVtWFBF20WGB7NmoKNcB8C_2ATFpkgA_hD4WuM/values/A4:C6`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`, // Include access token in the request headers
-            },
-          },
-        )
-      ).data;
-    }
-
-    throw new UnauthorizedException('No access token');
-  }
   @Post('signup')
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) userDto: CreateUserDto,
@@ -101,6 +68,80 @@ export class AuthController {
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
     response.redirect(302, frontURL.toString());
+  }
+  @Get('googlesheets/:ws/:ds')
+  @Redirect()
+  async googleLogin(
+    @Param('ws') ws: string,
+    @Param('ds') ds: string,
+    @Res() res: Response,
+  ) {
+    const scope: string = (await this.dataSourcesService.getOne(+ws, +ds))
+      .config.scope;
+    console.log(scope);
+    const scopeLinks = scopeMap[scope];
+    console.log(scopeLinks);
+    const authUrl = this.googleSheetsQueryService.getAuthUrl(scopeLinks);
+    // Set cookies for ws and ds
+    res.cookie('ws', ws, { httpOnly: true });
+    res.cookie('ds', ds, { httpOnly: true });
+
+    return { url: authUrl };
+  }
+  @Get('login/google-redirect')
+  async callback(
+    @Query('code') code: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const tokens = await this.googleSheetsQueryService.getTokensFromCode(code);
+    // Now we can use the tokens to authenticate requests to Google Sheets API
+    // For example, maybe  saving them in the database for use later when using the datasource
+    console.log(tokens);
+    const googleToken = tokens.access_token;
+    const googleRefreshToken = tokens.refresh_token;
+    // Get ws and ds from cookies
+    const ws = req.cookies.ws;
+    const ds = req.cookies.ds;
+    const dataSource = await this.dataSourcesService.getOne(+ws, +ds);
+    this.dataSourcesService.update(
+      {
+        dataSourceId: +ds,
+        workspaceId: +ws,
+        updatedById: null,
+      },
+      {
+        config: {
+          ...dataSource.config,
+          access_token: googleToken,
+          refresh_token: googleRefreshToken,
+        },
+      },
+    );
+    // Save the tokens in the database
+    res.cookie('access_token', googleToken, { httpOnly: true });
+    res.cookie('refresh_token', googleRefreshToken, { httpOnly: true });
+    res.redirect(`http://localhost:5173/${ws}/datasources/${ds}`);
+  }
+
+  @Get('profile')
+  async getProfile(@Req() req: Request) {
+    // console.log(req);
+    const accessToken = req.cookies['access_token'];
+    if (accessToken) {
+      return (
+        await axios.get(
+          `https://sheets.googleapis.com/v4/spreadsheets/1N9USlPVtWFBF20WGB7NmoKNcB8C_2ATFpkgA_hD4WuM/values/A4:C6`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        )
+      ).data;
+    }
+
+    throw new UnauthorizedException('No access token');
   }
 
   @Get('confirm/:email/:token')
