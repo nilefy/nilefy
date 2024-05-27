@@ -18,8 +18,7 @@ export default class GoogleSheetsQueryService
   private readonly oAuth2Client: OAuth2Client;
   constructor(private configService: ConfigService<EnvSchema, true>) {
     this.oAuth2Client = new OAuth2Client({
-      clientId:
-        '',
+      clientId: '',
       clientSecret: '',
       redirectUri: 'http://localhost:3000/auth/login/google-redirect',
     });
@@ -42,6 +41,53 @@ export default class GoogleSheetsQueryService
       'Content-Type': 'application/json',
     };
   }
+  async refreshToken(sourceOptions: {
+    refresh_token: string | undefined;
+  }): Promise<{ access_token: string }> {
+    if (!sourceOptions['refresh_token']) {
+      throw new Error('Refresh token is missing');
+    }
+
+    const accessTokenUrl = 'https://oauth2.googleapis.com/token';
+    const clientId =
+      '218152396304-tera2ganoj8v7vvu2aap21bu046kgvpm.apps.googleusercontent.com';
+    const clientSecret = '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';
+    const grantType = 'refresh_token';
+
+    const data = {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: grantType,
+      refresh_token: sourceOptions['refresh_token'],
+    };
+
+    try {
+      const response = await fetch(accessTokenUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Error refreshing token: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      if (!result['access_token']) {
+        throw new Error('Access token not found in the response');
+      }
+
+      return {
+        access_token: result['access_token'],
+      };
+    } catch (error) {
+      console.error('Error while refreshing token:', error);
+      throw new Error('Could not refresh token');
+    }
+  }
 
   async run(
     dataSourceConfig: ConfigT,
@@ -55,20 +101,20 @@ export default class GoogleSheetsQueryService
     const spreadsheetRange = queryOptions.spreadsheet_range
       ? queryOptions.spreadsheet_range
       : 'A1:Z500';
-    const accessToken = dataSourceConfig['access_token'] || '';
+    let accessToken = dataSourceConfig['access_token'] || '';
     const queryOptionFilter = {
       key: queryOptions.where_field,
       value: queryOptions.where_value,
     };
 
-    try {
+    const executeQuery = async (token: string) => {
       switch (operation) {
         case 'info':
           response = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
             {
               method: 'GET',
-              headers: this.authHeader(accessToken),
+              headers: this.authHeader(token),
             },
           ).then((res) => res.json());
           result = response;
@@ -79,9 +125,8 @@ export default class GoogleSheetsQueryService
             spreadsheetId,
             spreadsheetRange,
             queryOptions.sheet,
-            this.authHeader(accessToken),
+            this.authHeader(token),
           );
-          // console.log(response);
           break;
 
         case 'append':
@@ -89,7 +134,7 @@ export default class GoogleSheetsQueryService
             spreadsheetId,
             queryOptions.sheet,
             queryOptions.rows,
-            this.authHeader(accessToken),
+            this.authHeader(token),
           );
           break;
 
@@ -101,7 +146,7 @@ export default class GoogleSheetsQueryService
             queryOptions.body,
             queryOptionFilter,
             queryOptions.where_operation,
-            this.authHeader(accessToken),
+            this.authHeader(token),
           );
           break;
 
@@ -110,20 +155,30 @@ export default class GoogleSheetsQueryService
             spreadsheetId,
             queryOptions.sheet,
             queryOptions.row_index,
-            this.authHeader(accessToken),
+            this.authHeader(token),
           );
           break;
       }
-    } catch (error) {
-      console.error({
-        statusCode: error?.response?.statusCode,
-        message: error?.response?.body,
-      });
+    };
 
-      if (error?.response?.statusCode === 401) {
+    try {
+      await executeQuery(accessToken);
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        console.log('Access token expired, attempting to refresh token...');
+        const newTokens = await this.refreshToken({
+          refresh_token: dataSourceConfig['refresh_token'],
+        });
+        accessToken = newTokens.access_token;
+        await executeQuery(accessToken);
+      } else {
+        console.log('**************');
+        console.error({
+          statusCode: error?.response?.status,
+          message: error?.response?.body,
+        });
         throw new Error('Query could not be completed');
       }
-      throw new Error('Query could not be completed');
     }
 
     return {
