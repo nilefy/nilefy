@@ -96,8 +96,7 @@ export class AppsController {
     try {
       const jsonData = JSON.parse(file.buffer.toString());
       // ! modify later
-      // const userId = req.user.userId;
-      const userId = 1;
+      const userId = req.user?.userId ?? 1;
 
       const createAppDto = {
         ...jsonData,

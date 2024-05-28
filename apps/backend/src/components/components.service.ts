@@ -170,6 +170,9 @@ export class ComponentsService {
         try {
           const obj = componentsDto[key];
           // if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) {
+          //   continue;
+          // }
+          // if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) {
           //   obj = {
           //     ...obj,
           //     pageId: pageId,
@@ -183,13 +186,32 @@ export class ComponentsService {
             pageId: pageId,
             createdById: createdById,
             id: key,
-            parentId: obj.parentId,
+            parentId: key === '0' ? null : obj.parentId,
           });
         } catch (e) {
           console.log('error in createTreeForPageImport method :   ' + e);
         }
       }
     }
+    // await (options?.tx ? options.tx : this.db)
+    //   .insert(components)
+    //   .values({
+    //     id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    //     type: 'WebloomContainer',
+    //     pageId: pageId,
+    //     createdById: createdById,
+    //     parentId: null,
+    //     props: {
+    //       className: 'h-full w-full',
+    //       isCanvas: 'true',
+    //     },
+    //     col: 0,
+    //     row: 0,
+    //     columnsCount: 32,
+    //     rowsCount: 0,
+    //   })
+    //   .returning();
+
     console.log('initial array: ');
     console.log(arr);
     const batchSize = 100;
@@ -212,6 +234,8 @@ export class ComponentsService {
     console.log('returned array: ');
     console.log(t);
     console.log(t.length);
+    // console.log('Tree from db: ');
+    // console.log(await this.getTreeForPage(pageId));
     return [t];
   }
 }
