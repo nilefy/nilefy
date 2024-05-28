@@ -1,14 +1,15 @@
 import { apps } from './apps.api';
 import { pages } from './pages.api';
-import { groups } from './groups.api';
+import { roles, permissions } from './roles.api';
 import { dataSources, globalDataSource } from './dataSources.api';
 import { queries } from './queries.api';
 
 export const api = {
   apps,
-  groups,
+  roles,
   dataSources,
   queries,
   globalDataSource,
   pages,
+  permissions,
 };
