@@ -20,3 +20,5 @@ export const permissionsTypes = z.enum([
    */
   "Datasources-Delete",
 ]);
+
+export type PermissionsTypes = z.infer<typeof permissionsTypes>;
