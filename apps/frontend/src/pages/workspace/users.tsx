@@ -19,11 +19,9 @@ import {
 } from '@/components/ui/table';
 import { User } from '@/api/users.api';
 
-// TODO: move to common package
-
 export function UsersManagement() {
   // TODO: convert to data fetching
-  const users = useMemo<User[]>(
+  const users = useMemo<Omit<User, 'onboardingCompleted'>[]>(
     () => [
       {
         id: '1',
@@ -57,7 +55,7 @@ export function UsersManagement() {
           Add users
         </Button>
       </div>
-      <div className="flex w-full flex-col justify-between bg-primary/5 p-2">
+      <div className="bg-primary/5 flex w-full flex-col justify-between p-2">
         <div className="flex gap-4">
           <span>Showing</span>
           <Select defaultValue="all">

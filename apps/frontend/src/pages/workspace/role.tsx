@@ -20,7 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UseFormReturn, useForm } from 'react-hook-form';
 import {
@@ -33,8 +32,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Delete, Edit, Loader, Plus } from 'lucide-react';
-import { fetchX } from '@/utils/fetch';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
@@ -48,128 +46,34 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Group, GroupMetaSchema, groupMetaSchema } from '@/api/groups.api';
+import {
+  Role,
+  RoleMetaSchema,
+  roleMetaSchema,
+  ROLES_QUERY_KEY,
+} from '@/api/roles.api';
 import { User } from '@/api/users.api';
 import { api } from '@/api';
-import { permissionsTypes } from '@nilefy/permissions';
+import { WebloomLoader } from '@/components/loader';
+import { PermissionI } from '@/api/permission.api';
 
-// type BuiltinPermissions =
-
-type GroupMetaDialogProps = {
-  form: UseFormReturn<GroupMetaSchema>;
+type RoleMetaDialogProps = {
+  form: UseFormReturn<RoleMetaSchema>;
   dialogTitle: string;
   dialogSubmitButtonTitle: string;
   triggeChildren: ReactElement;
-  onSubmit: (values: GroupMetaSchema) => void;
+  onSubmit: (values: RoleMetaSchema) => void;
   dialogOpen: boolean;
   setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isPending: boolean;
+  operationError: string | null;
 };
 
-// type InsertGroupMetaProps = GroupMetaDialogProps;
-type UpdateGroupMetaProps = {
-  groupMeta: GroupMetaSchema & { id: Group['id'] };
+type UpdateRoleMetaProps = {
+  roleMeta: RoleMetaSchema & { id: Role['id'] };
 };
 
-function InsertGroupDialog() {
-  const [open, setOpen] = useState<boolean>(false);
-  const { workspaceId } = useParams();
-  const queryClient = useQueryClient();
-  const insertMutation = api.groups.insert.useMutation({
-    onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-      form.reset();
-      setOpen(false);
-    },
-    onError(error) {
-      console.log('error from mutation', error);
-      throw error;
-    },
-  });
-  const form = useForm<GroupMetaSchema>({
-    resolver: zodResolver(groupMetaSchema),
-    defaultValues: {
-      name: '',
-      description: undefined,
-    },
-  });
-  function onSubmit(values: GroupMetaSchema) {
-    if (!workspaceId)
-      throw new Error('group dialog can only works under workspaceId route');
-    insertMutation.mutate({
-      workspaceId: +workspaceId,
-      dto: values,
-    });
-  }
-
-  return (
-    <GroupMetaDialog
-      form={form}
-      onSubmit={onSubmit}
-      dialogTitle="Create new Group"
-      triggeChildren={
-        <>
-          <Plus className="mr-2" />
-          <span>Add new group</span>
-        </>
-      }
-      dialogSubmitButtonTitle="create"
-      dialogOpen={open}
-      setDialogOpen={setOpen}
-      isPending={insertMutation.isPending}
-    />
-  );
-}
-
-function UpdateGroupDialog({ groupMeta }: UpdateGroupMetaProps) {
-  const [open, setOpen] = useState<boolean>(false);
-  const { workspaceId } = useParams();
-  const queryClient = useQueryClient();
-  const form = useForm<GroupMetaSchema>({
-    resolver: zodResolver(groupMetaSchema),
-    defaultValues: {
-      name: groupMeta.name,
-      description: groupMeta.description,
-    },
-  });
-  const updateMutation = api.groups.update.useMutation({
-    onSuccess(data) {
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-      form.reset();
-      setOpen(false);
-    },
-  });
-  function onSubmit(values: GroupMetaSchema) {
-    console.log('group id', groupMeta);
-    if (!workspaceId)
-      throw new Error('group dialog can only works under workspaceId route');
-    updateMutation.mutate({
-      workspaceId: +workspaceId,
-      groupId: groupMeta.id,
-      dto: values,
-    });
-  }
-
-  return (
-    <GroupMetaDialog
-      form={form}
-      onSubmit={onSubmit}
-      dialogTitle="Update group"
-      triggeChildren={
-        <>
-          <Edit className="mr-2" />
-          <span>Edit name</span>
-        </>
-      }
-      dialogSubmitButtonTitle="save"
-      dialogOpen={open}
-      setDialogOpen={setOpen}
-      isPending={updateMutation.isPending}
-    />
-  );
-}
-
-function GroupMetaDialog({
+function RoleMetaDialog({
   form,
   triggeChildren,
   dialogTitle,
@@ -178,7 +82,8 @@ function GroupMetaDialog({
   dialogOpen,
   setDialogOpen,
   isPending,
-}: GroupMetaDialogProps) {
+  operationError,
+}: RoleMetaDialogProps) {
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
@@ -198,7 +103,7 @@ function GroupMetaDialog({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="My new Group" {...field} />
+                    <Input placeholder="My new Role" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -222,6 +127,7 @@ function GroupMetaDialog({
                 </FormItem>
               )}
             />
+            {operationError ? <p>{operationError}</p> : null}
             <Button type="submit" disabled={isPending}>
               {isPending ? (
                 <Loader className="animate-spin " />
@@ -236,26 +142,144 @@ function GroupMetaDialog({
   );
 }
 
-function DeleteGroupAlert(props: { id: number }) {
+function InsertRoleDialog() {
+  const [open, setOpen] = useState<boolean>(false);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
+  const insertMutation = api.roles.insert.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [ROLES_QUERY_KEY] });
+      form.reset();
+      setOpen(false);
+    },
+    onError(error) {
+      setOperationError(error.message);
+    },
+  });
+  const form = useForm<RoleMetaSchema>({
+    resolver: zodResolver(roleMetaSchema),
+    defaultValues: {
+      name: '',
+      description: undefined,
+    },
+  });
+  function onSubmit(values: RoleMetaSchema) {
+    if (!workspaceId)
+      throw new Error(
+        'role insert dialog can only works under workspaceId route',
+      );
+    insertMutation.mutate({
+      workspaceId: +workspaceId,
+      dto: values,
+    });
+  }
+
+  return (
+    <RoleMetaDialog
+      form={form}
+      onSubmit={onSubmit}
+      dialogTitle="Create new Role"
+      triggeChildren={
+        <>
+          <Plus className="mr-2" />
+          <span>Add new Role</span>
+        </>
+      }
+      dialogSubmitButtonTitle="create"
+      dialogOpen={open}
+      setDialogOpen={setOpen}
+      isPending={insertMutation.isPending}
+      operationError={operationError}
+    />
+  );
+}
+
+function UpdateRoleDialog({ roleMeta }: UpdateRoleMetaProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
+  const form = useForm<RoleMetaSchema>({
+    resolver: zodResolver(roleMetaSchema),
+    defaultValues: {
+      name: roleMeta.name,
+      description: roleMeta.description,
+    },
+  });
+  const updateMutation = api.roles.update.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [ROLES_QUERY_KEY] });
+      form.reset();
+      setOpen(false);
+    },
+    onError(error) {
+      setOperationError(error.message);
+    },
+  });
+  function onSubmit(values: RoleMetaSchema) {
+    if (!workspaceId)
+      throw new Error('role dialog can only works under workspaceId route');
+    updateMutation.mutate({
+      workspaceId: +workspaceId,
+      roleId: roleMeta.id,
+      dto: values,
+    });
+  }
+
+  return (
+    <RoleMetaDialog
+      form={form}
+      onSubmit={onSubmit}
+      dialogTitle="Update Role"
+      triggeChildren={
+        <>
+          <Edit className="mr-2" />
+          <span>Edit name</span>
+        </>
+      }
+      dialogSubmitButtonTitle="save"
+      dialogOpen={open}
+      setDialogOpen={setOpen}
+      isPending={updateMutation.isPending}
+      operationError={operationError}
+    />
+  );
+}
+
+function DeleteRoleAlert(props: { id: number }) {
+  const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
+  const deleteMutation = api.roles.delete.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [ROLES_QUERY_KEY] });
+    },
+  });
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive">
           <Delete />
-          delete group
+          delete role
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete this
-            group
+            This action cannot be undone. This will permanently delete this role
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => console.log('delete: ', props.id)}>
+          <AlertDialogAction
+            onClick={() =>
+              deleteMutation.mutate({
+                roleId: props.id,
+                workspaceId: +(workspaceId as string),
+              })
+            }
+          >
             Continue
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -267,34 +291,38 @@ function DeleteGroupAlert(props: { id: number }) {
 /**
  * render table to show all grpups
  */
-export function GroupsManagement() {
+export function RolesManagement() {
   const { workspaceId } = useParams();
-  const groups = api.groups.index.useQuery(+(workspaceId as string));
+  const roles = api.roles.index.useQuery(+(workspaceId as string));
 
-  if (groups.isError) {
-    throw groups.error;
-  } else if (groups.isPending) {
-    return <>loading</>;
+  if (roles.isError) {
+    throw roles.error;
+  } else if (roles.isPending) {
+    return <WebloomLoader />;
   }
+  console.log(
+    '🪵 [role.tsx:298] ~ token ~ \x1b[0;32mroles\x1b[0m = ',
+    roles.data,
+  );
 
   return (
     <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
       <div className="flex w-full justify-between">
-        <p>{groups.data.length} groups</p>
-        <InsertGroupDialog />
+        <p>{roles.data.length} roles</p>
+        <InsertRoleDialog />
       </div>
       <div className="bg-primary/5 flex h-2/3 w-full justify-between p-2">
         <div className="flex w-[20%] max-w-[20%] flex-col gap-4 overflow-y-auto border-r pr-2">
           <Input placeholder="search by name" />
-          {groups.data.map((group) => (
+          {roles.data.map((role) => (
             <NavLink
-              key={group.id}
-              to={group.id.toString()}
+              key={role.id}
+              to={role.id.toString()}
               className={({ isActive }) => {
                 return `p-3 ${isActive ? 'bg-primary/10' : ''}`;
               }}
             >
-              {group.name}
+              {role.name}
             </NavLink>
           ))}
         </div>
@@ -304,73 +332,21 @@ export function GroupsManagement() {
   );
 }
 
-type PermissionTypes = z.infer<typeof permissionsTypes>;
-
-type Permission = {
-  id: number;
-  name: PermissionTypes;
-};
-
-async function getAllPermissions() {
-  const res = await fetchX('permissions', {
-    method: 'GET',
-  });
-  return (await res.json()) as Permission[];
-}
-
-async function togglePermission({
-  workspaceId,
-  roleId,
-  permissionId,
-}: {
-  workspaceId: number;
-  roleId: number;
-  permissionId: Permission['id'];
-}) {
-  await fetchX(
-    `workspaces/${workspaceId}/roles/${roleId}/togglepermission/${permissionId}`,
-    {
-      method: 'PUT',
-    },
-  );
-}
-
-function useTogglePermission() {
-  const queryClient = useQueryClient();
-  const mutate = useMutation({
-    mutationFn: togglePermission,
-    async onSuccess(_, variables) {
-      await queryClient.invalidateQueries({
-        queryKey: ['groups', variables.workspaceId, variables.roleId],
-      });
-    },
-  });
-  return mutate;
-}
-
-function usePermissions() {
-  const permissions = useQuery({
-    queryKey: ['permissions'],
-    queryFn: getAllPermissions,
-  });
-  return permissions;
-}
-
 function PermissionsTab({
   permissions,
   isAdmin,
 }: {
-  permissions: Permission[];
+  permissions: PermissionI[];
   isAdmin: boolean;
 }) {
-  const { workspaceId, groupId } = useParams();
-  const allPermissions = usePermissions();
-  const togglePermission = useTogglePermission();
+  const { workspaceId, roleId } = useParams();
+  const allPermissions = api.permissions.index.useQuery();
+  const togglePermission = api.permissions.toggle.useMutation();
   // just for easy check
   const persId = new Set(permissions.map((p) => p.id));
 
   if (allPermissions.isPending) {
-    return <>loading</>;
+    return <WebloomLoader />;
   } else if (allPermissions.isError) {
     throw allPermissions.error;
   }
@@ -384,14 +360,14 @@ function PermissionsTab({
         <Label key={per.id} className="flex gap-5">
           <Checkbox
             defaultChecked={persId.has(per.id)}
-            onCheckedChange={(c) => {
-              if (!workspaceId || !groupId)
+            onCheckedChange={() => {
+              if (!workspaceId || !roleId)
                 throw new Error(
                   'this component only works under workspaceId and roleId',
                 );
               togglePermission.mutate({
                 workspaceId: +workspaceId,
-                roleId: +groupId,
+                roleId: +roleId,
                 permissionId: per.id,
               });
             }}
@@ -417,7 +393,7 @@ function UsersTab({
       {isEveryone ? (
         <p>
           cannot add users manually all users are added automatically to this
-          group
+          role
         </p>
       ) : null}
       <Table>
@@ -448,38 +424,39 @@ function UsersTab({
 }
 
 /*
- * render single group data as nested route
+ * render single role data as nested route
  */
-export function GroupManagement() {
-  const { workspaceId, groupId } = useParams();
-  const { isError, isPending, data, error } = api.groups.one.useQuery(
+export function RoleManagement() {
+  const { workspaceId, roleId } = useParams();
+  const { isError, isPending, data, error } = api.roles.one.useQuery(
     +(workspaceId as string),
-    +(groupId as string),
+    +(roleId as string),
   );
 
   if (isError) {
     throw error;
   } else if (isPending) {
-    return <>loading</>;
+    return <WebloomLoader />;
   }
 
+  console.log('🪵 [role.tsx:431] ~ token ~ \x1b[0;32mdata\x1b[0m = ', data);
   return (
     <div className="flex w-full flex-col">
       <div className="flex justify-between">
         <p>{data.name}</p>
         <div className="flex h-10 gap-4">
-          {/*if default group don't render delete/edit*/}
+          {/*if default role don't render delete/edit*/}
           {data.name === 'admin' || data.name === 'everyone' ? (
-            <p>default group</p>
+            <p>default role</p>
           ) : (
             <>
-              <UpdateGroupDialog
-                groupMeta={{
+              <UpdateRoleDialog
+                roleMeta={{
                   ...data,
                   description: data.description ?? undefined,
                 }}
               />
-              <DeleteGroupAlert id={data.id} />
+              <DeleteRoleAlert id={data.id} />
             </>
           )}
         </div>
@@ -493,7 +470,7 @@ export function GroupManagement() {
         </TabsList>
         <TabsContent value="apps">
           {/*TODO: */}
-          user will chose what apps this group can access here
+          user will chose what apps this role can access here
         </TabsContent>
         <TabsContent value="users">
           <UsersTab users={data.users} isEveryone={data.name === 'everyone'} />
@@ -506,7 +483,7 @@ export function GroupManagement() {
         </TabsContent>
         <TabsContent value="datasources">
           {/*TODO: */}
-          admin will chose what datasources available for users in this group
+          admin will chose what datasources available for users in this role
         </TabsContent>
       </Tabs>
     </div>
