@@ -9,6 +9,8 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
+
+import { useDataFetcher } from './helper';
 export type WebloomTextProps = {
   text: string;
 };
@@ -17,8 +19,12 @@ const WebloomText = observer(() => {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomTextProps;
-
-  return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
+  const text = useDataFetcher(props.text);
+  return (
+    <div className="prose prose-stone m-0 h-full w-full break-all text-xl">
+      {text}
+    </div>
+  );
 });
 const config: WidgetConfig = {
   name: 'Text',
