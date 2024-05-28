@@ -17,6 +17,7 @@ import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
 import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
 import { WebloomTextAreaWidget } from './WebloomWidgets/TextArea';
 import { WebloomFormWidget } from './WebloomWidgets/Form';
+import { NilefyRangeWidget } from './WebloomWidgets/Range';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
@@ -37,6 +38,7 @@ export const WebloomWidgets = {
   WebloomCheckBox: WebloomCheckBoxWidget,
   WebloomCheckBoxGroup: WebloomCheckBoxGroupWidget,
   WebloomForm: WebloomFormWidget,
+  NilefyRange: NilefyRangeWidget,
 } as const;
 
 export const WidgetContext = createContext<{
