@@ -14,7 +14,7 @@ import {
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import {
@@ -167,7 +167,7 @@ export class AppsService {
 
   async findAll(workspaceId: AppDto['workspaceId']): Promise<AppsRetDto[]> {
     const workspaceApps = await this.db.query.apps.findMany({
-      where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
+      where: and(eq(apps.workspaceId, workspaceId)),
       orderBy: asc(apps.createdAt),
       with: {
         createdBy: {
@@ -203,11 +203,7 @@ export class AppsService {
       throw new NotFoundException();
     }
     const app = await this.db.query.apps.findFirst({
-      where: and(
-        eq(apps.id, appId),
-        eq(apps.workspaceId, workspaceId),
-        isNull(apps.deletedAt),
-      ),
+      where: and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)),
       with: {
         createdBy: {
           columns: {
@@ -259,13 +255,7 @@ export class AppsService {
     const [app] = await this.db
       .update(apps)
       .set({ updatedAt: sql`now()`, ...updateAppDto })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');
@@ -275,22 +265,13 @@ export class AppsService {
   async delete({
     workspaceId,
     appId,
-    deletedById,
   }: {
-    deletedById: AppDto['deletedById'];
     appId: AppDto['id'];
     workspaceId: AppDto['workspaceId'];
   }): Promise<AppDto> {
     const [app] = await this.db
-      .update(apps)
-      .set({ deletedAt: sql`now()`, deletedById })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .delete(apps)
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');

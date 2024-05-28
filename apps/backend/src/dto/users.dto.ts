@@ -15,7 +15,6 @@ export const retUserSchema = userSchema.omit({
   conformationToken: true,
   createdAt: true,
   emailVerified: true,
-  deletedAt: true,
   updatedAt: true,
 });
 
