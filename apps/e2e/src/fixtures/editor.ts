@@ -85,7 +85,14 @@ export class EditorPage {
     return this.page.locator(`[data-id="${id}"]`);
   }
   async singleSelect(id: string) {
-    (await this.getWidget(id)).click();
+    let isAlreadySelected = false;
+    const activeId = await this.rightSidebar.ispectOnePanel
+      .getByTestId('selected-widget-id')
+      .inputValue();
+    if (activeId === id) {
+      isAlreadySelected = true;
+    }
+    if (!isAlreadySelected) (await this.getWidget(id)).click();
     await expect(this.rightSidebar.ispectOnePanel).toBeVisible();
   }
   async getInputValue(id: string, field: string) {
@@ -119,19 +126,34 @@ export class EditorPage {
     x: number = 0,
     y: number = 0,
   ): Promise<string> {
+    return this.dragAndDropNewWidgetInto(
+      widgetName,
+      EDITOR_CONSTANTS.ROOT_NODE_ID,
+      x,
+      y,
+    );
+  }
+
+  async dragAndDropNewWidgetInto(
+    widgetName: string,
+    targetId: string,
+    x: number = 0,
+    y: number = 0,
+  ): Promise<string> {
     await this.rightSidebar.insertButton.click();
     const widget = this.page.getByRole('button', {
       name: widgetName,
       exact: true,
     });
-    await drag(this.page, widget, this.rootCanvas, x, y);
-    const id = await this.rootCanvas
-      .locator('[data-id]')
-      .last()
-      .getAttribute('data-id');
+    const target = this.page.getByTestId(targetId);
+    await drag(this.page, widget, target, x, y);
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
     expect(id).not.toBe(null);
     return id!;
   }
+
   async dragAndDropExistingWidget(
     widgetId: string,
     targetId: string,
@@ -141,7 +163,9 @@ export class EditorPage {
     const widget = this.page.getByTestId(widgetId);
     const target = this.page.getByTestId(targetId);
     await drag(this.page, widget, target, x, y);
-    const id = await target.locator('[data-id]').last().getAttribute('data-id');
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
     expect(id).toBe(widgetId);
   }
 }
