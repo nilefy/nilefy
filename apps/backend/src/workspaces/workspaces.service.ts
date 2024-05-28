@@ -5,9 +5,9 @@ import {
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql, exists, like, asc } from 'drizzle-orm';
 import * as schema from '@nilefy/database';
-import { UserDto } from '../dto/users.dto';
+import { RetUserSchema, UserDto } from '../dto/users.dto';
 import { RolesService } from '../roles/roles.service';
 
 @Injectable()
@@ -17,6 +17,9 @@ export class WorkspacesService {
     private readonly rolesService: RolesService,
   ) {}
 
+  /**
+   * get user workspaces
+   */
   async index(userId: UserDto['id']): Promise<WorkspaceDto[]> {
     const ws = (
       await this.db.query.usersToWorkspaces.findMany({
@@ -27,6 +30,41 @@ export class WorkspacesService {
       })
     ).map((u) => u.workspace);
     return ws;
+  }
+
+  async workspaceUsers(
+    workspaceId: WorkspaceDto['id'],
+    page = 1,
+    pageSize = 3,
+    searchQ = '',
+  ): Promise<RetUserSchema[]> {
+    const q = this.db
+      .select({
+        id: schema.users.id,
+        email: schema.users.email,
+        username: schema.users.username,
+        avatar: schema.users.avatar,
+        onboardingCompleted: schema.users.onboardingCompleted,
+      })
+      .from(schema.users)
+      .where(
+        and(
+          like(schema.users.username, sql`%${searchQ}%`).if(searchQ),
+          exists(
+            this.db
+              .select({ userId: schema.usersToWorkspaces.userId })
+              .from(schema.usersToWorkspaces)
+              .where(
+                and(
+                  eq(schema.users.id, schema.usersToWorkspaces.userId),
+                  eq(schema.usersToWorkspaces.workspaceId, workspaceId),
+                ),
+              ),
+          ),
+        ),
+      )
+      .$dynamic();
+    return await schema.withPagination(q, asc(schema.users.id), page, pageSize);
   }
 
   /**
