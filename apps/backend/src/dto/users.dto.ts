@@ -10,6 +10,15 @@ export const userInsertSchema = createInsertSchema(usersDrizzle, {
   password: (schema) => schema.password.min(6).max(255),
 });
 
+export const retUserSchema = userSchema.omit({
+  password: true,
+  conformationToken: true,
+  createdAt: true,
+  emailVerified: true,
+  deletedAt: true,
+  updatedAt: true,
+});
+
 export const updateUserOnboardingSchema = userInsertSchema.pick({
   onboardingCompleted: true,
 });
@@ -57,3 +66,4 @@ export const updateUserRetSchema = userSchema.pick({
   updatedAt: true,
 });
 export class UpdateUserRetDto extends createZodDto(updateUserRetSchema) {}
+export class RetUserSchema extends createZodDto(retUserSchema) {}
