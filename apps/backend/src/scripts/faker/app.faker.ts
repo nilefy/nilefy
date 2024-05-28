@@ -19,6 +19,5 @@ export function generateFakeApp(
     workspaceId: workspaceId,
     createdAt: faker.date.past(),
     updatedAt: faker.helpers.arrayElement([faker.date.recent(), null]),
-    deletedAt: faker.helpers.arrayElement([null, null, faker.date.past()]),
   };
 }

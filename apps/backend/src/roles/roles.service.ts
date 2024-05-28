@@ -1,28 +1,30 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { CreateRoleDb, RolesDto, UpdateRoleDb } from '../dto/roles.dto';
+import { CreateRoleDb, RolesDto, RoleUpdateI } from '../dto/roles.dto';
 
-import { and, asc, eq, sql, notInArray } from 'drizzle-orm';
+import { and, asc, eq, sql, notInArray, inArray } from 'drizzle-orm';
 import {
   DatabaseI,
   permissionsToRoles,
   roles,
   PgTrans,
   usersToRoles,
+  appsToRoles,
 } from '@nilefy/database';
-import z from 'zod';
-import { permissionsTypes } from '@nilefy/permissions';
+import { permissionsTypes, PermissionsTypes } from '@nilefy/permissions';
+import { AuthorizationUtilsService } from '../authorization-utils/authorization-utils.service';
 
 // TODO: move to somewhere else
 const DEFAULT_ROLES: {
   name: string;
   description: string;
-  permissions: z.infer<typeof permissionsTypes>[];
+  permissions: PermissionsTypes[];
 }[] = [
   {
     name: 'admin',
@@ -40,7 +42,10 @@ const DEFAULT_ROLES: {
 const DEFAULT_ROLES_NAMES = DEFAULT_ROLES.map((r) => r.name);
 @Injectable()
 export class RolesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private authUtils: AuthorizationUtilsService,
+  ) {}
 
   async index(workspaceId: RolesDto['workspaceId']): Promise<RolesDto[]> {
     return await this.db.query.roles.findMany({
@@ -58,6 +63,14 @@ export class RolesService {
         description: true,
       },
       with: {
+        apps: {
+          columns: {
+            permission: true,
+          },
+          with: {
+            app: true,
+          },
+        },
         permissionsToRoles: {
           columns: {},
           with: {
@@ -70,6 +83,8 @@ export class RolesService {
             user: {
               columns: {
                 password: false,
+                conformationToken: false,
+                emailVerified: false,
               },
             },
           },
@@ -83,6 +98,10 @@ export class RolesService {
       description: role.description,
       permissions: role.permissionsToRoles.map((r) => r.permission),
       users: role.usersToRoles.map((u) => u.user),
+      apps: role.apps.map((a) => ({
+        permission: a.permission,
+        ...a.app,
+      })),
     };
   }
 
@@ -152,15 +171,110 @@ export class RolesService {
 
   // TODO: cannot update default roles
   async update(
+    currentUserId: number,
     workspaceId: RolesDto['workspaceId'],
     roleId: RolesDto['id'],
-    roleDto: UpdateRoleDb,
+    roleDto: RoleUpdateI,
   ) {
-    await this.db
+    const role = await this.db
       .update(roles)
-      .set({ updatedAt: sql`now()`, ...roleDto })
-      .where(and(eq(roles.id, roleId), eq(roles.workspaceId, workspaceId)))
+      .set({
+        updatedAt: sql`now()`,
+        updatedById: currentUserId,
+        description: roleDto.description ?? undefined,
+        name: roleDto.name ?? undefined,
+      })
+      .where(
+        and(
+          eq(roles.id, roleId),
+          eq(roles.workspaceId, workspaceId),
+          // DON'T UPDATE DEFAULT ROLES
+          // notInArray(roles.name, DEFAULT_ROLES_NAMES),
+        ),
+      )
       .returning();
+    if (!role) {
+      throw new NotFoundException('no role');
+    }
+    // TODO: don't allow adding users to everone role(we should add users automatially to this role)
+    if (roleDto.addUsers && roleDto.addUsers.length > 0) {
+      if (
+        !(await this.authUtils.doesWorkspaceOwnsUsers(
+          workspaceId,
+          roleDto.addUsers,
+        ))
+      ) {
+        throw new BadRequestException('cannot control those users');
+      }
+      await this.db
+        .insert(usersToRoles)
+        .values(roleDto.addUsers.map((u) => ({ roleId: roleId, userId: u })));
+    }
+    // TODO: don't delete admin from admin role hhh
+    if (roleDto.removeUsers && roleDto.removeUsers.length > 0) {
+      if (
+        !(await this.authUtils.doesWorkspaceOwnsUsers(
+          workspaceId,
+          roleDto.removeUsers,
+        ))
+      ) {
+        throw new BadRequestException('cannot control those users');
+      }
+      await this.db
+        .delete(usersToRoles)
+        .where(
+          and(
+            eq(usersToRoles.roleId, roleId),
+            inArray(usersToRoles.userId, roleDto.removeUsers),
+          ),
+        );
+    }
+
+    if (roleDto.addApps && roleDto.addApps.length > 0) {
+      if (
+        !(await this.authUtils.doesWorkspaceOwnsApps(
+          workspaceId,
+          roleDto.addApps.map((a) => a.appId),
+        ))
+      ) {
+        throw new BadRequestException('cannot control those apps');
+      }
+      await this.db
+        .insert(appsToRoles)
+        .values(
+          roleDto.addApps.map((a) => ({
+            roleId: roleId,
+            appId: a.appId,
+            permission: a.permission,
+          })),
+        )
+        .onConflictDoUpdate({
+          target: [appsToRoles.roleId, appsToRoles.appId],
+          set: {
+            permission: sql.raw(`excluded.${appsToRoles.permission.name}`),
+          },
+        });
+    }
+    // TODO: don't delete apps from admin role
+    if (roleDto.removeApps && roleDto.removeApps.length > 0) {
+      if (
+        !(await this.authUtils.doesWorkspaceOwnsApps(
+          workspaceId,
+          roleDto.removeApps,
+        ))
+      ) {
+        throw new BadRequestException('cannot control those apps');
+      }
+      await this.db
+        .delete(appsToRoles)
+        .where(
+          and(
+            eq(appsToRoles.roleId, roleId),
+            inArray(appsToRoles.appId, roleDto.removeApps),
+          ),
+        );
+    }
+    return role;
   }
 
   async delete({

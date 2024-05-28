@@ -10,7 +10,7 @@ import {
   apps,
 } from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 export const clearApps = async (username: string) => {
   const [db] = await dbConnect(process.env.DB_URL!);
@@ -26,14 +26,9 @@ export const clearApps = async (username: string) => {
     const res = await Promise.all(
       userApps.map(async (app) => {
         return await db
-          .update(apps)
-          .set({ deletedAt: sql`now()`, deletedById: userId })
+          .delete(apps)
           .where(
-            and(
-              eq(apps.id, app.id),
-              eq(apps.workspaceId, app.workspaceId),
-              isNull(apps.deletedAt),
-            ),
+            and(eq(apps.id, app.id), eq(apps.workspaceId, app.workspaceId)),
           )
           .returning();
       }),

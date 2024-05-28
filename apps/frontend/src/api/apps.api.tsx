@@ -12,7 +12,6 @@ export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
   id: number;
   name: string;
-  deletedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
   createdById: number;
