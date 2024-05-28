@@ -169,18 +169,6 @@ export class ComponentsService {
       if (componentsDto.hasOwnProperty(key)) {
         try {
           const obj = componentsDto[key];
-          // if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-          //   continue;
-          // }
-          // if (key === EDITOR_CONSTANTS.ROOT_NODE_ID) {
-          //   obj = {
-          //     ...obj,
-          //     pageId: pageId,
-          //     createdById: createdById,
-          //     parentId: null,
-          //   };
-          //   continue;
-          // }
           arr.push({
             ...obj,
             pageId: pageId,
@@ -193,27 +181,6 @@ export class ComponentsService {
         }
       }
     }
-    // await (options?.tx ? options.tx : this.db)
-    //   .insert(components)
-    //   .values({
-    //     id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    //     type: 'WebloomContainer',
-    //     pageId: pageId,
-    //     createdById: createdById,
-    //     parentId: null,
-    //     props: {
-    //       className: 'h-full w-full',
-    //       isCanvas: 'true',
-    //     },
-    //     col: 0,
-    //     row: 0,
-    //     columnsCount: 32,
-    //     rowsCount: 0,
-    //   })
-    //   .returning();
-
-    console.log('initial array: ');
-    console.log(arr);
     const batchSize = 100;
     const t = [];
     for (let i = 0; i < arr.length; i += batchSize) {
@@ -226,16 +193,13 @@ export class ComponentsService {
             .values(batch)
             .returning()),
         );
-        console.log(`Processed batch ${Math.floor(i / batchSize) + 1}`);
+        console.log(
+          `Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(arr.length / batchSize)}`,
+        );
       } catch (e) {
         console.error('Error processing batch:', e);
       }
     }
-    console.log('returned array: ');
-    console.log(t);
-    console.log(t.length);
-    // console.log('Tree from db: ');
-    // console.log(await this.getTreeForPage(pageId));
     return [t];
   }
 }
