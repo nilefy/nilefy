@@ -16,6 +16,7 @@ export const retUserSchema = userSchema.omit({
   createdAt: true,
   emailVerified: true,
   updatedAt: true,
+  deletedAt: true,
 });
 
 export const updateUserOnboardingSchema = userInsertSchema.pick({

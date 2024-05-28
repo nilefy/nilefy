@@ -19,6 +19,8 @@ import { JsQueriesModule } from './js_queries/js_queries.module';
 import { JsLibrariesModule } from './js_libraries/js_libraries.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AuthorizationUtilsService } from './authorization-utils/authorization-utils.service';
+import { AuthorizationUtilsModule } from './authorization-utils/authorization-utils.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { join } from 'path';
     EmailModule,
     JsQueriesModule,
     JsLibrariesModule,
+    AuthorizationUtilsModule,
   ],
+  providers: [AuthorizationUtilsService],
 })
 export class AppModule {}

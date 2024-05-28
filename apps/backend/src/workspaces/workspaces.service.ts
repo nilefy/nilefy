@@ -1,16 +1,14 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
-import { and, eq, sql, exists, like, asc, inArray } from 'drizzle-orm';
+import { and, eq, sql, exists, like, asc } from 'drizzle-orm';
 import * as schema from '@nilefy/database';
 import { RetUserSchema, UserDto } from '../dto/users.dto';
 import { RolesService } from '../roles/roles.service';
-import { AppDto } from '../dto/apps.dto';
-import { DataSourceDto } from '../dto/data_sources.dto';
 
 @Injectable()
 export class WorkspacesService {
@@ -107,72 +105,5 @@ export class WorkspacesService {
       .where(and(eq(schema.workspaces.id, id)))
       .returning();
     return workspace[0];
-  }
-
-  // TODO: test this funciton
-  async doesWorkspaceOwnsUsers(
-    workspaceId: WorkspaceDto['id'],
-    users: UserDto['id'][],
-  ) {
-    const inWorkspace = await this.db.query.usersToWorkspaces.findMany({
-      columns: { userId: true },
-      where: and(
-        eq(schema.usersToWorkspaces.workspaceId, workspaceId),
-        inArray(schema.usersToWorkspaces.userId, users),
-      ),
-    });
-    if (inWorkspace.length !== users.length) {
-      Logger.error({
-        msg: 'workspace access users outside the workspace',
-        users,
-        inWorkspace,
-      });
-      return false;
-    }
-    return true;
-  }
-  // TODO: test this funciton
-  async doesWorkspaceOwnsApps(
-    workspaceId: WorkspaceDto['id'],
-    apps: AppDto['id'][],
-  ) {
-    const inWorkspace = await this.db.query.apps.findMany({
-      columns: { id: true },
-      where: and(
-        eq(schema.apps.workspaceId, workspaceId),
-        inArray(schema.apps.id, apps),
-      ),
-    });
-    if (inWorkspace.length !== apps.length) {
-      Logger.error({
-        msg: 'workspace access apps outside the workspace',
-        apps,
-        inWorkspace,
-      });
-      return false;
-    }
-    return true;
-  }
-  // TODO: test this funciton
-  async doesWorkspaceOwnsDatasource(
-    workspaceId: WorkspaceDto['id'],
-    datasources: DataSourceDto['id'][],
-  ) {
-    const inWorkspace = await this.db.query.workspaceDataSources.findMany({
-      columns: { id: true },
-      where: and(
-        eq(schema.workspaceDataSources.workspaceId, workspaceId),
-        inArray(schema.workspaceDataSources.id, datasources),
-      ),
-    });
-    if (inWorkspace.length !== datasources.length) {
-      Logger.error({
-        msg: 'workspace access datasources outside the workspace',
-        datasources,
-        inWorkspace,
-      });
-      return false;
-    }
-    return true;
   }
 }
