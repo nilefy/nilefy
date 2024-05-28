@@ -24,6 +24,7 @@ export type PgTrans = PgTransaction<
   SchemaT,
   ExtractTablesWithRelations<SchemaT>
 >;
+export * from "./withPagination";
 export const DrizzleAsyncProvider = "drizzleProvider";
 
 export async function dbConnect(
