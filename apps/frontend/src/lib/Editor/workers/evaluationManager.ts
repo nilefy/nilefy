@@ -58,10 +58,12 @@ export class EvaluationManager {
       const { entityId, path } = item.dependency;
       const fullPath = `${entityId}.${path}`;
       const entity = this.editor.getEntityById(entityId);
-      const value = get(
-        this.lastEvaluatedForest,
-        fullPath,
-        get(entity.unevalValues, path, get(entity.actions, path)),
+      const value = toJS(
+        get(
+          this.lastEvaluatedForest,
+          fullPath,
+          get(entity.unevalValues, path, get(entity.actions, path)),
+        ),
       );
       set(context, fullPath, value);
     }
