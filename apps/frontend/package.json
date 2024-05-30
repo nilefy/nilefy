@@ -125,7 +125,7 @@
     "scroll-into-view-if-needed": "^3.1.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
-    "tinymce": "^5.10.9",
+    "tinymce": "^7.0.0",
     "toposort": "^2.0.2",
     "unescape-js": "^1.1.4",
     "unified": "^11.0.4",

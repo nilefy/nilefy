@@ -624,8 +624,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.3.3)
       tinymce:
-        specifier: ^5.10.9
-        version: 5.10.9
+        specifier: ^7.0.0
+        version: 7.0.0
       toposort:
         specifier: ^2.0.2
         version: 2.0.2
@@ -20224,6 +20224,10 @@ packages:
 
   /tinymce@5.10.9:
     resolution: {integrity: sha512-5bkrors87X9LhYX2xq8GgPHrIgJYHl87YNs+kBcjQ5I3CiUgzo/vFcGvT3MZQ9QHsEeYMhYO6a5CLGGffR8hMg==}
+    dev: false
+
+  /tinymce@7.0.0:
+    resolution: {integrity: sha512-ggXLfTRrUALAcjeJSRrZcJDOl6MgC2tPXe/zNOEkQXvTDgcKqFypPRoPpfpK5wejexjyaI/7dwETOntJ5MPBFg==}
     dev: false
 
   /tinypool@0.7.0:
