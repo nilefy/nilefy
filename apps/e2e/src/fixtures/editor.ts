@@ -118,8 +118,10 @@ export class EditorPage {
     const widget = this.page.getByTestId(id);
     return widget;
   }
-  unselectAll() {
-    this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID).click();
+  async unselectAll() {
+    await this.rootCanvas.click();
+    await this.page.keyboard.press('Escape');
+    await expect(this.rightSidebar.ispectOnePanel).not.toBeVisible();
   }
   async dragAndDropNewWidget(
     widgetName: string,
