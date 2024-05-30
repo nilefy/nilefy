@@ -32,7 +32,6 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    console.log(componentDto);
     return await (options?.tx ? options.tx : this.db)
       .insert(components)
       .values(componentDto)

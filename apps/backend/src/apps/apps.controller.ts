@@ -34,7 +34,7 @@ import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
-// @UseGuards(JwtGuard)
+@UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -93,22 +93,14 @@ export class AppsController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @UploadedFile(ParseFilePipe) file: Express.Multer.File,
   ) {
-    try {
-      const jsonData = JSON.parse(file.buffer.toString());
-      // ! modify later
-      const userId = req.user?.userId ?? 1;
+    const jsonData = JSON.parse(file.buffer.toString());
+    const createAppDto = {
+      ...jsonData,
+      workspaceId,
+      createdById: req.user.userId,
+    };
 
-      const createAppDto = {
-        ...jsonData,
-        workspaceId,
-        createdById: userId,
-      };
-
-      await this.appsService.importAppJSON(createAppDto);
-    } catch (e) {
-      console.log('An Error has occured while importing the app!');
-      console.log(e);
-    }
+    await this.appsService.importAppJSON(createAppDto);
   }
 
   @Get(':appId')
