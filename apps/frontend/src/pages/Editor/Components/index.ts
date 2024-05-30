@@ -3,7 +3,7 @@ import { WebloomButtonWidget } from './WebloomWidgets/Button';
 import { WebloomContainerWidget } from './WebloomWidgets/Container';
 import { WebloomInputWidget } from './WebloomWidgets/Input';
 import { WebloomTextEditorWidget } from './WebloomWidgets/RichTextEditor';
-import { WebloomTextWidget } from './WebloomWidgets/Text';
+import { NilefyTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
 import { WebloomImageWidget } from './WebloomWidgets/Image';
 import { WebloomChartWidget } from './WebloomWidgets/Chart';
@@ -24,7 +24,7 @@ export const WebloomWidgets = {
   WebloomInput: WebloomInputWidget,
   WebloomNumberInput: WebloomNumberInputWidget,
   WebloomTextArea: WebloomTextAreaWidget,
-  WebloomText: WebloomTextWidget,
+  NilefyText: NilefyTextWidget,
   TextEditor: WebloomTextEditorWidget,
   Table: WebloomTableWidget,
   Image: WebloomImageWidget,
