@@ -203,6 +203,7 @@ const hoverTooltipSource = async (
       //todo syntax highlight the tooltip
       const dom = document.createElement('div');
       dom.setAttribute('class', 'cm-quickinfo-tooltip');
+      dom.style.whiteSpace = 'pre-wrap';
       dom.textContent =
         displayPartsToString(quickInfo.displayParts) +
         (quickInfo.documentation?.length

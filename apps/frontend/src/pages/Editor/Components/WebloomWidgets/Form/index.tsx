@@ -127,7 +127,6 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
         name: 'submit',
         fn: (entity) => {
           entity.handleEvent('onSubmit');
-          entity.remoteExecuteAction('reset');
         },
       },
     },

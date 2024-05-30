@@ -1,11 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  action,
-  toJS,
-  computed,
-  autorun,
-} from 'mobx';
+import { makeObservable, observable, action, toJS, computed } from 'mobx';
 import { Snapshotable } from './interface';
 import {
   CompleteQueryI,
@@ -201,6 +194,11 @@ export class WebloomQuery
         data: {
           type: 'dynamic',
           description: 'Data returned from the query',
+        },
+        error: {
+          type: 'static',
+          description: 'Error message if the query failed',
+          typeSignature: 'string',
         },
         queryState: {
           type: 'static',

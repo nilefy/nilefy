@@ -146,6 +146,7 @@ export const EntityFormControl = observer(
         control.isEvent,
       ],
     );
+
     return (
       <EntityFormControlContext.Provider value={contextValue}>
         <FormControlWrapper
@@ -154,6 +155,7 @@ export const EntityFormControl = observer(
           id={id}
           label={control.label}
           path={control.path}
+          hidden={options.hidden}
         >
           {/* @ts-expect-error ignore */}
           <Component {...options} key={control.id} />

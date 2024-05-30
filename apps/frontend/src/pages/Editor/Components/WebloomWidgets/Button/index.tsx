@@ -11,7 +11,9 @@ import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 
 import { ToolTipWrapper } from '../tooltipWrapper';
-import { StringSchema } from '@/lib/Editor/validations';
+import { BooleanSchema, StringSchema } from '@/lib/Editor/validations';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 
 export type WebloomButtonProps = {
   text: string;
@@ -55,6 +57,23 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setText: {
+      name: 'setText',
+      path: 'text',
+      type: 'SETTER',
+    },
+    setDisabled: {
+      name: 'setDisabled',
+      path: 'isDisabled',
+      type: 'SETTER',
+    },
+    setIsLoading: {
+      name: 'setIsLoading',
+      path: 'isLoading',
+      type: 'SETTER',
+    },
+  },
 };
 
 const initialProps: WebloomButtonProps = {
@@ -79,6 +98,74 @@ const inspectorConfig: EntityInspectorConfig<WebloomButtonProps> = [
         },
         validation: StringSchema('Click me'),
       },
+      {
+        path: 'tooltip',
+        label: 'Tooltip',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter text',
+        },
+        validation: StringSchema('Click me'),
+      },
+      {
+        path: 'isLoading',
+        label: 'Is Loading',
+        type: 'inlineCodeInput',
+        options: {},
+        validation: BooleanSchema(false),
+      },
+      {
+        path: 'isDisabled',
+        label: 'Is Disabled',
+        type: 'inlineCodeInput',
+        options: {},
+        validation: BooleanSchema(false),
+      },
+      {
+        path: 'variant',
+        label: 'Varient',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Default',
+              value: 'default',
+            },
+            {
+              label: 'destructive',
+              value: 'destructive',
+            },
+            {
+              label: 'outline',
+              value: 'outline',
+            },
+            {
+              label: 'secondary',
+              value: 'secondary',
+            },
+            {
+              label: 'ghost',
+              value: 'ghost',
+            },
+            {
+              label: 'link',
+              value: 'link',
+            },
+          ],
+        },
+        validation: zodToJsonSchema(
+          z
+            .enum([
+              'default',
+              'destructive',
+              'outline',
+              'secondary',
+              'ghost',
+              'link',
+            ])
+            .default('default'),
+        ),
+      },
     ],
   },
   {
@@ -102,6 +189,35 @@ export const WebloomButtonWidget: Widget<WebloomButtonProps> = {
   config,
   initialProps,
   inspectorConfig,
+  publicAPI: {
+    setText: {
+      type: 'function',
+      args: [
+        {
+          name: 'text',
+          type: 'string',
+        },
+      ],
+    },
+    setDisabled: {
+      type: 'function',
+      args: [
+        {
+          name: 'disabled',
+          type: 'boolen',
+        },
+      ],
+    },
+    setIsLoading: {
+      type: 'function',
+      args: [
+        {
+          name: 'loading',
+          type: 'boolen',
+        },
+      ],
+    },
+  },
 };
 
 export { WebloomButton };

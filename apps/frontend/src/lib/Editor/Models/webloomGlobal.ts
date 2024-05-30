@@ -13,7 +13,7 @@ export const WebloomGlobalsActions = {
   alert: {
     type: 'SIDE_EFFECT',
     name: 'alert',
-    fn: (
+    fn: async (
       _: WebloomGlobal,
       message: string,
       variant: ToastProps['variant'] = 'default',

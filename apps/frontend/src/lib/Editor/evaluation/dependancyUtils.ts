@@ -2,7 +2,7 @@ import type { Node, Options } from 'acorn';
 import { parse } from 'acorn';
 
 import { ancestor } from 'acorn-walk';
-import { has, isFinite, isString, toPath } from 'lodash';
+import { has, isArray, isFinite, isString, toPath } from 'lodash';
 import {
   bindingRegexGlobal,
   functionActionWrapper,
@@ -119,13 +119,51 @@ const _analyzeDependencies = ({
     errors.push(e);
   }
 };
-const calcPathPermutations = (path: string) => {
-  const parts = path.split('.');
-  const permutations: string[] = [];
-  for (let i = 0; i < parts.length; i++) {
-    permutations.push(parts.slice(0, i + 1).join('.'));
+/**
+ * Converts `array` to a property path string.
+ *
+ * @private
+ * @param {Array} array The array to convert.
+ * @returns {string} Returns the property path string.
+ */
+function pathToString(array: string[]) {
+  return array.reduce(function (string, item) {
+    const prefix = string === '' ? '' : '.';
+    return string + (isNaN(Number(item)) ? prefix + item : '[' + item + ']');
+  }, '');
+}
+/**
+ * Converts array `value` to a property path string.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.6.1
+ * @category Util
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the new property path string.
+ * @example
+ *
+ * _.fromPath(['a', 'b', 'c']);
+ * // => 'a.b.c'
+ *
+ * _.fromPath(['a', '0', 'b', 'c']);
+ * // => 'a[0].b.c'
+ *
+ */
+function fromPath(value: string[]) {
+  if (isArray(value)) {
+    return pathToString(value);
   }
-  return permutations.reverse();
+  return '';
+}
+const calcPathPermutations = (path: string) => {
+  const pathSplit = toPath(path);
+  const pathPermutations = [];
+  //use fromPath to calc possible paths
+  for (let i = 0; i < pathSplit.length; i++) {
+    pathPermutations.push(fromPath(pathSplit.slice(0, i + 1)));
+  }
+  return pathPermutations;
 };
 
 export const ECMA_VERSION = 11;

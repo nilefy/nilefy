@@ -10,11 +10,13 @@ export type JsQueryI = {
   appId: number;
   query: string | null;
   settings?: unknown;
+  triggerMode: 'manually' | 'onAppLoad';
 };
 type InsertI = {
   id: JsQueryI['id'];
   query: JsQueryI['query'];
   settings: JsQueryI['settings'];
+  triggerMode: JsQueryI['triggerMode'];
 };
 type UpdateI = Partial<InsertI>;
 
