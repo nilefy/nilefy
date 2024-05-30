@@ -9,7 +9,8 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
-import { useDataFetcher } from './helper';
+import { useParseText } from './helper';
+import Markdown from 'markdown-to-jsx';
 
 export type NilefyTextProps = {
   text: string;
@@ -19,10 +20,10 @@ const NilefyText = observer(function NilefyText() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as NilefyTextProps;
-  const text = useDataFetcher(props.text);
+  const text = useParseText(props.text);
   return (
     <div className="prose prose-stone m-0 h-full w-full break-all text-xl">
-      {text}
+      <Markdown>{text}</Markdown>
     </div>
   );
 });

@@ -112,8 +112,8 @@ export class Entity implements WebloomDisposable {
       if (this.publicAPI[actionName]) continue;
       this.publicAPI[actionName] = {
         type: 'function',
-        args: 'unknown',
-        returns: 'unknown',
+        args: 'args: ...any[]',
+        returns: 'void',
       };
     }
     this.id = id;

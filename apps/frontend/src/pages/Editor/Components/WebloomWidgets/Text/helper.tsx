@@ -1,14 +1,13 @@
 import rehypeParse from 'rehype-parse';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
-import Markdown from 'markdown-to-jsx';
 import { unified } from 'unified';
 import { useState, useEffect } from 'react';
-export const useDataFetcher = (text: string) => {
-  const [content, setContent] = useState<React.ReactElement | null>(null);
+export const useParseText = (text: string) => {
+  const [content, setContent] = useState<string>('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const parseText = async () => {
       try {
         const processedFile = await unified()
           .use(rehypeParse, { fragment: true })
@@ -29,15 +28,14 @@ export const useDataFetcher = (text: string) => {
           })
           .use(rehypeStringify)
           .process(text);
-        console.log(String(processedFile.value), 'kk');
-        setContent(<Markdown>{String(processedFile)}</Markdown>);
+
+        setContent(String(processedFile));
       } catch (error) {
-        console.error('Error processing file:', error);
-        setContent(null); // Or handle error appropriately
+        setContent('');
       }
     };
 
-    fetchData();
+    parseText();
   }, [text]);
 
   return content;
