@@ -1,6 +1,6 @@
 import { generateFakeApp } from '../faker/app.faker';
 import { PgTrans } from '@nilefy/database';
-import { chunkArray } from '../utils';
+import { chunkArray } from '../../utils';
 import { INestApplicationContext } from '@nestjs/common';
 import { AppsService } from '../../apps/apps.service';
 import { AppsModule } from '../../apps/apps.module';

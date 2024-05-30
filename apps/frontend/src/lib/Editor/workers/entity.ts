@@ -4,12 +4,11 @@ import {
   makeObservable,
   observable,
   runInAction,
-  toJS,
 } from 'mobx';
 import { nanoid } from 'nanoid';
 import { deepEqual } from 'fast-equals';
 import { DependencyManager } from './dependencyManager';
-import { entries, get, isArray, keys, set, unset } from 'lodash';
+import { get, isArray, keys, set } from 'lodash';
 import {
   ajv,
   extractValidators,
@@ -27,6 +26,19 @@ import { getArrayPaths } from '../evaluation/utils';
 import { WebloomDisposable } from '../Models/interface';
 import { EditorState } from './editor';
 import { jsonToTs } from './tsServer/conversions';
+
+const addDescriptionIfPresent = (
+  type: string,
+  description: string | undefined,
+) => {
+  if (!description) return type;
+  return `
+  /**
+   * ${description}
+   * */
+  ${type}
+  `;
+};
 
 const defaultType = (path: string) => `const ${path}: unknown;`;
 const functionType = (
@@ -130,41 +142,31 @@ export class Entity implements WebloomDisposable {
   }
 
   get pathToType() {
-    const pathToType = entries(this.publicAPI)
-      .map(([path, item]) => {
+    const ret = Object.entries(this.publicAPI).reduce(
+      (acc, [path, item]) => {
         if (item.type === 'static') {
-          return [path, typedEntity(path, item.typeSignature)] as const;
+          acc[path] = addDescriptionIfPresent(
+            typedEntity(path, item.typeSignature),
+            item.description,
+          );
         } else if (item.type === 'function') {
-          return [path, functionType(path, item.args, item.returns)] as const;
+          acc[path] = addDescriptionIfPresent(
+            functionType(path, item.args, item.returns),
+            item.description,
+          );
         } else if (item.type === 'dynamic') {
-          return [
-            path,
-            typedEntity(
-              path,
-              jsonToTs(
-                path,
-                toJS(
-                  get(
-                    this.editorState.evaluationManager.evaluatedForest,
-                    [this.id, path],
-                    get(this.unevalValues, path),
-                  ),
-                ),
-              ),
-            ),
-          ] as const;
+          acc[path] = addDescriptionIfPresent(
+            typedEntity(path, jsonToTs(path, get(this.unevalValues, path))),
+            item.description,
+          );
         } else {
-          return [path, defaultType(path)] as const;
+          acc[path] = defaultType(path);
         }
-      })
-      .reduce(
-        (acc, [path, type]) => {
-          acc[path] = type;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-    return pathToType;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+    return ret;
   }
 
   initDependecies() {
@@ -320,9 +322,9 @@ export class Entity implements WebloomDisposable {
     for (const key in config) {
       const configItem = config[key];
       if (configItem.type === 'SETTER') {
-        actions[key] = (value: unknown) => {
+        actions[key] = async (value: unknown) => {
           if (this.metaValues.has(configItem.path)) {
-            return this.createPromiseForAction(this.id, key, [value]);
+            return await this.createPromiseForAction(this.id, key, [value]);
           }
           runInAction(() => {
             const path = configItem.path;
@@ -334,8 +336,8 @@ export class Entity implements WebloomDisposable {
           });
         };
       } else if (configItem.type === 'SIDE_EFFECT') {
-        actions[key] = (...args: unknown[]) => {
-          this.createPromiseForAction(this.id, key, args);
+        actions[key] = async (...args: unknown[]) => {
+          await this.createPromiseForAction(this.id, key, args);
         };
       }
     }

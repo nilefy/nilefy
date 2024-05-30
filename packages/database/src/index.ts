@@ -32,6 +32,7 @@ export async function dbConnect(
 ): Promise<[DatabaseI, Client]> {
   const client = new Client({
     connectionString: connectionString,
+    
   });
   await client.connect();
   const db: DatabaseI = drizzle(client, {

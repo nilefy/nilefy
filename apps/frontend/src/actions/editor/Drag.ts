@@ -68,7 +68,8 @@ class DragAction implements UndoableCommand {
           (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
         ),
       );
-
+      //select the newly added widget
+      editorStore.currentPage.setSelectedNodeIds(new Set([this.id]));
       return {
         event: 'insert' as const,
         data: {

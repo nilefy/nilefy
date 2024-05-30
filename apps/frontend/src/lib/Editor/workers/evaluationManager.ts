@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable, toJS } from 'mobx';
 import invariant from 'invariant';
 import { entries, get, keys, merge, set } from 'lodash';
 import { evaluate, evaluateAsync } from '../evaluation';
@@ -58,10 +58,12 @@ export class EvaluationManager {
       const { entityId, path } = item.dependency;
       const fullPath = `${entityId}.${path}`;
       const entity = this.editor.getEntityById(entityId);
-      const value = get(
-        this.lastEvaluatedForest,
-        fullPath,
-        get(entity.unevalValues, path, get(entity.actions, path)),
+      const value = toJS(
+        get(
+          this.lastEvaluatedForest,
+          fullPath,
+          get(entity.unevalValues, path, get(entity.actions, path)),
+        ),
       );
       set(context, fullPath, value);
     }
@@ -83,10 +85,12 @@ export class EvaluationManager {
       const { entityId, path } = item.dependency;
       const fullPath = `${entityId}.${path}`;
       const entity = this.editor.getEntityById(entityId);
-      const value = get(
-        this.lastEvaluatedForest,
-        fullPath,
-        get(entity.unevalValues, path, get(entity.actions, path)),
+      const value = toJS(
+        get(
+          this.lastEvaluatedForest,
+          fullPath,
+          get(entity.unevalValues, path, get(entity.actions, path)),
+        ),
       );
       set(context, fullPath, value);
     }

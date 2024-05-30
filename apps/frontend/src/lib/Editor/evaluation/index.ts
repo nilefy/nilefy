@@ -47,7 +47,12 @@ export const evaluate = (
         `with(context) { return (${functionExpressionWrapper(expression)}) }`,
       )(evaluationContext);
     } catch (e: unknown) {
-      const error = e as Error;
+      let error: Error;
+      if (e instanceof Error) {
+        error = e;
+      } else {
+        error = new Error('Unknown error');
+      }
       errors.push(error.name + ': ' + error.message);
       return null;
     }
@@ -92,7 +97,12 @@ export const evaluateAsync = async (
       errors: null,
     };
   } catch (e: unknown) {
-    const error = e as Error;
+    let error: Error;
+    if (e instanceof Error) {
+      error = e;
+    } else {
+      error = new Error('Unknown error');
+    }
     return {
       value: null,
       errors: [error.name + ': ' + error.message],

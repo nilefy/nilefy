@@ -40,10 +40,11 @@ export class DataQueriesService {
       query.dataSourceId,
     );
     const service = this.getService(ds.dataSource.name);
-    return await service.run(ds.config, {
+    const res = await service.run(ds.config, {
       name: query.id,
       query: evaluatedQuery,
     });
+    return res;
   }
 
   async addQuery(query: QueryDb): Promise<CompleteQueryI> {

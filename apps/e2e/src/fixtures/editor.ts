@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { clearApps } from '../utils';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 /**
  * @description assumes the user is logged in
  */
@@ -13,7 +14,12 @@ export class EditorPage {
     PageButton: Locator;
     ispectOnePanel: Locator;
   };
+  bottomPanel!: {
+    addNewQuery: Locator;
+  };
+  queryItems!: Locator;
   rootCanvas!: Locator;
+  quickInfoTooltip!: Locator;
   constructor(page: Page) {
     this.page = page;
   }
@@ -44,16 +50,49 @@ export class EditorPage {
       PageButton: this.page.getByRole('tab', { name: 'Page' }),
       ispectOnePanel: this.page.getByTestId('one-item-inspection-panel'),
     };
-    //todo add a test id
-    this.rootCanvas = this.page.getByTestId('0');
+    this.rootCanvas = this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID);
+    this.bottomPanel = {
+      addNewQuery: this.page.getByRole('button', { name: '+ Add' }),
+    };
+    this.queryItems = this.page.getByTestId('query-item');
+    this.quickInfoTooltip = this.page.locator('.cm-tooltip-hover');
   }
   async dispose(index: number) {
     const username = `user${index}`;
     console.log('disposing', username);
     clearApps(username);
   }
+
+  async addNewJsQuery() {
+    await this.bottomPanel.addNewQuery.click();
+    await this.page.getByRole('menuitem', { name: 'JS Query' }).click();
+    const queryItem = this.queryItems.last();
+    await expect(queryItem).toBeVisible();
+    return queryItem.getAttribute('data-id');
+  }
+  async deleteQuery(id: string) {
+    const queryItem = this.getQueryMenuItem(id);
+    //todo better selector
+    const deleteButton = queryItem.getByRole('button').nth(1);
+    await deleteButton.click();
+    await expect(queryItem).not.toBeVisible();
+  }
+  async selectQuery(id: string) {
+    const queryItem = this.getQueryMenuItem(id);
+    await queryItem.click();
+  }
+  getQueryMenuItem(id: string) {
+    return this.page.locator(`[data-id="${id}"]`);
+  }
   async singleSelect(id: string) {
-    (await this.getWidget(id)).click();
+    let isAlreadySelected = false;
+    const activeId = await this.rightSidebar.ispectOnePanel
+      .getByTestId('selected-widget-id')
+      .inputValue();
+    if (activeId === id) {
+      isAlreadySelected = true;
+    }
+    if (!isAlreadySelected) (await this.getWidget(id)).click();
     await expect(this.rightSidebar.ispectOnePanel).toBeVisible();
   }
   async getInputValue(id: string, field: string) {
@@ -63,11 +102,16 @@ export class EditorPage {
       .getByRole('textbox');
     return await input.innerText();
   }
-  async fillInput(id: string, field: string, value: string) {
+  async fillWidgetInput(id: string, field: string, value: string) {
     await this.singleSelect(id);
     const input = this.rightSidebar.ispectOnePanel
       .locator(`#${id}-${field}`)
       .getByRole('textbox');
+    await input.fill(value);
+  }
+  async fillQueryInput(id: string, field: string, value: string) {
+    await this.selectQuery(id);
+    const input = this.page.locator(`#${id}-${field}`).getByRole('textbox');
     await input.fill(value);
   }
   async getWidget(id: string) {
@@ -75,10 +119,24 @@ export class EditorPage {
     return widget;
   }
   unselectAll() {
-    this.page.getByTestId('0').click();
+    this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID).click();
   }
   async dragAndDropNewWidget(
     widgetName: string,
+    x: number = 0,
+    y: number = 0,
+  ): Promise<string> {
+    return this.dragAndDropNewWidgetInto(
+      widgetName,
+      EDITOR_CONSTANTS.ROOT_NODE_ID,
+      x,
+      y,
+    );
+  }
+
+  async dragAndDropNewWidgetInto(
+    widgetName: string,
+    targetId: string,
     x: number = 0,
     y: number = 0,
   ): Promise<string> {
@@ -87,13 +145,28 @@ export class EditorPage {
       name: widgetName,
       exact: true,
     });
-    await drag(this.page, widget, this.rootCanvas, x, y);
-    const id = await this.rootCanvas
-      .locator('[data-id]')
-      .last()
-      .getAttribute('data-id');
+    const target = this.page.getByTestId(targetId);
+    await drag(this.page, widget, target, x, y);
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
     expect(id).not.toBe(null);
     return id!;
+  }
+
+  async dragAndDropExistingWidget(
+    widgetId: string,
+    targetId: string,
+    x: number = 0,
+    y: number = 0,
+  ) {
+    const widget = this.page.getByTestId(widgetId);
+    const target = this.page.getByTestId(targetId);
+    await drag(this.page, widget, target, x, y);
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
+    expect(id).toBe(widgetId);
   }
 }
 const drag = async (

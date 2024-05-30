@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { generateFakeUser } from '../faker/user.faker';
 import { SeederI } from './seeder.types';
 import { UserDto } from '../../dto/users.dto';
-import { chunkArray } from '../utils';
+import { chunkArray } from '../../utils';
 import { UsersModule } from '../../users/users.module';
 import { UsersService } from '../../users/users.service';
 import { WorkspaceDto } from '../../dto/workspace.dto';

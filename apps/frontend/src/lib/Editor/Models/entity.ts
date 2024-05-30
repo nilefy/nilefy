@@ -50,7 +50,6 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
   public validators: Record<string, ReturnType<typeof ajv.compile>>;
   public codePaths: Set<string>;
   protected readonly workerBroker: WorkerBroker;
-  // public errors: EntityErrorsRecord[string] = {};
   public runtimeErros: Record<string, string[]>;
   public evaluationValidationErrors: Record<string, string[]>;
   public inputValidationErrors: Record<string, string[]>;
