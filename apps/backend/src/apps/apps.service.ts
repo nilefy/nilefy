@@ -289,8 +289,12 @@ export class AppsService {
     return app as AppDto;
   }
 
-  async exportAppJSON(workspaceId: AppDto['workspaceId'], appId: AppDto['id']) {
-    const app = await this.findOne(workspaceId, appId);
+  async exportAppJSON(
+    currentUser: UserDto['id'],
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+  ) {
+    const app = await this.findOne(currentUser, workspaceId, appId);
     console.log(app);
     if (app['deletedAt']) {
       return null;
@@ -331,7 +335,7 @@ export class AppsService {
 
   async importAppJSON(
     importAppDb: ImportAppDb & {
-      pages: Page[];
+      pages: PageDto[];
       defaultPage: DefaultPage;
     },
   ) {
@@ -369,36 +373,3 @@ export class AppsService {
     return app;
   }
 }
-
-type DefaultPage = {
-  handle: string;
-  name: string;
-  enabled: boolean;
-  visible: boolean;
-  tree: {
-    [key: string]: {
-      id: string;
-      nodes: string[];
-      parentId: string;
-      props: {
-        [key: string]: any;
-      };
-      type: string;
-      col: number;
-      row: number;
-      columnsCount: number;
-      rowsCount: number;
-      columnWidth: number;
-    };
-  };
-};
-type Page = {
-  name: string;
-  handle: string;
-  index: number;
-  appId: number;
-  enabled: boolean;
-  visible: boolean;
-  deletedAt?: Date | null;
-  deletedById?: Date | null;
-};

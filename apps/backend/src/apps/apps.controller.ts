@@ -74,10 +74,15 @@ export class AppsController {
     type: AppRetDto,
   })
   async exportOne(
+    @Req() req: ExpressAuthedRequest,
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
   ): Promise<StreamableFile> {
-    const app = await this.appsService.exportAppJSON(workspaceId, appId);
+    const app = await this.appsService.exportAppJSON(
+      req.user.userId,
+      workspaceId,
+      appId,
+    );
 
     const appJson = JSON.stringify(app);
 
