@@ -1,12 +1,12 @@
 import { useHotkeys } from 'react-hotkeys-hook';
 import { EditorState } from '../Models/editor';
-import { CommandManager } from '@/Actions/CommandManager';
-import { DeleteAction } from '@/Actions/Editor/Delete';
-import { CopyAction } from '@/Actions/Editor/Copy';
-import { CutAction } from '@/Actions/Editor/Cut';
-import { ClipboardDataT } from '@/Actions/types';
-import { PasteAction } from '@/Actions/Editor/Paste';
-import ResizeAction from '@/Actions/Editor/Resize';
+import { CommandManager } from '@/actions/CommandManager';
+import { DeleteAction } from '@/actions/editor/Delete';
+import { CopyAction } from '@/actions/editor/Copy';
+import { CutAction } from '@/actions/editor/Cut';
+import { ClipboardDataT } from '@/actions/types';
+import { PasteAction } from '@/actions/editor/Paste';
+import ResizeAction from '@/actions/editor/Resize';
 import { useEditorMousePosition } from './useEditorMousePosition';
 
 export const useEditorHotKeys = (
@@ -16,6 +16,7 @@ export const useEditorHotKeys = (
   const mousePos = useEditorMousePosition();
   useHotkeys('esc', () => {
     commandManager.executeCommand(ResizeAction.cancel());
+    editorStore.currentPage.setSelectedNodeIds(new Set());
   });
   useHotkeys('ctrl+z', () => {
     commandManager.undoCommand();
@@ -50,5 +51,10 @@ export const useEditorHotKeys = (
     } catch (ig) {
       console.log(ig);
     }
+  });
+
+  useHotkeys('ctrl+a', (e) => {
+    e.preventDefault();
+    editorStore.currentPage.selectAll();
   });
 };

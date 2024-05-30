@@ -5,12 +5,12 @@ import { WebloomWidgets, WidgetContext } from '..';
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
 import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
-import { WebloomContainer } from '../WebloomWidgets/Container';
 import { flow, flowRight } from 'lodash';
 import {
   WithDeletePopover,
   WithDnd,
   WithLayout,
+  WithPopover,
   WithResize,
   WithSelection,
 } from './HOCs';
@@ -18,7 +18,8 @@ import {
 const RenderedElement = observer(
   ({ id, isVisible }: { id: string; isVisible: boolean }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
-    if (widget.type === 'WebloomContainer') {
+    const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
+    if (widget.isCanvas) {
       const innerContainerStyle = {
         width: widget.innerContainerPixelDimensions.width + 'px',
         height: widget.innerContainerPixelDimensions.height + 'px',
@@ -29,7 +30,7 @@ const RenderedElement = observer(
       } as const;
 
       return (
-        <WebloomContainer
+        <WebloomWidget
           innerContainerStyle={innerContainerStyle}
           outerContainerStyle={outerContainerStyle}
           isVisibile={isVisible}
@@ -37,10 +38,9 @@ const RenderedElement = observer(
           {widget.nodes.map((nodeId) => (
             <WebloomElement id={nodeId} key={nodeId} />
           ))}
-        </WebloomContainer>
+        </WebloomWidget>
       );
     }
-    const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
     return (
       <WidgetWrapper id={id} isVisible={isVisible}>
         <WebloomWidget>
@@ -99,6 +99,7 @@ const WidgetWrapper = observer(
         }}
         className="target relative h-full w-full touch-none overflow-hidden outline-none"
         data-id={id}
+        data-testid={id}
         data-type={WIDGET_SECTIONS.CANVAS}
       >
         {
@@ -133,6 +134,7 @@ export const WebloomElement: React.FC<{ id: string }> = flowRight(
   WithLayout,
   WithResize,
   WithDnd,
+  WithPopover,
   WithSelection,
   WithDeletePopover,
 )(WebloomElementBase);

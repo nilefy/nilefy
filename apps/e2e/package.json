@@ -1,0 +1,23 @@
+{
+  "name": "@webloom/e2e",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "e2e": "playwright test --ui",
+    "e2e:ui": "playwright test --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@webloom/database": "workspace:*",
+    "bcrypt": "^5.1.1",
+    "drizzle-orm": "^0.30.8",
+    "@webloom/constants": "workspace:^"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "@types/node": "^20.12.5"
+  }
+}

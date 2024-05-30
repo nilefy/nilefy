@@ -1,12 +1,7 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import {
-  DatabaseI,
-  DrizzleAsyncProvider,
-  PgTrans,
-} from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { PageDto } from '../dto/pages.dto';
 import { and, eq, isNull, sql, ne, inArray } from 'drizzle-orm';
-import { components } from '../drizzle/schema/appsState.schema';
 import {
   ComponentDto,
   CreateComponentDb,
@@ -14,6 +9,7 @@ import {
   WebloomTree,
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { components, DatabaseI, PgTrans } from '@webloom/database';
 
 @Injectable()
 export class ComponentsService {

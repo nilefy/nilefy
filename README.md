@@ -1,4 +1,4 @@
-# WEBLOOM
+# Nilefy
 
 ## Getting started
 
@@ -10,7 +10,7 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 
 - install deps `pnpm install`
 
-- create backebd .env `cp apps/backend/.env.example apps/backend/.env`
+- create .env `cp .env.example .env`
 
 - prototype the database schema `pnpm db:push`
 
@@ -31,3 +31,5 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 - for the docs use `pnpm docs:start`
 
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
+
+- how to create new `WebloomWidget` guide check [CONTRIBUTING.md/How to create new Widget](/CONTRIBUTING.md#how-to-create-new-widget)

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { apps as appsDrizzle } from '../drizzle/schema/schema';
+import { apps as appsDrizzle } from '@webloom/database';
 import { createZodDto } from 'nestjs-zod';
 import { pageSchema } from './pages.dto';
 import { userSchema } from './users.dto';
@@ -15,7 +15,6 @@ export const importAppDb = createAppDb.omit({ id: true });
 export const createAppSchema = createAppDb.pick({
   name: true,
   description: true,
-  state: true,
 });
 
 export const updateAppDb = createAppDb
@@ -45,13 +44,7 @@ export class AppDto extends createZodDto(appSchema) {}
 export class CreateAppDto extends createZodDto(createAppSchema) {}
 export class UpdateAppDto extends createZodDto(updateAppSchema) {}
 
-export const createAppRetSchema = appSchema.extend({
-  pages: z.array(
-    pageSchema.extend({
-      tree: z.record(z.string(), z.unknown()),
-    }),
-  ),
-});
+export const createAppRetSchema = appSchema;
 export class CreateAppRetDto extends createZodDto(createAppRetSchema) {}
 
 export const appRetSchema = appSchema.extend({
@@ -80,6 +73,7 @@ export const appRetSchema = appSchema.extend({
       username: true,
     })
     .nullable(),
+  onBoardingCompleted: z.boolean(),
 });
 export class AppRetDto extends createZodDto(appRetSchema) {}
 

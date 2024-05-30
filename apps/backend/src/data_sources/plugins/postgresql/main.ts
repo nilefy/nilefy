@@ -1,7 +1,7 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { configSchema, ConfigT, QueryT } from './types';
-import { Pool, PoolConfig } from 'pg';
+import { Pool, PoolConfig, Client } from 'pg';
 
 export default class PostgresqlQueryService
   implements QueryRunnerI<ConfigT, QueryT>
@@ -15,12 +15,12 @@ export default class PostgresqlQueryService
       const pool = this.connect(dataSourceConfig);
       const res = await pool.query(query.query.query);
       return {
-        status: 200,
+        statusCode: 200,
         data: res.rows,
       };
     } catch (error) {
       return {
-        status: 500,
+        statusCode: 500,
         data: {},
         error: (error as Error).message,
       };
@@ -39,5 +39,29 @@ export default class PostgresqlQueryService
     // TODO: ssl + connection options
 
     return new Pool(config);
+  }
+
+  async testConnection(dataSourceConfig: ConfigT) {
+    const client = new Client({
+      ...dataSourceConfig,
+      connectionTimeoutMillis: 10000,
+    });
+    try {
+      await client.connect();
+      return {
+        connected: true,
+        msg: 'connected successfully',
+      };
+    } catch (error) {
+      return {
+        connected: false,
+        msg:
+          error instanceof Error
+            ? error.message
+            : 'unknown error please check your credentials',
+      };
+    } finally {
+      await client.end();
+    }
   }
 }

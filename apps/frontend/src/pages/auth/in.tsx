@@ -71,8 +71,11 @@ export function SignIn() {
       </p>
       <div>
         <Link
-          // TODO: move this hardcoded value to .env or smth
-          to={'http://localhost:3000/auth/login/google'}
+          to={
+            import.meta.env.DEV
+              ? 'http://localhost:3000/api/auth/login/google'
+              : '/api/auth/login/google'
+          }
           className={buttonVariants({
             variant: 'outline',
           })}

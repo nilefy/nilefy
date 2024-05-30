@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
-import { components as componentsDrizzle } from '../drizzle/schema/appsState.schema';
+import { components as componentsDrizzle } from '@webloom/database';
 
 export const componentSchema = createSelectSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
@@ -69,7 +69,6 @@ export type WebloomNode = {
 export const frontKnownKeysSchema = componentSchema.pick({
   id: true,
   parentId: true,
-  isCanvas: true,
   props: true,
   type: true,
   col: true,

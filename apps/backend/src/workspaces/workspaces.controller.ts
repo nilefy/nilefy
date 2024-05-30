@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -30,11 +31,11 @@ export class WorkspacesController {
 
   @Get()
   @ApiCreatedResponse({
-    description: 'get workspaces',
+    description: 'get user workspaces',
     type: Array<WorkspaceDto>,
   })
-  async index(): Promise<WorkspaceDto[]> {
-    return await this.workspaceService.index(false);
+  async index(@Req() req: ExpressAuthedRequest): Promise<WorkspaceDto[]> {
+    return await this.workspaceService.index(req.user.userId);
   }
 
   @Post()
