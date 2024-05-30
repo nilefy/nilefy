@@ -4,7 +4,6 @@ import rehypeStringify from 'rehype-stringify';
 import Markdown from 'markdown-to-jsx';
 import { unified } from 'unified';
 import { useState, useEffect } from 'react';
-import rehypeHighlight from 'rehype-highlight';
 export const useDataFetcher = (text: string) => {
   const [content, setContent] = useState<React.ReactElement | null>(null);
 
