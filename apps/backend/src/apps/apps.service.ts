@@ -29,7 +29,7 @@ import {
 } from '@webloom/database';
 import { ComponentsService } from '../components/components.service';
 import { alias } from 'drizzle-orm/pg-core';
-import { PageDto } from 'src/dto/pages.dto';
+import { CreatePageRetDto, PageDto } from 'src/dto/pages.dto';
 
 @Injectable()
 export class AppsService {
@@ -336,7 +336,7 @@ export class AppsService {
   async importAppJSON(
     importAppDb: ImportAppDb & {
       pages: PageDto[];
-      defaultPage: DefaultPage;
+      defaultPage: CreatePageRetDto;
     },
   ) {
     let app;
@@ -363,7 +363,7 @@ export class AppsService {
         tx: tx,
       });
       const defaultPage = importAppDb.defaultPage;
-      await this.componentsService.createTreeForPageImport(
+      await this.componentsService.createTree(
         importedPages.id,
         importedPages.createdById,
         defaultPage.tree,

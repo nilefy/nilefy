@@ -4,7 +4,7 @@ import { users as usersSchema } from '@webloom/database';
 import { SeederI } from './seeder.types';
 import { UserDto } from '../../dto/users.dto';
 import { genSalt, hash } from 'bcrypt';
-import { chunkArray } from '../utils';
+import { chunkArray } from '../../utils';
 
 /**
  * index `[0]` is the admin

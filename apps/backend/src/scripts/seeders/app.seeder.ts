@@ -3,7 +3,7 @@ import { UserDto } from '../../dto/users.dto';
 import { WorkspaceDto } from '../../dto/workspace.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
 import { apps, components, DatabaseI, pages } from '@webloom/database';
-import { chunkArray } from '../utils';
+import { chunkArray } from '../../utils';
 
 export async function appSeeder(
   db: DatabaseI,

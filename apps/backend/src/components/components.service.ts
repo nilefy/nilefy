@@ -90,7 +90,32 @@ export class ComponentsService {
       .returning();
   }
 
-  async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
+  private convertComponentsToNilefyTree(
+    coms: (ComponentDto & { level: number })[],
+  ): NilefyTree {
+    const tree: NilefyTree = {};
+    coms.forEach((com) => {
+      tree[com.id] = {
+        id: com.id,
+        nodes: [],
+        // set root node as parent of itself
+        parentId: com.parentId ?? com.id,
+        props: com.props,
+        type: com.type,
+        col: com.col,
+        row: com.row,
+        columnsCount: com.columnsCount,
+        rowsCount: com.rowsCount,
+        columnWidth: 0,
+      };
+      if (com.level > 1) {
+        tree[com.parentId!.toString()]['nodes'].push(com.id.toString());
+      }
+    });
+    return tree;
+  }
+
+  async getComponentsForPage(pageId: PageDto['id']) {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
@@ -112,49 +137,18 @@ export class ComponentsService {
       throw new BadRequestException(
         'page should contain at least one component(root)',
       ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
-    const tree: NilefyTree = {};
-    rows.forEach((row) => {
-      tree[row.id] = {
-        id: row.id,
-        nodes: [],
-        // set root node as parent of itself
-        parentId: row.parentId ?? row.id,
-        props: row.props,
-        type: row.type,
-        col: row.col,
-        row: row.row,
-        columnsCount: row.columnsCount,
-        rowsCount: row.rowsCount,
-        columnWidth: 0,
-      };
-      if (row.level > 1) {
-        tree[row.parentId!.toString()]['nodes'].push(row.id.toString());
-      }
-    });
-    return tree;
+    return rows;
   }
 
-  async createTreeForPageImport(
+  async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
+    const coms = await this.getComponentsForPage(pageId);
+    return this.convertComponentsToNilefyTree(coms);
+  }
+
+  async createPageTreeFromComponentsList(
     pageId: PageDto['id'],
     createdById: PageDto['createdById'],
-    componentsDto:
-      | ImportTreeDto
-      | {
-          [key: string]: {
-            id: string;
-            nodes: string[];
-            parentId: string;
-            props: {
-              [key: string]: any;
-            };
-            type: string;
-            col: number;
-            row: number;
-            columnsCount: number;
-            rowsCount: number;
-            columnWidth: number;
-          };
-        },
+    coms: ComponentDto[],
     options?: {
       tx?: PgTrans;
     },
@@ -198,20 +192,3 @@ export class ComponentsService {
     return [t];
   }
 }
-
-type ImportTreeDto = {
-  [key: string]: {
-    id: string;
-    nodes: string[];
-    parentId: string;
-    props: {
-      [key: string]: any;
-    };
-    type: string;
-    col: number;
-    row: number;
-    columnsCount: number;
-    rowsCount: number;
-    columnWidth: number;
-  };
-};
