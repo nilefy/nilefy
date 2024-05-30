@@ -1,7 +1,7 @@
 import { test as baseTest, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-import { acquireAccount } from '../utils';
+import { acquireAccount, createWorkspaceAndApp } from '../utils';
 import { EditorPage } from './editor';
 //todo env var
 const baseURL = 'http://localhost:4173';
@@ -55,8 +55,10 @@ export const test = baseTest.extend<WebloomFixtures, {
   ],
   editorPage: async ({ page }, use) => {
     const editorPage = new EditorPage(page);
+    const user = `user${test.info().parallelIndex}`;
+    const { workspace, app } = await createWorkspaceAndApp(user);
     try {
-      await editorPage.boot();
+      await editorPage.boot(workspace, app);
       await use(editorPage);
     } finally {
       await editorPage.dispose(test.info().parallelIndex);

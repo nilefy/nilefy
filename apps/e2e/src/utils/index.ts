@@ -8,10 +8,34 @@ import {
   workspaces,
   usersToWorkspaces,
   apps,
+  pages,
 } from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
+export const createWorkspaceAndApp = async (username: string) => {
+  const [db] = await dbConnect(process.env.DB_URL!);
+  const user = await db.query.users.findFirst({
+    where: eq(users.username, username),
+  });
+  const workspace = (
+    await db
+      .insert(workspaces)
+      .values({ name: 'workspace1', createdById: user!.id })
+      .returning()
+  )[0]!;
+  const app = (
+    await db
+      .insert(apps)
+      .values({
+        name: 'My App',
+        createdById: user!.id,
+        workspaceId: workspace.id,
+      })
+      .returning()
+  )[0]!;
 
+  return { workspace: workspace.id, app: app.id };
+};
 export const clearApps = async (username: string) => {
   const [db] = await dbConnect(process.env.DB_URL!);
   const user = await db.query.users.findFirst({
