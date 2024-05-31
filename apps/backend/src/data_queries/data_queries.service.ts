@@ -20,6 +20,8 @@ import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
 import { DatabaseI, queries } from '@webloom/database';
 import { ComponentsService } from '../components/components.service';
+import { apps } from '@webloom/database';
+import { PageDto } from '../dto/pages.dto';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -167,18 +169,37 @@ export class DataQueriesService {
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
   }): Promise<CompleteQueryI> {
-    const newId = query.id;
-    if (newId && newId !== queryId) {
+    if (query.id && query.id !== queryId) {
+      const newId = query.id;
       try {
         await this.getQuery(appId, newId);
         // there is a query with this new id
-        throw new BadRequestException();
+        throw new BadRequestException(
+          `There is another query with name ${newId}`,
+        );
       } catch {}
-      const ret = await this.componentsService.getComponent(newId);
-      if (ret) {
-        // there is a component with this new id
-        throw new BadRequestException();
-      }
+      const appPages = (
+        await this.db.query.apps.findFirst({
+          where: eq(apps.id, appId),
+          with: {
+            pages: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        })
+      )?.pages;
+      (appPages ?? []).forEach(async (page: { id: PageDto['id'] }) => {
+        const pageId = page.id;
+        const ret = await this.componentsService.getComponent(newId, pageId);
+        if (ret) {
+          // there is a component with this new id
+          throw new BadRequestException(
+            `There is a component with name ${newId}, page ${pageId}`,
+          );
+        }
+      });
     }
     const [q] = await this.db
       .update(queries)
