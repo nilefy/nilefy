@@ -22,6 +22,7 @@ import { DatabaseI, queries } from '@webloom/database';
 import { ComponentsService } from '../components/components.service';
 import { apps } from '@webloom/database';
 import { PageDto } from '../dto/pages.dto';
+import { jsQueries } from '@webloom/database';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -178,6 +179,16 @@ export class DataQueriesService {
           `There is another query with name ${newId}`,
         );
       } catch {}
+      const ret = await this.db.query.jsQueries.findFirst({
+        where: and(eq(jsQueries.id, newId), eq(jsQueries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      });
+      if (ret) {
+        // there is a js query with this new id
+        throw new BadRequestException(`There is a JS query with name ${newId}`);
+      }
       const appPages = (
         await this.db.query.apps.findFirst({
           where: eq(apps.id, appId),

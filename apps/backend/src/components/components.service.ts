@@ -9,9 +9,16 @@ import {
   WebloomTree,
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { components, DatabaseI, PgTrans, queries } from '@webloom/database';
+import {
+  components,
+  DatabaseI,
+  PgTrans,
+  queries,
+  jsQueries,
+} from '@webloom/database';
 import { QueryDto } from '../dto/data_queries.dto';
 import { AppDto } from '../dto/apps.dto';
+import { JsQueryDto } from '../dto/js_queries.dto';
 
 @Injectable()
 export class ComponentsService {
@@ -92,6 +99,11 @@ export class ComponentsService {
       if (query) {
         // there is a query with this id
         throw new BadRequestException(`There is a query with name ${newId}`);
+      }
+      const jsQuery = await this.getJsQueryById(newId, appId);
+      if (jsQuery) {
+        // there is a js query with this id
+        throw new BadRequestException(`There is a JS query with name ${newId}`);
       }
     }
 
@@ -196,6 +208,20 @@ export class ComponentsService {
     return (
       await this.db.query.queries.findFirst({
         where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
+  }
+
+  async getJsQueryById(
+    jsQueryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<JsQueryDto['id'] | undefined> {
+    return (
+      await this.db.query.jsQueries.findFirst({
+        where: and(eq(jsQueries.id, jsQueryId), eq(jsQueries.appId, appId)),
         columns: {
           id: true,
         },
