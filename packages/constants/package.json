@@ -1,5 +1,5 @@
 {
-  "name": "@webloom/constants",
+  "name": "@nilefy/constants",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -11,4 +11,3 @@
     "build": "tsup "
   }
 }
- 

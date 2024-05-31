@@ -14,7 +14,7 @@ import { EntityConfigBody, WorkerRequest } from '../workers/common/interface';
 import { WorkerBroker } from './workerBroker';
 import { WebloomDisposable } from './interface';
 import { QueriesManager } from './queriesManager';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';

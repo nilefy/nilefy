@@ -16,7 +16,7 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
-import { DatabaseI, workspaceDataSources } from '@webloom/database';
+import { DatabaseI, workspaceDataSources } from '@nilefy/database';
 
 @Injectable()
 export class DataSourcesService {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { workspaces as workspacesDrizzle } from '@webloom/database';
+import { workspaces as workspacesDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const workspaceSchema = createSelectSchema(workspacesDrizzle, {

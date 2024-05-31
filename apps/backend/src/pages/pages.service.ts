@@ -11,18 +11,13 @@ import {
   PageDto,
   UpdatePageDb,
 } from '../dto/pages.dto';
-import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
-import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import {
-  CreateComponentDb,
-  NilefyNode,
-  NilefyTree,
-} from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { NilefyNode, NilefyTree } from '../dto/components.dto';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { alias } from 'drizzle-orm/pg-core';
-import { DatabaseI, pages, PgTrans, components } from '@webloom/database';
+import { DatabaseI, pages, PgTrans, components } from '@nilefy/database';
 @Injectable()
 export class PagesService {
   constructor(
@@ -34,6 +29,9 @@ export class PagesService {
     return sql`(select (COALESCE(max(${pages.index}) , 0) + 1) from pages where pages.app_id = ${appId})`;
   }
 
+  /**
+   * create page with the default root component
+   */
   async create(
     pageDto: Omit<CreatePageDb, 'index' | 'handle' | 'index'> & {
       handle?: PageDto['handle'];
@@ -55,7 +53,7 @@ export class PagesService {
       [
         {
           id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-          type: 'WebloomContainer',
+          type: EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME,
           pageId: p.id,
           createdById: pageDto.createdById,
           parentId: null,
@@ -217,11 +215,9 @@ export class PagesService {
   async delete({
     appId,
     pageId,
-    deletedById,
   }: {
     appId: AppDto['id'];
     pageId: PageDto['id'];
-    deletedById: UserDto['id'];
   }): Promise<PageDto[]> {
     const [{ count }] = await this.db
       .select({

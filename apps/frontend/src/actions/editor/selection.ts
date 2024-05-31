@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 // import store from '@/store';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { Command } from '../types';
 
 /**

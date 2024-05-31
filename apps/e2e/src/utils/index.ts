@@ -1,3 +1,4 @@
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   dbConnect,
   permissions,
@@ -8,10 +9,60 @@ import {
   workspaces,
   usersToWorkspaces,
   apps,
-} from '@webloom/database';
+  pages,
+  components,
+} from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
-import { and, eq, isNull, sql } from 'drizzle-orm';
-
+import { and, eq } from 'drizzle-orm';
+export const createWorkspaceAndApp = async (username: string) => {
+  const [db] = await dbConnect(process.env.DB_URL!);
+  const user = await db.query.users.findFirst({
+    where: eq(users.username, username),
+  });
+  const workspace = (
+    await db
+      .insert(workspaces)
+      .values({ name: 'workspace1', createdById: user!.id })
+      .returning()
+  )[0]!;
+  const app = (
+    await db
+      .insert(apps)
+      .values({
+        name: 'My App',
+        createdById: user!.id,
+        workspaceId: workspace.id,
+      })
+      .returning()
+  )[0]!;
+  const page = (
+    await db
+      .insert(pages)
+      .values({
+        appId: app.id,
+        createdById: user!.id,
+        handle: 'new_page',
+        index: 0,
+        name: 'new page',
+      })
+      .returning()
+  )[0]!;
+  await db.insert(components).values({
+    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    type: EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME,
+    pageId: page.id,
+    createdById: user!.id,
+    parentId: null,
+    props: {
+      className: 'h-full w-full',
+    },
+    col: 0,
+    row: 0,
+    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+    rowsCount: 0,
+  });
+  return { workspace: workspace.id, app: app.id, page: page.id };
+};
 export const clearApps = async (username: string) => {
   const [db] = await dbConnect(process.env.DB_URL!);
   const user = await db.query.users.findFirst({
@@ -26,14 +77,9 @@ export const clearApps = async (username: string) => {
     const res = await Promise.all(
       userApps.map(async (app) => {
         return await db
-          .update(apps)
-          .set({ deletedAt: sql`now()`, deletedById: userId })
+          .delete(apps)
           .where(
-            and(
-              eq(apps.id, app.id),
-              eq(apps.workspaceId, app.workspaceId),
-              isNull(apps.deletedAt),
-            ),
+            and(eq(apps.id, app.id), eq(apps.workspaceId, app.workspaceId)),
           )
           .returning();
       }),

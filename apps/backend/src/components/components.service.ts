@@ -8,8 +8,8 @@ import {
   UpdateComponentDb,
   NilefyTree,
 } from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { components, DatabaseI, PgTrans } from '@webloom/database';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { components, DatabaseI, PgTrans } from '@nilefy/database';
 
 @Injectable()
 export class ComponentsService {

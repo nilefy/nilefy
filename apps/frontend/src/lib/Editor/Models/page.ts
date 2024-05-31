@@ -6,7 +6,7 @@ import {
   ShadowElement,
   WebloomGridDimensions,
 } from '../interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   checkOverlap,
   convertGridToPixel,

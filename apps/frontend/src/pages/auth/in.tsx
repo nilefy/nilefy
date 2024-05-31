@@ -93,7 +93,7 @@ export function SignIn() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="nagy@webloom.com"
+                    placeholder="nagy@nilefy.com"
                     autoFocus={true}
                     {...field}
                   />

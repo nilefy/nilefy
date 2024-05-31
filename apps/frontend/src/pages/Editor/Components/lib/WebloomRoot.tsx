@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { MultiSelectBounding, WebloomElement } from '.';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 

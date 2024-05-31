@@ -1,10 +1,8 @@
 {
-  "id": "ec7e7dff-deb3-47f3-bb99-f4c04062929c",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "6",
+  "dialect": "postgresql",
   "tables": {
-    "components": {
+    "public.components": {
       "name": "components",
       "schema": "",
       "columns": {
@@ -99,69 +97,69 @@
         "components_page_id_pages_id_fk": {
           "name": "components_page_id_pages_id_fk",
           "tableFrom": "components",
-          "tableTo": "pages",
           "columnsFrom": [
             "page_id"
           ],
+          "tableTo": "pages",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "components_created_by_id_users_id_fk": {
           "name": "components_created_by_id_users_id_fk",
           "tableFrom": "components",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "components_updated_by_id_users_id_fk": {
           "name": "components_updated_by_id_users_id_fk",
           "tableFrom": "components",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "components_deleted_by_id_users_id_fk": {
           "name": "components_deleted_by_id_users_id_fk",
           "tableFrom": "components",
-          "tableTo": "users",
           "columnsFrom": [
             "deleted_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "components_parent_id_page_id_components_id_page_id_fk": {
           "name": "components_parent_id_page_id_components_id_page_id_fk",
           "tableFrom": "components",
-          "tableTo": "components",
           "columnsFrom": [
             "parent_id",
             "page_id"
           ],
+          "tableTo": "components",
           "columnsTo": [
             "id",
             "page_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -175,7 +173,7 @@
       },
       "uniqueConstraints": {}
     },
-    "app_js_libraries": {
+    "public.app_js_libraries": {
       "name": "app_js_libraries",
       "schema": "",
       "columns": {
@@ -234,54 +232,54 @@
         "app_js_libraries_app_id_apps_id_fk": {
           "name": "app_js_libraries_app_id_apps_id_fk",
           "tableFrom": "app_js_libraries",
-          "tableTo": "apps",
           "columnsFrom": [
             "app_id"
           ],
+          "tableTo": "apps",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "app_js_libraries_created_by_id_users_id_fk": {
           "name": "app_js_libraries_created_by_id_users_id_fk",
           "tableFrom": "app_js_libraries",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "app_js_libraries_updated_by_id_users_id_fk": {
           "name": "app_js_libraries_updated_by_id_users_id_fk",
           "tableFrom": "app_js_libraries",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "app_js_libraries_deleted_by_id_users_id_fk": {
           "name": "app_js_libraries_deleted_by_id_users_id_fk",
           "tableFrom": "app_js_libraries",
-          "tableTo": "users",
           "columnsFrom": [
             "deleted_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -295,7 +293,7 @@
       },
       "uniqueConstraints": {}
     },
-    "pages": {
+    "public.pages": {
       "name": "pages",
       "schema": "",
       "columns": {
@@ -386,77 +384,77 @@
         "pages_app_id_apps_id_fk": {
           "name": "pages_app_id_apps_id_fk",
           "tableFrom": "pages",
-          "tableTo": "apps",
           "columnsFrom": [
             "app_id"
           ],
+          "tableTo": "apps",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "pages_created_by_id_users_id_fk": {
           "name": "pages_created_by_id_users_id_fk",
           "tableFrom": "pages",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "pages_updated_by_id_users_id_fk": {
           "name": "pages_updated_by_id_users_id_fk",
           "tableFrom": "pages",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "pages_deleted_by_id_users_id_fk": {
           "name": "pages_deleted_by_id_users_id_fk",
           "tableFrom": "pages",
-          "tableTo": "users",
           "columnsFrom": [
             "deleted_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "pages_app_id_name_unique": {
           "name": "pages_app_id_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "app_id",
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         },
         "pages_app_id_handle_unique": {
           "name": "pages_app_id_handle_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "app_id",
             "handle"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "data_sources": {
+    "public.data_sources": {
       "name": "data_sources",
       "schema": "",
       "columns": {
@@ -508,7 +506,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "app_js_queries": {
+    "public.app_js_queries": {
       "name": "app_js_queries",
       "schema": "",
       "columns": {
@@ -567,41 +565,41 @@
         "app_js_queries_app_id_apps_id_fk": {
           "name": "app_js_queries_app_id_apps_id_fk",
           "tableFrom": "app_js_queries",
-          "tableTo": "apps",
           "columnsFrom": [
             "app_id"
           ],
+          "tableTo": "apps",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "app_js_queries_created_by_id_users_id_fk": {
           "name": "app_js_queries_created_by_id_users_id_fk",
           "tableFrom": "app_js_queries",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "app_js_queries_updated_by_id_users_id_fk": {
           "name": "app_js_queries_updated_by_id_users_id_fk",
           "tableFrom": "app_js_queries",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -615,7 +613,7 @@
       },
       "uniqueConstraints": {}
     },
-    "workspace_app_queries": {
+    "public.workspace_app_queries": {
       "name": "workspace_app_queries",
       "schema": "",
       "columns": {
@@ -681,54 +679,54 @@
         "workspace_app_queries_app_id_apps_id_fk": {
           "name": "workspace_app_queries_app_id_apps_id_fk",
           "tableFrom": "workspace_app_queries",
-          "tableTo": "apps",
           "columnsFrom": [
             "app_id"
           ],
+          "tableTo": "apps",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspace_app_queries_data_source_id_workspace_data_sources_id_fk": {
           "name": "workspace_app_queries_data_source_id_workspace_data_sources_id_fk",
           "tableFrom": "workspace_app_queries",
-          "tableTo": "workspace_data_sources",
           "columnsFrom": [
             "data_source_id"
           ],
+          "tableTo": "workspace_data_sources",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "workspace_app_queries_created_by_id_users_id_fk": {
           "name": "workspace_app_queries_created_by_id_users_id_fk",
           "tableFrom": "workspace_app_queries",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspace_app_queries_updated_by_id_users_id_fk": {
           "name": "workspace_app_queries_updated_by_id_users_id_fk",
           "tableFrom": "workspace_app_queries",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -742,7 +740,7 @@
       },
       "uniqueConstraints": {}
     },
-    "workspace_data_sources": {
+    "public.workspace_data_sources": {
       "name": "workspace_data_sources",
       "schema": "",
       "columns": {
@@ -808,70 +806,70 @@
         "workspace_data_sources_workspace_id_workspaces_id_fk": {
           "name": "workspace_data_sources_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_data_sources",
-          "tableTo": "workspaces",
           "columnsFrom": [
             "workspace_id"
           ],
+          "tableTo": "workspaces",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspace_data_sources_data_source_id_data_sources_id_fk": {
           "name": "workspace_data_sources_data_source_id_data_sources_id_fk",
           "tableFrom": "workspace_data_sources",
-          "tableTo": "data_sources",
           "columnsFrom": [
             "data_source_id"
           ],
+          "tableTo": "data_sources",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspace_data_sources_created_by_id_users_id_fk": {
           "name": "workspace_data_sources_created_by_id_users_id_fk",
           "tableFrom": "workspace_data_sources",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspace_data_sources_updated_by_id_users_id_fk": {
           "name": "workspace_data_sources_updated_by_id_users_id_fk",
           "tableFrom": "workspace_data_sources",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "workspace_data_sources_workspace_id_data_source_id_name_unique": {
           "name": "workspace_data_sources_workspace_id_data_source_id_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "workspace_id",
             "data_source_id",
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "accounts": {
+    "public.accounts": {
       "name": "accounts",
       "schema": "",
       "columns": {
@@ -899,15 +897,15 @@
         "accounts_userId_users_id_fk": {
           "name": "accounts_userId_users_id_fk",
           "tableFrom": "accounts",
-          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -921,7 +919,7 @@
       },
       "uniqueConstraints": {}
     },
-    "apps": {
+    "public.apps": {
       "name": "apps",
       "schema": "",
       "columns": {
@@ -992,60 +990,60 @@
         "apps_created_by_id_users_id_fk": {
           "name": "apps_created_by_id_users_id_fk",
           "tableFrom": "apps",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "apps_workspace_id_workspaces_id_fk": {
           "name": "apps_workspace_id_workspaces_id_fk",
           "tableFrom": "apps",
-          "tableTo": "workspaces",
           "columnsFrom": [
             "workspace_id"
           ],
+          "tableTo": "workspaces",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "apps_updated_by_id_users_id_fk": {
           "name": "apps_updated_by_id_users_id_fk",
           "tableFrom": "apps",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "apps_deleted_by_id_users_id_fk": {
           "name": "apps_deleted_by_id_users_id_fk",
           "tableFrom": "apps",
-          "tableTo": "users",
           "columnsFrom": [
             "deleted_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "permissions": {
+    "public.permissions": {
       "name": "permissions",
       "schema": "",
       "columns": {
@@ -1081,14 +1079,14 @@
       "uniqueConstraints": {
         "permissions_name_unique": {
           "name": "permissions_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "permissions_to_roles": {
+    "public.permissions_to_roles": {
       "name": "permissions_to_roles",
       "schema": "",
       "columns": {
@@ -1110,28 +1108,28 @@
         "permissions_to_roles_permission_id_permissions_id_fk": {
           "name": "permissions_to_roles_permission_id_permissions_id_fk",
           "tableFrom": "permissions_to_roles",
-          "tableTo": "permissions",
           "columnsFrom": [
             "permission_id"
           ],
+          "tableTo": "permissions",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "permissions_to_roles_role_id_roles_id_fk": {
           "name": "permissions_to_roles_role_id_roles_id_fk",
           "tableFrom": "permissions_to_roles",
-          "tableTo": "roles",
           "columnsFrom": [
             "role_id"
           ],
+          "tableTo": "roles",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1145,7 +1143,7 @@
       },
       "uniqueConstraints": {}
     },
-    "roles": {
+    "public.roles": {
       "name": "roles",
       "schema": "",
       "columns": {
@@ -1216,69 +1214,69 @@
         "roles_workspace_id_workspaces_id_fk": {
           "name": "roles_workspace_id_workspaces_id_fk",
           "tableFrom": "roles",
-          "tableTo": "workspaces",
           "columnsFrom": [
             "workspace_id"
           ],
+          "tableTo": "workspaces",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "roles_created_by_id_users_id_fk": {
           "name": "roles_created_by_id_users_id_fk",
           "tableFrom": "roles",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "roles_updated_by_id_users_id_fk": {
           "name": "roles_updated_by_id_users_id_fk",
           "tableFrom": "roles",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "roles_deleted_by_id_users_id_fk": {
           "name": "roles_deleted_by_id_users_id_fk",
           "tableFrom": "roles",
-          "tableTo": "users",
           "columnsFrom": [
             "deleted_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "roles_workspace_id_name_unique": {
           "name": "roles_workspace_id_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "workspace_id",
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -1357,14 +1355,14 @@
       "uniqueConstraints": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "users_to_roles": {
+    "public.users_to_roles": {
       "name": "users_to_roles",
       "schema": "",
       "columns": {
@@ -1386,28 +1384,28 @@
         "users_to_roles_user_id_users_id_fk": {
           "name": "users_to_roles_user_id_users_id_fk",
           "tableFrom": "users_to_roles",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "users_to_roles_role_id_roles_id_fk": {
           "name": "users_to_roles_role_id_roles_id_fk",
           "tableFrom": "users_to_roles",
-          "tableTo": "roles",
           "columnsFrom": [
             "role_id"
           ],
+          "tableTo": "roles",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1421,7 +1419,7 @@
       },
       "uniqueConstraints": {}
     },
-    "users_to_workspaces": {
+    "public.users_to_workspaces": {
       "name": "users_to_workspaces",
       "schema": "",
       "columns": {
@@ -1443,28 +1441,28 @@
         "users_to_workspaces_user_id_users_id_fk": {
           "name": "users_to_workspaces_user_id_users_id_fk",
           "tableFrom": "users_to_workspaces",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "users_to_workspaces_workspace_id_workspaces_id_fk": {
           "name": "users_to_workspaces_workspace_id_workspaces_id_fk",
           "tableFrom": "users_to_workspaces",
-          "tableTo": "workspaces",
           "columnsFrom": [
             "workspace_id"
           ],
+          "tableTo": "workspaces",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1478,7 +1476,7 @@
       },
       "uniqueConstraints": {}
     },
-    "columns": {
+    "public.columns": {
       "name": "columns",
       "schema": "",
       "columns": {
@@ -1512,30 +1510,30 @@
         "columns_table_id_tables_id_fk": {
           "name": "columns_table_id_tables_id_fk",
           "tableFrom": "columns",
-          "tableTo": "tables",
           "columnsFrom": [
             "table_id"
           ],
+          "tableTo": "tables",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "columns_table_id_name_unique": {
           "name": "columns_table_id_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "table_id",
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "tables": {
+    "public.tables": {
       "name": "tables",
       "schema": "",
       "columns": {
@@ -1582,42 +1580,42 @@
         "tables_created_by_id_users_id_fk": {
           "name": "tables_created_by_id_users_id_fk",
           "tableFrom": "tables",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "tables_workspace_id_workspaces_id_fk": {
           "name": "tables_workspace_id_workspaces_id_fk",
           "tableFrom": "tables",
-          "tableTo": "workspaces",
           "columnsFrom": [
             "workspace_id"
           ],
+          "tableTo": "workspaces",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "tables_name_unique": {
           "name": "tables_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "workspaces": {
+    "public.workspaces": {
       "name": "workspaces",
       "schema": "",
       "columns": {
@@ -1670,28 +1668,28 @@
         "workspaces_created_by_id_users_id_fk": {
           "name": "workspaces_created_by_id_users_id_fk",
           "tableFrom": "workspaces",
-          "tableTo": "users",
           "columnsFrom": [
             "created_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "workspaces_updated_by_id_users_id_fk": {
           "name": "workspaces_updated_by_id_users_id_fk",
           "tableFrom": "workspaces",
-          "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1699,48 +1697,54 @@
     }
   },
   "enums": {
-    "data_sources_enum": {
+    "public.data_sources_enum": {
       "name": "data_sources_enum",
-      "values": {
-        "database": "database",
-        "api": "api",
-        "cloud storage": "cloud storage",
-        "plugin": "plugin"
-      }
+      "schema": "public",
+      "values": [
+        "database",
+        "api",
+        "cloud storage",
+        "plugin"
+      ]
     },
-    "queries_trigger_mode": {
+    "public.queries_trigger_mode": {
       "name": "queries_trigger_mode",
-      "values": {
-        "manually": "manually",
-        "onAppLoad": "onAppLoad"
-      }
+      "schema": "public",
+      "values": [
+        "manually",
+        "onAppLoad"
+      ]
     },
-    "pg_columns_enum": {
+    "public.pg_columns_enum": {
       "name": "pg_columns_enum",
-      "values": {
-        "varchar": "varchar",
-        "int": "int",
-        "bigint": "bigint",
-        "serial": "serial",
-        "boolean": "boolean"
-      }
+      "schema": "public",
+      "values": [
+        "varchar",
+        "int",
+        "bigint",
+        "serial",
+        "boolean"
+      ]
     },
-    "permissions_enum": {
+    "public.permissions_enum": {
       "name": "permissions_enum",
-      "values": {
-        "Workspaces-Read": "Workspaces-Read",
-        "Workspaces-Write": "Workspaces-Write",
-        "Workspaces-Delete": "Workspaces-Delete",
-        "Apps-Read": "Apps-Read",
-        "Apps-Write": "Apps-Write",
-        "Apps-Delete": "Apps-Delete"
-      }
+      "schema": "public",
+      "values": [
+        "Workspaces-Read",
+        "Workspaces-Write",
+        "Workspaces-Delete",
+        "Apps-Read",
+        "Apps-Write",
+        "Apps-Delete"
+      ]
     }
   },
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "ec7e7dff-deb3-47f3-bb99-f4c04062929c",
+  "prevId": "00000000-0000-0000-0000-000000000000"
 }

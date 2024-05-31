@@ -11,7 +11,7 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { eq } from 'drizzle-orm';
 import { PermissionTypes } from '../dto/permissions.dto';
 import { UserDto } from '../dto/users.dto';
-import { DatabaseI, users } from '@webloom/database';
+import { DatabaseI, users } from '@nilefy/database';
 
 const PERMISSIONS_KEY = 'permissions_key' as const;
 const ONLY_ADMIN_KEY = 'need_admin_key' as const;

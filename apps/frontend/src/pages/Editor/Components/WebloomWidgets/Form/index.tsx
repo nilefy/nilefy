@@ -134,7 +134,7 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
   blueprint: {
     children: [
       {
-        type: 'WebloomText',
+        type: 'NilefyText',
         props: {
           text: 'Form',
         },

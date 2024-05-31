@@ -161,7 +161,6 @@ export class AppsController {
     type: AppDto,
   })
   async delete(
-    @Req() req: ExpressAuthedRequest,
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('id', ParseIntPipe) appId: number,
   ) {
@@ -169,7 +168,6 @@ export class AppsController {
     return await this.appsService.delete({
       workspaceId,
       appId,
-      deletedById: req.user.userId,
     });
   }
 }
