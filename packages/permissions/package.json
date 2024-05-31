@@ -1,5 +1,5 @@
 {
-  "name": "@webloom/permissions",
+  "name": "@nilefy/permissions",
   "version": "1.0.0",
   "description": "",
   "keywords": [],
@@ -12,10 +12,9 @@
     "dev": "tsup --watch --dts",
     "build": "tsup "
   },
-
   "dependencies": {
     "zod": "^3.22.4"
-  },  
+  },
   "devDependencies": {
     "tsup": "^8.0.1"
   }

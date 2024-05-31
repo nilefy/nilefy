@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
-import { components as componentsDrizzle } from '@webloom/database';
+import { components as componentsDrizzle } from '@nilefy/database';
 
 export const componentSchema = createSelectSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
@@ -68,4 +68,4 @@ export const frontKnownKeysSchema = componentSchema.pick({
 
 export const frontKnownKeys = frontKnownKeysSchema.keyof().options;
 
-export type WebloomTree = Record<string, WebloomNode>;
+export type NilefyTree = Record<string, WebloomNode>;

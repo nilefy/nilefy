@@ -1,4 +1,4 @@
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState } from 'react';
 import { editorStore } from '@/lib/Editor/Models';

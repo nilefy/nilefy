@@ -14,7 +14,7 @@ import {
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import {
@@ -25,7 +25,7 @@ import {
   components,
   queries as drizzleQueries,
   users,
-} from '@webloom/database';
+} from '@nilefy/database';
 import { alias } from 'drizzle-orm/pg-core';
 import { PageDto } from 'src/dto/pages.dto';
 
@@ -44,7 +44,7 @@ export class AppsService {
     createdById: UserDto['id'];
     workspaceId: AppDto['workspaceId'];
     appId: AppDto['id'];
-  }): Promise<CreateAppRetDto> {
+  }): Promise<Omit<CreateAppRetDto, 'pages'>> {
     const newApp = await this.db.transaction(async (tx) => {
       const apps2 = alias(apps, 'apps2');
       const createAppSql = sql<AppDto>`
@@ -135,29 +135,39 @@ export class AppsService {
     return newPage;
   }
 
-  async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
-    const app = await this.db.transaction(async (tx) => {
-      const [app] = await tx.insert(apps).values(createAppDto).returning();
-      // create default page for the app
-      const page = await this.pagesService.create(
-        {
-          name: 'page 1',
-          createdById: createAppDto.createdById,
-          appId: app.id,
-        },
-        {
-          tx: tx,
-        },
-      );
-      return { ...app, pages: [page] };
-    });
+  async create(
+    createAppDto: CreateAppDb,
+    options?: { tx?: PgTrans },
+  ): Promise<CreateAppRetDto> {
+    return await (options?.tx
+      ? this.createHelper(createAppDto, options.tx)
+      : this.db.transaction(async (tx) => {
+          return await this.createHelper(createAppDto, tx);
+        }));
+  }
 
-    return app;
+  private async createHelper(
+    createAppDto: CreateAppDb,
+    tx: PgTrans,
+  ): Promise<CreateAppRetDto> {
+    const [app] = await tx.insert(apps).values(createAppDto).returning();
+    // create default page for the app
+    const page = await this.pagesService.create(
+      {
+        name: 'page 1',
+        createdById: createAppDto.createdById,
+        appId: app.id,
+      },
+      {
+        tx: tx,
+      },
+    );
+    return { ...app, pages: [page] };
   }
 
   async findAll(workspaceId: AppDto['workspaceId']): Promise<AppsRetDto[]> {
     const workspaceApps = await this.db.query.apps.findMany({
-      where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
+      where: and(eq(apps.workspaceId, workspaceId)),
       orderBy: asc(apps.createdAt),
       with: {
         createdBy: {
@@ -193,11 +203,7 @@ export class AppsService {
       throw new NotFoundException();
     }
     const app = await this.db.query.apps.findFirst({
-      where: and(
-        eq(apps.id, appId),
-        eq(apps.workspaceId, workspaceId),
-        isNull(apps.deletedAt),
-      ),
+      where: and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)),
       with: {
         createdBy: {
           columns: {
@@ -249,13 +255,7 @@ export class AppsService {
     const [app] = await this.db
       .update(apps)
       .set({ updatedAt: sql`now()`, ...updateAppDto })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');
@@ -265,22 +265,13 @@ export class AppsService {
   async delete({
     workspaceId,
     appId,
-    deletedById,
   }: {
-    deletedById: AppDto['deletedById'];
     appId: AppDto['id'];
     workspaceId: AppDto['workspaceId'];
   }): Promise<AppDto> {
     const [app] = await this.db
-      .update(apps)
-      .set({ deletedAt: sql`now()`, deletedById })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .delete(apps)
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');

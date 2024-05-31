@@ -20,11 +20,8 @@
     "declaration": true,
     "declarationMap": true,
     /* If your code doesn't run in the DOM: */
-    "lib": [
-      "es2022"
-    ],
+    "lib": ["es2022"],
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-  ]
+  "include": ["src/**/*.ts", "drizzle.config.ts"]
 }

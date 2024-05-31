@@ -9,7 +9,7 @@ import ErrorPage from './pages/error';
 import { Dashboard, loader as workspacesLoader } from './pages/mainLayout';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
-import { GroupManagement, GroupsManagement } from '@/pages/workspace/group';
+import { RoleManagement, RolesManagement } from '@/pages/workspace/role';
 import { WorkspaceSettingsLayout } from '@/pages/workspace/workspace';
 import { ProfileSettings } from '@/pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -31,7 +31,6 @@ import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
-import { startWorker } from '../mocks/browser';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -105,24 +104,24 @@ const router = createBrowserRouter([
               },
             ],
           },
-          { path: 'profile-settings', element: <ProfileSettings /> },
           {
             path: 'workspace-settings',
             element: <WorkspaceSettingsLayout />,
             children: [
               { path: '', element: <UsersManagement /> },
               {
-                path: 'groups',
-                element: <GroupsManagement />,
+                path: 'roles',
+                element: <RolesManagement />,
                 children: [
                   {
-                    path: ':groupId',
-                    element: <GroupManagement />,
+                    path: ':roleId',
+                    element: <RoleManagement />,
                   },
                 ],
               },
             ],
           },
+          { path: 'profile-settings', element: <ProfileSettings /> },
         ],
       },
     ],
@@ -172,13 +171,6 @@ const router = createBrowserRouter([
 const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
 
-async function enableMocking() {
-  if (process.env.NODE_ENV == 'development') {
-    return startWorker();
-  }
-}
-
-// enableMocking().then(() => {
 root.render(
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -188,4 +180,3 @@ root.render(
     <ReactQueryDevtools buttonPosition="bottom-right" />
   </QueryClientProvider>,
 );
-// });

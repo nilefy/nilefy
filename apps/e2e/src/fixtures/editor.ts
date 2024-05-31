@@ -1,6 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { clearApps } from '../utils';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 /**
  * @description assumes the user is logged in
  */
@@ -23,27 +23,9 @@ export class EditorPage {
   constructor(page: Page) {
     this.page = page;
   }
-  async boot() {
-    await this.page.goto(`/`);
-    const createButton = this.page
-      .getByRole('button', {
-        name: 'create new app',
-      })
-      .first();
-    await createButton.click();
-    const appNameInput = this.page.getByLabel('Name');
-    this.appName = 'My App';
-    appNameInput.fill(this.appName);
-    await this.page
-      .getByRole('button', {
-        name: 'Create App',
-      })
-      .click();
+  async boot(workspaceId: number, appId: number) {
+    await this.page.goto(`/${workspaceId}/apps/edit/${appId}`);
 
-    const editButton = this.page.getByRole('link', { name: 'Edit' });
-    await editButton.click();
-    const newAppInEditor = this.page.getByText(this.appName);
-    await expect(newAppInEditor).toBeVisible();
     this.rightSidebar = {
       insertButton: this.page.getByRole('tab', { name: 'Insert' }),
       inspectButton: this.page.getByRole('tab', { name: 'Inspect' }),

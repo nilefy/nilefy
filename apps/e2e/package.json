@@ -1,5 +1,5 @@
 {
-  "name": "@webloom/e2e",
+  "name": "@nilefy/e2e",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -11,10 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@webloom/database": "workspace:*",
+    "@nilefy/database": "workspace:*",
     "bcrypt": "^5.1.1",
-    "drizzle-orm": "^0.30.8",
-    "@webloom/constants": "workspace:^"
+    "drizzle-orm": "^0.30.10",
+    "@nilefy/constants": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",
