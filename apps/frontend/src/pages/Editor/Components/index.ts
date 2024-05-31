@@ -17,10 +17,11 @@ import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
 import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
 import { WebloomTextAreaWidget } from './WebloomWidgets/TextArea';
 import { WebloomFormWidget } from './WebloomWidgets/Form';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
-  WebloomContainer: WebloomContainerWidget,
+  [EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME]: WebloomContainerWidget,
   WebloomInput: WebloomInputWidget,
   WebloomNumberInput: WebloomNumberInputWidget,
   WebloomTextArea: WebloomTextAreaWidget,

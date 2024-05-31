@@ -1,3 +1,4 @@
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   dbConnect,
   permissions,
@@ -9,6 +10,7 @@ import {
   usersToWorkspaces,
   apps,
   pages,
+  components,
 } from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
@@ -33,8 +35,33 @@ export const createWorkspaceAndApp = async (username: string) => {
       })
       .returning()
   )[0]!;
-
-  return { workspace: workspace.id, app: app.id };
+  const page = (
+    await db
+      .insert(pages)
+      .values({
+        appId: app.id,
+        createdById: user!.id,
+        handle: 'new_page',
+        index: 0,
+        name: 'new page',
+      })
+      .returning()
+  )[0]!;
+  await db.insert(components).values({
+    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+    type: EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME,
+    pageId: page.id,
+    createdById: user!.id,
+    parentId: null,
+    props: {
+      className: 'h-full w-full',
+    },
+    col: 0,
+    row: 0,
+    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+    rowsCount: 0,
+  });
+  return { workspace: workspace.id, app: app.id, page: page.id };
 };
 export const clearApps = async (username: string) => {
   const [db] = await dbConnect(process.env.DB_URL!);
