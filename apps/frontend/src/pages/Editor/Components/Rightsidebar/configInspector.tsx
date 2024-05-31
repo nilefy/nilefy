@@ -20,6 +20,7 @@ import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
 import { useAutoRun } from '@/lib/Editor/hooks';
+import { ChangePropAction } from '@/actions/editor/changeProps';
 
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
@@ -139,7 +140,9 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         onBlur={(e) => {
           editorStore.currentPage
             .getWidgetById(node.id)
-            .setValue('name', e.target.value);
+            .setName(e.target.value);
+          // .setValue('name', e.target.value);
+          commandManager.executeCommand(new ChangePropAction(node.id));
         }}
       />
     </div>

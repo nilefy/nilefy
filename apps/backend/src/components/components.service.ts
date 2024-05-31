@@ -78,18 +78,20 @@ export class ComponentsService {
     },
   ) {
     // id/name is changed
-    if (dto.props && dto.props.name !== componentId) {
-      const newId = dto.props.name as string;
+    if (dto.name && dto.name !== componentId) {
+      const newId = dto.name as string;
       // there is a component with this new id
       const component = await this.getComponent(newId);
       if (component) {
-        throw new BadRequestException();
+        throw new BadRequestException(
+          `There is another component with name ${newId}`,
+        );
       }
       const { appId } = (await this.getComponent(componentId))!;
       const query = await this.getQueryById(newId, appId);
       if (query) {
         // there is a query with this id
-        throw new BadRequestException();
+        throw new BadRequestException(`There is a query with name ${newId}`);
       }
     }
 
@@ -104,7 +106,7 @@ export class ComponentsService {
       .update(components)
       .set({
         ...dto,
-        id: (dto.props?.name as string) ?? componentId,
+        id: (dto.name as string) ?? componentId,
         parentId:
           componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
         updatedAt: sql`now()`,

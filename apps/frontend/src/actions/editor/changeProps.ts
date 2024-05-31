@@ -7,9 +7,15 @@ export class ChangePropAction implements Command {
   constructor(private comId: WebloomWidget['id']) {}
 
   execute() {
+    const widget = editorStore.currentPage.getWidgetById(this.comId);
     return {
       event: 'update' as const,
-      data: [editorStore.currentPage.getWidgetById(this.comId).snapshot],
+      data: [
+        {
+          ...widget.snapshot,
+          name: widget.widgetName,
+        },
+      ],
     };
   }
 }

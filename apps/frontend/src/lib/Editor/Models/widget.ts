@@ -77,6 +77,7 @@ export class WebloomWidget
   rowsCount: number;
   page: WebloomPage;
   metaProps: Set<string>;
+  widgetName: string;
   constructor({
     type,
     parentId,
@@ -119,6 +120,7 @@ export class WebloomWidget
       ),
       metaValues: widgetConfig.metaProps,
     });
+    this.widgetName = id;
     this.metaProps = widgetConfig.metaProps ?? new Set();
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
@@ -211,6 +213,9 @@ export class WebloomWidget
       this.debouncedSyncRawValuesWithServer();
     }
     super.setValue(path, value);
+  }
+  setName(name: string) {
+    this.widgetName = name;
   }
   setApi(api: Record<string, (...args: unknown[]) => void>) {
     this.api = api;

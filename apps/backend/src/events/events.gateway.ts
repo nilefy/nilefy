@@ -28,7 +28,10 @@ class LoomSocket extends WebSocket {
 }
 
 type LoomServer = Server<typeof LoomSocket>;
-type UpdateNodePayload = (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+type UpdateNodePayload = (Partial<WebloomNode> & {
+  id: WebloomNode['id'];
+  name?: WebloomNode['id'];
+})[];
 
 // TODO: make page id dynamic
 // TODO: make app id dynamic
