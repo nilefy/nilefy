@@ -81,13 +81,13 @@ export class ComponentsService {
     if (dto.name && dto.name !== componentId) {
       const newId = dto.name as string;
       // there is a component with this new id
-      const component = await this.getComponent(newId);
+      const component = await this.getComponent(newId, pageId);
       if (component) {
         throw new BadRequestException(
           `There is another component with name ${newId}`,
         );
       }
-      const { appId } = (await this.getComponent(componentId))!;
+      const { appId } = (await this.getComponent(componentId, pageId))!;
       const query = await this.getQueryById(newId, appId);
       if (query) {
         // there is a query with this id
@@ -161,9 +161,10 @@ export class ComponentsService {
 
   async getComponent(
     componentId: ComponentDto['id'],
+    pageId: PageDto['id'],
   ): Promise<{ id: ComponentDto['id']; appId: AppDto['id'] } | undefined> {
     const ret = await this.db.query.components.findFirst({
-      where: eq(components.id, componentId),
+      where: and(eq(components.id, componentId), eq(components.pageId, pageId)),
       columns: {
         id: true,
       },
