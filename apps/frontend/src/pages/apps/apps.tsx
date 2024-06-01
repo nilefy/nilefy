@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -436,13 +437,37 @@ function ApplicationsView() {
 }
 
 export function ApplicationsLayout() {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useParams();
+  const importApp = api.apps.import.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+    },
+  });
+
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
       <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
-        <div className=" w-full">
+        <div className=" flex w-full flex-col gap-5">
           <CreateAppDialog />
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                importApp.mutate({
+                  workspaceId: +(workspaceId as string),
+                  formData,
+                });
+              }}
+            >
+              <Label htmlFor="picture">Import From Json</Label>
+              <Input id="file" name="file" type="file" />
+              <Button type="submit">Import</Button>
+            </form>
+          </div>
         </div>
         <div className="mt-auto">
           <SelectWorkSpace />
