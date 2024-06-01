@@ -3,6 +3,8 @@ import { RemoteTypes, UndoableCommand } from '../types';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { toJS } from 'mobx';
 import { updateOrderMap } from '@/lib/Editor/entitiesNameSeed';
+import ResizeAction from './Resize';
+import { commandManager } from '../CommandManager';
 
 /**
  * @NOTE: the default behaviour: the action will delete current selected widgets
@@ -28,6 +30,8 @@ export class DeleteAction implements UndoableCommand {
       targetNodes = Array.from(toJS(editorStore.currentPage.selectedNodeIds));
       editorStore.currentPage.setSelectedNodeIds(new Set());
     }
+    editorStore.currentPage.setResizedWidgetId(null);
+    commandManager.executeCommand(ResizeAction.cancel());
     for (const id of targetNodes) {
       this.nodes = [
         ...this.nodes,
