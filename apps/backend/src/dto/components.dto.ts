@@ -27,7 +27,7 @@ export const updateComponentDb = createComponentDb
   .omit({ pageId: true, id: true })
   .extend({
     updatedById: z.number(),
-    name: z.string().optional(),
+    newId: z.string().optional(),
   });
 
 export type ComponentDto = z.infer<typeof componentSchema>;
