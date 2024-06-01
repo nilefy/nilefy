@@ -89,18 +89,6 @@ const operations = [
   'Delete Document',
 ];
 
-const operationsOptions = z
-  .union([
-    z.literal('Create Document'),
-    z.literal('Find Document'),
-    z.literal('View Database Collections'),
-    z.literal('Count Documents'),
-    z.literal('Update Document'),
-    z.literal('Replace Document'),
-    z.literal('Delete Document'),
-  ])
-  .default('Create Document');
-
 export const queryConfigForm = {
   formConfig: [
     {
@@ -123,14 +111,172 @@ export const queryConfigForm = {
               { label: 'Replace Document', value: 'Replace Document' },
               { label: 'Delete Document', value: 'Delete Document' },
             ],
-            validation: zodToJsonSchema(operationsOptions),
+            validation: zodToJsonSchema(
+              z
+                .union([
+                  z.literal('Create Document'),
+                  z.literal('Find Document'),
+                  z.literal('View Database Collections'),
+                  z.literal('Count Documents'),
+                  z.literal('Update Document'),
+                  z.literal('Replace Document'),
+                  z.literal('Delete Document'),
+                ])
+                .default('Create Document'),
+            ),
           },
         },
-        // {
-        //   path: 'config.operation',
-        //   label: 'Operation',
-        //   type: 'select',
-        // }
+        {
+          path: 'config.database',
+          label: 'Database',
+          type: 'input',
+          options: {
+            placeholder: 'Enter database name',
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              database: z.string().optional(),
+            }),
+          ),
+        },
+        {
+          path: 'config.collection',
+          label: 'Collection',
+          type: 'input',
+          options: {
+            placeholder: 'Enter collection name',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'EQUALS',
+                value: operations[2],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              collection: z.string().min(1),
+            }),
+          ),
+        },
+        {
+          path: 'config.documents',
+          label: 'Document/s',
+          type: 'inlineCodeInput', // input ?
+          options: {
+            placeholder: 'Enter document/s to create',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[0],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              documents: z.array(z.record(z.string(), z.unknown())),
+            }),
+          ),
+        },
+        {
+          path: 'config.filter',
+          label: 'Filter',
+          type: 'inlineCodeInput', // input ?
+          options: {
+            placeholder: 'Enter filter object',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'IN',
+                value: [operations[0], operations[2]],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              /**
+               * should be optional in 'Count Documents' operation
+               */
+              filter: z.record(z.string(), z.unknown()),
+            }),
+          ),
+        },
+        {
+          path: 'config.update',
+          label: 'Update',
+          type: 'inlineCodeInput', // input ?
+          options: {
+            placeholder: 'Enter update object',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[4],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              update: z.record(z.string(), z.unknown()),
+            }),
+          ),
+        },
+        {
+          path: 'config.replacement',
+          label: 'Replacement',
+          type: 'inlineCodeInput', // input ?
+          options: {
+            placeholder: 'Enter replacement object',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[5],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              replacement: z.record(z.string(), z.unknown()),
+            }),
+          ),
+        },
+        {
+          path: 'config.multiple',
+          label: 'Multiple',
+          type: '', // boolean
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_IN',
+                value: [operations[1], operations[4], operations[6]],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              multiple: z.boolean().optional(),
+            }),
+          ),
+        },
       ],
     },
   ],
