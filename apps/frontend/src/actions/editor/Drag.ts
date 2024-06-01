@@ -63,10 +63,8 @@ class DragAction implements UndoableCommand {
         .filter((test) => test !== this.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
-      const blueprintChildren = affectedNodes.concat(
-        addedWidget.nodes.map(
-          (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
-        ),
+      const blueprintChildren = addedWidget.nodes.map(
+        (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
       );
       //select the newly added widget
       editorStore.currentPage.setSelectedNodeIds(new Set([this.id]));
