@@ -68,3 +68,12 @@ export function updateOrderMap(
     }
   });
 }
+
+export function entitiyNameExists(entityName: string) {
+  return Object.entries(entityOrder).some(([type, set]) => {
+    return [...set].some((order) => {
+      const currentName = `${type}${order}`;
+      return currentName === entityName;
+    });
+  });
+}
