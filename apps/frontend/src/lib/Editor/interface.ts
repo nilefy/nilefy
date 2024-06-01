@@ -1,16 +1,11 @@
 import { InputProps } from '@/components/ui/input';
-import {
-  Component,
-  ExoticComponent,
-  FunctionComponent,
-  ReactElement,
-  ReactNode,
-} from 'react';
+import { FunctionComponent, ReactNode } from 'react';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
 import { NewWidgePayload } from './Models/page';
 import { LucideProps } from 'lucide-react';
+import { IsHidden } from '@/pages/Editor/Components/entityForm';
 
 type BaseControlProps = {
   label: string;
@@ -96,7 +91,7 @@ export type FormControl<
   isEvent?: boolean;
   path: Key;
 
-  hidden?(props: TProps): boolean;
+  hidden?: IsHidden;
   validation?: JsonSchema7Type;
 } & BaseControlProps &
   ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;
