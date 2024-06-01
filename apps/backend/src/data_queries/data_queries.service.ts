@@ -13,7 +13,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
-import { DatabaseI, queries } from '@nilefy/database';
+import { DatabaseI, PgTrans, queries } from '@nilefy/database';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -47,11 +47,20 @@ export class DataQueriesService {
     return res;
   }
 
+  /**
+   * @returns return complete query back
+   */
   async addQuery(query: QueryDb): Promise<CompleteQueryI> {
     const [q] = await this.db.insert(queries).values(query).returning({
       id: queries.id,
     });
     return await this.getQuery(query.appId, q.id);
+  }
+
+  async insert(queriesDto: QueryDb[], options?: { tx?: PgTrans }) {
+    await (options?.tx ? options.tx : this.db)
+      .insert(queries)
+      .values(queriesDto);
   }
 
   async getAppQueries(appId: QueryDto['appId']): Promise<AppQueriesDto[]> {

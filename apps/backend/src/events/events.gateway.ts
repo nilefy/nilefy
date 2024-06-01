@@ -17,7 +17,7 @@ import { Inject } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { PageDto } from 'src/dto/pages.dto';
 import { pick } from 'lodash';
-import { WebloomNode, frontKnownKeys } from '../dto/components.dto';
+import { NilefyNode, frontKnownKeys } from '../dto/components.dto';
 import { DatabaseI } from '@nilefy/database';
 
 class LoomSocket extends WebSocket {
@@ -28,7 +28,7 @@ class LoomSocket extends WebSocket {
 }
 
 type LoomServer = Server<typeof LoomSocket>;
-type UpdateNodePayload = (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+type UpdateNodePayload = (Partial<NilefyNode> & { id: NilefyNode['id'] })[];
 
 // TODO: make page id dynamic
 // TODO: make app id dynamic
@@ -94,7 +94,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       nodes,
       sideEffects,
     }: {
-      nodes: WebloomNode[];
+      nodes: NilefyNode[];
       sideEffects: UpdateNodePayload;
     },
   ) {
@@ -193,7 +193,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       nodesId,
       sideEffects,
     }: {
-      nodesId: WebloomNode['id'][];
+      nodesId: NilefyNode['id'][];
       sideEffects: UpdateNodePayload;
     },
   ) {

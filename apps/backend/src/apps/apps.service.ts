@@ -7,10 +7,12 @@ import {
 } from '@nestjs/common';
 import {
   AppDto,
+  AppExportSchema,
   AppRetDto,
   AppsRetDto,
   CreateAppDb,
   CreateAppRetDto,
+  // ImportAppDb,
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -26,14 +28,22 @@ import {
   queries as drizzleQueries,
   users,
 } from '@nilefy/database';
+import { ComponentsService } from '../components/components.service';
 import { alias } from 'drizzle-orm/pg-core';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { JsQueriesService } from '../js_queries/js_queries.service';
+import { JsLibrariesService } from '../js_libraries/js_libraries.service';
 
 @Injectable()
 export class AppsService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
+    private componentsService: ComponentsService,
+    private queriesService: DataQueriesService,
+    private jsQueriesService: JsQueriesService,
+    private jsLibsService: JsLibrariesService,
   ) {}
 
   async clone({
@@ -187,6 +197,9 @@ export class AppsService {
     return workspaceApps;
   }
 
+  /**
+   * @returns get application with its default page which is the first page
+   */
   async findOne(
     currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
@@ -276,5 +289,134 @@ export class AppsService {
 
     if (!app) throw new NotFoundException('app not found in this workspace');
     return app as AppDto;
+  }
+
+  async exportAppJSON(
+    currentUser: UserDto['id'],
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+  ): Promise<AppExportSchema> {
+    const app = await this.findOne(currentUser, workspaceId, appId);
+    const appPages = app.pages;
+    const pagesPromise = Promise.all(
+      appPages.map((p) => this.componentsService.getComponentsForPage(p.id)),
+    );
+    const [pages, queries, jsQueries, jsLibs] = await Promise.all([
+      pagesPromise,
+      this.queriesService.getAppQueries(app.id),
+      this.jsQueriesService.index(app.id),
+      this.jsLibsService.index(app.id),
+    ]);
+    return {
+      // TODO: hoist versions in global scope
+      version: '0.0.1',
+      name: app.name,
+      description: app.description,
+      pages: pages.map((tree, i) => ({
+        ...appPages[i],
+        tree: tree.map((c) => ({
+          id: c.id,
+          type: c.type,
+          level: c.level,
+          col: c.col,
+          row: c.row,
+          props: c.props,
+          rowsCount: c.rowsCount,
+          columnsCount: c.columnsCount,
+          parentId: c.parentId,
+          pageId: c.pageId,
+        })),
+      })),
+      queries: queries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        dataSourceId: q.dataSource.id,
+        baseDatasourceId: q.dataSource.dataSource.id,
+      })),
+      jsQueries: jsQueries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        settings: q.settings,
+      })),
+      jsLibs: jsLibs.map((l) => ({
+        id: l.id,
+        url: l.url,
+      })),
+    };
+  }
+
+  // TODO: handle case where datasource doesn't exist
+  async importAppJSON(
+    currentUser: number,
+    workspaceId: number,
+    appData: AppExportSchema,
+  ) {
+    return await this.db.transaction(async (tx) => {
+      const [app] = await tx
+        .insert(apps)
+        .values({
+          name: appData.name + 'from json',
+          description: appData.description,
+          workspaceId: workspaceId,
+          createdById: currentUser,
+        })
+        .returning();
+      const appId = app.id;
+      const createdById = app.createdById;
+      const pages = await this.pagesService.createWithoutDefaultRoot(
+        appData.pages.map((p) => ({
+          appId: appId,
+          createdById,
+          handle: p.handle,
+          index: p.index,
+          name: p.name,
+          enabled: p.enabled,
+          visible: p.visible,
+        })),
+        { tx },
+      );
+      await Promise.all([
+        this.componentsService.create(
+          appData.pages.flatMap((p, i) =>
+            p.tree.map((c) => ({ ...c, pageId: pages[i].id, createdById })),
+          ),
+          { tx },
+        ),
+        // TODO: handle case where datasource might not exist in this workspace or doesn't exist at all
+        appData.queries.length > 0
+          ? this.queriesService.insert(
+              appData.queries.map((q) => ({
+                ...q,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsQueries.length > 0
+          ? this.jsQueriesService.insert(
+              appData.jsQueries.map((q) => ({
+                ...q,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsLibs.length > 0
+          ? this.jsLibsService.insert(
+              appData.jsLibs.map((l) => ({
+                ...l,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+      ]);
+      return app;
+    });
   }
 }

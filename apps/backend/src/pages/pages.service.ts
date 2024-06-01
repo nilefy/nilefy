@@ -11,11 +11,10 @@ import {
   PageDto,
   UpdatePageDb,
 } from '../dto/pages.dto';
-import { and, asc, eq, gt, gte, isNull, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, lt, lte, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
-import { UserDto } from '../dto/users.dto';
 import { ComponentsService } from '../components/components.service';
-import { WebloomNode, NilefyTree } from '../dto/components.dto';
+import { NilefyNode, NilefyTree } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { alias } from 'drizzle-orm/pg-core';
 import { DatabaseI, pages, PgTrans, components } from '@nilefy/database';
@@ -78,7 +77,7 @@ export class PagesService {
           ...rootComponent,
           id: rootComponent.id,
           parentId: rootComponent.parentId ?? rootComponent.id,
-          props: rootComponent.props as WebloomNode['props'],
+          props: rootComponent.props as NilefyNode['props'],
           nodes: [],
         },
       } satisfies NilefyTree,
@@ -119,18 +118,14 @@ export class PagesService {
 
   async index(appId: number): Promise<PageDto[]> {
     return await this.db.query.pages.findMany({
-      where: and(eq(pages.appId, appId), isNull(pages.deletedAt)),
+      where: eq(pages.appId, appId),
       orderBy: asc(pages.index),
     });
   }
 
   async findOne(appId: number, pageId: number): Promise<CreatePageRetDto> {
     const p = await this.db.query.pages.findFirst({
-      where: and(
-        eq(pages.appId, appId),
-        eq(pages.id, pageId),
-        isNull(pages.deletedAt),
-      ),
+      where: and(eq(pages.appId, appId), eq(pages.id, pageId)),
     });
     if (!p)
       throw new NotFoundException(
@@ -149,11 +144,7 @@ export class PagesService {
     if (pageDto.index !== undefined) {
       const oldIndex = await this.db.query.pages.findFirst({
         columns: { index: true },
-        where: and(
-          eq(pages.appId, appId),
-          eq(pages.id, pageId),
-          isNull(pages.deletedAt),
-        ),
+        where: and(eq(pages.appId, appId), eq(pages.id, pageId)),
       });
 
       if (!oldIndex)
@@ -173,7 +164,6 @@ export class PagesService {
           .where(
             and(
               eq(pages.appId, appId),
-              isNull(pages.deletedAt),
               gt(pages.index, oldIndex.index),
               lte(pages.index, pageDto.index),
             ),
@@ -185,7 +175,6 @@ export class PagesService {
           .where(
             and(
               eq(pages.appId, appId),
-              isNull(pages.deletedAt),
               lt(pages.index, oldIndex.index),
               gte(pages.index, pageDto.index),
             ),
@@ -198,50 +187,43 @@ export class PagesService {
         ...pageDto,
         updatedAt: sql`now()`,
       })
-      .where(
-        and(
-          eq(pages.appId, appId),
-          eq(pages.id, pageId),
-          isNull(pages.deletedAt),
-        ),
-      )
+      .where(and(eq(pages.appId, appId), eq(pages.id, pageId)))
       .returning();
+  }
+
+  async createWithoutDefaultRoot(
+    pageDto: CreatePageDb[],
+    options?: { tx?: PgTrans },
+  ) {
+    const res = await (options?.tx ? options.tx : this.db)
+      .insert(pages)
+      .values(pageDto)
+      .returning();
+    return res;
   }
 
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
   async delete({
     appId,
     pageId,
-    deletedById,
   }: {
     appId: AppDto['id'];
     pageId: PageDto['id'];
-    deletedById: UserDto['id'];
   }): Promise<PageDto[]> {
     const [{ count }] = await this.db
       .select({
         count: sql<number>`cast(count(${pages.id}) as int)`,
       })
       .from(pages)
-      .where(and(eq(pages.appId, appId), isNull(pages.deletedAt)));
+      .where(eq(pages.appId, appId));
 
     if (count === 1) {
       throw new BadRequestException('cannot delete the only page in an app');
     }
 
     return await this.db
-      .update(pages)
-      .set({
-        deletedById: deletedById,
-        deletedAt: sql`now()`,
-      })
-      .where(
-        and(
-          eq(pages.appId, appId),
-          eq(pages.id, pageId),
-          isNull(pages.deletedAt),
-        ),
-      )
+      .delete(pages)
+      .where(and(eq(pages.appId, appId), eq(pages.id, pageId)))
       .returning();
   }
 }

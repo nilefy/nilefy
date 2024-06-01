@@ -5,5 +5,6 @@ import { JsQueriesService } from './js_queries.service';
 @Module({
   controllers: [JsQueriesController],
   providers: [JsQueriesService],
+  exports: [JsQueriesService],
 })
 export class JsQueriesModule {}

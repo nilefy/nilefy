@@ -39,7 +39,7 @@ export const workspaceDataSources = pgTable(
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 100 }).notNull(),
     workspaceId: integer("workspace_id")
-      .references(() => workspaces.id)
+      .references(() => workspaces.id, { onDelete: "cascade" })
       .notNull(),
     dataSourceId: integer("data_source_id")
       .references(() => dataSources.id)
@@ -84,7 +84,7 @@ export const queries = pgTable(
       .default("manually")
       .notNull(),
     appId: integer("app_id")
-      .references(() => apps.id)
+      .references(() => apps.id, { onDelete: "cascade" })
       .notNull(),
     dataSourceId: integer("data_source_id")
       .references(() => workspaceDataSources.id, { onDelete: "cascade" })
@@ -108,7 +108,7 @@ export const jsQueries = pgTable(
      */
     id: text("id").notNull(),
     appId: integer("app_id")
-      .references(() => apps.id)
+      .references(() => apps.id, { onDelete: "cascade" })
       .notNull(),
     /**
      * query **un-evaluated**: js queries are always ran on the client side

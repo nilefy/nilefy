@@ -7,5 +7,6 @@ import { DataSourcesModule } from '../data_sources/data_sources.module';
   imports: [DataSourcesModule],
   controllers: [DataQueriesController],
   providers: [DataQueriesService],
+  exports: [DataQueriesService],
 })
 export class DataQueriesModule {}
