@@ -88,7 +88,54 @@ const operations = [
   'Replace Document',
   'Delete Document',
 ];
+
+const operationsOptions = z
+  .union([
+    z.literal('Create Document'),
+    z.literal('Find Document'),
+    z.literal('View Database Collections'),
+    z.literal('Count Documents'),
+    z.literal('Update Document'),
+    z.literal('Replace Document'),
+    z.literal('Delete Document'),
+  ])
+  .default('Create Document');
+
 export const queryConfigForm = {
+  formConfig: [
+    {
+      sectionName: 'Basic',
+      children: [
+        {
+          path: 'config.operation',
+          label: 'Operation',
+          type: 'select',
+          options: {
+            items: [
+              { label: 'Create Document', value: 'Create Document' },
+              { label: 'Find Document', value: 'Find Document' },
+              {
+                label: 'View Database Collections',
+                value: 'View Database Collections',
+              },
+              { label: 'Count Documents', value: 'Count Documents' },
+              { label: 'Update Document', value: 'Update Document' },
+              { label: 'Replace Document', value: 'Replace Document' },
+              { label: 'Delete Document', value: 'Delete Document' },
+            ],
+            validation: zodToJsonSchema(operationsOptions),
+          },
+        },
+        // {
+        //   path: 'config.operation',
+        //   label: 'Operation',
+        //   type: 'select',
+        // }
+      ],
+    },
+  ],
+};
+export const queryConfig = {
   schema: {
     type: 'object',
     properties: {
