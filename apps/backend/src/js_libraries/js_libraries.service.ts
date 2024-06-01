@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDto } from '../dto/apps.dto';
-import { DatabaseI, jsLibraries } from '@nilefy/database';
+import { DatabaseI, jsLibraries, PgTrans } from '@nilefy/database';
 import {
   JsLibraryDb,
   JsLibraryDto,
@@ -13,9 +13,18 @@ import {
 export class JsLibrariesService {
   constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
 
-  async create(jsQuery: JsLibraryDb) {
-    const [q] = await this.db.insert(jsLibraries).values(jsQuery).returning();
+  /**
+   * @returns create one and return it
+   */
+  async create(jsLib: JsLibraryDb) {
+    const [q] = await this.db.insert(jsLibraries).values(jsLib).returning();
     return q;
+  }
+
+  async insert(jsLibs: JsLibraryDb[], options?: { tx?: PgTrans }) {
+    return await (options?.tx ? options.tx : this.db)
+      .insert(jsLibraries)
+      .values(jsLibs);
   }
 
   async update({
@@ -39,6 +48,9 @@ export class JsLibrariesService {
     return q;
   }
 
+  /**
+   * @returns get app js libs
+   */
   async index(appId: AppDto['id']) {
     return await this.db.query.jsLibraries.findMany({
       where: eq(jsLibraries.appId, appId),

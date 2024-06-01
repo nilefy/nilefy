@@ -4,12 +4,17 @@ import { apps as appsDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 import { pageSchema } from './pages.dto';
 import { userSchema } from './users.dto';
+import { componentSchema } from './components.dto';
+import { querySchema } from './data_queries.dto';
+import { jsQuerySchema } from './js_queries.dto';
+import { jsLibrariesSchema } from './js_libraries.dto';
 
 export const appSchema = createSelectSchema(appsDrizzle);
 
 export const createAppDb = createInsertSchema(appsDrizzle, {
   name: (schema) => schema.name.min(1).max(100),
 });
+export const importAppDb = createAppDb.omit({ id: true });
 
 export const createAppSchema = createAppDb.pick({
   name: true,
@@ -31,6 +36,7 @@ export const updateAppSchema = createAppSchema.partial();
  * insert in the db interface
  */
 export type CreateAppDb = z.infer<typeof createAppDb>;
+export type ImportAppDb = z.infer<typeof importAppDb>;
 /**
  * API insert interface
  */
@@ -75,6 +81,70 @@ export const appRetSchema = appSchema.extend({
     .nullable(),
   onBoardingCompleted: z.boolean(),
 });
+
+export const appExportSchema = appSchema
+  .pick({
+    name: true,
+    description: true,
+  })
+  .extend({
+    version: z.string(),
+    pages: z.array(
+      pageSchema
+        .pick({
+          id: true,
+          name: true,
+          handle: true,
+          index: true,
+          enabled: true,
+          visible: true,
+        })
+        .extend({
+          tree: z.array(
+            componentSchema
+              .omit({
+                createdAt: true,
+                createdById: true,
+                deletedById: true,
+                updatedAt: true,
+                updatedById: true,
+              })
+              .extend({
+                level: z.number(),
+              }),
+          ),
+        }),
+    ),
+    queries: z.array(
+      querySchema
+        .pick({
+          id: true,
+          query: true,
+          triggerMode: true,
+          dataSourceId: true,
+        })
+        .extend({
+          baseDatasourceId: z.number(),
+        }),
+    ),
+    jsQueries: z.array(
+      jsQuerySchema.pick({
+        id: true,
+        query: true,
+        settings: true,
+        triggerMode: true,
+      }),
+    ),
+    jsLibs: z.array(
+      jsLibrariesSchema.pick({
+        id: true,
+        url: true,
+      }),
+    ),
+  });
+
+export type AppExportSchema = z.infer<typeof appExportSchema>;
+
 export class AppRetDto extends createZodDto(appRetSchema) {}
 
 export const appsRetSchema = appSchema.extend({
