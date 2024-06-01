@@ -177,15 +177,6 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         options: { placeholder: 'Enter default value' },
         validation: zodToJsonSchema(z.string().default('')),
       },
-      {
-        path: 'value',
-        label: 'Test',
-        type: 'inlineCodeInput',
-
-        options: {
-          placeholder: 'Enter test',
-        },
-      },
     ],
   },
   {
