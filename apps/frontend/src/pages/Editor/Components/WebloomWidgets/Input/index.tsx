@@ -181,21 +181,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
         path: 'value',
         label: 'Test',
         type: 'inlineCodeInput',
-        hidden: {
-          conditionType: 'AND',
-          conditions: [
-            {
-              path: 'type',
-              comparison: 'EQUALS',
-              value: 'password',
-            },
-            {
-              path: 'defaultValue',
-              comparison: 'EQUALS',
-              value: 'hello',
-            },
-          ],
-        },
+
         options: {
           placeholder: 'Enter test',
         },
