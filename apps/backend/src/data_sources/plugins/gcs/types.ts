@@ -79,16 +79,6 @@ const operations = [
   'Download file', // 4
 ];
 
-const operationsOptions = z
-  .union([
-    z.literal('Delete file'),
-    z.literal('Upload file'),
-    z.literal('List buckets'),
-    z.literal('List files in a bucket'),
-    z.literal('Download file'),
-  ])
-  .default('Delete file');
-
 export const queryConfigForm = {
   formConfig: [
     {
@@ -109,16 +99,114 @@ export const queryConfigForm = {
               },
               { label: 'Download file', value: 'Download file' },
             ],
-            validation: zodToJsonSchema(operationsOptions),
+            validation: zodToJsonSchema(
+              z
+                .union([
+                  z.literal('Delete file'),
+                  z.literal('Upload file'),
+                  z.literal('List buckets'),
+                  z.literal('List files in a bucket'),
+                  z.literal('Download file'),
+                ])
+                .default('Delete file'),
+            ),
           },
         },
-        // {
-        //   path: 'config.operation',
-        //   label: 'Operation',
-        //   type: 'select',
-        // }
-      ],
-    },
+        {
+          path: 'config.bucket',
+          label: 'Bucket',
+          type: 'input',
+          options: {
+            placeholder: 'Enter bucket name',
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              bucket: z.string(),
+            }),
+          ),
+        },
+        {
+          path: 'config.file',
+          label: 'File',
+          type: 'input',
+          options: {
+            placeholder: 'Enter file name',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'IN',
+                value: [operations[1], operations[2], operations[3]],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              file: z.string(),
+            }),
+          ),
+        },
+        {
+          path: 'config.filePath',
+          label: 'File Path',
+          type: '', // file picker
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[1],
+              },
+            ],
+          },
+        },
+        {
+          path: 'config.prefix',
+          label: 'Prefix',
+          type: 'input',
+          options: {
+            placeholder: 'Enter prefix',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[3],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              prefix: z.string().optional(),
+            }),
+          ),
+        },
+        {
+          path: 'config.destination',
+          label: 'Destination',
+          type: '', // file picker
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[4],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(
+            z.object({
+              destination: z.string().optional(),
+            }),
+          ),
+        },
+      }
   ],
 };
 
