@@ -206,7 +206,8 @@ export const queryConfigForm = {
             }),
           ),
         },
-      }
+      ],
+    },
   ],
 };
 

@@ -421,23 +421,26 @@ export const QueryPanel = observer(function QueryPanel() {
               >
                 JS Query
               </DropdownMenuItem>
-              {filteredDatasources.map((item) => (
-                // ADD NEW QUERY
-                <DropdownMenuItem
-                  key={`${item.name}${item.id}`}
-                  onClick={() => {
-                    editorStore.queriesManager.addQuery.mutate({
-                      dto: {
-                        dataSourceId: item.id,
-                        id: getNewEntityName(item.name),
-                        query: {},
-                      },
-                    });
-                  }}
-                >
-                  {item.name}
-                </DropdownMenuItem>
-              ))}
+              {filteredDatasources.map((item) => {
+                const id = getNewEntityName(item.name, false);
+                return (
+                  // ADD NEW QUERY
+                  <DropdownMenuItem
+                    key={`${item.name}-${id}`}
+                    onClick={() => {
+                      editorStore.queriesManager.addQuery.mutate({
+                        dto: {
+                          dataSourceId: item.id,
+                          id: getNewEntityName(item.name),
+                          query: {},
+                        },
+                      });
+                    }}
+                  >
+                    {item.name}
+                  </DropdownMenuItem>
+                );
+              })}
               <DropdownMenuItem asChild>
                 <Link to={`/${workspaceId}/datasources`}>Add New</Link>
               </DropdownMenuItem>
