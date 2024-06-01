@@ -493,8 +493,7 @@ export const QueryPanel = observer(function QueryPanel() {
                       setEditingItemValue(null);
                       try {
                         const query = editorStore.getQueryById(item.id);
-                        query.setQueryName(e.target.value);
-                        query.updateQueryMutator.mutate();
+                        query.updateQueryMutator.mutate(e.target.value);
                       } catch {
                         // TODO: error message
                         e.target.value = item.id;

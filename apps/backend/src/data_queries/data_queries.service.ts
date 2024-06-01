@@ -172,20 +172,25 @@ export class DataQueriesService {
   }): Promise<CompleteQueryI> {
     if (query.id && query.id !== queryId) {
       const newId = query.id;
-      try {
-        await this.getQuery(appId, newId);
+      const q = await this.db.query.queries.findFirst({
+        where: and(eq(queries.id, newId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      });
+      if (q) {
         // there is a query with this new id
         throw new BadRequestException(
           `There is another query with name ${newId}`,
         );
-      } catch {}
-      const ret = await this.db.query.jsQueries.findFirst({
+      }
+      const jsQuery = await this.db.query.jsQueries.findFirst({
         where: and(eq(jsQueries.id, newId), eq(jsQueries.appId, appId)),
         columns: {
           id: true,
         },
       });
-      if (ret) {
+      if (jsQuery) {
         // there is a js query with this new id
         throw new BadRequestException(`There is a JS query with name ${newId}`);
       }

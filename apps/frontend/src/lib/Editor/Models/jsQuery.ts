@@ -93,7 +93,6 @@ export class WebloomJSQuery
   workspaceId: number;
   createdAt: JsQueryI['createdAt'];
   updatedAt: JsQueryI['updatedAt'];
-  queryName: string;
   // as inconvenient as it is, this makes things consistent across all queries
   dataSource = {
     dataSource: {
@@ -104,7 +103,7 @@ export class WebloomJSQuery
   updateQueryMutator: MobxMutation<
     Awaited<ReturnType<typeof updateJSquery>>,
     FetchXError,
-    void,
+    string | undefined,
     void
   >;
   queryRunner: MobxMutation<
@@ -168,16 +167,15 @@ export class WebloomJSQuery
       // @ts-expect-error TODO: fix this
       entityActionConfig: QueryActions,
     });
-    this.queryName = this.id;
     this.queryClient = queryClient;
     this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
-      mutationFn: () => {
+      mutationFn: (newId: string | undefined) => {
         return updateJSquery({
           appId,
           workspaceId,
           queryId: this.id,
           dto: {
-            id: this.queryName,
+            id: newId,
             settings: toJS(this.rawValues.settings),
             query: this.rawValues.query as string,
             triggerMode: this.triggerMode,
@@ -186,6 +184,7 @@ export class WebloomJSQuery
       },
       onSuccess: (data) => {
         this.updateQuery(data);
+        super.setId(data.id);
       },
       onError: (error) => {
         console.error('error', error);
@@ -229,7 +228,6 @@ export class WebloomJSQuery
     this.rawValues.queryState = state;
   }
 
-  // TODO: make it handle id update
   updateQuery(
     dto: Omit<
       Partial<JsQueryI & { rawValues: Partial<JSQueryRawValues> }>,
@@ -242,10 +240,6 @@ export class WebloomJSQuery
       this.rawValues.data = dto.rawValues.data;
       this.rawValues.error = dto.rawValues.error;
     }
-  }
-
-  setQueryName(name: string) {
-    this.queryName = name;
   }
 
   /**
