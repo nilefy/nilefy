@@ -88,16 +88,16 @@ export class AuthController {
 
     return { url: authUrl };
   }
-  @Get('login/google-redirect')
+  @Get('login/google-sheets-redirect')
   async callback(
     @Query('code') code: string,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    console.log('callback');
     const tokens = await this.googleSheetsQueryService.getTokensFromCode(code);
     // Now we can use the tokens to authenticate requests to Google Sheets API
     // For example, maybe  saving them in the database for use later when using the datasource
-    console.log(tokens);
     const googleToken = tokens.access_token;
     const googleRefreshToken = tokens.refresh_token;
     // Get ws and ds from cookies

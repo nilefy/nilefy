@@ -20,7 +20,7 @@ export default class GoogleSheetsQueryService
     this.oAuth2Client = new OAuth2Client({
       clientId: '',
       clientSecret: '',
-      redirectUri: 'http://localhost:3000/auth/login/google-redirect',
+      redirectUri: 'http://localhost:3000/auth/login/google-sheets-redirect',
     });
   }
   getAuthUrl(scopes: string[]): string {
