@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Copy, MoreVertical, Trash, Wrench } from 'lucide-react';
+import { Copy, FileDown, MoreVertical, Trash, Wrench } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +54,7 @@ import {
   AppI,
   AppMetaT,
   appMetaSchema,
+  exportApp,
   useAppsQuery,
 } from '@/api/apps.api';
 import { Suspense, useMemo, useState } from 'react';
@@ -186,6 +187,21 @@ function AppDropDown(props: { app: AppI }) {
           </DialogContent>
         </Dialog>
 
+        {/*
+          EXPORT
+          */}
+        <DropdownMenuItem
+          onClick={() =>
+            exportApp({
+              workspaceId: +workspaceId,
+              appId: props.app.id,
+              appName: props.app.name,
+            })
+          }
+        >
+          <FileDown className="mr-2 h-4 w-4" />
+          <span>Export To Json</span>
+        </DropdownMenuItem>
         {/*
           CLONE
           */}

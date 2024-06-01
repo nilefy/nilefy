@@ -39,6 +39,9 @@ export class JsLibrariesService {
     return q;
   }
 
+  /**
+   * @returns get app js libs
+   */
   async index(appId: AppDto['id']) {
     return await this.db.query.jsLibraries.findMany({
       where: eq(jsLibraries.appId, appId),

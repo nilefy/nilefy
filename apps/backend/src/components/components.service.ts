@@ -115,6 +115,9 @@ export class ComponentsService {
     return tree;
   }
 
+  /**
+   * @returns  get components for a page as a list ordered by their level on the app tree
+   */
   async getComponentsForPage(pageId: PageDto['id']) {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
@@ -145,50 +148,50 @@ export class ComponentsService {
     return this.convertComponentsToNilefyTree(coms);
   }
 
-  async createPageTreeFromComponentsList(
-    pageId: PageDto['id'],
-    createdById: PageDto['createdById'],
-    coms: ComponentDto[],
-    options?: {
-      tx?: PgTrans;
-    },
-  ) {
-    const arr = [];
-    for (const key in componentsDto) {
-      if (componentsDto.hasOwnProperty(key)) {
-        try {
-          const obj = componentsDto[key];
-          arr.push({
-            ...obj,
-            pageId: pageId,
-            createdById: createdById,
-            id: key,
-            parentId: key === '0' ? null : obj.parentId,
-          });
-        } catch (e) {
-          console.log('error in createTreeForPageImport method :   ' + e);
-        }
-      }
-    }
-    const batchSize = 100;
-    const t = [];
-    for (let i = 0; i < arr.length; i += batchSize) {
-      const batch = arr.slice(i, i + batchSize);
+  // async createPageTreeFromComponentsList(
+  //   pageId: PageDto['id'],
+  //   createdById: PageDto['createdById'],
+  //   coms: ComponentDto[],
+  //   options?: {
+  //     tx?: PgTrans;
+  //   },
+  // ) {
+  //   const arr = [];
+  //   for (const key in componentsDto) {
+  //     if (componentsDto.hasOwnProperty(key)) {
+  //       try {
+  //         const obj = componentsDto[key];
+  //         arr.push({
+  //           ...obj,
+  //           pageId: pageId,
+  //           createdById: createdById,
+  //           id: key,
+  //           parentId: key === '0' ? null : obj.parentId,
+  //         });
+  //       } catch (e) {
+  //         console.log('error in createTreeForPageImport method :   ' + e);
+  //       }
+  //     }
+  //   }
+  //   const batchSize = 100;
+  //   const t = [];
+  //   for (let i = 0; i < arr.length; i += batchSize) {
+  //     const batch = arr.slice(i, i + batchSize);
 
-      try {
-        t.push(
-          ...(await (options?.tx ? options.tx : this.db)
-            .insert(components)
-            .values(batch)
-            .returning()),
-        );
-        console.log(
-          `Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(arr.length / batchSize)}`,
-        );
-      } catch (e) {
-        console.error('Error processing batch:', e);
-      }
-    }
-    return [t];
-  }
+  //     try {
+  //       t.push(
+  //         ...(await (options?.tx ? options.tx : this.db)
+  //           .insert(components)
+  //           .values(batch)
+  //           .returning()),
+  //       );
+  //       console.log(
+  //         `Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(arr.length / batchSize)}`,
+  //       );
+  //     } catch (e) {
+  //       console.error('Error processing batch:', e);
+  //     }
+  //   }
+  //   return [t];
+  // }
 }

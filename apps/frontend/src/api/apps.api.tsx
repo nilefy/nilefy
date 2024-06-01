@@ -132,6 +132,37 @@ async function one({
   return (await res.json()) as AppCompleteT;
 }
 
+export async function exportApp({
+  workspaceId,
+  appId,
+  appName,
+}: {
+  workspaceId: number;
+  appId: number;
+  appName: string;
+}) {
+  fetchX(`workspaces/${workspaceId}/apps/export/${appId}`, {
+    method: 'GET',
+  })
+    .then((response) => response.blob())
+    .then((blob) => {
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${appName}.json`);
+
+      // Append to html link element page
+      document.body.appendChild(link);
+
+      // Start download
+      link.click();
+      // Clean up and remove the link
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    });
+}
+
 export type AppsIndexRet = Awaited<ReturnType<typeof index>>;
 /**
  * query config to get workspace apps

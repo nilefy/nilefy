@@ -9,9 +9,9 @@ import {
   Req,
   Put,
   StreamableFile,
-  UseInterceptors,
-  UploadedFile,
-  ParseFilePipe,
+  // UseInterceptors,
+  // UploadedFile,
+  // ParseFilePipe,
   Header,
   UseGuards,
 } from '@nestjs/common';
@@ -30,7 +30,7 @@ import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { Readable } from 'node:stream';
-import { FileInterceptor } from '@nestjs/platform-express/multer';
+// import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
@@ -91,22 +91,22 @@ export class AppsController {
     return new StreamableFile(stream);
   }
 
-  @Post('import')
-  @UseInterceptors(FileInterceptor('file'))
-  async importOne(
-    @Req() req: ExpressAuthedRequest,
-    @Param('workspaceId', ParseIntPipe) workspaceId: number,
-    @UploadedFile(ParseFilePipe) file: Express.Multer.File,
-  ) {
-    const jsonData = JSON.parse(file.buffer.toString());
-    const createAppDto = {
-      ...jsonData,
-      workspaceId,
-      createdById: req.user.userId,
-    };
+  // @Post('import')
+  // @UseInterceptors(FileInterceptor('file'))
+  // async importOne(
+  //   @Req() req: ExpressAuthedRequest,
+  //   @Param('workspaceId', ParseIntPipe) workspaceId: number,
+  //   @UploadedFile(ParseFilePipe) file: Express.Multer.File,
+  // ) {
+  //   const jsonData = JSON.parse(file.buffer.toString());
+  //   const createAppDto = {
+  //     ...jsonData,
+  //     workspaceId,
+  //     createdById: req.user.userId,
+  //   };
 
-    await this.appsService.importAppJSON(createAppDto);
-  }
+  //   await this.appsService.importAppJSON(createAppDto);
+  // }
 
   @Get(':appId')
   @ApiCreatedResponse({

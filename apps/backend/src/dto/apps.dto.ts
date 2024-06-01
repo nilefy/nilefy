@@ -4,6 +4,10 @@ import { apps as appsDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 import { pageSchema } from './pages.dto';
 import { userSchema } from './users.dto';
+import { componentSchema } from './components.dto';
+import { querySchema } from './data_queries.dto';
+import { jsQuerySchema } from './js_queries.dto';
+import { jsLibrariesSchema } from './js_libraries.dto';
 
 export const appSchema = createSelectSchema(appsDrizzle);
 
@@ -77,6 +81,70 @@ export const appRetSchema = appSchema.extend({
     .nullable(),
   onBoardingCompleted: z.boolean(),
 });
+
+export const appExportSchema = appSchema
+  .pick({
+    name: true,
+    description: true,
+  })
+  .extend({
+    version: z.string(),
+    pages: z.array(
+      pageSchema
+        .pick({
+          id: true,
+          name: true,
+          handle: true,
+          index: true,
+          enabled: true,
+          visible: true,
+        })
+        .extend({
+          tree: z.array(
+            componentSchema
+              .omit({
+                createdAt: true,
+                createdById: true,
+                deletedById: true,
+                updatedAt: true,
+                updatedById: true,
+              })
+              .extend({
+                level: z.number(),
+              }),
+          ),
+        }),
+    ),
+    queries: z.array(
+      querySchema
+        .pick({
+          id: true,
+          query: true,
+          triggerMode: true,
+          dataSourceId: true,
+        })
+        .extend({
+          baseDatasourceId: z.number(),
+        }),
+    ),
+    jsQueries: z.array(
+      jsQuerySchema.pick({
+        id: true,
+        query: true,
+        settings: true,
+        triggerMode: true,
+      }),
+    ),
+    jsLibs: z.array(
+      jsLibrariesSchema.pick({
+        id: true,
+        url: true,
+      }),
+    ),
+  });
+
+export type AppExportSchema = z.infer<typeof appExportSchema>;
+
 export class AppRetDto extends createZodDto(appRetSchema) {}
 
 export const appsRetSchema = appSchema.extend({

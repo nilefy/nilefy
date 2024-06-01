@@ -7,11 +7,12 @@ import {
 } from '@nestjs/common';
 import {
   AppDto,
+  AppExportSchema,
   AppRetDto,
   AppsRetDto,
   CreateAppDb,
   CreateAppRetDto,
-  ImportAppDb,
+  // ImportAppDb,
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -29,7 +30,10 @@ import {
 } from '@nilefy/database';
 import { ComponentsService } from '../components/components.service';
 import { alias } from 'drizzle-orm/pg-core';
-import { CreatePageRetDto, PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { JsQueriesService } from '../js_queries/js_queries.service';
+import { JsLibrariesService } from '../js_libraries/js_libraries.service';
 
 @Injectable()
 export class AppsService {
@@ -37,6 +41,9 @@ export class AppsService {
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
     private componentsService: ComponentsService,
+    private queriesService: DataQueriesService,
+    private jsQueriesService: JsQueriesService,
+    private jsLibsService: JsLibrariesService,
   ) {}
 
   async clone({
@@ -190,6 +197,9 @@ export class AppsService {
     return workspaceApps;
   }
 
+  /**
+   * @returns get application with its default page which is the first page
+   */
   async findOne(
     currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
@@ -285,80 +295,96 @@ export class AppsService {
     currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
     appId: AppDto['id'],
-  ) {
+  ): Promise<AppExportSchema> {
     const app = await this.findOne(currentUser, workspaceId, appId);
-    console.log(app);
-
-    const omittedFields = [
-      'id',
-      'appId',
-      'createdById',
-      'updatedBy',
-      'workspaceId',
-      'createdBy',
-      'createdAt',
-      'updatedAt',
-      'deletedAt',
-      'updatedById',
-      'deletedById',
-    ];
-    const omitFields = (obj: {
-      [x: string]: any;
-      hasOwnProperty: (arg0: string) => any;
-    }) => {
-      for (const prop in obj) {
-        if (obj.hasOwnProperty(prop)) {
-          if (omittedFields.includes(prop)) {
-            delete obj[prop];
-          } else if (typeof obj[prop] === 'object' && obj[prop] !== null) {
-            omitFields(obj[prop]);
-          }
-        }
-      }
+    const appPages = app.pages;
+    const pagesPromise = Promise.all(
+      appPages.map((p) => this.componentsService.getComponentsForPage(p.id)),
+    );
+    const [pages, queries, jsQueries, jsLibs] = await Promise.all([
+      pagesPromise,
+      this.queriesService.getAppQueries(app.id),
+      this.jsQueriesService.index(app.id),
+      this.jsLibsService.index(app.id),
+    ]);
+    return {
+      // TODO: hoist versions in global scope
+      version: '0.0.1',
+      name: app.name,
+      description: app.description,
+      pages: pages.map((tree, i) => ({
+        ...appPages[i],
+        tree: tree.map((c) => ({
+          id: c.id,
+          type: c.type,
+          level: c.level,
+          col: c.col,
+          row: c.row,
+          props: c.props,
+          rowsCount: c.rowsCount,
+          columnsCount: c.columnsCount,
+          parentId: c.parentId,
+          pageId: c.pageId,
+        })),
+      })),
+      queries: queries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        dataSourceId: q.dataSource.id,
+        baseDatasourceId: q.dataSource.dataSource.id,
+      })),
+      jsQueries: jsQueries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        settings: q.settings,
+      })),
+      jsLibs: jsLibs.map((l) => ({
+        id: l.id,
+        url: l.url,
+      })),
     };
-
-    omitFields(app);
-
-    return app;
   }
 
-  async importAppJSON(
-    importAppDb: ImportAppDb & {
-      pages: PageDto[];
-      defaultPage: CreatePageRetDto;
-    },
-  ) {
-    let app;
-    await this.db.transaction(async (tx) => {
-      const createdApps = await tx
-        .insert(apps)
-        .values({
-          name: importAppDb.name,
-          description: importAppDb.description,
-          workspaceId: importAppDb.workspaceId,
-          createdById: importAppDb.createdById,
-        })
-        .returning({
-          appId: apps.id,
-          createdById: apps.createdById,
-        });
-      app = createdApps[0];
-      const appId = app.appId;
-      const createdById = app.createdById;
-      const pagesToInsert = importAppDb.pages.map((page) => {
-        return { ...page, appId: appId, createdById: createdById };
-      });
-      const importedPages = await this.pagesService.importPages(pagesToInsert, {
-        tx: tx,
-      });
-      const defaultPage = importAppDb.defaultPage;
-      await this.componentsService.createTree(
-        importedPages.id,
-        importedPages.createdById,
-        defaultPage.tree,
-        { tx: tx },
-      );
-    });
-    return app;
-  }
+  // TODO: handle case where datasource doesn't exist
+  // async importAppJSON(
+  //   importAppDb: ImportAppDb & {
+  //     pages: PageDto[];
+  //     defaultPage: CreatePageRetDto;
+  //   },
+  // ) {
+  //   let app;
+  //   await this.db.transaction(async (tx) => {
+  //     const createdApps = await tx
+  //       .insert(apps)
+  //       .values({
+  //         name: importAppDb.name,
+  //         description: importAppDb.description,
+  //         workspaceId: importAppDb.workspaceId,
+  //         createdById: importAppDb.createdById,
+  //       })
+  //       .returning({
+  //         appId: apps.id,
+  //         createdById: apps.createdById,
+  //       });
+  //     app = createdApps[0];
+  //     const appId = app.appId;
+  //     const createdById = app.createdById;
+  //     const pagesToInsert = importAppDb.pages.map((page) => {
+  //       return { ...page, appId: appId, createdById: createdById };
+  //     });
+  //     const importedPages = await this.pagesService.importPages(pagesToInsert, {
+  //       tx: tx,
+  //     });
+  //     const defaultPage = importAppDb.defaultPage;
+  //     await this.componentsService.createTree(
+  //       importedPages.id,
+  //       importedPages.createdById,
+  //       defaultPage.tree,
+  //       { tx: tx },
+  //     );
+  //   });
+  //   return app;
+  // }
 }

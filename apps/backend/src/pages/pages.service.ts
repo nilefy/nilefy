@@ -191,25 +191,25 @@ export class PagesService {
       .returning();
   }
 
-  async importPages(
-    pagesToInsert: {
-      appId: number;
-      createdById: number;
-      name: string;
-      handle: string;
-      index: number;
-      enabled: boolean;
-      visible: boolean;
-    }[],
-    options?: { tx?: PgTrans },
-  ) {
-    const [p] = await (options?.tx ? options.tx : this.db)
-      .insert(pages)
-      .values(pagesToInsert)
-      .returning();
-    p;
-    return p;
-  }
+  // async importPages(
+  //   pagesToInsert: {
+  //     appId: number;
+  //     createdById: number;
+  //     name: string;
+  //     handle: string;
+  //     index: number;
+  //     enabled: boolean;
+  //     visible: boolean;
+  //   }[],
+  //   options?: { tx?: PgTrans },
+  // ) {
+  //   const [p] = await (options?.tx ? options.tx : this.db)
+  //     .insert(pages)
+  //     .values(pagesToInsert)
+  //     .returning();
+  //   p;
+  //   return p;
+  // }
 
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
   async delete({
