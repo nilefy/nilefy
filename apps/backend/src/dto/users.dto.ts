@@ -1,6 +1,6 @@
 import z from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { users as usersDrizzle } from '@webloom/database';
+import { users as usersDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const userSchema = createSelectSchema(usersDrizzle);
@@ -8,6 +8,15 @@ export const userInsertSchema = createInsertSchema(usersDrizzle, {
   username: (schema) => schema.username.min(3).max(255),
   email: (schema) => schema.email.email(),
   password: (schema) => schema.password.min(6).max(255),
+});
+
+export const retUserSchema = userSchema.omit({
+  password: true,
+  conformationToken: true,
+  createdAt: true,
+  emailVerified: true,
+  updatedAt: true,
+  deletedAt: true,
 });
 
 export const updateUserOnboardingSchema = userInsertSchema.pick({
@@ -57,3 +66,4 @@ export const updateUserRetSchema = userSchema.pick({
   updatedAt: true,
 });
 export class UpdateUserRetDto extends createZodDto(updateUserRetSchema) {}
+export class RetUserSchema extends createZodDto(retUserSchema) {}

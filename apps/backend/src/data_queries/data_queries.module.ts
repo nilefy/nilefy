@@ -8,5 +8,6 @@ import { ComponentsModule } from '../components/components.module';
   imports: [DataSourcesModule, ComponentsModule],
   controllers: [DataQueriesController],
   providers: [DataQueriesService],
+  exports: [DataQueriesService],
 })
 export class DataQueriesModule {}

@@ -1,4 +1,4 @@
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { createDefaultMapFromCDN } from './initFromCdn';
 import { keys } from 'lodash';
 

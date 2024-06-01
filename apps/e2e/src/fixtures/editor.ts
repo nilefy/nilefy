@@ -1,6 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { clearApps } from '../utils';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 /**
  * @description assumes the user is logged in
  */
@@ -23,27 +23,9 @@ export class EditorPage {
   constructor(page: Page) {
     this.page = page;
   }
-  async boot() {
-    await this.page.goto(`/`);
-    const createButton = this.page
-      .getByRole('button', {
-        name: 'create new app',
-      })
-      .first();
-    await createButton.click();
-    const appNameInput = this.page.getByLabel('Name');
-    this.appName = 'My App';
-    appNameInput.fill(this.appName);
-    await this.page
-      .getByRole('button', {
-        name: 'Create App',
-      })
-      .click();
+  async boot(workspaceId: number, appId: number) {
+    await this.page.goto(`/${workspaceId}/apps/edit/${appId}`);
 
-    const editButton = this.page.getByRole('link', { name: 'Edit' });
-    await editButton.click();
-    const newAppInEditor = this.page.getByText(this.appName);
-    await expect(newAppInEditor).toBeVisible();
     this.rightSidebar = {
       insertButton: this.page.getByRole('tab', { name: 'Insert' }),
       inspectButton: this.page.getByRole('tab', { name: 'Inspect' }),
@@ -85,7 +67,14 @@ export class EditorPage {
     return this.page.locator(`[data-id="${id}"]`);
   }
   async singleSelect(id: string) {
-    (await this.getWidget(id)).click();
+    let isAlreadySelected = false;
+    const activeId = await this.rightSidebar.ispectOnePanel
+      .getByTestId('selected-widget-id')
+      .inputValue();
+    if (activeId === id) {
+      isAlreadySelected = true;
+    }
+    if (!isAlreadySelected) (await this.getWidget(id)).click();
     await expect(this.rightSidebar.ispectOnePanel).toBeVisible();
   }
   async getInputValue(id: string, field: string) {
@@ -111,11 +100,27 @@ export class EditorPage {
     const widget = this.page.getByTestId(id);
     return widget;
   }
-  unselectAll() {
-    this.page.getByTestId(EDITOR_CONSTANTS.ROOT_NODE_ID).click();
+  async unselectAll() {
+    await this.rootCanvas.click();
+    await this.page.keyboard.press('Escape');
+    await expect(this.rightSidebar.ispectOnePanel).not.toBeVisible();
   }
   async dragAndDropNewWidget(
     widgetName: string,
+    x: number = 0,
+    y: number = 0,
+  ): Promise<string> {
+    return this.dragAndDropNewWidgetInto(
+      widgetName,
+      EDITOR_CONSTANTS.ROOT_NODE_ID,
+      x,
+      y,
+    );
+  }
+
+  async dragAndDropNewWidgetInto(
+    widgetName: string,
+    targetId: string,
     x: number = 0,
     y: number = 0,
   ): Promise<string> {
@@ -124,14 +129,15 @@ export class EditorPage {
       name: widgetName,
       exact: true,
     });
-    await drag(this.page, widget, this.rootCanvas, x, y);
-    const id = await this.rootCanvas
-      .locator('[data-id]')
-      .last()
-      .getAttribute('data-id');
+    const target = this.page.getByTestId(targetId);
+    await drag(this.page, widget, target, x, y);
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
     expect(id).not.toBe(null);
     return id!;
   }
+
   async dragAndDropExistingWidget(
     widgetId: string,
     targetId: string,
@@ -141,7 +147,9 @@ export class EditorPage {
     const widget = this.page.getByTestId(widgetId);
     const target = this.page.getByTestId(targetId);
     await drag(this.page, widget, target, x, y);
-    const id = await target.locator('[data-id]').last().getAttribute('data-id');
+    const selectedId =
+      this.rightSidebar.ispectOnePanel.getByTestId('selected-widget-id');
+    const id = await selectedId.inputValue();
     expect(id).toBe(widgetId);
   }
 }

@@ -76,7 +76,7 @@ import { cn } from '@/lib/cn';
 import { LoadingButton } from '@/components/loadingButton';
 import FormT from '@rjsf/core';
 import { useToast } from '@/components/ui/use-toast';
-// import { dataSourcesTypes } from '@webloom/constants';
+// import { dataSourcesTypes } from '@nilefy/constants';
 
 function CreatePluginForm({
   workspaceId,

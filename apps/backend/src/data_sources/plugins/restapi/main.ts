@@ -36,7 +36,16 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
     //todo 3. Documentation
     //todo 4. config schema ✅
     try {
-      const res: Response = await fetch(queryUrl, finalHeaders);
+      console.log('headers', finalHeaders);
+      const res = await fetch(queryUrl, finalHeaders);
+
+      if (!res.ok) {
+        return {
+          statusCode: res.status,
+          data: {},
+          error: await res.text(),
+        };
+      }
       return {
         statusCode: res.status,
         data: await res.json(),
@@ -75,11 +84,12 @@ export default class RESTQueryService implements QueryRunnerI<ConfigT, QueryT> {
 
 function constructHeaders(
   headers: Record<string, string>,
-  method: QueryConfig['query']['method'],
-  body: QueryConfig['query']['body'],
+  method: QueryConfig<QueryT>['query']['method'],
+  body: QueryConfig<QueryT>['query']['body'],
   auth: ConfigT['auth'],
 ): Record<string, string> {
   let finalHeaders = headers;
+  finalHeaders.method = method;
   switch (auth.auth_type) {
     case 'none':
       break;

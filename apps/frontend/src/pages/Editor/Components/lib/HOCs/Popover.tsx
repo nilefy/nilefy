@@ -52,6 +52,7 @@ export const WithPopover = <P extends { id: string }>(
         <div
           ref={popoverRef}
           style={floatingStyles}
+          data-testid="popover"
           className={cn(
             'w-max p-1 text-center text-xs flex items-center gap-1 ',
             {

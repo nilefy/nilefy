@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { pages as pagesDrizzle } from '@webloom/database';
+import { pages as pagesDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const pageSchema = createSelectSchema(pagesDrizzle);

@@ -11,7 +11,9 @@ test('1. Should be able to dynamically change the options of the select widget',
   ];
   const selectOptionsBinding = `{{${JSON.stringify(selectOptions)}}}`;
   await editorPage.fillWidgetInput(selectId, 'options', selectOptionsBinding);
-
+  const selectWidget = await editorPage.getWidget(selectId);
+  const comboBox = selectWidget.getByRole('combobox');
+  await comboBox.click();
   const item1 = page.getByLabel(selectOptions[0]!.label);
   const item2 = page.getByLabel(selectOptions[1]!.label);
   await expect(item1).toBeVisible();
@@ -31,7 +33,7 @@ test('2. Should be able to select an option from the select widget', async ({
   await editorPage.fillWidgetInput(selectId, 'options', selectOptionsBinding);
   const selectWidget = await editorPage.getWidget(selectId);
   const comboBox = selectWidget.getByRole('combobox');
-
+  await comboBox.click();
   const item1 = page.getByLabel(selectOptions[0]!.label);
   await item1.click();
   await expect(comboBox).toHaveText(selectOptions[0]!.label);
@@ -51,7 +53,7 @@ test('3. Selected option value can be used in a binding', async ({
 
   const selectWidget = await editorPage.getWidget(selectId);
   const comboBox = selectWidget.getByRole('combobox');
-
+  await comboBox.click();
   const item1 = page.getByLabel(selectOptions[0]!.label);
   await item1.click();
   await expect(comboBox).toHaveText(selectOptions[0]!.label);
@@ -75,7 +77,7 @@ test('4. selected option can be cleared through an action', async ({
   ];
   const selectOptionsBinding = `{{${JSON.stringify(selectOptions)}}}`;
   await editorPage.fillWidgetInput(selectId, 'options', selectOptionsBinding);
-
+  await comboBox.click();
   const item1 = page.getByLabel(selectOptions[0]!.label);
   await item1.click();
   await expect(comboBox).toHaveText(selectOptions[0]!.label);
@@ -129,7 +131,7 @@ test('6. Should be able to set the value of the select widget through an action'
 
   const selectWidget = await editorPage.getWidget(selectId);
   const comboBox = selectWidget.getByRole('combobox');
-
+  await comboBox.click();
   const item1 = page.getByLabel(selectOptions[0]!.label);
   await item1.click();
   await expect(comboBox).toHaveText(selectOptions[0]!.label);

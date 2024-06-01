@@ -7,5 +7,6 @@ import { ComponentsModule } from '../components/components.module';
   imports: [ComponentsModule],
   controllers: [JsQueriesController],
   providers: [JsQueriesService],
+  exports: [JsQueriesService],
 })
 export class JsQueriesModule {}

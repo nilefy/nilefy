@@ -6,16 +6,17 @@ import {
   ComponentDto,
   CreateComponentDb,
   UpdateComponentDb,
-  WebloomTree,
+  NilefyTree,
 } from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   components,
   DatabaseI,
   PgTrans,
   queries,
   jsQueries,
-} from '@webloom/database';
+} from '@nilefy/database';
+import { chunkArray } from '../utils';
 import { QueryDto } from '../dto/data_queries.dto';
 import { AppDto } from '../dto/apps.dto';
 import { JsQueryDto } from '../dto/js_queries.dto';
@@ -26,7 +27,7 @@ export class ComponentsService {
 
   /**
    * components state is represented as tree, but notice there's case we don't have to handle while inserting
-   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as child of a node
+   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as a leaf to some subtree
    */
   async create(
     componentDto: CreateComponentDb[],
@@ -37,10 +38,17 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    return await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values(componentDto)
-      .returning();
+    const res = [];
+    const chunks = chunkArray(componentDto, 1000);
+    for (const c of chunks) {
+      res.push(
+        ...(await (options?.tx ? options.tx : this.db)
+          .insert(components)
+          .values(c)
+          .returning()),
+      );
+    }
+    return res;
   }
 
   /**
@@ -127,7 +135,35 @@ export class ComponentsService {
       .returning();
   }
 
-  async getTreeForPage(pageId: PageDto['id']): Promise<WebloomTree> {
+  private convertComponentsToNilefyTree(
+    coms: (ComponentDto & { level: number })[],
+  ): NilefyTree {
+    const tree: NilefyTree = {};
+    coms.forEach((com) => {
+      tree[com.id] = {
+        id: com.id,
+        nodes: [],
+        // set root node as parent of itself
+        parentId: com.parentId ?? com.id,
+        props: com.props,
+        type: com.type,
+        col: com.col,
+        row: com.row,
+        columnsCount: com.columnsCount,
+        rowsCount: com.rowsCount,
+        columnWidth: 0,
+      };
+      if (com.level > 1) {
+        tree[com.parentId!.toString()]['nodes'].push(com.id.toString());
+      }
+    });
+    return tree;
+  }
+
+  /**
+   * @returns  get components for a page as a list ordered by their level on the app tree
+   */
+  async getComponentsForPage(pageId: PageDto['id']) {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
@@ -149,26 +185,12 @@ export class ComponentsService {
       throw new BadRequestException(
         'page should contain at least one component(root)',
       ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
-    const tree: WebloomTree = {};
-    rows.forEach((row) => {
-      tree[row.id] = {
-        id: row.id,
-        nodes: [],
-        // set root node as parent of itself
-        parentId: row.parentId ?? row.id,
-        props: row.props,
-        type: row.type,
-        col: row.col,
-        row: row.row,
-        columnsCount: row.columnsCount,
-        rowsCount: row.rowsCount,
-        columnWidth: 0,
-      };
-      if (row.level > 1) {
-        tree[row.parentId!.toString()]['nodes'].push(row.id.toString());
-      }
-    });
-    return tree;
+    return rows;
+  }
+
+  async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
+    const coms = await this.getComponentsForPage(pageId);
+    return this.convertComponentsToNilefyTree(coms);
   }
 
   async getComponent(

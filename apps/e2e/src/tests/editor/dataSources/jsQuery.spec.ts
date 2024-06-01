@@ -177,3 +177,61 @@ test(
     await expect(queryItem).not.toBeVisible();
   },
 );
+
+test('8. Should be able to run onSuccess event', async ({ editorPage }) => {
+  const id = await editorPage.addNewJsQuery();
+  await editorPage.fillQueryInput(id!, 'query', 'return 1');
+  const buttonId = await editorPage.dragAndDropNewWidget('Button');
+  const textId = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+  const textWidget = await editorPage.getWidget(textId);
+  await editorPage.fillWidgetInput(buttonId, 'onClick', `{{${id}.run()}}`);
+  await editorPage.fillQueryInput(
+    id!,
+    // todo: change this because it has an implementation detail
+    'config\\.onSuccess',
+    `{{${textId}.setText("success")}}`,
+  );
+  const button = await editorPage.getWidget(buttonId);
+  await button.click();
+  await expect(textWidget).toHaveText('success');
+});
+
+test('9. Should be able to run onFailure event', async ({ editorPage }) => {
+  const id = await editorPage.addNewJsQuery();
+  await editorPage.fillQueryInput(id!, 'query', 'throw new Error("error")');
+  const buttonId = await editorPage.dragAndDropNewWidget('Button');
+  const textId = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+  const textWidget = await editorPage.getWidget(textId);
+  await editorPage.fillWidgetInput(buttonId, 'onClick', `{{${id}.run()}}`);
+  await editorPage.fillQueryInput(
+    id!,
+    'config\\.onFailure',
+    `{{${textId}.setText("failure")}}`,
+  );
+  const button = await editorPage.getWidget(buttonId);
+  await button.click();
+  await expect(textWidget).toHaveText('failure');
+});
+
+test('10. Should be able to run onMutate event', async ({ editorPage }) => {
+  const id = await editorPage.addNewJsQuery();
+  await editorPage.fillQueryInput(
+    id!,
+    'query',
+    `return await new Promise((resolve)=>{
+    return setTimeout(resolve, 1000)
+  })`,
+  );
+  const buttonId = await editorPage.dragAndDropNewWidget('Button');
+  const textId = await editorPage.dragAndDropNewWidget('Text', 0, 100);
+  const textWidget = await editorPage.getWidget(textId);
+  await editorPage.fillWidgetInput(buttonId, 'onClick', `{{${id}.run()}}`);
+  await editorPage.fillQueryInput(
+    id!,
+    'config\\.onMutate',
+    `{{${textId}.setText("mutating")}}`,
+  );
+  const button = await editorPage.getWidget(buttonId);
+  await button.click();
+  await expect(textWidget).toHaveText('mutating');
+});

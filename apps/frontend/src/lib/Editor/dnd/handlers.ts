@@ -7,7 +7,7 @@ import {
   getMousePositionRelativeToEditor,
   normalize,
 } from '../utils';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { Point } from '@/types';
 import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
 import { WebloomWidgets } from '@/pages/Editor/Components';

@@ -12,7 +12,9 @@ import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
 import { autorun } from 'mobx';
-import { useExposeWidgetApi } from '@/lib/Editor/hooks';
+import { useAutoRun, useExposeWidgetApi } from '@/lib/Editor/hooks';
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 export type WebloomInputProps = {
   label: string;
@@ -25,6 +27,7 @@ export type WebloomInputProps = {
   onFocus?: string;
   onBlur?: string;
   onSubmit?: string;
+  defaultValue?: string | number;
 };
 const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
@@ -39,6 +42,13 @@ const WebloomInput = observer(() => {
         if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
       }),
     [onPropChange, props.type],
+  );
+  // set default value
+  useAutoRun(() =>
+    onPropChange({
+      key: 'value',
+      value: props.defaultValue,
+    }),
   );
   useExposeWidgetApi(id, {
     focus: () => {
@@ -159,6 +169,13 @@ const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
           placeholder: 'Enter placeholder',
         },
         validation: StringSchema('Write something'),
+      },
+      {
+        path: 'defaultValue',
+        label: 'Default Value',
+        type: 'inlineCodeInput',
+        options: { placeholder: 'Enter default value' },
+        validation: zodToJsonSchema(z.string().default('')),
       },
     ],
   },

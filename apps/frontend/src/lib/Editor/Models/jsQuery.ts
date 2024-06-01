@@ -10,7 +10,43 @@ import { EntityInspectorConfig } from '../interface';
 import { concat } from 'lodash';
 import { JsQueryI, updateJSquery } from '@/api/jsQueries.api';
 
+const onSuccessKey = 'config.onSuccess';
+const onFailureKey = 'config.onFailure';
+const onMutateKey = 'config.onMutate';
+
 const inspectorConfig: EntityInspectorConfig = [
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: onSuccessKey,
+        label: 'onSuccess',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("onSuccess")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onFailureKey,
+        label: 'onFailure',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("failed")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onMutateKey,
+        label: 'onMutate',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("query started working")}}',
+        },
+        isEvent: true,
+      },
+    ],
+  },
   {
     sectionName: 'General',
     children: [{ path: 'query', label: 'Query', type: 'codeInput' }],
@@ -196,15 +232,18 @@ export class WebloomJSQuery
       },
       onMutate: () => {
         this.setValue('queryState', 'loading');
+        this.handleEvent(onMutateKey);
       },
       onError: (error) => {
         this.setValue('queryState', 'error');
         this.setValue('error', error.message);
+        this.handleEvent(onFailureKey);
       },
       onSuccess: (data) => {
         this.setValue('data', data);
         this.setValue('error', undefined);
         this.setValue('queryState', 'success');
+        this.handleEvent(onSuccessKey);
       },
     }));
     this.workspaceId = workspaceId;

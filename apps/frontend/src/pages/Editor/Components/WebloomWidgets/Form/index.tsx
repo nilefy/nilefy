@@ -127,7 +127,6 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
         name: 'submit',
         fn: (entity) => {
           entity.handleEvent('onSubmit');
-          entity.remoteExecuteAction('reset');
         },
       },
     },
@@ -135,7 +134,7 @@ export const WebloomFormWidget: Widget<WebloomFormProps> = {
   blueprint: {
     children: [
       {
-        type: 'WebloomText',
+        type: 'NilefyText',
         props: {
           text: 'Form',
         },

@@ -53,16 +53,7 @@ export const WidgetConfigPanel = observer(() => {
 });
 
 const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
-  const [value, setValue] = useState(node.id);
-  const onChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setValue(e.target.value);
-    },
-    [setValue],
-  );
-  useAutoRun(() => {
-    setValue(node.id);
-  });
+  const selectedWidgetId = editorStore.currentPage.firstSelectedWidget;
   if (!node) return null;
   const incoming = node.connections.dependencies || [];
   const outgoing = node.connections.dependents || [];
@@ -135,8 +126,9 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         Name
       </Label>
       <Input
-        value={value}
-        onChange={onChange}
+        data-testid="selected-widget-id"
+        value={selectedWidgetId}
+        onChange={() => {}}
         onBlur={(e) => {
           try {
             commandManager.executeCommand(

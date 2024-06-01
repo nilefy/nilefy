@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { hash, genSalt, compare } from 'bcrypt';
+import { compare } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -17,7 +17,7 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
 import { EmailService } from '../email/email.service';
-import { DatabaseI, users } from '@webloom/database';
+import { DatabaseI, users } from '@nilefy/database';
 
 @Injectable()
 export class AuthService {
@@ -76,6 +76,7 @@ export class AuthService {
       throw new BadRequestException();
     }
   }
+
   private async signUpEmail(email: string, username: string, jwt: string) {
     const baseUrl: string = this.configService.get('BASE_URL_BE');
 
@@ -92,19 +93,19 @@ export class AuthService {
     const html =
       `
     <p>Dear ${username},</p>
-    <p>Congratulations on signing up for WebLoom! We're thrilled to have you on board.</p>
+    <p>Congratulations on signing up for nilefy! We're thrilled to have you on board.</p>
     <p>Please click the following link to confirm your email address and complete the signup process:</p>
     <a href="` +
       url +
       ` ">Confirm Email Address</a>
     <p>If you did not sign up for WeblLoom, please disregard this email.</p>
-    <p>Thank you for choosing WebLoom!</p>
+    <p>Thank you for choosing Nilefy!</p>
     <p>Best Regards,<br/>
-    The Webloom Team</p>
+    The Nilefy Team</p>
   `;
     await this.emailService.sendEmail({
       to: email,
-      subject: 'WebLoom - Confirm Your Email Address',
+      subject: 'Nilefy - Confirm Your Email Address',
       html,
     });
   }
@@ -114,8 +115,6 @@ export class AuthService {
    */
   async signUp(user: CreateUserDto): Promise<{ msg: string }> {
     try {
-      const salt = await genSalt(10);
-      const hashed = await hash(user.password, salt);
       const conformationToken = await this.jwtService.signAsync(
         {
           email: user.email,
@@ -125,9 +124,10 @@ export class AuthService {
       await this.userService.create({
         username: user.username,
         email: user.email,
-        password: hashed,
+        password: user.password,
         conformationToken,
       });
+      // TODO: sending email should be through a queue to not halt the request until the email is sent
       this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {

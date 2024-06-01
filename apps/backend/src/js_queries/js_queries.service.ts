@@ -8,11 +8,11 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
 import { JsQueryDb, JsQueryDto, UpdateJsQueryDto } from '../dto/js_queries.dto';
 import { AppDto } from '../dto/apps.dto';
-import { DatabaseI, jsQueries } from '@webloom/database';
-import { apps } from '@webloom/database';
+import { DatabaseI, jsQueries, PgTrans } from '@nilefy/database';
+import { apps } from '@nilefy/database';
 import { ComponentsService } from '../components/components.service';
 import { PageDto } from '../dto/pages.dto';
-import { queries } from '@webloom/database';
+import { queries } from '@nilefy/database';
 
 @Injectable()
 export class JsQueriesService {
@@ -21,9 +21,18 @@ export class JsQueriesService {
     private componentsService: ComponentsService,
   ) {}
 
+  /**
+   * @returns create one query and return it
+   */
   async create(jsQuery: JsQueryDb) {
     const [q] = await this.db.insert(jsQueries).values(jsQuery).returning();
     return q;
+  }
+
+  async insert(jsQueriesDto: JsQueryDb[], options?: { tx?: PgTrans }) {
+    await (options?.tx ? options.tx : this.db)
+      .insert(jsQueries)
+      .values(jsQueriesDto);
   }
 
   async update({
