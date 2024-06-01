@@ -10,6 +10,7 @@ import {
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { components, DatabaseI, PgTrans } from '@nilefy/database';
+import { chunkArray } from '../utils';
 
 @Injectable()
 export class ComponentsService {
@@ -17,7 +18,7 @@ export class ComponentsService {
 
   /**
    * components state is represented as tree, but notice there's case we don't have to handle while inserting
-   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as child of a node
+   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as a leaf to some subtree
    */
   async create(
     componentDto: CreateComponentDb[],
@@ -28,10 +29,17 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    return await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values(componentDto)
-      .returning();
+    const res = [];
+    const chunks = chunkArray(componentDto, 1000);
+    for (const c of chunks) {
+      res.push(
+        ...(await (options?.tx ? options.tx : this.db)
+          .insert(components)
+          .values(c)
+          .returning()),
+      );
+    }
+    return res;
   }
 
   /**
@@ -147,51 +155,4 @@ export class ComponentsService {
     const coms = await this.getComponentsForPage(pageId);
     return this.convertComponentsToNilefyTree(coms);
   }
-
-  // async createPageTreeFromComponentsList(
-  //   pageId: PageDto['id'],
-  //   createdById: PageDto['createdById'],
-  //   coms: ComponentDto[],
-  //   options?: {
-  //     tx?: PgTrans;
-  //   },
-  // ) {
-  //   const arr = [];
-  //   for (const key in componentsDto) {
-  //     if (componentsDto.hasOwnProperty(key)) {
-  //       try {
-  //         const obj = componentsDto[key];
-  //         arr.push({
-  //           ...obj,
-  //           pageId: pageId,
-  //           createdById: createdById,
-  //           id: key,
-  //           parentId: key === '0' ? null : obj.parentId,
-  //         });
-  //       } catch (e) {
-  //         console.log('error in createTreeForPageImport method :   ' + e);
-  //       }
-  //     }
-  //   }
-  //   const batchSize = 100;
-  //   const t = [];
-  //   for (let i = 0; i < arr.length; i += batchSize) {
-  //     const batch = arr.slice(i, i + batchSize);
-
-  //     try {
-  //       t.push(
-  //         ...(await (options?.tx ? options.tx : this.db)
-  //           .insert(components)
-  //           .values(batch)
-  //           .returning()),
-  //       );
-  //       console.log(
-  //         `Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(arr.length / batchSize)}`,
-  //       );
-  //     } catch (e) {
-  //       console.error('Error processing batch:', e);
-  //     }
-  //   }
-  //   return [t];
-  // }
 }

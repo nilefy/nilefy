@@ -348,43 +348,75 @@ export class AppsService {
   }
 
   // TODO: handle case where datasource doesn't exist
-  // async importAppJSON(
-  //   importAppDb: ImportAppDb & {
-  //     pages: PageDto[];
-  //     defaultPage: CreatePageRetDto;
-  //   },
-  // ) {
-  //   let app;
-  //   await this.db.transaction(async (tx) => {
-  //     const createdApps = await tx
-  //       .insert(apps)
-  //       .values({
-  //         name: importAppDb.name,
-  //         description: importAppDb.description,
-  //         workspaceId: importAppDb.workspaceId,
-  //         createdById: importAppDb.createdById,
-  //       })
-  //       .returning({
-  //         appId: apps.id,
-  //         createdById: apps.createdById,
-  //       });
-  //     app = createdApps[0];
-  //     const appId = app.appId;
-  //     const createdById = app.createdById;
-  //     const pagesToInsert = importAppDb.pages.map((page) => {
-  //       return { ...page, appId: appId, createdById: createdById };
-  //     });
-  //     const importedPages = await this.pagesService.importPages(pagesToInsert, {
-  //       tx: tx,
-  //     });
-  //     const defaultPage = importAppDb.defaultPage;
-  //     await this.componentsService.createTree(
-  //       importedPages.id,
-  //       importedPages.createdById,
-  //       defaultPage.tree,
-  //       { tx: tx },
-  //     );
-  //   });
-  //   return app;
-  // }
+  async importAppJSON(
+    currentUser: number,
+    workspaceId: number,
+    appData: AppExportSchema,
+  ) {
+    return await this.db.transaction(async (tx) => {
+      const [app] = await tx
+        .insert(apps)
+        .values({
+          name: appData.name + 'from json',
+          description: appData.description,
+          workspaceId: workspaceId,
+          createdById: currentUser,
+        })
+        .returning();
+      const appId = app.id;
+      const createdById = app.createdById;
+      const pages = await this.pagesService.createWithoutDefaultRoot(
+        appData.pages.map((p) => ({
+          appId: appId,
+          createdById,
+          handle: p.handle,
+          index: p.index,
+          name: p.name,
+          enabled: p.enabled,
+          visible: p.visible,
+        })),
+        { tx },
+      );
+      await Promise.all([
+        this.componentsService.create(
+          appData.pages.flatMap((p, i) =>
+            p.tree.map((c) => ({ ...c, pageId: pages[i].id, createdById })),
+          ),
+          { tx },
+        ),
+        // TODO: handle case where datasource might not exist in this workspace or doesn't exist at all
+        appData.queries.length > 0
+          ? this.queriesService.insert(
+              appData.queries.map((q) => ({
+                ...q,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsQueries.length > 0
+          ? this.jsQueriesService.insert(
+              appData.jsQueries.map((q) => ({
+                ...q,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsLibs.length > 0
+          ? this.jsLibsService.insert(
+              appData.jsLibs.map((l) => ({
+                ...l,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+      ]);
+      return app;
+    });
+  }
 }

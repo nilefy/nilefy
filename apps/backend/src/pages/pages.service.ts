@@ -191,25 +191,16 @@ export class PagesService {
       .returning();
   }
 
-  // async importPages(
-  //   pagesToInsert: {
-  //     appId: number;
-  //     createdById: number;
-  //     name: string;
-  //     handle: string;
-  //     index: number;
-  //     enabled: boolean;
-  //     visible: boolean;
-  //   }[],
-  //   options?: { tx?: PgTrans },
-  // ) {
-  //   const [p] = await (options?.tx ? options.tx : this.db)
-  //     .insert(pages)
-  //     .values(pagesToInsert)
-  //     .returning();
-  //   p;
-  //   return p;
-  // }
+  async createWithoutDefaultRoot(
+    pageDto: CreatePageDb[],
+    options?: { tx?: PgTrans },
+  ) {
+    const res = await (options?.tx ? options.tx : this.db)
+      .insert(pages)
+      .values(pageDto)
+      .returning();
+    return res;
+  }
 
   // TODO: there must be at least one page in any app, throw if user tried to delete while there's only one page in app
   async delete({
