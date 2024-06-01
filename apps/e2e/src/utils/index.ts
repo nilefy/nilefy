@@ -13,81 +13,87 @@ import {
   components,
 } from '@nilefy/database';
 import { genSalt, hash } from 'bcrypt';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 export const createWorkspaceAndApp = async (username: string) => {
-  const [db] = await dbConnect(process.env.DB_URL!);
-  const user = await db.query.users.findFirst({
-    where: eq(users.username, username),
-  });
-  const workspace = (
-    await db
-      .insert(workspaces)
-      .values({ name: 'workspace1', createdById: user!.id })
-      .returning()
-  )[0]!;
-  const app = (
-    await db
-      .insert(apps)
-      .values({
-        name: 'My App',
-        createdById: user!.id,
-        workspaceId: workspace.id,
-      })
-      .returning()
-  )[0]!;
-  const page = (
-    await db
-      .insert(pages)
-      .values({
-        appId: app.id,
-        createdById: user!.id,
-        handle: 'new_page',
-        index: 0,
-        name: 'new page',
-      })
-      .returning()
-  )[0]!;
-  await db.insert(components).values({
-    id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-    type: EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME,
-    pageId: page.id,
-    createdById: user!.id,
-    parentId: null,
-    props: {
-      className: 'h-full w-full',
-    },
-    col: 0,
-    row: 0,
-    columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
-    rowsCount: 0,
-  });
-  return { workspace: workspace.id, app: app.id, page: page.id };
+  const [db, client] = await dbConnect(process.env.DB_URL!);
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.username, username),
+    });
+    const workspace = (
+      await db
+        .insert(workspaces)
+        .values({ name: 'workspace1', createdById: user!.id })
+        .returning()
+    )[0]!;
+    const app = (
+      await db
+        .insert(apps)
+        .values({
+          name: 'My App',
+          createdById: user!.id,
+          workspaceId: workspace.id,
+        })
+        .returning()
+    )[0]!;
+    const page = (
+      await db
+        .insert(pages)
+        .values({
+          appId: app.id,
+          createdById: user!.id,
+          handle: 'new_page',
+          index: 0,
+          name: 'new page',
+        })
+        .returning()
+    )[0]!;
+    await db.insert(components).values({
+      id: EDITOR_CONSTANTS.ROOT_NODE_ID,
+      type: EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME,
+      pageId: page.id,
+      createdById: user!.id,
+      parentId: null,
+      props: {
+        className: 'h-full w-full',
+      },
+      col: 0,
+      row: 0,
+      columnsCount: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS,
+      rowsCount: 0,
+    });
+    return { workspace: workspace.id, app: app.id, page: page.id };
+  } finally {
+    await client.end();
+  }
 };
 export const clearApps = async (username: string) => {
-  const [db] = await dbConnect(process.env.DB_URL!);
-  const user = await db.query.users.findFirst({
-    where: eq(users.username, username),
-  });
-  const userId = user!.id;
-
-  const userApps = await db.query.apps.findMany({
-    where: eq(apps.createdById, userId),
-  });
-  try {
-    const res = await Promise.all(
-      userApps.map(async (app) => {
-        return await db
-          .delete(apps)
-          .where(
-            and(eq(apps.id, app.id), eq(apps.workspaceId, app.workspaceId)),
-          )
-          .returning();
-      }),
-    );
-    console.dir(res, { depth: null });
-  } catch (e) {
-    console.log(e);
-  }
+  /**
+   * todo no need to clear apps now as we're using a new workspace for each test
+   */
+  // const [db] = await dbConnect(process.env.DB_URL!);
+  // const user = await db.query.users.findFirst({
+  //   where: eq(users.username, username),
+  // });
+  // const userId = user!.id;
+  // const userApps = await db.query.apps.findMany({
+  //   where: eq(apps.createdById, userId),
+  // });
+  // try {
+  //   const res = await Promise.all(
+  //     userApps.map(async (app) => {
+  //       return await db
+  //         .delete(apps)
+  //         .where(
+  //           and(eq(apps.id, app.id), eq(apps.workspaceId, app.workspaceId)),
+  //         )
+  //         .returning();
+  //     }),
+  //   );
+  //   console.dir(res, { depth: null });
+  // } catch (e) {
+  //   console.log(e);
+  // }
 };
 
 export const createApp = async (username: string, workspaceId: number) => {
