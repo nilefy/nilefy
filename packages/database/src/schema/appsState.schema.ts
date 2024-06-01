@@ -37,7 +37,7 @@ export const pages = pgTable(
     index: integer("index").notNull(),
     appId: integer("app_id")
       .notNull()
-      .references(() => apps.id),
+      .references(() => apps.id, { onDelete: "cascade" }),
     ...timeStamps,
     ...whoToBlame,
   },
@@ -78,7 +78,7 @@ export const components = pgTable(
     rowsCount: integer("rows_count").notNull(),
     pageId: integer("page_id")
       .notNull()
-      .references(() => pages.id),
+      .references(() => pages.id, { onDelete: "cascade" }),
     ...timeStamps,
     ...whoToBlame,
   },
@@ -100,7 +100,7 @@ export const jsLibraries = pgTable(
   {
     id: text("id").notNull(),
     appId: integer("app_id")
-      .references(() => apps.id)
+      .references(() => apps.id, { onDelete: "cascade" })
       .notNull(),
     url: varchar("url").notNull(),
     ...timeStamps,
