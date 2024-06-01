@@ -79,7 +79,50 @@ const operations = [
   'Download file', // 4
 ];
 
+const operationsOptions = z
+  .union([
+    z.literal('Delete file'),
+    z.literal('Upload file'),
+    z.literal('List buckets'),
+    z.literal('List files in a bucket'),
+    z.literal('Download file'),
+  ])
+  .default('Delete file');
+
 export const queryConfigForm = {
+  formConfig: [
+    {
+      sectionName: 'Basic',
+      children: [
+        {
+          path: 'config.operation',
+          label: 'Operation',
+          type: 'select',
+          options: {
+            items: [
+              { label: 'Delete file', value: 'Delete file' },
+              { label: 'Upload file', value: 'Upload file' },
+              { label: 'List buckets', value: 'List buckets' },
+              {
+                label: 'List files in a bucket',
+                value: 'List files in a bucket',
+              },
+              { label: 'Download file', value: 'Download file' },
+            ],
+            validation: zodToJsonSchema(operationsOptions),
+          },
+        },
+        // {
+        //   path: 'config.operation',
+        //   label: 'Operation',
+        //   type: 'select',
+        // }
+      ],
+    },
+  ],
+};
+
+export const queryConfig = {
   schema: {
     type: 'object',
     properties: {
