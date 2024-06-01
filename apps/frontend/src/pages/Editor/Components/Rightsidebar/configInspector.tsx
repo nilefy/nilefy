@@ -3,7 +3,7 @@ import { EntityInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { WebloomWidgets } from '..';
 import { DefaultSection, EntityForm } from '../entityForm';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
 import { useAutoRun } from '@/lib/Editor/hooks';
-import { ChangePropAction } from '@/actions/editor/changeProps';
+import { RenameAction } from '@/actions/editor/Rename';
 
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
@@ -138,11 +138,16 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         value={value}
         onChange={onChange}
         onBlur={(e) => {
-          editorStore.currentPage
-            .getWidgetById(node.id)
-            .setName(e.target.value);
-          // .setValue('name', e.target.value);
-          commandManager.executeCommand(new ChangePropAction(node.id));
+          try {
+            commandManager.executeCommand(
+              new RenameAction(node.id, e.target.value),
+            );
+            editorStore.currentPage
+              .getWidgetById(node.id)
+              .setId(e.target.value);
+          } catch {
+            e.target.value = node.id;
+          }
         }}
       />
     </div>

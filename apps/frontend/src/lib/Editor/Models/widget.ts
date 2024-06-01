@@ -214,9 +214,6 @@ export class WebloomWidget
     }
     super.setValue(path, value);
   }
-  setName(name: string) {
-    this.widgetName = name;
-  }
   setApi(api: Record<string, (...args: unknown[]) => void>) {
     this.api = api;
   }

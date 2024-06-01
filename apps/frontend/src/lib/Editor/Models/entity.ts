@@ -108,6 +108,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       addInputValidationError: action,
       pushIntoArray: action,
       removeElementFromArray: action,
+      setId: action,
     });
     this.metaValues = metaValues;
     this.evaluablePaths = new Set<string>([
@@ -246,6 +247,9 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       set(this.finalValues, path, value);
     }
     this.syncRawValuesWithEvaluationWorker(path);
+  }
+  setId(newId: string) {
+    this.id = newId;
   }
   pushIntoArray(path: string, value: unknown) {
     let array = get(this.rawValues, path) as unknown[];

@@ -13,6 +13,7 @@ export type ClipboardDataT = {
 
 export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
+  newId?: WebloomWidget['id'];
 })[];
 
 export type RemoteTypes =
@@ -26,6 +27,10 @@ export type RemoteTypes =
   | {
       event: 'update';
       data: UpdateNodesPayload;
+    }
+  | {
+      event: 'rename';
+      data: UpdateNodesPayload[number];
     }
   | {
       event: 'delete';

@@ -30,7 +30,7 @@ class LoomSocket extends WebSocket {
 type LoomServer = Server<typeof LoomSocket>;
 type UpdateNodePayload = (Partial<WebloomNode> & {
   id: WebloomNode['id'];
-  name?: WebloomNode['id'];
+  newId?: WebloomNode['id'];
 })[];
 
 // TODO: make page id dynamic
@@ -183,6 +183,31 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return `done`;
     } catch (e) {
       console.log('e in update', e);
+      throw new WsException(e.message);
+    }
+  }
+
+  @SubscribeMessage('rename')
+  async handleRename(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody()
+    payload: UpdateNodePayload[number],
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send('send auth first');
+      socket.close();
+      return;
+    }
+    try {
+      this.componentsService.update(socket.pageId, payload.id, {
+        newId: payload.newId,
+        updatedById: user.userId,
+      });
+      console.log('RENAMED COMPONENT');
+      return `done`;
+    } catch (e) {
+      console.log('e in rename', e);
       throw new WsException(e.message);
     }
   }
