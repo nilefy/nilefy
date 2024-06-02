@@ -117,7 +117,6 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     const paths: string[] = [];
     for (const section of config) {
       for (const control of section.children) {
-        if (control.isEvent) continue;
         if (control.type === 'array') {
           for (const subControl of control.options.subform) {
             // TODO: handle nested arrays but it's a bit of an overkill
@@ -137,7 +136,34 @@ export const getEvaluablePathsFromInspectorConfig = memoize(
     return paths;
   },
 );
+export const getEventPathsFromInspectorConfig = memoize(
+  (config: EntityInspectorConfig | undefined) => {
+    if (!config) return [];
+    const paths: string[] = [];
+    for (const section of config) {
+      for (const control of section.children) {
+        if (!control.isEvent) continue;
+        paths.push(control.path);
+      }
+    }
+    return paths;
+  },
+);
 
+export const getShouldntCheckForBinding = memoize(
+  (config: EntityInspectorConfig | undefined) => {
+    if (!config) return [];
+    const paths: string[] = [];
+    for (const section of config) {
+      for (const control of section.children) {
+        if (control.isCode) {
+          paths.push(control.path);
+        }
+      }
+    }
+    return paths;
+  },
+);
 export const evaluablePathsHasPath = (
   path: string,
   evaluablePaths: Set<string>,
