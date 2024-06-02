@@ -38,6 +38,8 @@ import {
 import { renameEntityInCode } from '../evaluation/dependancyUtils';
 import { commandManager } from '@/actions/CommandManager';
 import { RenameAction } from '@/actions/editor/Rename';
+import { updateJSquery } from '@/api/jsQueries.api';
+import { updateQuery } from '@/api/queries.api';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -103,6 +105,7 @@ export class EditorState implements WebloomDisposable {
       renameEntity: action,
       dispose: action,
       addJSQuery: action,
+      refactorDepedentPaths: action,
     });
   }
 
@@ -573,7 +576,6 @@ export class EditorState implements WebloomDisposable {
   }
 
   async renameEntity(id: string, newId: string) {
-    console.log('renameEntity', id, newId);
     if (id === newId) return;
     if (entitiyNameExists(newId)) {
       throw new Error('Name already exists');
@@ -605,26 +607,55 @@ export class EditorState implements WebloomDisposable {
     });
     this.refactorDepedentPaths(id, newId, dependentPaths);
   }
-  renameQuery(id: string, newId: string) {
+  async renameQuery(id: string, newId: string) {
     const query = this.queries[id];
     const isJsQuery = query instanceof WebloomJSQuery;
     const snapshot = query.snapshot;
     const dependentPaths = query.connections.dependents;
     //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
-    runInAction(() => {
-      this.removeQuery(id);
-      if (isJsQuery) {
-        this.addJSQuery({
-          ...(snapshot as InstanceType<typeof WebloomJSQuery>['snapshot']),
-          id: newId,
+
+    if (isJsQuery) {
+      try {
+        await updateJSquery({
+          workspaceId: this.workspaceId,
+          appId: this.appId,
+          queryId: id,
+          dto: {
+            id: newId,
+          },
         });
-      } else {
-        this.addQuery({
-          ...(snapshot as InstanceType<typeof WebloomQuery>['snapshot']),
-          id: newId,
+        runInAction(() => {
+          this.removeQuery(id);
+          this.addJSQuery({
+            ...(snapshot as InstanceType<typeof WebloomJSQuery>['snapshot']),
+            id: newId,
+          });
         });
+      } catch (e) {
+        // TODO: handle error
       }
-    });
+    } else {
+      try {
+        await updateQuery({
+          workspaceId: this.workspaceId,
+          appId: this.appId,
+          queryId: id,
+          dto: {
+            id: newId,
+          },
+        });
+        runInAction(() => {
+          this.removeQuery(id);
+          this.addQuery({
+            ...(snapshot as InstanceType<typeof WebloomQuery>['snapshot']),
+            id: newId,
+          });
+        });
+      } catch (e) {
+        // TODO: handle error
+      }
+    }
+
     this.refactorDepedentPaths(id, newId, dependentPaths);
   }
   refactorDepedentPaths(
