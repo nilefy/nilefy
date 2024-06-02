@@ -3,7 +3,7 @@ import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
 import {
   webloomTables as webloomTablesDrizzle,
   webloomColumns as webloomColumnsDrizzle,
-} from '../drizzle/schema/schema';
+} from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const webloomTableColumn = createSelectSchema(webloomColumnsDrizzle, {

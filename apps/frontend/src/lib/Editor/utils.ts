@@ -1,4 +1,12 @@
-import { isPlainObject } from 'lodash';
+import { Point } from '@/types';
+import { editorStore } from './Models';
+import {
+  DebounceSettings,
+  DebouncedFunc,
+  debounce,
+  isPlainObject,
+  memoize,
+} from 'lodash';
 import {
   BoundingRect,
   WebloomGridDimensions,
@@ -158,6 +166,67 @@ export function normalizeCoords(
     rowsCount: newCoords.rowsCount ?? node.rowsCount,
   };
 }
+
+export function isPointInsideBoundingRect(
+  point: Point,
+  boundingRect: BoundingRect,
+) {
+  return (
+    point.x > boundingRect.left &&
+    point.x < boundingRect.right &&
+    point.y > boundingRect.top &&
+    point.y < boundingRect.bottom
+  );
+}
+
+export const getMousePositionRelativeToEditor = (clientOffset: Point) => {
+  if (!editorStore.currentPage.rootWidget.canvas) return clientOffset;
+  const boundingRect =
+    editorStore.currentPage.rootWidget.canvas.getBoundingClientRect();
+  return getMousePositionRelativeToBoundingRect(clientOffset, boundingRect);
+};
+
+export const getMousePositionRelativeToBoundingRect = (
+  clientOffset: Point,
+  boundingRect: BoundingRect,
+) => {
+  return {
+    x: clientOffset.x - boundingRect.left,
+    y: clientOffset.y - boundingRect.top,
+  };
+};
 export function isObject(val: unknown): val is Record<string, unknown> {
   return isPlainObject(val);
+}
+
+export interface MemoizeDebouncedFunction<
+  F extends (...args: unknown[]) => unknown,
+> {
+  (...args: Parameters<F>): void;
+  flush: (...args: Parameters<F>) => void;
+}
+
+export function memoizeDebounce<F extends (...args: any[]) => any>(
+  func: F,
+  wait = 0,
+  options: DebounceSettings = {},
+  resolver?: (...args: Parameters<F>) => unknown,
+): MemoizeDebouncedFunction<F> {
+  const debounceMemo = memoize<(...args: Parameters<F>) => DebouncedFunc<F>>(
+    (..._args: Parameters<F>) => debounce(func, wait, options),
+    resolver,
+  );
+
+  function wrappedFunction(
+    this: MemoizeDebouncedFunction<F>,
+    ...args: Parameters<F>
+  ): ReturnType<F> | undefined {
+    return debounceMemo(...args)(...args);
+  }
+
+  wrappedFunction.flush = (...args: Parameters<F>): void => {
+    debounceMemo(...args).flush();
+  };
+
+  return wrappedFunction as unknown as MemoizeDebouncedFunction<F>;
 }

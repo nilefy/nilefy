@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { SignUpSchema } from '@/api/auth';
 import { signUpSchema } from '@/api/auth';
 import { useSignUp } from '@/hooks/useSignUp';
+
 export function SignUp() {
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),
@@ -26,6 +27,7 @@ export function SignUp() {
     },
   });
   const { mutate, isError, error, isPending } = useSignUp();
+  console.log('DEBUGPRINT[1]: up.tsx:28: isError=', isError, error);
   function onSubmit(values: SignUpSchema) {
     mutate(values);
   }
@@ -41,8 +43,11 @@ export function SignUp() {
       </p>
       <div>
         <Link
-          // TODO: move this hardcoded value to .env or smth
-          to={'http://localhost:3000/auth/login/google'}
+          to={
+            import.meta.env.DEV
+              ? 'http://localhost:3000/api/auth/login/google'
+              : '/api/auth/login/google'
+          }
           className={buttonVariants({
             variant: 'outline',
           })}
@@ -73,7 +78,7 @@ export function SignUp() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="nagy@webloom.com" {...field} />
+                  <Input placeholder="nagy@nilefy.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

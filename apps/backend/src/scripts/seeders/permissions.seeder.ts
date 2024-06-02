@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import { permissions } from '../../drizzle/schema/schema';
-import { permissionTypes } from '../../dto/permissionsTypes';
+
+import { permissionsTypes } from '@nilefy/permissions';
+import { DatabaseI, permissions } from '@nilefy/database';
 
 export async function permissionsSeeder(db: DatabaseI) {
   console.log('running PERMISSIONS seeder');
-  const permissionsSeed = permissionTypes.options.map((p) => ({
+  const permissionsSeed = permissionsTypes.options.map((p) => ({
     name: p,
     description: faker.lorem.sentence(),
   }));

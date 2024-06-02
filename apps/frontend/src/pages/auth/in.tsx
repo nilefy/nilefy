@@ -21,6 +21,7 @@ export function SignIn() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const err = searchParams.get('errorMsg');
+  const msg = searchParams.get('msg');
   const token = searchParams.get('token');
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
@@ -31,9 +32,19 @@ export function SignIn() {
   });
   const { mutate, isError, error, isPending } = useSignIn();
   useEffect(() => {
+    // assumed to be good message from the backend
+    if (msg) {
+      toast({
+        variant: 'default',
+        title: 'sign in',
+        description: msg,
+      });
+      return;
+    }
     // if token exist in the url that means the server redirect oauth with access token(is this secure tho?)
     if (token) {
       mutate({ accessToken: token });
+      return;
     }
     // for now assume that this message is from the backend with something that happend during oauth
     if (err) {
@@ -42,6 +53,7 @@ export function SignIn() {
         title: 'Error while auth',
         description: err,
       });
+      return;
     }
   }, [err, toast, mutate, token]);
   function onSubmit(values: SignInSchema) {
@@ -59,8 +71,11 @@ export function SignIn() {
       </p>
       <div>
         <Link
-          // TODO: move this hardcoded value to .env or smth
-          to={'http://localhost:3000/auth/login/google'}
+          to={
+            import.meta.env.DEV
+              ? 'http://localhost:3000/api/auth/login/google'
+              : '/api/auth/login/google'
+          }
           className={buttonVariants({
             variant: 'outline',
           })}
@@ -78,7 +93,7 @@ export function SignIn() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="nagy@webloom.com"
+                    placeholder="nagy@nilefy.com"
                     autoFocus={true}
                     {...field}
                   />

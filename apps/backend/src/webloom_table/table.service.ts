@@ -12,13 +12,13 @@ import {
   WebloomTableDto,
 } from '../dto/webloom_table.dto';
 import { WorkspaceDto } from '../dto/workspace.dto';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { and, eq, sql } from 'drizzle-orm';
-import * as schema from '../drizzle/schema/schema';
+import * as schema from '@nilefy/database';
 
 @Injectable()
 export class WebloomDbService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(@Inject(DrizzleAsyncProvider) private db: schema.DatabaseI) {}
 
   async index(workspaceId: WorkspaceDto['id']): Promise<WebloomTableDto[]> {
     return await this.db.query.webloomTables.findMany({

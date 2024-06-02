@@ -29,7 +29,7 @@ export interface User {
 export interface UserData {
   access_token: string;
 }
-export const signUp = async (user: SignUpSchema): Promise<UserData> => {
+export const signUp = async (user: SignUpSchema): Promise<{ msg: string }> => {
   const response = await fetchX('auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,6 +38,7 @@ export const signUp = async (user: SignUpSchema): Promise<UserData> => {
   const data = await response.json();
   return data;
 };
+
 export const signIn = async (user: LoginCredentials): Promise<UserData> => {
   const response = await fetchX('auth/login', {
     method: 'POST',

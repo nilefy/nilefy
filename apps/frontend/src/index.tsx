@@ -9,11 +9,13 @@ import ErrorPage from './pages/error';
 import { Dashboard, loader as workspacesLoader } from './pages/mainLayout';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
-import { GroupManagement, GroupsManagement } from '@/pages/workspace/group';
+import { RoleManagement, RolesManagement } from '@/pages/workspace/role';
 import { WorkspaceSettingsLayout } from '@/pages/workspace/workspace';
 import { ProfileSettings } from '@/pages/profile/settings';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import log from 'loglevel';
+
 // import DatabaseTable from './pages/built-in-db/db';
 // import SelectDb from './pages/built-in-db/selectDb';
 import { Toaster } from '@/components/ui/toaster';
@@ -22,13 +24,22 @@ import { NonAuthRoute } from '@/components/non-auth-routes';
 import {
   GlobalDataSourcesView,
   DataSourceView,
+  DataSourcesTemplate,
 } from '@/pages/dataSources/dataSources';
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
-import { startWorker } from '../mocks/browser';
+import { DndProvider } from 'react-dnd';
+import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
+import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
-const queryClient = new QueryClient({
+if (process.env.NODE_ENV !== 'production') {
+  log.enableAll();
+} else {
+  log.disableAll(false);
+}
+
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,
@@ -39,7 +50,9 @@ const queryClient = new QueryClient({
     },
   },
 });
-
+const DndOptions: Partial<TouchBackendOptions> = {
+  enableMouseEvents: true,
+};
 // router config
 const router = createBrowserRouter([
   {
@@ -74,32 +87,41 @@ const router = createBrowserRouter([
           //     },
           //   ],
           // },
-          {
-            path: 'datasources/:datasourceId',
-            element: <DataSourceView />,
-          },
+
+          {},
           {
             path: 'datasources',
-            element: <GlobalDataSourcesView />,
+            element: <DataSourcesTemplate />,
+            children: [
+              {
+                index: true,
+                element: <GlobalDataSourcesView />,
+                loader: globalDataSourcesLoader(queryClient),
+              },
+              {
+                path: ':datasourceId',
+                element: <DataSourceView />,
+              },
+            ],
           },
-          { path: 'profile-settings', element: <ProfileSettings /> },
           {
             path: 'workspace-settings',
             element: <WorkspaceSettingsLayout />,
             children: [
               { path: '', element: <UsersManagement /> },
               {
-                path: 'groups',
-                element: <GroupsManagement />,
+                path: 'roles',
+                element: <RolesManagement />,
                 children: [
                   {
-                    path: ':groupId',
-                    element: <GroupManagement />,
+                    path: ':roleId',
+                    element: <RoleManagement />,
                   },
                 ],
               },
             ],
           },
+          { path: 'profile-settings', element: <ProfileSettings /> },
         ],
       },
     ],
@@ -124,14 +146,22 @@ const router = createBrowserRouter([
   },
   {
     path: '/:workspaceId/apps/edit/:appId',
-    element: <App />,
+    element: (
+      <DndProvider backend={TouchBackend} options={DndOptions}>
+        <App />
+      </DndProvider>
+    ),
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId' }],
   },
   {
     path: '/:workspaceId/apps/:appId',
-    element: <AppPreview />,
+    element: (
+      <DndProvider backend={TouchBackend} options={DndOptions}>
+        <AppPreview />
+      </DndProvider>
+    ),
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId', element: <PagePreview /> }],
@@ -141,22 +171,12 @@ const router = createBrowserRouter([
 const container = document.getElementById('root') as HTMLDivElement;
 const root = createRoot(container);
 
-async function enableMocking() {
-  if (process.env.NODE_ENV == 'development') {
-    return startWorker();
-  }
-}
-
-// enableMocking().then(() => {
 root.render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Toaster />
-        <RouterProvider router={router} />
-      </ThemeProvider>
-      <ReactQueryDevtools buttonPosition="bottom-right" />
-    </QueryClientProvider>
-  </React.StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <Toaster />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+    <ReactQueryDevtools buttonPosition="bottom-right" />
+  </QueryClientProvider>,
 );
-// });

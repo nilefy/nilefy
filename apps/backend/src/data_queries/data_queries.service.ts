@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   AppQueriesDto,
   QueryDb,
@@ -8,12 +8,12 @@ import {
 } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
 import { QueryRet } from './query.types';
-import { queries } from '../drizzle/schema/data_sources.schema';
 import { getQueryService } from '../data_sources/plugins/common/service';
 import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
+import { DatabaseI, PgTrans, queries } from '@nilefy/database';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -40,17 +40,27 @@ export class DataQueriesService {
       query.dataSourceId,
     );
     const service = this.getService(ds.dataSource.name);
-    return await service.run(ds.config, {
+    const res = await service.run(ds.config, {
       name: query.id,
       query: evaluatedQuery,
     });
+    return res;
   }
 
+  /**
+   * @returns return complete query back
+   */
   async addQuery(query: QueryDb): Promise<CompleteQueryI> {
     const [q] = await this.db.insert(queries).values(query).returning({
       id: queries.id,
     });
     return await this.getQuery(query.appId, q.id);
+  }
+
+  async insert(queriesDto: QueryDb[], options?: { tx?: PgTrans }) {
+    await (options?.tx ? options.tx : this.db)
+      .insert(queries)
+      .values(queriesDto);
   }
 
   async getAppQueries(appId: QueryDto['appId']): Promise<AppQueriesDto[]> {
@@ -65,6 +75,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {
@@ -103,6 +114,7 @@ export class DataQueriesService {
         createdById: true,
         updatedById: true,
         dataSourceId: true,
+        triggerMode: true,
       },
       with: {
         dataSource: {

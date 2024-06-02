@@ -1,0 +1,33 @@
+{
+  "name": "@nilefy/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.ts --dts --watch",
+    "build": "tsup src/index.ts --dts",
+    "db:push": "drizzle-kit push",
+    "db:reset": "ts-node ./src/scripts/reset && pnpm db:push",
+    "db:studio": "drizzle-kit studio --verbose",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "drizzle-kit check"
+  },
+  "dependencies": {
+    "@nilefy/constants": "workspace:*",
+    "@nilefy/permissions": "workspace:*"
+  },
+  "peerDependencies": {
+    "@types/pg": "^8.11.6",
+    "drizzle-kit": "^0.21.4",
+    "drizzle-orm": "^0.30.10",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.2"
+  }
+}

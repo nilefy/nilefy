@@ -55,12 +55,12 @@ export default function WrapIfAdditionalTemplate<
   return (
     <div
       key={`${id}-key`}
-      className={cn('flex gap-3 items-center', classNames)}
+      className={cn('flex items-center space-x-2', classNames)}
       style={style}
     >
-      <div>
+      <div className="flex-1">
         <div>
-          <Label>{keyLabel}</Label>
+          {/* <Label>{keyLabel}</Label> */}
           <Input
             required={required}
             defaultValue={label}
@@ -72,8 +72,8 @@ export default function WrapIfAdditionalTemplate<
           />
         </div>
       </div>
-      <div>{children}</div>
-      <div>
+      <div className="flex-1">{children}</div>
+      <div className="shrink-0">
         <RemoveButton
           iconType="default"
           disabled={disabled || readonly}

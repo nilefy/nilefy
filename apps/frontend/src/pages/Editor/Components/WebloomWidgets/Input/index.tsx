@@ -1,54 +1,39 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { TextCursorInput } from 'lucide-react';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-// import z from 'zod';
-// import zodToJsonSchema from 'zod-to-json-schema';
+import { StringSchema } from '@/lib/Editor/validations';
 import { autorun } from 'mobx';
-import {
-  EventTypes,
-  WidgetsEventHandler,
-  genEventHandlerUiSchema,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
-
-/**
- * fields that you want to be on the configForm
- */
-// const webloomInputProps = z.object({
-//   placeholder: z.string().optional(),
-//   label: z.string(),
-//   type: z.union([
-//     z.literal('text'),
-//     z.literal('password'),
-//     z.literal('number'),
-//     z.literal('email'),
-//   ]),
-//   disabled: z.boolean().default(false).optional(),
-//   autoFocus: z.boolean().default(false).optional(),
-//   value: z.union([z.string(), z.number()]).optional(),
-//   events: widgetsEventHandler,
-// });
+import { useAutoRun, useExposeWidgetApi } from '@/lib/Editor/hooks';
+import z from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 export type WebloomInputProps = {
   label: string;
   type: 'number' | 'text' | 'password';
-  placeholder?: string | undefined;
-  disabled?: boolean | undefined;
-  autoFocus?: boolean | undefined;
-  value?: string | number | undefined;
-  events: WidgetsEventHandler;
+  placeholder?: string;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  value?: string | number;
+  onTextChange?: string;
+  onFocus?: string;
+  onBlur?: string;
+  onSubmit?: string;
+  defaultValue?: string | number;
 };
-
-const WebloomInput = observer(function WebloomInput() {
+const WebloomInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomInputProps;
+  const ref = useRef<HTMLInputElement>(null);
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as WebloomInputProps;
   useEffect(
     () =>
       autorun(() => {
@@ -56,16 +41,33 @@ const WebloomInput = observer(function WebloomInput() {
           onPropChange({ value: '', key: 'value' });
         if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
       }),
-    [onPropChange],
+    [onPropChange, props.type],
   );
-
+  // set default value
+  useAutoRun(() =>
+    onPropChange({
+      key: 'value',
+      value: props.defaultValue,
+    }),
+  );
+  useExposeWidgetApi(id, {
+    focus: () => {
+      if (!ref.current) return;
+      ref.current.focus();
+    },
+    blur: () => {
+      if (!ref.current) return;
+      ref.current.blur();
+    },
+  });
   return (
     <div className="flex w-full items-center justify-center gap-2">
       <Label>{props.label}</Label>
       <Input
+        ref={ref}
         placeholder={props.placeholder}
         type={props.type}
-        value={props.value}
+        value={props.value ?? ''}
         disabled={props.disabled}
         autoFocus={props.autoFocus}
         onChange={(e) => {
@@ -73,22 +75,21 @@ const WebloomInput = observer(function WebloomInput() {
             key: 'value',
             value: e.target.value,
           });
-          editorStore.executeActions(id, webloomInputEvents['onTextChanged']);
+          widget.handleEvent('onTextChange');
         }}
-        onFocus={() =>
-          editorStore.executeActions(id, webloomInputEvents['onFocus'])
-        }
-        onBlur={() =>
-          editorStore.executeActions(id, webloomInputEvents['onBlur'])
-        }
+        onFocus={() => {
+          widget.handleEvent('onFocus');
+        }}
+        onBlur={() => {
+          widget.handleEvent('onBlur');
+        }}
       />
     </div>
   );
 });
-
 const config: WidgetConfig = {
   name: 'Input',
-  icon: <TextCursorInput />,
+  icon: TextCursorInput,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
@@ -97,90 +98,174 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Horizontal',
+  widgetActions: {
+    focus: {
+      fn(entity) {
+        entity.api.focus();
+      },
+      name: 'focus',
+      type: 'SIDE_EFFECT',
+    },
+    blur: {
+      fn(entity) {
+        entity.api.blur();
+      },
+      name: 'blur',
+      type: 'SIDE_EFFECT',
+    },
+    clearValue: {
+      type: 'SETTER',
+      path: 'value',
+      value: '',
+      name: 'clearValue',
+    },
+    setValue: {
+      type: 'SETTER',
+      path: 'value',
+      name: 'setValue',
+    },
+  },
 };
 
-const defaultProps: WebloomInputProps = {
+const initialProps: WebloomInputProps = {
   placeholder: 'Enter text',
   value: '',
   label: 'Label',
   type: 'text',
   disabled: false,
-  events: [],
 };
 
-const webloomInputEvents: EventTypes = {
-  onTextChanged: 'onTextChanged',
-  onFocus: 'onFocus',
-  onBlur: 'onBlur',
-} as const;
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      placeholder: {
-        type: 'string',
+const inspectorConfig: EntityInspectorConfig<WebloomInputProps> = [
+  {
+    sectionName: 'Basic',
+    children: [
+      {
+        path: 'type',
+        label: 'Type',
+        type: 'select',
+        options: {
+          items: [
+            {
+              label: 'Text',
+              value: 'text',
+            },
+            {
+              label: 'Number',
+              value: 'number',
+            },
+            {
+              label: 'Password',
+              value: 'password',
+            },
+          ],
+          placeholder: 'Select type',
+        },
       },
-      label: {
-        type: 'string',
+      {
+        path: 'placeholder',
+        label: 'Placeholder',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter placeholder',
+        },
+        validation: StringSchema('Write something'),
       },
-      type: {
-        type: 'string',
-        enum: ['text', 'password', 'number', 'email'],
+      {
+        path: 'defaultValue',
+        label: 'Default Value',
+        type: 'inlineCodeInput',
+        options: { placeholder: 'Enter default value' },
+        validation: zodToJsonSchema(z.string().default('')),
       },
-      color: {
-        type: 'string',
-      },
-      disabled: {
-        type: 'boolean',
-        default: false,
-      },
-      autoFocus: {
-        type: 'boolean',
-        default: false,
-      },
-      events: widgetsEventHandlerJsonSchema,
-      value: {
-        anyOf: [{ type: 'string' }, { type: 'number' }],
-      },
-    },
-    required: ['events', 'label'],
+    ],
   },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    type: {
-      'ui:placeholder': 'Select type',
-      'ui:title': 'Type',
-    },
-    placeholder: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Placeholder',
-      'ui:placeholder': 'Enter placeholder',
-    },
-    label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
-    },
-    events: genEventHandlerUiSchema(webloomInputEvents),
+  {
+    sectionName: 'Label',
+    children: [
+      {
+        path: 'label',
+        label: 'Label',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter label',
+        },
+        validation: StringSchema('Label'),
+      },
+    ],
   },
-};
-
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onTextChange',
+        label: 'onTextChange',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onTextChange',
+        },
+      },
+      {
+        path: 'onFocus',
+        label: 'onFocus',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onFocus',
+        },
+      },
+      {
+        path: 'onBlur',
+        label: 'onBlur',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onBlur',
+        },
+      },
+      {
+        path: 'onSubmit',
+        label: 'onSubmit',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onSubmit',
+        },
+      },
+    ],
+  },
+];
 const WebloomInputWidget: Widget<WebloomInputProps> = {
   component: WebloomInput,
   config,
-  defaultProps,
-  schema,
-  setters: {
-    setValue: {
-      path: 'value',
-      type: 'string',
+  initialProps,
+  publicAPI: {
+    value: {
+      description: 'Input widget',
+      type: 'static',
+      typeSignature: 'string',
     },
-    setDisabled: {
-      path: 'disabled',
-      type: 'boolean',
+    focus: {
+      description: 'Focus on input',
+      type: 'function',
+    },
+    blur: {
+      description: 'Blur input',
+      type: 'function',
+    },
+    clearValue: {
+      description: 'Clear input value',
+      type: 'function',
+    },
+    setValue: {
+      description: 'Set input value',
+      type: 'function',
+      args: [
+        {
+          name: 'value',
+          type: 'string',
+        },
+      ],
     },
   },
+  metaProps: new Set(['value']),
+  inspectorConfig,
 };
 
 export { WebloomInputWidget };
