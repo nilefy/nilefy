@@ -20,7 +20,7 @@ import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import {
-  entityNameExists,
+  entitiyNameExists,
   getNewEntityName,
   seedOrderMap,
   updateOrderMap,
@@ -567,7 +567,7 @@ export class EditorState implements WebloomDisposable {
 
   async renameEntity(id: string, newId: string) {
     if (id === newId) return;
-    if (entityNameExists(newId)) {
+    if (entitiyNameExists(newId)) {
       throw new Error('Name already exists');
     }
     const entity = this.getEntityById(id);
