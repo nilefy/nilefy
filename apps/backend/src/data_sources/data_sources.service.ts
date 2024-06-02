@@ -107,15 +107,12 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
-    console.log('old ds: ');
-    console.log(ds);
+    const uiSchema = { ...ds['dataSource']['config']['uiSchema'] };
     const config = this.decryptConfigRequiredFields(
-      { ...ds['dataSource']['config'] },
-      { ...ds['dataSource']['config']['uiSchema'] },
+      { ...ds['config'] },
+      { ...uiSchema },
     );
-    ds['dataSource']['config'] = config;
-    console.log('new ds:');
-    console.log(ds);
+    ds['config'] = config;
     return ds;
   }
 
@@ -159,6 +156,15 @@ export class DataSourcesService {
     uiSchema: Record<string, unknown> | undefined,
     isDecryption = false,
   ): any {
+    if (isDecryption) {
+      console.log('decrypting... ... ...');
+    } else {
+      console.log(' encrypting .. ... ...  ');
+    }
+    console.log('pre config');
+    console.log(config);
+    console.log('pre uiSchema');
+    console.log(uiSchema);
     if (!uiSchema) {
       return config;
     }
@@ -176,7 +182,9 @@ export class DataSourcesService {
           ) {
             processedConfig[key] = this.encryptConfigRequiredFields(
               value,
-              uiSchema[key] as Record<string, unknown>,
+              // { ...(uiSchema[key] as Record<string, unknown>) },
+              { ...uiSchema },
+              isDecryption,
             );
           } else {
             if (
@@ -186,11 +194,8 @@ export class DataSourcesService {
               console.log('before donig anything value: ');
               console.log(value);
               if (isDecryption) {
-                console.log('decryption');
-                processedConfig[key] =
-                  'after decryption ' + this.encryptionService.decrypt(value);
+                processedConfig[key] = this.encryptionService.decrypt(value);
               } else {
-                console.log('encryption');
                 processedConfig[key] = this.encryptionService.encrypt(value);
               }
               console.log('after decryption/encryption');
