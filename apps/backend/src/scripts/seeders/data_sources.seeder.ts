@@ -21,6 +21,10 @@ import {
   queryConfigForm as mongodbQueryConfigForm,
 } from '../../data_sources/plugins/mongodb/types';
 import { DatabaseI, dataSources as dataSourcesSchema } from '@nilefy/database';
+import {
+  pluginConfigForm as azureBlobStorageConfigForm,
+  queryConfigForm as azureBlobStorageQueryConfigForm,
+} from '../../data_sources/plugins/azure_blob_storage/types';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -65,8 +69,8 @@ export async function dataSourcesSeeder(db: DatabaseI) {
           break;
         case 'azure blob storage':
           {
-            dataSourceConfig = [];
-            queryConfig = [];
+            dataSourceConfig = azureBlobStorageConfigForm;
+            queryConfig = azureBlobStorageQueryConfigForm;
             image =
               'https://www.svgrepo.com/show/448272/azure-blob-storage.svg';
             description =
