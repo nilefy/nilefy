@@ -165,7 +165,7 @@ export const queryConfigForm = {
         {
           path: 'config.documents',
           label: 'Document/s',
-          type: 'inlineCodeInput', // input ?
+          type: 'inlineCodeInput',
           options: {
             placeholder: 'Enter document/s to create',
           },
@@ -188,7 +188,7 @@ export const queryConfigForm = {
         {
           path: 'config.filter',
           label: 'Filter',
-          type: 'inlineCodeInput', // input ?
+          type: 'inlineCodeInput',
           options: {
             placeholder: 'Enter filter object',
           },
@@ -214,7 +214,7 @@ export const queryConfigForm = {
         {
           path: 'config.update',
           label: 'Update',
-          type: 'inlineCodeInput', // input ?
+          type: 'inlineCodeInput',
           options: {
             placeholder: 'Enter update object',
           },
@@ -237,7 +237,7 @@ export const queryConfigForm = {
         {
           path: 'config.replacement',
           label: 'Replacement',
-          type: 'inlineCodeInput', // input ?
+          type: 'inlineCodeInput',
           options: {
             placeholder: 'Enter replacement object',
           },
