@@ -331,7 +331,16 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       },
     });
   }
-
+  getInspectorConfigForPath(path: string) {
+    for (const config of this.inspectorConfig) {
+      for (const item of config.children) {
+        if (item.path === path) {
+          return item;
+        }
+      }
+    }
+    return null;
+  }
   processActionConfig = (config: EntityActionConfig) => {
     const actions: Record<string, (...args: unknown[]) => void> = {};
     for (const key in config) {

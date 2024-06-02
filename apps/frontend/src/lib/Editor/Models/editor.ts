@@ -594,9 +594,16 @@ export class EditorState implements WebloomDisposable {
       const [entityId, ...pathArr] = dependentPath.split('.');
       const path = pathArr.join('.');
       const entity = this.getEntityById(entityId);
+      const shouldSearchForBinding =
+        !entity?.getInspectorConfigForPath(path)!.isCode;
       if (!entity) continue;
       const valueInPath = entity.getRawValue(path) as string;
-      const newCode = renameEntityInCode(valueInPath, id, newId, true);
+      const newCode = renameEntityInCode(
+        valueInPath,
+        id,
+        newId,
+        shouldSearchForBinding,
+      );
       entity.setValue(path, newCode);
     }
   }

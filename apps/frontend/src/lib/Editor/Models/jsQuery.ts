@@ -49,7 +49,9 @@ const inspectorConfig: EntityInspectorConfig = [
   },
   {
     sectionName: 'General',
-    children: [{ path: 'query', label: 'Query', type: 'codeInput' }],
+    children: [
+      { path: 'query', label: 'Query', type: 'codeInput', isCode: true },
+    ],
   },
 ];
 

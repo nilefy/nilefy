@@ -759,12 +759,10 @@ export const renameEntityInCode = (
   while ((res = bindingRegexGlobal.exec(code)) !== null) {
     const index = res.index;
     const wrapped = res[1];
-    const newCode = _renameEntityInCode(wrapped, oldName, newName).body.code!;
-    const bindingLength = 2;
-    code =
-      code.slice(0, index) +
-      `{{${newCode}}}` +
-      code.slice(index + code.length + bindingLength);
+    const newCode = `{{${_renameEntityInCode(wrapped, oldName, newName).body
+      .code!}}}`;
+    code = code.slice(0, index) + newCode + code.slice(index + res[0].length);
+    bindingRegexGlobal.lastIndex = index + newCode.length;
   }
   return code;
 };
