@@ -19,6 +19,8 @@ import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
+import { toast } from '@/components/ui/use-toast';
+
 import {
   entitiyNameExists,
   getNewEntityName,
@@ -577,10 +579,14 @@ export class EditorState implements WebloomDisposable {
 
   async renameEntity(id: string, newId: string) {
     if (id === newId) return;
-    if (entitiyNameExists(newId)) {
-      throw new Error('Name already exists');
-    }
     const entity = this.getEntityById(id);
+    if (entitiyNameExists(newId)) {
+      return toast({
+        title: 'Error',
+        description: `Failed to rename ${entity?.entityType} ${id} to ${newId}, because ${newId} already exists.`,
+        variant: 'destructive',
+      });
+    }
     if (!entity) return;
     if (entity.entityType === 'widget') {
       return this.renameWidget(id, newId);
@@ -612,7 +618,6 @@ export class EditorState implements WebloomDisposable {
     const isJsQuery = query instanceof WebloomJSQuery;
     const snapshot = query.snapshot;
     const dependentPaths = query.connections.dependents;
-    //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
 
     if (isJsQuery) {
       try {
@@ -632,7 +637,11 @@ export class EditorState implements WebloomDisposable {
           });
         });
       } catch (e) {
-        // TODO: handle error
+        return toast({
+          title: 'Error',
+          description: `Failed to rename query ${id} to ${newId}, please try again.`,
+          variant: 'destructive',
+        });
       }
     } else {
       try {
@@ -652,7 +661,11 @@ export class EditorState implements WebloomDisposable {
           });
         });
       } catch (e) {
-        // TODO: handle error
+        return toast({
+          title: 'Error',
+          description: `Failed to rename query ${id} to ${newId}, please try again.`,
+          variant: 'destructive',
+        });
       }
     }
 
