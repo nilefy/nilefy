@@ -1,4 +1,11 @@
-import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  forwardRef,
+  useEffect,
+} from 'react';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -64,6 +71,10 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
+  const [renameValue, setRenameValue] = useState(query.id);
+  useEffect(() => {
+    setRenameValue(query.id);
+  }, [query]);
   const saveCallback = useCallback(() => {
     query.updateQueryMutator.mutate();
   }, [query]);
@@ -73,9 +84,12 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
       <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input
-          value={query.id}
-          onChange={() => {
-            //todo
+          value={renameValue}
+          onChange={(e) => {
+            setRenameValue(e.target.value);
+          }}
+          onBlur={(e) => {
+            editorStore.renameEntity(query.id, e.target.value);
           }}
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
@@ -493,12 +507,7 @@ export const QueryPanel = observer(function QueryPanel() {
                     onBlur={(e) => {
                       setEditingItemId(null);
                       setEditingItemValue(null);
-                      try {
-                        editorStore.renameEntity(item.id, e.target.value);
-                      } catch {
-                        // TODO: error message
-                        e.target.value = item.id;
-                      }
+                      editorStore.renameEntity(item.id, e.target.value);
                     }}
                   />
                 ) : (

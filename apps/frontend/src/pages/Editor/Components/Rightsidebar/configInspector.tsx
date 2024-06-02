@@ -139,16 +139,6 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         onChange={onChange}
         onBlur={(e) => {
           editorStore.renameEntity(selectedWidgetId, e.target.value);
-          // try {
-          //   commandManager.executeCommand(
-          //     new RenameAction(node.id, e.target.value),
-          //   );
-          //   editorStore.currentPage
-          //     .getWidgetById(node.id)
-          //     .setId(e.target.value);
-          // } catch {
-          //   e.target.value = node.id;
-          // }
         }}
       />
     </div>
