@@ -107,6 +107,15 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
+    console.log('old ds: ');
+    console.log(ds);
+    const config = this.decryptConfigRequiredFields(
+      { ...ds['dataSource']['config'] },
+      { ...ds['dataSource']['config']['uiSchema'] },
+    );
+    ds['dataSource']['config'] = config;
+    console.log('new ds:');
+    console.log(ds);
     return ds;
   }
 
@@ -153,13 +162,6 @@ export class DataSourcesService {
     if (!uiSchema) {
       return config;
     }
-
-    console.log('pre config: ');
-    console.log(config);
-
-    console.log('pre ui scheme');
-    console.log(uiSchema);
-
     const processedConfig = { ...config };
 
     for (const key in processedConfig) {
@@ -181,12 +183,18 @@ export class DataSourcesService {
               uiSchema[key] &&
               (uiSchema[key] as any)['ui:encrypted'] === 'encrypted'
             ) {
+              console.log('before donig anything value: ');
               console.log(value);
               if (isDecryption) {
-                processedConfig[key] = this.encryptionService.decrypt(value);
+                console.log('decryption');
+                processedConfig[key] =
+                  'after decryption ' + this.encryptionService.decrypt(value);
               } else {
+                console.log('encryption');
                 processedConfig[key] = this.encryptionService.encrypt(value);
               }
+              console.log('after decryption/encryption');
+              console.log(processedConfig[key]);
             }
           }
         } catch (error) {

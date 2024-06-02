@@ -171,7 +171,6 @@ export class DataSourcesController {
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
-    console.log(data);
     return this.dataSourceService.update(
       {
         workspaceId,
