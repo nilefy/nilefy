@@ -427,7 +427,6 @@ export const QueryPanel = observer(function QueryPanel() {
                   <DropdownMenuItem
                     key={`${item.id}`}
                     onClick={() => {
-                      console.log(item.id);
                       editorStore.queriesManager.addQuery.mutate({
                         dto: {
                           dataSourceId: item.id,
