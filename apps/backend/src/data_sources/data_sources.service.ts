@@ -150,11 +150,13 @@ export class DataSourcesService {
     if (!uiSchema) {
       return config;
     }
+
     console.log('pre config: ');
     console.log(config);
 
     console.log('pre ui scheme');
     console.log(uiSchema);
+
     const processedConfig = { ...config };
 
     for (const key in processedConfig) {
@@ -167,11 +169,15 @@ export class DataSourcesService {
             value !== null &&
             !Array.isArray(value)
           ) {
-            processedConfig[key] = this.processConfig(value, uiSchema[key]);
+            // Recursively process nested objects with the corresponding uiSchema
+            processedConfig[key] = this.processConfig(
+              value,
+              uiSchema[key] as Record<string, unknown>,
+            );
           } else {
             if (
               uiSchema[key] &&
-              uiSchema[key]['ui:encrypted'] === 'encrypted'
+              (uiSchema[key] as any)['ui:encrypted'] === 'encrypted'
             ) {
               // processedConfig[key] = this.encrypt(value);
               processedConfig[key] = 'encrypted successfully';
@@ -199,16 +205,13 @@ export class DataSourcesService {
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
     const r = await this.getOne(workspaceId, dataSourceId);
-    console.log('r: ');
-    console.log(r);
-    // console.log("r['dataSource']['config']['uiSchema']: ");
-    // console.log(r['dataSource']['config']['uiSchema']);
-    console.log('ui scheme ');
     const uiSchema = r['dataSource']['config']['uiSchema'];
-    console.log(uiSchema);
-    const config = this.processConfig(dataSourceDto, { ...uiSchema });
+    const config = this.processConfig(dataSourceDto['config'], { ...uiSchema });
+    dataSourceDto['config'] = config;
     console.log('processed config');
     console.log(config);
+    console.log('dataSourceDto');
+    console.log(dataSourceDto);
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
