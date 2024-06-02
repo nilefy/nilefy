@@ -156,15 +156,6 @@ export class DataSourcesService {
     uiSchema: Record<string, unknown> | undefined,
     isDecryption = false,
   ): any {
-    if (isDecryption) {
-      console.log('decrypting... ... ...');
-    } else {
-      console.log(' encrypting .. ... ...  ');
-    }
-    console.log('pre config');
-    console.log(config);
-    console.log('pre uiSchema');
-    console.log(uiSchema);
     if (!uiSchema) {
       return config;
     }
@@ -182,7 +173,6 @@ export class DataSourcesService {
           ) {
             processedConfig[key] = this.encryptConfigRequiredFields(
               value,
-              // { ...(uiSchema[key] as Record<string, unknown>) },
               { ...uiSchema },
               isDecryption,
             );
@@ -198,8 +188,6 @@ export class DataSourcesService {
               } else {
                 processedConfig[key] = this.encryptionService.encrypt(value);
               }
-              console.log('after decryption/encryption');
-              console.log(processedConfig[key]);
             }
           }
         } catch (error) {
