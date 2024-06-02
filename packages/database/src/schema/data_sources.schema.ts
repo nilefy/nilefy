@@ -48,7 +48,7 @@ export const workspaceDataSources = pgTable(
      * datasource configuration(evaluated, there will be no expressions in datasource config)
      */
     config: json("config")
-      .$type<Record<string, unknown>>()
+      .$type<Record<"development" | "staging" | "deployment", Record<string, unknown>>>()
       .default(sql`'{}'::json`)
       .notNull(),
     ...timeStamps,
