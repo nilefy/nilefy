@@ -167,7 +167,7 @@ export const queryConfigForm = {
           label: 'Document/s',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter document/s to create',
+            placeholder: '[ { _id: 0, role: "user" } ]',
           },
           hidden: {
             conditionType: 'OR',
@@ -190,7 +190,7 @@ export const queryConfigForm = {
           label: 'Filter',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter filter object',
+            placeholder: '{ rating: { $gt : 5 } }',
           },
           hidden: {
             conditionType: 'OR',
@@ -216,7 +216,8 @@ export const queryConfigForm = {
           label: 'Update',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter update object',
+            placeholder:
+              '{ $rename: { <field1>: <newName1>, <field2>: <newName2>, ... } }',
           },
           hidden: {
             conditionType: 'OR',
@@ -239,7 +240,7 @@ export const queryConfigForm = {
           label: 'Replacement',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter replacement object',
+            placeholder: '{ role: "admin" }',
           },
           hidden: {
             conditionType: 'OR',
@@ -260,7 +261,7 @@ export const queryConfigForm = {
         {
           path: 'config.multiple',
           label: 'Multiple',
-          type: '', // boolean
+          type: 'checkbox',
           hidden: {
             conditionType: 'OR',
             conditions: [
