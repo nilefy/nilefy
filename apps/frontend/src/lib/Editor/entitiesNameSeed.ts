@@ -3,10 +3,6 @@ import { defaultLibraries } from './libraries';
 
 let entityOrder: Record<string, Set<number>> = {};
 
-export function entityNameExists(name: string): boolean {
-  return Object.values(entityOrder).some((set) => set.has(+name.slice()));
-}
-
 export function getNewEntityName(
   type: string,
   sideEffect: boolean = true,
@@ -70,5 +66,14 @@ export function updateOrderMap(
     } else {
       entityOrder[type].add(order);
     }
+  });
+}
+
+export function entitiyNameExists(entityName: string) {
+  return Object.entries(entityOrder).some(([type, set]) => {
+    return [...set].some((order) => {
+      const currentName = `${type}${order}`;
+      return currentName === entityName;
+    });
   });
 }
