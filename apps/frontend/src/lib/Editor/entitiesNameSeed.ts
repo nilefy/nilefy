@@ -3,6 +3,10 @@ import { defaultLibraries } from './libraries';
 
 let entityOrder: Record<string, Set<number>> = {};
 
+export function entityNameExists(name: string): boolean {
+  return Object.values(entityOrder).some((set) => set.has(+name.slice()));
+}
+
 export function getNewEntityName(
   type: string,
   sideEffect: boolean = true,

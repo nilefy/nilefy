@@ -20,6 +20,7 @@ import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
 import {
+  entityNameExists,
   getNewEntityName,
   seedOrderMap,
   updateOrderMap,
@@ -34,6 +35,7 @@ import {
   JSLibraryI,
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
+import { renameEntityInCode } from '../evaluation/dependancyUtils';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -561,5 +563,41 @@ export class EditorState implements WebloomDisposable {
       ...this.queries,
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
+  }
+
+  async renameEntity(id: string, newId: string) {
+    if (id === newId) return;
+    if (entityNameExists(newId)) {
+      throw new Error('Name already exists');
+    }
+    const entity = this.getEntityById(id);
+    if (!entity) return;
+    if (entity.entityType === 'widget') {
+      return this.renameWidget(id, newId);
+    } else if (entity.entityType === 'query') {
+      //todo
+    }
+  }
+
+  renameWidget(id: string, newId: string) {
+    const widget = this.currentPage.widgets[id];
+    const snapshot = widget.snapshot;
+    const dependentPaths = widget.connections.dependents;
+    runInAction(() => {
+      this.currentPage.removeWidget(id, false);
+      this.currentPage.addWidget({
+        ...snapshot,
+        id: newId,
+      });
+    });
+    for (const dependentPath of dependentPaths) {
+      const [entityId, ...pathArr] = dependentPath.split('.');
+      const path = pathArr.join('.');
+      const entity = this.getEntityById(entityId);
+      if (!entity) continue;
+      const valueInPath = entity.getRawValue(path) as string;
+      const newCode = renameEntityInCode(valueInPath, id, newId, true);
+      entity.setValue(path, newCode);
+    }
   }
 }

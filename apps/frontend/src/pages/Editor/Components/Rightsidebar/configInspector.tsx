@@ -3,7 +3,7 @@ import { EntityInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { WebloomWidgets } from '..';
 import { DefaultSection, EntityForm } from '../entityForm';
-import { ChangeEvent, useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,6 @@ import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
-import { useAutoRun } from '@/lib/Editor/hooks';
 import { RenameAction } from '@/actions/editor/Rename';
 
 export const WidgetConfigPanel = observer(() => {
@@ -53,6 +52,16 @@ export const WidgetConfigPanel = observer(() => {
 });
 
 const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
+  const [value, setValue] = useState(node.id);
+  const onChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setValue(e.target.value);
+    },
+    [setValue],
+  );
+  useEffect(() => {
+    setValue(node.id);
+  }, [node.id]);
   const selectedWidgetId = editorStore.currentPage.firstSelectedWidget;
   if (!node) return null;
   const incoming = node.connections.dependencies || [];
@@ -83,7 +92,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
                   key={id}
                   className="cursor-pointer"
                   onClick={() => {
-                    selectCallback(id);
+                    selectCallback(id.split('.')[0]);
                   }}
                 >
                   {id}
@@ -112,7 +121,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
                   className="cursor-pointer"
                   key={id}
                   onClick={() => {
-                    selectCallback(id);
+                    selectCallback(id.split('.')[0]);
                   }}
                 >
                   {id}
@@ -127,19 +136,20 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
       </Label>
       <Input
         data-testid="selected-widget-id"
-        value={selectedWidgetId}
-        onChange={() => {}}
+        value={value}
+        onChange={onChange}
         onBlur={(e) => {
-          try {
-            commandManager.executeCommand(
-              new RenameAction(node.id, e.target.value),
-            );
-            editorStore.currentPage
-              .getWidgetById(node.id)
-              .setId(e.target.value);
-          } catch {
-            e.target.value = node.id;
-          }
+          editorStore.renameEntity(selectedWidgetId, e.target.value);
+          // try {
+          //   commandManager.executeCommand(
+          //     new RenameAction(node.id, e.target.value),
+          //   );
+          //   editorStore.currentPage
+          //     .getWidgetById(node.id)
+          //     .setId(e.target.value);
+          // } catch {
+          //   e.target.value = node.id;
+          // }
         }}
       />
     </div>
