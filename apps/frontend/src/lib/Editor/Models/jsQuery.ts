@@ -141,7 +141,7 @@ export class WebloomJSQuery
   updateQueryMutator: MobxMutation<
     Awaited<ReturnType<typeof updateJSquery>>,
     FetchXError,
-    string | undefined,
+    void,
     void
   >;
   queryRunner: MobxMutation<
@@ -207,13 +207,13 @@ export class WebloomJSQuery
     });
     this.queryClient = queryClient;
     this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
-      mutationFn: (newId: string | undefined) => {
+      mutationFn: () => {
         return updateJSquery({
           appId,
           workspaceId,
           queryId: this.id,
           dto: {
-            id: newId,
+            id: this.id,
             settings: toJS(this.rawValues.settings),
             query: this.rawValues.query as string,
             triggerMode: this.triggerMode,
@@ -222,7 +222,6 @@ export class WebloomJSQuery
       },
       onSuccess: (data) => {
         this.updateQuery(data);
-        super.setId(data.id);
       },
       onError: (error) => {
         console.error('error', error);

@@ -416,6 +416,7 @@ export const QueryPanel = observer(function QueryPanel() {
                     dto: {
                       query: '',
                       settings: {},
+                      triggerMode: 'manually',
                     },
                   });
                 }}
@@ -483,6 +484,7 @@ export const QueryPanel = observer(function QueryPanel() {
                   <Input
                     type="text"
                     value={editingItemValue!}
+                    aria-label="Rename query"
                     className="w-full"
                     onChange={(e) => {
                       setEditingItemValue(e.target.value);
@@ -492,8 +494,7 @@ export const QueryPanel = observer(function QueryPanel() {
                       setEditingItemId(null);
                       setEditingItemValue(null);
                       try {
-                        const query = editorStore.getQueryById(item.id);
-                        query.updateQueryMutator.mutate(e.target.value);
+                        editorStore.renameEntity(item.id, e.target.value);
                       } catch {
                         // TODO: error message
                         e.target.value = item.id;

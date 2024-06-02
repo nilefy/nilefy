@@ -36,6 +36,8 @@ import {
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
 import { renameEntityInCode } from '../evaluation/dependancyUtils';
+import { commandManager } from '@/actions/CommandManager';
+import { RenameAction } from '@/actions/editor/Rename';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -96,6 +98,11 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
+      renameWidget: action,
+      renameQuery: action,
+      renameEntity: action,
+      dispose: action,
+      addJSQuery: action,
     });
   }
 
@@ -566,6 +573,7 @@ export class EditorState implements WebloomDisposable {
   }
 
   async renameEntity(id: string, newId: string) {
+    console.log('renameEntity', id, newId);
     if (id === newId) return;
     if (entitiyNameExists(newId)) {
       throw new Error('Name already exists');
@@ -574,8 +582,11 @@ export class EditorState implements WebloomDisposable {
     if (!entity) return;
     if (entity.entityType === 'widget') {
       return this.renameWidget(id, newId);
-    } else if (entity.entityType === 'query') {
-      //todo
+    } else if (
+      entity.entityType === 'query' ||
+      entity.entityType === 'jsQuery'
+    ) {
+      return this.renameQuery(id, newId);
     }
   }
 
@@ -583,13 +594,44 @@ export class EditorState implements WebloomDisposable {
     const widget = this.currentPage.widgets[id];
     const snapshot = widget.snapshot;
     const dependentPaths = widget.connections.dependents;
+    //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
     runInAction(() => {
       this.currentPage.removeWidget(id, false);
       this.currentPage.addWidget({
         ...snapshot,
         id: newId,
       });
+      commandManager.executeCommand(new RenameAction(id, newId));
     });
+    this.refactorDepedentPaths(id, newId, dependentPaths);
+  }
+  renameQuery(id: string, newId: string) {
+    const query = this.queries[id];
+    const isJsQuery = query instanceof WebloomJSQuery;
+    const snapshot = query.snapshot;
+    const dependentPaths = query.connections.dependents;
+    //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
+    runInAction(() => {
+      this.removeQuery(id);
+      if (isJsQuery) {
+        this.addJSQuery({
+          ...(snapshot as InstanceType<typeof WebloomJSQuery>['snapshot']),
+          id: newId,
+        });
+      } else {
+        this.addQuery({
+          ...(snapshot as InstanceType<typeof WebloomQuery>['snapshot']),
+          id: newId,
+        });
+      }
+    });
+    this.refactorDepedentPaths(id, newId, dependentPaths);
+  }
+  refactorDepedentPaths(
+    oldId: string,
+    newId: string,
+    dependentPaths: string[],
+  ) {
     for (const dependentPath of dependentPaths) {
       const [entityId, ...pathArr] = dependentPath.split('.');
       const path = pathArr.join('.');
@@ -600,7 +642,7 @@ export class EditorState implements WebloomDisposable {
       const valueInPath = entity.getRawValue(path) as string;
       const newCode = renameEntityInCode(
         valueInPath,
-        id,
+        oldId,
         newId,
         shouldSearchForBinding,
       );
