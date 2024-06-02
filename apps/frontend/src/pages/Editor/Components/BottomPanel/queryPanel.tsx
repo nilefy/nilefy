@@ -422,12 +422,12 @@ export const QueryPanel = observer(function QueryPanel() {
                 JS Query
               </DropdownMenuItem>
               {filteredDatasources.map((item) => {
-                const id = getNewEntityName(item.name, false);
                 return (
                   // ADD NEW QUERY
                   <DropdownMenuItem
-                    key={`${item.name}-${id}`}
+                    key={`${item.id}`}
                     onClick={() => {
+                      console.log(item.id);
                       editorStore.queriesManager.addQuery.mutate({
                         dto: {
                           dataSourceId: item.id,

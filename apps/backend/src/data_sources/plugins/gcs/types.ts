@@ -148,21 +148,21 @@ export const queryConfigForm = {
             }),
           ),
         },
-        {
-          path: 'config.filePath',
-          label: 'File Path',
-          type: '', // file picker
-          hidden: {
-            conditionType: 'OR',
-            conditions: [
-              {
-                path: 'config.operation',
-                comparison: 'NOT_EQUALS',
-                value: operations[1],
-              },
-            ],
-          },
-        },
+        // {
+        // path: 'config.filePath',
+        // label: 'File Path',
+        // type: '', // file picker
+        // hidden: {
+        //   conditionType: 'OR',
+        //   conditions: [
+        //     {
+        //       path: 'config.operation',
+        //       comparison: 'NOT_EQUALS',
+        //       value: operations[1],
+        //     },
+        //   ],
+        // },
+        // },
         {
           path: 'config.prefix',
           label: 'Prefix',
@@ -186,26 +186,26 @@ export const queryConfigForm = {
             }),
           ),
         },
-        {
-          path: 'config.destination',
-          label: 'Destination',
-          type: '', // file picker
-          hidden: {
-            conditionType: 'OR',
-            conditions: [
-              {
-                path: 'config.operation',
-                comparison: 'NOT_EQUALS',
-                value: operations[4],
-              },
-            ],
-          },
-          validation: zodToJsonSchema(
-            z.object({
-              destination: z.string().optional(),
-            }),
-          ),
-        },
+        // {
+        //   path: 'config.destination',
+        //   label: 'Destination',
+        //   type: '', // file picker
+        //   hidden: {
+        //     conditionType: 'OR',
+        //     conditions: [
+        //       {
+        //         path: 'config.operation',
+        //         comparison: 'NOT_EQUALS',
+        //         value: operations[4],
+        //       },
+        //     ],
+        //   },
+        //   validation: zodToJsonSchema(
+        //     z.object({
+        //       destination: z.string().optional(),
+        //     }),
+        //   ),
+        // },
       ],
     },
   ],
