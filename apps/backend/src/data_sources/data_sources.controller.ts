@@ -74,6 +74,7 @@ export class DataSourcesController {
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
+    console.log(createDataSourceDto);
     return await this.dataSourceService.create({
       ...createDataSourceDto,
       workspaceId,
@@ -170,6 +171,7 @@ export class DataSourcesController {
     data: UpdateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
+    console.log(data);
     return this.dataSourceService.update(
       {
         workspaceId,

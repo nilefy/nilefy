@@ -41,6 +41,7 @@ export const pluginConfigForm = {
     password: {
       'ui:widget': 'password',
       'ui:placeholder': 'Enter password',
+      'ui:encrypted': 'encrypted',
     },
   },
 };

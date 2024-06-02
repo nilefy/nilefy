@@ -17,12 +17,17 @@ import { and, eq, sql } from 'drizzle-orm';
 import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
 import { DatabaseI, workspaceDataSources } from '@nilefy/database';
+import { GlobalDataSourcesService } from './global_data_sources.service';
 
 @Injectable()
 export class DataSourcesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    readonly globalDataSourceService: GlobalDataSourcesService,
+  ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
+    console.log(dataSourceDto);
     const [dataSource] = await this.db
       .insert(workspaceDataSources)
       .values(dataSourceDto)
@@ -138,6 +143,49 @@ export class DataSourcesService {
     return ds;
   }
 
+  private processConfig(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    if (!uiSchema) {
+      return config;
+    }
+    console.log('pre config: ');
+    console.log(config);
+
+    console.log('pre ui scheme');
+    console.log(uiSchema);
+    const processedConfig = { ...config };
+
+    for (const key in processedConfig) {
+      if (processedConfig.hasOwnProperty(key)) {
+        try {
+          const value = processedConfig[key];
+
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            processedConfig[key] = this.processConfig(value, uiSchema[key]);
+          } else {
+            if (
+              uiSchema[key] &&
+              uiSchema[key]['ui:encrypted'] === 'encrypted'
+            ) {
+              // processedConfig[key] = this.encrypt(value);
+              processedConfig[key] = 'encrypted successfully';
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing key "${key}": ${error.message}`);
+        }
+      }
+    }
+
+    return processedConfig;
+  }
+
   async update(
     {
       workspaceId,
@@ -150,6 +198,17 @@ export class DataSourcesService {
     },
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
+    const r = await this.getOne(workspaceId, dataSourceId);
+    console.log('r: ');
+    console.log(r);
+    // console.log("r['dataSource']['config']['uiSchema']: ");
+    // console.log(r['dataSource']['config']['uiSchema']);
+    console.log('ui scheme ');
+    const uiSchema = r['dataSource']['config']['uiSchema'];
+    console.log(uiSchema);
+    const config = this.processConfig(dataSourceDto, { ...uiSchema });
+    console.log('processed config');
+    console.log(config);
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
