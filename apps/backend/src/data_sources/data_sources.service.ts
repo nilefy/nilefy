@@ -18,12 +18,14 @@ import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
 import { DatabaseI, workspaceDataSources } from '@nilefy/database';
 import { GlobalDataSourcesService } from './global_data_sources.service';
+import { EncryptionService } from '../encryption/encryption.service';
 
 @Injectable()
 export class DataSourcesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     readonly globalDataSourceService: GlobalDataSourcesService,
+    readonly encryptionService: EncryptionService,
   ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
@@ -143,9 +145,10 @@ export class DataSourcesService {
     return ds;
   }
 
-  private processConfig(
+  private encryptConfigRequiredFields(
     config: any,
     uiSchema: Record<string, unknown> | undefined,
+    isDecryption = false,
   ): any {
     if (!uiSchema) {
       return config;
@@ -169,8 +172,7 @@ export class DataSourcesService {
             value !== null &&
             !Array.isArray(value)
           ) {
-            // Recursively process nested objects with the corresponding uiSchema
-            processedConfig[key] = this.processConfig(
+            processedConfig[key] = this.encryptConfigRequiredFields(
               value,
               uiSchema[key] as Record<string, unknown>,
             );
@@ -179,8 +181,12 @@ export class DataSourcesService {
               uiSchema[key] &&
               (uiSchema[key] as any)['ui:encrypted'] === 'encrypted'
             ) {
-              // processedConfig[key] = this.encrypt(value);
-              processedConfig[key] = 'encrypted successfully';
+              console.log(value);
+              if (isDecryption) {
+                processedConfig[key] = this.encryptionService.decrypt(value);
+              } else {
+                processedConfig[key] = this.encryptionService.encrypt(value);
+              }
             }
           }
         } catch (error) {
@@ -190,6 +196,13 @@ export class DataSourcesService {
     }
 
     return processedConfig;
+  }
+
+  private decryptConfigRequiredFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.encryptConfigRequiredFields(config, uiSchema, true);
   }
 
   async update(
@@ -206,12 +219,10 @@ export class DataSourcesService {
   ): Promise<WsDataSourceDto> {
     const r = await this.getOne(workspaceId, dataSourceId);
     const uiSchema = r['dataSource']['config']['uiSchema'];
-    const config = this.processConfig(dataSourceDto['config'], { ...uiSchema });
+    const config = this.encryptConfigRequiredFields(dataSourceDto['config'], {
+      ...uiSchema,
+    });
     dataSourceDto['config'] = config;
-    console.log('processed config');
-    console.log(config);
-    console.log('dataSourceDto');
-    console.log(dataSourceDto);
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
