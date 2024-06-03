@@ -78,9 +78,7 @@ export class AuthController {
   ) {
     const scope: string = (await this.dataSourcesService.getOne(+ws, +ds))
       .config.scope;
-    console.log(scope);
     const scopeLinks = scopeMap[scope];
-    console.log(scopeLinks);
     const authUrl = this.googleSheetsQueryService.getAuthUrl(scopeLinks);
     // Set cookies for ws and ds
     res.cookie('ws', ws, { httpOnly: true });
@@ -94,7 +92,6 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    console.log('callback');
     const tokens = await this.googleSheetsQueryService.getTokensFromCode(code);
     // Now we can use the tokens to authenticate requests to Google Sheets API
     // For example, maybe  saving them in the database for use later when using the datasource
@@ -126,7 +123,6 @@ export class AuthController {
 
   @Get('profile')
   async getProfile(@Req() req: Request) {
-    // console.log(req);
     const accessToken = req.cookies['access_token'];
     if (accessToken) {
       return (

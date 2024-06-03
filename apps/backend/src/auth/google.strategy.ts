@@ -33,8 +33,6 @@ export class SignInGoogleStrategy extends PassportStrategy(Strategy, 'google') {
       scope: ['email', 'profile'],
     });
     this.configService = configService;
-    console.log('configService', configService.get('GOOGLE_CLIENT_ID'));
-    console.log('configService', configService.get('GOOGLE_CLIENT_SECRET'));
   }
 
   async validate(

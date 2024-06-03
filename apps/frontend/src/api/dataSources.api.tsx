@@ -290,12 +290,11 @@ function useUpdateDataSource(
       const workspaceId = variables.workspaceId;
       const dataSourceId = variables.dataSourceId;
       const dto = variables.dto;
-      console.log({ workspaceId, dataSourceId, dto });
       await queryClient.invalidateQueries({
         queryKey: [DATASOURCES_QUERY_KEY],
       });
       if (dto.config && dto.config.scope.includes('Google Sheets')) {
-        window.location.href = `http://localhost:3000/auth/googlesheets/${+workspaceId}/${+dataSourceId}`;
+        window.location.href = `/api/auth/googlesheets/${+workspaceId}/${+dataSourceId}`;
       }
     },
     ...options,

@@ -49,9 +49,8 @@ export default class GoogleSheetsQueryService
     }
 
     const accessTokenUrl = 'https://oauth2.googleapis.com/token';
-    const clientId =
-      '218152396304-tera2ganoj8v7vvu2aap21bu046kgvpm.apps.googleusercontent.com';
-    const clientSecret = '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';
+    const clientId = '';
+    const clientSecret = '';
     const grantType = 'refresh_token';
 
     const data = {
@@ -164,15 +163,14 @@ export default class GoogleSheetsQueryService
     try {
       await executeQuery(accessToken);
     } catch (error) {
+      // Attempt to refresh the token if it has expired
       if (error?.response?.status === 401) {
-        console.log('Access token expired, attempting to refresh token...');
         const newTokens = await this.refreshToken({
           refresh_token: dataSourceConfig['refresh_token'],
         });
         accessToken = newTokens.access_token;
         await executeQuery(accessToken);
       } else {
-        console.log('**************');
         console.error({
           statusCode: error?.response?.status,
           message: error?.response?.body,
