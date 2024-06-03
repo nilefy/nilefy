@@ -150,18 +150,53 @@ export class DataSourcesService {
     },
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
-    const [ds] = await this.db
-      .update(workspaceDataSources)
-      .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
-      .where(
-        and(
+    const { config, env, name } = dataSourceDto;
+    if (config) {
+      /**
+       * jsonb_set (target jsonb, path text[], new_value jsonb [, create_if_missing boolean ])
+       */
+      const query = `
+        UPDATE workspace_data_sources
+        SET config = jsonb_set(config, '{${env}}'::text[], '${JSON.stringify(config)}'::jsonb, true),
+        name = '${name}',
+        updated_at = now(),
+        updated_by_id = ${updatedById}
+        WHERE id = ${dataSourceId} AND workspace_id = ${workspaceId}
+      `;
+      await this.db.execute(sql.raw(query));
+      const ds = await this.db.query.workspaceDataSources.findFirst({
+        columns: {
+          id: true,
+          name: true,
+          workspaceId: true,
+          dataSourceId: true,
+          config: true,
+          createdAt: true,
+          updatedAt: true,
+          createdById: true,
+          updatedById: true,
+        },
+        where: and(
           eq(workspaceDataSources.workspaceId, workspaceId),
           eq(workspaceDataSources.id, dataSourceId),
         ),
-      )
-      .returning();
-    if (!ds) throw new NotFoundException();
-    return ds;
+      });
+      if (!ds) throw new NotFoundException();
+      return ds;
+    } else {
+      const [ds] = await this.db
+        .update(workspaceDataSources)
+        .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
+        .where(
+          and(
+            eq(workspaceDataSources.workspaceId, workspaceId),
+            eq(workspaceDataSources.id, dataSourceId),
+          ),
+        )
+        .returning();
+      if (!ds) throw new NotFoundException();
+      return ds;
+    }
   }
   async testConnection(
     {

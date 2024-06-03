@@ -9,6 +9,7 @@ import {
   unique,
   text,
   primaryKey,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { workspaces, users, timeStamps, apps } from "./schema";
 import { dataSourcesTypes } from "@nilefy/constants";
@@ -47,9 +48,9 @@ export const workspaceDataSources = pgTable(
     /**
      * datasource configuration(evaluated, there will be no expressions in datasource config)
      */
-    config: json("config")
+    config: jsonb("config")
       .$type<Record<"development" | "staging" | "deployment", Record<string, unknown>>>()
-      .default(sql`'{}'::json`)
+      .default(sql`'{}'::jsonb`)
       .notNull(),
     ...timeStamps,
     createdById: integer("created_by_id")

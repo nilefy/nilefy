@@ -3,13 +3,14 @@ import { dataSources, workspaceDataSources } from '@nilefy/database';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { createZodDto } from 'nestjs-zod';
 
+const environmentKey = z.union([
+  z.literal('development'),
+  z.literal('staging'),
+  z.literal('deployment'),
+]);
 const WsDataSourceConfig = z.record(
-  z.union([
-    z.literal('development'),
-    z.literal('staging'),
-    z.literal('deployment'),
-  ]),
-  z.record(z.string(), z.any()),
+  environmentKey,
+  z.record(z.string(), z.unknown())
 );
 export type WsDataSourceConfigT = z.infer<typeof WsDataSourceConfig>;
 
@@ -33,7 +34,8 @@ export const createWsDataSourceSchema = z.object({
 });
 export const updateWsDataSourceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  config: WsDataSourceConfig.optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
+  env: environmentKey.default('development'),
 });
 
 export const dataSourceSelect = createSelectSchema(dataSources);
