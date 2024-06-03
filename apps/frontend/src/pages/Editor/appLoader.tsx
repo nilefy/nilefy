@@ -74,6 +74,7 @@ export const appLoader =
         })),
       ],
     });
+    await editorStore.initPromise;
     return defer({
       values,
     });
