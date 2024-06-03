@@ -42,6 +42,7 @@ import { commandManager } from '@/actions/CommandManager';
 import { RenameAction } from '@/actions/editor/Rename';
 import { updateJSquery } from '@/api/jsQueries.api';
 import { updateQuery } from '@/api/queries.api';
+import { isValidIdentifier as isValidIdentifierName } from '@/lib/utils';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -579,6 +580,13 @@ export class EditorState implements WebloomDisposable {
 
   async renameEntity(id: string, newId: string) {
     if (id === newId) return;
+    if (!isValidIdentifierName(newId)) {
+      return toast({
+        title: 'Error',
+        description: `Failed to rename ${id} to ${newId}, because ${newId} is not a valid identifier name.`,
+        variant: 'destructive',
+      });
+    }
     const entity = this.getEntityById(id);
     if (entitiyNameExists(newId)) {
       return toast({

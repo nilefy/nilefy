@@ -151,6 +151,8 @@ export const acquireAccount = async (id: number) => {
       .values({ roleId: res.id, userId: user.id })
       .returning();
     return { username, password, email, workspaceId: workspace.id };
+  } catch (e) {
+    console.log(e);
   } finally {
     await client.end();
   }
