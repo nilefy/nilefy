@@ -16,7 +16,10 @@ type InsertI = {
   id: JsQueryI['id'];
   query: JsQueryI['query'];
   settings: JsQueryI['settings'];
-  triggerMode: JsQueryI['triggerMode'];
+  /**
+   * default value is "manually"
+   */
+  triggerMode?: JsQueryI['triggerMode'];
 };
 type UpdateI = Partial<InsertI>;
 

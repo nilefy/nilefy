@@ -229,7 +229,7 @@ export class EditorState implements WebloomDisposable {
         }),
         ...queries.map((q) => {
           return {
-            type: q.dataSource.name,
+            type: q?.dataSource?.name ?? q.baseDataSource.name,
             name: q.id,
           };
         }),
@@ -449,7 +449,9 @@ export class EditorState implements WebloomDisposable {
   removeQuery(id: string) {
     const query = this.queries[id];
     const type =
-      query instanceof WebloomQuery ? query.dataSource.name : query.entityType;
+      query instanceof WebloomQuery
+        ? query?.dataSource?.name ?? query.baseDataSource.name
+        : query.entityType;
     updateOrderMap(
       [
         {
