@@ -403,6 +403,7 @@ export function DataSourceView() {
       },
     });
   const nameRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState(data?.config.development);
 
   if (isPending) {
     return <WebloomLoader />;
@@ -418,7 +419,18 @@ export function DataSourceView() {
       </div>
 
       <ScrollArea className="h-full w-full">
-        <Tabs defaultValue="dev">
+        <Tabs
+          defaultValue="dev"
+          onValueChange={(val) => {
+            if (val === 'dev') {
+              setFormData(data.config.development);
+            } else if (val == 'staging') {
+              setFormData(data.config.staging);
+            } else if (val == 'prod') {
+              setFormData(data.config.production);
+            }
+          }}
+        >
           <TabsList className="w-full space-x-3">
             <TabsTrigger value="dev">Development</TabsTrigger>
             <TabsTrigger value="staging">Staging</TabsTrigger>
@@ -430,7 +442,8 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config.development}
+              formData={formData}
+              onChange={(e) => setFormData(e.formData)}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
@@ -469,7 +482,8 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config.staging}
+              formData={formData}
+              onChange={(e) => setFormData(e.formData)}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
@@ -508,7 +522,8 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config.production}
+              formData={formData}
+              onChange={(e) => setFormData(e.formData)}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
