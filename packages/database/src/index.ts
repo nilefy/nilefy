@@ -39,18 +39,18 @@ export async function dbConnect(
     schema: { ...schema, ...appStateSchema, ...ds_schema, ...relations },
     logger: false,
   });
-  await db.execute(sql`
-      ALTER TABLE components
-      DROP CONSTRAINT IF EXISTS components_parent_id_page_id_components_id_page_id_fk
-  `);
-  await db.execute(sql`  
-      ALTER TABLE components
-      ADD CONSTRAINT components_parent_id_page_id_components_id_page_id_fk
-      FOREIGN KEY (parent_id, page_id)
-      REFERENCES components(id, page_id)
-      ON UPDATE CASCADE
-      ON DELETE CASCADE
-      DEFERRABLE INITIALLY DEFERRED;
-  `); 
+  // await db.execute(sql`
+  //     ALTER TABLE components
+  //     DROP CONSTRAINT IF EXISTS components_parent_id_page_id_components_id_page_id_fk
+  // `);
+  // await db.execute(sql`  
+  //     ALTER TABLE components
+  //     ADD CONSTRAINT components_parent_id_page_id_components_id_page_id_fk
+  //     FOREIGN KEY (parent_id, page_id)
+  //     REFERENCES components(id, page_id)
+  //     ON UPDATE CASCADE
+  //     ON DELETE CASCADE
+  //     DEFERRABLE INITIALLY DEFERRED;
+  // `); 
   return [db, client];
 }

@@ -115,9 +115,9 @@ export class ComponentsService {
       }
     }
 
-    await this.db.execute(
-      sql`SET CONSTRAINTS components_parent_id_page_id_components_id_page_id_fk DEFERRED`,
-    );
+    // await this.db.execute(
+    //   sql`SET CONSTRAINTS components_parent_id_page_id_components_id_page_id_fk DEFERRED`,
+    // );
 
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
