@@ -15,14 +15,19 @@ export const queryDb = createInsertSchema(queries).extend({
   query: z.record(z.string(), z.unknown()),
 });
 
-export const addQuerySchema = queryDb.pick({
-  id: true,
-  dataSourceId: true,
-  query: true,
-  triggerMode: true,
-});
+export const addQuerySchema = queryDb
+  .pick({
+    id: true,
+    query: true,
+    triggerMode: true,
+  })
+  .extend({
+    dataSourceId: z.number(),
+  });
 
-export const updateQuerySchema = addQuerySchema.partial();
+export const updateQuerySchema = addQuerySchema.partial().extend({
+  dataSourceId: z.number().nullable(),
+});
 
 export const runQueryBody = z.object({
   evaluatedConfig: z.record(z.string(), z.unknown()),
@@ -46,33 +51,35 @@ export class DeleteDatasourceQueriesDto extends createZodDto(
   deleteDatasourceQueriesSchema,
 ) {}
 
-export const appQueriesSchema = querySchema
+export const appQuerySchema = querySchema
   .pick({
     id: true,
     query: true,
     triggerMode: true,
+    dataSourceId: true,
   })
   .extend({
+    baseDataSource: dataSourceSelect
+      .pick({
+        id: true,
+        type: true,
+        name: true,
+        queryConfig: true,
+      })
+      .extend({
+        queryConfig: z.object({
+          schema: z.record(z.string(), z.unknown()),
+          uiSchema: z.record(z.string(), z.unknown()).optional(),
+        }),
+      }),
     dataSource: workspaceDataSourcesSelect
       .pick({
         id: true,
         name: true,
       })
-      .extend({
-        dataSource: dataSourceSelect
-          .pick({
-            id: true,
-            type: true,
-            name: true,
-            queryConfig: true,
-          })
-          .extend({
-            queryConfig: z.object({
-              schema: z.record(z.string(), z.unknown()),
-              uiSchema: z.record(z.string(), z.unknown()).optional(),
-            }),
-          }),
-      }),
+      .optional(),
   });
+export const appQueriesSchema = z.array(appQuerySchema);
 
+export class AppQueryDto extends createZodDto(appQuerySchema) {}
 export class AppQueriesDto extends createZodDto(appQueriesSchema) {}
