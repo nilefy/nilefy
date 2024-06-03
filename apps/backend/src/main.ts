@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import { WsAdapter } from '@nestjs/platform-ws';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { patchNestJsSwagger } from 'nestjs-zod';
+import cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './filters/AllExceptionsFilter.filter';
 
 async function bootstrap() {
@@ -20,6 +21,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
+  app.use(cookieParser());
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
   await app.listen(3000);
