@@ -1,13 +1,1 @@
-{
-  "version": "5",
-  "dialect": "pg",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1714516231224,
-      "tag": "0000_outgoing_killmonger",
-      "breakpoints": true
-    }
-  ]
-}
+{"version":"5","dialect":"pg","entries":[{"idx":0,"version":"5","when":1714516231224,"tag":"0000_outgoing_killmonger","breakpoints":true}]}

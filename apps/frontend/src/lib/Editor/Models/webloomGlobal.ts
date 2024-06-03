@@ -2,7 +2,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Entity } from './entity';
 import { ToastProps } from '@/components/ui/toast';
 import { WorkerBroker } from './workerBroker';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export type WebloomGlobalData = {
   currentUser: string;
@@ -13,7 +13,7 @@ export const WebloomGlobalsActions = {
   alert: {
     type: 'SIDE_EFFECT',
     name: 'alert',
-    fn: (
+    fn: async (
       _: WebloomGlobal,
       message: string,
       variant: ToastProps['variant'] = 'default',

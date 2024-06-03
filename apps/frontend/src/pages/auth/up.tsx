@@ -78,7 +78,7 @@ export function SignUp() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="nagy@webloom.com" {...field} />
+                  <Input placeholder="nagy@nilefy.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

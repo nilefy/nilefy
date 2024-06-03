@@ -10,7 +10,7 @@ import {
   convertPixelToGrid,
   getBoundingRect,
 } from '../utils';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export function handleHoverCollision(
   dimensions: WebloomGridDimensions,

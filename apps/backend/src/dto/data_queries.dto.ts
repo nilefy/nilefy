@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { queries } from '@webloom/database';
+import { queries } from '@nilefy/database';
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import {

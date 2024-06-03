@@ -195,6 +195,11 @@ export class WebloomQuery
           type: 'dynamic',
           description: 'Data returned from the query',
         },
+        error: {
+          type: 'static',
+          description: 'Error message if the query failed',
+          typeSignature: 'string',
+        },
         queryState: {
           type: 'static',
           typeSignature: 'string',

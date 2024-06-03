@@ -124,8 +124,8 @@ export class Entity implements WebloomDisposable {
       if (this.publicAPI[actionName]) continue;
       this.publicAPI[actionName] = {
         type: 'function',
-        args: 'unknown',
-        returns: 'unknown',
+        args: 'args: ...any[]',
+        returns: 'void',
       };
     }
     this.id = id;
@@ -322,9 +322,9 @@ export class Entity implements WebloomDisposable {
     for (const key in config) {
       const configItem = config[key];
       if (configItem.type === 'SETTER') {
-        actions[key] = (value: unknown) => {
+        actions[key] = async (value: unknown) => {
           if (this.metaValues.has(configItem.path)) {
-            return this.createPromiseForAction(this.id, key, [value]);
+            return await this.createPromiseForAction(this.id, key, [value]);
           }
           runInAction(() => {
             const path = configItem.path;
@@ -336,8 +336,8 @@ export class Entity implements WebloomDisposable {
           });
         };
       } else if (configItem.type === 'SIDE_EFFECT') {
-        actions[key] = (...args: unknown[]) => {
-          this.createPromiseForAction(this.id, key, args);
+        actions[key] = async (...args: unknown[]) => {
+          await this.createPromiseForAction(this.id, key, args);
         };
       }
     }

@@ -4,6 +4,7 @@ import PostgresqlQueryService from '../postgresql/main';
 import RESTQueryService from '../restapi/main';
 import GoogleCloudStorageQueryService from '../gcs/main';
 import MongoDBQueryService from '../mongodb/main';
+import AzureBlobStorageQueryService from '../azure_blob_storage/main';
 
 export const getQueryService = (name: string): QueryRunnerI => {
   switch (name.toLowerCase()) {
@@ -15,6 +16,8 @@ export const getQueryService = (name: string): QueryRunnerI => {
         return new GoogleCloudStorageQueryService();
       case 'mongodb':
       return new MongoDBQueryService();
+    case 'azure blob storage':
+      return new AzureBlobStorageQueryService();
     default:
       throw new BadRequestException();
   }

@@ -10,7 +10,7 @@ import {
   unique,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { permissionsTypes } from "@webloom/permissions";
+import { permissionsTypes } from "@nilefy/permissions";
 import { boolean } from "drizzle-orm/pg-core";
 
 /**
@@ -135,7 +135,6 @@ export const roles = pgTable(
       .references(() => workspaces.id)
       .notNull(),
     ...timeStamps,
-    ...softDelete,
     ...whoToBlame,
   },
   (t) => ({
@@ -168,6 +167,7 @@ export const usersToRoles = pgTable(
     roleId: integer("role_id")
       .notNull()
       .references(() => roles.id),
+    ...timeStamps,
   },
   (t) => ({
     pk: primaryKey({ columns: [t.roleId, t.userId] }),
@@ -232,10 +232,29 @@ export const apps = pgTable("apps", {
     .references(() => workspaces.id)
     .notNull(),
   ...timeStamps,
-  ...softDelete,
   updatedById: integer("updated_by_id").references(() => users.id),
   deletedById: integer("deleted_by_id").references(() => users.id),
 });
+
+/**
+ * many to many relation
+ */
+export const appsToRoles = pgTable(
+  "appsToRoles",
+  {
+    appId: integer("app_id")
+      .notNull()
+      .references(() => apps.id),
+    roleId: integer("role_id")
+      .notNull()
+      .references(() => roles.id),
+    permission: varchar("permission").notNull(),
+    ...timeStamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.appId, t.roleId] }),
+  })
+);
 
 export const webloomTables = pgTable("tables", {
   id: serial("id").primaryKey(),

@@ -22,8 +22,9 @@ import { z } from 'zod';
 import { ToolTipWrapper } from '../tooltipWrapper';
 
 import clsx from 'clsx';
-import { autorun } from 'mobx';
+
 import { useContext, useEffect } from 'react';
+import { useAutoRun } from '@/lib/Editor/hooks';
 
 export type WebloomSelectProps = {
   options: SelectOptions[];
@@ -44,18 +45,12 @@ const WebloomSelect = observer(function WebloomSelect() {
 
   // for defaultValue, i don't think we can use radix-ui's select.defaultValue directly because the component is controlled
   // so the meaning of default value what the value will start with
-  useEffect(
-    () =>
-      autorun(() => {
-        onPropChange({
-          key: 'value',
-          value: props.defaultValue,
-        });
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+  useAutoRun(() =>
+    onPropChange({
+      key: 'value',
+      value: props.defaultValue,
+    }),
   );
-
   /**
    * why do i set the key to this weird `id + props.value`?
    * when clearValue is triggred but the value was set before radix select don't re-show the placeholder

@@ -1,7 +1,7 @@
 import { generateFakeWorkspace } from '../faker/workspace.faker';
-import { DatabaseI, usersToWorkspaces, workspaces } from '@webloom/database';
+import { DatabaseI, usersToWorkspaces, workspaces } from '@nilefy/database';
 import { UserDto } from '../../dto/users.dto';
-import { chunkArray } from '../utils';
+import { chunkArray } from '../../utils';
 
 export async function workspaceSeeder(
   db: DatabaseI,

@@ -9,17 +9,25 @@ import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { StringSchema } from '@/lib/Editor/validations';
-export type WebloomTextProps = {
+import { useParseText } from './helper';
+import Markdown from 'markdown-to-jsx';
+
+export type NilefyTextProps = {
   text: string;
 };
 
-const WebloomText = observer(() => {
+const NilefyText = observer(function NilefyText() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomTextProps;
-
-  return <span className="h-full w-full break-all text-4xl">{props.text}</span>;
+    .finalValues as NilefyTextProps;
+  const text = useParseText(props.text);
+  return (
+    <div className="prose prose-stone m-0 h-full w-full break-all text-xl">
+      <Markdown>{text}</Markdown>
+    </div>
+  );
 });
+
 const config: WidgetConfig = {
   name: 'Text',
   icon: Type,
@@ -37,6 +45,12 @@ const config: WidgetConfig = {
       name: 'setText',
       path: 'text',
     },
+    clearText: {
+      type: 'SETTER',
+      name: 'setText',
+      path: 'text',
+      value: '',
+    },
     testSideEffect: {
       type: 'SIDE_EFFECT',
       name: 'testSideEffect',
@@ -47,11 +61,11 @@ const config: WidgetConfig = {
   },
 };
 
-const initialProps: WebloomTextProps = {
+const initialProps: NilefyTextProps = {
   text: 'Text',
 };
 
-const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
+const inspectorConfig: EntityInspectorConfig<NilefyTextProps> = [
   {
     sectionName: 'General',
     children: [
@@ -62,14 +76,14 @@ const inspectorConfig: EntityInspectorConfig<WebloomTextProps> = [
         options: {
           placeholder: 'Enter text',
         },
-        validation: StringSchema('Text'),
+        validation: StringSchema(initialProps.text),
       },
     ],
   },
 ];
 
-export const WebloomTextWidget: Widget<WebloomTextProps> = {
-  component: WebloomText,
+export const NilefyTextWidget: Widget<NilefyTextProps> = {
+  component: NilefyText,
   config,
   initialProps,
   publicAPI: {
@@ -78,8 +92,21 @@ export const WebloomTextWidget: Widget<WebloomTextProps> = {
       type: 'static',
       typeSignature: 'string',
     },
+    setText: {
+      type: 'function',
+      args: [
+        {
+          name: 'text',
+          type: 'string',
+        },
+      ],
+    },
+    clearText: {
+      type: 'function',
+      args: [],
+    },
   },
   inspectorConfig,
 };
 
-export { WebloomText };
+export { NilefyText };
