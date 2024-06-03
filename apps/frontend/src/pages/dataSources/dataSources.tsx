@@ -421,20 +421,8 @@ export function DataSourceView() {
         <Tabs defaultValue="dev">
           <TabsList className="w-full space-x-3">
             <TabsTrigger value="dev">Development</TabsTrigger>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {/*TODO: re-enable when the back is ready  */}
-                  <TabsTrigger value="prod" disabled={true}>
-                    Production
-                  </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Soon</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <TabsTrigger value="staging">Staging</TabsTrigger>
+            <TabsTrigger value="prod">Production</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dev" className="h-full w-full ">
@@ -442,7 +430,7 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config}
+              formData={data.config.development}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
@@ -474,36 +462,107 @@ export function DataSourceView() {
                   <SaveIcon /> Save
                 </span>
               </LoadingButton>
-              <LoadingButton
-                isLoading={isTestingConnection}
-                buttonProps={{
-                  type: 'button',
-                  onClick: () => {
-                    if (
-                      !workspaceId ||
-                      !datasourceId ||
-                      !form ||
-                      !form.current
-                    ) {
-                      throw new Error();
-                    }
-                    testConnectionMutate({
-                      workspaceId: +workspaceId,
-                      dataSourceId: +datasourceId,
-                      dto: {
-                        config: form.current.state.formData,
-                      },
-                    });
+            </RJSFShadcn>
+          </TabsContent>
+          <TabsContent value="staging" className="h-full w-full ">
+            <RJSFShadcn
+              ref={form}
+              schema={data.dataSource.config.schema}
+              uiSchema={data.dataSource.config.uiSchema}
+              formData={data.config.staging}
+              validator={validator}
+              onSubmit={({ formData }) => {
+                if (
+                  !workspaceId ||
+                  !datasourceId ||
+                  !nameRef ||
+                  !nameRef.current
+                )
+                  throw new Error(
+                    "that's weird this function should run under workspaceId, datasourceId",
+                  );
+                updateMutate({
+                  workspaceId: +workspaceId,
+                  dataSourceId: +datasourceId,
+                  dto: {
+                    name: nameRef.current.value,
+                    config: formData,
+                    env: 'staging',
                   },
-                }}
-                key={'dsTest'}
+                });
+              }}
+            >
+              <LoadingButton
+                key={'dsSave'}
+                isLoading={isSubmitting}
+                buttonProps={{ type: 'submit', className: 'mt-4' }}
               >
-                <>Test Connection</>
+                <span>
+                  <SaveIcon /> Save
+                </span>
               </LoadingButton>
             </RJSFShadcn>
           </TabsContent>
-          {/*TODO:*/}
-          <TabsContent value="prod"></TabsContent>
+          <TabsContent value="prod" className="h-full w-full ">
+            <RJSFShadcn
+              ref={form}
+              schema={data.dataSource.config.schema}
+              uiSchema={data.dataSource.config.uiSchema}
+              formData={data.config.production}
+              validator={validator}
+              onSubmit={({ formData }) => {
+                if (
+                  !workspaceId ||
+                  !datasourceId ||
+                  !nameRef ||
+                  !nameRef.current
+                )
+                  throw new Error(
+                    "that's weird this function should run under workspaceId, datasourceId",
+                  );
+                updateMutate({
+                  workspaceId: +workspaceId,
+                  dataSourceId: +datasourceId,
+                  dto: {
+                    name: nameRef.current.value,
+                    config: formData,
+                    env: 'production',
+                  },
+                });
+              }}
+            >
+              <LoadingButton
+                key={'dsSave'}
+                isLoading={isSubmitting}
+                buttonProps={{ type: 'submit', className: 'mt-4' }}
+              >
+                <span>
+                  <SaveIcon /> Save
+                </span>
+              </LoadingButton>
+            </RJSFShadcn>
+          </TabsContent>
+          <LoadingButton
+            isLoading={isTestingConnection}
+            buttonProps={{
+              type: 'button',
+              onClick: () => {
+                if (!workspaceId || !datasourceId || !form || !form.current) {
+                  throw new Error();
+                }
+                testConnectionMutate({
+                  workspaceId: +workspaceId,
+                  dataSourceId: +datasourceId,
+                  dto: {
+                    config: form.current.state.formData,
+                  },
+                });
+              },
+            }}
+            key={'dsTest'}
+          >
+            <>Test Connection</>
+          </LoadingButton>
         </Tabs>
       </ScrollArea>
     </div>

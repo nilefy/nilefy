@@ -15,7 +15,7 @@ const environments = z
   .union([
     z.literal('development'),
     z.literal('staging'),
-    z.literal('deployment'),
+    z.literal('production'),
   ])
   .default('development');
 type envT = z.infer<typeof environments>;
