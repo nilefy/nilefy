@@ -29,7 +29,6 @@ export class DataSourcesService {
   ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
-    console.log(dataSourceDto);
     const [dataSource] = await this.db
       .insert(workspaceDataSources)
       .values(dataSourceDto)
