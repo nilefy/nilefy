@@ -12,9 +12,9 @@ export const getQueryService = (name: string): QueryRunnerI => {
       return new PostgresqlQueryService();
     case 'rest api':
       return new RESTQueryService();
-      case 'google cloud storage':
-        return new GoogleCloudStorageQueryService();
-      case 'mongodb':
+    case 'google cloud storage':
+      return new GoogleCloudStorageQueryService();
+    case 'mongodb':
       return new MongoDBQueryService();
     case 'azure blob storage':
       return new AzureBlobStorageQueryService();

@@ -58,7 +58,7 @@ export type WsDataSourceI = {
   id: number;
   name: string;
   workspaceId: number;
-  config: Record<string, unknown>;
+  config: Record<envT, Record<string, unknown>>;
   /**
    * global datasource id
    */
@@ -167,8 +167,7 @@ async function testDsConnection({
   workspaceId: number;
   dataSourceId: WsDataSourceI['id'];
   dto: {
-    config: WsDataSourceI['config'];
-    env: envT;
+    config: DataSourceMeta['config'];
   };
 }): Promise<DataSourceTestConnectionRet> {
   const res = await fetchX(

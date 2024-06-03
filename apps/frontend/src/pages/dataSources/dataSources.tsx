@@ -492,7 +492,6 @@ export function DataSourceView() {
                       dataSourceId: +datasourceId,
                       dto: {
                         config: form.current.state.formData,
-                        env: 'development',
                       },
                     });
                   },

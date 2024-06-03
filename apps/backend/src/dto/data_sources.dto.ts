@@ -10,7 +10,7 @@ const environmentKey = z.union([
 ]);
 const WsDataSourceConfig = z.record(
   environmentKey,
-  z.record(z.string(), z.unknown())
+  z.record(z.string(), z.unknown()),
 );
 export type WsDataSourceConfigT = z.infer<typeof WsDataSourceConfig>;
 
