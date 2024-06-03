@@ -608,6 +608,10 @@ export class EditorState implements WebloomDisposable {
 
   renameWidget(id: string, newId: string) {
     const widget = this.currentPage.widgets[id];
+    const children = widget.nodes;
+    children.forEach((childId) => {
+      widget.removeChild(childId);
+    });
     const snapshot = widget.snapshot;
     const dependentPaths = widget.connections.dependents;
     //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
@@ -616,6 +620,10 @@ export class EditorState implements WebloomDisposable {
       this.currentPage.addWidget({
         ...snapshot,
         id: newId,
+      });
+      const newWidget = this.currentPage.getWidgetById(newId);
+      children.forEach((childId) => {
+        newWidget.addChild(childId);
       });
       commandManager.executeCommand(new RenameAction(id, newId));
     });
