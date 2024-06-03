@@ -11,9 +11,19 @@ import z from 'zod';
 
 export const DATASOURCES_QUERY_KEY = 'datasources';
 
+const environments = z
+  .union([
+    z.literal('development'),
+    z.literal('staging'),
+    z.literal('deployment'),
+  ])
+  .default('development');
+type envT = z.infer<typeof environments>;
+
 export const dataSourceMeta = z.object({
   name: z.string().min(1).max(100),
   config: z.record(z.string(), z.unknown()),
+  env: environments,
 });
 
 export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
@@ -158,6 +168,7 @@ async function testDsConnection({
   dataSourceId: WsDataSourceI['id'];
   dto: {
     config: WsDataSourceI['config'];
+    env: envT;
   };
 }): Promise<DataSourceTestConnectionRet> {
   const res = await fetchX(

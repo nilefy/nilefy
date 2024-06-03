@@ -460,6 +460,7 @@ export function DataSourceView() {
                   dto: {
                     name: nameRef.current.value,
                     config: formData,
+                    env: 'development',
                   },
                 });
               }}
@@ -491,6 +492,7 @@ export function DataSourceView() {
                       dataSourceId: +datasourceId,
                       dto: {
                         config: form.current.state.formData,
+                        env: 'development',
                       },
                     });
                   },
