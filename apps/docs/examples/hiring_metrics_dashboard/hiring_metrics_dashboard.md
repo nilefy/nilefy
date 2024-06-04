@@ -60,3 +60,23 @@ VALUES
     (3, 'Product Designer'),
     (4, 'Product Designer');
 ```
+
+### Step 3: Add queries to count respective data
+
+1. Count Total Applications:
+```sql
+SELECT COUNT(*) AS total_applicants
+FROM applicants;
+```
+2. Count Total Interviewed
+```sql
+SELECT COUNT(*) AS total_interviewed
+FROM applicants
+WHERE status = 'Interviewed';
+```
+3. Count Total Contacted
+```sql
+SELECT COUNT(*) AS total_contacted
+FROM applicants
+WHERE status = 'Contacted';
+```
