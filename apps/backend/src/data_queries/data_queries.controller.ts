@@ -22,9 +22,8 @@ import {
   UpdateQueryDto,
   runQueryBody,
   RunQueryBody,
-  deleteDatasourceQueriesSchema,
-  DeleteDatasourceQueriesDto,
   AppQueriesDto,
+  AppQueryDto,
 } from '../dto/data_queries.dto';
 import { QueryRet } from './query.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
@@ -65,7 +64,7 @@ export class DataQueriesController {
     @Param('appId', ParseIntPipe) appId: number,
     @Body(new ZodValidationPipe(addQuerySchema)) query: AddQueryDto,
     @Req() req: ExpressAuthedRequest,
-  ): Promise<QueryDto> {
+  ): Promise<AppQueryDto> {
     return await this.dataQueriesService.addQuery({
       ...query,
       createdById: req.user.userId,
@@ -80,7 +79,7 @@ export class DataQueriesController {
   })
   async getAppQueries(
     @Param('appId', ParseIntPipe) appId: number,
-  ): Promise<AppQueriesDto[]> {
+  ): Promise<AppQueriesDto> {
     return await this.dataQueriesService.getAppQueries(appId);
   }
 
@@ -92,7 +91,7 @@ export class DataQueriesController {
   async getQuery(
     @Param('queryId') queryId: string,
     @Param('appId', ParseIntPipe) appId: number,
-  ): Promise<QueryDto> {
+  ): Promise<AppQueryDto> {
     return await this.dataQueriesService.getQuery(appId, queryId);
   }
 
@@ -106,20 +105,6 @@ export class DataQueriesController {
     @Param('queryId') queryId: string,
   ) {
     return await this.dataQueriesService.deleteQuery(appId, queryId);
-  }
-
-  @Delete()
-  @ApiCreatedResponse({
-    description: 'delete data source queries',
-    type: Array<QueryDto>,
-  })
-  async deleteDataSourceQueries(
-    @Body(deleteDatasourceQueriesSchema)
-    body: DeleteDatasourceQueriesDto,
-  ): Promise<QueryDto[]> {
-    return await this.dataQueriesService.deleteDataSourceQueries(
-      body.dataSourceId,
-    );
   }
 
   @Put(':queryId')

@@ -345,8 +345,9 @@ function WorkspaceDataSourcesView() {
                         Are you absolutely sure?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. will remove all queries
-                        related to this datasource
+                        This action cannot be undone. YOU HAVE TO CONNECT
+                        QUUERIES CONNECTED TO THIS DATASOURCE TO NEW DATASOURCE
+                        OR YOUR APP WILL NOT FUNCTION CORRECTLY
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
