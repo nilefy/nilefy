@@ -75,8 +75,12 @@ export const appLoader =
       ],
       appEnv: app.env,
     });
+    // little hack to make sure the editor is initialized
+    const data = editorStore.initPromise.then(() => {
+      return values;
+    });
     return defer({
-      values,
+      values: data,
     });
   };
 

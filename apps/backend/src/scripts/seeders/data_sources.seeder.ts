@@ -13,6 +13,10 @@ import {
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
 import {
+  pluginConfigForm as googleSheetsConfigForm,
+  queryConfigForm as googleSheetsQueryConfigForm,
+} from '../../data_sources/plugins/googlesheets/types';
+import {
   pluginConfigForm as GCSConfigForm,
   queryConfigForm as GCSQueryConfigForm,
 } from '../../data_sources/plugins/gcs/types';
@@ -86,6 +90,14 @@ export async function dataSourcesSeeder(db: DatabaseI) {
             description =
               'Connect to GCS buckets and perform various operations on them.';
           }
+          break;
+        case 'google sheets':
+          dataSourceConfig = googleSheetsConfigForm; // Google Sheets config form
+          queryConfig = googleSheetsQueryConfigForm; // Google Sheets query config form
+          image =
+            'https://mailmeteor.com/logos/assets/SVG/Google_Sheets_Logo.svg';
+          description =
+            'Connect to Google Sheets to read and modify spreadsheet data.';
           break;
         default: {
           dataSourceConfig = [];

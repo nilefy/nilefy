@@ -100,10 +100,16 @@ export type WebloomTableProps = z.infer<typeof webloomTableProps>;
  * Helper function to generate columns from data
  */
 const generateColumnsFromData = (
-  data: RowData | undefined,
+  data: RowData[] | undefined,
 ): WebLoomTableColumn[] => {
   if (!data) return [];
-  return Object.keys(data).map((key, index) => {
+  // generate columns based on all data elements
+  const keys = data.reduce((acc, row) => {
+    return acc.concat(Object.keys(row));
+  }, [] as string[]);
+  // remove duplicates
+  const uniqueKeys = Array.from(new Set(keys));
+  return uniqueKeys.map((key, index) => {
     return {
       id: (index + 1).toString(),
       accessorKey: key,

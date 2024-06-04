@@ -129,10 +129,10 @@ export const appExportSchema = appSchema
           id: true,
           query: true,
           triggerMode: true,
-          dataSourceId: true,
+          baseDataSourceId: true,
         })
         .extend({
-          baseDatasourceId: z.number(),
+          dataSourceId: z.number().nullable(),
         }),
     ),
     jsQueries: z.array(

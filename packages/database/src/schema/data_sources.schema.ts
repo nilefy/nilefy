@@ -87,8 +87,15 @@ export const queries = pgTable(
     appId: integer("app_id")
       .references(() => apps.id, { onDelete: "cascade" })
       .notNull(),
-    dataSourceId: integer("data_source_id")
-      .references(() => workspaceDataSources.id, { onDelete: "cascade" })
+    // datasource id could be nullable to handle cases where datasource got deleted but we don't want to destroy user app and give them the ability to connect existing queries to other datasources
+    dataSourceId: integer("data_source_id").references(
+      () => workspaceDataSources.id,
+      { onDelete: "set null" }
+    ),
+    // to support case where user deleted the datasourcec:
+    // previously we depended on getting the queryconfig/datasource type by joining in workspaceDataSources then dataSources, but in the case of deleted datasources we don't have this option anymore so we cannot return config to the user to show the form to be able to change connected resource after deletion, but with having base datasource directly in the query we can continue rendering queries after we delete datasource
+    baseDataSourceId: integer("base_data_source_id")
+      .references(() => dataSources.id)
       .notNull(),
     createdById: integer("created_by_id")
       .references(() => users.id)

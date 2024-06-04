@@ -306,10 +306,17 @@ function useUpdateDataSource(
   const queryClient = useQueryClient();
   const mutate = useMutation({
     mutationFn: update,
-    async onSuccess() {
+    async onSuccess(data, variables) {
+      // Access parameters here
+      const workspaceId = variables.workspaceId;
+      const dataSourceId = variables.dataSourceId;
+      const dto = variables.dto;
       await queryClient.invalidateQueries({
         queryKey: [DATASOURCES_QUERY_KEY],
       });
+      if (dto.config && dto.config.scope.includes('Google Sheets')) {
+        window.location.href = `/api/auth/googlesheets/${+workspaceId}/${+dataSourceId}`;
+      }
     },
     ...options,
   });
