@@ -113,7 +113,7 @@ export class DataSourcesController {
     return await this.dataSourceService.getOne(workspaceId, dataSourceId);
   }
 
-  @Get()
+  @Get('env/:env')
   @ApiCreatedResponse({
     description: 'get workspace data sources',
     type: Array<WsDataSourcesDto>,
@@ -121,8 +121,20 @@ export class DataSourcesController {
   async getWsDataSources(
     @Param('workspaceId', ParseIntPipe)
     workspaceId: number,
+    @Param(
+      'env',
+      new ZodValidationPipe(
+        z.union([
+          z.literal('development'),
+          z.literal('staging'),
+          z.literal('production'),
+          z.literal('any'),
+        ]),
+      ),
+    )
+    env: 'development' | 'staging' | 'production' | 'any',
   ): Promise<WsDataSourcesDto[]> {
-    return await this.dataSourceService.getWsDataSources(workspaceId);
+    return await this.dataSourceService.getWsDataSources(workspaceId, env);
   }
 
   @Delete(':dataSourceId/all') // global data source id

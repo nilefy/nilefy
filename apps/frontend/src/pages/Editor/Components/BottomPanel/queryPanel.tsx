@@ -63,6 +63,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
+    env: editorStore.currentAppEnv,
   });
   const saveCallback = useCallback(() => {
     query.updateQueryMutator.mutate();
@@ -210,6 +211,7 @@ export const QueryPanel = observer(function QueryPanel() {
 
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
+    env: editorStore.currentAppEnv,
   });
   const queries = editorStore.queries;
 

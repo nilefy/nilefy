@@ -48,24 +48,55 @@ export class DataSourcesService {
 
   async getWsDataSources(
     workspaceId: WsDataSourceDto['workspaceId'],
+    env: 'development' | 'staging' | 'production' | 'any',
   ): Promise<WsDataSourcesDto[]> {
-    const ds = await this.db.query.workspaceDataSources.findMany({
-      columns: {
-        id: true,
-        name: true,
-        workspaceId: true,
-      },
-      with: {
-        dataSource: {
-          columns: {
-            id: true,
-            name: true,
-            image: true,
-            type: true,
+    if (env === 'any') {
+      const ds = await this.db.query.workspaceDataSources.findMany({
+        columns: {
+          id: true,
+          name: true,
+          workspaceId: true,
+        },
+        with: {
+          dataSource: {
+            columns: {
+              id: true,
+              name: true,
+              image: true,
+              type: true,
+            },
           },
         },
-      },
-      where: eq(workspaceDataSources.workspaceId, workspaceId),
+        where: eq(workspaceDataSources.workspaceId, workspaceId),
+      });
+      return ds;
+    }
+    const query = `
+      SELECT
+        workspace_data_sources.id,
+        workspace_data_sources.name,
+        workspace_data_sources.workspace_id AS workspace_id,
+        data_sources.id AS datasource_id,
+        data_sources.name AS datasource_name,
+        data_sources.image_url AS image,
+        data_sources.type
+      FROM workspace_data_sources
+      JOIN data_sources ON workspace_data_sources.data_source_id = data_sources.id
+      WHERE workspace_data_sources.workspace_id = ${workspaceId} AND workspace_data_sources.config ? '${env}'
+      `;
+    const { rows } = await this.db.execute(sql.raw(query));
+    const ds = rows.map((row) => {
+      return {
+        id: row.id,
+        name: row.name,
+        workspaceId: row.workspace_id,
+        dataSource: {
+          id: row.datasource_id,
+          name: row.datasource_name,
+          image: row.image,
+          type: row.type,
+        },
+      };
     });
     return ds;
   }
