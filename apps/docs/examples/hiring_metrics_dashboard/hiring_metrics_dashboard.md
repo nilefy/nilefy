@@ -51,14 +51,14 @@ VALUES
     ('Berk Yurikov', 'byurikov2m@ucoz.com', '771-852-3939', 6, 'Software Engineer', 'London', 'link_to_resume_35', 'Interviewed'),
     ('Allie Whitchurch', 'awhitchurch2l@goo.gl', '771-852-3940', 1, 'Marketing Lead', 'Berlin', 'link_to_resume_36', 'Contacted'),
     ('Donall Quatrucci', 'dquatrucci2k@photobucket.com', '771-852-3941', 7, 'Product Designer', 'San Francisco', 'link_to_resume_37', 'Interviewed'),
-    ('Patrick Bulbrook', 'pbulbrook2j@livejournal.com', '771-852-3942', 2, 'Software Engineer', 'New York', 'link_to_resume_38', 'Applied');
+    ('Patrick Bulbrook', 'pbulbrook2j@livejournal.com', '771-852-3942', 2, 'Software Engineer', 'New York', 'link_to_resume_38', 'Applied') ON CONFLICT DO NOTHING;
 
 INSERT INTO applications (applicant_id, job_role)
 VALUES 
     (1, 'Product Designer'),
     (2, 'Product Designer'),
     (3, 'Product Designer'),
-    (4, 'Product Designer');
+    (4, 'Product Designer') ON CONFLICT DO NOTHING;
 ```
 
 ### Step 3: Add queries to count respective data
