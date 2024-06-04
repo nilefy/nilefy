@@ -32,11 +32,13 @@ type UserMetaI = { id: number; username: string };
 export const appMetaSchema = z.object({
   name: z.string().min(4).max(255),
   description: z.string().min(4).max(255).optional(),
-  env: z.union([
-    z.literal('development'),
-    z.literal('staging'),
-    z.literal('production'),
-  ]),
+  env: z
+    .union([
+      z.literal('development'),
+      z.literal('staging'),
+      z.literal('production'),
+    ])
+    .default('development'),
 });
 export type AppMetaT = z.infer<typeof appMetaSchema>;
 
