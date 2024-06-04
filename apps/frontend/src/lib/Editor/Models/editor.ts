@@ -62,6 +62,7 @@ export class EditorState implements WebloomDisposable {
    */
   name: string = 'New Application';
   onBoardingCompleted: boolean = false;
+  currentAppEnv: 'development' | 'staging' | 'production' = 'development';
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -172,6 +173,7 @@ export class EditorState implements WebloomDisposable {
     currentUser,
     jsLibraries = [],
     onBoardingCompleted,
+    appEnv = 'development',
   }: {
     name: string;
     pages: Optional<
@@ -192,6 +194,7 @@ export class EditorState implements WebloomDisposable {
     workspaceId: number;
     currentUser: string;
     onBoardingCompleted: boolean;
+    appEnv: 'development' | 'staging' | 'production';
   }) {
     try {
       this.dispose();
@@ -219,6 +222,7 @@ export class EditorState implements WebloomDisposable {
         },
         workerBroker: this.workerBroker,
       });
+      this.currentAppEnv = appEnv;
 
       seedOrderMap([
         ...Object.values(pages[0].widgets || {}).map((w) => {
@@ -561,5 +565,8 @@ export class EditorState implements WebloomDisposable {
       ...this.queries,
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
+  }
+  changeAppEnv(env: 'development' | 'staging' | 'production') {
+    this.currentAppEnv = env;
   }
 }

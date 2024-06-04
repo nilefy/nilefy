@@ -19,6 +19,7 @@ export const importAppDb = createAppDb.omit({ id: true });
 export const createAppSchema = createAppDb.pick({
   name: true,
   description: true,
+  env: true,
 });
 
 export const updateAppDb = createAppDb
@@ -80,6 +81,13 @@ export const appRetSchema = appSchema.extend({
     })
     .nullable(),
   onBoardingCompleted: z.boolean(),
+  env: z
+    .union([
+      z.literal('development'),
+      z.literal('staging'),
+      z.literal('production'),
+    ])
+    .default('development'),
 });
 
 export const appExportSchema = appSchema

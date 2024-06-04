@@ -73,6 +73,7 @@ export const appLoader =
           handle: p.handle,
         })),
       ],
+      appEnv: app.env,
     });
     return defer({
       values,
