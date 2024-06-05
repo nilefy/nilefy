@@ -1,4 +1,8 @@
 import { getToken } from '@/lib/token.localstorage';
+import {
+  SOCKET_EVENTS_REQUEST,
+  SOCKET_EVENTS_RESPONSE,
+} from '@nilefy/constants';
 
 export const REPEAT_LIMIT = 5;
 export const RECONNECT_TIMEOUT = 2000;
@@ -125,7 +129,7 @@ export class WebloomWebSocket {
   private auth() {
     this.socket!.send(
       JSON.stringify({
-        event: 'auth',
+        event: SOCKET_EVENTS_REQUEST.AUTH,
         data: {
           access_token: getToken(),
           pageId: this.pageId,
@@ -136,14 +140,25 @@ export class WebloomWebSocket {
   }
 
   private handleMessages(msg: string) {
-    if (msg === 'ok authed') {
-      this.state = 'connected';
-      console.log('authed');
-    } else if (msg === 'get out') {
-      this.state = 'not-authed';
-      console.log("couldn't auth");
-    } else {
-      console.log('ws new msg', msg);
+    const parsed: {
+      message: (typeof SOCKET_EVENTS_RESPONSE)[keyof typeof SOCKET_EVENTS_RESPONSE];
+    } = JSON.parse(msg);
+    switch (parsed.message) {
+      case SOCKET_EVENTS_RESPONSE.AUTHED:
+        {
+          this.state = 'connected';
+          console.log('authed');
+        }
+        break;
+      case SOCKET_EVENTS_RESPONSE.NOT_AUTHED:
+        {
+          this.state = 'not-authed';
+          console.log("couldn't auth");
+        }
+        break;
+      default: {
+        console.log('ws new msg', parsed);
+      }
     }
   }
 }
