@@ -54,9 +54,7 @@ const query = z.discriminatedUnion('operation', [
   }),
 ]);
 
-export const querySchema = z.object({
-  query: query,
-});
+export const querySchema = query;
 
 export type UpdateDocRetT = {
   updatedIds: (ObjectId | null)[];

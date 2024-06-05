@@ -23,7 +23,7 @@ export default class MongoDBQueryService
     try {
       configSchema.parse(dataSourceConfig);
       const client = this.connect(dataSourceConfig);
-      const data = await this.runQuery(query.query.query, client);
+      const data = await this.runQuery(query.query, client);
       await client.close();
       return {
         statusCode: 200,
@@ -38,7 +38,7 @@ export default class MongoDBQueryService
     }
   }
 
-  async runQuery(query: QueryT['query'], client: MongoClient) {
+  async runQuery(query: QueryT, client: MongoClient) {
     switch (query.operation) {
       case OPERATIONS.CREATE_DOC:
         return createDocument(query, client);
