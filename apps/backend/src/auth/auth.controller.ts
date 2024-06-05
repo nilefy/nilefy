@@ -18,6 +18,10 @@ import { Request, Response } from 'express';
 import {
   CreateUserDto,
   LoginUserDto,
+  forgotPasswordSchema,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  resetPasswordSchema,
   signInSchema,
   signUpSchema,
 } from '../dto/users.dto';
@@ -148,5 +152,21 @@ export class AuthController {
     }
     response.redirect(302, frontURL.toString());
     return;
+  }
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema))
+    resetPasswordDto: ResetPasswordDto,
+  ) {
+    const { password, token } = resetPasswordDto;
+    return await this.authService.resetPassword(password, token);
   }
 }
