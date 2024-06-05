@@ -33,11 +33,15 @@ export type QueryReturnT = {
 
 type RunQueryBody = {
   evaluatedConfig: Record<string, unknown>;
+  env: 'development' | 'staging' | 'production';
 };
 
 export type CompleteQueryI = QueryI & {
   dataSource?:
-    | (Pick<WsDataSourceI, 'name'> & { id?: null | WsDataSourceI['id'] })
+    | (Pick<WsDataSourceI, 'name'> & {
+        id?: null | WsDataSourceI['id'];
+        env?: ('development' | 'staging' | 'production')[];
+      })
     | null;
   baseDataSource: Pick<
     GlobalDataSourceI,

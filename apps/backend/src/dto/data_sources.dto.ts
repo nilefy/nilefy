@@ -3,7 +3,7 @@ import { dataSources, workspaceDataSources } from '@nilefy/database';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { createZodDto } from 'nestjs-zod';
 
-const environmentKey = z.union([
+export const environmentKey = z.union([
   z.literal('development'),
   z.literal('staging'),
   z.literal('production'),

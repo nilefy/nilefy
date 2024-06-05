@@ -13,6 +13,7 @@ import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
 import { concat } from 'lodash';
+import { editorStore } from '.';
 
 const onSuccessKey = 'config.onSuccess';
 const onFailureKey = 'config.onFailure';
@@ -255,6 +256,7 @@ export class WebloomQuery
           queryId: this.id,
           body: {
             evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+            env: editorStore.currentAppEnv,
           },
         });
       },
