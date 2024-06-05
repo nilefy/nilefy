@@ -9,16 +9,16 @@ export const signInSchema = z.object({
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
-export const resetPasswordSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  password_confirmation: z.string(),
-  token: z.string(),
-})
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(6),
+    password_confirmation: z.string(),
+    token: z.string(),
+  })
   .refine((data) => data.password === data.password_confirmation, {
     message: "Passwords don't match",
     path: ['password_confirmation'], // path of error
-});
+  });
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

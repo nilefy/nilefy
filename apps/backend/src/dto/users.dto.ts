@@ -36,7 +36,11 @@ export const signInSchema = signUpSchema.pick({
 export const forgotPasswordSchema = userInsertSchema.pick({
   email: true,
 });
-
+export const resetPasswordSchema = z.object({
+  password: z.string().min(6),
+  password_confirmation: z.string(),
+  token: z.string(),
+});
 
 // export type UserDto = z.infer<typeof userSchema>;
 // export type CreateUserDto = z.infer<typeof signUpSchema>;
@@ -49,8 +53,7 @@ export class LoginUserDto extends createZodDto(signInSchema) {}
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
 export class UpdateUserDb extends createZodDto(userInsertSchema.partial()) {}
 export class ForgotPasswordDto extends createZodDto(forgotPasswordSchema) {}
-
-
+export class ResetPasswordDto extends createZodDto(resetPasswordSchema) {}
 export const updateUserRetSchema = userSchema.pick({
   id: true,
   username: true,

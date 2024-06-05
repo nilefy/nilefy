@@ -146,7 +146,6 @@ export class AuthService {
       throw new NotFoundException('Email Not Found');
     }
 
-
     if (u.password) {
       const match = await compare(password, u.password);
       if (!match) {
@@ -223,8 +222,9 @@ export class AuthService {
     <a href="` +
       url +
       ` ">Reset Password</a>
+    <P> This link will expire in 10 minutes.</p>
     <p>If you did not request a password reset, please disregard this email.</p>
-    <p>Thank you for choosing WebLoom!</p>
+    <p>Thank you for choosing Nilefy!</p>
     <p>Best Regards,<br/>
     The Webloom Team</p>
   `;
@@ -235,7 +235,7 @@ export class AuthService {
     });
   }
 
-async forgotPassword(
+  async forgotPassword(
     email: string,
   ): Promise<{ success: boolean; message?: string }> {
     try {
@@ -247,7 +247,7 @@ async forgotPassword(
 
       const token = await this.jwtService.signAsync(
         { email: user.email },
-        { expiresIn: '1d' },
+        { expiresIn: '10m' },
       );
 
       await this.userService.update(user.id, {
@@ -258,13 +258,15 @@ async forgotPassword(
 
       return { success: true };
     } catch (error) {
-      throw new BadRequestException(`Failed To Reset Password, ${error.message}`);
+      throw new BadRequestException(
+        `Failed To Reset Password, ${error.message}`,
+      );
     }
   }
 
-  async resetPassword(email: string, password: string, token: string) {
+  async resetPassword(password: string, token: string) {
     try {
-
+      const { email } = await this.jwtService.verifyAsync(token);
       const user = await this.db.query.users.findFirst({
         where: and(
           eq(users.email, email),
@@ -281,7 +283,8 @@ async forgotPassword(
       if (user === undefined) {
         throw new BadRequestException('Token Expired or Invalid');
       }
-      await this.jwtService .verifyAsync(token);
+      await this.jwtService.verifyAsync(token);
+
       if (user.password) {
         const match = await compare(password, user.password);
         if (match) {
@@ -295,9 +298,9 @@ async forgotPassword(
         password: hashed,
         passwordResetToken: null,
       });
-      return { success: true , message: 'Password Reset Successfully'};
+      return { success: true, message: 'Password Reset Successfully' };
     } catch (error) {
-      throw new BadRequestException(`Failed To Reset Password, ${error.message}`);
+      throw new BadRequestException(`Failed To Reset Password`);
     }
   }
 }

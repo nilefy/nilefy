@@ -55,7 +55,6 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
 export const resetPassword = async (
   values: ResetPasswordSchema,
 ): Promise<void> => {
-  console.log(values);
   const response = await fetchX('auth/reset-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -78,7 +77,6 @@ export const forgotPassword = async (
 };
 
 export function useForgotPassword() {
-  const navigate = useNavigate();
   const forgotPasswordMutation = useMutation<
     void,
     FetchXError,
@@ -88,7 +86,6 @@ export function useForgotPassword() {
   });
   return forgotPasswordMutation;
 }
-
 
 export function useResetPassword() {
   // const navigate = useNavigate();

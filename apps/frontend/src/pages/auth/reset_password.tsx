@@ -1,5 +1,5 @@
-import { useForm, useFormState } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { Link, redirect, useNavigate, useParams } from 'react-router-dom';
 // import { resetPasswordSchema } from '@/types/auth.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,26 +16,50 @@ import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
 import { useResetPassword } from '@/api/auth.api';
 import { toast } from '@/components/ui/use-toast';
 import { ErrorMessage } from '@hookform/error-message';
+import { jwtDecode } from 'jwt-decode';
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const decoded: any = jwtDecode(token);
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  } catch (error) {
+    return true;
+  }
+}
+export const resetPasswordLoader = ({
+  params,
+}: {
+  params: { token: string };
+}) => {
+  const { token } = params;
+  if (!token || isTokenExpired(token)) {
+    return redirect(
+      `../../signin?${new URLSearchParams({
+        errorMsg: 'Invalid Reset Link',
+      }).toString()}`,
+      {},
+    );
+  }
+  return null;
+};
 
 export function ResetPassword() {
-  const { email, token } = useParams();
+  const { token } = useParams();
+  const navigate = useNavigate();
 
   const form = useForm({
     resolver: zodResolver(resetPasswordSchema),
-
     defaultValues: {
-      email: email || '',
       password: '',
       password_confirmation: '',
       token: token || '',
     },
   });
   const { mutate } = useResetPassword();
-  const navigate = useNavigate();
   const onSubmit = (data: ResetPasswordSchema) => {
     mutate(data, {
       onSuccess: () => {
-        console.log('done');
         toast({
           variant: 'default',
           title: 'Password Reset',
@@ -53,7 +77,6 @@ export function ResetPassword() {
       },
     });
   };
-
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">
       <h1 className="text-4xl">Reset your password</h1>
@@ -105,7 +128,7 @@ export function ResetPassword() {
               </FormItem>
             )}
           />
-          {/* <Button type="submit" disabled={isLoading || isSuccess}> */}
+          {/* <Button type="submit" disabled={isLoadin••••g || isSuccess}> */}
           <Button type="submit" className=" w-full ">
             Change Password
           </Button>

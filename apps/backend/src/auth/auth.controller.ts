@@ -20,6 +20,8 @@ import {
   LoginUserDto,
   forgotPasswordSchema,
   ForgotPasswordDto,
+  ResetPasswordDto,
+  resetPasswordSchema,
 } from '../dto/users.dto';
 import { GoogleAuthedRequest } from './auth.types';
 import { Response } from 'express';
@@ -93,16 +95,10 @@ export class AuthController {
 
   @Post('reset-password')
   async resetPassword(
-    @Body('email') email: string,
-    @Body('password') password: string,
-    @Body('token') token: string,
+    @Body(new ZodValidationPipe(resetPasswordSchema))
+    resetPasswordDto: ResetPasswordDto,
   ) {
-    const values = {
-      email,
-      password,
-      token,
-    };
-    console.log(values); 
-    return await this.authService.resetPassword(email, password, token);
+    const { password, token } = resetPasswordDto;
+    return await this.authService.resetPassword(password, token);
   }
 }
