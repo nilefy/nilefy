@@ -115,7 +115,7 @@ const generateColumnsFromData = (
       accessorKey: key,
       header: key,
       name: key,
-      type: 'Default', // TODO: Infer type from data , or we can put it initially as default and then user can change it
+      type: 'Default',
     };
   });
 };
@@ -165,7 +165,7 @@ const WebloomTable = observer(() => {
     const data = toJS(props.data) || [];
     setTableData(toJS(data));
     // merging predefined cols and cols generated from data
-    const cols = generateColumnsFromData(data[0]);
+    const cols = generateColumnsFromData(data);
     runInAction(() => {
       cols.forEach((propCol) => {
         const exists = columns.find((col) => col.id === propCol.id);
@@ -322,11 +322,11 @@ const WebloomTable = observer(() => {
           />
         </div>
       )}
-      <div className="h-full w-full rounded-md border shadow-md">
+      <div className="h-full w-full border shadow-md">
         <Table className="h-full">
-          <TableHeader>
+          <TableHeader className="bg-white">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-gray-300">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
@@ -342,14 +342,14 @@ const WebloomTable = observer(() => {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="bg-white">
             {table.getRowModel().rows.length === 0 ? (
               <tr className="flex h-full w-full items-center justify-center text-xl">
                 <td>{props.emptyState}</td>
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="hover:bg-gray-300">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
