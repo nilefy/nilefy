@@ -1,5 +1,6 @@
 import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { wsDataSourcesQuery } from '@/api/dataSources.api';
 import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
@@ -24,6 +25,12 @@ export const appLoader =
     if (!workspaceId || !appId) {
       throw new Error('use this loader under :workspaceId and :appId');
     }
+
+    const workspacesQuery = wsDataSourcesQuery({
+      workspaceId: +workspaceId,
+      staleTime: Infinity,
+    });
+    queryClient.prefetchQuery(workspacesQuery);
     // Fetch queries
     const queriesQuery = useQueriesQuery(+workspaceId, +appId);
 

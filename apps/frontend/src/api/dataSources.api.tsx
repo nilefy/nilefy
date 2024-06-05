@@ -196,8 +196,10 @@ type WsDataSourcesIndexRet = Awaited<ReturnType<typeof index>>;
 
 export function wsDataSourcesQuery({
   workspaceId,
+  staleTime = 0,
 }: {
   workspaceId: WsDataSourceI['workspaceId'];
+  staleTime?: number;
 }): UndefinedInitialDataOptions<
   WsDataSourcesIndexRet,
   FetchXError,
@@ -206,7 +208,7 @@ export function wsDataSourcesQuery({
   return {
     queryKey: [DATASOURCES_QUERY_KEY, { workspaceId }],
     queryFn: async () => index({ workspaceId }),
-    staleTime: 0,
+    staleTime,
   };
 }
 
