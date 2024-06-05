@@ -13,15 +13,19 @@ export type QueryI = {
    * un-evaluated config
    */
   query: Record<string, unknown>;
-  dataSourceId: number;
+  dataSourceId?: number | null;
   appId: number;
   createdById: number;
   updatedById: number;
   createdAt: Date;
   updatedAt: Date | null;
+  triggerMode: 'manually' | 'onAppLoad';
 };
 
 export type QueryReturnT = {
+  /**
+   * the true backend statusCode
+   */
   status: number;
   data: unknown;
   error?: string;
@@ -32,9 +36,13 @@ type RunQueryBody = {
 };
 
 export type CompleteQueryI = QueryI & {
-  dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
-    dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
-  };
+  dataSource?:
+    | (Pick<WsDataSourceI, 'name'> & { id?: null | WsDataSourceI['id'] })
+    | null;
+  baseDataSource: Pick<
+    GlobalDataSourceI,
+    'id' | 'name' | 'type' | 'queryConfig'
+  >;
 };
 
 export async function getQueries({
@@ -92,7 +100,7 @@ export async function addQuery({
   return (await res.json()) as CompleteQueryI;
 }
 
-async function runQuery({
+export async function runQuery({
   workspaceId,
   queryId,
   appId,
@@ -102,7 +110,7 @@ async function runQuery({
   queryId: QueryI['id'];
   appId: QueryI['appId'];
   body: RunQueryBody;
-}) {
+}): Promise<QueryReturnT> {
   const res = await fetchX(
     `workspaces/${workspaceId}/apps/${appId}/queries/run/${queryId}`,
     {
@@ -111,7 +119,7 @@ async function runQuery({
       body: JSON.stringify(body),
     },
   );
-  return (await res.json()) as QueryReturnT;
+  return await res.json();
 }
 
 export async function updateQuery({
@@ -124,9 +132,10 @@ export async function updateQuery({
   appId: QueryI['appId'];
   queryId: QueryI['id'];
   dto: Partial<{
-    dataSourceId: QueryI['dataSourceId'];
+    dataSourceId: QueryI['dataSourceId'] | null;
     id: QueryI['id'];
     query: QueryI['query'];
+    triggerMode: QueryI['triggerMode'];
   }>;
 }) {
   const res = await fetchX(

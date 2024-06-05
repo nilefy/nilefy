@@ -1,12 +1,18 @@
-import { Widget, WidgetConfig, selectOptions } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+  selectOptions,
+} from '@/lib/Editor/interface';
 import { CopyCheck } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
 import MultipleSelect from './MultiSelect';
 import { Label } from '@/components/ui/label';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 
 export type WebloomSelectProps = {
   options: selectOptions[];
@@ -19,7 +25,7 @@ const WebloomMultiSelect = observer(function WebloomMultiSelect() {
   const props = editorStore.currentPage.getWidgetById(id)
     .finalValues as WebloomSelectProps;
   return (
-    <div className="absolute w-full">
+    <div className=" w-full">
       <Label>{props.label}</Label>
       <MultipleSelect
         options={props.options}
@@ -32,7 +38,7 @@ const WebloomMultiSelect = observer(function WebloomMultiSelect() {
 
 const config: WidgetConfig = {
   name: 'MultiSelect',
-  icon: <CopyCheck />,
+  icon: CopyCheck,
   isCanvas: false,
   layoutConfig: {
     colsCount: 5,
@@ -43,7 +49,7 @@ const config: WidgetConfig = {
   resizingDirection: 'Both',
 };
 
-const defaultProps: WebloomSelectProps = {
+const initialProps: WebloomSelectProps = {
   options: [
     { value: 'Option 1', label: 'Option 1' },
     { value: 'Option 2', label: 'Option 2' },
@@ -53,52 +59,45 @@ const defaultProps: WebloomSelectProps = {
   value: [],
 };
 
-const selectOptionsSchema = {
-  type: 'array',
-  items: {
-    type: 'object',
-    properties: {
-      value: {
-        type: 'string',
+const inspectorConfig: EntityInspectorConfig<WebloomSelectProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        label: 'Label',
+        path: 'label',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Label',
+        },
       },
-      label: {
-        type: 'string',
+      {
+        label: 'Options',
+        path: 'options',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Options',
+        },
+        validation: zodToJsonSchema(
+          z
+            .array(
+              z.object({
+                label: z.string(),
+                value: z.string(),
+              }),
+            )
+            .default([]),
+        ),
       },
-    },
+    ],
   },
-};
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      label: {
-        type: 'string',
-        default: defaultProps.label,
-      },
-      options: selectOptionsSchema,
-      value: selectOptionsSchema,
-    },
-    required: ['label', 'options'],
-  },
-  uiSchema: {
-    value: { 'ui:widget': 'hidden' },
-    label: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:title': 'Label',
-      'ui:placeholder': 'Enter label',
-    },
-    options: {
-      'ui:widget': 'inlineCodeInput',
-    },
-  },
-};
-
+];
 export const WebloomMultiSelectWidget: Widget<WebloomSelectProps> = {
   component: WebloomMultiSelect,
+  metaProps: new Set(['value']),
   config,
-  defaultProps,
-  schema,
+  initialProps,
+  inspectorConfig,
 };
 
 export { WebloomMultiSelect };

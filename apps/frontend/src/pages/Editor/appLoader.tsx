@@ -1,80 +1,64 @@
-import { commandManager } from '@/Actions/CommandManager';
+import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { useJSLibraries } from '@/api/JSLibraries.api';
+import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
 import { WebloomLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
-
-import { getToken, removeToken } from '@/lib/token.localstorage';
 import { JwtPayload } from '@/types/auth.types';
+import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
-import { jwtDecode } from 'jwt-decode';
-import { Suspense, useEffect, useRef } from 'react';
-import {
-  Await,
-  defer,
-  redirect,
-  useAsyncValue,
-  useLoaderData,
-} from 'react-router-dom';
+import { Suspense, useEffect } from 'react';
+import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
 
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
-    // as this loader runs before react renders we need to check for token first
-    const token = getToken();
-    if (!token) {
-      return redirect('/signin');
-    } else {
-      // check is the token still valid
-      // Decode the token
-      const decoded = jwtDecode<JwtPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        removeToken();
-        return redirect('/signin');
-      }
-      const workspaceId = params.workspaceId;
-      const appId = params.appId;
-      if (!workspaceId || !appId) {
-        throw new Error('use this loader under :workspaceId and :appId');
-      }
-      // Fetch queries
-      const queriesQuery = useQueriesQuery(+workspaceId, +appId);
-
-      // Fetch the app data
-      const appQuery = useAppQuery({
-        workspaceId: +(params.workspaceId as string),
-        appId: +(params.appId as string),
-      });
-      const values = Promise.all([
-        queryClient.fetchQuery(appQuery),
-        queryClient.fetchQuery(queriesQuery),
-      ]);
-      return defer({
-        values,
-      });
+    const notAuthed = loaderAuth();
+    if (notAuthed) {
+      return notAuthed;
     }
-  };
+    const currentUser = getUser() as JwtPayload;
+    const workspaceId = params.workspaceId;
+    const appId = params.appId;
+    if (!workspaceId || !appId) {
+      throw new Error('use this loader under :workspaceId and :appId');
+    }
+    // Fetch queries
+    const queriesQuery = useQueriesQuery(+workspaceId, +appId);
 
-type AppLoaderProps = {
-  /**
-   * does this app needs to connect to websocket connection?
-   */
-  initWs: boolean;
-  children: React.ReactNode;
-};
+    // Fetch the app data
+    const appQuery = useAppQuery({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
 
-const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
-  const [app, queries] = useAsyncValue() as [
-    app: AppCompleteT,
-    queries: Awaited<ReturnType<typeof getQueries>>,
-  ];
-  const tree = app.defaultPage.tree;
-  // todo : put the init state inside the editor store itself
-  const inited = useRef(false);
-  if (!inited.current) {
+    const jsQueriesQuery = useJSQueries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
+    const jsLibrariesQuery = useJSLibraries({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+    });
+    const values = await Promise.all([
+      queryClient.fetchQuery(appQuery),
+      queryClient.fetchQuery(queriesQuery),
+      queryClient.fetchQuery(jsQueriesQuery),
+      queryClient.fetchQuery(jsLibrariesQuery),
+    ]);
+    const [app, queries, jsQueries, jsLibraries] = values;
+    const tree = app.defaultPage.tree;
     editorStore.init({
       name: app.name,
+      workspaceId: app.workspaceId,
+      appId: app.id,
       queries,
+      jsQueries,
+      jsLibraries,
+      currentUser: currentUser?.username,
+      // TODO: i don't think we should store this info here but whatever right?
+      onBoardingCompleted: app.onBoardingCompleted,
       currentPageId: app.defaultPage.id.toString(),
       pages: [
         {
@@ -90,8 +74,29 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
         })),
       ],
     });
-    inited.current = true;
-  }
+    // little hack to make sure the editor is initialized
+    const data = editorStore.initPromise.then(() => {
+      return values;
+    });
+    return defer({
+      values: data,
+    });
+  };
+
+type AppLoaderProps = {
+  /**
+   * does this app needs to connect to websocket connection?
+   */
+  initWs: boolean;
+  children: React.ReactNode;
+};
+
+const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
+  const [app] = useAsyncValue() as [
+    app: AppCompleteT,
+    queries: Awaited<ReturnType<typeof getQueries>>,
+  ];
+
   useEffect(() => {
     if (initWs) commandManager.connectToEditor(app.id, app.defaultPage.id);
     return () => {

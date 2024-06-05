@@ -12,7 +12,6 @@ export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
   id: number;
   name: string;
-  deletedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
   createdById: number;
@@ -117,6 +116,7 @@ type WebloomTree = Record<
 export type AppCompleteT = AppI & {
   pages: PageI[];
   defaultPage: PageI & { tree: WebloomTree };
+  onBoardingCompleted: boolean;
 };
 
 async function one({
@@ -130,6 +130,50 @@ async function one({
     method: 'GET',
   });
   return (await res.json()) as AppCompleteT;
+}
+
+export async function exportApp({
+  workspaceId,
+  appId,
+  appName,
+}: {
+  workspaceId: number;
+  appId: number;
+  appName: string;
+}) {
+  const blob = await (
+    await fetchX(`workspaces/${workspaceId}/apps/export/${appId}`, {
+      method: 'GET',
+    })
+  ).blob();
+  // Create blob link to download
+  const url = window.URL.createObjectURL(new Blob([blob]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `${appName}.json`);
+
+  // Append to html link element page
+  document.body.appendChild(link);
+
+  // Start download
+  link.click();
+  // Clean up and remove the link
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(link);
+}
+
+export async function importApp({
+  workspaceId,
+  formData,
+}: {
+  workspaceId: number;
+  formData: FormData;
+}) {
+  await fetchX(`workspaces/${workspaceId}/apps/import`, {
+    method: 'POST',
+    // headers: { 'content-type': 'multipart/form-data' },
+    body: formData,
+  });
 }
 
 export type AppsIndexRet = Awaited<ReturnType<typeof index>>;
@@ -150,7 +194,7 @@ export const useAppsQuery = ({
 function useApps(...rest: Parameters<typeof useAppsQuery>) {
   return useQuery(useAppsQuery(...rest));
 }
-
+// todo change function name because it's currently misleading
 export const useAppQuery = ({
   workspaceId,
   appId,
@@ -180,6 +224,20 @@ function useInsertApp(
 ) {
   const mutate = useMutation({
     mutationFn: insert,
+    ...options,
+  });
+  return mutate;
+}
+
+function useImportApp(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof importApp>>,
+    Error,
+    Parameters<typeof importApp>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: importApp,
     ...options,
   });
   return mutate;
@@ -234,4 +292,5 @@ export const apps = {
   delete: { useMutation: useDeleteApp },
   update: { useMutation: useUpdateApp },
   clone: { useMutation: useCloneApp },
+  import: { useMutation: useImportApp },
 };

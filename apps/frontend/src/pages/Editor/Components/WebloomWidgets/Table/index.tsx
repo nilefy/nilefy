@@ -1,4 +1,8 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import {
   ArrowUpDown,
   ChevronsLeft,
@@ -16,7 +20,10 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
   Column,
+  RowSelectionState,
+  FilterFn,
 } from '@tanstack/react-table';
+import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import {
   Table,
   TableBody,
@@ -25,26 +32,31 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { Button } from '@/components/ui/button';
-import React, { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { observer } from 'mobx-react-lite';
-import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
-import {
-  genEventHandlerUiSchema,
-  widgetsEventHandler,
-  widgetsEventHandlerJsonSchema,
-} from '@/components/rjsf_shad/eventHandler';
+import { z } from 'zod';
+import { toJS } from 'mobx';
+type RowData = Record<string, unknown>;
+
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
+import { useAutoRun } from '@/lib/Editor/hooks';
 
 //Types
-type RowData = Record<string, unknown>;
+declare module '@tanstack/react-table' {
+  interface FilterFns {
+    fuzzy: FilterFn<unknown>;
+  }
+  interface FilterMeta {
+    itemRank: RankingInfo;
+  }
+}
 export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 
 export const webLoomTableColumn = z.object({
@@ -57,13 +69,6 @@ export const webLoomTableColumn = z.object({
 
 export type WebLoomTableColumn = z.infer<typeof webLoomTableColumn>;
 
-const webloomTableEvents = {
-  onRowSelectionChange: 'onRowSelectionChage',
-  onPageChange: 'onPageChange',
-  onSearchChange: 'onSearchChange',
-  onSortChange: 'onSortChange',
-} as const;
-
 const webloomTableProps = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
   columns: z.array(webLoomTableColumn).optional(),
@@ -72,13 +77,21 @@ const webloomTableProps = z.object({
   isPaginationEnabled: z.boolean(),
   pageSize: z.number().optional(),
   pageIndex: z.number().optional(),
-  appearance: z.object({
-    emptyState: z.string().default('No rows found'),
-    showHeaders: z.boolean().default(true),
-    showFooter: z.boolean().default(true),
-  }),
-  events: widgetsEventHandler,
-  rowSelection: z.record(z.boolean()),
+  emptyState: z.string().default('No rows found'),
+  showHeaders: z.boolean().default(true),
+  showFooter: z.boolean().default(true),
+  /**
+   * Contains the data of the row selected by the user. It's an empty object if no row is selected
+   */
+  selectedRow: z.record(z.unknown()),
+  /**
+   *Contains the index of the row selected by the user
+   * if no selection will be -1
+   */
+  selectedRowIndex: z.number().default(-1),
+  onRowSelectionChange: z.string().optional(),
+  onPageChange: z.string().optional(),
+  onSortChange: z.string().optional(),
 });
 
 export type WebloomTableProps = z.infer<typeof webloomTableProps>;
@@ -86,11 +99,17 @@ export type WebloomTableProps = z.infer<typeof webloomTableProps>;
 /**
  * Helper function to generate columns from data
  */
-const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
-  if (data.length === 0) {
-    return [];
-  }
-  return Object.keys(data[0]).map((key, index) => {
+const generateColumnsFromData = (
+  data: RowData[] | undefined,
+): WebLoomTableColumn[] => {
+  if (!data) return [];
+  // generate columns based on all data elements
+  const keys = data.reduce((acc, row) => {
+    return acc.concat(Object.keys(row));
+  }, [] as string[]);
+  // remove duplicates
+  const uniqueKeys = Array.from(new Set(keys));
+  return uniqueKeys.map((key, index) => {
     return {
       id: (index + 1).toString(),
       accessorKey: key,
@@ -101,31 +120,70 @@ const generateColumnsFromData = (data: RowData[]): WebLoomTableColumn[] => {
   });
 };
 
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  // Rank the item
+  const itemRank = rankItem(row.getValue(columnId), value);
+
+  // Store the itemRank info
+  addMeta({
+    itemRank,
+  });
+
+  // Return if the item should be filtered in/out
+  return itemRank.passed;
+};
+
+// const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
+//   let dir = 0;
+
+//   // Only sort by rank if the column has ranking information
+//   if (rowA.columnFiltersMeta[columnId]) {
+//     dir = compareItems(
+//       rowA.columnFiltersMeta[columnId].itemRank!,
+//       rowB.columnFiltersMeta[columnId].itemRank!,
+//     );
+//   }
+
+//   // Provide an alphanumeric fallback for when the item ranks are equal
+//   return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
+// };
+
 const WebloomTable = observer(() => {
+  const [tableData, setTableData] = useState<RowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomTableProps;
-  const { data = [], columns = [] } = props;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as WebloomTableProps;
+  const { columns = [] } = props;
+  // sorting options
+  const [sorting, setSorting] = useState<SortingState>([]);
+  // filtering options
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   //  to run only once when the component is mounted
-  React.useEffect(() => {
+  useAutoRun(() => {
+    const data = toJS(props.data) || [];
+    setTableData(toJS(data));
     // merging predefined cols and cols generated from data
-    const cols = generateColumnsFromData(data);
-    cols.forEach((propCol) => {
-      const exists = columns.find((col) => col.id === propCol.id);
-      if (!exists) {
-        columns.push(propCol);
-      }
+    const cols = generateColumnsFromData(data[0]);
+    runInAction(() => {
+      cols.forEach((propCol) => {
+        const exists = columns.find((col) => col.id === propCol.id);
+        if (!exists) {
+          columns.push(propCol);
+        }
+      });
+      onPropChange({ key: 'columns', value: cols });
     });
-
-    onPropChange({ key: 'columns', value: cols });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onPropChange, data]);
-
-  // sorting options
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  // filtering options
-  const [globalFilter, setGlobalFilter] = React.useState('');
+  });
+  // if the props index is -1 then set the selected row to empty object
+  useAutoRun(() => {
+    if (props.selectedRowIndex === -1) {
+      setRowSelection({});
+      onPropChange({ key: 'selectedRow', value: {} });
+      onPropChange({ key: 'selectedRowIndex', value: -1 });
+    }
+  });
 
   // mapping the columns to be  compatible with tanstack-table
 
@@ -148,7 +206,14 @@ const WebloomTable = observer(() => {
   });
 
   const table = useReactTable({
-    data,
+    data: tableData,
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
+    enableMultiRowSelection: false,
+    globalFilterFn: fuzzyFilter,
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     columns: props.isRowSelectionEnabled
       ? [
           {
@@ -185,20 +250,18 @@ const WebloomTable = observer(() => {
           ? props.pageSize ?? 3
           : props.data.length,
       },
-      rowSelection: props.rowSelection,
+      rowSelection,
       sorting,
       globalFilter,
     },
     onGlobalFilterChange: (updater) => {
       setGlobalFilter(updater);
     },
-    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: (updater) => {
       setSorting(updater);
       // execute user event
-      editorStore.executeActions<typeof webloomTableEvents>(id, 'onSortChange');
+      widget.handleEvent('onSortChange');
     },
-    getSortedRowModel: getSortedRowModel(),
     onPaginationChange: (updater) => {
       const v =
         typeof updater === 'function'
@@ -218,26 +281,30 @@ const WebloomTable = observer(() => {
         });
       });
       // execute user event
-      editorStore.executeActions<typeof webloomTableEvents>(id, 'onPageChange');
+      widget.handleEvent('onPageChange');
     },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: (updater) => {
+      const selectedIndex: string | undefined = Object.keys(
+        typeof updater === 'function' ? updater(rowSelection) : updater,
+      )[0];
       onPropChange({
-        key: 'rowSelection',
-        value:
-          typeof updater === 'function' ? updater(props.rowSelection) : updater,
+        key: 'selectedRow',
+        value: selectedIndex ? props.data[+selectedIndex] : {},
       });
+      onPropChange({
+        key: 'selectedRowIndex',
+        value: selectedIndex ? +selectedIndex : -1,
+      });
+      setRowSelection(updater);
       // execute user event
-      editorStore.executeActions<typeof webloomTableEvents>(
-        id,
-        'onRowSelectionChange',
-      );
+      widget.handleEvent('onRowSelectionChange');
     },
   });
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+    <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
       {props.isSearchEnabled && (
         <div className=" ml-auto  w-[40%] p-2">
           <DebouncedInput
@@ -245,10 +312,10 @@ const WebloomTable = observer(() => {
             onChange={(value) => {
               setGlobalFilter(String(value));
               // execute user event
-              editorStore.executeActions<typeof webloomTableEvents>(
-                id,
-                'onSearchChange',
-              );
+              // editorStore.executeActions<typeof webloomTableEvents>(
+              //   id,
+              //   'onSearchChange',
+              // );
             }}
             className=" border p-2 shadow"
             placeholder="Search"
@@ -277,9 +344,9 @@ const WebloomTable = observer(() => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <div className="flex h-full w-full items-center justify-center text-xl">
-                {props.appearance.emptyState}
-              </div>
+              <tr className="flex h-full w-full items-center justify-center text-xl">
+                <td>{props.emptyState}</td>
+              </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
@@ -360,7 +427,7 @@ const WebloomTable = observer(() => {
 
 const config: WidgetConfig = {
   name: 'Table',
-  icon: <TableIcon />,
+  icon: TableIcon,
   isCanvas: false,
   resizingDirection: 'Both',
   layoutConfig: {
@@ -369,82 +436,193 @@ const config: WidgetConfig = {
     minColumns: 20,
     minRows: 40,
   },
+  widgetActions: {
+    setData: {
+      name: 'setData',
+      path: 'data',
+      type: 'SETTER',
+    },
+    setPage: {
+      name: 'setPage',
+      path: 'pageIndex',
+      type: 'SETTER',
+    },
+    setPageSize: {
+      name: 'setPageSize',
+      path: 'pageSize',
+      type: 'SETTER',
+    },
+    setSelectedRowIndex: {
+      name: 'setSelectedRowIndex',
+      path: 'selectedRowIndex',
+      type: 'SETTER',
+    },
+  },
 };
 
-const defaultProps: WebloomTableProps = {
-  data: [],
-  rowSelection: {},
+const initialProps: WebloomTableProps = {
+  data: [{ id: '1', name: 'John', age: 23 }],
+  selectedRow: {},
+  selectedRowIndex: -1,
   columns: [],
-  events: [],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
   isPaginationEnabled: false,
   pageSize: 3,
-  appearance: {
-    emptyState: 'No rows found',
-    showHeaders: true,
-    showFooter: true,
-  },
+  emptyState: 'No rows found',
+  showHeaders: true,
+  showFooter: true,
 };
 
-const schema: WidgetInspectorConfig = {
-  dataSchema: {
-    type: 'object',
-    properties: {
-      data: zodToJsonSchema(webloomTableProps.shape.data),
-      columns: zodToJsonSchema(z.array(webLoomTableColumn)),
-      isRowSelectionEnabled: {
-        type: 'boolean',
-        default: defaultProps.isRowSelectionEnabled,
+const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
+  {
+    sectionName: 'Data',
+    children: [
+      {
+        path: 'data',
+        label: 'Data',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Data',
+        },
+        validation: zodToJsonSchema(
+          z.array(z.record(z.string(), z.any())).default(initialProps.data),
+        ),
       },
-      isSearchEnabled: {
-        type: 'boolean',
-        default: defaultProps.isSearchEnabled,
+      {
+        path: 'selectedRowIndex',
+        hidden: () => true,
+        label: '',
+        type: 'input',
+        options: {},
+        validation: zodToJsonSchema(
+          z.number().default(initialProps.selectedRowIndex),
+        ),
       },
-      isPaginationEnabled: {
-        type: 'boolean',
-        default: defaultProps.isPaginationEnabled,
-      },
-      appearance: zodToJsonSchema(webloomTableProps.shape.appearance),
-      pageSize: { type: 'number' },
-      events: widgetsEventHandlerJsonSchema,
-      rowSelection: zodToJsonSchema(webloomTableProps.shape.rowSelection),
-      pageIndex: {
-        type: 'number',
-      },
-    },
-    required: [
-      'data',
-      'events',
-      'appearance',
-      'isRowSelectionEnabled',
-      'isSearchEnabled',
-      'isPaginationEnabled',
-      'rowSelection',
     ],
   },
-  uiSchema: {
-    rowSelection: { 'ui:widget': 'hidden' },
-    pageIndex: { 'ui:widget': 'hidden' },
-    columns: {
-      'ui:widget': 'sortableList',
-    },
-    data: {
-      'ui:widget': 'inlineCodeInput',
-    },
-    events: genEventHandlerUiSchema(webloomTableEvents),
+  {
+    sectionName: 'Columns',
+    children: [
+      {
+        path: 'columns',
+        label: 'Columns',
+        type: 'list',
+      },
+    ],
   },
-};
+  {
+    sectionName: 'Table Options',
+    children: [
+      {
+        path: 'isRowSelectionEnabled',
+        label: 'Row Selection',
+        type: 'checkbox',
+      },
+      {
+        path: 'isSearchEnabled',
+        label: 'Search',
+        type: 'checkbox',
+      },
+      {
+        path: 'isPaginationEnabled',
+        label: 'Pagination',
+        type: 'checkbox',
+      },
+      {
+        path: 'pageSize',
+        label: 'Page Size',
+        type: 'input',
+        options: {
+          type: 'number',
+        },
+      },
+      {
+        path: 'pageIndex',
+        label: 'Page Index',
+        type: 'input',
+        options: {
+          type: 'number',
+        },
+        validation: zodToJsonSchema(z.number().default(0)),
+      },
+    ],
+  },
+  {
+    sectionName: 'Appearance',
+    children: [
+      {
+        path: 'emptyState',
+        label: 'Empty State',
+        type: 'input',
+        options: {
+          type: 'text',
+        },
+      },
+      {
+        path: 'showHeaders',
+        label: 'Show Headers',
+        type: 'checkbox',
+      },
+      {
+        path: 'showFooter',
+        label: 'Show Footer',
+        type: 'checkbox',
+      },
+    ],
+  },
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onRowSelectionChange',
+        label: 'onRowSelectionChange',
+        type: 'inlineCodeInput',
+        isEvent: true,
+        options: {
+          placeholder: 'onRowSelectionChange',
+        },
+      },
+      {
+        path: 'onPageChange',
+        label: 'onPageChange',
+        type: 'inlineCodeInput',
+        isEvent: true,
+        options: {
+          placeholder: 'onPageChange',
+        },
+      },
+      {
+        path: 'onSortChange',
+        label: 'onSortChange',
+        type: 'inlineCodeInput',
+        isEvent: true,
+        options: {
+          placeholder: 'onSortChange',
+        },
+      },
+    ],
+  },
+];
 
 const WebloomTableWidget: Widget<WebloomTableProps> = {
   component: WebloomTable,
   config,
-  defaultProps,
-  schema,
-  setters: {
-    setData: {
-      path: 'data',
-      type: 'array<object>',
+  initialProps,
+  inspectorConfig,
+  metaProps: new Set(['selectedRow', 'selectedRowIndex', 'columns']),
+  publicAPI: {
+    selectedRow: {
+      type: 'dynamic',
+      description: 'Selected row data',
+    },
+    selectedRowIndex: {
+      type: 'dynamic',
+      description: 'Selected row Index data',
+    },
+    pageIndex: {
+      type: 'dynamic',
+      description: 'if pagination is enabled will be current page index',
     },
   },
 };

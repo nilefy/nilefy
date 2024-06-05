@@ -77,8 +77,8 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
       });
       return (await res.json()) as Workspace;
     },
-    onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       setModalOpen(false);
     },
     onError(error) {
@@ -104,8 +104,8 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
       });
       return (await res.json()) as Workspace;
     },
-    onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       setModalOpen(false);
     },
     onError(error) {
@@ -228,7 +228,7 @@ export function SelectWorkSpace() {
           <ChevronDown size={20} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="DropdownMenuContent overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <DropdownMenuContent className="DropdownMenuContent scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 overflow-y-auto">
         {/*current workspace*/}
         <WorkspaceMetaDialog insert={false} workspaceMeta={currentWorkspce} />
         <DropdownMenuSeparator />

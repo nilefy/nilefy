@@ -14,10 +14,11 @@ import { ComponentsService } from '../components/components.service';
 import { PayloadUser, RequestUser } from 'src/auth/auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
-import { DatabaseI, DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { PageDto } from 'src/dto/pages.dto';
 import { pick } from 'lodash';
-import { WebloomNode, frontKnownKeys } from '../dto/components.dto';
+import { NilefyNode, frontKnownKeys } from '../dto/components.dto';
+import { DatabaseI } from '@nilefy/database';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -27,7 +28,7 @@ class LoomSocket extends WebSocket {
 }
 
 type LoomServer = Server<typeof LoomSocket>;
-type UpdateNodePayload = (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+type UpdateNodePayload = (Partial<NilefyNode> & { id: NilefyNode['id'] })[];
 
 // TODO: make page id dynamic
 // TODO: make app id dynamic
@@ -93,7 +94,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       nodes,
       sideEffects,
     }: {
-      nodes: WebloomNode[];
+      nodes: NilefyNode[];
       sideEffects: UpdateNodePayload;
     },
   ) {
@@ -192,7 +193,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       nodesId,
       sideEffects,
     }: {
-      nodesId: WebloomNode['id'][];
+      nodesId: NilefyNode['id'][];
       sideEffects: UpdateNodePayload;
     },
   ) {
@@ -204,6 +205,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       this.db.transaction(async (tx) => {
+        // eslint-disable-next-line drizzle/enforce-delete-with-where
         await this.componentsService.delete(socket.pageId, nodesId, { tx });
         await Promise.all(
           sideEffects.map((c) => {

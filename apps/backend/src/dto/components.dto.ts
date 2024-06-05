@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
-import { components as componentsDrizzle } from '../drizzle/schema/appsState.schema';
+import { components as componentsDrizzle } from '@nilefy/database';
 
 export const componentSchema = createSelectSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
@@ -8,6 +8,17 @@ export const componentSchema = createSelectSchema(componentsDrizzle).extend({
 
 export const createComponentDb = createInsertSchema(componentsDrizzle).extend({
   props: z.record(z.string(), z.unknown()),
+});
+
+export const ImportComponentDb = createInsertSchema(componentsDrizzle).extend({
+  type: z.string(),
+  props: z.record(z.string(), z.unknown()),
+  parentId: z.string(),
+  col: z.number(),
+  row: z.number(),
+  columnsCount: z.number(),
+  rowsCount: z.number(),
+  pageId: z.number(),
 });
 
 export const updateComponentDb = createComponentDb
@@ -27,7 +38,7 @@ export type UpdateComponentDb = z.infer<typeof updateComponentDb>;
 
 // FRONTEND NODE TYPE
 // TODO: remove this type and import it from shared package
-export type WebloomGridDimensions = {
+export type NilefyGridDimensions = {
   /**
    * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
    */
@@ -46,19 +57,18 @@ export type WebloomGridDimensions = {
   rowsCount: number;
 };
 
-export type WebloomNode = {
+export type NilefyNode = {
   id: string;
   nodes: string[];
   parentId: string;
   isCanvas?: boolean;
   props: Record<string, unknown>;
   type: string;
-} & WebloomGridDimensions;
+} & NilefyGridDimensions;
 
 export const frontKnownKeysSchema = componentSchema.pick({
   id: true,
   parentId: true,
-  isCanvas: true,
   props: true,
   type: true,
   col: true,
@@ -69,4 +79,4 @@ export const frontKnownKeysSchema = componentSchema.pick({
 
 export const frontKnownKeys = frontKnownKeysSchema.keyof().options;
 
-export type WebloomTree = Record<string, WebloomNode>;
+export type NilefyTree = Record<string, NilefyNode>;

@@ -1,38 +1,36 @@
-import { Widget, WidgetConfig } from '@/lib/Editor/interface';
+import {
+  EntityInspectorConfig,
+  Widget,
+  WidgetConfig,
+} from '@/lib/Editor/interface';
 import { Type } from 'lucide-react';
-import { WidgetInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
-import z from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
+import { StringSchema } from '@/lib/Editor/validations';
+import { useParseText } from './helper';
+import Markdown from 'markdown-to-jsx';
 
-const webloomTextProps = z.object({
-  text: z.string(),
-  textColor: z.string(),
-});
-export type WebloomTextProps = z.infer<typeof webloomTextProps>;
+export type NilefyTextProps = {
+  text: string;
+};
 
-const WebloomText = observer(() => {
+const NilefyText = observer(function NilefyText() {
   const { id } = useContext(WidgetContext);
   const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as WebloomTextProps;
+    .finalValues as NilefyTextProps;
+  const text = useParseText(props.text);
   return (
-    <span
-      className="h-full w-full break-all text-4xl"
-      style={{
-        color: props.textColor,
-      }}
-    >
-      {props.text}
-    </span>
+    <div className="prose prose-stone m-0 h-full w-full break-all text-xl">
+      <Markdown>{text}</Markdown>
+    </div>
   );
 });
 
 const config: WidgetConfig = {
   name: 'Text',
-  icon: <Type />,
+  icon: Type,
   isCanvas: false,
   layoutConfig: {
     colsCount: 2,
@@ -41,41 +39,74 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
-};
-
-const defaultProps: WebloomTextProps = {
-  text: 'Text',
-  textColor: '#FFF',
-};
-
-const schema: WidgetInspectorConfig = {
-  dataSchema: zodToJsonSchema(webloomTextProps),
-  uiSchema: {
-    text: {
-      'ui:widget': 'inlineCodeInput',
-      'ui:placeholder': 'Enter text',
-      'ui:title': 'Text',
-    },
-    textColor: {
-      'ui:widget': 'colorPicker',
-    },
-  },
-};
-export const WebloomTextWidget: Widget<WebloomTextProps> = {
-  component: WebloomText,
-  config,
-  defaultProps,
-  schema,
-  setters: {
+  widgetActions: {
     setText: {
+      type: 'SETTER',
+      name: 'setText',
       path: 'text',
-      type: 'string',
     },
-    setTextColor: {
-      path: 'textColor',
-      type: 'string',
+    clearText: {
+      type: 'SETTER',
+      name: 'setText',
+      path: 'text',
+      value: '',
+    },
+    testSideEffect: {
+      type: 'SIDE_EFFECT',
+      name: 'testSideEffect',
+      fn: (entity, ...args: unknown[]) => {
+        console.log('testSideEffect', entity, args);
+      },
     },
   },
 };
 
-export { WebloomText };
+const initialProps: NilefyTextProps = {
+  text: 'Text',
+};
+
+const inspectorConfig: EntityInspectorConfig<NilefyTextProps> = [
+  {
+    sectionName: 'General',
+    children: [
+      {
+        path: 'text',
+        label: 'Text',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Enter text',
+        },
+        validation: StringSchema(initialProps.text),
+      },
+    ],
+  },
+];
+
+export const NilefyTextWidget: Widget<NilefyTextProps> = {
+  component: NilefyText,
+  config,
+  initialProps,
+  publicAPI: {
+    text: {
+      description: 'Text of the widget',
+      type: 'static',
+      typeSignature: 'string',
+    },
+    setText: {
+      type: 'function',
+      args: [
+        {
+          name: 'text',
+          type: 'string',
+        },
+      ],
+    },
+    clearText: {
+      type: 'function',
+      args: [],
+    },
+  },
+  inspectorConfig,
+};
+
+export { NilefyText };

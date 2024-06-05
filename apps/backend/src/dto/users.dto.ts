@@ -1,6 +1,6 @@
 import z from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { users as usersDrizzle } from '../drizzle/schema/schema';
+import { users as usersDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const userSchema = createSelectSchema(usersDrizzle);
@@ -9,6 +9,19 @@ export const userInsertSchema = createInsertSchema(usersDrizzle, {
   email: (schema) => schema.email.email(),
   passwordResetToken: (schema) => schema.passwordResetToken.max(255),
   password: (schema) => schema.password.min(6).max(255),
+});
+
+export const retUserSchema = userSchema.omit({
+  password: true,
+  conformationToken: true,
+  createdAt: true,
+  emailVerified: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const updateUserOnboardingSchema = userInsertSchema.pick({
+  onboardingCompleted: true,
 });
 
 export const updateUserSchema = userInsertSchema
@@ -54,6 +67,9 @@ export class UpdateUserDto extends createZodDto(updateUserSchema) {}
 export class UpdateUserDb extends createZodDto(userInsertSchema.partial()) {}
 export class ForgotPasswordDto extends createZodDto(forgotPasswordSchema) {}
 export class ResetPasswordDto extends createZodDto(resetPasswordSchema) {}
+export class UpdateUserOnboardingDto extends createZodDto(
+  updateUserOnboardingSchema,
+) {}
 export const updateUserRetSchema = userSchema.pick({
   id: true,
   username: true,
@@ -62,3 +78,4 @@ export const updateUserRetSchema = userSchema.pick({
   updatedAt: true,
 });
 export class UpdateUserRetDto extends createZodDto(updateUserRetSchema) {}
+export class RetUserSchema extends createZodDto(retUserSchema) {}

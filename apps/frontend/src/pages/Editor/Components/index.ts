@@ -3,7 +3,7 @@ import { WebloomButtonWidget } from './WebloomWidgets/Button';
 import { WebloomContainerWidget } from './WebloomWidgets/Container';
 import { WebloomInputWidget } from './WebloomWidgets/Input';
 import { WebloomTextEditorWidget } from './WebloomWidgets/RichTextEditor';
-import { WebloomTextWidget } from './WebloomWidgets/Text';
+import { NilefyTextWidget } from './WebloomWidgets/Text';
 import { WebloomTableWidget } from './WebloomWidgets/Table';
 import { WebloomImageWidget } from './WebloomWidgets/Image';
 import { WebloomChartWidget } from './WebloomWidgets/Chart';
@@ -14,12 +14,19 @@ import { WebloomFilePickerWidget } from './WebloomWidgets/FilePicker';
 import { WebloomRadioWidget } from './WebloomWidgets/radioGroup';
 import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
 import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
+import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
+import { WebloomTextAreaWidget } from './WebloomWidgets/TextArea';
+import { WebloomFormWidget } from './WebloomWidgets/Form';
+import { NilefyRangeWidget } from './WebloomWidgets/Range';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export const WebloomWidgets = {
   WebloomButton: WebloomButtonWidget,
-  WebloomContainer: WebloomContainerWidget,
+  [EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME]: WebloomContainerWidget,
   WebloomInput: WebloomInputWidget,
-  WebloomText: WebloomTextWidget,
+  WebloomNumberInput: WebloomNumberInputWidget,
+  WebloomTextArea: WebloomTextAreaWidget,
+  NilefyText: NilefyTextWidget,
   TextEditor: WebloomTextEditorWidget,
   Table: WebloomTableWidget,
   Image: WebloomImageWidget,
@@ -31,6 +38,8 @@ export const WebloomWidgets = {
   WebloomRadioGroup: WebloomRadioWidget,
   WebloomCheckBox: WebloomCheckBoxWidget,
   WebloomCheckBoxGroup: WebloomCheckBoxGroupWidget,
+  WebloomForm: WebloomFormWidget,
+  NilefyRange: NilefyRangeWidget,
 } as const;
 
 export const WidgetContext = createContext<{

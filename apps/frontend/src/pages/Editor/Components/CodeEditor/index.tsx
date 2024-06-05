@@ -1,13 +1,4 @@
-import { xcodeDark } from '@uiw/codemirror-theme-xcode';
-import { RegExpCursor } from '@codemirror/search';
-import {
-  Decoration,
-  DecorationSet,
-  ViewPlugin,
-  EditorView,
-  ViewUpdate,
-  placeholder,
-} from '@codemirror/view';
+import { EditorView, ViewUpdate, placeholder } from '@codemirror/view';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, PostgreSQL } from '@codemirror/lang-sql';
@@ -22,70 +13,13 @@ import {
   StateField,
 } from '@codemirror/state';
 
-import { webLoomContext } from './autoComplete';
 import { basicSetup } from 'codemirror';
 import { cn } from '@/lib/cn';
 import { language } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
+import { blockCodeEditorExtensionsSetup } from './extensions';
+import { useTheme } from '@/components/theme-provider';
 
-export const inlineTheme = EditorView.baseTheme({
-  '&': {
-    backgroundColor: 'hsl(var(--background))',
-  },
-
-  '&.cm-focused .cm-selectionBackground, ::selection': {
-    backgroundColor: '#c0c0c0',
-  },
-  '&.cm-focused': {
-    outline: 'none',
-  },
-  '.cm-jstemplate': {
-    backgroundColor: '#85edff49',
-  },
-});
-// HIGHLIGHT JS TEMPLATEs
-const templateMarkDeco = Decoration.mark({ class: 'cm-jstemplate' });
-
-// TODO: fix this, new lines breaks the plugin
-/**
- * extension that adds new class to use in the mark
- */
-export const jsTemplatePlugin = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = this.getDeco(view);
-    }
-    getDeco(view: EditorView) {
-      // TODO: Why do we need two backslashes before the curly braces?
-      const templateRegexString = '\\{\\{([\\s\\S]*?)\\}\\}';
-      const { state } = view;
-      const decos = [];
-      for (const part of view.visibleRanges) {
-        const cursor = new RegExpCursor(
-          state.doc,
-          templateRegexString,
-          {},
-          part.from,
-          part.to,
-        );
-        for (const match of cursor) {
-          const { from, to } = match;
-          decos.push(templateMarkDeco.range(from, to));
-        }
-      }
-      return Decoration.set(decos);
-    }
-    update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = this.getDeco(update.view);
-      }
-    }
-  },
-  {
-    decorations: (instance) => instance.decorations,
-  },
-);
 const External = Annotation.define<boolean>();
 
 /**
@@ -106,6 +40,8 @@ export type WebloomCodeEditorProps = {
   templateAutocompletionOnly?: boolean;
   setup: Extension;
   id?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 /**
  *
@@ -137,6 +73,8 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
     onChange,
     autoFocus = false,
     value = '',
+    onFocus,
+    onBlur,
     setup,
   } = props;
   const editor = useRef<HTMLDivElement>(null);
@@ -163,11 +101,13 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
         onChange(value, viewUpdate);
       }
+
       // onStatistics && onStatistics(getStatistics(vu));
     },
   );
+
   const extensions = useMemo(() => {
-    const extensions = [setup, webLoomContext, javascript(), xcodeDark];
+    const extensions = [setup, javascript()];
     if (props.templateAutocompletionOnly) {
       extensions.push(...[autoCompletionConf.of([]), setAutoCompletionAllowed]);
     } else {
@@ -188,9 +128,14 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
 
   useEffect(() => {
     if (container && !state) {
+      const focusListner = EditorView.domEventObservers({
+        focus: onFocus,
+        blur: onBlur,
+      });
+
       const config: EditorStateConfig = {
         doc: value,
-        extensions: getExtensions,
+        extensions: [...getExtensions, focusListner],
       };
       const stateCurrent = initialState
         ? EditorState.fromJSON(initialState.json, config, initialState.fields)
@@ -212,7 +157,7 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, container]);
+  }, [state, container, onFocus, onBlur]);
 
   useEffect(() => {
     if (autoFocus && view) {
@@ -249,12 +194,14 @@ export function WebloomCodeEditor(props: WebloomCodeEditorProps) {
       });
     }
   }, [value, view]);
-
   return (
     <div
       id={props.id}
       ref={editor}
-      className={cn('w-full h-full', props.className)}
+      className={cn(
+        'w-full h-full [&[contenteditable]]:focus:border-none [&[contenteditable]]:focus:outline-none [&[contenteditable]]:active:border-none [&[contenteditable]]:active:outline-none        ',
+        props.className,
+      )}
     />
   );
 }
@@ -263,12 +210,10 @@ export const inlineSetupCallback = (
   placeholderText: string = 'Enter something',
 ) => [
   placeholder(placeholderText),
-  inlineTheme,
   basicSetup,
   sql({
     dialect: PostgreSQL,
   }),
-  jsTemplatePlugin,
 ];
 
 export type WebloomSQLEditorProps = Omit<WebloomCodeEditorProps, 'setup'> & {
@@ -285,6 +230,26 @@ export function SQLEditor(props: WebloomSQLEditorProps) {
       setup={inlineSetup}
       {...props}
       templateAutocompletionOnly
+    />
+  );
+}
+
+export type CodeInputProps = Omit<WebloomCodeEditorProps, 'setup'> & {
+  fileName: string;
+};
+export function CodeInput(props: CodeInputProps) {
+  const { fileName, ...rest } = props;
+  const theme = useTheme().activeTheme;
+  const setup = useMemo(
+    () => blockCodeEditorExtensionsSetup({ theme, fileName }),
+    [fileName, theme],
+  );
+
+  return (
+    <WebloomCodeEditor
+      setup={setup}
+      {...rest}
+      className="border-input bg-background ring-offset-background focus-visible:ring-ring min-h-[200px] w-full overflow-auto rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
     />
   );
 }

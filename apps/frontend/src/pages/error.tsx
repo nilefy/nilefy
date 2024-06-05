@@ -1,7 +1,6 @@
 import { buttonVariants } from '@/components/ui/button';
 import { FetchXError } from '@/utils/fetch';
 import { Link, useRouteError } from 'react-router-dom';
-
 export default function ErrorPage() {
   const error = useRouteError();
   console.error(error);
@@ -15,7 +14,9 @@ export default function ErrorPage() {
       <p className="">Sorry, an unexpected error has occurred.</p>
       <p className="text-gray-400">
         <i>
-          {error instanceof Error || error instanceof FetchXError
+          {'statusText' in error
+            ? error.statusText
+            : error instanceof Error || error instanceof FetchXError
             ? error.message
             : 'unknown error'}
         </i>

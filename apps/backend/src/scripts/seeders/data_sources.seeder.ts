@@ -4,8 +4,6 @@ import {
   dataSourcesEnum,
   DataSourceT,
 } from '../seeders/seeder.types';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import * as schema from '../../drizzle/schema/data_sources.schema';
 import {
   pluginConfigForm as postgresConfigForm,
   queryConfigForm as postgresQueryConfigForm,
@@ -14,6 +12,23 @@ import {
   pluginConfigForm as restApiConfigForm,
   queryConfigForm as restApiQueryConfigForm,
 } from '../../data_sources/plugins/restapi/types';
+import {
+  pluginConfigForm as googleSheetsConfigForm,
+  queryConfigForm as googleSheetsQueryConfigForm,
+} from '../../data_sources/plugins/googlesheets/types';
+import {
+  pluginConfigForm as GCSConfigForm,
+  queryConfigForm as GCSQueryConfigForm,
+} from '../../data_sources/plugins/gcs/types';
+import {
+  pluginConfigForm as mongodbConfigForm,
+  queryConfigForm as mongodbQueryConfigForm,
+} from '../../data_sources/plugins/mongodb/types';
+import { DatabaseI, dataSources as dataSourcesSchema } from '@nilefy/database';
+import {
+  pluginConfigForm as azureBlobStorageConfigForm,
+  queryConfigForm as azureBlobStorageQueryConfigForm,
+} from '../../data_sources/plugins/azure_blob_storage/types';
 
 export async function dataSourcesSeeder(db: DatabaseI) {
   console.log('running DATA SOURCES seeder');
@@ -23,19 +38,66 @@ export async function dataSourcesSeeder(db: DatabaseI) {
     dataSources[type].forEach((name) => {
       let dataSourceConfig;
       let queryConfig;
+      let image = faker.helpers.arrayElement([faker.image.url(), null]);
+      let description = faker.helpers.arrayElement([
+        faker.commerce.productDescription(),
+        null,
+      ]);
 
       switch (name.toLocaleLowerCase()) {
         case 'postgresql':
           {
             dataSourceConfig = postgresConfigForm;
             queryConfig = postgresQueryConfigForm;
+            image = 'https://www.svgrepo.com/show/354200/postgresql.svg';
+            description =
+              'Connect to PostgreSQL databases to read and modify data.';
           }
           break;
         case 'rest api':
           {
             dataSourceConfig = restApiConfigForm;
             queryConfig = restApiQueryConfigForm;
+            image = 'https://www.svgrepo.com/show/447473/rest-api.svg';
+            description =
+              'Connect with REST API endpoints and create queries to interact with it.';
           }
+          break;
+        case 'mongodb':
+          {
+            dataSourceConfig = mongodbConfigForm;
+            queryConfig = mongodbQueryConfigForm;
+            image = 'https://www.svgrepo.com/show/373845/mongo.svg';
+            description = 'Connect to MongoDB to read and write data.';
+          }
+          break;
+        case 'azure blob storage':
+          {
+            dataSourceConfig = azureBlobStorageConfigForm;
+            queryConfig = azureBlobStorageQueryConfigForm;
+            image =
+              'https://www.svgrepo.com/show/448272/azure-blob-storage.svg';
+            description =
+              'Connect to Azure Blob storage containers to read and manipulate unstructured data.';
+          }
+          break;
+        case 'google cloud storage':
+          {
+            dataSourceConfig = GCSConfigForm;
+            queryConfig = GCSQueryConfigForm;
+            image =
+              'https://www.svgrepo.com/show/353806/google-cloud-functions.svg';
+            description =
+              'Connect to GCS buckets and perform various operations on them.';
+          }
+          break;
+        case 'google sheets':
+          dataSourceConfig = googleSheetsConfigForm; // Google Sheets config form
+          queryConfig = googleSheetsQueryConfigForm; // Google Sheets query config form
+          image =
+            'https://mailmeteor.com/logos/assets/SVG/Google_Sheets_Logo.svg';
+          description =
+            'Connect to Google Sheets to read and modify spreadsheet data.';
           break;
         default: {
           dataSourceConfig = [];
@@ -46,16 +108,13 @@ export async function dataSourcesSeeder(db: DatabaseI) {
       ds.push({
         type,
         name,
-        description: faker.helpers.arrayElement([
-          faker.commerce.productDescription(),
-          null,
-        ]),
-        image: faker.helpers.arrayElement([faker.image.url(), null]),
+        image,
+        description,
         config: dataSourceConfig,
         queryConfig: queryConfig,
       });
     });
   });
 
-  await db.insert(schema.dataSources).values(ds);
+  await db.insert(dataSourcesSchema).values(ds);
 }

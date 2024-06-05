@@ -10,6 +10,7 @@ import {
   convertPixelToGrid,
   getBoundingRect,
 } from '../utils';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export function handleHoverCollision(
   dimensions: WebloomGridDimensions,
@@ -19,26 +20,34 @@ export function handleHoverCollision(
   isCanvas: boolean,
   mousePos: Point,
   forShadow = false,
-): WebloomGridDimensions {
+): { dims: WebloomGridDimensions; shouldHandleLateralCollisions: boolean } {
   const nodePixelDims = convertGridToPixel(dimensions, grid, parentPixelDims);
+  let shouldHandleLateralCollisions = true;
   if (!isCanvas) {
-    if (
-      mousePos.y <=
-      overBoundingRect.top +
-        (overBoundingRect.bottom - overBoundingRect.top) / 2 -
-        5
-    ) {
+    const { top, bottom } = overBoundingRect;
+    const middle = top + (bottom - top) / 2;
+    if (mousePos.y <= middle - 5) {
+      shouldHandleLateralCollisions = false;
       if (forShadow) {
-        nodePixelDims.y = overBoundingRect.top - 10;
-        nodePixelDims.height = 10;
+        nodePixelDims.y = top - 2;
+        nodePixelDims.height = 2;
       } else {
-        nodePixelDims.y = overBoundingRect.top;
+        nodePixelDims.y = top;
       }
     } else {
-      nodePixelDims.y = overBoundingRect.bottom;
+      shouldHandleLateralCollisions = false;
+      if (forShadow) {
+        nodePixelDims.height = 2;
+        nodePixelDims.y = bottom + 2;
+      } else {
+        nodePixelDims.y = bottom;
+      }
     }
   }
-  return convertPixelToGrid(nodePixelDims, grid, parentPixelDims);
+  return {
+    dims: convertPixelToGrid(nodePixelDims, grid, parentPixelDims),
+    shouldHandleLateralCollisions,
+  };
 }
 /**
  *
@@ -75,31 +84,34 @@ export function handleLateralCollisions(
     const otherTop = otherNode.row;
     const otherLeft = otherNode.col;
     const otherRight = otherNode.col + otherNode.columnsCount;
+
+    top < otherBottom && top > otherTop;
     const mouseLeftOfElement = mousePos.x < otherBoundingRect.left;
     const mouseRightOfElement = mousePos.x > otherBoundingRect.right;
-    const mouseUnderElementOrExactlyOnBorder =
-      mousePos.y >= otherBoundingRect.bottom;
-    const mouseWithinElement =
+    const mouseUnderElementWithThreshold =
+      mousePos.y - otherBoundingRect.bottom > -EDITOR_CONSTANTS.ROW_HEIGHT;
+    const mouseWithinElementHorizontalBounds =
       mousePos.x > otherBoundingRect.left &&
       mousePos.x < otherBoundingRect.right;
+
     if (top < otherBottom && top >= otherTop) {
-      if (mouseWithinElement && mouseUnderElementOrExactlyOnBorder) {
+      if (
+        mouseWithinElementHorizontalBounds &&
+        mouseUnderElementWithThreshold
+      ) {
         // mouse under other element and between its left and right
         top = otherBottom;
       } else if (
         mouseLeftOfElement &&
         left < otherLeft &&
-        left + colCount > otherLeft
+        left + colCount >= otherLeft
       ) {
         colCount = Math.min(colCount, otherLeft - left);
         if (colCount < 2) {
           left = otherLeft - 2;
           colCount = 2;
         }
-      } else if (
-        (left >= otherLeft && left < otherRight) ||
-        (mouseRightOfElement && left < otherLeft)
-      ) {
+      } else if (mouseRightOfElement && left > otherLeft && left < otherRight) {
         const temp = left;
         left = otherRight;
         colCount += temp - left;
@@ -120,11 +132,11 @@ export function handleLateralCollisions(
 export function handleParentCollisions(
   dimensions: WebloomGridDimensions,
   parentDims: WebloomPixelDimensions,
-  parentBoundingRect: BoundingRect,
   grid: [number, number],
   clipBottom = false,
 ) {
   const [gridrow, gridcol] = grid;
+  const parentBoundingRect = getBoundingRect(parentDims);
   const boundingRect = getBoundingRect(
     convertGridToPixel(dimensions, [gridrow, gridcol], parentDims),
   );

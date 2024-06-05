@@ -1,61 +1,27 @@
 import { generateFakeApp } from '../faker/app.faker';
-import { faker } from '@faker-js/faker';
-import { apps } from '../../drizzle/schema/schema';
-import { UserDto } from '../../dto/users.dto';
-import { WorkspaceDto } from '../../dto/workspace.dto';
-import { DatabaseI } from '../../drizzle/drizzle.provider';
-import { components, pages } from '../../drizzle/schema/appsState.schema';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { PgTrans } from '@nilefy/database';
+import { chunkArray } from '../../utils';
+import { INestApplicationContext } from '@nestjs/common';
+import { AppsService } from '../../apps/apps.service';
+import { AppsModule } from '../../apps/apps.module';
 
 export async function appSeeder(
-  db: DatabaseI,
-  userIds: UserDto['id'][],
-  workspaceIds: WorkspaceDto['id'][],
+  nest: INestApplicationContext,
+  tx: PgTrans,
+  userWorkspaceIds: [number, number][],
 ) {
   console.log('running APPS seeder');
-  const fakeApps = faker.helpers.multiple(
-    () => generateFakeApp(userIds, workspaceIds),
-    {
-      count: 50,
-    },
-  );
-  const res = await db.insert(apps).values(fakeApps).returning();
-  // create page for each app
-  const res2 = await Promise.all(
-    res.map((a) =>
-      db
-        .insert(pages)
-        .values({
-          appId: a.id,
-          createdById: userIds[0],
-          name: 'page 1',
-          handle: 'home',
-          index: 1,
-        })
-        .returning(),
-    ),
-  );
+  const appsService = nest
+    .select(AppsModule)
+    .get(AppsService, { strict: true });
 
-  // create component for each app;
-  await Promise.all(
-    res2.map((p) =>
-      db.insert(components).values({
-        id: EDITOR_CONSTANTS.ROOT_NODE_ID,
-        type: 'WebloomContainer',
-        pageId: p[0].id,
-        createdById: userIds[0],
-        parentId: null,
-        props: {
-          className: 'h-full w-full',
-          isCanvas: true,
-        },
-        col: 0,
-        row: 0,
-        columnsCount: 32,
-        rowsCount: 0,
-      }),
-    ),
-  );
+  const fakeApps = userWorkspaceIds.map(([userId, workspaceId]) => {
+    return generateFakeApp(userId, workspaceId);
+  });
 
-  return res;
+  const appsChunks = chunkArray(fakeApps, 1000);
+
+  for (const chunk of appsChunks) {
+    await Promise.all(chunk.map((u) => appsService.create(u, { tx })));
+  }
 }

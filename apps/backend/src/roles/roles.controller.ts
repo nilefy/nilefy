@@ -63,10 +63,14 @@ export class RolesController {
     @Param('roleId', ParseIntPipe) roleId: number,
     @Body(new ZodValidationPipe(updateRoleSchema)) updateRoleDto: RoleUpdateI,
   ) {
-    return await this.rolesService.update(workspaceId, roleId, {
-      updatedById: req.user.userId,
-      ...updateRoleDto,
-    });
+    return await this.rolesService.update(
+      req.user.userId,
+      workspaceId,
+      roleId,
+      {
+        ...updateRoleDto,
+      },
+    );
   }
 
   @Put(':roleId/togglepermission/:permissionId')
@@ -84,12 +88,11 @@ export class RolesController {
 
   @Delete(':roleId')
   async Delete(
-    @Req() req: ExpressAuthedRequest,
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('roleId', ParseIntPipe) roleId: number,
   ) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
     return await this.rolesService.delete({
-      deletedById: req.user.userId,
       roleId: roleId,
       workspaceId: workspaceId,
     });
