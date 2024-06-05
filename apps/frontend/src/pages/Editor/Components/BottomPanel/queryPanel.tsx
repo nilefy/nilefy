@@ -215,7 +215,7 @@ export const QueryPanel = observer(function QueryPanel() {
     workspaceId: +(workspaceId as string),
     env: editorStore.currentAppEnv,
   });
-  const queries = editorStore.queries;
+  const queries = editorStore.envQueries;
 
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),

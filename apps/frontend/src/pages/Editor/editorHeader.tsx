@@ -28,7 +28,16 @@ export const EditorHeader = observer(function EditorHeader() {
       await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
     },
   });
-
+  const handleSelect = (env: 'development' | 'staging' | 'production') => {
+    setCurrentAppEnv(env[0].toUpperCase() + env.slice(1));
+    editorStore.setAppEnv(env);
+    if (!workspaceId || !appId) throw new Error();
+    updateMutate({
+      workspaceId: +workspaceId,
+      appId: +appId,
+      data: { env },
+    });
+  };
   return (
     <div className="flex w-full items-center gap-5 border-b px-3 py-[4px]">
       <div className="h-full w-10">
@@ -44,52 +53,19 @@ export const EditorHeader = observer(function EditorHeader() {
         <DropdownMenuContent>
           <DropdownMenuItem
             className="hover:cursor-pointer"
-            onSelect={() => {
-              setCurrentAppEnv('Development');
-              editorStore.changeAppEnv('development');
-              if (!workspaceId || !appId) throw new Error();
-              updateMutate({
-                workspaceId: +workspaceId,
-                appId: +appId,
-                data: {
-                  env: 'development',
-                },
-              });
-            }}
+            onSelect={() => handleSelect('development')}
           >
             Development
           </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:cursor-pointer"
-            onSelect={() => {
-              setCurrentAppEnv('Staging');
-              editorStore.changeAppEnv('staging');
-              if (!workspaceId || !appId) throw new Error();
-              updateMutate({
-                workspaceId: +workspaceId,
-                appId: +appId,
-                data: {
-                  env: 'staging',
-                },
-              });
-            }}
+            onSelect={() => handleSelect('staging')}
           >
             Staging
           </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:cursor-pointer"
-            onSelect={() => {
-              setCurrentAppEnv('Production');
-              editorStore.changeAppEnv('production');
-              if (!workspaceId || !appId) throw new Error();
-              updateMutate({
-                workspaceId: +workspaceId,
-                appId: +appId,
-                data: {
-                  env: 'production',
-                },
-              });
-            }}
+            onSelect={() => handleSelect('production')}
           >
             Production
           </DropdownMenuItem>

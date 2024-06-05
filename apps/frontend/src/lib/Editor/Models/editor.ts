@@ -347,6 +347,16 @@ export class EditorState implements WebloomDisposable {
     }
   }
 
+  get envQueries() {
+    return [...Object.values(this.queries)].filter((q) => {
+      return (
+        (q instanceof WebloomQuery &&
+          q.dataSource.env?.includes(this.currentAppEnv)) ||
+        q instanceof WebloomJSQuery
+      );
+    });
+  }
+
   /**
    * kinda of hook after the worker init the application(after first evaluation cycle)
    *
@@ -576,7 +586,7 @@ export class EditorState implements WebloomDisposable {
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
   }
-  changeAppEnv(env: 'development' | 'staging' | 'production') {
+  setAppEnv(env: 'development' | 'staging' | 'production') {
     this.currentAppEnv = env;
   }
 }
