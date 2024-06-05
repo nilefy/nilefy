@@ -1,6 +1,12 @@
-import { UndoableCommand, Command, isUndoableCommand } from './types';
+import {
+  UndoableCommand,
+  Command,
+  isUndoableCommand,
+  ActionReturnI,
+} from './types';
 import { WebloomWebSocket } from './ws';
 import log from 'loglevel';
+import { nanoid } from 'nanoid';
 
 export class CommandManager {
   // history is just a stack
@@ -30,14 +36,25 @@ export class CommandManager {
     this.socket = null;
   }
 
+  private handleActionReturn(ret: ActionReturnI) {
+    if (ret && this.socket !== null && this.socket.getState() === 'connected') {
+      const r = {
+        ...ret,
+        data: {
+          ...ret.data,
+          id: nanoid(),
+        },
+      };
+      log.info('method returned value i will send to remote', r);
+      this.socket.sendMessage(JSON.stringify(r));
+    }
+  }
+
   public executeCommand(cmd: Command | null) {
     //this is essentially a no-op
     if (cmd === null) return;
     const ret = cmd.execute();
-    if (ret && this.socket !== null && this.socket.getState() === 'connected') {
-      log.info('method returned value i will send to remote', ret);
-      this.socket.sendMessage(JSON.stringify(ret));
-    }
+    this.handleActionReturn(ret);
     if (cmd instanceof UndoableCommand || isUndoableCommand(cmd)) {
       this.commandStack.push(cmd as UndoableCommand);
     }
@@ -51,10 +68,7 @@ export class CommandManager {
       return;
     }
     const ret = cmd.undo();
-    if (ret && this.socket !== null && this.socket.getState() === 'connected') {
-      log.info('method returned value from undo i will send to remote', ret);
-      this.socket.sendMessage(JSON.stringify(ret));
-    }
+    this.handleActionReturn(ret);
   }
 
   public static getInstance() {

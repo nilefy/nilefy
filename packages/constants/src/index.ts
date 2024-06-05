@@ -9,12 +9,21 @@ const EDITOR_CONSTANTS = {
   JS_AUTOCOMPLETE_FILE_NAME: "webloom-autocomplete",
   WIDGET_CONTAINER_TYPE_NAME: "WebloomContainer",
 } as const;
-const SOCKET_EVENTS = {
+const SOCKET_EVENTS_REQUEST = {
+  AUTH: "auth",
   DELETE_NODE: "deleteNode",
   UPDATE_NODE: "updateNode",
   CREATE_NODE: "createNode",
+  CREATE_QUERY: "createQuery",
+  UPDATE_QUERY: "updateQuery",
+  DELETE_QUERY: 'deleteQuery',
+} as const;
+
+const SOCKET_EVENTS_RESPONSE = {
+  AUTHED: "authed",
   NOT_AUTHED: "notAuthed",
 } as const;
+
 const dataSourcesTypes = [
   "database",
   "api",
@@ -22,5 +31,6 @@ const dataSourcesTypes = [
   "plugin",
 ] as const;
 Object.freeze(EDITOR_CONSTANTS);
-Object.freeze(SOCKET_EVENTS);
-export { EDITOR_CONSTANTS, SOCKET_EVENTS, dataSourcesTypes };
+Object.freeze(SOCKET_EVENTS_REQUEST);
+Object.freeze(SOCKET_EVENTS_RESPONSE);
+export { EDITOR_CONSTANTS, SOCKET_EVENTS_REQUEST, SOCKET_EVENTS_RESPONSE,dataSourcesTypes };

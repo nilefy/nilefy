@@ -1,6 +1,7 @@
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { BoundingRect } from '@/lib/Editor/interface';
 import { WidgetSnapshot } from '@/types';
+import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 export type ClipboardDataT = {
   action: 'copy' | 'cut';
@@ -17,30 +18,45 @@ export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
 
 export type RemoteTypes =
   | {
-      event: 'insert';
+      event: (typeof SOCKET_EVENTS_REQUEST)['CREATE_NODE'];
       data: {
+        /**
+         * operation id
+         */
+        id?: string;
         nodes: WebloomWidget['snapshot'][];
         sideEffects: UpdateNodesPayload;
       };
     }
   | {
-      event: 'update';
-      data: UpdateNodesPayload;
+      event: (typeof SOCKET_EVENTS_REQUEST)['UPDATE_NODE'];
+      data: {
+        /**
+         * operation id
+         */
+        id?: string;
+        updates: UpdateNodesPayload;
+      };
     }
   | {
-      event: 'delete';
+      event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_NODE'];
       data: {
+        /**
+         * operation id
+         */
+        id?: string;
         nodesId: WebloomWidget['id'][];
         sideEffects: UpdateNodesPayload;
       };
     };
 
+export type ActionReturnI = void | RemoteTypes;
 export abstract class Command {
-  abstract execute(): void | RemoteTypes;
+  abstract execute(): ActionReturnI;
 }
 
 export abstract class UndoableCommand extends Command {
-  abstract undo(): void | RemoteTypes;
+  abstract undo(): ActionReturnI;
 }
 
 export function isUndoableCommand(cmd: Command): cmd is UndoableCommand {
