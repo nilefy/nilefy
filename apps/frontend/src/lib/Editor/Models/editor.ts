@@ -45,6 +45,9 @@ export class EditorState implements WebloomDisposable {
   queryPanel!: {
     addMenuOpen: boolean;
   };
+  initPromise!: Promise<void>;
+  resolveInit!: () => void;
+  rejectInit!: (e: Error) => void;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
@@ -194,6 +197,10 @@ export class EditorState implements WebloomDisposable {
     onBoardingCompleted: boolean;
   }) {
     try {
+      this.initPromise = new Promise((resolve, reject) => {
+        this.resolveInit = resolve;
+        this.rejectInit = reject;
+      });
       this.dispose();
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
@@ -229,7 +236,7 @@ export class EditorState implements WebloomDisposable {
         }),
         ...queries.map((q) => {
           return {
-            type: q.dataSource.name,
+            type: q?.dataSource?.name ?? q.baseDataSource.name,
             name: q.id,
           };
         }),
@@ -345,6 +352,7 @@ export class EditorState implements WebloomDisposable {
     Object.values(this.queries).forEach((q) => {
       if (q.triggerMode === 'onAppLoad') void q.run();
     });
+    this.resolveInit();
   }
   // TODO: add support for queries
   get currentPageErrors() {
@@ -449,7 +457,9 @@ export class EditorState implements WebloomDisposable {
   removeQuery(id: string) {
     const query = this.queries[id];
     const type =
-      query instanceof WebloomQuery ? query.dataSource.name : query.entityType;
+      query instanceof WebloomQuery
+        ? query?.dataSource?.name ?? query.baseDataSource.name
+        : query.entityType;
     updateOrderMap(
       [
         {

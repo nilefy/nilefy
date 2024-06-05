@@ -183,6 +183,124 @@ export const DefaultSection = observer(
     );
   },
 );
+export type ComparisonOperations =
+  | 'EQUALS'
+  | 'NOT_EQUALS'
+  | 'LESSER'
+  | 'GREATER'
+  | 'IN'
+  | 'NOT_IN';
+
+type Condition = {
+  path: string;
+  value: any;
+  comparison: ComparisonOperations;
+};
+export interface ConditionObject {
+  conditionType: 'AND' | 'OR';
+  conditions: Conditions;
+}
+
+export type Conditions = Array<Condition> | ConditionObject;
+
+export type IsHidden =
+  | ((args: {
+      store: typeof editorStore;
+      entityId: string;
+      finalValues: Record<string, unknown>;
+    }) => boolean)
+  | boolean
+  | Condition
+  | ConditionObject;
+
+export const calculateIsHidden = (
+  hidden: IsHidden,
+  entityId: string,
+): boolean => {
+  if (typeof hidden === 'boolean') {
+    return hidden;
+  }
+
+  if (typeof hidden === 'function') {
+    return hidden({
+      store: editorStore,
+      entityId,
+      finalValues: editorStore.getEntityById(entityId)!.finalValues,
+    });
+  }
+  if (Array.isArray(hidden)) {
+    return applyBooleanOperator(evaluateConditions(hidden, entityId), 'OR');
+  }
+  if ('conditionType' in hidden) {
+    return evaluateConditionObject(hidden, entityId);
+  }
+  return evaluateCondition(
+    hidden as Condition,
+    editorStore
+      .getEntityById(entityId)
+      ?.getRawValue((hidden as Condition).path),
+  );
+};
+
+const applyBooleanOperator = (
+  conditions: Array<boolean>,
+  conditionType: 'AND' | 'OR',
+): boolean => {
+  if (conditionType === 'AND') {
+    return conditions.every((condition) => condition);
+  }
+  return conditions.some((condition) => condition);
+};
+
+const evaluateConditionObject = (
+  conditionObject: ConditionObject,
+  entityId: string,
+): boolean => {
+  const conditions = conditionObject.conditions;
+  if (Array.isArray(conditions)) {
+    return applyBooleanOperator(
+      evaluateConditions(conditions, entityId),
+      conditionObject.conditionType,
+    );
+  }
+  return applyBooleanOperator(
+    [evaluateConditionObject(conditions, entityId)],
+    conditionObject.conditionType,
+  );
+};
+
+const evaluateConditions = (conditions: Conditions, entityId: string) => {
+  if (Array.isArray(conditions)) {
+    return conditions.map((condition) =>
+      evaluateCondition(
+        condition,
+        editorStore.getEntityById(entityId)!.getRawValue(condition.path),
+      ),
+    );
+  }
+  return [evaluateConditionObject(conditions, entityId)];
+};
+
+const evaluateCondition = (condition: Condition, valueAtPath: any) => {
+  const value = condition.value;
+  switch (condition.comparison) {
+    case 'EQUALS':
+      return valueAtPath === value;
+    case 'NOT_EQUALS':
+      return valueAtPath !== value;
+    case 'GREATER':
+      return valueAtPath > value;
+    case 'LESSER':
+      return valueAtPath < value;
+    case 'IN':
+      return Array.isArray(value) && value.includes(valueAtPath);
+    case 'NOT_IN':
+      return Array.isArray(value) && !value.includes(valueAtPath);
+    default:
+      return true;
+  }
+};
+
 const FormControlWrapper = observer(
   (
     props: {
@@ -191,11 +309,12 @@ const FormControlWrapper = observer(
       id: string;
       entityId: string;
       path: string;
-      hidden?: (props: Record<string, unknown>) => boolean;
+      hidden?: IsHidden;
     } & BaseControlProps,
   ) => {
     const entity = editorStore.getEntityById(props.entityId);
-    if (props.hidden && props.hidden(entity!.finalValues)) return null;
+    if (props.hidden && calculateIsHidden(props.hidden, props.entityId))
+      return null;
     return (
       <ErrorPopover>
         <div className="flex w-full flex-col gap-1">

@@ -5,10 +5,15 @@ import {
   Body,
   Param,
   Delete,
-  UseGuards,
   ParseIntPipe,
   Req,
   Put,
+  StreamableFile,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  Header,
+  UseGuards,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -20,11 +25,14 @@ import {
   updateAppSchema,
   AppRetDto,
   AppDto,
+  AppExportSchema,
 } from '../dto/apps.dto';
-import { JwtGuard } from '../auth/jwt.guard';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
+import { Readable } from 'node:stream';
+import { FileInterceptor } from '@nestjs/platform-express/multer';
+import { JwtGuard } from '../auth/jwt.guard';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -58,6 +66,47 @@ export class AppsController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
   ): Promise<AppsRetDto[]> {
     return await this.appsService.findAll(workspaceId);
+  }
+
+  @Get('export/:appId')
+  @Header('Content-Type', 'application/json')
+  @Header('Content-Disposition', 'attachment; filename="webloom_app_5.json"')
+  @ApiCreatedResponse({
+    type: AppRetDto,
+  })
+  async exportOne(
+    @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @Param('appId', ParseIntPipe) appId: number,
+  ): Promise<StreamableFile> {
+    const app = await this.appsService.exportAppJSON(
+      req.user.userId,
+      workspaceId,
+      appId,
+    );
+
+    const appJson = JSON.stringify(app);
+
+    const stream: Readable = Readable.from([appJson]);
+
+    return new StreamableFile(stream);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  async importOne(
+    @Req() req: ExpressAuthedRequest,
+    @Param('workspaceId', ParseIntPipe) workspaceId: number,
+    @UploadedFile(ParseFilePipe) file: Express.Multer.File,
+  ) {
+    // TODO: validate json file content
+    const jsonData = JSON.parse(file.buffer.toString()) as AppExportSchema;
+
+    return await this.appsService.importAppJSON(
+      req.user.userId,
+      workspaceId,
+      jsonData,
+    );
   }
 
   @Get(':appId')

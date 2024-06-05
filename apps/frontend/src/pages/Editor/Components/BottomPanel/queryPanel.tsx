@@ -115,20 +115,22 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             <Label className="flex items-center gap-4">
               Data Source
               <Select
-                value={query.dataSourceId.toString()}
+                value={query.dataSourceId?.toString() ?? undefined}
                 onValueChange={(e) => {
                   query.setDataSource(e);
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={query?.dataSource.name} />
+                  <SelectValue
+                    placeholder={'select datasource to connect to'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {dataSources
                     ?.filter(
                       (dataSource) =>
                         dataSource.dataSource.name ===
-                        query.dataSource.dataSource.name,
+                        query.baseDataSource.name,
                     )
                     .map((dataSource) => (
                       <SelectItem
@@ -239,8 +241,9 @@ export const QueryPanel = observer(function QueryPanel() {
         });
       } else if (sortingCriteria === 'source') {
         sortedData.sort((a, b) => {
-          const aValue = a.dataSource.dataSource.type.toLowerCase();
-          const bValue = b.dataSource.dataSource.type.toLowerCase();
+          const aValue = a.baseDataSource.type.toLowerCase();
+          const bValue = b.baseDataSource.type.toLowerCase();
+
           return sortingOrder === 'asc'
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
@@ -278,7 +281,7 @@ export const QueryPanel = observer(function QueryPanel() {
           (item) => {
             if (
               selectedSource === 'all' ||
-              item.dataSource.dataSource.type === selectedSource
+              item.baseDataSource.type === selectedSource
             ) {
               return item;
             }
@@ -421,23 +424,25 @@ export const QueryPanel = observer(function QueryPanel() {
               >
                 JS Query
               </DropdownMenuItem>
-              {filteredDatasources.map((item) => (
-                // ADD NEW QUERY
-                <DropdownMenuItem
-                  key={item.dataSource.type}
-                  onClick={() => {
-                    editorStore.queriesManager.addQuery.mutate({
-                      dto: {
-                        dataSourceId: item.id,
-                        id: getNewEntityName(item.name),
-                        query: {},
-                      },
-                    });
-                  }}
-                >
-                  {item.name}
-                </DropdownMenuItem>
-              ))}
+              {filteredDatasources.map((item) => {
+                return (
+                  // ADD NEW QUERY
+                  <DropdownMenuItem
+                    key={`${item.id}`}
+                    onClick={() => {
+                      editorStore.queriesManager.addQuery.mutate({
+                        dto: {
+                          dataSourceId: item.id,
+                          id: getNewEntityName(item.name),
+                          query: {},
+                        },
+                      });
+                    }}
+                  >
+                    {item.name}
+                  </DropdownMenuItem>
+                );
+              })}
               <DropdownMenuItem asChild>
                 <Link to={`/${workspaceId}/datasources`}>Add New</Link>
               </DropdownMenuItem>

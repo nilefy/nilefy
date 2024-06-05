@@ -5,5 +5,6 @@ import { JsLibrariesService } from './js_libraries.service';
 @Module({
   controllers: [JsLibrariesController],
   providers: [JsLibrariesService],
+  exports: [JsLibrariesService],
 })
 export class JsLibrariesModule {}
