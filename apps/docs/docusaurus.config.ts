@@ -3,8 +3,9 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'WebLoom-Docs',
-  tagline: 'Dinosaurs are cool',
+  title: 'Nilefy Docs',
+  // TODO:
+  tagline: 'Low Code?',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -15,8 +16,8 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'z-grad-pr-sh', // Usually your GitHub org/user name.
-  projectName: 'frontend', // Usually your repo name.
+  organizationName: 'nilefy', // Usually your GitHub org/user name.
+  projectName: 'nilefy', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -35,17 +36,15 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/z-grad-pr-sh/frontend/tree/main/apps/docs',
+            'https://github.com/nilefy/nilefy/tree/main/apps/docs',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/z-grad-pr-sh/frontend/tree/main/apps/docs',
+            'https://github.com/nilefy/nilefy/tree/main/apps/docs',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -58,7 +57,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'WebLoom-Docs',
+      title: 'Nilefy Docs',
       logo: {
         alt: 'My Site Logo',
         src: 'img/logo.svg',
@@ -72,7 +71,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/z-grad-pr-sh/frontend',
+          href: 'https://github.com/nilefy/nilefy',
           label: 'GitHub',
           position: 'right',
         },
