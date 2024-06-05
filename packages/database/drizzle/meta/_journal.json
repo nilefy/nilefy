@@ -1,1 +1,20 @@
-{"version":"5","dialect":"pg","entries":[{"idx":0,"version":"5","when":1714516231224,"tag":"0000_outgoing_killmonger","breakpoints":true}]}
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1714516231224,
+      "tag": "0000_outgoing_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1717631087999,
+      "tag": "0001_daffy_sunspot",
+      "breakpoints": true
+    }
+  ]
+}
