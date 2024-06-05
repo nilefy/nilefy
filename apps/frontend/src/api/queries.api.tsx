@@ -87,6 +87,10 @@ export async function addQuery({
     dataSourceId: number;
     id: QueryI['id'];
     query: QueryI['query'];
+    /**
+     * default manual
+     */
+    triggerMode?: QueryI['triggerMode'];
   };
 }) {
   const res = await fetchX(

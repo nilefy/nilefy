@@ -74,10 +74,10 @@ export class UsersService {
     userId: number,
     updateDto: UpdateUserDb,
   ): Promise<UpdateUserRetDto> {
-    if (updateDto.password) {
-      const salt = await genSalt(10);
-      updateDto.password = await hash(updateDto.password, salt);
-    }
+    // if (updateDto.password) {
+    //   const salt = await genSalt(10);
+    //   updateDto.password = await hash(updateDto.password, salt);
+    // }
     const updatedUser = (
       await this.db
         .update(users)

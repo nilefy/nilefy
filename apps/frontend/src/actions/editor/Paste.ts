@@ -8,7 +8,7 @@ import { AddWidgetPayload } from './Drag';
 import { WebloomPage } from '@/lib/Editor/Models/page';
 import { RemoteTypes } from '../types';
 import { WebloomGridDimensions } from '@/lib/Editor/interface';
-import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { EDITOR_CONSTANTS, SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 export class PasteAction implements UndoableCommand {
   private parent: string;
@@ -76,7 +76,10 @@ export class PasteAction implements UndoableCommand {
       this.paste(widget.id, this.parent, { col, row, columnsCount, rowsCount });
     }
 
-    const data: Extract<RemoteTypes, { event: 'insert' }>['data'] = {
+    const data: Extract<
+      RemoteTypes,
+      { event: (typeof SOCKET_EVENTS_REQUEST)['CREATE_NODE'] }
+    >['data'] = {
       nodes: [],
       sideEffects: [],
     };
@@ -103,7 +106,7 @@ export class PasteAction implements UndoableCommand {
       );
     }
     return {
-      event: 'insert' as const,
+      event: SOCKET_EVENTS_REQUEST['CREATE_NODE'],
       data,
     };
   }
@@ -115,7 +118,7 @@ export class PasteAction implements UndoableCommand {
     });
     const sideEffects: Extract<
       RemoteTypes,
-      { event: 'delete' }
+      { event: 'deleteNode' }
     >['data']['sideEffects'] = [];
     Object.entries(this.undoData).forEach(([id, coords]) => {
       if (!data.includes(id)) {
@@ -124,7 +127,7 @@ export class PasteAction implements UndoableCommand {
       }
     });
     return {
-      event: 'delete' as const,
+      event: SOCKET_EVENTS_REQUEST.DELETE_NODE,
       data: {
         nodesId: data,
         sideEffects,
