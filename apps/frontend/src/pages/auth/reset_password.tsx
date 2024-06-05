@@ -15,7 +15,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
 import { useResetPassword } from '@/api/auth.api';
 import { toast } from '@/components/ui/use-toast';
-import { ErrorMessage } from '@hookform/error-message';
 import { jwtDecode } from 'jwt-decode';
 
 function isTokenExpired(token: string): boolean {
@@ -118,13 +117,7 @@ export function ResetPassword() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage>
-                  <ErrorMessage
-                    errors={form.formState.errors}
-                    name="password_confirmation"
-                    render={({ message }) => <p>{message}</p>}
-                  />
-                </FormMessage>
+                <FormMessage />
               </FormItem>
             )}
           />

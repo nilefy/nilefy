@@ -280,9 +280,6 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.1
         version: 3.2.1(react@18.2.0)
-      '@hookform/error-message':
-        specifier: ^2.0.1
-        version: 2.0.1(react-dom@18.2.0)(react-hook-form@7.47.0)(react@18.2.0)
       '@hookform/resolvers':
         specifier: ^3.3.2
         version: 3.3.2(react-hook-form@7.47.0)
@@ -4282,18 +4279,6 @@ packages:
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
     dependencies:
       '@hapi/hoek': 9.3.0
-
-  /@hookform/error-message@2.0.1(react-dom@18.2.0)(react-hook-form@7.47.0)(react@18.2.0):
-    resolution: {integrity: sha512-U410sAr92xgxT1idlu9WWOVjndxLdgPUHEB8Schr27C9eh7/xUnITWpCMF93s+lGiG++D4JnbSnrb5A21AdSNg==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-      react-hook-form: ^7.0.0
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-hook-form: 7.47.0(react@18.2.0)
-    dev: false
 
   /@hookform/resolvers@3.3.2(react-hook-form@7.47.0):
     resolution: {integrity: sha512-Tw+GGPnBp+5DOsSg4ek3LCPgkBOuOgS5DsDV7qsWNH9LZc433kgsWICjlsh2J9p04H2K66hsXPPb9qn9ILdUtA==}
