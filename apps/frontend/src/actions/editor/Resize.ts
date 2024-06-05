@@ -7,6 +7,7 @@ import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
 import { WebloomWidgets } from '@/pages/Editor/Components';
+import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
 type CornerResizingKeys =
@@ -270,8 +271,8 @@ class ResizeAction {
 
         // return means data will be send to the server
         return {
-          event: 'update' as const,
-          data: updates,
+          event: SOCKET_EVENTS_REQUEST.UPDATE_NODE,
+          data: { updates },
         };
       },
       undo: () => {
@@ -283,8 +284,8 @@ class ResizeAction {
         });
         updates.push(editorStore.currentPage.getWidgetById(id).snapshot);
         return {
-          event: 'update' as const,
-          data: updates,
+          event: SOCKET_EVENTS_REQUEST.UPDATE_NODE,
+          data: { updates },
         };
       },
     };

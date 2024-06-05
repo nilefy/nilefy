@@ -5,6 +5,7 @@ import { toJS } from 'mobx';
 import { updateOrderMap } from '@/lib/Editor/entitiesNameSeed';
 import ResizeAction from './Resize';
 import { commandManager } from '../CommandManager';
+import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 /**
  * @NOTE: the default behaviour: the action will delete current selected widgets
@@ -48,7 +49,7 @@ export class DeleteAction implements UndoableCommand {
       true,
     );
     return {
-      event: 'delete' as const,
+      event: 'deleteNode',
       data: {
         nodesId: [...targetNodes],
         sideEffects: [],
@@ -77,7 +78,7 @@ export class DeleteAction implements UndoableCommand {
       serverData.push(editorStore.currentPage.getWidgetById(node.id).snapshot);
     }
     return {
-      event: 'insert',
+      event: SOCKET_EVENTS_REQUEST.CREATE_NODE,
       data: {
         nodes: serverData,
         sideEffects: [],
