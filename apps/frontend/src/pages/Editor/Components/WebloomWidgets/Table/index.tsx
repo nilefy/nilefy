@@ -164,9 +164,9 @@ function TableBody({
   return (
     <TableBodyInner className="bg-white">
       {table.getRowModel().rows.length === 0 ? (
-        <div className="flex h-full w-full items-center justify-center text-xl">
-          <div>{emptyState}</div>
-        </div>
+        <tr className="flex h-full w-full items-center justify-center text-xl">
+          <td>{emptyState}</td>
+        </tr>
       ) : (
         table.getRowModel().rows.map((row) => (
           <TableRow key={row.id} className="divide-x hover:bg-gray-300">
@@ -254,11 +254,7 @@ const WebloomTable = observer(() => {
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    defaultColumn: {
-      minSize: 60,
-      size: 100,
-      maxSize: 600,
-    },
+
     columnResizeMode: 'onChange',
 
     columns: props.isRowSelectionEnabled
@@ -380,11 +376,11 @@ const WebloomTable = observer(() => {
           />
         </div>
       )}
-      <div className="h-full w-full  shadow-md">
+      <div className="block h-full w-full shadow-md">
         <TableInner
+          className="w-full"
           style={{
             ...columnSizeVars,
-            width: table.getTotalSize(),
           }}
         >
           <TableHeader className="relative bg-white">
@@ -398,6 +394,7 @@ const WebloomTable = observer(() => {
                     <TableHead
                       key={header.id}
                       className="relative"
+                      colSpan={header.colSpan}
                       style={{
                         width: `calc(var(--header-${header?.id}-size) * 1px)`,
                       }}

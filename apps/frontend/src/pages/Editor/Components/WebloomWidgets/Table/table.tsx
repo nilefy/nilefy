@@ -7,10 +7,9 @@ const Table = React.forwardRef<
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
   <div className="relative h-full w-full overflow-auto">
-    <div
-      role="table"
+    <table
       ref={ref}
-      className={cn('w-fit caption-bottom text-sm', className)}
+      className={cn('caption-bottom text-sm', className)}
       {...props}
     />
   </div>
@@ -21,12 +20,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <div
-    role="columnheader"
-    ref={ref}
-    className={cn('[&_tr]:border-b', className)}
-    {...props}
-  />
+  <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />
 ));
 
 TableHeader.displayName = 'TableHeader';
@@ -35,8 +29,7 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <div
-    role="tablebody"
+  <tbody
     ref={ref}
     className={cn('[&_tr:last-child]:border-0', className)}
     {...props}
@@ -60,11 +53,10 @@ const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => (
-  <div
-    role="row"
+  <tr
     ref={ref}
     className={cn(
-      'flex w-fit border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+      'flex border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
       className,
     )}
     {...props}
@@ -76,7 +68,7 @@ const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <th
     ref={ref}
     className={cn(
       'h-12 px-4 text-center align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
@@ -91,7 +83,7 @@ const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <td
     role="cell"
     ref={ref}
     className={cn(' align-middle [&:has([role=checkbox])]:pr-0', className)}
