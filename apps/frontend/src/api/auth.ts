@@ -1,6 +1,9 @@
 import { ForgotPasswordSchema, ResetPasswordSchema } from '@/types/auth.types';
 import { fetchX } from '@/utils/fetch';
 import * as z from 'zod';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { FetchXError } from '@/utils/fetch';
 
 export const signUpSchema = z
   .object({
@@ -72,5 +75,19 @@ export const forgotPassword = async (
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   });
-  return response.json();
+  
+  return await response.json();
 };
+
+export function useForgotPassword() {
+  const navigate = useNavigate();
+  const forgotPasswordMutation = useMutation<
+    void,
+    FetchXError,
+    ForgotPasswordSchema
+  >({
+    mutationFn: (values) => forgotPassword(values),
+  });
+  return forgotPasswordMutation;
+}
+

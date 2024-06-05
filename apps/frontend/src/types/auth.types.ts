@@ -11,9 +11,13 @@ export const forgotPasswordSchema = z.object({
 });
 export const resetPasswordSchema = z.object({
   email: z.string().email(),
-  // new_password: z.string(),
-  password: z.string(),
+  password: z.string().min(6),
+  password_confirmation: z.string(),
   token: z.string(),
+})
+  .refine((data) => data.password === data.password_confirmation, {
+    message: "Passwords don't match",
+    path: ['password'], // path of error
 });
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;

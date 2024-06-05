@@ -8,7 +8,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useForgotPassword } from '@/hooks/useForgotPassword';
+import { toast } from '@/components/ui/use-toast';
+import { useForgotPassword } from '@/api/auth';
 import { ForgotPasswordSchema, forgotPasswordSchema } from '@/types/auth.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -25,7 +26,23 @@ export function ForgotPassword() {
   const { mutate } = useForgotPassword();
 
   function onSubmit(values: ForgotPasswordSchema) {
-    mutate(values);
+    mutate(values, {
+      onSuccess: ()=>{
+        toast({
+          variant: 'default',
+          title: 'Password Reset',
+          description: 'Your password reset instructions have been sent to your email.',
+        });
+      },
+      onError: () => {
+        toast({
+          variant: 'destructive',
+          title: 'Password Reset Failed',
+          description: 'An error occurred while sending password reset instructions to your email.',
+        });
+    }
+    });
+    
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">

@@ -145,6 +145,8 @@ export class AuthService {
     if (!u) {
       throw new NotFoundException('Email Not Found');
     }
+
+
     if (u.password) {
       const match = await compare(password, u.password);
       if (!match) {
@@ -233,26 +235,36 @@ export class AuthService {
     });
   }
 
-  async forgotPassword(email: string) {
-    const user = await this.userService.findOne(email);
-    if (!user) {
-      throw new NotFoundException('Email Not Found');
-    }
-    const token = await this.jwtService.signAsync(
-      {
-        email: user.email,
-      },
-      { expiresIn: '1d' },
-    );
-    await this.userService.update(user.id, {
-      passwordResetToken: token,
-    });
+async forgotPassword(
+    email: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const user = await this.userService.findOne(email);
 
-    this.forgotPasswordSendEmail(email, token);
+      if (!user) {
+        throw new NotFoundException('Email Not Found');
+      }
+
+      const token = await this.jwtService.signAsync(
+        { email: user.email },
+        { expiresIn: '1d' },
+      );
+
+      await this.userService.update(user.id, {
+        passwordResetToken: token,
+      });
+
+      this.forgotPasswordSendEmail(email, token);
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   }
 
   async resetPassword(email: string, password: string, token: string) {
     try {
+
       const user = await this.db.query.users.findFirst({
         where: and(
           eq(users.email, email),
@@ -269,12 +281,17 @@ export class AuthService {
       if (!user) {
         throw new BadRequestException('Failed to reset password');
       }
+
       await this.jwtService.verifyAsync(token);
+      if (user.password) {
+        const match = await compare(password, user.password);
+        if (match) {
+          throw new BadRequestException('use a new password');
+        }
+      }
       const salt = await genSalt(10);
       const hashed = await hash(password, salt);
-      if (user.password === hashed) {
-        throw new BadRequestException('use a new password');
-      }
+
       await this.userService.update(user.id, {
         password: hashed,
         passwordResetToken: null,
