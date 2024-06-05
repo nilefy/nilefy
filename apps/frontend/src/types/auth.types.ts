@@ -17,7 +17,7 @@ export const resetPasswordSchema = z.object({
 })
   .refine((data) => data.password === data.password_confirmation, {
     message: "Passwords don't match",
-    path: ['password'], // path of error
+    path: ['password_confirmation'], // path of error
 });
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;

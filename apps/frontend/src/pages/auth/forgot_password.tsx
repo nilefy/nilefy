@@ -1,3 +1,4 @@
+import { useForgotPassword } from '@/api/auth.api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -9,7 +10,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
-import { useForgotPassword } from '@/api/auth';
 import { ForgotPasswordSchema, forgotPasswordSchema } from '@/types/auth.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -27,22 +27,23 @@ export function ForgotPassword() {
 
   function onSubmit(values: ForgotPasswordSchema) {
     mutate(values, {
-      onSuccess: ()=>{
+      onSuccess: () => {
         toast({
           variant: 'default',
           title: 'Password Reset',
-          description: 'Your password reset instructions have been sent to your email.',
+          description:
+            'Your password reset instructions have been sent to your email.',
         });
       },
       onError: () => {
         toast({
           variant: 'destructive',
           title: 'Password Reset Failed',
-          description: 'An error occurred while sending password reset instructions to your email.',
+          description:
+            'An error occurred while sending password reset instructions to your email.',
         });
-    }
+      },
     });
-    
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">

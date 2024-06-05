@@ -1,5 +1,5 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { SignUpSchema, signUpSchema } from '@/api/auth.api';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -10,11 +10,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { SignUpSchema } from '@/api/auth';
-import { signUpSchema } from '@/api/auth';
 import { useSignUp } from '@/hooks/useSignUp';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 export function SignUp() {
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),

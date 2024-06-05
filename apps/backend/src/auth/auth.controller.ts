@@ -18,6 +18,8 @@ import {
   signInSchema,
   CreateUserDto,
   LoginUserDto,
+  forgotPasswordSchema,
+  ForgotPasswordDto,
 } from '../dto/users.dto';
 import { GoogleAuthedRequest } from './auth.types';
 import { Response } from 'express';
@@ -82,8 +84,11 @@ export class AuthController {
     return;
   }
   @Post('forgot-password')
-  async forgotPassword(@Body('email') email: string) {
-    return await this.authService.forgotPassword(email);
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
   @Post('reset-password')
@@ -97,7 +102,7 @@ export class AuthController {
       password,
       token,
     };
-    console.log(values);
+    console.log(values); 
     return await this.authService.resetPassword(email, password, token);
   }
 }

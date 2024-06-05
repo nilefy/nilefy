@@ -258,7 +258,7 @@ async forgotPassword(
 
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.message };
+      throw new BadRequestException(`Failed To Reset Password, ${error.message}`);
     }
   }
 
@@ -278,15 +278,14 @@ async forgotPassword(
           password: true,
         },
       });
-      if (!user) {
-        throw new BadRequestException('Failed to reset password');
+      if (user === undefined) {
+        throw new BadRequestException('Token Expired or Invalid');
       }
-
-      await this.jwtService.verifyAsync(token);
+      await this.jwtService .verifyAsync(token);
       if (user.password) {
         const match = await compare(password, user.password);
         if (match) {
-          throw new BadRequestException('use a new password');
+          throw new BadRequestException('Use a New Password');
         }
       }
       const salt = await genSalt(10);
@@ -296,9 +295,9 @@ async forgotPassword(
         password: hashed,
         passwordResetToken: null,
       });
-      return 'Password reset successfully, try signing in';
-    } catch (e) {
-      throw new BadRequestException('Failed to reset password');
+      return { success: true , message: 'Password Reset Successfully'};
+    } catch (error) {
+      throw new BadRequestException(`Failed To Reset Password, ${error.message}`);
     }
   }
 }

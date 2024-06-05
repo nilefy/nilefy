@@ -1,5 +1,5 @@
-import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { useForm, useFormState } from 'react-hook-form';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 // import { resetPasswordSchema } from '@/types/auth.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,26 +9,30 @@ import {
   FormControl,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
-import { useResetPassword } from '@/hooks/useResetPassword';
+import { useResetPassword } from '@/api/auth.api';
 import { toast } from '@/components/ui/use-toast';
+import { ErrorMessage } from '@hookform/error-message';
 
 export function ResetPassword() {
   const { email, token } = useParams();
 
   const form = useForm({
     resolver: zodResolver(resetPasswordSchema),
+
     defaultValues: {
       email: email || '',
       password: '',
+      password_confirmation: '',
       token: token || '',
     },
   });
   const { mutate } = useResetPassword();
-
-  const onSubmit = (data:ResetPasswordSchema) => {
+  const navigate = useNavigate();
+  const onSubmit = (data: ResetPasswordSchema) => {
     mutate(data, {
       onSuccess: () => {
         console.log('done');
@@ -37,6 +41,7 @@ export function ResetPassword() {
           title: 'Password Reset',
           description: 'Your password has been successfully reset.',
         });
+        navigate('/signin');
       },
       onError: (error) => {
         toast({
@@ -49,11 +54,6 @@ export function ResetPassword() {
     });
   };
 
-  // function onSubmit(values: ResetPasswordSchema) {
-  //   // todo check 2 passwords are equal
-  //   console.log(values);
-  //   mutate(values);
-  // }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">
       <h1 className="text-4xl">Reset your password</h1>
@@ -78,14 +78,13 @@ export function ResetPassword() {
                       {...field}
                     />
                   </FormControl>
-                  {/* <FormMessage /> */}
                 </FormItem>
               )}
             />
           </div>
           <FormField
             control={form.control}
-            name="password"
+            name="password_confirmation"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirm New Password</FormLabel>
@@ -96,6 +95,13 @@ export function ResetPassword() {
                     {...field}
                   />
                 </FormControl>
+                <FormMessage>
+                  <ErrorMessage
+                    errors={form.formState.errors}
+                    name="password_confirmation"
+                    render={({ message }) => <p>{message}</p>}
+                  />
+                </FormMessage>
               </FormItem>
             )}
           />
