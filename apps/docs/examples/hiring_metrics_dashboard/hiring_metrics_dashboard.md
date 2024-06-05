@@ -100,3 +100,44 @@ Here is what the table should look like now⚡:
 ![Show Table image](./table_show.png)
 
 _notice I checked `RowSelection` from `table options` to make it selectible_
+
+### Step 5: The Banner
+Now we'll make use of the queries we generated earlier that count the total number of applicants, total interviewed, and total contacted.
+Feel free to drag a container and give it a color to give the page a nice header at the top.
+beneath it I'm going to go ahead and use another container for some background color. 
+On top of that we're going to have 3 text fields to show these pieces of data one for each.
+Here is what it might look like:
+![banner png](./banner.png) 
+
+I'm going to show you now how I could show the output of the query withing the text of the first text`Total Applicants: 10`
+We simply include and access our query by it's id _make sure to include any expressions -like our js here- inside 2 nested curly braces: {{}}_
+![total_applicants](./text_total_applicants.png)
+
+***
+### Step 6: showing selected row's data
+That's nice, now we'd like to show an applicant's data when you select their respective row from the table.
+By now you already know how to use a container for a background color and have text fields over it, feel free to do this now for their name, email, phone, etc..
+
+now to show the selected row's data we simply access the table via its id _found in the side menue which is shown by clicking on the table_ then accessing the `selectedRow` property.
+
+here is what the first field is going to look like:
+
+![selected row](./selected_row.png)
+
+***
+<p align="center">
+  <img src="./voila.gif" />
+<p align="center"> Voila!!</p>
+</p>
+You've just Created a simple hiring metrics in 10 minutes!
+
+
+
+***
+⚡⚡Here is how mine looks like⚡⚡:
+
+
+![hiring result](./hiring_result.png)
+
+_I'm sure yours is going to look more beautiful than mine_ 😅
+
