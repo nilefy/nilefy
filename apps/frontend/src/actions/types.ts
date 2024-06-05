@@ -1,3 +1,4 @@
+import { addQuery, updateQuery } from '@/api/queries.api';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { BoundingRect } from '@/lib/Editor/interface';
 import { WidgetSnapshot } from '@/types';
@@ -23,7 +24,7 @@ export type RemoteTypes =
         /**
          * operation id
          */
-        id?: string;
+        opId?: string;
         nodes: WebloomWidget['snapshot'][];
         sideEffects: UpdateNodesPayload;
       };
@@ -34,7 +35,7 @@ export type RemoteTypes =
         /**
          * operation id
          */
-        id?: string;
+        opId?: string;
         updates: UpdateNodesPayload;
       };
     }
@@ -44,9 +45,40 @@ export type RemoteTypes =
         /**
          * operation id
          */
-        id?: string;
+        opId?: string;
         nodesId: WebloomWidget['id'][];
         sideEffects: UpdateNodesPayload;
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['CREATE_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof addQuery>[0]['dto'];
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['UPDATE_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof updateQuery>[0]['dto'];
+        queryId: string;
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        queryId: string;
       };
     };
 

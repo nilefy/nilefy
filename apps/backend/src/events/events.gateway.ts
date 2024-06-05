@@ -279,10 +279,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody(
       new ZodValidationPipe(
-        addQuerySchema.extend({ opId: z.string().optional() }),
+        z.object({
+          query: addQuerySchema,
+          opId: z.string().optional(),
+        }),
       ),
     )
-    query: AddQueryDto & { opId?: string },
+    query: { query: AddQueryDto; opId?: string },
   ) {
     const user = socket.user;
     if (user === null) {
@@ -295,7 +298,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     await this.dataQueriesService.addQuery({
-      ...query,
+      ...query.query,
       createdById: user.userId,
       appId: socket.appId,
     });
@@ -338,13 +341,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody(
       new ZodValidationPipe(
-        updateQuerySchema.extend({
-          queryId: z.string(),
+        z.object({
+          query: updateQuerySchema,
           opId: z.string().optional(),
+          queryId: z.string(),
         }),
       ),
     )
-    query: UpdateQueryDto & { opId?: string; queryId: string },
+    query: { query: UpdateQueryDto; opId?: string; queryId: string },
   ) {
     const user = socket.user;
     if (user === null) {
@@ -361,7 +365,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       appId: socket.appId,
       queryId: query.queryId,
       updatedById: user.userId,
-      query,
+      query: query.query,
     });
     return {
       opId: query.opId,
