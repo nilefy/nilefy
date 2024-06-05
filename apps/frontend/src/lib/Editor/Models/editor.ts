@@ -98,6 +98,9 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
+      currentAppEnv: observable,
+      setAppEnv: action,
+      envQueries: computed,
     });
   }
 

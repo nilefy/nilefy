@@ -184,6 +184,7 @@ export class DataQueriesService {
           columns: {
             id: true,
             name: true,
+            config: true,
           },
           with: {},
         },
@@ -192,7 +193,15 @@ export class DataQueriesService {
     if (!q) {
       throw new NotFoundException(`Query ${queryId} not found`);
     }
-    return q;
+    const ret = {
+      ...q,
+      dataSource: {
+        id: q.dataSource.id,
+        name: q.dataSource.name,
+        env: [...Object.keys(q.dataSource.config)],
+      },
+    };
+    return ret;
   }
 
   async deleteQuery(appId: QueryDto['appId'], queryId: QueryDto['id']) {

@@ -277,7 +277,7 @@ export const QueryPanel = observer(function QueryPanel() {
   // check https://github.com/mobxjs/mobx/discussions/3348
   const filteredQueries = useMemo(() => {
     return computed(() => {
-      const tempQ = Object.values(queries);
+      const tempQ = queries;
       if (tempQ.length > 0) {
         const temp = sortQueries(tempQ, sortingCriteria, sortingOrder).filter(
           (item) => {
