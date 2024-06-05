@@ -22,18 +22,19 @@ import {
   Column,
   RowSelectionState,
   FilterFn,
+  Table,
 } from '@tanstack/react-table';
 import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import {
-  Table,
-  TableBody,
+  Table as TableInner,
+  TableBody as TableBodyInner,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from './table';
 import { Button } from '@/components/ui/button';
-import { useContext, useState } from 'react';
+import { memo, useContext, useMemo, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -47,6 +48,7 @@ type RowData = Record<string, unknown>;
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun } from '@/lib/Editor/hooks';
+import clsx from 'clsx';
 
 //Types
 declare module '@tanstack/react-table' {
@@ -147,6 +149,44 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 //   // Provide an alphanumeric fallback for when the item ranks are equal
 //   return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
 // };
+export const MemoizedTableBody = memo(
+  TableBody,
+  (prev, next) => prev.table.options.data === next.table.options.data,
+) as typeof TableBody;
+
+function TableBody({
+  table,
+  emptyState,
+}: {
+  table: Table<RowData>;
+  emptyState: string;
+}) {
+  return (
+    <TableBodyInner className="bg-white">
+      {table.getRowModel().rows.length === 0 ? (
+        <div className="flex h-full w-full items-center justify-center text-xl">
+          <div>{emptyState}</div>
+        </div>
+      ) : (
+        table.getRowModel().rows.map((row) => (
+          <TableRow key={row.id} className="divide-x hover:bg-gray-300">
+            {row.getVisibleCells().map((cell) => (
+              <TableCell
+                key={cell.id}
+                className="flex items-center justify-start p-4"
+                style={{
+                  width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+                }}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))
+      )}
+    </TableBodyInner>
+  );
+}
 
 const WebloomTable = observer(() => {
   const [tableData, setTableData] = useState<RowData[]>([]);
@@ -193,13 +233,13 @@ const WebloomTable = observer(() => {
       accessorKey: col.accessorKey,
       header: ({ column }: { column: Column<RowData> }) => {
         return (
-          <Button
-            variant="ghost"
+          <div
+            className="flex h-full w-full cursor-pointer items-center justify-center"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
             {col.accessorKey.toUpperCase()}
             <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          </div>
         );
       },
     };
@@ -214,6 +254,13 @@ const WebloomTable = observer(() => {
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    defaultColumn: {
+      minSize: 60,
+      size: 100,
+      maxSize: 600,
+    },
+    columnResizeMode: 'onChange',
+
     columns: props.isRowSelectionEnabled
       ? [
           {
@@ -303,6 +350,17 @@ const WebloomTable = observer(() => {
     },
   });
 
+  const columnSizeVars = useMemo(() => {
+    const headers = table.getFlatHeaders();
+    const colSizes: { [key: string]: number } = {};
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]!;
+      colSizes[`--header-${header.id}-size`] = header.getSize();
+      colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
+    }
+    return colSizes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.getState().columnSizingInfo, columns]);
   return (
     <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
       {props.isSearchEnabled && (
@@ -322,47 +380,63 @@ const WebloomTable = observer(() => {
           />
         </div>
       )}
-      <div className="h-full w-full border shadow-md">
-        <Table className="h-full">
-          <TableHeader className="bg-white">
+      <div className="h-full w-full  shadow-md">
+        <TableInner
+          style={{
+            ...columnSizeVars,
+            width: table.getTotalSize(),
+          }}
+        >
+          <TableHeader className="relative bg-white">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-gray-300">
+              <TableRow
+                key={headerGroup.id}
+                className="divide-x hover:bg-gray-300"
+              >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className="relative"
+                      style={{
+                        width: `calc(var(--header-${header?.id}-size) * 1px)`,
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
+                      <div
+                        {...{
+                          onDoubleClick: () => header.column.resetSize(),
+                          onMouseDown: (e) => {
+                            e.stopPropagation();
+                            const cb = header.getResizeHandler();
+                            cb(e);
+                          },
+                          onTouchStart: header.getResizeHandler(),
+                        }}
+                        className={clsx(
+                          'absolute right-[-5px] top-0 h-full w-[10px] cursor-col-resize touch-none select-none bg-blue-300 opacity-0',
+                          {
+                            'opacity-100 z-5': header.column.getIsResizing(),
+                          },
+                        )}
+                      />
                     </TableHead>
                   );
                 })}
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="bg-white">
-            {table.getRowModel().rows.length === 0 ? (
-              <tr className="flex h-full w-full items-center justify-center text-xl">
-                <td>{props.emptyState}</td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-gray-300">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+          {table.getState().columnSizingInfo.isResizingColumn ? (
+            <MemoizedTableBody table={table} emptyState={props.emptyState} />
+          ) : (
+            <TableBody table={table} emptyState={props.emptyState} />
+          )}
+        </TableInner>
       </div>
       {props.isPaginationEnabled && (
         <div className="flex items-center justify-center space-x-2 py-4">
@@ -433,7 +507,7 @@ const config: WidgetConfig = {
   layoutConfig: {
     colsCount: 20,
     rowsCount: 40,
-    minColumns: 20,
+    minColumns: 1,
     minRows: 40,
   },
   widgetActions: {
