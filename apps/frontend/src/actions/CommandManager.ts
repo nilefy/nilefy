@@ -42,7 +42,7 @@ export class CommandManager {
         ...ret,
         data: {
           ...ret.data,
-          id: nanoid(),
+          opId: nanoid(),
         },
       };
       log.info('method returned value i will send to remote', r);

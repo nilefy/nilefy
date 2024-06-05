@@ -23,6 +23,15 @@ import {
   SOCKET_EVENTS_REQUEST,
   SOCKET_EVENTS_RESPONSE,
 } from '@nilefy/constants';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import {
+  AddQueryDto,
+  addQuerySchema,
+  UpdateQueryDto,
+  updateQuerySchema,
+} from '../dto/data_queries.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { z } from 'zod';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -43,6 +52,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private componentsService: ComponentsService,
     private jwtService: JwtService,
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private dataQueriesService: DataQueriesService,
   ) {}
 
   @WebSocketServer()
@@ -97,14 +107,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
-      id,
+      opId,
       nodes,
       sideEffects,
     }: {
       /**
        * operation id
        */
-      id?: string;
+      opId?: string;
       nodes: NilefyNode[];
       sideEffects: UpdateNodePayload;
     },
@@ -112,7 +122,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // TODO: is there a middleware concept in ws
     const user = socket.user;
     if (user === null) {
-      socket.send('need send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -147,13 +161,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('ADDED COMPONENT/s');
       return {
-        id,
+        opId,
         message: 'done',
       };
     } catch (e) {
-      console.log(e);
       throw new WsException(e.message);
     }
   }
@@ -162,11 +174,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleUpdate(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
-    { id, updates }: { id?: string; updates: UpdateNodePayload },
+    { opId, updates }: { opId?: string; updates: UpdateNodePayload },
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -191,13 +207,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('UPDATED COMPONENT/s');
       return {
-        id,
+        opId,
         message: 'done',
       };
     } catch (e) {
-      console.log('e in update', e);
       throw new WsException(e.message);
     }
   }
@@ -207,21 +221,25 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
-      id,
+      opId,
       nodesId,
       sideEffects,
     }: {
       /**
        * operation id
        */
-      id?: string;
+      opId?: string;
       nodesId: NilefyNode['id'][];
       sideEffects: UpdateNodePayload;
     },
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -247,14 +265,107 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('DELETED COMPONENT/s ' + nodesId);
       return {
-        id,
+        opId,
         message: 'done',
       };
     } catch (e) {
-      console.log(e);
       throw new WsException(e.message);
     }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_QUERY)
+  async handleAddQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        addQuerySchema.extend({ opId: z.string().optional() }),
+      ),
+    )
+    query: AddQueryDto & { opId?: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+    await this.dataQueriesService.addQuery({
+      ...query,
+      createdById: user.userId,
+      appId: socket.appId,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_QUERY)
+  async handleDeleteQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({ queryId: z.string(), opId: z.string().optional() }),
+      ),
+    )
+    query: { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.deleteQuery(socket.appId, query.queryId);
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_QUERY)
+  async handleUpdateQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        updateQuerySchema.extend({
+          queryId: z.string(),
+          opId: z.string().optional(),
+        }),
+      ),
+    )
+    query: UpdateQueryDto & { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.updateQuery({
+      appId: socket.appId,
+      queryId: query.queryId,
+      updatedById: user.userId,
+      query,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
   }
 }
