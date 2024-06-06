@@ -24,6 +24,8 @@ import {
   FilterFn,
   Table,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
+
 import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import {
   Table as TableInner,
@@ -32,9 +34,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  ROW_HEIGHT,
 } from './table';
 import { Button } from '@/components/ui/button';
-import { memo, useContext, useMemo, useState } from 'react';
+import { forwardRef, memo, useContext, useMemo, useRef, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -43,13 +46,13 @@ import { observer } from 'mobx-react-lite';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { z } from 'zod';
 import { toJS } from 'mobx';
-type RowData = Record<string, unknown>;
+export type NilefyRowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
-
+import { generateColumnsFromData } from './utils';
 //Types
 declare module '@tanstack/react-table' {
   interface FilterFns {
@@ -61,7 +64,7 @@ declare module '@tanstack/react-table' {
 }
 export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 
-export const webLoomTableColumn = z.object({
+export const nilefyTableColumnSchema = z.object({
   id: z.string(),
   accessorKey: z.string(),
   header: z.string(),
@@ -69,14 +72,14 @@ export const webLoomTableColumn = z.object({
   type: z.enum(columnTypes),
 });
 
-export type WebLoomTableColumn = z.infer<typeof webLoomTableColumn>;
+export type NilefyTableColumn = z.infer<typeof nilefyTableColumnSchema>;
 
-const webloomTableProps = z.object({
+const nilefyTablePropsSchema = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
-  columns: z.array(webLoomTableColumn).optional(),
+  columns: z.array(nilefyTableColumnSchema).optional(),
   isRowSelectionEnabled: z.boolean(),
   isSearchEnabled: z.boolean(),
-  isPaginationEnabled: z.boolean(),
+  paginationType: z.enum(['client', 'server', 'virtual']).default('client'),
   pageSize: z.number().optional(),
   pageIndex: z.number().optional(),
   emptyState: z.string().default('No rows found'),
@@ -96,31 +99,7 @@ const webloomTableProps = z.object({
   onSortChange: z.string().optional(),
 });
 
-export type WebloomTableProps = z.infer<typeof webloomTableProps>;
-
-/**
- * Helper function to generate columns from data
- */
-const generateColumnsFromData = (
-  data: RowData[] | undefined,
-): WebLoomTableColumn[] => {
-  if (!data) return [];
-  // generate columns based on all data elements
-  const keys = data.reduce((acc, row) => {
-    return acc.concat(Object.keys(row));
-  }, [] as string[]);
-  // remove duplicates
-  const uniqueKeys = Array.from(new Set(keys));
-  return uniqueKeys.map((key, index) => {
-    return {
-      id: (index + 1).toString(),
-      accessorKey: key,
-      header: key,
-      name: key,
-      type: 'Default',
-    };
-  });
-};
+export type NilefyTableProps = z.infer<typeof nilefyTablePropsSchema>;
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -135,45 +114,30 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-// const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
-//   let dir = 0;
-
-//   // Only sort by rank if the column has ranking information
-//   if (rowA.columnFiltersMeta[columnId]) {
-//     dir = compareItems(
-//       rowA.columnFiltersMeta[columnId].itemRank!,
-//       rowB.columnFiltersMeta[columnId].itemRank!,
-//     );
-//   }
-
-//   // Provide an alphanumeric fallback for when the item ranks are equal
-//   return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
-// };
-export const MemoizedTableBody = memo(
-  TableBody,
-  (prev, next) => prev.table.options.data === next.table.options.data,
-) as typeof TableBody;
-
-function TableBody({
-  table,
-  emptyState,
-}: {
-  table: Table<RowData>;
-  emptyState: string;
-}) {
+const TableBody = forwardRef<
+  HTMLTableSectionElement,
+  {
+    table: Table<NilefyRowData>;
+    emptyState: string;
+    emptyRowsCount: number;
+  }
+>(({ table, emptyState, emptyRowsCount }, ref) => {
   return (
-    <TableBodyInner className="bg-white">
+    <TableBodyInner className="bg-white" ref={ref}>
       {table.getRowModel().rows.length === 0 ? (
         <tr className="flex h-full w-full items-center justify-center text-xl">
           <td>{emptyState}</td>
         </tr>
       ) : (
         table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} className="divide-x hover:bg-gray-300">
+          <TableRow
+            key={row.id}
+            className="divide-x last:border hover:bg-gray-300"
+          >
             {row.getVisibleCells().map((cell) => (
               <TableCell
                 key={cell.id}
-                className="flex items-center justify-start p-4"
+                className="flex items-center justify-start px-4"
                 style={{
                   width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
                 }}
@@ -184,15 +148,79 @@ function TableBody({
           </TableRow>
         ))
       )}
+      {emptyRowsCount > 0 &&
+        new Array(emptyRowsCount).fill(0).map((_, index) => (
+          <TableRow key={index} className="divide-x hover:bg-gray-300">
+            {table.getFlatHeaders().map((header) => (
+              <TableCell
+                key={header.id}
+                className="flex items-center justify-start px-4"
+                style={{
+                  width: `calc(var(--col-${header.id}-size) * 1px)`,
+                }}
+              ></TableCell>
+            ))}
+          </TableRow>
+        ))}
     </TableBodyInner>
   );
-}
+});
 
+TableBody.displayName = 'TableBody';
+
+export const MemoizedTableBody = memo(
+  TableBody,
+  (prev, next) => prev.table.options.data === next.table.options.data,
+) as typeof TableBody;
+
+const usePaginationMeta = ({
+  paginationType,
+  tableHeight,
+  tableTop,
+  bodyTop,
+  rowsCount,
+  serverSidePageSize,
+  pageNumber,
+}: {
+  paginationType: NilefyTableProps['paginationType'];
+  tableHeight: number;
+  tableTop: number | undefined;
+  bodyTop: number | undefined;
+  rowsCount: number;
+  serverSidePageSize: number;
+  pageNumber: number;
+}) => {
+  const isPaginationEnabled =
+    paginationType === 'client' || paginationType === 'server';
+  if (!isPaginationEnabled)
+    // virtual
+    return {
+      isPaginationEnabled,
+      pageSize: rowsCount,
+      emptyRowsCount: 0,
+    };
+  if (paginationType === 'server') {
+    return {
+      isPaginationEnabled,
+      pageSize: serverSidePageSize,
+      emptyRowsCount: 0,
+    };
+  }
+  const bodyHeight = tableHeight - 10 - ((bodyTop ?? 0) - (tableTop ?? 0));
+  const pageSize = Math.floor(bodyHeight / ROW_HEIGHT);
+  const spentRows = pageNumber * pageSize;
+  const emptyRowsCount = rowsCount - spentRows;
+  return {
+    isPaginationEnabled,
+    pageSize,
+    emptyRowsCount,
+  };
+};
 const WebloomTable = observer(() => {
-  const [tableData, setTableData] = useState<RowData[]>([]);
+  const [tableData, setTableData] = useState<NilefyRowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
-  const props = widget.finalValues as WebloomTableProps;
+  const props = widget.finalValues as NilefyTableProps;
   const { columns = [] } = props;
   // sorting options
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -231,7 +259,7 @@ const WebloomTable = observer(() => {
     return {
       id: col.id,
       accessorKey: col.accessorKey,
-      header: ({ column }: { column: Column<RowData> }) => {
+      header: ({ column }: { column: Column<NilefyRowData> }) => {
         return (
           <div
             className="flex h-full w-full cursor-pointer items-center justify-center"
@@ -244,7 +272,19 @@ const WebloomTable = observer(() => {
       },
     };
   });
-
+  const tableHeight = widget.pixelDimensions.height;
+  const tableTop = widget.dom?.getBoundingClientRect().top;
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  const bodyTop = bodyRef.current?.getBoundingClientRect().top;
+  const paginationMeta = usePaginationMeta({
+    paginationType: props.paginationType,
+    tableHeight,
+    tableTop,
+    bodyTop,
+    rowsCount: tableData.length,
+    serverSidePageSize: 0,
+    pageNumber: props.pageIndex ?? 0,
+  });
   const table = useReactTable({
     data: tableData,
     filterFns: {
@@ -289,10 +329,11 @@ const WebloomTable = observer(() => {
     state: {
       pagination: {
         pageIndex: props.pageIndex ?? 0,
-        pageSize: props.isPaginationEnabled
-          ? props.pageSize ?? 3
+        pageSize: paginationMeta.isPaginationEnabled
+          ? paginationMeta.pageSize
           : props.data.length,
       },
+
       rowSelection,
       sorting,
       globalFilter,
@@ -345,7 +386,6 @@ const WebloomTable = observer(() => {
       widget.handleEvent('onRowSelectionChange');
     },
   });
-
   const columnSizeVars = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: { [key: string]: number } = {};
@@ -357,6 +397,19 @@ const WebloomTable = observer(() => {
     return colSizes;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table.getState().columnSizingInfo, columns]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: table.getRowModel().rows.length,
+    estimateSize: () => ROW_HEIGHT,
+    measureElement:
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
+    overscan: 5,
+    getScrollElement: () => containerRef.current,
+  });
+  widget.setValue('pageSize', paginationMeta.pageSize);
   return (
     <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
       {props.isSearchEnabled && (
@@ -378,12 +431,13 @@ const WebloomTable = observer(() => {
       )}
       <div className="block h-full w-full shadow-md">
         <TableInner
-          className="w-full"
+          className="h-full w-full"
+          containerRef={containerRef}
           style={{
             ...columnSizeVars,
           }}
         >
-          <TableHeader className="relative bg-white">
+          <TableHeader className="bg-white">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
@@ -429,13 +483,23 @@ const WebloomTable = observer(() => {
             ))}
           </TableHeader>
           {table.getState().columnSizingInfo.isResizingColumn ? (
-            <MemoizedTableBody table={table} emptyState={props.emptyState} />
+            <MemoizedTableBody
+              table={table}
+              emptyState={props.emptyState}
+              emptyRowsCount={paginationMeta.emptyRowsCount}
+              ref={bodyRef}
+            />
           ) : (
-            <TableBody table={table} emptyState={props.emptyState} />
+            <TableBody
+              table={table}
+              emptyState={props.emptyState}
+              emptyRowsCount={paginationMeta.emptyRowsCount}
+              ref={bodyRef}
+            />
           )}
         </TableInner>
       </div>
-      {props.isPaginationEnabled && (
+      {paginationMeta.isPaginationEnabled && (
         <div className="flex items-center justify-center space-x-2 py-4">
           <Button
             variant="ghost"
@@ -531,21 +595,21 @@ const config: WidgetConfig = {
   },
 };
 
-const initialProps: WebloomTableProps = {
+const initialProps: NilefyTableProps = {
   data: [{ id: '1', name: 'John', age: 23 }],
   selectedRow: {},
   selectedRowIndex: -1,
   columns: [],
   isRowSelectionEnabled: false,
   isSearchEnabled: false,
-  isPaginationEnabled: false,
+  paginationType: 'client',
   pageSize: 3,
   emptyState: 'No rows found',
   showHeaders: true,
   showFooter: true,
 };
 
-const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
+const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
   {
     sectionName: 'Data',
     children: [
@@ -596,9 +660,19 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
         type: 'checkbox',
       },
       {
-        path: 'isPaginationEnabled',
+        path: 'paginationType',
         label: 'Pagination',
-        type: 'checkbox',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Client', value: 'client' },
+            { label: 'Server', value: 'server' },
+            { label: 'Virtual', value: 'virtual' },
+          ],
+        },
+        validation: zodToJsonSchema(
+          nilefyTablePropsSchema.shape.paginationType,
+        ),
       },
       {
         path: 'pageSize',
@@ -676,7 +750,7 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
   },
 ];
 
-const WebloomTableWidget: Widget<WebloomTableProps> = {
+const WebloomTableWidget: Widget<NilefyTableProps> = {
   component: WebloomTable,
   config,
   initialProps,

@@ -1,5 +1,4 @@
 import CodeInputWidget from './codeInput';
-import SortableListWidget from './sortableList';
 import InlineCodeInputWidget from './inlineCodeInput';
 import ColorPickerWidget from './color';
 import RangeWidget from './range';
@@ -31,7 +30,6 @@ export function generateWidgets<
     sql: SQLRJSFWidget,
     colorPicker: ColorPickerWidget,
     inlineCodeInput: InlineCodeInputWidget,
-    sortableList: SortableListWidget,
 
     codeInput: CodeInputWidget,
   };

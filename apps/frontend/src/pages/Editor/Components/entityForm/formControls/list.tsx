@@ -44,8 +44,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Grip, MoreVertical } from 'lucide-react';
-import { WebLoomTableColumn } from '@/pages/Editor/Components/WebloomWidgets/Table/index';
 import { EntityFormControlContext } from '..';
+import { NilefyTableColumn } from '../../WebloomWidgets/Table';
 
 const columnsTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 // export type columnsTypes = typeof columnsTypes;
@@ -72,10 +72,10 @@ function ColumnDialog({
   open,
   onOpen,
 }: {
-  columns: WebLoomTableColumn[];
-  onChange: (newColumns: WebLoomTableColumn[]) => void;
+  columns: NilefyTableColumn[];
+  onChange: (newColumns: NilefyTableColumn[]) => void;
   create: boolean;
-  initialValues?: WebLoomTableColumn;
+  initialValues?: NilefyTableColumn;
   open: boolean;
   onOpen: (value: boolean) => void;
 }) {
@@ -93,7 +93,7 @@ function ColumnDialog({
     shouldUnregister: false, // Do not unregister fields on removal
     mode: 'onSubmit',
   });
-  const onSubmit = (data: WebLoomTableColumn) => {
+  const onSubmit = (data: NilefyTableColumn) => {
     if (create) {
       const newColumn = {
         id: String(columns.length + 1),
@@ -198,15 +198,15 @@ function ColumnDialog({
 
 const InspectorList = () => {
   const { onChange, value } = useContext(EntityFormControlContext) as {
-    onChange: (value: WebLoomTableColumn[]) => void;
-    value: WebLoomTableColumn[];
+    onChange: (value: NilefyTableColumn[]) => void;
+    value: NilefyTableColumn[];
   };
 
   const [isCreateColumnDialogOpen, setIsCreateColumDialogOpen] =
     useState(false);
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false);
-  const [editableColumn, setEditableColumn] = useState<WebLoomTableColumn>(
-    {} as WebLoomTableColumn,
+  const [editableColumn, setEditableColumn] = useState<NilefyTableColumn>(
+    {} as NilefyTableColumn,
   );
 
   const sensors = useSensors(
@@ -218,7 +218,7 @@ const InspectorList = () => {
     }),
   );
 
-  const handleColumnClick = (column: WebLoomTableColumn) => {
+  const handleColumnClick = (column: NilefyTableColumn) => {
     setEditableColumn(column);
     setIsEditColumnDialogOpen(true);
   };
