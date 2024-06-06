@@ -12,6 +12,7 @@ import {
   roles,
   accounts,
   appsToRoles,
+  appsVersions,
 } from "./schema";
 import {
   workspaceDataSources,
@@ -29,6 +30,9 @@ const userAppRelation = "userApps";
 const userWebloomTablesRelation = "userTables";
 const userUserInWorkspacesRelation = "userworkspaceUsers";
 const workspaceUserInWorkspacesRelation = "workspaceworkspaceUsers";
+const userAppsVersionsRelation = "userAppsVersions";
+const userUpdateAppsVersionsRelation = "userUpdateAppsVersions";
+
 // workspaces
 const workspaceAppsRelation = "workspaceApps";
 const workspaceWebloomTablesRelation = "workspaceWebloomTables";
@@ -51,6 +55,8 @@ const rolePermissionsInRoleRelation = "rolepermissionsInRole";
 
 // apps
 const pagesToappsRelation = "pagesinapp";
+const appsVersionsRelation = "appsVersions"
+const pagesToappVersionRelation = "pagesToappVersion";
 
 // data sources/queries
 const dataSourceWorkspaceRelation = "dataSource";
@@ -63,6 +69,9 @@ const appQueriesRelation = "appQueries";
 const appJsQueriesRelation = "appjsquery";
 const appJsLibrariesRelation = "appjsLibraries";
 const wsDataSourceQueriesRelation = "dataSourceQueriesRelation";
+const appVersionQueriesRelation = "appVersionQueries";
+const appVersionJsQueriesRelation = "appVersionJsQueries";
+const appVersionJsLibrariesRelation = "appVersionJsLibraries";
 
 const componentsToPageRelation = "componentsToPage";
 const componentParentRelation = "componentParent";
@@ -84,6 +93,9 @@ export const usersRelations = relations(users, ({ many }) => {
     DeletedApps: many(apps, {
       relationName: userDeleteAppRelation,
     }),
+    lastUpdatedAppsVersions: many(appsVersions, {
+      relationName: userUpdateAppsVersionsRelation,
+    }),
 
     /**
      * user created/own
@@ -102,6 +114,9 @@ export const usersRelations = relations(users, ({ many }) => {
     }),
     queries: many(queries, {
       relationName: userQueriesRelation,
+    }),
+    appsVersions: many(appsVersions, {
+      relationName: userAppsVersionsRelation,
     }),
 
     /**
@@ -193,6 +208,39 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
    * which roles could control this app
    */
   roles: many(appsToRoles),
+  appVersions: many(appsVersions, {
+    relationName: appsVersionsRelation,
+  }),
+}));
+
+export const appsVersionsRelations = relations(appsVersions, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [appsVersions.createdById],
+    references: [users.id],
+    relationName: userAppsVersionsRelation,
+  }),
+  updatedBy: one(users, {
+    fields: [appsVersions.updatedById],
+    references: [users.id],
+    relationName: userUpdateAppsVersionsRelation,
+  }),
+  queries: many(queries, {
+    relationName: appVersionQueriesRelation,
+  }),
+  jsQueries: many(jsQueries, {
+    relationName: appVersionJsQueriesRelation,
+  }),
+  jsLibraries: many(jsLibraries, {
+    relationName: appVersionJsLibrariesRelation,
+  }),
+  pages: many(pages, {
+    relationName: pagesToappVersionRelation,
+  }),
+  baseApp: one(apps, {
+    fields: [appsVersions.appId],
+    references: [apps.id],
+    relationName: appsVersionsRelation,
+  })
 }));
 
 export const webloomTableRelations = relations(
@@ -252,6 +300,11 @@ export const queriesRelations = relations(queries, ({ one }) => ({
     fields: [queries.baseDataSourceId],
     references: [dataSources.id],
   }),
+  appVersion: one(appsVersions, {
+    fields: [queries.appId],
+    references: [appsVersions.id],
+    relationName: appVersionQueriesRelation,
+  }),
 }));
 
 export const jsQueriesRelations = relations(jsQueries, ({ one }) => ({
@@ -260,6 +313,11 @@ export const jsQueriesRelations = relations(jsQueries, ({ one }) => ({
     references: [apps.id],
     relationName: appJsQueriesRelation,
   }),
+  appVersion: one(appsVersions, {
+    fields: [jsQueries.appId],
+    references: [appsVersions.id],
+    relationName: appVersionJsQueriesRelation,
+  }),
 }));
 
 export const jsLibrariesRelations = relations(jsLibraries, ({ one }) => ({
@@ -267,6 +325,11 @@ export const jsLibrariesRelations = relations(jsLibraries, ({ one }) => ({
     fields: [jsLibraries.appId],
     references: [apps.id],
     relationName: appJsLibrariesRelation,
+  }),
+  app: one(appsVersions, {
+    fields: [jsLibraries.appId],
+    references: [appsVersions.id],
+    relationName: appVersionJsLibrariesRelation,
   }),
 }));
 
@@ -415,6 +478,11 @@ export const pagesRelations = relations(pages, ({ many, one }) => {
     }),
     components: many(components, {
       relationName: componentsToPageRelation,
+    }),
+    appVersion: one(appsVersions, {
+      fields: [pages.appId],
+      references: [appsVersions.id],
+      relationName: pagesToappVersionRelation,
     }),
   };
 });

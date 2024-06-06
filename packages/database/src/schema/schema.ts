@@ -239,6 +239,18 @@ export const apps = pgTable("apps", {
   deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
+export const appsVersions = pgTable("apps_versions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  appId: integer("app_id").references(() => apps.id, { onDelete: 'cascade' }),
+  ...timeStamps,
+  createdById: integer("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  updatedById: integer("updated_by_id").references(() => users.id),
+  deletedById: integer("deleted_by_id").references(() => users.id),
+});
+
 /**
  * many to many relation
  */
