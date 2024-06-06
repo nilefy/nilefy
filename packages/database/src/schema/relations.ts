@@ -326,7 +326,7 @@ export const jsLibrariesRelations = relations(jsLibraries, ({ one }) => ({
     references: [apps.id],
     relationName: appJsLibrariesRelation,
   }),
-  app: one(appsVersions, {
+  appVersion: one(appsVersions, {
     fields: [jsLibraries.appId],
     references: [appsVersions.id],
     relationName: appVersionJsLibrariesRelation,
