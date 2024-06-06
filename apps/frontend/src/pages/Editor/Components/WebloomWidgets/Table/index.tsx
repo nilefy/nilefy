@@ -24,7 +24,7 @@ import {
   FilterFn,
   Table,
 } from '@tanstack/react-table';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 
 import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import {
@@ -120,51 +120,95 @@ const TableBody = forwardRef<
     table: Table<NilefyRowData>;
     emptyState: string;
     emptyRowsCount: number;
+    rowVirtualizer?: Virtualizer<HTMLDivElement, Element>;
+    isVirtualized?: boolean;
   }
->(({ table, emptyState, emptyRowsCount }, ref) => {
-  return (
-    <TableBodyInner className="bg-white" ref={ref}>
-      {table.getRowModel().rows.length === 0 ? (
-        <tr className="flex h-full w-full items-center justify-center text-xl">
-          <td>{emptyState}</td>
-        </tr>
-      ) : (
-        table.getRowModel().rows.map((row) => (
-          <TableRow
-            key={row.id}
-            className="divide-x last:border hover:bg-gray-300"
-          >
-            {row.getVisibleCells().map((cell) => (
-              <TableCell
-                key={cell.id}
-                className="flex items-center justify-start px-4"
-                style={{
-                  width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-                }}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))
-      )}
-      {emptyRowsCount > 0 &&
-        new Array(emptyRowsCount).fill(0).map((_, index) => (
-          <TableRow key={index} className="divide-x hover:bg-gray-300">
-            {table.getFlatHeaders().map((header) => (
-              <TableCell
-                key={header.id}
-                className="flex items-center justify-start px-4"
-                style={{
-                  width: `calc(var(--col-${header.id}-size) * 1px)`,
-                }}
-              ></TableCell>
-            ))}
-          </TableRow>
-        ))}
-    </TableBodyInner>
-  );
-});
+>(
+  (
+    { table, emptyState, emptyRowsCount, rowVirtualizer, isVirtualized },
+    ref,
+  ) => {
+    const TableRows = () => {
+      if (isVirtualized) {
+        const { rows } = table.getRowModel();
+        return rowVirtualizer!.getVirtualItems().map((virtualRow) => {
+          const row = rows[virtualRow.index];
+          return (
+            <TableRow
+              data-index={virtualRow.index}
+              ref={(node) => rowVirtualizer!.measureElement(node)}
+              key={row.id}
+              className="divide-x last:border hover:bg-gray-300"
+              isVirtualized
+              virtualRow={virtualRow}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className="flex items-center justify-start px-4"
+                  style={{
+                    width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+                  }}
+                  isVirtualized
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        });
+      }
+      return table.getRowModel().rows.map((row) => (
+        <TableRow
+          key={row.id}
+          className="divide-x last:border hover:bg-gray-300"
+        >
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              className="flex items-center justify-start px-4"
+              style={{
+                width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+    };
+    return (
+      <TableBodyInner
+        className="bg-white"
+        ref={ref}
+        isVirtualized={isVirtualized}
+        rowVirtualizer={rowVirtualizer}
+      >
+        {table.getRowModel().rows.length === 0 ? (
+          <tr className="flex h-full w-full items-center justify-center text-xl">
+            <td>{emptyState}</td>
+          </tr>
+        ) : (
+          <TableRows />
+        )}
+        {emptyRowsCount > 0 &&
+          new Array(emptyRowsCount).fill(0).map((_, index) => (
+            <TableRow key={index} className="divide-x hover:bg-gray-300">
+              {table.getFlatHeaders().map((header) => (
+                <TableCell
+                  key={header.id}
+                  className="flex items-center justify-start px-4"
+                  style={{
+                    width: `calc(var(--col-${header.id}-size) * 1px)`,
+                  }}
+                ></TableCell>
+              ))}
+            </TableRow>
+          ))}
+      </TableBodyInner>
+    );
+  },
+);
 
 TableBody.displayName = 'TableBody';
 
@@ -398,8 +442,9 @@ const WebloomTable = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table.getState().columnSizingInfo, columns]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { rows } = table.getRowModel();
   const rowVirtualizer = useVirtualizer({
-    count: table.getRowModel().rows.length,
+    count: rows.length,
     estimateSize: () => ROW_HEIGHT,
     measureElement:
       typeof window !== 'undefined' &&
@@ -436,8 +481,12 @@ const WebloomTable = observer(() => {
           style={{
             ...columnSizeVars,
           }}
+          isVirtualized={paginationMeta.isPaginationEnabled}
         >
-          <TableHeader className="bg-white">
+          <TableHeader
+            className="bg-white"
+            isVirtualized={paginationMeta.isPaginationEnabled}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
@@ -488,6 +537,8 @@ const WebloomTable = observer(() => {
               emptyState={props.emptyState}
               emptyRowsCount={paginationMeta.emptyRowsCount}
               ref={bodyRef}
+              isVirtualized={props.paginationType === 'virtual'}
+              rowVirtualizer={rowVirtualizer}
             />
           ) : (
             <TableBody
@@ -495,6 +546,8 @@ const WebloomTable = observer(() => {
               emptyState={props.emptyState}
               emptyRowsCount={paginationMeta.emptyRowsCount}
               ref={bodyRef}
+              isVirtualized={props.paginationType === 'virtual'}
+              rowVirtualizer={rowVirtualizer}
             />
           )}
         </TableInner>

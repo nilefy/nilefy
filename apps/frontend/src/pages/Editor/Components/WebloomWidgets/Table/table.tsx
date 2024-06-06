@@ -36,13 +36,20 @@ Table.displayName = 'Table';
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
+  React.HTMLAttributes<HTMLTableSectionElement> & {
+    isVirtualized?: boolean;
+  }
 >(({ className, ...props }, ref) => {
+  const { isVirtualized, ...rest } = props;
   return (
     <thead
       ref={ref}
-      className={cn('[&_tr]:border-b sticky top-0 z-10', className)}
-      {...props}
+      className={cn(
+        '[&_tr]:border-b sticky top-0 z-10',
+        { grid: isVirtualized },
+        className,
+      )}
+      {...rest}
     />
   );
 });
@@ -53,13 +60,13 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement> & {
     isVirtualized?: boolean;
-    rowVirtualizer?: Virtualizer<HTMLElement, Element>;
+    rowVirtualizer?: Virtualizer<HTMLDivElement, Element>;
   }
 >(({ className, ...props }, ref) => {
   const { isVirtualized, rowVirtualizer, ...rest } = props;
   if (isVirtualized) {
-    if (props.style === undefined) props.style = {};
-    props.style.height = `${rowVirtualizer!.getTotalSize()}px`;
+    if (rest.style === undefined) rest.style = {};
+    rest.style.height = `${rowVirtualizer!.getTotalSize()}px`;
   }
   return (
     <tbody
@@ -98,8 +105,11 @@ const TableRow = React.forwardRef<
 >(({ className, ...props }, ref) => {
   const { isVirtualized, virtualRow, ...rest } = props;
   if (isVirtualized) {
-    if (props.style === undefined) props.style = {};
-    props.style.transform = `translateY(${virtualRow!.start}px)`;
+    if (rest.style === undefined) rest.style = {};
+    rest.style = {
+      ...rest.style,
+      transform: `translateY(${virtualRow!.start}px)`,
+    };
   }
   return (
     <tr
@@ -107,7 +117,7 @@ const TableRow = React.forwardRef<
       className={cn(
         'flex border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
         {
-          'flex absolute': isVirtualized,
+          'flex absolute w-full': isVirtualized,
         },
         className,
       )}
@@ -119,17 +129,23 @@ TableRow.displayName = 'TableRow';
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      'h-12 px-4 text-center align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
-      className,
-    )}
-    {...props}
-  />
-));
+  React.ThHTMLAttributes<HTMLTableCellElement> & {
+    isVirtualized?: boolean;
+  }
+>(({ className, ...props }, ref) => {
+  const { isVirtualized, ...rest } = props;
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        'h-12 px-4 text-center align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        { flex: isVirtualized },
+        className,
+      )}
+      {...rest}
+    />
+  );
+});
 TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<
