@@ -21,8 +21,10 @@ export default class MongoDBQueryService
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
     try {
-      configSchema.parse(dataSourceConfig);
-      querySchema.parse(query.query);
+      await Promise.all([
+        configSchema.parseAsync(dataSourceConfig),
+        querySchema.parseAsync(query.query),
+      ]);
       const client = this.connect(dataSourceConfig);
       const data = await this.runQuery(query.query, client);
       await client.close();

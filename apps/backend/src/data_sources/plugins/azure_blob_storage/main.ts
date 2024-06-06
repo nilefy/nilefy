@@ -1,7 +1,7 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
 import { BlobServiceClient } from '@azure/storage-blob';
-import { ConfigT, QueryT } from './types';
+import { ConfigT, QueryT, querySchema, configSchema } from './types';
 import {
   createContainer,
   deleteBlob,
@@ -21,15 +21,19 @@ export default class AzureBlobStorageQueryService
     query: QueryConfig<QueryT>,
   ): Promise<QueryRet> {
     try {
+      await Promise.all([
+        configSchema.parseAsync(dataSourceConfig),
+        querySchema.parseAsync(query.query),
+      ]);
       const client = this.connect(dataSourceConfig);
       const data = await this.runQuery(query.query.query, client);
       return {
-        status: 200,
+        statusCode: 200,
         data,
       };
     } catch (error) {
       return {
-        status: 500,
+        statusCode: 500,
         data: {},
         error: (error as Error).message,
       };
