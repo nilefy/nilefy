@@ -242,7 +242,7 @@ export const apps = pgTable("apps", {
 export const appsVersions = pgTable("apps_versions", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
-  appId: integer("app_id").references(() => apps.id, { onDelete: 'cascade' }),
+  appId: integer("app_id").references(() => apps.id, { onDelete: 'cascade' }).notNull(),
   ...timeStamps,
   createdById: integer("created_by_id")
     .references(() => users.id)
