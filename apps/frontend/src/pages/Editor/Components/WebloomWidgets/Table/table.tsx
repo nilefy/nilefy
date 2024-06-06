@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/cn';
+import { VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 
 export const ROW_HEIGHT = 40;
 
@@ -8,9 +9,10 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement> & {
     containerRef?: React.RefObject<HTMLDivElement>;
+    isVirtualized?: boolean;
   }
 >(({ className, ...props }, ref) => {
-  const { containerRef, ...rest } = props;
+  const { containerRef, isVirtualized, ...rest } = props;
   return (
     <div
       className="relative h-full w-full overflow-auto rounded-md"
@@ -18,7 +20,13 @@ const Table = React.forwardRef<
     >
       <table
         ref={ref}
-        className={cn('caption-bottom text-sm', className)}
+        className={cn(
+          'caption-bottom text-sm',
+          {
+            grid: isVirtualized,
+          },
+          className,
+        )}
         {...rest}
       />
     </div>
@@ -29,22 +37,44 @@ Table.displayName = 'Table';
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <thead
-    ref={ref}
-    className={cn('[&_tr]:border-b sticky top-0 z-10', className)}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  return (
+    <thead
+      ref={ref}
+      className={cn('[&_tr]:border-b sticky top-0 z-10', className)}
+      {...props}
+    />
+  );
+});
 
 TableHeader.displayName = 'TableHeader';
 
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('', className)} {...props} />
-));
+  React.HTMLAttributes<HTMLTableSectionElement> & {
+    isVirtualized?: boolean;
+    rowVirtualizer?: Virtualizer<HTMLElement, Element>;
+  }
+>(({ className, ...props }, ref) => {
+  const { isVirtualized, rowVirtualizer, ...rest } = props;
+  if (isVirtualized) {
+    if (props.style === undefined) props.style = {};
+    props.style.height = `${rowVirtualizer!.getTotalSize()}px`;
+  }
+  return (
+    <tbody
+      ref={ref}
+      className={cn(
+        '',
+        {
+          'grid relative': isVirtualized,
+        },
+        className,
+      )}
+      {...rest}
+    />
+  );
+});
 TableBody.displayName = 'TableBody';
 
 const TableFooter = React.forwardRef<
@@ -61,17 +91,30 @@ TableFooter.displayName = 'TableFooter';
 
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
-  React.HTMLAttributes<HTMLTableRowElement>
->(({ className, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      'flex  border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
-      className,
-    )}
-    {...props}
-  />
-));
+  React.HTMLAttributes<HTMLTableRowElement> & {
+    isVirtualized?: boolean;
+    virtualRow?: VirtualItem;
+  }
+>(({ className, ...props }, ref) => {
+  const { isVirtualized, virtualRow, ...rest } = props;
+  if (isVirtualized) {
+    if (props.style === undefined) props.style = {};
+    props.style.transform = `translateY(${virtualRow!.start}px)`;
+  }
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        'flex border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+        {
+          'flex absolute': isVirtualized,
+        },
+        className,
+      )}
+      {...rest}
+    />
+  );
+});
 TableRow.displayName = 'TableRow';
 
 const TableHead = React.forwardRef<
@@ -91,7 +134,9 @@ TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
+  React.TdHTMLAttributes<HTMLTableCellElement> & {
+    isVirtualized?: boolean;
+  }
 >(({ className, ...props }, ref) => {
   if (props.style === undefined) props.style = {};
   props.style.height = ROW_HEIGHT;
@@ -99,7 +144,10 @@ const TableCell = React.forwardRef<
     <td
       role="cell"
       ref={ref}
-      className={cn('align-middle [&:has([role=checkbox])]:pr-0', className)}
+      className={cn(
+        'align-middle [&:has([role=checkbox])]:pr-0  overflow-auto scrollbar-none',
+        className,
+      )}
       {...props}
     />
   );
