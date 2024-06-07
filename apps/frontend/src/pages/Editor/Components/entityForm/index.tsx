@@ -20,12 +20,18 @@ import { Label } from '@/components/ui/label';
 import {
   BaseControlProps,
   EntityInspectorConfig,
-  FormControl,
   InspectorFormControlsTypes,
 } from '@/lib/Editor/interface';
 import { InspectorFormControls } from './formControls';
 import { ErrorPopover } from './formControls/errorPopover';
 import { cn } from '@/lib/cn';
+import {
+  Condition,
+  ConditionObject,
+  Conditions,
+  FormControl,
+  IsHidden,
+} from '@nilefy/constants';
 
 export const EntityFormControlContext = createContext<{
   onChange: (newValue: unknown) => void;
@@ -183,38 +189,20 @@ export const DefaultSection = observer(
     );
   },
 );
-export type ComparisonOperations =
-  | 'EQUALS'
-  | 'NOT_EQUALS'
-  | 'LESSER'
-  | 'GREATER'
-  | 'IN'
-  | 'NOT_IN';
 
-type Condition = {
-  path: string;
-  value: any;
-  comparison: ComparisonOperations;
-};
-export interface ConditionObject {
-  conditionType: 'AND' | 'OR';
-  conditions: Conditions;
-}
-
-export type Conditions = Array<Condition> | ConditionObject;
-
-export type IsHidden =
+/**
+ * difference between this and @nilefy/constants is that type could accept function
+ */
+export type ExtendedIsHidden =
+  | IsHidden
   | ((args: {
       store: typeof editorStore;
       entityId: string;
       finalValues: Record<string, unknown>;
-    }) => boolean)
-  | boolean
-  | Condition
-  | ConditionObject;
+    }) => boolean);
 
 export const calculateIsHidden = (
-  hidden: IsHidden,
+  hidden: ExtendedIsHidden,
   entityId: string,
 ): boolean => {
   if (typeof hidden === 'boolean') {

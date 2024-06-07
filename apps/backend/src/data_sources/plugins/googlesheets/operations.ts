@@ -280,20 +280,6 @@ export async function readData(
   );
 }
 
-export async function readData(
-  spreadSheetId: string,
-  spreadsheetRange: string,
-  sheet: string,
-  authHeader: RequestInit['headers'],
-): Promise<any[]> {
-  return await readDataFromSheet(
-    spreadSheetId,
-    sheet,
-    spreadsheetRange,
-    authHeader,
-  );
-}
-
 export async function appendData(
   spreadSheetId: string,
   sheet: string,
