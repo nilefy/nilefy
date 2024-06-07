@@ -138,7 +138,7 @@ const TableHead = React.forwardRef<
     <th
       ref={ref}
       className={cn(
-        'h-12 px-4 text-center align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        'h-12 px-4 text-center align-middle font-medium text-muted-foreground',
         { flex: isVirtualized },
         className,
       )}
@@ -158,10 +158,7 @@ const TableCell = React.forwardRef<
     <td
       role="cell"
       ref={ref}
-      className={cn(
-        'align-middle [&:has([role=checkbox])]:pr-0  overflow-auto scrollbar-none',
-        className,
-      )}
+      className={cn('align-middle overflow-auto scrollbar-none', className)}
       {...props}
     />
   );

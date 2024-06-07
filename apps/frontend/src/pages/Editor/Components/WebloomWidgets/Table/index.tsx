@@ -60,7 +60,7 @@ import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
 import { generateColumnsFromData } from './utils';
-import { clamp } from 'lodash';
+import { clamp, isNaN, isNumber } from 'lodash';
 //Types
 declare module '@tanstack/react-table' {
   interface FilterFns {
@@ -85,7 +85,7 @@ export type NilefyTableColumn = z.infer<typeof nilefyTableColumnSchema>;
 const nilefyTablePropsSchema = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
   columns: z.array(nilefyTableColumnSchema).optional(),
-  isRowSelectionEnabled: z.boolean(),
+  rowSelectionType: z.enum(['single', 'multiple', 'none']).default('single'),
   isSearchEnabled: z.boolean(),
   paginationType: z.enum(['client', 'server', 'virtual']).default('client'),
   pageSize: z.number().optional(),
@@ -156,11 +156,13 @@ const Pagination = ({
         <ChevronLeft />
       </Button>
       <Input
-        type="number"
-        min={1}
-        max={totalPageCount}
         value={inputValue}
-        onChange={(e) => setInputValue(Number(e.target.value))}
+        onChange={(e) => {
+          const numberized = Number(e.target.value);
+          if (isNumber(numberized) && !isNaN(numberized)) {
+            setInputValue(clamp(numberized, 1, totalPageCount));
+          }
+        }}
         onBlur={(e) => {
           let page = e.target.value ? Number(e.target.value) - 1 : 0;
           page = clamp(page, 0, totalPageCount - 1);
@@ -422,41 +424,45 @@ const WebloomTable = observer(function WebloomTable() {
     currentPageIndex: props.pageIndex ?? 0,
     rowsCount: tableData.length,
   });
-
+  const isMultiSelect = props.rowSelectionType === 'multiple';
   const table = useReactTable({
     data: tableData,
     filterFns: {
       fuzzy: fuzzyFilter,
     },
-    enableMultiRowSelection: false,
+    enableMultiRowSelection: isMultiSelect,
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: props.paginationType === 'server',
     columnResizeMode: 'onChange',
-
-    columns: props.isRowSelectionEnabled
+    columns: isMultiSelect
       ? [
           {
             id: 'select',
+            size: 40,
             header: ({ table }) => (
-              <Checkbox
-                checked={
-                  table.getIsAllPageRowsSelected() ||
-                  (table.getIsSomePageRowsSelected() && 'indeterminate')
-                }
-                onCheckedChange={(value) =>
-                  table.toggleAllPageRowsSelected(!!value)
-                }
-                aria-label="Select all"
-              />
+              <div className="flex h-full w-full items-center justify-center">
+                <Checkbox
+                  checked={
+                    table.getIsAllPageRowsSelected() ||
+                    (table.getIsSomePageRowsSelected() && 'indeterminate')
+                  }
+                  onCheckedChange={(value) => {
+                    table.toggleAllPageRowsSelected(!!value);
+                  }}
+                  aria-label="Select all"
+                />
+              </div>
             ),
             cell: ({ row }) => (
-              <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-              />
+              <div className="flex h-full w-full items-center justify-center">
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(value) => row.toggleSelected(!!value)}
+                  aria-label="Select row"
+                />
+              </div>
             ),
             enableSorting: false,
             enableHiding: false,
@@ -508,16 +514,25 @@ const WebloomTable = observer(function WebloomTable() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: (updater) => {
-      const selectedIndex: string | undefined = Object.keys(
+      const selectedIndices: string[] = Object.keys(
         typeof updater === 'function' ? updater(rowSelection) : updater,
-      )[0];
+      );
+
       onPropChange({
         key: 'selectedRow',
-        value: selectedIndex ? props.data[+selectedIndex] : {},
+        value: selectedIndices[0] ? props.data[+selectedIndices[0]] : {},
       });
       onPropChange({
         key: 'selectedRowIndex',
-        value: selectedIndex ? +selectedIndex : -1,
+        value: selectedIndices[0] ? +selectedIndices[0] : -1,
+      });
+      onPropChange({
+        key: 'selectedRows',
+        value: selectedIndices.map((index) => props.data[+index]),
+      });
+      onPropChange({
+        key: 'selectedRowIndices',
+        value: selectedIndices.map((index) => +index),
       });
       setRowSelection(updater);
       // execute user event
@@ -655,7 +670,7 @@ const WebloomTable = observer(function WebloomTable() {
 
       <div
         ref={footerRef}
-        className="flex w-full items-center justify-center rounded-b-md bg-white py-2"
+        className="flex w-full items-center justify-center rounded-b-md border-t bg-white py-2"
       >
         {paginationMeta.isPaginationEnabled && (
           <Pagination
@@ -708,7 +723,7 @@ const initialProps: NilefyTableProps = {
   selectedRow: {},
   selectedRowIndex: -1,
   columns: [],
-  isRowSelectionEnabled: false,
+  rowSelectionType: 'single',
   isSearchEnabled: false,
   paginationType: 'client',
   pageSize: 3,
@@ -758,9 +773,19 @@ const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
     sectionName: 'Table Options',
     children: [
       {
-        path: 'isRowSelectionEnabled',
+        path: 'rowSelectionType',
         label: 'Row Selection',
-        type: 'checkbox',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Single', value: 'single' },
+            { label: 'Multiple', value: 'multiple' },
+            { label: 'None', value: 'none' },
+          ],
+        },
+        validation: zodToJsonSchema(
+          nilefyTablePropsSchema.shape.rowSelectionType,
+        ),
       },
       {
         path: 'isSearchEnabled',
@@ -853,11 +878,17 @@ const WebloomTableWidget: Widget<NilefyTableProps> = {
   metaProps: new Set([
     'selectedRow',
     'selectedRowIndex',
+    'selectedRows',
+    'selectedRowIndices',
     'columns',
     'pageSize',
     'pageIndex',
   ]),
   publicAPI: {
+    selectedRows: {
+      type: 'dynamic',
+      description: 'Selected rows data',
+    },
     selectedRow: {
       type: 'dynamic',
       description: 'Selected row data',
@@ -866,6 +897,11 @@ const WebloomTableWidget: Widget<NilefyTableProps> = {
       type: 'static',
       typeSignature: 'number',
       description: 'Selected row Index data',
+    },
+    selectedRowIndices: {
+      type: 'static',
+      typeSignature: 'number[]',
+      description: 'Selected row indices',
     },
     pageIndex: {
       type: 'static',
