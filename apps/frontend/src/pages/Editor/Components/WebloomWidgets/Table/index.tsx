@@ -97,11 +97,13 @@ const nilefyTablePropsSchema = z.object({
    * Contains the data of the row selected by the user. It's an empty object if no row is selected
    */
   selectedRow: z.record(z.unknown()),
+  selectedRows: z.array(z.record(z.unknown())),
   /**
    *Contains the index of the row selected by the user
    * if no selection will be -1
    */
   selectedRowIndex: z.number().default(-1),
+  selectedRowIndices: z.array(z.number()),
   onRowSelectionChange: z.string().optional(),
   onPageChange: z.string().optional(),
   onSortChange: z.string().optional(),
@@ -168,7 +170,7 @@ const Pagination = ({
           page = clamp(page, 0, totalPageCount - 1);
           onPageChange(page);
         }}
-        className="w-10 rounded border p-1"
+        className="w-8 rounded border p-1"
       />
       <Button
         variant="ghost"
@@ -189,10 +191,18 @@ const TableBody = forwardRef<
     emptyRowsCount: number;
     rowVirtualizer?: Virtualizer<HTMLDivElement, Element>;
     isVirtualized?: boolean;
+    isSingleSelect?: boolean;
   }
 >(
   (
-    { table, emptyState, emptyRowsCount, rowVirtualizer, isVirtualized },
+    {
+      table,
+      emptyState,
+      emptyRowsCount,
+      rowVirtualizer,
+      isVirtualized,
+      isSingleSelect,
+    },
     ref,
   ) => {
     const TableRows = useCallback(() => {
@@ -205,9 +215,16 @@ const TableBody = forwardRef<
               data-index={virtualRow.index}
               ref={(node) => rowVirtualizer!.measureElement(node)}
               key={row.id}
-              className="divide-x hover:bg-gray-300"
+              className={clsx('divide-x hover:bg-gray-300', {
+                'bg-gray-200': row.getIsSelected(),
+              })}
               isVirtualized
               virtualRow={virtualRow}
+              onClick={() => {
+                if (isSingleSelect) {
+                  row.toggleSelected();
+                }
+              }}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell
@@ -225,7 +242,17 @@ const TableBody = forwardRef<
         });
       }
       return table.getRowModel().rows.map((row) => (
-        <TableRow key={row.id} className="divide-x hover:bg-gray-300">
+        <TableRow
+          key={row.id}
+          className={clsx('divide-x hover:bg-gray-300', {
+            'bg-gray-200': row.getIsSelected(),
+          })}
+          onClick={() => {
+            if (isSingleSelect) {
+              row.toggleSelected();
+            }
+          }}
+        >
           {row.getVisibleCells().map((cell) => (
             <TableCell
               key={cell.id}
@@ -425,12 +452,14 @@ const WebloomTable = observer(function WebloomTable() {
     rowsCount: tableData.length,
   });
   const isMultiSelect = props.rowSelectionType === 'multiple';
+  const isSingleSelect = props.rowSelectionType === 'single';
   const table = useReactTable({
     data: tableData,
     filterFns: {
       fuzzy: fuzzyFilter,
     },
     enableMultiRowSelection: isMultiSelect,
+    enableRowSelection: props.rowSelectionType !== 'none',
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -654,6 +683,7 @@ const WebloomTable = observer(function WebloomTable() {
                 emptyRowsCount={emptyRowsCount}
                 isVirtualized={props.paginationType === 'virtual'}
                 rowVirtualizer={rowVirtualizer}
+                isSingleSelect={isSingleSelect}
               />
             ) : (
               <TableBody
@@ -662,6 +692,7 @@ const WebloomTable = observer(function WebloomTable() {
                 emptyRowsCount={emptyRowsCount}
                 isVirtualized={props.paginationType === 'virtual'}
                 rowVirtualizer={rowVirtualizer}
+                isSingleSelect={isSingleSelect}
               />
             )}
           </TableInner>
@@ -730,6 +761,8 @@ const initialProps: NilefyTableProps = {
   emptyState: 'No rows found',
   showHeaders: true,
   showFooter: true,
+  selectedRows: [],
+  selectedRowIndices: [],
 };
 
 const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
