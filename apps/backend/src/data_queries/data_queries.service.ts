@@ -35,7 +35,7 @@ export class DataQueriesService {
     evaluatedQuery: Record<string, unknown>,
   ): Promise<QueryRet> {
     const query = await this.getQuery(appId, queryId);
-    const ds = await this.dataSourcesService.getOne(
+    const ds = await this.dataSourcesService.getOneToView(
       workspaceId,
       query.dataSourceId,
     );

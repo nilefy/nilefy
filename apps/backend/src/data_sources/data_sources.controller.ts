@@ -110,7 +110,7 @@ export class DataSourcesController {
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: number,
   ): Promise<DataSourceConnectionDto> {
-    return await this.dataSourceService.getOne(workspaceId, dataSourceId);
+    return await this.dataSourceService.getOneToView(workspaceId, dataSourceId);
   }
 
   @Get()

@@ -76,9 +76,10 @@ export class DataSourcesService {
     return ds;
   }
 
-  async getOne(
+  private async getOne(
     workspaceId: WsDataSourceDto['workspaceId'],
     datasourceId: WsDataSourceDto['id'],
+    toRun: boolean = false,
   ): Promise<DataSourceConnectionDto> {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
@@ -106,13 +107,34 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
+
     const uiSchema = { ...ds['dataSource']['config']['uiSchema'] };
-    const config = this.decryptConfigRequiredFields(
-      { ...ds['config'] },
-      { ...uiSchema },
-    );
+    let config;
+    if (toRun) {
+      config = this.decryptConfigRequiredFields(
+        { ...ds['config'] },
+        { ...uiSchema },
+      );
+    } else {
+      config = this.omitEncryptedFields({ ...ds['config'] }, { ...uiSchema });
+    }
     ds['config'] = config;
+
     return ds;
+  }
+
+  async getOneToRun(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ): Promise<DataSourceConnectionDto> {
+    return this.getOne(workspaceId, datasourceId, true);
+  }
+
+  async getOneToView(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ): Promise<DataSourceConnectionDto> {
+    return this.getOne(workspaceId, datasourceId);
   }
 
   async deleteConnections({
@@ -150,10 +172,11 @@ export class DataSourcesService {
     return ds;
   }
 
-  private encryptConfigRequiredFields(
+  private configFieldsHelper(
     config: any,
     uiSchema: Record<string, unknown> | undefined,
     isDecryption = false,
+    omitEncryptedFields = false,
   ): any {
     if (!uiSchema) {
       return config;
@@ -170,7 +193,7 @@ export class DataSourcesService {
             value !== null &&
             !Array.isArray(value)
           ) {
-            processedConfig[key] = this.encryptConfigRequiredFields(
+            processedConfig[key] = this.configFieldsHelper(
               value,
               { ...uiSchema },
               isDecryption,
@@ -180,12 +203,14 @@ export class DataSourcesService {
               uiSchema[key] &&
               (uiSchema[key] as any)['ui:encrypted'] === 'encrypted'
             ) {
-              console.log('before donig anything value: ');
-              console.log(value);
-              if (isDecryption) {
-                processedConfig[key] = this.encryptionService.decrypt(value);
+              if (omitEncryptedFields) {
+                delete processedConfig[key];
               } else {
-                processedConfig[key] = this.encryptionService.encrypt(value);
+                if (isDecryption) {
+                  processedConfig[key] = this.encryptionService.decrypt(value);
+                } else {
+                  processedConfig[key] = this.encryptionService.encrypt(value);
+                }
               }
             }
           }
@@ -198,11 +223,25 @@ export class DataSourcesService {
     return processedConfig;
   }
 
+  private encryptConfigRequiredFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.configFieldsHelper(config, uiSchema);
+  }
+
   private decryptConfigRequiredFields(
     config: any,
     uiSchema: Record<string, unknown> | undefined,
   ): any {
-    return this.encryptConfigRequiredFields(config, uiSchema, true);
+    return this.configFieldsHelper(config, uiSchema, true);
+  }
+
+  private omitEncryptedFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.configFieldsHelper(config, uiSchema, true, true);
   }
 
   async update(
@@ -217,7 +256,7 @@ export class DataSourcesService {
     },
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
-    const r = await this.getOne(workspaceId, dataSourceId);
+    const r = await this.getOneToView(workspaceId, dataSourceId);
     const uiSchema = r['dataSource']['config']['uiSchema'];
     const config = this.encryptConfigRequiredFields(dataSourceDto['config'], {
       ...uiSchema,
@@ -236,6 +275,7 @@ export class DataSourcesService {
     if (!ds) throw new NotFoundException();
     return ds;
   }
+
   async testConnection(
     {
       workspaceId,
@@ -246,7 +286,7 @@ export class DataSourcesService {
     },
     config: Record<string, unknown>,
   ): TestConnectionT {
-    const ds = await this.getOne(workspaceId, dataSourceId);
+    const ds = await this.getOneToRun(workspaceId, dataSourceId);
     const service = this.getService(ds.dataSource.name);
     if (service.testConnection) {
       const res = await service.testConnection(config);
