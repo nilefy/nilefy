@@ -57,7 +57,7 @@ export type NilefyRowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
-import { useAutoRun, useSize } from '@/lib/Editor/hooks';
+import { useAutoRun } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
 import { generateColumnsFromData } from './utils';
 import { clamp } from 'lodash';
@@ -402,7 +402,11 @@ const WebloomTable = observer(function WebloomTable() {
       },
     };
   });
-  const tableTop = useSize(widget.dom)?.top;
+  const tableTop =
+    (widget.dom?.getBoundingClientRect().top ?? 0) +
+    //TODO: HACK this calculation isn't really doing anything I just want this to be reactive with respect to the table size
+    widget.pixelDimensions.y -
+    widget.pixelDimensions.y;
   const footerRef = useRef<HTMLDivElement>(null);
   const footerTop = footerRef.current?.getBoundingClientRect().top;
   const paginationMeta = getPaginationMeta({
