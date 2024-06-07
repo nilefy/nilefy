@@ -5,10 +5,8 @@ import {
 } from '@/lib/Editor/interface';
 import {
   ArrowUpDown,
-  ChevronsLeft,
-  ChevronsRight,
-  MoveLeft,
-  MoveRight,
+  ChevronLeft,
+  ChevronRight,
   Table as TableIcon,
 } from 'lucide-react';
 import {
@@ -37,7 +35,16 @@ import {
   ROW_HEIGHT,
 } from './table';
 import { Button } from '@/components/ui/button';
-import { forwardRef, memo, useContext, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -50,7 +57,7 @@ export type NilefyRowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
 import { DebouncedInput } from '@/components/debouncedInput';
-import { useAutoRun } from '@/lib/Editor/hooks';
+import { useAutoRun, useSize } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
 import { generateColumnsFromData } from './utils';
 //Types
@@ -114,6 +121,58 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
+const Pagination = ({
+  onPageChange,
+  isNextDisabled,
+  isPrevDisabled,
+  pageNumber,
+  totalPageCount,
+}: {
+  onPageChange: (pageNumber: number) => void;
+  isNextDisabled: boolean;
+  isPrevDisabled: boolean;
+  pageNumber: number;
+  totalPageCount: number;
+}) => {
+  const handlePrevClick = () => {
+    onPageChange(pageNumber - 1);
+  };
+
+  const handleNextClick = () => {
+    onPageChange(pageNumber + 1);
+  };
+
+  return (
+    <div className="flex">
+      <Button
+        variant="ghost"
+        onClick={handlePrevClick}
+        disabled={isPrevDisabled}
+      >
+        <ChevronLeft />
+      </Button>
+      <Input
+        type="number"
+        min={1}
+        max={totalPageCount}
+        defaultValue={pageNumber + 1}
+        onChange={(e) => {
+          const page = e.target.value ? Number(e.target.value) - 1 : 0;
+          onPageChange(page);
+        }}
+        className="w-2 rounded border p-1"
+      />
+      <Button
+        variant="ghost"
+        onClick={handleNextClick}
+        disabled={isNextDisabled}
+      >
+        <ChevronRight />
+      </Button>
+    </div>
+  );
+};
+
 const TableBody = forwardRef<
   HTMLTableSectionElement,
   {
@@ -128,7 +187,7 @@ const TableBody = forwardRef<
     { table, emptyState, emptyRowsCount, rowVirtualizer, isVirtualized },
     ref,
   ) => {
-    const TableRows = () => {
+    const TableRows = useCallback(() => {
       if (isVirtualized) {
         const { rows } = table.getRowModel();
         return rowVirtualizer!.getVirtualItems().map((virtualRow) => {
@@ -138,7 +197,7 @@ const TableBody = forwardRef<
               data-index={virtualRow.index}
               ref={(node) => rowVirtualizer!.measureElement(node)}
               key={row.id}
-              className="divide-x last:border hover:bg-gray-300"
+              className="divide-x hover:bg-gray-300"
               isVirtualized
               virtualRow={virtualRow}
             >
@@ -159,10 +218,7 @@ const TableBody = forwardRef<
         });
       }
       return table.getRowModel().rows.map((row) => (
-        <TableRow
-          key={row.id}
-          className="divide-x last:border hover:bg-gray-300"
-        >
+        <TableRow key={row.id} className="divide-x hover:bg-gray-300">
           {row.getVisibleCells().map((cell) => (
             <TableCell
               key={cell.id}
@@ -176,7 +232,7 @@ const TableBody = forwardRef<
           ))}
         </TableRow>
       ));
-    };
+    }, [table, isVirtualized, rowVirtualizer]);
     return (
       <TableBodyInner
         className="bg-white"
@@ -217,22 +273,18 @@ export const MemoizedTableBody = memo(
   (prev, next) => prev.table.options.data === next.table.options.data,
 ) as typeof TableBody;
 
-const usePaginationMeta = ({
+const getPaginationMeta = ({
   paginationType,
-  tableHeight,
   tableTop,
-  bodyTop,
+  footerTop,
   rowsCount,
   serverSidePageSize,
-  pageNumber,
 }: {
   paginationType: NilefyTableProps['paginationType'];
-  tableHeight: number;
   tableTop: number | undefined;
-  bodyTop: number | undefined;
+  footerTop: number | undefined;
   rowsCount: number;
   serverSidePageSize: number;
-  pageNumber: number;
 }) => {
   const isPaginationEnabled =
     paginationType === 'client' || paginationType === 'server';
@@ -241,25 +293,40 @@ const usePaginationMeta = ({
     return {
       isPaginationEnabled,
       pageSize: rowsCount,
-      emptyRowsCount: 0,
     };
   if (paginationType === 'server') {
     return {
       isPaginationEnabled,
       pageSize: serverSidePageSize,
-      emptyRowsCount: 0,
     };
   }
-  const bodyHeight = tableHeight - 10 - ((bodyTop ?? 0) - (tableTop ?? 0));
+  const bodyHeight = (footerTop ?? 0) - (tableTop ?? 0) - 40;
   const pageSize = Math.floor(bodyHeight / ROW_HEIGHT);
-  const spentRows = pageNumber * pageSize;
-  const emptyRowsCount = rowsCount - spentRows;
   return {
     isPaginationEnabled,
     pageSize,
-    emptyRowsCount,
   };
 };
+
+const calculateEmptyRowsCount = ({
+  isPaginationEnabled,
+  pageSize,
+  currentPageIndex,
+  rowsCount,
+}: {
+  isPaginationEnabled: boolean;
+  pageSize: number;
+  currentPageIndex: number;
+  rowsCount: number;
+}) => {
+  if (!isPaginationEnabled) return 0;
+  const totalNumberOfPages = Math.ceil(rowsCount / pageSize);
+  if (currentPageIndex !== totalNumberOfPages - 1) {
+    return 0;
+  }
+  return pageSize - (rowsCount % pageSize);
+};
+
 const WebloomTable = observer(() => {
   const [tableData, setTableData] = useState<NilefyRowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
@@ -316,19 +383,23 @@ const WebloomTable = observer(() => {
       },
     };
   });
-  const tableHeight = widget.pixelDimensions.height;
-  const tableTop = widget.dom?.getBoundingClientRect().top;
-  const bodyRef = useRef<HTMLTableSectionElement>(null);
-  const bodyTop = bodyRef.current?.getBoundingClientRect().top;
-  const paginationMeta = usePaginationMeta({
+  const tableTop = useSize(widget.dom)?.top;
+  const footerRef = useRef<HTMLDivElement>(null);
+  const footerTop = footerRef.current?.getBoundingClientRect().top;
+  const paginationMeta = getPaginationMeta({
     paginationType: props.paginationType,
-    tableHeight,
     tableTop,
-    bodyTop,
+    footerTop,
     rowsCount: tableData.length,
     serverSidePageSize: 0,
-    pageNumber: props.pageIndex ?? 0,
   });
+  const emptyRowsCount = calculateEmptyRowsCount({
+    isPaginationEnabled: paginationMeta.isPaginationEnabled,
+    pageSize: paginationMeta.pageSize,
+    currentPageIndex: props.pageIndex ?? 0,
+    rowsCount: tableData.length,
+  });
+
   const table = useReactTable({
     data: tableData,
     filterFns: {
@@ -338,7 +409,7 @@ const WebloomTable = observer(() => {
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-
+    manualPagination: props.paginationType === 'server',
     columnResizeMode: 'onChange',
 
     columns: props.isRowSelectionEnabled
@@ -430,6 +501,10 @@ const WebloomTable = observer(() => {
       widget.handleEvent('onRowSelectionChange');
     },
   });
+
+  useEffect(() => {
+    table.setPageIndex(0);
+  }, [paginationMeta.pageSize, table]);
   const columnSizeVars = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: { [key: string]: number } = {};
@@ -456,159 +531,116 @@ const WebloomTable = observer(() => {
   });
   widget.setValue('pageSize', paginationMeta.pageSize);
   return (
-    <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
-      {props.isSearchEnabled && (
-        <div className=" ml-auto  w-[40%] p-2">
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={(value) => {
-              setGlobalFilter(String(value));
-              // execute user event
-              // editorStore.executeActions<typeof webloomTableEvents>(
-              //   id,
-              //   'onSearchChange',
-              // );
+    <div className="flex h-full w-full flex-col">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
+        {props.isSearchEnabled && (
+          <div className=" ml-auto  w-[40%] p-2">
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={(value) => {
+                setGlobalFilter(String(value));
+                // execute user event
+                // editorStore.executeActions<typeof webloomTableEvents>(
+                //   id,
+                //   'onSearchChange',
+                // );
+              }}
+              className=" border p-2 shadow"
+              placeholder="Search"
+            />
+          </div>
+        )}
+        <div className="block h-full w-full shadow-md">
+          <TableInner
+            className="h-full w-full"
+            containerRef={containerRef}
+            style={{
+              ...columnSizeVars,
             }}
-            className=" border p-2 shadow"
-            placeholder="Search"
-          />
-        </div>
-      )}
-      <div className="block h-full w-full shadow-md">
-        <TableInner
-          className="h-full w-full"
-          containerRef={containerRef}
-          style={{
-            ...columnSizeVars,
-          }}
-          isVirtualized={paginationMeta.isPaginationEnabled}
-        >
-          <TableHeader
-            className="bg-white"
             isVirtualized={paginationMeta.isPaginationEnabled}
           >
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="divide-x hover:bg-gray-300"
-              >
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className="relative"
-                      colSpan={header.colSpan}
-                      style={{
-                        width: `calc(var(--header-${header?.id}-size) * 1px)`,
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                      <div
-                        {...{
-                          onDoubleClick: () => header.column.resetSize(),
-                          onMouseDown: (e) => {
-                            e.stopPropagation();
-                            const cb = header.getResizeHandler();
-                            cb(e);
-                          },
-                          onTouchStart: header.getResizeHandler(),
+            <TableHeader
+              className="bg-white"
+              isVirtualized={paginationMeta.isPaginationEnabled}
+            >
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                  key={headerGroup.id}
+                  className="divide-x hover:bg-gray-300"
+                >
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className="relative"
+                        colSpan={header.colSpan}
+                        style={{
+                          width: `calc(var(--header-${header?.id}-size) * 1px)`,
                         }}
-                        className={clsx(
-                          'absolute right-[-5px] top-0 h-full w-[10px] cursor-col-resize touch-none select-none bg-blue-300 opacity-0',
-                          {
-                            'opacity-100 z-5': header.column.getIsResizing(),
-                          },
-                        )}
-                      />
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          {table.getState().columnSizingInfo.isResizingColumn ? (
-            <MemoizedTableBody
-              table={table}
-              emptyState={props.emptyState}
-              emptyRowsCount={paginationMeta.emptyRowsCount}
-              ref={bodyRef}
-              isVirtualized={props.paginationType === 'virtual'}
-              rowVirtualizer={rowVirtualizer}
-            />
-          ) : (
-            <TableBody
-              table={table}
-              emptyState={props.emptyState}
-              emptyRowsCount={paginationMeta.emptyRowsCount}
-              ref={bodyRef}
-              isVirtualized={props.paginationType === 'virtual'}
-              rowVirtualizer={rowVirtualizer}
-            />
-          )}
-        </TableInner>
-      </div>
-      {paginationMeta.isPaginationEnabled && (
-        <div className="flex items-center justify-center space-x-2 py-4">
-          <Button
-            variant="ghost"
-            className="rounded border p-1"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronsLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <MoveLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <MoveRight />
-          </Button>
-          <Button
-            variant="ghost"
-            className="rounded border p-1"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronsRight />
-          </Button>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
-            </strong>
-          </span>
-          <span className="flex items-center gap-1">
-            | Go to page:
-            <Input
-              type="number"
-              min={1}
-              max={table.getPageCount()}
-              defaultValue={table.getState().pagination.pageIndex + 1}
-              onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
-              }}
-              className="w-16 rounded border p-1"
-            />
-          </span>
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                        <div
+                          {...{
+                            onDoubleClick: () => header.column.resetSize(),
+                            onMouseDown: (e) => {
+                              e.stopPropagation();
+                              const cb = header.getResizeHandler();
+                              cb(e);
+                            },
+                            onTouchStart: header.getResizeHandler(),
+                          }}
+                          className={clsx(
+                            'absolute right-[-5px] top-0 h-full w-[10px] cursor-col-resize touch-none select-none bg-blue-300 opacity-0',
+                            {
+                              'opacity-100 z-5': header.column.getIsResizing(),
+                            },
+                          )}
+                        />
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            {table.getState().columnSizingInfo.isResizingColumn ? (
+              <MemoizedTableBody
+                table={table}
+                emptyState={props.emptyState}
+                emptyRowsCount={emptyRowsCount}
+                isVirtualized={props.paginationType === 'virtual'}
+                rowVirtualizer={rowVirtualizer}
+              />
+            ) : (
+              <TableBody
+                table={table}
+                emptyState={props.emptyState}
+                emptyRowsCount={emptyRowsCount}
+                isVirtualized={props.paginationType === 'virtual'}
+                rowVirtualizer={rowVirtualizer}
+              />
+            )}
+          </TableInner>
         </div>
-      )}
+      </div>
+
+      <div ref={footerRef}>
+        {paginationMeta.isPaginationEnabled && (
+          <Pagination
+            isNextDisabled={!table.getCanNextPage()}
+            isPrevDisabled={!table.getCanPreviousPage()}
+            pageNumber={table.getState().pagination.pageIndex}
+            totalPageCount={table.getPageCount()}
+            onPageChange={(pageNumber) => {
+              table.setPageIndex(pageNumber);
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 });
