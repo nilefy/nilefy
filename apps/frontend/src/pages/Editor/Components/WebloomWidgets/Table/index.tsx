@@ -60,6 +60,7 @@ import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun, useSize } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
 import { generateColumnsFromData } from './utils';
+import { clamp } from 'lodash';
 //Types
 declare module '@tanstack/react-table' {
   interface FilterFns {
@@ -141,7 +142,10 @@ const Pagination = ({
   const handleNextClick = () => {
     onPageChange(pageNumber + 1);
   };
-
+  const [inputValue, setInputValue] = useState(pageNumber + 1);
+  useEffect(() => {
+    setInputValue(pageNumber + 1);
+  }, [pageNumber]);
   return (
     <div className="flex">
       <Button
@@ -155,12 +159,14 @@ const Pagination = ({
         type="number"
         min={1}
         max={totalPageCount}
-        defaultValue={pageNumber + 1}
-        onChange={(e) => {
-          const page = e.target.value ? Number(e.target.value) - 1 : 0;
+        value={inputValue}
+        onChange={(e) => setInputValue(Number(e.target.value))}
+        onBlur={(e) => {
+          let page = e.target.value ? Number(e.target.value) - 1 : 0;
+          page = clamp(page, 0, totalPageCount - 1);
           onPageChange(page);
         }}
-        className="w-2 rounded border p-1"
+        className="w-10 rounded border p-1"
       />
       <Button
         variant="ghost"
@@ -546,8 +552,8 @@ const WebloomTable = observer(function WebloomTable() {
   });
   widget.setValue('pageSize', paginationMeta.pageSize);
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
+    <div className="flex h-full w-full flex-col shadow-sm">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto rounded-t-md">
         {props.isSearchEnabled && (
           <div className=" ml-auto  w-[40%] p-2">
             <DebouncedInput
@@ -643,7 +649,10 @@ const WebloomTable = observer(function WebloomTable() {
         </div>
       </div>
 
-      <div ref={footerRef}>
+      <div
+        ref={footerRef}
+        className="flex w-full items-center justify-center rounded-b-md bg-white py-2"
+      >
         {paginationMeta.isPaginationEnabled && (
           <Pagination
             isNextDisabled={!table.getCanNextPage()}
@@ -680,11 +689,6 @@ const config: WidgetConfig = {
     setPage: {
       name: 'setPage',
       path: 'pageIndex',
-      type: 'SETTER',
-    },
-    setPageSize: {
-      name: 'setPageSize',
-      path: 'pageSize',
       type: 'SETTER',
     },
     setSelectedRowIndex: {
@@ -855,12 +859,52 @@ const WebloomTableWidget: Widget<NilefyTableProps> = {
       description: 'Selected row data',
     },
     selectedRowIndex: {
-      type: 'dynamic',
+      type: 'static',
+      typeSignature: 'number',
       description: 'Selected row Index data',
     },
     pageIndex: {
-      type: 'dynamic',
+      type: 'static',
+      typeSignature: 'number',
       description: 'if pagination is enabled will be current page index',
+    },
+    pageSize: {
+      type: 'static',
+      typeSignature: 'number',
+      description: 'if pagination is enabled will be current page size',
+    },
+    setData: {
+      type: 'function',
+      args: [
+        {
+          name: 'data',
+          type: 'Record<string, unknown>[]',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the data of the table',
+    },
+    setPage: {
+      type: 'function',
+      args: [
+        {
+          name: 'pageIndex',
+          type: 'number',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the page index of the table',
+    },
+    setSelectedRowIndex: {
+      type: 'function',
+      args: [
+        {
+          name: 'selectedRowIndex',
+          type: 'number',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the selected row index of the table',
     },
   },
 };

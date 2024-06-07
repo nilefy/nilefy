@@ -15,7 +15,7 @@ const Table = React.forwardRef<
   const { containerRef, isVirtualized, ...rest } = props;
   return (
     <div
-      className="scrollbar-thin relative h-full w-full overflow-auto rounded-md "
+      className="scrollbar-thin relative h-full w-full overflow-auto"
       ref={containerRef}
     >
       <table
