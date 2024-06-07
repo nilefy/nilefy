@@ -34,7 +34,7 @@ const queryWhere_valueSchema = z.string();
 const queryBodySchema = z.string();
 const queryRow_indexSchema = z.string();
 
-const querySchema = z.discriminatedUnion('operation', [
+export const querySchema = z.discriminatedUnion('operation', [
   z.object({
     // info 0
     operation: ops[0],

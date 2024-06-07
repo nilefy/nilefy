@@ -1,8 +1,13 @@
+import { QueryT } from './types';
+
 async function makeRequestToReadValues(
-  spreadSheetId,
-  sheet,
-  range,
-  authHeader,
+  spreadSheetId: string,
+  /**
+   * sheet name
+   */
+  sheet: string,
+  range: string,
+  authHeader: RequestInit['headers'],
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${sheet || ''}!${range}`;
 
@@ -19,10 +24,13 @@ async function makeRequestToReadValues(
 }
 
 async function makeRequestToAppendValues(
-  spreadSheetId,
-  sheet,
-  requestBody,
-  authHeader,
+  spreadSheetId: string,
+  /**
+   * sheet name
+   */
+  sheet: string,
+  requestBody: string,
+  authHeader: RequestInit['headers'],
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${sheet || ''}!A:Z:append?valueInputOption=USER_ENTERED`;
 
@@ -42,7 +50,11 @@ async function makeRequestToAppendValues(
   return await response.json();
 }
 
-async function makeRequestToDeleteRows(spreadSheetId, requestBody, authHeader) {
+async function makeRequestToDeleteRows(
+  spreadSheetId: QueryT['spreadsheet_id'],
+  requestBody: string,
+  authHeader: RequestInit['headers'],
+) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}:batchUpdate`;
 
   const response = await fetch(url, {
@@ -62,9 +74,9 @@ async function makeRequestToDeleteRows(spreadSheetId, requestBody, authHeader) {
 }
 
 async function makeRequestToBatchUpdateValues(
-  spreadSheetId,
-  requestBody,
-  authHeader,
+  spreadSheetId: QueryT['spreadsheet_id'],
+  requestBody: string,
+  authHeader: RequestInit['headers'],
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values:batchUpdate`;
 
@@ -84,7 +96,11 @@ async function makeRequestToBatchUpdateValues(
   return await response.json();
 }
 
-async function makeRequestToLookUpCellValues(spreadSheetId, range, authHeader) {
+async function makeRequestToLookUpCellValues(
+  spreadSheetId: string,
+  range: string,
+  authHeader: RequestInit['headers'],
+) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${range}?majorDimension=COLUMNS`;
 
   const response = await fetch(url, {
@@ -101,17 +117,13 @@ async function makeRequestToLookUpCellValues(spreadSheetId, range, authHeader) {
 
 export async function batchUpdateToSheet(
   spreadSheetId: string,
-  spreadsheetRange = 'A1:Z500',
-  sheet = '',
-  requestBody: any,
+  spreadsheetRange: string = 'A1:Z500',
+  sheet: string,
+  requestBody: string,
   filterData: any,
   filterOperator: string,
-  authHeader: any,
+  authHeader: RequestInit['headers'],
 ) {
-  if (!filterOperator) {
-    return new Error('filterOperator is required');
-  }
-
   const lookUpData = await lookUpSheetData(
     spreadSheetId,
     spreadsheetRange,
@@ -141,6 +153,7 @@ export async function batchUpdateToSheet(
   };
 
   if (!reqBody.data) return new Error('No data to update');
+
   const response = await makeRequestToBatchUpdateValues(
     spreadSheetId,
     reqBody,
@@ -257,7 +270,21 @@ export async function readData(
   spreadSheetId: string,
   spreadsheetRange: string,
   sheet: string,
-  authHeader: any,
+  authHeader: RequestInit['headers'],
+): Promise<any[]> {
+  return await readDataFromSheet(
+    spreadSheetId,
+    sheet,
+    spreadsheetRange,
+    authHeader,
+  );
+}
+
+export async function readData(
+  spreadSheetId: string,
+  spreadsheetRange: string,
+  sheet: string,
+  authHeader: RequestInit['headers'],
 ): Promise<any[]> {
   return await readDataFromSheet(
     spreadSheetId,
@@ -271,7 +298,7 @@ export async function appendData(
   spreadSheetId: string,
   sheet: string,
   rows: any[],
-  authHeader: any,
+  authHeader: RequestInit['headers'],
 ): Promise<any> {
   return await appendDataToSheet(spreadSheetId, sheet, rows, authHeader);
 }
@@ -280,7 +307,7 @@ export async function deleteData(
   spreadSheetId: string,
   sheet: string,
   rowIndex: string,
-  authHeader: any,
+  authHeader: RequestInit['headers'],
 ): Promise<any> {
   return await deleteDataFromSheet(spreadSheetId, sheet, rowIndex, authHeader);
 }
@@ -289,7 +316,7 @@ async function lookUpSheetData(
   spreadSheetId: string,
   spreadsheetRange: string,
   sheet: string,
-  authHeader: any,
+  authHeader: RequestInit['headers'],
 ) {
   const range = `${sheet}!${spreadsheetRange}`;
   const responseLookUpCellValues = await makeRequestToLookUpCellValues(

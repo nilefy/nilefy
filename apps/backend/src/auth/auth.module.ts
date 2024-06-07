@@ -10,7 +10,6 @@ import { AuthService } from './auth.service';
 import { SignInGoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { DataSourcesModule } from '../data_sources/data_sources.module';
-import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 @Module({
   imports: [
     DataSourcesModule,
@@ -29,11 +28,6 @@ import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main'
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    SignInGoogleStrategy,
-    JwtStrategy,
-    GoogleSheetsQueryService,
-  ],
+  providers: [AuthService, SignInGoogleStrategy, JwtStrategy],
 })
 export class AuthModule {}
