@@ -150,9 +150,7 @@ TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement> & {
-    isVirtualized?: boolean;
-  }
+  React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => {
   if (props.style === undefined) props.style = {};
   props.style.height = ROW_HEIGHT;

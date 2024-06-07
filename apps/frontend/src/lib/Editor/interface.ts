@@ -91,7 +91,7 @@ export type FormControl<
   isEvent?: boolean;
   path: Key;
 
-  hidden?: IsHidden;
+  hidden?: IsHidden<TProps>;
   validation?: JsonSchema7Type;
 } & BaseControlProps &
   ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;

@@ -208,7 +208,6 @@ const TableBody = forwardRef<
                   style={{
                     width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
                   }}
-                  isVirtualized
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
@@ -327,7 +326,21 @@ const calculateEmptyRowsCount = ({
   return pageSize - (rowsCount % pageSize);
 };
 
-const WebloomTable = observer(() => {
+const useRestPageIndexOnPageSizeChange = ({
+  table,
+  paginationMeta,
+}: {
+  table: Table<NilefyRowData>;
+  paginationMeta: {
+    pageSize: number;
+  };
+}) => {
+  useEffect(() => {
+    table.setPageIndex(0);
+  }, [paginationMeta.pageSize, table]);
+};
+
+const WebloomTable = observer(function WebloomTable() {
   const [tableData, setTableData] = useState<NilefyRowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
@@ -502,9 +515,11 @@ const WebloomTable = observer(() => {
     },
   });
 
-  useEffect(() => {
-    table.setPageIndex(0);
-  }, [paginationMeta.pageSize, table]);
+  useRestPageIndexOnPageSizeChange({
+    table,
+    paginationMeta,
+  });
+
   const columnSizeVars = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: { [key: string]: number } = {};
@@ -759,23 +774,6 @@ const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
           nilefyTablePropsSchema.shape.paginationType,
         ),
       },
-      {
-        path: 'pageSize',
-        label: 'Page Size',
-        type: 'input',
-        options: {
-          type: 'number',
-        },
-      },
-      {
-        path: 'pageIndex',
-        label: 'Page Index',
-        type: 'input',
-        options: {
-          type: 'number',
-        },
-        validation: zodToJsonSchema(z.number().default(0)),
-      },
     ],
   },
   {
@@ -821,7 +819,11 @@ const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
         options: {
           placeholder: 'onPageChange',
         },
+        hidden(args) {
+          return args.finalValues.paginationType === 'virtual';
+        },
       },
+
       {
         path: 'onSortChange',
         label: 'onSortChange',
@@ -840,7 +842,13 @@ const WebloomTableWidget: Widget<NilefyTableProps> = {
   config,
   initialProps,
   inspectorConfig,
-  metaProps: new Set(['selectedRow', 'selectedRowIndex', 'columns']),
+  metaProps: new Set([
+    'selectedRow',
+    'selectedRowIndex',
+    'columns',
+    'pageSize',
+    'pageIndex',
+  ]),
   publicAPI: {
     selectedRow: {
       type: 'dynamic',
