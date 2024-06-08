@@ -4,6 +4,8 @@ import {
   WidgetConfig,
 } from '@/lib/Editor/interface';
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
@@ -266,7 +268,7 @@ const TableBody = forwardRef<
           ))}
         </TableRow>
       ));
-    }, [table, isVirtualized, rowVirtualizer]);
+    }, [table, isVirtualized, rowVirtualizer, isSingleSelect]);
     return (
       <TableBodyInner
         className="bg-white"
@@ -425,7 +427,10 @@ const WebloomTable = observer(function WebloomTable() {
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
             {col.accessorKey.toUpperCase()}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {{
+              asc: <ArrowUp size={16} />,
+              desc: <ArrowDown size={16} />,
+            }[String(column.getIsSorted())] ?? <ArrowUpDown size={16} />}
           </div>
         );
       },
