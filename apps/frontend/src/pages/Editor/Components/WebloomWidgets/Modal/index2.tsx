@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import { useContext, useEffect, useState } from 'react';
 import { WidgetContext } from '../..';
-import { autorun, toJS } from 'mobx';
+import { toJS } from 'mobx';
 import {
   Dialog,
   DialogContent,
@@ -23,9 +23,9 @@ import {
   DialogTrigger,
   DialogOverlay,
   DialogPortal,
-} from '@/components/ui/dialog-custom';
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-
+import Modal from './Modal';
 const isEmptyValue = (value: unknown) => {
   if (Array.isArray(value) && value.length === 0) return true;
   if (value === undefined || value === null) {
@@ -47,38 +47,34 @@ const WebloomModal = observer(
   (props: Parameters<typeof WebloomContainer>[0] & WebloomModalProps) => {
     const { id, onPropChange } = useContext(WidgetContext);
     const widget = editorStore.currentPage.getWidgetById(id);
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-      setOpen(widget.childrenHasSelected || widget.isSelected);
-    }, [widget.isSelected, widget.childrenHasSelected]);
-
-    // Close the dialog when clicked outside
     const handleClose = () => {
       setOpen(false);
     };
-    useEffect(
-      () =>
-        autorun(() => {
-          onPropChange({ value: false, key: 'isVisibile' });
-          onPropChange({
-            value: { width: '96px' },
-            key: 'innerContainerStyle',
-          });
-        }),
-      [onPropChange, props],
-    );
+
+    const handleOpen = () => {
+      setOpen(true);
+    };
+
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogOverlay>
-          <DialogContent
-            onPointerDownOutside={handleClose}
-            className={`h-fit w-fit p-0`}
-          >
-            <WebloomContainer {...props}>{props.children}</WebloomContainer>
-          </DialogContent>
-        </DialogOverlay>
-      </Dialog>
+      <div
+        style={{
+          textAlign: 'center',
+          display: 'block',
+          padding: 30,
+          margin: 'auto',
+        }}
+      >
+        <h1 style={{ color: 'green' }}>GeeksforGeeks</h1>
+        <h4>Modal Component in ReactJS?</h4>
+        <button type="button" onClick={handleOpen}>
+          Click Me to Open Modal
+        </button>
+        <Modal isOpen={open} onClose={handleClose}>
+          <WebloomContainer {...props}>{props.children}</WebloomContainer>
+        </Modal>
+      </div>
     );
   },
 );
