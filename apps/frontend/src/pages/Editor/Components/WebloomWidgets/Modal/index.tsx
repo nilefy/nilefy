@@ -48,9 +48,11 @@ const WebloomModal = observer(
     const { id, onPropChange } = useContext(WidgetContext);
     const widget = editorStore.currentPage.getWidgetById(id);
     const [open, setOpen] = useState(true);
+    const [width, setWidth] = useState(0);
 
     useEffect(() => {
       setOpen(widget.childrenHasSelected || widget.isSelected);
+      setWidth(editorStore.currentPage.rootWidget.boundingRect.width);
     }, [widget.isSelected, widget.childrenHasSelected]);
 
     // Close the dialog when clicked outside
@@ -68,9 +70,12 @@ const WebloomModal = observer(
         }),
       [onPropChange, props],
     );
+    // const {left, right, top} =
+    //   editorStore.currentPage.rootWidget.gridBoundingRect;
+    console.log(width, "width")
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogOverlay>
+        <DialogOverlay className={`w-[${width}px]`}>
           <DialogContent
             onPointerDownOutside={handleClose}
             className={`h-fit w-fit p-0`}
