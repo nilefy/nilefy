@@ -34,6 +34,7 @@ import {
   JSLibraryI,
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
+import { WebloomWidget } from './widget';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -411,13 +412,18 @@ export class EditorState implements WebloomDisposable {
     } as WorkerRequest);
   }
 
-  addPage(id: string, name: string, handle: string) {
+  addPage(
+    id: string,
+    name: string,
+    handle: string,
+    tree?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>,
+  ) {
     this.pages[id] = new WebloomPage({
       id,
       name,
       handle,
       workerBroker: this.workerBroker,
-      widgets: {},
+      widgets: tree ?? {},
     });
   }
   getQueryById(id: string) {
