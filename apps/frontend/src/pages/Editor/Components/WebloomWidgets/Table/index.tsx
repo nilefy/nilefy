@@ -58,7 +58,6 @@ import { toJS } from 'mobx';
 export type NilefyRowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
-import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import clsx from 'clsx';
 import { generateColumnsFromData } from './utils';
@@ -88,8 +87,8 @@ const nilefyTablePropsSchema = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
   columns: z.array(nilefyTableColumnSchema).optional(),
   rowSelectionType: z.enum(['single', 'multiple', 'none']).default('single'),
-  isSearchEnabled: z.boolean(),
   paginationType: z.enum(['client', 'server', 'virtual']).default('client'),
+  search: z.string().default(''),
   pageSize: z.number().optional(),
   pageIndex: z.number().optional(),
   emptyState: z.string().default('No rows found'),
@@ -347,34 +346,24 @@ const getPaginationMeta = ({
 const calculateEmptyRowsCount = ({
   isPaginationEnabled,
   pageSize,
-  currentPageIndex,
-  rowsCount,
+  currentPageRows,
 }: {
   isPaginationEnabled: boolean;
   pageSize: number;
-  currentPageIndex: number;
-  rowsCount: number;
+  currentPageRows: number;
 }) => {
   if (!isPaginationEnabled) return 0;
-  const totalNumberOfPages = Math.ceil(rowsCount / pageSize);
-  if (currentPageIndex !== totalNumberOfPages - 1) {
-    return 0;
-  }
-  return pageSize - (rowsCount % pageSize);
+  return pageSize - currentPageRows;
 };
 
 const useRestPageIndexOnPageSizeChange = ({
   table,
-  paginationMeta,
 }: {
   table: Table<NilefyRowData>;
-  paginationMeta: {
-    pageSize: number;
-  };
 }) => {
   useEffect(() => {
     table.setPageIndex(0);
-  }, [paginationMeta.pageSize, table]);
+  }, [table.getState().pagination.pageSize, table]);
 };
 
 const WebloomTable = observer(function WebloomTable() {
@@ -414,6 +403,9 @@ const WebloomTable = observer(function WebloomTable() {
     }
   });
 
+  useAutoRun(() => {
+    setGlobalFilter(String(props.search));
+  });
   // mapping the columns to be  compatible with tanstack-table
 
   const tableCols = columns.map((col) => {
@@ -450,12 +442,7 @@ const WebloomTable = observer(function WebloomTable() {
     rowsCount: tableData.length,
     serverSidePageSize: 0,
   });
-  const emptyRowsCount = calculateEmptyRowsCount({
-    isPaginationEnabled: paginationMeta.isPaginationEnabled,
-    pageSize: paginationMeta.pageSize,
-    currentPageIndex: props.pageIndex ?? 0,
-    rowsCount: tableData.length,
-  });
+
   const isMultiSelect = props.rowSelectionType === 'multiple';
   const isSingleSelect = props.rowSelectionType === 'single';
   const table = useReactTable({
@@ -576,7 +563,6 @@ const WebloomTable = observer(function WebloomTable() {
 
   useRestPageIndexOnPageSizeChange({
     table,
-    paginationMeta,
   });
 
   const columnSizeVars = useMemo(() => {
@@ -603,27 +589,18 @@ const WebloomTable = observer(function WebloomTable() {
     overscan: 5,
     getScrollElement: () => containerRef.current,
   });
-  widget.setValue('pageSize', paginationMeta.pageSize);
+  const emptyRowsCount = calculateEmptyRowsCount({
+    isPaginationEnabled: paginationMeta.isPaginationEnabled,
+    pageSize: paginationMeta.pageSize,
+    currentPageRows: table.getRowModel().rows.length,
+  });
+  console.log('emptyRowsCount', {
+    rowsCount: tableData.length,
+    rowsCount1: table.getRowModel().rows.length,
+  });
   return (
     <div className="flex h-full w-full flex-col shadow-sm">
       <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto rounded-t-md">
-        {props.isSearchEnabled && (
-          <div className=" ml-auto  w-[40%] p-2">
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={(value) => {
-                setGlobalFilter(String(value));
-                // execute user event
-                // editorStore.executeActions<typeof webloomTableEvents>(
-                //   id,
-                //   'onSearchChange',
-                // );
-              }}
-              className=" border p-2 shadow"
-              placeholder="Search"
-            />
-          </div>
-        )}
         <div className="block h-full w-full shadow-md">
           <TableInner
             className="h-full w-full"
@@ -760,8 +737,8 @@ const initialProps: NilefyTableProps = {
   selectedRowIndex: -1,
   columns: [],
   rowSelectionType: 'single',
-  isSearchEnabled: false,
   paginationType: 'client',
+  search: '',
   pageSize: 3,
   emptyState: 'No rows found',
   showHeaders: true,
@@ -826,9 +803,13 @@ const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
         ),
       },
       {
-        path: 'isSearchEnabled',
+        path: 'search',
         label: 'Search',
-        type: 'checkbox',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Search',
+        },
+        validation: zodToJsonSchema(nilefyTablePropsSchema.shape.search),
       },
       {
         path: 'paginationType',
