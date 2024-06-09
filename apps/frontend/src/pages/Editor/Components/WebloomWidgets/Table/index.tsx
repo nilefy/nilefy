@@ -384,6 +384,7 @@ const WebloomTable = observer(function WebloomTable() {
     setTableData(toJS(data));
     // merging predefined cols and cols generated from data
     const cols = generateColumnsFromData(data);
+    if (cols.length === 0) return;
     runInAction(() => {
       cols.forEach((propCol) => {
         const exists = columns.find((col) => col.id === propCol.id);
