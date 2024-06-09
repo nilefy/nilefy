@@ -203,11 +203,11 @@ export interface ConditionObject {
 
 export type Conditions = Array<Condition> | ConditionObject;
 
-export type IsHidden =
+export type IsHidden<T = Record<string, unknown>> =
   | ((args: {
       store: typeof editorStore;
       entityId: string;
-      finalValues: Record<string, unknown>;
+      finalValues: T;
     }) => boolean)
   | boolean
   | Condition

@@ -4,11 +4,11 @@ import {
   WidgetConfig,
 } from '@/lib/Editor/interface';
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
-  ChevronsLeft,
-  ChevronsRight,
-  MoveLeft,
-  MoveRight,
+  ChevronLeft,
+  ChevronRight,
   Table as TableIcon,
 } from 'lucide-react';
 import {
@@ -22,18 +22,31 @@ import {
   Column,
   RowSelectionState,
   FilterFn,
+  Table,
 } from '@tanstack/react-table';
+import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
+
 import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import {
-  Table,
-  TableBody,
+  Table as TableInner,
+  TableBody as TableBodyInner,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+  ROW_HEIGHT,
+} from './table';
 import { Button } from '@/components/ui/button';
-import { useContext, useState } from 'react';
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { WidgetContext } from '../..';
@@ -42,12 +55,13 @@ import { observer } from 'mobx-react-lite';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { z } from 'zod';
 import { toJS } from 'mobx';
-type RowData = Record<string, unknown>;
+export type NilefyRowData = Record<string, unknown>;
 
 import { runInAction } from 'mobx';
-import { DebouncedInput } from '@/components/debouncedInput';
 import { useAutoRun } from '@/lib/Editor/hooks';
-
+import clsx from 'clsx';
+import { generateColumnsFromData } from './utils';
+import { clamp, isNaN, isNumber } from 'lodash';
 //Types
 declare module '@tanstack/react-table' {
   interface FilterFns {
@@ -59,7 +73,7 @@ declare module '@tanstack/react-table' {
 }
 export const columnTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 
-export const webLoomTableColumn = z.object({
+export const nilefyTableColumnSchema = z.object({
   id: z.string(),
   accessorKey: z.string(),
   header: z.string(),
@@ -67,14 +81,15 @@ export const webLoomTableColumn = z.object({
   type: z.enum(columnTypes),
 });
 
-export type WebLoomTableColumn = z.infer<typeof webLoomTableColumn>;
+export type NilefyTableColumn = z.infer<typeof nilefyTableColumnSchema>;
 
-const webloomTableProps = z.object({
+const nilefyTablePropsSchema = z.object({
   data: z.array(z.record(z.string(), z.unknown())),
-  columns: z.array(webLoomTableColumn).optional(),
-  isRowSelectionEnabled: z.boolean(),
-  isSearchEnabled: z.boolean(),
-  isPaginationEnabled: z.boolean(),
+  columns: z.array(nilefyTableColumnSchema).optional(),
+  rowSelectionType: z.enum(['single', 'multiple', 'none']).default('single'),
+  paginationType: z.enum(['client', 'server', 'virtual']).default('client'),
+  totalRecords: z.union([z.number(), z.undefined(), z.literal('')]).default(0),
+  search: z.string().default(''),
   pageSize: z.number().optional(),
   pageIndex: z.number().optional(),
   emptyState: z.string().default('No rows found'),
@@ -84,41 +99,19 @@ const webloomTableProps = z.object({
    * Contains the data of the row selected by the user. It's an empty object if no row is selected
    */
   selectedRow: z.record(z.unknown()),
+  selectedRows: z.array(z.record(z.unknown())),
   /**
    *Contains the index of the row selected by the user
    * if no selection will be -1
    */
   selectedRowIndex: z.number().default(-1),
+  selectedRowIndices: z.array(z.number()),
   onRowSelectionChange: z.string().optional(),
   onPageChange: z.string().optional(),
   onSortChange: z.string().optional(),
 });
 
-export type WebloomTableProps = z.infer<typeof webloomTableProps>;
-
-/**
- * Helper function to generate columns from data
- */
-const generateColumnsFromData = (
-  data: RowData[] | undefined,
-): WebLoomTableColumn[] => {
-  if (!data) return [];
-  // generate columns based on all data elements
-  const keys = data.reduce((acc, row) => {
-    return acc.concat(Object.keys(row));
-  }, [] as string[]);
-  // remove duplicates
-  const uniqueKeys = Array.from(new Set(keys));
-  return uniqueKeys.map((key, index) => {
-    return {
-      id: (index + 1).toString(),
-      accessorKey: key,
-      header: key,
-      name: key,
-      type: 'Default', // TODO: Infer type from data , or we can put it initially as default and then user can change it
-    };
-  });
-};
+export type NilefyTableProps = z.infer<typeof nilefyTablePropsSchema>;
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -133,26 +126,245 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-// const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
-//   let dir = 0;
+const Pagination = ({
+  onPageChange,
+  isNextDisabled,
+  isPrevDisabled,
+  pageNumber,
+  totalPageCount,
+}: {
+  onPageChange: (pageNumber: number) => void;
+  isNextDisabled: boolean;
+  isPrevDisabled: boolean;
+  pageNumber: number;
+  totalPageCount: number;
+}) => {
+  const handlePrevClick = () => {
+    onPageChange(pageNumber - 1);
+  };
 
-//   // Only sort by rank if the column has ranking information
-//   if (rowA.columnFiltersMeta[columnId]) {
-//     dir = compareItems(
-//       rowA.columnFiltersMeta[columnId].itemRank!,
-//       rowB.columnFiltersMeta[columnId].itemRank!,
-//     );
-//   }
+  const handleNextClick = () => {
+    onPageChange(pageNumber + 1);
+  };
+  const [inputValue, setInputValue] = useState(pageNumber + 1);
+  useEffect(() => {
+    setInputValue(pageNumber + 1);
+  }, [pageNumber]);
+  return (
+    <div className="flex">
+      <Button
+        variant="ghost"
+        onClick={handlePrevClick}
+        disabled={isPrevDisabled}
+      >
+        <ChevronLeft />
+      </Button>
+      <Input
+        value={inputValue}
+        onChange={(e) => {
+          const numberized = Number(e.target.value);
+          if (isNumber(numberized) && !isNaN(numberized)) {
+            setInputValue(clamp(numberized, 1, totalPageCount));
+          }
+        }}
+        onBlur={(e) => {
+          let page = e.target.value ? Number(e.target.value) - 1 : 0;
+          page = clamp(page, 0, totalPageCount - 1);
+          onPageChange(page);
+        }}
+        className="w-8 rounded border p-1"
+      />
+      <Button
+        variant="ghost"
+        onClick={handleNextClick}
+        disabled={isNextDisabled}
+      >
+        <ChevronRight />
+      </Button>
+    </div>
+  );
+};
 
-//   // Provide an alphanumeric fallback for when the item ranks are equal
-//   return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
-// };
+const TableBody = forwardRef<
+  HTMLTableSectionElement,
+  {
+    table: Table<NilefyRowData>;
+    emptyState: string;
+    emptyRowsCount: number;
+    rowVirtualizer?: Virtualizer<HTMLDivElement, Element>;
+    isVirtualized?: boolean;
+    isSingleSelect?: boolean;
+  }
+>(
+  (
+    {
+      table,
+      emptyState,
+      emptyRowsCount,
+      rowVirtualizer,
+      isVirtualized,
+      isSingleSelect,
+    },
+    ref,
+  ) => {
+    const TableRows = useCallback(() => {
+      if (isVirtualized) {
+        const { rows } = table.getRowModel();
+        return rowVirtualizer!.getVirtualItems().map((virtualRow) => {
+          const row = rows[virtualRow.index];
+          return (
+            <TableRow
+              data-index={virtualRow.index}
+              ref={(node) => rowVirtualizer!.measureElement(node)}
+              key={row.id}
+              className={clsx('divide-x hover:bg-gray-300', {
+                'bg-gray-200': row.getIsSelected(),
+              })}
+              isVirtualized
+              virtualRow={virtualRow}
+              onClick={() => {
+                if (isSingleSelect) {
+                  row.toggleSelected();
+                }
+              }}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className="flex items-center justify-start px-4"
+                  style={{
+                    width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+                  }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        });
+      }
+      return table.getRowModel().rows.map((row) => (
+        <TableRow
+          key={row.id}
+          className={clsx('divide-x hover:bg-gray-300', {
+            'bg-gray-200': row.getIsSelected(),
+          })}
+          onClick={() => {
+            if (isSingleSelect) {
+              row.toggleSelected();
+            }
+          }}
+        >
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              className="flex items-center justify-start px-4"
+              style={{
+                width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+    }, [table, isVirtualized, rowVirtualizer, isSingleSelect]);
+    return (
+      <TableBodyInner
+        className="bg-white"
+        ref={ref}
+        isVirtualized={isVirtualized}
+        rowVirtualizer={rowVirtualizer}
+      >
+        {table.getRowModel().rows.length === 0 ? (
+          <tr className="flex h-full w-full items-center justify-center text-xl">
+            <td>{emptyState}</td>
+          </tr>
+        ) : (
+          <TableRows />
+        )}
+        {emptyRowsCount > 0 &&
+          new Array(emptyRowsCount).fill(0).map((_, index) => (
+            <TableRow key={index} className="divide-x hover:bg-gray-300">
+              {table.getFlatHeaders().map((header) => (
+                <TableCell
+                  key={header.id}
+                  className="flex items-center justify-start px-4"
+                  style={{
+                    width: `calc(var(--col-${header.id}-size) * 1px)`,
+                  }}
+                ></TableCell>
+              ))}
+            </TableRow>
+          ))}
+      </TableBodyInner>
+    );
+  },
+);
 
-const WebloomTable = observer(() => {
-  const [tableData, setTableData] = useState<RowData[]>([]);
+TableBody.displayName = 'TableBody';
+
+export const MemoizedTableBody = memo(
+  TableBody,
+  (prev, next) => prev.table.options.data === next.table.options.data,
+) as typeof TableBody;
+
+const getPaginationMeta = ({
+  paginationType,
+  tableTop,
+  footerTop,
+  rowsCount,
+}: {
+  paginationType: NilefyTableProps['paginationType'];
+  tableTop: number | undefined;
+  footerTop: number | undefined;
+  rowsCount: number;
+}) => {
+  const isPaginationEnabled =
+    paginationType === 'client' || paginationType === 'server';
+  if (paginationType !== 'client') {
+    return {
+      isPaginationEnabled,
+      pageSize: rowsCount,
+    };
+  }
+  const bodyHeight = (footerTop ?? 0) - (tableTop ?? 0) - 40;
+  const pageSize = Math.floor(bodyHeight / ROW_HEIGHT);
+  return {
+    isPaginationEnabled,
+    pageSize,
+  };
+};
+
+const calculateEmptyRowsCount = ({
+  isPaginationEnabled,
+  pageSize,
+  currentPageRows,
+}: {
+  isPaginationEnabled: boolean;
+  pageSize: number;
+  currentPageRows: number;
+}) => {
+  if (!isPaginationEnabled) return 0;
+  return pageSize - currentPageRows;
+};
+
+const useRestPageIndexOnPageSizeChange = ({
+  table,
+}: {
+  table: Table<NilefyRowData>;
+}) => {
+  useEffect(() => {
+    table.setPageIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.getState().pagination.pageSize, table]);
+};
+
+const WebloomTable = observer(function WebloomTable() {
+  const [tableData, setTableData] = useState<NilefyRowData[]>([]);
   const { onPropChange, id } = useContext(WidgetContext);
   const widget = editorStore.currentPage.getWidgetById(id);
-  const props = widget.finalValues as WebloomTableProps;
+  const props = widget.finalValues as NilefyTableProps;
   const { columns = [] } = props;
   // sorting options
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -165,7 +377,8 @@ const WebloomTable = observer(() => {
     const data = toJS(props.data) || [];
     setTableData(toJS(data));
     // merging predefined cols and cols generated from data
-    const cols = generateColumnsFromData(data[0]);
+    const cols = generateColumnsFromData(data);
+    if (cols.length === 0) return;
     runInAction(() => {
       cols.forEach((propCol) => {
         const exists = columns.find((col) => col.id === propCol.id);
@@ -185,57 +398,90 @@ const WebloomTable = observer(() => {
     }
   });
 
+  useAutoRun(() => {
+    setGlobalFilter(String(props.search));
+  });
   // mapping the columns to be  compatible with tanstack-table
 
   const tableCols = columns.map((col) => {
     return {
       id: col.id,
       accessorKey: col.accessorKey,
-      header: ({ column }: { column: Column<RowData> }) => {
+      header: ({ column }: { column: Column<NilefyRowData> }) => {
         return (
-          <Button
-            variant="ghost"
+          <div
+            className="flex h-full w-full cursor-pointer items-center justify-center"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
             {col.accessorKey.toUpperCase()}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+            {{
+              asc: <ArrowUp size={16} />,
+              desc: <ArrowDown size={16} />,
+            }[String(column.getIsSorted())] ?? <ArrowUpDown size={16} />}
+          </div>
         );
       },
     };
   });
+  const tableTop =
+    (widget.dom?.getBoundingClientRect().top ?? 0) +
+    //TODO: HACK this calculation isn't really doing anything I just want this to be reactive with respect to the table size
+    widget.pixelDimensions.y -
+    widget.pixelDimensions.y;
+  const footerRef = useRef<HTMLDivElement>(null);
+  const footerTop = footerRef.current?.getBoundingClientRect().top;
+  const paginationMeta = getPaginationMeta({
+    paginationType: props.paginationType,
+    tableTop,
+    footerTop,
+    rowsCount: tableData.length,
+  });
 
+  const isMultiSelect = props.rowSelectionType === 'multiple';
+  const isSingleSelect = props.rowSelectionType === 'single';
   const table = useReactTable({
     data: tableData,
     filterFns: {
       fuzzy: fuzzyFilter,
     },
-    enableMultiRowSelection: false,
+    enableMultiRowSelection: isMultiSelect,
+    enableRowSelection: props.rowSelectionType !== 'none',
     globalFilterFn: fuzzyFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    columns: props.isRowSelectionEnabled
+    manualPagination: props.paginationType === 'server',
+    rowCount:
+      props.paginationType === 'server'
+        ? props.totalRecords || undefined
+        : undefined,
+    columnResizeMode: 'onChange',
+    columns: isMultiSelect
       ? [
           {
             id: 'select',
+            size: 40,
             header: ({ table }) => (
-              <Checkbox
-                checked={
-                  table.getIsAllPageRowsSelected() ||
-                  (table.getIsSomePageRowsSelected() && 'indeterminate')
-                }
-                onCheckedChange={(value) =>
-                  table.toggleAllPageRowsSelected(!!value)
-                }
-                aria-label="Select all"
-              />
+              <div className="flex h-full w-full items-center justify-center">
+                <Checkbox
+                  checked={
+                    table.getIsAllPageRowsSelected() ||
+                    (table.getIsSomePageRowsSelected() && 'indeterminate')
+                  }
+                  onCheckedChange={(value) => {
+                    table.toggleAllPageRowsSelected(!!value);
+                  }}
+                  aria-label="Select all"
+                />
+              </div>
             ),
             cell: ({ row }) => (
-              <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-              />
+              <div className="flex h-full w-full items-center justify-center">
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(value) => row.toggleSelected(!!value)}
+                  aria-label="Select row"
+                />
+              </div>
             ),
             enableSorting: false,
             enableHiding: false,
@@ -246,10 +492,11 @@ const WebloomTable = observer(() => {
     state: {
       pagination: {
         pageIndex: props.pageIndex ?? 0,
-        pageSize: props.isPaginationEnabled
-          ? props.pageSize ?? 3
+        pageSize: paginationMeta.isPaginationEnabled
+          ? paginationMeta.pageSize
           : props.data.length,
       },
+
       rowSelection,
       sorting,
       globalFilter,
@@ -286,16 +533,25 @@ const WebloomTable = observer(() => {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: (updater) => {
-      const selectedIndex: string | undefined = Object.keys(
+      const selectedIndices: string[] = Object.keys(
         typeof updater === 'function' ? updater(rowSelection) : updater,
-      )[0];
+      );
+
       onPropChange({
         key: 'selectedRow',
-        value: selectedIndex ? props.data[+selectedIndex] : {},
+        value: selectedIndices[0] ? props.data[+selectedIndices[0]] : {},
       });
       onPropChange({
         key: 'selectedRowIndex',
-        value: selectedIndex ? +selectedIndex : -1,
+        value: selectedIndices[0] ? +selectedIndices[0] : -1,
+      });
+      onPropChange({
+        key: 'selectedRows',
+        value: selectedIndices.map((index) => props.data[+index]),
+      });
+      onPropChange({
+        key: 'selectedRowIndices',
+        value: selectedIndices.map((index) => +index),
       });
       setRowSelection(updater);
       // execute user event
@@ -303,124 +559,142 @@ const WebloomTable = observer(() => {
     },
   });
 
+  useRestPageIndexOnPageSizeChange({
+    table,
+  });
+
+  const columnSizeVars = useMemo(() => {
+    const headers = table.getFlatHeaders();
+    const colSizes: { [key: string]: number } = {};
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]!;
+      colSizes[`--header-${header.id}-size`] = header.getSize();
+      colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
+    }
+    return colSizes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.getState().columnSizingInfo, columns]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { rows } = table.getRowModel();
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    estimateSize: () => ROW_HEIGHT,
+    measureElement:
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
+    overscan: 5,
+    getScrollElement: () => containerRef.current,
+  });
+  const emptyRowsCount = calculateEmptyRowsCount({
+    isPaginationEnabled: paginationMeta.isPaginationEnabled,
+    pageSize: paginationMeta.pageSize,
+    currentPageRows: table.getRowModel().rows.length,
+  });
+  console.log('emptyRowsCount', {
+    rowsCount: tableData.length,
+    rowsCount1: table.getRowModel().rows.length,
+  });
   return (
-    <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto">
-      {props.isSearchEnabled && (
-        <div className=" ml-auto  w-[40%] p-2">
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={(value) => {
-              setGlobalFilter(String(value));
-              // execute user event
-              // editorStore.executeActions<typeof webloomTableEvents>(
-              //   id,
-              //   'onSearchChange',
-              // );
+    <div className="flex h-full w-full flex-col shadow-sm">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto rounded-t-md">
+        <div className="block h-full w-full shadow-md">
+          <TableInner
+            className="h-full w-full"
+            containerRef={containerRef}
+            style={{
+              ...columnSizeVars,
             }}
-            className=" border p-2 shadow"
-            placeholder="Search"
-          />
-        </div>
-      )}
-      <div className="h-full w-full rounded-md border shadow-md">
-        <Table className="h-full">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
+            isVirtualized={paginationMeta.isPaginationEnabled}
+          >
+            <TableHeader
+              className="bg-white"
+              isVirtualized={paginationMeta.isPaginationEnabled}
+            >
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                  key={headerGroup.id}
+                  className="divide-x hover:bg-gray-300"
+                >
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className="relative"
+                        colSpan={header.colSpan}
+                        style={{
+                          width: `calc(var(--header-${header?.id}-size) * 1px)`,
+                        }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                        <div
+                          {...{
+                            onDoubleClick: () => header.column.resetSize(),
+                            onMouseDown: (e) => {
+                              e.stopPropagation();
+                              const cb = header.getResizeHandler();
+                              cb(e);
+                            },
+                            onTouchStart: header.getResizeHandler(),
+                          }}
+                          className={clsx(
+                            'absolute right-[-5px] top-0 h-full w-[10px] cursor-col-resize touch-none select-none bg-blue-300 opacity-0',
+                            {
+                              'opacity-100 z-5': header.column.getIsResizing(),
+                            },
                           )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length === 0 ? (
-              <tr className="flex h-full w-full items-center justify-center text-xl">
-                <td>{props.emptyState}</td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                        />
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
+              ))}
+            </TableHeader>
+            {table.getState().columnSizingInfo.isResizingColumn ? (
+              <MemoizedTableBody
+                table={table}
+                emptyState={props.emptyState}
+                emptyRowsCount={emptyRowsCount}
+                isVirtualized={props.paginationType === 'virtual'}
+                rowVirtualizer={rowVirtualizer}
+                isSingleSelect={isSingleSelect}
+              />
+            ) : (
+              <TableBody
+                table={table}
+                emptyState={props.emptyState}
+                emptyRowsCount={emptyRowsCount}
+                isVirtualized={props.paginationType === 'virtual'}
+                rowVirtualizer={rowVirtualizer}
+                isSingleSelect={isSingleSelect}
+              />
             )}
-          </TableBody>
-        </Table>
-      </div>
-      {props.isPaginationEnabled && (
-        <div className="flex items-center justify-center space-x-2 py-4">
-          <Button
-            variant="ghost"
-            className="rounded border p-1"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronsLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <MoveLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <MoveRight />
-          </Button>
-          <Button
-            variant="ghost"
-            className="rounded border p-1"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronsRight />
-          </Button>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
-            </strong>
-          </span>
-          <span className="flex items-center gap-1">
-            | Go to page:
-            <Input
-              type="number"
-              min={1}
-              max={table.getPageCount()}
-              defaultValue={table.getState().pagination.pageIndex + 1}
-              onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
-              }}
-              className="w-16 rounded border p-1"
-            />
-          </span>
+          </TableInner>
         </div>
-      )}
+      </div>
+
+      <div
+        ref={footerRef}
+        className="flex w-full items-center justify-center rounded-b-md border-t bg-white py-2"
+      >
+        {paginationMeta.isPaginationEnabled && (
+          <Pagination
+            isNextDisabled={!table.getCanNextPage()}
+            isPrevDisabled={!table.getCanPreviousPage()}
+            pageNumber={table.getState().pagination.pageIndex}
+            totalPageCount={table.getPageCount()}
+            onPageChange={(pageNumber) => {
+              table.setPageIndex(pageNumber);
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 });
@@ -433,7 +707,7 @@ const config: WidgetConfig = {
   layoutConfig: {
     colsCount: 20,
     rowsCount: 40,
-    minColumns: 20,
+    minColumns: 1,
     minRows: 40,
   },
   widgetActions: {
@@ -447,11 +721,6 @@ const config: WidgetConfig = {
       path: 'pageIndex',
       type: 'SETTER',
     },
-    setPageSize: {
-      name: 'setPageSize',
-      path: 'pageSize',
-      type: 'SETTER',
-    },
     setSelectedRowIndex: {
       name: 'setSelectedRowIndex',
       path: 'selectedRowIndex',
@@ -460,21 +729,24 @@ const config: WidgetConfig = {
   },
 };
 
-const initialProps: WebloomTableProps = {
+const initialProps: NilefyTableProps = {
   data: [{ id: '1', name: 'John', age: 23 }],
   selectedRow: {},
   selectedRowIndex: -1,
   columns: [],
-  isRowSelectionEnabled: false,
-  isSearchEnabled: false,
-  isPaginationEnabled: false,
+  rowSelectionType: 'single',
+  paginationType: 'client',
+  search: '',
   pageSize: 3,
   emptyState: 'No rows found',
+  totalRecords: 0,
   showHeaders: true,
   showFooter: true,
+  selectedRows: [],
+  selectedRowIndices: [],
 };
 
-const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
+const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
   {
     sectionName: 'Data',
     children: [
@@ -515,36 +787,55 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
     sectionName: 'Table Options',
     children: [
       {
-        path: 'isRowSelectionEnabled',
+        path: 'rowSelectionType',
         label: 'Row Selection',
-        type: 'checkbox',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Single', value: 'single' },
+            { label: 'Multiple', value: 'multiple' },
+            { label: 'None', value: 'none' },
+          ],
+        },
+        validation: zodToJsonSchema(
+          nilefyTablePropsSchema.shape.rowSelectionType,
+        ),
       },
       {
-        path: 'isSearchEnabled',
+        path: 'search',
         label: 'Search',
-        type: 'checkbox',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Search',
+        },
+        validation: zodToJsonSchema(nilefyTablePropsSchema.shape.search),
       },
       {
-        path: 'isPaginationEnabled',
+        path: 'paginationType',
         label: 'Pagination',
-        type: 'checkbox',
+        type: 'select',
+        options: {
+          items: [
+            { label: 'Client', value: 'client' },
+            { label: 'Server', value: 'server' },
+            { label: 'Virtual', value: 'virtual' },
+          ],
+        },
+        validation: zodToJsonSchema(
+          nilefyTablePropsSchema.shape.paginationType,
+        ),
       },
       {
-        path: 'pageSize',
-        label: 'Page Size',
-        type: 'input',
+        path: 'totalRecords',
+        label: 'Total Records',
+        type: 'inlineCodeInput',
         options: {
-          type: 'number',
+          placeholder: 'Total Records',
         },
-      },
-      {
-        path: 'pageIndex',
-        label: 'Page Index',
-        type: 'input',
-        options: {
-          type: 'number',
+        validation: zodToJsonSchema(nilefyTablePropsSchema.shape.totalRecords),
+        hidden(args) {
+          return args.finalValues.paginationType !== 'server';
         },
-        validation: zodToJsonSchema(z.number().default(0)),
       },
     ],
   },
@@ -591,7 +882,11 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
         options: {
           placeholder: 'onPageChange',
         },
+        hidden(args) {
+          return args.finalValues.paginationType === 'virtual';
+        },
       },
+
       {
         path: 'onSortChange',
         label: 'onSortChange',
@@ -605,24 +900,81 @@ const inspectorConfig: EntityInspectorConfig<WebloomTableProps> = [
   },
 ];
 
-const WebloomTableWidget: Widget<WebloomTableProps> = {
+const WebloomTableWidget: Widget<NilefyTableProps> = {
   component: WebloomTable,
   config,
   initialProps,
   inspectorConfig,
-  metaProps: new Set(['selectedRow', 'selectedRowIndex', 'columns']),
+  metaProps: new Set([
+    'selectedRow',
+    'selectedRowIndex',
+    'selectedRows',
+    'selectedRowIndices',
+    'columns',
+    'pageSize',
+    'pageIndex',
+  ]),
   publicAPI: {
+    selectedRows: {
+      type: 'dynamic',
+      description: 'Selected rows data',
+    },
     selectedRow: {
       type: 'dynamic',
       description: 'Selected row data',
     },
     selectedRowIndex: {
-      type: 'dynamic',
+      type: 'static',
+      typeSignature: 'number',
       description: 'Selected row Index data',
     },
+    selectedRowIndices: {
+      type: 'static',
+      typeSignature: 'number[]',
+      description: 'Selected row indices',
+    },
     pageIndex: {
-      type: 'dynamic',
+      type: 'static',
+      typeSignature: 'number',
       description: 'if pagination is enabled will be current page index',
+    },
+    pageSize: {
+      type: 'static',
+      typeSignature: 'number',
+      description: 'if pagination is enabled will be current page size',
+    },
+    setData: {
+      type: 'function',
+      args: [
+        {
+          name: 'data',
+          type: 'Record<string, unknown>[]',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the data of the table',
+    },
+    setPage: {
+      type: 'function',
+      args: [
+        {
+          name: 'pageIndex',
+          type: 'number',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the page index of the table',
+    },
+    setSelectedRowIndex: {
+      type: 'function',
+      args: [
+        {
+          name: 'selectedRowIndex',
+          type: 'number',
+        },
+      ],
+      returns: 'void',
+      description: 'Set the selected row index of the table',
     },
   },
 };
