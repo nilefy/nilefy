@@ -88,6 +88,7 @@ const nilefyTablePropsSchema = z.object({
   columns: z.array(nilefyTableColumnSchema).optional(),
   rowSelectionType: z.enum(['single', 'multiple', 'none']).default('single'),
   paginationType: z.enum(['client', 'server', 'virtual']).default('client'),
+  totalRecords: z.union([z.number(), z.undefined(), z.literal('')]).default(0),
   search: z.string().default(''),
   pageSize: z.number().optional(),
   pageIndex: z.number().optional(),
@@ -313,26 +314,18 @@ const getPaginationMeta = ({
   tableTop,
   footerTop,
   rowsCount,
-  serverSidePageSize,
 }: {
   paginationType: NilefyTableProps['paginationType'];
   tableTop: number | undefined;
   footerTop: number | undefined;
   rowsCount: number;
-  serverSidePageSize: number;
 }) => {
   const isPaginationEnabled =
     paginationType === 'client' || paginationType === 'server';
-  if (!isPaginationEnabled)
-    // virtual
+  if (paginationType !== 'client') {
     return {
       isPaginationEnabled,
       pageSize: rowsCount,
-    };
-  if (paginationType === 'server') {
-    return {
-      isPaginationEnabled,
-      pageSize: serverSidePageSize,
     };
   }
   const bodyHeight = (footerTop ?? 0) - (tableTop ?? 0) - 40;
@@ -363,6 +356,7 @@ const useRestPageIndexOnPageSizeChange = ({
 }) => {
   useEffect(() => {
     table.setPageIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table.getState().pagination.pageSize, table]);
 };
 
@@ -441,7 +435,6 @@ const WebloomTable = observer(function WebloomTable() {
     tableTop,
     footerTop,
     rowsCount: tableData.length,
-    serverSidePageSize: 0,
   });
 
   const isMultiSelect = props.rowSelectionType === 'multiple';
@@ -457,6 +450,10 @@ const WebloomTable = observer(function WebloomTable() {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: props.paginationType === 'server',
+    rowCount:
+      props.paginationType === 'server'
+        ? props.totalRecords || undefined
+        : undefined,
     columnResizeMode: 'onChange',
     columns: isMultiSelect
       ? [
@@ -742,6 +739,7 @@ const initialProps: NilefyTableProps = {
   search: '',
   pageSize: 3,
   emptyState: 'No rows found',
+  totalRecords: 0,
   showHeaders: true,
   showFooter: true,
   selectedRows: [],
@@ -826,6 +824,18 @@ const inspectorConfig: EntityInspectorConfig<NilefyTableProps> = [
         validation: zodToJsonSchema(
           nilefyTablePropsSchema.shape.paginationType,
         ),
+      },
+      {
+        path: 'totalRecords',
+        label: 'Total Records',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Total Records',
+        },
+        validation: zodToJsonSchema(nilefyTablePropsSchema.shape.totalRecords),
+        hidden(args) {
+          return args.finalValues.paginationType !== 'server';
+        },
       },
     ],
   },
