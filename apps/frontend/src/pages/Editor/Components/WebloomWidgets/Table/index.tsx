@@ -592,10 +592,7 @@ const WebloomTable = observer(function WebloomTable() {
     pageSize: paginationMeta.pageSize,
     currentPageRows: table.getRowModel().rows.length,
   });
-  console.log('emptyRowsCount', {
-    rowsCount: tableData.length,
-    rowsCount1: table.getRowModel().rows.length,
-  });
+
   return (
     <div className="flex h-full w-full flex-col shadow-sm">
       <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col overflow-auto rounded-t-md">
