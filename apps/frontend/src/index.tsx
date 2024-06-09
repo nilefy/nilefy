@@ -29,6 +29,12 @@ import {
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
 import { appLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
+import { ForgotPassword } from './pages/auth/forgot_password';
+import { NeedHelpSigningIn } from './pages/auth/need_help_in';
+import {
+  ResetPassword,
+  resetPasswordLoader,
+} from './pages/auth/reset_password';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
@@ -140,6 +146,34 @@ const router = createBrowserRouter([
     element: (
       <NonAuthRoute>
         <SignIn />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <NonAuthRoute>
+        <ForgotPassword />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: 'auth/reset-password/:email/:token',
+    loader: resetPasswordLoader,
+    element: (
+      <NonAuthRoute>
+        <ResetPassword />
+      </NonAuthRoute>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/need_help_in',
+    element: (
+      <NonAuthRoute>
+        <NeedHelpSigningIn />
       </NonAuthRoute>
     ),
     errorElement: <ErrorPage />,

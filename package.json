@@ -14,6 +14,7 @@
     "db:push": "cd packages/database && dotenv -e ../../.env pnpm db:push",
     "db:check": "cd packages/database && dotenv -e ../../.env pnpm db:check",
     "db:studio": "cd packages/database && dotenv -e ../../.env pnpm db:studio",
+    "db:syncDss": "cd apps/backend && dotenv -e ../../.env pnpm db:syncDss",
     "db:seed": "dotenv turbo db:seed",
     "db:reset": "dotenv turbo db:reset",
     "typecheck": "turbo typecheck",

@@ -1,6 +1,6 @@
 import { QueryConfig, QueryRet } from '../../../data_queries/query.types';
 import { QueryRunnerI } from '../../../data_queries/query.interface';
-import { configSchema, ConfigT, QueryT } from './types';
+import { configSchema, ConfigT, querySchema, QueryT } from './types';
 import { mongodb as OPERATIONS } from '../common/operations';
 import { MongoClient } from 'mongodb';
 import {
@@ -22,8 +22,9 @@ export default class MongoDBQueryService
   ): Promise<QueryRet> {
     try {
       configSchema.parse(dataSourceConfig);
+      querySchema.parse(query.query);
       const client = this.connect(dataSourceConfig);
-      const data = await this.runQuery(query.query.query, client);
+      const data = await this.runQuery(query.query, client);
       await client.close();
       return {
         statusCode: 200,
@@ -38,7 +39,7 @@ export default class MongoDBQueryService
     }
   }
 
-  async runQuery(query: QueryT['query'], client: MongoClient) {
+  async runQuery(query: QueryT, client: MongoClient) {
     switch (query.operation) {
       case OPERATIONS.CREATE_DOC:
         return createDocument(query, client);

@@ -204,7 +204,13 @@ export class DataQueriesService {
   }): Promise<AppQueryDto> {
     const [q] = await this.db
       .update(queries)
-      .set({ ...query, updatedById, updatedAt: sql`now()` })
+      .set({
+        dataSourceId: query.dataSourceId,
+        query: query.query,
+        triggerMode: query.triggerMode,
+        updatedById,
+        updatedAt: sql`now()`,
+      })
       .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
       .returning({ id: queries.id });
     return await this.getQuery(appId, q.id);
