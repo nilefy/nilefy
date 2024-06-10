@@ -17,6 +17,9 @@ const SOCKET_EVENTS_REQUEST = {
   CREATE_QUERY: "createQuery",
   UPDATE_QUERY: "updateQuery",
   DELETE_QUERY: 'deleteQuery',
+  CREATE_JS_QUERY: "createJsQuery",
+  UPDATE_JS_QUERY: "updateJsQuery",
+  DELETE_JS_QUERY: 'deleteJsQuery',
 } as const;
 
 const SOCKET_EVENTS_RESPONSE = {

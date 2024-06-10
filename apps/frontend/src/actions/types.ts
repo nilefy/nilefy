@@ -1,3 +1,4 @@
+import { createJSquery, updateJSquery } from '@/api/jsQueries.api';
 import { addQuery, updateQuery } from '@/api/queries.api';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { BoundingRect } from '@/lib/Editor/interface';
@@ -78,6 +79,37 @@ export type RemoteTypes =
     }
   | {
       event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        queryId: string;
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['CREATE_JS_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof createJSquery>[0]['dto'];
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['UPDATE_JS_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof updateJSquery>[0]['dto'];
+        queryId: string;
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_JS_QUERY'];
       data: {
         /**
          * operation id
