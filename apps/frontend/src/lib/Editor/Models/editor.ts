@@ -397,10 +397,12 @@ export class EditorState implements WebloomDisposable {
   }
 
   get currentPage() {
+    console.trace(this.currentPageId);
     return this.pages[this.currentPageId];
   }
 
-  async changePage(id: string, name: string, handle: string) {
+  async changePage(id: string | number, name: string, handle: string) {
+    id = id.toString();
     if (!this.pages[id]) {
       runInAction(() => {
         this.isLoadingPage = true;

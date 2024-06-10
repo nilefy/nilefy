@@ -4,6 +4,7 @@ import RenameInput from '../../../../components/renameInput';
 import { PageDto } from '@/api/pages.api';
 import { Button } from '@/components/ui/button';
 import PageMenu from './pageMenu';
+import { editorStore } from '@/lib/Editor/Models';
 
 function Page({
   workspaceId,
@@ -24,7 +25,13 @@ function Page({
 
   return (
     <div className={` flex flex-row items-center justify-between p-2 `}>
-      <Button variant={'ghost'} className="text-[15px]">
+      <Button
+        variant={'ghost'}
+        className="text-[15px]"
+        onClick={() => {
+          editorStore.changePage(page.id, page.name, page.handle);
+        }}
+      >
         {page.name}
       </Button>
       <PageMenu
