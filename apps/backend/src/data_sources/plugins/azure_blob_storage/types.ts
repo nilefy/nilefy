@@ -120,11 +120,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              container: z.string(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string()),
         },
         {
           path: 'config.blob',
@@ -143,11 +139,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              blob: z.string(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string()),
         },
         {
           path: 'config.includDeleted',
@@ -163,11 +155,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              includeDeleted: z.boolean().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.boolean().optional()),
         },
         // {
         //   path: 'config.content',
@@ -183,11 +171,7 @@ export const queryConfigForm = {
         //       },
         //     ],
         //   },
-        //   validation: zodToJsonSchema(
-        //     z.object({
-        //       content: z.unknown(),
-        //     }),
-        //   ),
+        //   validation: zodToJsonSchema(z.unknown()),
         // },
         // {
         //   path: 'config.contentType',
@@ -203,11 +187,7 @@ export const queryConfigForm = {
         //       },
         //     ],
         //   },
-        //   validation: zodToJsonSchema(
-        //     z.object({
-        //       contentType: z.string().optional(),
-        //     }),
-        //   ),
+        //   validation: zodToJsonSchema(z.string().optional()),
         // },
         {
           path: 'config.pageSize',
@@ -226,11 +206,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              pageSize: z.number(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.number()),
         },
         {
           path: 'config.prefix',
@@ -249,11 +225,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              prefix: z.string().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string().optional()),
         },
         {
           path: 'config.continuationToken',
@@ -272,40 +244,9 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              continuationToken: z.string().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string().optional()),
         },
       ],
     },
   ],
-};
-export const queryConfig = {
-  schema: zodToJsonSchema(querySchema, 'querySchema'),
-  uiSchema: {
-    operation: {
-      'ui:title': 'Operation',
-      'ui:widget': 'select',
-    },
-    container: {
-      'ui:title': 'Container Name',
-    },
-    blob: {
-      'ui:title': 'Blob Name',
-    },
-    contentType: {
-      'ui:title': 'Content Type',
-    },
-    pageSize: {
-      'ui:title': 'Page Size',
-    },
-    prefix: {
-      'ui:title': 'Prefix',
-    },
-    continuationToken: {
-      'ui:title': 'Continuation Token',
-    },
-  },
 };

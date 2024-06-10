@@ -24,12 +24,12 @@ export default class AzureBlobStorageQueryService
       const client = this.connect(dataSourceConfig);
       const data = await this.runQuery(query.query.query, client);
       return {
-        status: 200,
+        statusCode: 200,
         data,
       };
     } catch (error) {
       return {
-        status: 500,
+        statusCode: 500,
         data: {},
         error: (error as Error).message,
       };
