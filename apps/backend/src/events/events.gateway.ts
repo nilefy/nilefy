@@ -11,11 +11,11 @@ import {
 import { AppDto } from '../dto/apps.dto';
 import { Server, WebSocket } from 'ws';
 import { ComponentsService } from '../components/components.service';
-import { PayloadUser, RequestUser } from 'src/auth/auth.types';
+import { PayloadUser, RequestUser } from '../auth/auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
 import { pick } from 'lodash';
 import { NilefyNode, frontKnownKeys } from '../dto/components.dto';
 import { DatabaseI } from '@nilefy/database';
@@ -32,6 +32,13 @@ import {
 } from '../dto/data_queries.dto';
 import { DataQueriesService } from '../data_queries/data_queries.service';
 import { z } from 'zod';
+import { JsQueriesService } from '../js_queries/js_queries.service';
+import {
+  AddJsQueryDto,
+  UpdateJsQueryDto,
+  addJsQuerySchema,
+  updateJsQuerySchema,
+} from '../dto/js_queries.dto';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -56,6 +63,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private jwtService: JwtService,
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private dataQueriesService: DataQueriesService,
+    private jsQueriesService: JsQueriesService,
   ) {}
 
   @WebSocketServer()
@@ -391,6 +399,107 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.dataQueriesService.updateQuery({
       appId: socket.appId,
       queryId: query.queryId,
+      updatedById: user.userId,
+      query: query.query,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_JS_QUERY)
+  async handleAddJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: addJsQuerySchema,
+          opId: z.string().optional(),
+        }),
+      ),
+    )
+    query: { query: AddJsQueryDto; opId?: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.jsQueriesService.create({
+      ...query.query,
+      createdById: user.userId,
+      appId: socket.appId,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_JS_QUERY)
+  async handleDeleteJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({ queryId: z.string(), opId: z.string().optional() }),
+      ),
+    )
+    query: { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
+    await this.jsQueriesService.delete(socket.appId, query.queryId);
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_JS_QUERY)
+  async handleUpdateJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: updateJsQuerySchema,
+          opId: z.string().optional(),
+          queryId: z.string(),
+        }),
+      ),
+    )
+    query: { query: UpdateJsQueryDto; opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.jsQueriesService.update({
+      appId: socket.appId,
+      jsQueryId: query.queryId,
       updatedById: user.userId,
       query: query.query,
     });
