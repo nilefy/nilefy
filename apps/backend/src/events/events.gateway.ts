@@ -19,6 +19,19 @@ import { PageDto } from 'src/dto/pages.dto';
 import { pick } from 'lodash';
 import { NilefyNode, frontKnownKeys } from '../dto/components.dto';
 import { DatabaseI } from '@nilefy/database';
+import {
+  SOCKET_EVENTS_REQUEST,
+  SOCKET_EVENTS_RESPONSE,
+} from '@nilefy/constants';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import {
+  AddQueryDto,
+  addQuerySchema,
+  UpdateQueryDto,
+  updateQuerySchema,
+} from '../dto/data_queries.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { z } from 'zod';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -34,7 +47,6 @@ type UpdateNodePayload = (Partial<NilefyNode> & {
 })[];
 
 // TODO: make page id dynamic
-// TODO: make app id dynamic
 @WebSocketGateway({
   WebSocket: LoomSocket,
 })
@@ -43,6 +55,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private componentsService: ComponentsService,
     private jwtService: JwtService,
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private dataQueriesService: DataQueriesService,
   ) {}
 
   @WebSocketServer()
@@ -51,14 +64,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: LoomSocket) {
     console.log('CONNECTION: client connected to ws', client.user?.userId);
     client.on('error', (e) => console.error('ERROR: ', e));
-    client.send('hi');
   }
 
   handleDisconnect() {
     console.log('DISCONNECTION: client disconnect from ws');
   }
 
-  @SubscribeMessage('auth')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.AUTH)
   async handleAuth(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
@@ -76,11 +88,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.appId = appId;
       socket.pageId = pageId;
       console.log('USER AUTHED: ', socket.user.username);
-      // TODO: return structred signal
-      socket.send('ok authed');
-      return;
+      return {
+        message: SOCKET_EVENTS_RESPONSE.AUTHED,
+      };
     } catch {
-      socket.send('get out');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -89,14 +105,19 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * for now gonna depend on frontend id
    */
-  @SubscribeMessage('insert')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_NODE)
   async handleInsert(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
+      opId,
       nodes,
       sideEffects,
     }: {
+      /**
+       * operation id
+       */
+      opId?: string;
       nodes: NilefyNode[];
       sideEffects: UpdateNodePayload;
     },
@@ -104,7 +125,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // TODO: is there a middleware concept in ws
     const user = socket.user;
     if (user === null) {
-      socket.send('need send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -139,30 +164,35 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('ADDED COMPONENT/s');
-      return `done ${nodes[0]?.id}`;
+      return {
+        opId,
+        message: 'done',
+      };
     } catch (e) {
-      console.log(e);
       throw new WsException(e.message);
     }
   }
 
-  @SubscribeMessage('update')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_NODE)
   async handleUpdate(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
-    payload: UpdateNodePayload,
+    { opId, updates }: { opId?: string; updates: UpdateNodePayload },
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
     try {
       await this.db.transaction(async (tx) => {
         return await Promise.all(
-          payload.map((c) => {
+          updates.map((c) => {
             // clear all columns that not on the db(i hate drizzzle already)
             const temp = pick(c, frontKnownKeys);
             return this.componentsService.update(
@@ -179,10 +209,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('UPDATED COMPONENT/s');
-      return `done`;
+      return {
+        opId,
+        message: 'done',
+      };
     } catch (e) {
-      console.log('e in update', e);
       throw new WsException(e.message);
     }
   }
@@ -212,21 +243,30 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('delete')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_NODE)
   async handleDelete(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
+      opId,
       nodesId,
       sideEffects,
     }: {
+      /**
+       * operation id
+       */
+      opId?: string;
       nodesId: NilefyNode['id'][];
       sideEffects: UpdateNodePayload;
     },
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -252,11 +292,111 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }),
         );
       });
-      console.log('DELETED COMPONENT/s ' + nodesId);
-      return `done`;
+      return {
+        opId,
+        message: 'done',
+      };
     } catch (e) {
-      console.log(e);
       throw new WsException(e.message);
     }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_QUERY)
+  async handleAddQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: addQuerySchema,
+          opId: z.string().optional(),
+        }),
+      ),
+    )
+    query: { query: AddQueryDto; opId?: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+    await this.dataQueriesService.addQuery({
+      ...query.query,
+      createdById: user.userId,
+      appId: socket.appId,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_QUERY)
+  async handleDeleteQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({ queryId: z.string(), opId: z.string().optional() }),
+      ),
+    )
+    query: { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.deleteQuery(socket.appId, query.queryId);
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_QUERY)
+  async handleUpdateQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: updateQuerySchema,
+          opId: z.string().optional(),
+          queryId: z.string(),
+        }),
+      ),
+    )
+    query: { query: UpdateQueryDto; opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.updateQuery({
+      appId: socket.appId,
+      queryId: query.queryId,
+      updatedById: user.userId,
+      query: query.query,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
   }
 }

@@ -1,11 +1,11 @@
 // Import dependencies
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { signIn } from '@/api/auth';
-import { useAuthStore } from './useAuthStore';
+import { signIn } from '@/api/auth.api';
 import { JwtPayload } from '@/types/auth.types';
-import { jwtDecode } from 'jwt-decode';
 import { FetchXError } from '@/utils/fetch';
+import { useMutation } from '@tanstack/react-query';
+import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from './useAuthStore';
 
 export function useSignIn() {
   const navigate = useNavigate();

@@ -7,6 +7,7 @@ import {
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   AppQueriesDto,
+  AppQueryDto,
   QueryDb,
   QueryDto,
   UpdateQueryDto,
@@ -18,11 +19,16 @@ import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
-import { DatabaseI, PgTrans, queries } from '@nilefy/database';
 import { ComponentsService } from '../components/components.service';
 import { apps } from '@nilefy/database';
 import { PageDto } from '../dto/pages.dto';
 import { jsQueries } from '@nilefy/database';
+import {
+  DatabaseI,
+  PgTrans,
+  queries,
+  workspaceDataSources,
+} from '@nilefy/database';
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
@@ -45,6 +51,11 @@ export class DataQueriesService {
     evaluatedQuery: Record<string, unknown>,
   ): Promise<QueryRet> {
     const query = await this.getQuery(appId, queryId);
+    if (!query.dataSourceId) {
+      throw new BadRequestException(
+        'query should be connected to datasource to run the query',
+      );
+    }
     const ds = await this.dataSourcesService.getOne(
       workspaceId,
       query.dataSourceId,
@@ -60,10 +71,54 @@ export class DataQueriesService {
   /**
    * @returns return complete query back
    */
-  async addQuery(query: QueryDb): Promise<CompleteQueryI> {
-    const [q] = await this.db.insert(queries).values(query).returning({
-      id: queries.id,
-    });
+  async addQuery(
+    query: Omit<QueryDb, 'baseDataSourceId'> & {
+      dataSourceId: number;
+    },
+  ): Promise<AppQueryDto> {
+    // const insertQuery = sql`INSERT INTO  workspace_app_queries (
+    //   id,
+    //   app_id,
+    //   created_by_id,
+    //   query,
+    //   trigger_mode,
+    //   data_source_id,
+    //   base_data_source_id
+    // )
+
+    // SELECT ${query.id},
+    //         ${query.appId},
+    //         ${query.createdById},
+    //         ${query.query},
+    //         ${query.triggerMode},
+    //         ${query.dataSourceId},
+    //         data_sources.id
+
+    // FROM data_sources
+    // WHERE data_sources.id = ${query.dataSourceId}
+    // returning workspace_app_queries.id;`;
+    // const q = await this.db.execute(insertQuery);
+    // console.log(
+    //   '🪵 [data_queries.service.ts:68] ~ token ~ \x1b[0;32mq\x1b[0m = ',
+    //   q.rows,
+    // );
+    const baseDataSourceId = await this.db.query.workspaceDataSources.findFirst(
+      {
+        columns: {
+          dataSourceId: true,
+        },
+        where: eq(workspaceDataSources.id, query.dataSourceId),
+      },
+    );
+    const [q] = await this.db
+      .insert(queries)
+      .values({
+        ...query,
+        baseDataSourceId: baseDataSourceId!.dataSourceId,
+      })
+      .returning({
+        id: queries.id,
+      });
     return await this.getQuery(query.appId, q.id);
   }
 
@@ -73,35 +128,29 @@ export class DataQueriesService {
       .values(queriesDto);
   }
 
-  async getAppQueries(appId: QueryDto['appId']): Promise<AppQueriesDto[]> {
+  async getAppQueries(appId: QueryDto['appId']): Promise<AppQueriesDto> {
     const q = await this.db.query.queries.findMany({
       where: eq(queries.appId, appId),
       columns: {
         id: true,
         query: true,
-        updatedAt: true,
-        createdAt: true,
         appId: true,
-        createdById: true,
-        updatedById: true,
         dataSourceId: true,
         triggerMode: true,
       },
       with: {
+        baseDataSource: {
+          columns: {
+            queryConfig: true,
+            id: true,
+            type: true,
+            name: true,
+          },
+        },
         dataSource: {
           columns: {
             id: true,
             name: true,
-          },
-          with: {
-            dataSource: {
-              columns: {
-                queryConfig: true,
-                id: true,
-                type: true,
-                name: true,
-              },
-            },
           },
         },
       },
@@ -112,36 +161,31 @@ export class DataQueriesService {
   async getQuery(
     appId: QueryDto['appId'],
     queryId: QueryDto['id'],
-  ): Promise<CompleteQueryI> {
+  ): Promise<AppQueryDto> {
     const q = await this.db.query.queries.findFirst({
       where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
       columns: {
         id: true,
         query: true,
-        updatedAt: true,
-        createdAt: true,
         appId: true,
-        createdById: true,
-        updatedById: true,
         dataSourceId: true,
         triggerMode: true,
       },
       with: {
+        baseDataSource: {
+          columns: {
+            queryConfig: true,
+            id: true,
+            type: true,
+            name: true,
+          },
+        },
         dataSource: {
           columns: {
             id: true,
             name: true,
           },
-          with: {
-            dataSource: {
-              columns: {
-                queryConfig: true,
-                id: true,
-                type: true,
-                name: true,
-              },
-            },
-          },
+          with: {},
         },
       },
     });
@@ -156,16 +200,6 @@ export class DataQueriesService {
       .delete(queries)
       .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
       .returning({ id: queries.id });
-    return q;
-  }
-
-  async deleteDataSourceQueries(
-    dataSourceId: QueryDto['dataSourceId'],
-  ): Promise<QueryDto[]> {
-    const q = await this.db
-      .delete(queries)
-      .where(eq(queries.dataSourceId, dataSourceId))
-      .returning();
     return q;
   }
 
@@ -229,7 +263,13 @@ export class DataQueriesService {
     }
     const [q] = await this.db
       .update(queries)
-      .set({ ...query, updatedById, updatedAt: sql`now()` })
+      .set({
+        dataSourceId: query.dataSourceId,
+        query: query.query,
+        triggerMode: query.triggerMode,
+        updatedById,
+        updatedAt: sql`now()`,
+      })
       .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
       .returning({ id: queries.id });
     return await this.getQuery(appId, q.id);

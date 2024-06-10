@@ -1,7 +1,7 @@
+import { signUp } from '@/api/auth.api';
+import { FetchXError } from '@/utils/fetch';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { signUp } from '@/api/auth';
-import { FetchXError } from '@/utils/fetch';
 
 export function useSignUp() {
   const navigate = useNavigate();

@@ -131,6 +131,7 @@ export class WebloomJSQuery
   workspaceId: number;
   createdAt: JsQueryI['createdAt'];
   updatedAt: JsQueryI['updatedAt'];
+  baseDataSource: { type: string } = { type: 'jsQuery' };
   // as inconvenient as it is, this makes things consistent across all queries
   dataSource = {
     dataSource: {

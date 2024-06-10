@@ -26,7 +26,6 @@ import { ExpressAuthedRequest } from '../auth/auth.types';
 import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { TestConnectionT } from '../data_queries/query.interface';
 import z from 'zod';
-
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
 @Controller('workspaces/:workspaceId/data-sources')

@@ -90,11 +90,8 @@ export type FormControl<
   type: FormControlType;
   isEvent?: boolean;
   path: Key;
-  /**
-   * @description used to indicate that the code inside can be evaluated without "{{}}"
-   */
-  isCode?: boolean;
-  hidden?: IsHidden;
+
+  hidden?: IsHidden<TProps>;
   validation?: JsonSchema7Type;
 } & BaseControlProps &
   ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;

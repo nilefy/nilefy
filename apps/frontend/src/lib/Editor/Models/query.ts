@@ -139,13 +139,15 @@ export class WebloomQuery
         | keyof ConstructorParameters<typeof Entity>[0]
         | 'queryClient'
         | 'workspaceId'
+        | 'baseDataSource'
       >
     >
 {
   appId: CompleteQueryI['appId'];
   workspaceId: number;
   dataSource: CompleteQueryI['dataSource'];
-  dataSourceId: CompleteQueryI['dataSourceId'];
+  baseDataSource: CompleteQueryI['baseDataSource'];
+  dataSourceId?: CompleteQueryI['dataSourceId'] | null;
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
   private readonly queryClient: QueryClient;
@@ -168,6 +170,7 @@ export class WebloomQuery
     workspaceId,
     dataSource,
     dataSourceId,
+    baseDataSource,
     triggerMode,
     createdAt,
     updatedAt,
@@ -185,7 +188,7 @@ export class WebloomQuery
         triggerMode: triggerMode ?? 'manually',
         data: undefined,
         queryState: 'idle',
-        type: dataSource.dataSource.type,
+        type: baseDataSource.type,
         statusCode: undefined,
         error: undefined,
       },
@@ -217,7 +220,7 @@ export class WebloomQuery
       entityType: 'query',
       inspectorConfig: concat(
         [],
-        dataSource.dataSource.queryConfig.formConfig as any,
+        baseDataSource.queryConfig.formConfig as any,
         defaultQueryInspectorConfig,
       ),
       // @ts-expect-error TODO: fix this
@@ -282,6 +285,7 @@ export class WebloomQuery
     this.workspaceId = workspaceId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
+    this.baseDataSource = baseDataSource;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     makeObservable(this, {
@@ -312,6 +316,7 @@ export class WebloomQuery
     if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
+    if (dto.baseDataSource) this.baseDataSource = dto.baseDataSource;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
     if (dto.rawValues) {
       this.rawValues.data = dto.rawValues.data;

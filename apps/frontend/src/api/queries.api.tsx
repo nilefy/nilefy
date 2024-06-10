@@ -13,7 +13,7 @@ export type QueryI = {
    * un-evaluated config
    */
   query: Record<string, unknown>;
-  dataSourceId: number;
+  dataSourceId?: number | null;
   appId: number;
   createdById: number;
   updatedById: number;
@@ -36,9 +36,13 @@ type RunQueryBody = {
 };
 
 export type CompleteQueryI = QueryI & {
-  dataSource: Pick<WsDataSourceI, 'id' | 'name'> & {
-    dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'type' | 'queryConfig'>;
-  };
+  dataSource?:
+    | (Pick<WsDataSourceI, 'name'> & { id?: null | WsDataSourceI['id'] })
+    | null;
+  baseDataSource: Pick<
+    GlobalDataSourceI,
+    'id' | 'name' | 'type' | 'queryConfig'
+  >;
 };
 
 export async function getQueries({
@@ -83,6 +87,10 @@ export async function addQuery({
     dataSourceId: number;
     id: QueryI['id'];
     query: QueryI['query'];
+    /**
+     * default manual
+     */
+    triggerMode?: QueryI['triggerMode'];
   };
 }) {
   const res = await fetchX(
@@ -128,7 +136,7 @@ export async function updateQuery({
   appId: QueryI['appId'];
   queryId: QueryI['id'];
   dto: Partial<{
-    dataSourceId: QueryI['dataSourceId'];
+    dataSourceId: QueryI['dataSourceId'] | null;
     id: QueryI['id'];
     query: QueryI['query'];
     triggerMode: QueryI['triggerMode'];

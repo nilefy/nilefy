@@ -1,37 +1,46 @@
 import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  UseGuards,
-  Req,
-  UsePipes,
-  Res,
-  Param,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Redirect,
+  Req,
+  Res,
+  UseGuards,
+  UsePipes,
   Logger,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignInGoogleOAuthGuard } from './google.guard';
-import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { ConfigService } from '@nestjs/config';
+import { Request, Response } from 'express';
 import {
-  signUpSchema,
-  signInSchema,
   CreateUserDto,
   LoginUserDto,
+  forgotPasswordSchema,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
 } from '../dto/users.dto';
-import { GoogleAuthedRequest } from './auth.types';
-import { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
-
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { AuthService } from './auth.service';
+import { GoogleAuthedRequest } from './auth.types';
+import { SignInGoogleOAuthGuard } from './google.guard';
+import { DataSourcesService } from '../data_sources/data_sources.service';
+import { scopeMap } from '../data_sources/plugins/googlesheets/types';
+import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 @Controller('auth')
 export class AuthController {
   constructor(
+    private dataSourcesService: DataSourcesService,
     private authService: AuthService,
+    private googleSheetsQueryService: GoogleSheetsQueryService,
     private configService: ConfigService<EnvSchema, true>,
   ) {}
-
   @Post('signup')
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) userDto: CreateUserDto,
@@ -69,6 +78,57 @@ export class AuthController {
     Logger.debug(frontURL);
     response.redirect(302, frontURL.toString());
   }
+  @Get('googlesheets/:ws/:ds')
+  @Redirect()
+  async googleLogin(
+    @Param('ws') ws: string,
+    @Param('ds') ds: string,
+    @Res() res: Response,
+  ) {
+    const scope: string = (await this.dataSourcesService.getOne(+ws, +ds))
+      .config.scope;
+    const scopeLinks = scopeMap[scope];
+    const authUrl = this.googleSheetsQueryService.getAuthUrl(scopeLinks);
+    // Set cookies for ws and ds
+    res.cookie('ws', ws, { httpOnly: true });
+    res.cookie('ds', ds, { httpOnly: true });
+
+    return { url: authUrl };
+  }
+  @Get('login/google-sheets-redirect')
+  async callback(
+    @Query('code') code: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const tokens = await this.googleSheetsQueryService.getTokensFromCode(code);
+    // Now we can use the tokens to authenticate requests to Google Sheets API
+    // For example, maybe  saving them in the database for use later when using the datasource
+    const googleToken = tokens.access_token;
+    const googleRefreshToken = tokens.refresh_token;
+    // Get ws and ds from cookies
+    const ws = req.cookies.ws;
+    const ds = req.cookies.ds;
+    const dataSource = await this.dataSourcesService.getOne(+ws, +ds);
+    this.dataSourcesService.update(
+      {
+        dataSourceId: +ds,
+        workspaceId: +ws,
+        updatedById: null,
+      },
+      {
+        config: {
+          ...dataSource.config,
+          access_token: googleToken,
+          refresh_token: googleRefreshToken,
+        },
+      },
+    );
+    // Save the tokens in the database
+    res.cookie('access_token', googleToken, { httpOnly: true });
+    res.cookie('refresh_token', googleRefreshToken, { httpOnly: true });
+    res.redirect(`http://localhost:5173/${ws}/datasources/${ds}`);
+  }
 
   @Get('confirm/:email/:token')
   async confirm(
@@ -92,5 +152,21 @@ export class AuthController {
     }
     response.redirect(302, frontURL.toString());
     return;
+  }
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema))
+    resetPasswordDto: ResetPasswordDto,
+  ) {
+    const { password, token } = resetPasswordDto;
+    return await this.authService.resetPassword(password, token);
   }
 }

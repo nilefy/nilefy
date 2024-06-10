@@ -248,6 +248,10 @@ export const queriesRelations = relations(queries, ({ one }) => ({
     references: [workspaceDataSources.id],
     relationName: wsDataSourceQueriesRelation,
   }),
+  baseDataSource: one(dataSources, {
+    fields: [queries.baseDataSourceId],
+    references: [dataSources.id],
+  }),
 }));
 
 export const jsQueriesRelations = relations(jsQueries, ({ one }) => ({
