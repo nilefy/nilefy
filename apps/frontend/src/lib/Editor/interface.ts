@@ -1,112 +1,19 @@
-import { InputProps } from '@/components/ui/input';
-import { FunctionComponent, ReactNode } from 'react';
-import { JsonSchema7Type } from 'zod-to-json-schema';
+import { FunctionComponent } from 'react';
 import { EntityActionConfig } from './evaluation/interface';
 import { WebloomWidget } from './Models/widget';
 import { NewWidgePayload } from './Models/page';
 import { LucideProps } from 'lucide-react';
-import { IsHidden } from '@/pages/Editor/Components/entityForm';
+import {
+  BaseControlProps,
+  EntityInspectorConfig as BaseEntityInspectorConfig,
+  InlineCodeInputProps,
+  InspectorColorProps,
+  InspectorFormControlsTypes,
+  InspectorInputProps,
+  InspectorSelectProps,
+} from '@nilefy/constants';
+import { ExtendedIsHidden } from '@/pages/Editor/Components/entityForm';
 
-type BaseControlProps = {
-  label: string;
-};
-
-// each widget props
-type InspectorInputProps = Partial<
-  Pick<InputProps, 'type' | 'placeholder' | 'max' | 'min'>
->;
-
-type InspectorStaticSelectProps = {
-  items: { label: string; value: string }[];
-};
-type InspectorDynamicSelectProps = {
-  path: string;
-  convertToOptions: (value: unknown) => { label: string; value: string }[];
-};
-type InspectorSelectProps = {
-  placeholder?: string;
-} & (InspectorStaticSelectProps | InspectorDynamicSelectProps);
-
-type InspectorColorProps = {
-  color: string;
-};
-
-type InspectorEvents = Record<string, never>;
-
-type InspectorDatePickerProps = {
-  date: Date;
-};
-export type ArrayInputProps<T = any> = {
-  subform: FormControl[];
-  SubFormWrapper?: React.FC<{
-    onDelete: () => void;
-    children: ReactNode;
-    value: T;
-  }>;
-  FormWrapper?: React.FC<{ children: ReactNode }>;
-  newItemDefaultValue: Record<string, unknown>;
-  addButtonText?: string;
-};
-
-// config panel types
-type FormControlOptions = {
-  input: InspectorInputProps;
-  select: InspectorSelectProps;
-  color: InspectorColorProps;
-  event: InspectorEvents;
-  sqlEditor: {
-    placeholder?: string;
-  };
-  list: undefined;
-  checkbox: undefined;
-  inlineCodeInput: InlineCodeInputProps;
-  chartDatasets: undefined;
-  datePicker: InspectorDatePickerProps;
-  array: ArrayInputProps;
-  keyValue: undefined;
-  codeInput: undefined;
-};
-
-type MappedTypeToArray<T> = T extends { [K in keyof T]: infer U } ? U[] : never;
-type EntityInspectorConfig<
-  TProps extends Record<string, unknown> = Record<string, unknown>,
-> = {
-  sectionName: string;
-  hidden?: (props: TProps) => boolean;
-  deps?: TProps[];
-  children: MappedTypeToArray<{
-    [key in keyof TProps]: {
-      [key2 in InspectorFormControlsTypes]: FormControl<key2, TProps, key>;
-    }[InspectorFormControlsTypes];
-  }>;
-}[];
-
-export type FormControl<
-  FormControlType extends
-    InspectorFormControlsTypes = InspectorFormControlsTypes,
-  TProps extends Record<string, unknown> = Record<string, unknown>,
-  Key extends keyof TProps = keyof TProps,
-> = {
-  type: FormControlType;
-  isEvent?: boolean;
-  path: Key;
-
-  hidden?: IsHidden<TProps>;
-  validation?: JsonSchema7Type;
-} & BaseControlProps &
-  ConditionalOptionalFormControlOptions<FormControlOptions[FormControlType]>;
-
-export type ConditionalOptionalFormControlOptions<T> = T extends undefined
-  ? object
-  : {
-      options: T;
-    };
-
-type InspectorFormControlsTypes = keyof FormControlOptions;
-
-type InlineCodeInputProps = {
-  placeholder?: string;
-};
 export type BoundingRect = {
   left: number;
   top: number;
@@ -210,7 +117,9 @@ export type FunctionPublicApiItem = {
   type: 'function';
 } & FunctionType;
 export type PublicApi = Record<string, PublicApiItem>;
-
+type EntityInspectorConfig<
+  TWidgetProps extends Record<string, unknown> = Record<string, unknown>,
+> = BaseEntityInspectorConfig<TWidgetProps, ExtendedIsHidden>;
 export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
   initialProps: TWidgetProps;
@@ -228,16 +137,17 @@ type SelectOptions = {
   value: string;
   label: string;
 };
+
 // inspector types
 export type {
   BaseControlProps,
   InspectorInputProps,
   InspectorSelectProps,
-  EntityInspectorConfig,
   InspectorFormControlsTypes,
   InlineCodeInputProps,
   InspectorColorProps,
   SelectOptions,
+  EntityInspectorConfig,
 };
 
 export type EntityTypes = 'query' | 'widget' | 'globals' | 'jsQuery';

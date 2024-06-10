@@ -198,12 +198,13 @@ export class AppsService {
   }
 
   /**
-   * @returns get application with its default page which is the first page
+   * @returns get application with its default page which is the first page or page with certain id
    */
   async findOne(
     currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
     appId: AppDto['id'],
+    pageId?: PageDto['id'],
   ): Promise<AppRetDto> {
     const user = await this.db.query.users.findFirst({
       where: eq(users.id, currentUser),
@@ -251,8 +252,12 @@ export class AppsService {
     // TODO: for now i get the first page as the default but needs to add default page concept to the database
     const defaultPage = await this.pagesService.findOne(
       app.id,
-      app.pages[0].id,
+      // load certain page if provided other than that load default page
+      pageId ? pageId : app.pages[0].id,
     );
+    if (!defaultPage) {
+      throw new BadRequestException('page not found');
+    }
     return {
       ...app,
       onBoardingCompleted: user.onboardingCompleted ?? false,

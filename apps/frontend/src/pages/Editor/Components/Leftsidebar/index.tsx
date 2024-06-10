@@ -10,10 +10,13 @@ import { PageSelector } from './pageSelector';
 import { Libraries } from './libraries';
 
 type LeftSidebarTabs = 'Pages' | 'Libraries' | 'Components';
+const PAGES_TAB_KEY: LeftSidebarTabs = 'Pages';
+const LIBRARIES_TAB_KEY: LeftSidebarTabs = 'Libraries';
+const COMPONENTS_TAB_KEY: LeftSidebarTabs = 'Components';
 
 const ComponentsTab = observer(() => {
   return (
-    <TabsContent value="Components">
+    <TabsContent value={COMPONENTS_TAB_KEY}>
       <div className="flex flex-col">
         {editorStore.currentPage.rootWidget.nodes.map((node) => {
           return <ComponentTreeItem key={node} id={node} />;
@@ -25,7 +28,7 @@ const ComponentsTab = observer(() => {
 
 const PagesTab = observer(() => {
   return (
-    <TabsContent value="Pages">
+    <TabsContent value={PAGES_TAB_KEY}>
       <PageSelector />
     </TabsContent>
   );
@@ -33,7 +36,7 @@ const PagesTab = observer(() => {
 
 const LibrariesTab = observer(() => {
   return (
-    <TabsContent value="Libraries">
+    <TabsContent value={LIBRARIES_TAB_KEY}>
       <Libraries />
     </TabsContent>
   );

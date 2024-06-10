@@ -1,6 +1,7 @@
 import { useToast } from '@/components/ui/use-toast';
 import { FetchXError, fetchX } from '@/utils/fetch';
 import {
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   useMutation,
   useQuery,
@@ -41,13 +42,51 @@ function useFetchPages(workspaceId: number, appId: number) {
   return pages;
 }
 
-const fetchPage = async (appId: number, pageId: number) => {
+const fetchPage = async ({
+  workspaceId,
+  appId,
+  pageId,
+}: {
+  workspaceId: number;
+  appId: number;
+  pageId: number;
+}) => {
   const response = await fetchX(
-    `workspaces/:workspaceId/apps/${appId}/pages/${pageId}`,
+    `workspaces/${workspaceId}/apps/${appId}/pages/${pageId}`,
   );
   const data = await response.json();
   return data as PageDto;
 };
+
+// TODO: change function name because it's currently misleading
+export const usePageQuery = ({
+  workspaceId,
+  appId,
+  pageId,
+}: {
+  workspaceId: number;
+  appId: number;
+  pageId: number;
+}): UndefinedInitialDataOptions<
+  ReturnType<typeof fetchPage>,
+  Error,
+  ReturnType<typeof fetchPage>
+> => ({
+  queryKey: [PAGES_QUERY_KEY, { workspaceId, appId, pageId }],
+  queryFn: async () => {
+    const data = await fetchPage({ workspaceId, appId, pageId });
+    return data;
+  },
+  staleTime: 0,
+});
+
+function useFetchPage(workspaceId: number, appId: number, pageId: number) {
+  return useQuery({
+    queryKey: [PAGES_QUERY_KEY, { workspaceId, appId, pageId }],
+    queryFn: async () => await fetchPage({ workspaceId, appId, pageId }),
+    staleTime: 0,
+  });
+}
 
 async function createPage({
   workspaceId,
@@ -199,7 +238,7 @@ function useDeletePage(
 
 export const pages = {
   index: { useQuery: useFetchPages },
-  one: { useQuery: fetchPage },
+  one: { useQuery: useFetchPage },
   create: { useMutation: useCreatePage },
   clone: { useMutation: useClonePage },
   update: { useMutation: useUpdatePage },

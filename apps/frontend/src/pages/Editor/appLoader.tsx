@@ -21,6 +21,7 @@ export const appLoader =
     const currentUser = getUser() as JwtPayload;
     const workspaceId = params.workspaceId;
     const appId = params.appId;
+    const pageId = params.pageId;
     if (!workspaceId || !appId) {
       throw new Error('use this loader under :workspaceId and :appId');
     }
@@ -31,6 +32,7 @@ export const appLoader =
     const appQuery = useAppQuery({
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
+      pageId: pageId ? +pageId : undefined,
     });
 
     const jsQueriesQuery = useJSQueries({

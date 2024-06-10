@@ -122,13 +122,23 @@ export type AppCompleteT = AppI & {
 async function one({
   workspaceId,
   appId,
+  pageId,
 }: {
   workspaceId: number;
   appId: number;
+  /**
+   * as optional field front can provide page id and the back will load instead of the default page
+   */
+  pageId?: number;
 }) {
-  const res = await fetchX(`workspaces/${workspaceId}/apps/${appId}`, {
-    method: 'GET',
-  });
+  const res = await fetchX(
+    `workspaces/${workspaceId}/apps/${appId}${
+      pageId ? '?pageId=' + pageId : ''
+    }`,
+    {
+      method: 'GET',
+    },
+  );
   return (await res.json()) as AppCompleteT;
 }
 
@@ -194,17 +204,24 @@ export const useAppsQuery = ({
 function useApps(...rest: Parameters<typeof useAppsQuery>) {
   return useQuery(useAppsQuery(...rest));
 }
-// todo change function name because it's currently misleading
+
+// TODO: change function name because it's currently misleading
 export const useAppQuery = ({
   workspaceId,
   appId,
+  pageId,
 }: {
   workspaceId: number;
   appId: number;
+  /**
+   * as optional field front can provide page id and the back will load instead of the default page
+   */
+  pageId?: number;
 }): UndefinedInitialDataOptions<AppCompleteT, Error, AppCompleteT> => ({
+  // i don't want to add page id to the query key disable this error
   queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
   queryFn: async () => {
-    const data = await one({ workspaceId, appId });
+    const data = await one({ workspaceId, appId, pageId });
     return data;
   },
   staleTime: 0,
