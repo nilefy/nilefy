@@ -29,7 +29,7 @@ function isTokenExpired(token: string): boolean {
 export const resetPasswordLoader = ({
   params,
 }: {
-  params: { token: string };
+  params: Record<string, string | undefined>;
 }) => {
   const { token } = params;
   if (!token || isTokenExpired(token)) {

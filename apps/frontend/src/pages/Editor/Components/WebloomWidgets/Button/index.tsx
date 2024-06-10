@@ -36,7 +36,7 @@ const WebloomButton = observer(function WebloomButton() {
           widget.handleEvent('onClick');
         }}
         disabled={props.isLoading || props.isDisabled}
-        className={`active:bg-primary/20 block h-full w-full`}
+        className={`block h-full w-full active:bg-primary/20`}
       >
         {props.isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
