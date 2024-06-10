@@ -119,6 +119,16 @@ export const queryConfigForm = {
           options: {
             placeholder: 'Enter bucket name',
           },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'EQUALS',
+                value: operations[2],
+              },
+            ],
+          },
           validation: zodToJsonSchema(z.string()),
         },
         {
