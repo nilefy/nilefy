@@ -35,6 +35,7 @@ import {
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
 import { WebloomWidget } from './widget';
+import { fetchAppData } from '@/api/apps.api';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -47,6 +48,7 @@ export class EditorState implements WebloomDisposable {
     addMenuOpen: boolean;
   };
   initPromise!: Promise<void>;
+  isLoadingPage: boolean = false;
   resolveInit!: () => void;
   rejectInit!: (e: Error) => void;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
@@ -78,7 +80,6 @@ export class EditorState implements WebloomDisposable {
       entities: computed,
       name: observable,
       currentPage: computed,
-      changePage: action,
       addPage: action,
       addQuery: action,
       removeQuery: action,
@@ -98,6 +99,7 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
+      isLoadingPage: observable,
     });
   }
 
@@ -262,6 +264,7 @@ export class EditorState implements WebloomDisposable {
       this.currentPageId = currentPageId;
       // NOTE: backend should create page by default
       if (pages.length === 0) {
+        // TODO does this ever get hit?
         this.addPage('page1', 'page1', 'page1');
         this.currentPageId = 'page1';
       }
@@ -397,12 +400,26 @@ export class EditorState implements WebloomDisposable {
     return this.pages[this.currentPageId];
   }
 
-  changePage(id: string, name: string, handle: string) {
+  async changePage(id: string, name: string, handle: string) {
     if (!this.pages[id]) {
-      this.addPage(id, name, handle);
-      this.currentPageId = id;
+      runInAction(() => {
+        this.isLoadingPage = true;
+      });
+      const tree = await this.queryClient.fetchQuery(
+        fetchAppData({
+          workspaceId: this.workspaceId,
+          appId: this.appId,
+          pageId: +id,
+        }),
+      );
+      runInAction(() => {
+        this.addPage(id, name, handle, tree.defaultPage.tree);
+        this.currentPageId = id;
+      });
     } else {
-      this.currentPageId = id;
+      runInAction(() => {
+        this.currentPageId = id;
+      });
     }
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',

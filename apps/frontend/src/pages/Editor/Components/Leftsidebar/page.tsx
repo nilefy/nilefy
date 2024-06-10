@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
-import RenameInput from './renameInput';
-import PageMenu from './pageMenu';
+import { useState } from 'react';
+import RenameInput from '../../../../components/renameInput';
+
 import { PageDto } from '@/api/pages.api';
 import { Button } from '@/components/ui/button';
+import PageMenu from './pageMenu';
 
 function Page({
   workspaceId,

@@ -1,5 +1,5 @@
 import { commandManager } from '@/actions/CommandManager';
-import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { AppCompleteT, fetchAppData } from '@/api/apps.api';
 import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
@@ -29,7 +29,7 @@ export const appLoader =
     const queriesQuery = useQueriesQuery(+workspaceId, +appId);
 
     // Fetch the app data
-    const appQuery = useAppQuery({
+    const appQuery = fetchAppData({
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
       pageId: pageId ? +pageId : undefined,
