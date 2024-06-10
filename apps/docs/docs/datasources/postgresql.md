@@ -23,7 +23,7 @@ To connect your PostgreSQL database to your workspace, follow these steps:
 
 3. **Provide Connection Details**:
 
-    ![Nilefy](img/ds_config.png) 
+    ![Nilefy](img/postgresql/ds_config.png) 
 
    - **Name**: You can change the connection name.
    - **User**: Enter the username for accessing the database.
@@ -55,11 +55,11 @@ Once your PostgreSQL database is connected, you can proceed to run queries:
    - Select the option to add a new query.
    - Select your connected PostgreSQL database.
 
-    ![Nilefy](img/query_add.png)
+    ![Nilefy](img/postgresql/query_add.png)
 
    - Enter your SQL query and other configurations in the query editor.
     
-    ![Nilefy](img/query.png)
+    ![Nilefy](img/postgresql/query.png)
 
 
 3. **Configuring Actions**: Configure the actions to be performed based on the query's result.

@@ -1,5 +1,6 @@
 ---
 title: 'Overview'
+sidebar_position: 1
 ---
 
 # Overview of Data Sources in *Nilefy*
@@ -36,7 +37,7 @@ To connect a data source to your application, follow these general steps:
    - For APIs, specify the endpoint URL, authentication method, and any required headers.
    - For cloud services, provide the necessary credentials and configuration details specific to the service.
 
-    ![Nilefy](img/ds_config.png)
+    ![Nilefy](img/postgresql/ds_config.png)
 
 4. **Test the Connection**:
    - Ensure the connection is successful and data can be retrieved without issues.
