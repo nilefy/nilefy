@@ -115,7 +115,7 @@ List all buckets in your Google Cloud Storage.
 To list files in a specific bucket with an optional prefix:
 
 - **Bucket Name**: Specify the name of the bucket.
-- **Prefix** (optional): Provide a prefix to filter the files listed.
+- **Prefix (optional)**: Provide a prefix to filter the files listed.
 
 ### 5. Download File
 
@@ -123,6 +123,6 @@ To download a file from a specific bucket:
 
 - **Bucket Name**: Specify the name of the bucket.
 - **File Name**: Specify the name of the file to be downloaded.
-- **Destination** (optional): Provide the local destination path where the file will be saved.
+- **Destination (optional)**: Provide the local destination path where the file will be saved.
 
 By following these steps, you can effectively connect to Google Cloud Storage and perform various operations. This allows you to manage and interact with your storage seamlessly within your applications.
