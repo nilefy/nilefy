@@ -119,11 +119,7 @@ export const queryConfigForm = {
           options: {
             placeholder: 'Enter bucket name',
           },
-          validation: zodToJsonSchema(
-            z.object({
-              bucket: z.string(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string()),
         },
         {
           path: 'config.file',
@@ -142,11 +138,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              file: z.string(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string()),
         },
         // {
         // path: 'config.filePath',
@@ -180,11 +172,7 @@ export const queryConfigForm = {
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              prefix: z.string().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(z.string().optional()),
         },
         // {
         //   path: 'config.destination',
@@ -200,118 +188,9 @@ export const queryConfigForm = {
         //       },
         //     ],
         //   },
-        //   validation: zodToJsonSchema(
-        //     z.object({
-        //       destination: z.string().optional(),
-        //     }),
-        //   ),
+        //   validation: zodToJsonSchema(z.string().optional()),
         // },
       ],
     },
   ],
-};
-
-export const queryConfig = {
-  schema: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'object',
-        properties: {
-          operation: {
-            type: 'string',
-            enum: operations,
-            default: operations[0],
-          },
-        },
-        required: ['operation'],
-        dependencies: {
-          operation: {
-            oneOf: [
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[0]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  file: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'file'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[1]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  filePath: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'filePath'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[2]],
-                  },
-                },
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[3]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  prefix: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[4]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  file: {
-                    type: 'string',
-                  },
-                  destination: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'file'],
-              },
-            ],
-          },
-        },
-      },
-    },
-    required: ['query'],
-    additionalProperties: false,
-  },
-  uiSchema: {
-    operation: {
-      'ui:title': 'Operation',
-      'ui:widget': 'select',
-    },
-    bucket: {
-      'ui:title': 'Bucket',
-    },
-    file: {
-      'ui:title': 'File',
-    },
-  },
 };
