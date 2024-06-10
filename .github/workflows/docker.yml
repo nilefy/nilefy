@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: nagynabil/nilefy:${{ env.RELEASE_TAG }}
+          tags: nagynabil/nilefy:${{ steps.tagName.outputs.tag }}
