@@ -60,7 +60,7 @@ const DndOptions: Partial<TouchBackendOptions> = {
   enableMouseEvents: true,
 };
 // router config
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '',
     element: (

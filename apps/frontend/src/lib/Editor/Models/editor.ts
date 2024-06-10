@@ -38,6 +38,7 @@ import { WebloomWidget } from './widget';
 import { fetchAppData } from '@/api/apps.api';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePage } from '@/actions/editor/changePage';
+import { router } from '@/index';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -423,6 +424,7 @@ export class EditorState implements WebloomDisposable {
         this.currentPageId = id;
       });
     }
+    router.navigate(`/${this.workspaceId}/apps/edit/${this.appId}/${id}`);
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
       body: {
