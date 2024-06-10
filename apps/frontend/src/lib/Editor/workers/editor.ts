@@ -20,7 +20,7 @@ import {
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { AnalysisContext } from '../evaluation/dependancyUtils';
 import { MainThreadBroker } from './mainThreadBroker';
-import { entries, keys, values } from 'lodash';
+import { entries, forEach, keys, values } from 'lodash';
 import { installLibrary, WebloomLibraries } from './libraries';
 import { defaultLibraries, JSLibrary } from '../libraries';
 import { JSLibraryI } from '@/api/JSLibraries.api';
@@ -34,7 +34,7 @@ type EntityConfigRecord = Record<string, EntityConfigBody>;
 // The worker is responsible for evaluation, widget events, and dependency analysis
 // as usually these tend to be the most expensive operations
 export class EditorState {
-  pages: Record<string, Record<string, Entity>> = {};
+  widgets: Record<string, Entity> = {};
   queries: Record<string, Entity> = {};
   otherEntities: Record<string, Entity> = {};
   currentPageId: string = '';
@@ -50,7 +50,6 @@ export class EditorState {
 
   constructor() {
     makeObservable(this, {
-      pages: observable,
       queries: observable,
       currentPageId: observable,
       context: computed({
@@ -58,8 +57,8 @@ export class EditorState {
         equals: comparer.shallow,
       }),
       entities: computed,
-      currentPage: computed,
       changePage: action,
+      widgets: observable,
       addPage: action,
       addQuery: action,
       removeQuery: action,
@@ -89,7 +88,7 @@ export class EditorState {
   }
 
   cleanUp() {
-    this.pages = {};
+    this.widgets = {};
     this.queries = {};
     this.currentPageId = '';
     this.dependencyManager = new DependencyManager({ editor: this });
@@ -101,13 +100,13 @@ export class EditorState {
   async init({
     currentPageId,
     queries,
-    pages,
+    widgets,
     globals,
     libraries,
   }: {
     currentPageId: string;
     queries: Record<string, EntityConfigBody>;
-    pages: Record<string, Record<string, EntityConfigBody>>;
+    widgets: Record<string, EntityConfigBody>;
     globals: EntityConfigBody;
     libraries: JSLibraryI[];
   }) {
@@ -116,8 +115,8 @@ export class EditorState {
     entries(queries).forEach(([_, query]) => {
       this.addQuery(this.normalizeEntityConfig(query));
     });
-    entries(pages).forEach(([pageId, widgets]) => {
-      this.addPage({ pageId, widgets });
+    entries(widgets).forEach(([_, widget]) => {
+      this.addWidget(this.normalizeEntityConfig(widget));
     });
     this.otherEntities[EDITOR_CONSTANTS.GLOBALS_ID] = new Entity(
       this.normalizeEntityConfig(globals),
@@ -144,7 +143,7 @@ export class EditorState {
 
   get entities() {
     return {
-      ...this.currentPage,
+      ...this.widgets,
       ...this.queries,
       ...this.otherEntities,
     };
@@ -159,34 +158,26 @@ export class EditorState {
     return file.join('\n');
   }
   getEntityById(id: string) {
-    return this.currentPage[id] || this.queries[id] || this.otherEntities[id];
+    return this.widgets[id] || this.queries[id] || this.otherEntities[id];
   }
 
-  addPage({
-    pageId,
-    widgets,
-  }: {
-    pageId: string;
-    widgets: EntityConfigRecord;
-  }) {
-    this.pages[pageId] ||= {};
+  addPage({ widgets }: { widgets: EntityConfigRecord }) {
+    this.widgets = {};
     Object.entries(widgets).forEach(([id, widget]) => {
-      this.pages[pageId][id] = new Entity(this.normalizeEntityConfig(widget));
+      this.widgets[id] = new Entity(this.normalizeEntityConfig(widget));
     });
   }
 
   addWidget(config: EntityConfig) {
-    if (!this.currentPage) return;
+    if (!this.widgets) return;
     if (
       config.id === EDITOR_CONSTANTS.ROOT_NODE_ID ||
       config.id === EDITOR_CONSTANTS.PREVIEW_NODE_ID
     )
       return;
-    this.currentPage[config.id] ||= new Entity(config);
+    this.widgets[config.id] ||= new Entity(config);
   }
-  get currentPage() {
-    return this.pages[this.currentPageId];
-  }
+
   addQuery(config: EntityConfig) {
     this.queries[config.id] = new Entity(config);
   }
@@ -194,18 +185,18 @@ export class EditorState {
     this.otherEntities[config.id] = new Entity(config);
   }
   removeWidget(id: string) {
-    delete this.currentPage[id];
+    delete this.widgets[id];
   }
   removeQuery(id: string) {
     delete this.queries[id];
   }
   removePage(id: string) {
-    delete this.pages[id];
+    delete this.widgets[id];
   }
   removeEntity(id: string) {
     const entity = this.getEntityById(id);
     entity.dispose();
-    if (this.currentPage[id]) {
+    if (this.widgets[id]) {
       this.removeWidget(id);
     } else {
       this.removeQuery(id);
@@ -233,8 +224,12 @@ export class EditorState {
       editorState: this,
     };
   }
-  changePage(id: string) {
-    this.currentPageId = id;
+  changePage(widgets: EntityConfigRecord) {
+    forEach(this.widgets, (widget) => widget.dispose());
+    this.widgets = {};
+    Object.entries(widgets).forEach(([id, widget]) => {
+      this.widgets[id] = new Entity(this.normalizeEntityConfig(widget));
+    });
   }
   updateLibraryName(body: UpdateLibraryNameRequest['body']) {
     const lib = this.libraries[body.id];

@@ -36,6 +36,8 @@ import {
 } from '@/api/JSLibraries.api';
 import { WebloomWidget } from './widget';
 import { fetchAppData } from '@/api/apps.api';
+import { commandManager } from '@/actions/CommandManager';
+import { ChangePage } from '@/actions/editor/changePage';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -324,22 +326,20 @@ export class EditorState implements WebloomDisposable {
             },
             {} as Record<string, EntityConfigBody>,
           ),
-          pages: {
-            [currentPageId]: Object.entries(this.currentPage.widgets).reduce(
-              (acc, [id, widget]) => {
-                acc[id] = {
-                  id: widget.id,
-                  unevalValues: toJS(widget.rawValues),
-                  inspectorConfig: widget.inspectorConfig,
-                  publicAPI: widget.publicAPI,
-                  actionsConfig: widget.rawActionsConfig,
-                  metaValues: widget.metaValues,
-                };
-                return acc;
-              },
-              {} as Record<string, EntityConfigBody>,
-            ),
-          },
+          widgets: Object.entries(this.currentPage.widgets).reduce(
+            (acc, [id, widget]) => {
+              acc[id] = {
+                id: widget.id,
+                unevalValues: toJS(widget.rawValues),
+                inspectorConfig: widget.inspectorConfig,
+                publicAPI: widget.publicAPI,
+                actionsConfig: widget.rawActionsConfig,
+                metaValues: widget.metaValues,
+              };
+              return acc;
+            },
+            {} as Record<string, EntityConfigBody>,
+          ),
         },
       });
     } catch (e) {
@@ -397,12 +397,12 @@ export class EditorState implements WebloomDisposable {
   }
 
   get currentPage() {
-    console.trace(this.currentPageId);
     return this.pages[this.currentPageId];
   }
 
   async changePage(id: string | number, name: string, handle: string) {
     id = id.toString();
+    commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
       runInAction(() => {
         this.isLoadingPage = true;
@@ -426,7 +426,20 @@ export class EditorState implements WebloomDisposable {
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
       body: {
-        currentPageId: this.currentPageId,
+        widgets: Object.entries(this.currentPage.widgets).reduce(
+          (acc, [id, widget]) => {
+            acc[id] = {
+              id: widget.id,
+              unevalValues: toJS(widget.rawValues),
+              inspectorConfig: widget.inspectorConfig,
+              publicAPI: widget.publicAPI,
+              actionsConfig: widget.rawActionsConfig,
+              metaValues: widget.metaValues,
+            };
+            return acc;
+          },
+          {} as Record<string, EntityConfigBody>,
+        ),
       },
     } as WorkerRequest);
   }
