@@ -394,7 +394,7 @@ export class EditorState implements WebloomDisposable {
     return this.pages[this.currentPageId];
   }
 
-  async changePage({
+  changePage({
     id,
     name,
     handle,
@@ -406,7 +406,7 @@ export class EditorState implements WebloomDisposable {
     tree?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
   }) {
     id = id.toString();
-    if (id === this.currentPageId) return;
+    if (id == this.currentPageId) return;
     commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
       runInAction(() => {
