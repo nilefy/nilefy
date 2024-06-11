@@ -5,6 +5,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { z } from 'zod';
+import { User } from './users.api';
 
 export type Workspace = { id: number; name: string; imageUrl: string | null };
 export type WorkSpaces = Workspace[];
@@ -25,6 +26,21 @@ async function insert(data: WorkspaceSchema) {
     },
   });
   return (await res.json()) as Workspace;
+}
+
+async function workspaceUsers({
+  workspaceId,
+}: {
+  workspaceId: Workspace['id'];
+}) {
+  // TODO: add pagination options
+  const res = await fetchX(`/workspaces/${workspaceId}/users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  });
+  return (await res.json()) as User[];
 }
 
 async function update(data: {
@@ -52,6 +68,13 @@ export const indexQueryConfig = () => ({
 
 function useWorkspaces(...rest: Parameters<typeof indexQueryConfig>) {
   return useQuery(indexQueryConfig(...rest));
+}
+
+function useWorkspaceUsers(workspaceId: number) {
+  return useQuery({
+    queryKey: [WORKSPACES_QUERY_KEY, { workspaceId }, 'users'],
+    queryFn: () => workspaceUsers({ workspaceId }),
+  });
 }
 
 function useInsertWorkspace(
@@ -86,4 +109,5 @@ export const workspaces = {
   index: { useQuery: useWorkspaces },
   insert: { useMutation: useInsertWorkspace },
   update: { useMutation: useUpdateWorkspace },
+  users: { useQuery: useWorkspaceUsers },
 };

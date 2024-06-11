@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
-import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -17,38 +16,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { User } from '@/api/users.api';
+import { api } from '@/api';
+import { useParams } from 'react-router-dom';
+import { WebloomLoader } from '@/components/loader';
 
 export function UsersManagement() {
-  // TODO: convert to data fetching
-  const users = useMemo<Omit<User, 'onboardingCompleted'>[]>(
-    () => [
-      {
-        id: '1',
-        username: 'nagy nabil 1',
-        email: 'nagy@nagy',
-        status: 'active',
-      },
-      {
-        id: '2',
-        username: 'nagy nabil 2',
-        email: 'nagy@nagy',
-        status: 'active',
-      },
-      {
-        id: '3',
-        username: 'nagy nabil 3',
-        email: 'nagy@nagy',
-        status: 'active',
-      },
-    ],
-    [],
-  );
+  const { workspaceId } = useParams();
+  const users = api.workspaces.users.useQuery(+workspaceId!);
+  if (users.isPending) {
+    return <WebloomLoader />;
+  } else if (users.isError) {
+    throw users.error;
+  }
 
   return (
     <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
       <div className="flex w-full justify-between">
-        <p>{users.length} users</p>
+        <p>{users.data.length} users</p>
         {/*TODO: remove the button and add ui to add users*/}
         <Button>
           <Users />
@@ -81,7 +65,7 @@ export function UsersManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {users.data.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
