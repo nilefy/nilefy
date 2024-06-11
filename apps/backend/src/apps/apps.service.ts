@@ -12,7 +12,6 @@ import {
   AppsRetDto,
   CreateAppDb,
   CreateAppRetDto,
-  // ImportAppDb,
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -180,6 +179,15 @@ export class AppsService {
       where: and(eq(apps.workspaceId, workspaceId)),
       orderBy: asc(apps.createdAt),
       with: {
+        pages: {
+          // TODO: if we gonna have default page concept update this to get default page instead of first page
+          orderBy: asc(pages.index),
+          limit: 1,
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
         createdBy: {
           columns: {
             id: true,
@@ -194,7 +202,10 @@ export class AppsService {
         },
       },
     });
-    return workspaceApps;
+    return workspaceApps.map((a) => ({
+      ...a,
+      page: a.pages[0],
+    }));
   }
 
   /**
