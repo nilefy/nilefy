@@ -42,10 +42,6 @@ export type RemoteTypes =
       };
     }
   | {
-      event: 'rename';
-      data: UpdateNodesPayload[number];
-    }
-  | {
       event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_NODE'];
       data: {
         /**

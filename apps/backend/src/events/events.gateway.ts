@@ -208,6 +208,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
               c.id,
               {
                 ...temp,
+                newId: c.newId,
                 updatedById: user.userId,
               },
               {

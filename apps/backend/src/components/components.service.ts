@@ -94,7 +94,7 @@ export class ComponentsService {
   ) {
     // id/name is changed
     if (dto.newId && dto.newId !== componentId) {
-      const newId = dto.newId as string;
+      const newId = dto.newId;
       // there is a component with this new id
       const component = await this.getComponent(newId, pageId);
       if (component) {
@@ -114,10 +114,6 @@ export class ComponentsService {
         throw new BadRequestException(`There is a JS query with name ${newId}`);
       }
     }
-
-    // await this.db.execute(
-    //   sql`SET CONSTRAINTS components_parent_id_page_id_components_id_page_id_fk DEFERRED`,
-    // );
 
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
