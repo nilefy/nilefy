@@ -4,6 +4,7 @@ import { ToastProps } from '@/components/ui/toast';
 import { WorkerBroker } from './workerBroker';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { router } from '@/index';
+import { editorStore } from '.';
 
 export type WebloomGlobalData = {
   currentUser: string;
@@ -32,6 +33,7 @@ export const WebloomGlobalsActions = {
       external?: boolean,
     ) => {
       if (!external) {
+        if (handle == editorStore.currentPageId) return;
         router.navigate('../' + handle);
         return;
       }
