@@ -63,6 +63,13 @@ export class WorkspacesService {
         status: schema.usersToWorkspaces.status,
       })
       .from(schema.users)
+      .innerJoin(
+        schema.usersToWorkspaces,
+        and(
+          eq(schema.usersToWorkspaces.userId, schema.users.id),
+          eq(schema.usersToWorkspaces.workspaceId, workspaceId),
+        ),
+      )
       .where(
         and(
           like(schema.users.username, sql`%${searchQ}%`).if(searchQ),
