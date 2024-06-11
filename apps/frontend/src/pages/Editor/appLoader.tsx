@@ -8,12 +8,26 @@ import { editorStore } from '@/lib/Editor/Models';
 import { JwtPayload } from '@/types/auth.types';
 import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
+import { when } from 'mobx';
 import { Suspense, useEffect } from 'react';
 import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
-
+export const pageLoader =
+  (queryClient: QueryClient) =>
+  async ({ params }: { params: Record<string, string | undefined> }) => {
+    console.log('waiting for editor to init');
+    await when(() => editorStore.initting === false);
+    console.log('loading page', params);
+    const pageId = params.pageId!;
+    editorStore.changePage(+pageId, 'test', 'test');
+    return defer({
+      values: [pageId],
+    });
+  };
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
+    console.log('loading app', params);
+
     const notAuthed = loaderAuth();
     if (notAuthed) {
       return notAuthed;
@@ -77,7 +91,8 @@ export const appLoader =
       ],
     });
     // little hack to make sure the editor is initialized
-    const data = editorStore.initPromise.then(() => {
+    const data = when(() => editorStore.initting === false).then(() => {
+      console.log('editor initialized');
       return values;
     });
     return defer({
@@ -110,13 +125,22 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
 };
 
 export function AppLoader(props: AppLoaderProps) {
-  const { values } = useLoaderData();
+  const { values } = useLoaderData() as { values: any };
 
   return (
     <Suspense fallback={<WebloomLoader />}>
       <Await resolve={values}>
         <AppResolved {...props} />
       </Await>
+    </Suspense>
+  );
+}
+
+export function PageLoader({ children }: { children: React.ReactNode }) {
+  const { values } = useLoaderData() as { values: any };
+  return (
+    <Suspense fallback={<WebloomLoader />}>
+      <Await resolve={values}>{children}</Await>
     </Suspense>
   );
 }

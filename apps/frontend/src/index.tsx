@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import { App } from '@/pages/Editor/Editor';
+import { App, Editor } from '@/pages/Editor/Editor';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
@@ -27,7 +27,7 @@ import {
   DataSourcesTemplate,
 } from '@/pages/dataSources/dataSources';
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
-import { appLoader } from '@/pages/Editor/appLoader';
+import { appLoader, pageLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { ForgotPassword } from './pages/auth/forgot_password';
 import { NeedHelpSigningIn } from './pages/auth/need_help_in';
@@ -38,6 +38,7 @@ import {
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
+import { WebloomRoot } from './pages/Editor/Components/lib';
 
 if (process.env.NODE_ENV !== 'production') {
   log.enableAll();
@@ -185,9 +186,12 @@ export const router = createBrowserRouter([
         <App />
       </DndProvider>
     ),
+
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
-    children: [{ path: ':pageId' }],
+    children: [
+      { path: ':pageId', element: <Editor />, loader: pageLoader(queryClient) },
+    ],
   },
   {
     path: '/:workspaceId/apps/:appId',

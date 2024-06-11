@@ -50,16 +50,13 @@ export class EditorState implements WebloomDisposable {
   queryPanel!: {
     addMenuOpen: boolean;
   };
-  initPromise!: Promise<void>;
   isLoadingPage: boolean = false;
-  resolveInit!: () => void;
-  rejectInit!: (e: Error) => void;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
   workerBroker!: WorkerBroker;
   currentPageId: string = '';
-  initting = false;
+  initting = true;
   queryClient!: QueryClient;
   queriesManager!: QueriesManager;
   appId!: number;
@@ -88,6 +85,7 @@ export class EditorState implements WebloomDisposable {
       removeQuery: action,
       removePage: action,
       init: action,
+      initting: observable,
       queryPanel: observable,
       applyEvalForestPatch: action.bound,
       applyEntityToEntityDependencyPatch: action.bound,
@@ -202,11 +200,8 @@ export class EditorState implements WebloomDisposable {
     currentUser: string;
     onBoardingCompleted: boolean;
   }) {
+    this.initting = true;
     try {
-      this.initPromise = new Promise((resolve, reject) => {
-        this.resolveInit = resolve;
-        this.rejectInit = reject;
-      });
       this.dispose();
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
@@ -357,7 +352,7 @@ export class EditorState implements WebloomDisposable {
     Object.values(this.queries).forEach((q) => {
       if (q.triggerMode === 'onAppLoad') void q.run();
     });
-    this.resolveInit();
+    this.initting = false;
   }
   // TODO: add support for queries
   get currentPageErrors() {
@@ -403,6 +398,7 @@ export class EditorState implements WebloomDisposable {
 
   async changePage(id: string | number, name: string, handle: string) {
     id = id.toString();
+    if (id === this.currentPageId) return;
     commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
       runInAction(() => {
@@ -424,6 +420,7 @@ export class EditorState implements WebloomDisposable {
         this.currentPageId = id;
       });
     }
+
     router.navigate(`/${this.workspaceId}/apps/edit/${this.appId}/${id}`);
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
