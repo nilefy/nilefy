@@ -37,6 +37,7 @@ import {
 import { WebloomWidget } from './widget';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePage } from '@/actions/editor/changePage';
+import { CursorManager } from './cursorManager';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -61,6 +62,7 @@ export class EditorState implements WebloomDisposable {
   workspaceId!: number;
   selectedQueryId: string | null = null;
   bottomPanelMode: BottomPanelMode = 'query';
+  private cursorManager!: CursorManager;
   /**
    * application name
    */
@@ -156,6 +158,7 @@ export class EditorState implements WebloomDisposable {
   dispose() {
     Object.values(this.pages).forEach((page) => page.dispose());
     Object.values(this.queries).forEach((query) => query.dispose());
+    this.cursorManager?.dispose();
     this.globals = undefined;
     this.workerBroker?.dispose();
     this.pages = {};
@@ -337,6 +340,7 @@ export class EditorState implements WebloomDisposable {
           ),
         },
       });
+      this.cursorManager = new CursorManager(this.currentPage);
     } catch (e) {
       console.log(e);
     }
