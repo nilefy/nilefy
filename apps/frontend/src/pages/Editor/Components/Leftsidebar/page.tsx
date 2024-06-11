@@ -4,7 +4,7 @@ import RenameInput from '../../../../components/renameInput';
 import { PageDto } from '@/api/pages.api';
 import { Button } from '@/components/ui/button';
 import PageMenu from './pageMenu';
-import { editorStore } from '@/lib/Editor/Models';
+import { useNavigateToEditorPage } from '@/lib/Editor/hooks';
 
 function Page({
   workspaceId,
@@ -16,11 +16,10 @@ function Page({
   page: PageDto;
 }) {
   const [isEditingPageName, setIsEditingPageName] = useState(false);
-
+  const navigate = useNavigateToEditorPage(page.id);
   if (isEditingPageName) {
     return <RenameInput page={page} updateEditMode={setIsEditingPageName} />;
   }
-
   // const openPageCallback = useCallback(() => {}, [appId, pageId, workspaceId]);
 
   return (
@@ -29,7 +28,7 @@ function Page({
         variant={'ghost'}
         className="text-[15px]"
         onClick={() => {
-          editorStore.changePage(page.id, page.name, page.handle);
+          navigate();
         }}
       >
         {page.name}

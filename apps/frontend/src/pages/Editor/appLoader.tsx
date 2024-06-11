@@ -14,11 +14,20 @@ import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
 export const pageLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
-    console.log('waiting for editor to init');
-    await when(() => editorStore.initting === false);
-    console.log('loading page', params);
     const pageId = params.pageId!;
-    editorStore.changePage(+pageId, 'test', 'test');
+    const appQuery = fetchAppData({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+      pageId: pageId ? +pageId : undefined,
+    });
+    const page = await queryClient.fetchQuery(appQuery);
+    await when(() => editorStore.initting === false);
+    editorStore.changePage({
+      id: pageId,
+      name: page.name,
+      handle: page.id.toString(),
+      tree: page.defaultPage.tree,
+    });
     return defer({
       values: [pageId],
     });
@@ -26,8 +35,6 @@ export const pageLoader =
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
-    console.log('loading app', params);
-
     const notAuthed = loaderAuth();
     if (notAuthed) {
       return notAuthed;

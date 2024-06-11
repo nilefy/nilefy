@@ -35,10 +35,8 @@ import {
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
 import { WebloomWidget } from './widget';
-import { fetchAppData } from '@/api/apps.api';
 import { commandManager } from '@/actions/CommandManager';
 import { ChangePage } from '@/actions/editor/changePage';
-import { router } from '@/index';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -396,7 +394,17 @@ export class EditorState implements WebloomDisposable {
     return this.pages[this.currentPageId];
   }
 
-  async changePage(id: string | number, name: string, handle: string) {
+  async changePage({
+    id,
+    name,
+    handle,
+    tree,
+  }: {
+    id: string | number;
+    name: string;
+    handle: string;
+    tree?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
+  }) {
     id = id.toString();
     if (id === this.currentPageId) return;
     commandManager.executeCommand(new ChangePage(+id));
@@ -404,24 +412,13 @@ export class EditorState implements WebloomDisposable {
       runInAction(() => {
         this.isLoadingPage = true;
       });
-      const tree = await this.queryClient.fetchQuery(
-        fetchAppData({
-          workspaceId: this.workspaceId,
-          appId: this.appId,
-          pageId: +id,
-        }),
-      );
       runInAction(() => {
-        this.addPage(id, name, handle, tree.defaultPage.tree);
-        this.currentPageId = id;
-      });
-    } else {
-      runInAction(() => {
-        this.currentPageId = id;
+        this.addPage(id, name, handle, tree);
       });
     }
-
-    router.navigate(`/${this.workspaceId}/apps/edit/${this.appId}/${id}`);
+    runInAction(() => {
+      this.currentPageId = id;
+    });
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
       body: {
