@@ -3,6 +3,7 @@ import { Entity } from './entity';
 import { ToastProps } from '@/components/ui/toast';
 import { WorkerBroker } from './workerBroker';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { router } from '@/index';
 
 export type WebloomGlobalData = {
   currentUser: string;
@@ -19,6 +20,22 @@ export const WebloomGlobalsActions = {
       variant: ToastProps['variant'] = 'default',
     ) => {
       toast({ description: message, variant: variant });
+    },
+  },
+  navigateTo: {
+    type: 'SIDE_EFFECT',
+    name: 'navigateTo',
+    fn: async (
+      _: WebloomGlobal,
+
+      handle: string,
+      external?: boolean,
+    ) => {
+      if (!external) {
+        router.navigate('../' + handle);
+        return;
+      }
+      router.navigate(handle, { replace: true });
     },
   },
 };
@@ -51,6 +68,22 @@ export class WebloomGlobal extends Entity {
               optional: true,
             },
           ],
+        },
+        navigateTo: {
+          type: 'function',
+          args: [
+            {
+              name: 'handle',
+              type: 'string',
+            },
+            {
+              name: 'external',
+              type: 'boolean',
+              optional: true,
+            },
+          ],
+          description:
+            'Navigate to a page, either within the app or externally',
         },
         currentUser: {
           description: 'Current user',
