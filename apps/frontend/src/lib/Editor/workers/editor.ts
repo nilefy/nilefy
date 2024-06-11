@@ -151,6 +151,7 @@ export class EditorState {
   get tsGlobalFile() {
     const file: string[] = [];
     values(this.entities).forEach((entity) => {
+      if (entity.id === EDITOR_CONSTANTS.ROOT_NODE_ID) return;
       if (entity.tsType) {
         file.push(entity.tsType);
       }
