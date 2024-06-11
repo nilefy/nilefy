@@ -23,8 +23,8 @@ export class EditorPage {
   constructor(page: Page) {
     this.page = page;
   }
-  async boot(workspaceId: number, appId: number) {
-    await this.page.goto(`/${workspaceId}/apps/edit/${appId}`);
+  async boot(workspaceId: number, appId: number, pageId: number) {
+    await this.page.goto(`/${workspaceId}/apps/edit/${appId}/${pageId}`);
 
     this.rightSidebar = {
       insertButton: this.page.getByRole('tab', { name: 'Insert' }),
