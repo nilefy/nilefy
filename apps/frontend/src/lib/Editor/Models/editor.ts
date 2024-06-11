@@ -412,6 +412,7 @@ export class EditorState implements WebloomDisposable {
   }) {
     id = id.toString();
     if (id == this.currentPageId) return;
+    this.currentPage.setSelectedNodeIds(new Set());
     commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
       runInAction(() => {
