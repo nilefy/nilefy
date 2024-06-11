@@ -160,5 +160,10 @@ export const appsRetSchema = appSchema.extend({
       username: true,
     })
     .nullable(),
+  page: pageSchema.pick({
+    id: true,
+    name: true,
+  }),
 });
+
 export class AppsRetDto extends createZodDto(appsRetSchema) {}

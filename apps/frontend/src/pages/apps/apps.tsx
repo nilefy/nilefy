@@ -403,13 +403,13 @@ function ApplicationsViewResolved() {
                 </CardContent>
                 <CardFooter className="mt-auto flex justify-end gap-5">
                   <Link
-                    to={`apps/edit/${app.id}`}
+                    to={`apps/edit/${app.id}/${app.page.id}`}
                     className={buttonVariants({ variant: 'default' })}
                   >
                     Edit
                   </Link>
                   <Link
-                    to={`apps/${app.id}`}
+                    to={`apps/${app.id}/${app.page.id}`}
                     className={buttonVariants({ variant: 'default' })}
                   >
                     Launch

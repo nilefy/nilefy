@@ -35,7 +35,10 @@ export class PasteAction implements UndoableCommand {
 
     let id: string = snapshot.id!;
     if (this.data.action === 'copy') {
-      id = getNewEntityName(snapshot.type as WidgetTypes);
+      id = getNewEntityName(
+        snapshot.type as WidgetTypes,
+        editorStore.currentPageId,
+      );
     }
 
     snapshot.id = id;

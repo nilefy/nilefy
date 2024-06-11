@@ -7,6 +7,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { z } from 'zod';
+import { PageDto } from './pages.api';
 
 export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
@@ -106,6 +107,7 @@ async function index({ workspaceId }: { workspaceId: number }) {
   return (await res.json()) as (AppI & {
     updatedBy: UserMetaI | null;
     createdBy: UserMetaI;
+    page: Pick<PageDto, 'id' | 'name'>;
   })[];
 }
 type WebloomTree = Record<

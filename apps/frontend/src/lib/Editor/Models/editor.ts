@@ -231,6 +231,7 @@ export class EditorState implements WebloomDisposable {
           return {
             type: w.type,
             name: w.id,
+            pageId: pages[0].id,
           };
         }),
         ...queries.map((q) => {
@@ -419,6 +420,18 @@ export class EditorState implements WebloomDisposable {
     runInAction(() => {
       this.currentPageId = id;
     });
+
+    updateOrderMap(
+      Object.values(this.pages[this.currentPageId].widgets).map((w) => {
+        return {
+          name: w.id,
+          type: w.type,
+          pageId: this.currentPageId,
+        };
+      }),
+      false,
+    );
+
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
       body: {
