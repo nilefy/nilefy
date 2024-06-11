@@ -7,6 +7,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { z } from 'zod';
+import { PageDto } from './pages.api';
 
 export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
@@ -106,6 +107,7 @@ async function index({ workspaceId }: { workspaceId: number }) {
   return (await res.json()) as (AppI & {
     updatedBy: UserMetaI | null;
     createdBy: UserMetaI;
+    page: Pick<PageDto, 'id' | 'name'>;
   })[];
 }
 type WebloomTree = Record<
@@ -206,7 +208,7 @@ function useApps(...rest: Parameters<typeof useAppsQuery>) {
 }
 
 // TODO: change function name because it's currently misleading
-export const useAppQuery = ({
+export const fetchAppData = ({
   workspaceId,
   appId,
   pageId,
@@ -219,7 +221,7 @@ export const useAppQuery = ({
   pageId?: number;
 }): UndefinedInitialDataOptions<AppCompleteT, Error, AppCompleteT> => ({
   // i don't want to add page id to the query key disable this error
-  queryKey: [APPS_QUERY_KEY, { workspaceId, appId }],
+  queryKey: [APPS_QUERY_KEY, { workspaceId, appId, pageId }],
   queryFn: async () => {
     const data = await one({ workspaceId, appId, pageId });
     return data;
@@ -227,8 +229,8 @@ export const useAppQuery = ({
   staleTime: 0,
 });
 
-function useApp(...rest: Parameters<typeof useAppQuery>) {
-  const app = useQuery(useAppQuery(...rest));
+function useApp(...rest: Parameters<typeof fetchAppData>) {
+  const app = useQuery(fetchAppData(...rest));
   return app;
 }
 

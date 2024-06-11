@@ -19,12 +19,12 @@ import { WebloomRootProduction } from './Components/lib/WebloomRoot';
  * should take full width of the screen
  */
 function PreviewHeader() {
-  const { workspaceId, appId } = useParams();
+  const { workspaceId, appId, pageId } = useParams();
   const appName = editorStore.name;
   const pages = editorStore.pages;
 
   return (
-    <div className="bg-primary/10 flex h-full w-full items-center gap-4 p-5">
+    <div className="flex h-full w-full items-center gap-4 bg-primary/10 p-5">
       <h2>{appName}</h2>
       <NavigationMenu className="gap-5">
         <NavigationMenuList></NavigationMenuList>
@@ -47,7 +47,7 @@ function PreviewHeader() {
       <div className="ml-auto flex items-center gap-4">
         <Link
           className={buttonVariants({ variant: 'outline', size: 'icon' })}
-          to={`/${workspaceId}/apps/edit/${appId}`}
+          to={`/${workspaceId}/apps/edit/${appId}/${pageId}`}
         >
           <Edit className="absolute h-[1.2rem] w-[1.2rem] " />
         </Link>

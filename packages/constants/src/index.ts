@@ -21,11 +21,13 @@ const SOCKET_EVENTS_REQUEST = {
   CREATE_QUERY: "createQuery",
   UPDATE_QUERY: "updateQuery",
   DELETE_QUERY: 'deleteQuery',
+  CHANGE_PAGE: 'changePage',
 } as const;
 
 const SOCKET_EVENTS_RESPONSE = {
   AUTHED: "authed",
   NOT_AUTHED: "notAuthed",
+  PAGE_CHANGED: "pageChanged",
 } as const;
 
 const dataSourcesTypes = [

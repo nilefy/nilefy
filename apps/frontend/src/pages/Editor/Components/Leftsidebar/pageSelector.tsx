@@ -7,7 +7,7 @@ import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { useToast } from '../../../../components/ui/use-toast';
 import { api } from '@/api';
-import Page from '../../../../components/page';
+import Page from './page';
 // import { SortableList } from './sortableList';
 import { PAGES_QUERY_KEY, PageDto } from '@/api/pages.api';
 import { matchSorter } from 'match-sorter';

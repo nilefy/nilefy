@@ -30,7 +30,6 @@ export class TypeScriptVirtualFileSystem {
     this.defaultLibs = await createDefaultMapFromCDN();
     this.fs.set(GLOBAL_CONTEXT_FILE, ' ');
     this.fs = new Map([...this.fs, ...this.defaultLibs]);
-    console.log(keys(this.fs));
     this.initted = true;
   }
 }

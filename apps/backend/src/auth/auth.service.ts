@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { compare } from 'bcrypt';
+import { compare, genSalt, hash } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -78,11 +78,8 @@ export class AuthService {
   }
 
   private async signUpEmail(email: string, username: string, jwt: string) {
-    const baseUrl: string = this.configService.get('BASE_URL_BE');
-
     const url =
-      baseUrl +
-      'auth' +
+      '/auth' +
       '/' +
       'confirm' +
       '/' +
@@ -205,10 +202,8 @@ export class AuthService {
   }
 
   private async forgotPasswordSendEmail(email: string, token: string) {
-    const baseUrl: string = this.configService.get('BASE_URL_FE');
     const url =
-      baseUrl +
-      'auth' +
+      '/auth' +
       '/' +
       'reset-password' +
       '/' +

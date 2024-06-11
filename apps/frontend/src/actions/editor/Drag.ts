@@ -38,7 +38,10 @@ class DragAction implements UndoableCommand {
       ).parent.id;
       this.id = options.draggedItem.id;
     } else {
-      this.id = getNewEntityName(options.draggedItem.type);
+      this.id = getNewEntityName(
+        options.draggedItem.type,
+        editorStore.currentPageId,
+      );
       this.newType = options.draggedItem.type;
     }
   }

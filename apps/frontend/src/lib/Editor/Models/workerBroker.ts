@@ -183,7 +183,10 @@ export class WorkerBroker implements WebloomDisposable {
     });
     this.queue.push({
       event: 'installLibrary',
-      body: { url, defaultName: getNewEntityName('jsLibrary', false) },
+      body: {
+        url,
+        defaultName: getNewEntityName('jsLibrary', undefined, false),
+      },
     });
     setTimeout(() => {
       if (this.pendingInstallLibraryRequest) {

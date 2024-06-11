@@ -13,3 +13,4 @@ export { useWebloomDragCore } from './useWebloomDrag';
 export { useExposeWidgetApi } from './useExposeWidgetApi';
 export { useAutoRun } from './useAutoRun';
 export { useOnboarding } from './useOnboarding';
+export { useNavigateToEditorPage } from './useNavigateToEditorPage';
