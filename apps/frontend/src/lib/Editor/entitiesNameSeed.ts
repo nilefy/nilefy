@@ -79,7 +79,6 @@ export function updateOrderMap(
   entities: { type: string; name: string; pageId?: string }[],
   deleted: boolean,
 ) {
-  console.log(entityOrder);
   entities.forEach(({ type, name, pageId }) => {
     const nameRe = new RegExp(`${type}\\d+`);
 
@@ -123,7 +122,6 @@ export function updateOrderMap(
       }
     }
   });
-  console.log(entityOrder);
 }
 
 export function entitiyNameExists(entityName: string, pageId: string) {
