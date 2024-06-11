@@ -170,11 +170,6 @@ export class EditorState {
 
   addWidget(config: EntityConfig) {
     if (!this.widgets) return;
-    if (
-      config.id === EDITOR_CONSTANTS.ROOT_NODE_ID ||
-      config.id === EDITOR_CONSTANTS.PREVIEW_NODE_ID
-    )
-      return;
     this.widgets[config.id] ||= new Entity(config);
   }
 
