@@ -83,7 +83,7 @@ export class WebloomWidget
     row = 0,
     col = 0,
     page,
-    id = getNewEntityName(type),
+    id = getNewEntityName(type, page.id),
     nodes = [],
     rowsCount,
     columnsCount,
@@ -425,7 +425,7 @@ export class WebloomWidget
 
   clone() {
     const snapshot = this.snapshot;
-    snapshot.id = getNewEntityName(snapshot.type);
+    snapshot.id = getNewEntityName(snapshot.type, this.page.id);
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
