@@ -1,5 +1,5 @@
 import { commandManager } from '@/actions/CommandManager';
-import { AppCompleteT, useAppQuery } from '@/api/apps.api';
+import { AppCompleteT, fetchAppData } from '@/api/apps.api';
 import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
@@ -8,9 +8,36 @@ import { editorStore } from '@/lib/Editor/Models';
 import { JwtPayload } from '@/types/auth.types';
 import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
+import { runInAction, when } from 'mobx';
 import { Suspense, useEffect } from 'react';
 import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
-
+export const pageLoader =
+  (queryClient: QueryClient) =>
+  async ({ params }: { params: Record<string, string | undefined> }) => {
+    runInAction(() => {
+      editorStore.isLoadingPage = true;
+    });
+    const pageId = params.pageId!;
+    const appQuery = fetchAppData({
+      workspaceId: +(params.workspaceId as string),
+      appId: +(params.appId as string),
+      pageId: pageId ? +pageId : undefined,
+    });
+    const page = await queryClient.fetchQuery(appQuery);
+    await when(() => editorStore.initting === false);
+    editorStore.changePage({
+      id: pageId,
+      name: page.name,
+      handle: page.id.toString(),
+      tree: page.defaultPage.tree,
+    });
+    runInAction(() => {
+      editorStore.isLoadingPage = false;
+    });
+    return defer({
+      values: [pageId],
+    });
+  };
 export const appLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
@@ -21,6 +48,7 @@ export const appLoader =
     const currentUser = getUser() as JwtPayload;
     const workspaceId = params.workspaceId;
     const appId = params.appId;
+    const pageId = params.pageId;
     if (!workspaceId || !appId) {
       throw new Error('use this loader under :workspaceId and :appId');
     }
@@ -28,9 +56,10 @@ export const appLoader =
     const queriesQuery = useQueriesQuery(+workspaceId, +appId);
 
     // Fetch the app data
-    const appQuery = useAppQuery({
+    const appQuery = fetchAppData({
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
+      pageId: pageId ? +pageId : undefined,
     });
 
     const jsQueriesQuery = useJSQueries({
@@ -75,7 +104,8 @@ export const appLoader =
       ],
     });
     // little hack to make sure the editor is initialized
-    const data = editorStore.initPromise.then(() => {
+    const data = when(() => editorStore.initting === false).then(() => {
+      console.log('editor initialized');
       return values;
     });
     return defer({
@@ -108,13 +138,22 @@ const AppResolved = function AppResolved({ children, initWs }: AppLoaderProps) {
 };
 
 export function AppLoader(props: AppLoaderProps) {
-  const { values } = useLoaderData();
+  const { values } = useLoaderData() as { values: any };
 
   return (
     <Suspense fallback={<WebloomLoader />}>
       <Await resolve={values}>
         <AppResolved {...props} />
       </Await>
+    </Suspense>
+  );
+}
+
+export function PageLoader({ children }: { children: React.ReactNode }) {
+  const { values } = useLoaderData() as { values: any };
+  return (
+    <Suspense fallback={<WebloomLoader />}>
+      <Await resolve={values}>{children}</Await>
     </Suspense>
   );
 }

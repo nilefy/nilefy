@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -29,13 +28,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { getInitials } from '@/utils/avatar';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchX } from '@/utils/fetch';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ScrollArea } from './ui/scroll-area';
-
-export type Workspace = { id: number; name: string; imageUrl: string | null };
-export type WorkSpaces = Workspace[];
+import {
+  WORKSPACES_QUERY_KEY,
+  Workspace,
+  WorkspaceSchema,
+  workspaceSchema,
+} from '@/api/workspaces.api';
+import { api } from '@/api';
 
 type WorkspaceMetaDialogProps =
   | {
@@ -54,65 +55,20 @@ type WorkspaceMetaDialogProps =
       workspaceMeta: Workspace;
     };
 
-const workspaceSchema = z.object({
-  name: z.string().min(3).max(255),
-});
-type WorkspaceSchema = z.infer<typeof workspaceSchema>;
-
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const queryClient = useQueryClient();
-  const createWorkspace = useMutation({
-    mutationFn: async (data: WorkspaceSchema) => {
-      const res = await fetchX('/workspaces', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json;charset=utf-8',
-        },
-      });
-      return (await res.json()) as Workspace;
-    },
+  const createWorkspace = api.workspaces.insert.useMutation({
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+      await queryClient.invalidateQueries({ queryKey: [WORKSPACES_QUERY_KEY] });
       setModalOpen(false);
-    },
-    onError(error) {
-      console.log(
-        '🪵 [selectWorkspace.tsx:73] ~ token ~ \x1b[0;32merror\x1b[0m = ',
-        error,
-      );
     },
   });
 
-  const updateWorkspace = useMutation({
-    mutationFn: async (data: {
-      id: Workspace['id'];
-      workspace: WorkspaceSchema;
-    }) => {
-      await sleep(2000);
-      const res = await fetchX(`/workspaces/${data.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data.workspace),
-        headers: {
-          'Content-Type': 'application/json;charset=utf-8',
-        },
-      });
-      return (await res.json()) as Workspace;
-    },
+  const updateWorkspace = api.workspaces.update.useMutation({
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+      await queryClient.invalidateQueries({ queryKey: [WORKSPACES_QUERY_KEY] });
       setModalOpen(false);
-    },
-    onError(error) {
-      console.log(
-        '🪵 [selectWorkspace.tsx:73] ~ token ~ \x1b[0;32merror\x1b[0m = ',
-        error,
-      );
     },
   });
 
@@ -203,19 +159,14 @@ function WorkspaceMetaDialog(props: WorkspaceMetaDialogProps) {
 
 /**
  * detect current workspace from the url
- *
- * NOTE: it gets the workspaces data from react query store under the name "workspaces"
  */
 export function SelectWorkSpace() {
-  const { data: workspaces } = useQuery<WorkSpaces>({
-    queryKey: ['workspaces'],
-    initialData: [],
-  });
+  const { data: workspaces } = api.workspaces.index.useQuery();
   const { workspaceId } = useParams();
   if (workspaceId === undefined) {
     throw new Error('must have active workspace id');
   }
-  const currentWorkspce = workspaces.find((i) => i.id === +workspaceId);
+  const currentWorkspce = workspaces!.find((i) => i.id === +workspaceId);
   if (currentWorkspce === undefined) {
     throw new Error('Workspace Not Found');
   }
@@ -228,12 +179,12 @@ export function SelectWorkSpace() {
           <ChevronDown size={20} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="DropdownMenuContent scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 overflow-y-auto">
+      <DropdownMenuContent className="DropdownMenuContent overflow-y-auto scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
         {/*current workspace*/}
         <WorkspaceMetaDialog insert={false} workspaceMeta={currentWorkspce} />
         <DropdownMenuSeparator />
         {/*all the workspaces links*/}
-        {workspaces.map((workspace) => {
+        {workspaces!.map((workspace) => {
           return (
             <DropdownMenuItem
               key={workspace.id}

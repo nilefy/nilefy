@@ -11,7 +11,7 @@ import { commandManager } from '@/actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { FixedLeftSidebar } from './Components/FixedLeftSidebar';
 import { editorStore } from '@/lib/Editor/Models';
-import { AppLoader } from './appLoader';
+import { AppLoader, PageLoader } from './appLoader';
 import { WebloomLoader } from '@/components/loader';
 import { EditorHeader } from './editorHeader';
 
@@ -25,8 +25,9 @@ import {
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 import { BottomPanel } from './Components/BottomPanel';
 import { LeftSidebar } from './Components/Leftsidebar';
+import { Outlet } from 'react-router-dom';
 
-export const Editor = observer(() => {
+export const EditorLayout = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
   useSetPageDimensions(editorRef);
   useEditorHotKeys(editorStore, commandManager);
@@ -82,7 +83,7 @@ export const Editor = observer(() => {
                     ref={editorRef}
                     className="relative h-full w-full bg-white"
                   >
-                    <WebloomRoot isProduction={false} />
+                    <Outlet />
                   </div>
                 </div>
               </ResizablePanel>
@@ -120,7 +121,18 @@ export const Editor = observer(() => {
 export function App() {
   return (
     <AppLoader initWs={true}>
-      <Editor />
+      <EditorLayout />
     </AppLoader>
   );
 }
+
+export const Editor = observer(() => {
+  if (editorStore.isLoadingPage) {
+    return <WebloomLoader />;
+  }
+  return (
+    <PageLoader>
+      <WebloomRoot isProduction={false} />
+    </PageLoader>
+  );
+});

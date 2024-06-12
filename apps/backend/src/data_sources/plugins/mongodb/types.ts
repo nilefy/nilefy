@@ -14,32 +14,47 @@ const queryMultipleSchema = z.boolean().optional();
 const queryUpdateSchema = z.record(z.string(), z.unknown());
 const queryReplacementSchema = z.record(z.string(), z.unknown());
 
+const ops = [
+  z.literal('Create Document'), // 0
+  z.literal('Find Document'), //1
+  z.literal('View Database Collections'), //2
+  z.literal('Count Documents'), //3
+  z.literal('Update Document'), //4
+  z.literal('Replace Document'), //5
+  z.literal('Delete Document'), //6
+] as const;
+const operationOptions = z.union(ops).default('Create Document');
 const query = z.discriminatedUnion('operation', [
   z.object({
-    operation: z.literal('Create Document'),
+    // create doc
+    operation: ops[0],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     documents: queryDocumentsSchema,
   }),
   z.object({
-    operation: z.literal('Find Document'),
+    // find doc
+    operation: ops[1],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     filter: queryFilterSchema,
     multiple: queryMultipleSchema,
   }),
   z.object({
-    operation: z.literal('View Database Collections'),
+    // view doc
+    operation: ops[2],
     database: queryDatabaseSchema,
   }),
   z.object({
-    operation: z.literal('Count Documents'),
+    // count docs
+    operation: ops[3],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     filter: queryFilterSchema,
   }),
   z.object({
-    operation: z.literal('Update Document'),
+    // update docs
+    operation: ops[4],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     filter: queryFilterSchema,
@@ -47,14 +62,16 @@ const query = z.discriminatedUnion('operation', [
     multiple: queryMultipleSchema,
   }),
   z.object({
-    operation: z.literal('Replace Document'),
+    // replace doc
+    operation: ops[5],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     filter: queryFilterSchema,
     replacement: queryReplacementSchema,
   }),
   z.object({
-    operation: z.literal('Delete Document'),
+    // delete doc
+    operation: ops[6],
     database: queryDatabaseSchema,
     collection: queryCollectionSchema,
     filter: queryFilterSchema,
@@ -85,16 +102,6 @@ export const pluginConfigForm = {
   },
 };
 
-const operations = [
-  'Create Document',
-  'Find Document',
-  'View Database Collections',
-  'Count Documents',
-  'Update Document',
-  'Replace Document',
-  'Delete Document',
-];
-
 export const queryConfigForm = {
   formConfig: [
     {
@@ -106,30 +113,18 @@ export const queryConfigForm = {
           type: 'select',
           options: {
             items: [
-              { label: 'Create Document', value: 'Create Document' },
-              { label: 'Find Document', value: 'Find Document' },
+              { label: 'Create Document', value: ops[0].value },
+              { label: 'Find Document', value: ops[1].value },
               {
                 label: 'View Database Collections',
-                value: 'View Database Collections',
+                value: ops[2].value,
               },
-              { label: 'Count Documents', value: 'Count Documents' },
-              { label: 'Update Document', value: 'Update Document' },
-              { label: 'Replace Document', value: 'Replace Document' },
-              { label: 'Delete Document', value: 'Delete Document' },
+              { label: 'Count Documents', value: ops[3].value },
+              { label: 'Update Document', value: ops[4].value },
+              { label: 'Replace Document', value: ops[5].value },
+              { label: 'Delete Document', value: ops[6].value },
             ],
-            validation: zodToJsonSchema(
-              z
-                .union([
-                  z.literal('Create Document'),
-                  z.literal('Find Document'),
-                  z.literal('View Database Collections'),
-                  z.literal('Count Documents'),
-                  z.literal('Update Document'),
-                  z.literal('Replace Document'),
-                  z.literal('Delete Document'),
-                ])
-                .default('Create Document'),
-            ),
+            validation: zodToJsonSchema(operationOptions),
           },
         },
         {
@@ -154,7 +149,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'EQUALS',
-                value: operations[2],
+                value: ops[2].value,
               },
             ],
           },
@@ -173,7 +168,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[0],
+                value: ops[0].value,
               },
             ],
           },
@@ -192,7 +187,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'IN',
-                value: [operations[0], operations[2]],
+                value: [ops[0].value, ops[2].value],
               },
             ],
           },
@@ -212,7 +207,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[4],
+                value: ops[4].value,
               },
             ],
           },
@@ -231,7 +226,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[5],
+                value: ops[5].value,
               },
             ],
           },
@@ -247,7 +242,7 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_IN',
-                value: [operations[1], operations[4], operations[6]],
+                value: [ops[1].value, ops[4].value, ops[6].value],
               },
             ],
           },

@@ -299,7 +299,10 @@ export class Entity implements WebloomDisposable {
 
   async dispose() {
     this.clearDependents();
-    const keysToBeRemovedFromTsServer = this.allEvaluablePaths;
+    const keysToBeRemovedFromTsServer = [
+      ...this.allEvaluablePaths,
+      ...keys(this.actions),
+    ];
     const tsServer = await this.editorState.tsServer;
     for (const key of keysToBeRemovedFromTsServer) {
       tsServer.deleteFile(this.id + '_' + key);

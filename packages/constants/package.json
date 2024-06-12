@@ -4,10 +4,15 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "devDependencies": {
-    "tsup": "^8.0.1"
+    "@types/react": "^18.2.31",
+    "tsup": "^8.0.1",
+    "zod-to-json-schema": "^3.23.0"
   },
   "scripts": {
     "dev": "tsup --watch --dts",
     "build": "tsup "
+  },
+  "peerDependencies": {
+    "zod-to-json-schema": "^3.23.0"
   }
 }

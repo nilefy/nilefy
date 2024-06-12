@@ -206,6 +206,23 @@ export const workspaces = pgTable("workspaces", {
   updatedById: integer("updated_by_id").references(() => users.id),
 });
 
+export const userToWorkspaceStatusEnum = pgEnum("user_to_workspace_status", [
+  /**
+   * user could interact with the workspace, or accepted the invite
+   */
+  "active",
+  'invited',
+  /**
+   * user declined invitation
+   */
+  'declined',
+  /**
+   * admin disabled this user from accessing the workspace
+   *  could re-enable this user again
+   */
+  'archived'
+]);
+
 export const usersToWorkspaces = pgTable(
   "users_to_workspaces",
   {
@@ -215,11 +232,14 @@ export const usersToWorkspaces = pgTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id),
+    status: userToWorkspaceStatusEnum("status").notNull(),
+    ...timeStamps,
   },
   (t) => ({
     pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
   })
 );
+
 
 export const apps = pgTable("apps", {
   id: serial("id").primaryKey(),
