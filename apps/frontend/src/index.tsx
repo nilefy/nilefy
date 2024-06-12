@@ -1,11 +1,12 @@
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import { App } from '@/pages/Editor/Editor';
+import { App, Editor } from '@/pages/Editor/Editor';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SignUp } from '@/pages/auth/up';
 import { SignIn } from '@/pages/auth/in';
 import ErrorPage from './pages/error';
-import { Dashboard, loader as workspacesLoader } from './pages/mainLayout';
+import { Dashboard } from './pages/mainLayout';
+import { loader as workspacesLoader } from './pages/workspaceLoader';
 import { ThemeProvider } from './components/theme-provider';
 import { UsersManagement } from './pages/workspace/users';
 import { RoleManagement, RolesManagement } from '@/pages/workspace/role';
@@ -26,7 +27,7 @@ import {
   DataSourcesTemplate,
 } from '@/pages/dataSources/dataSources';
 import { AppPreview, PagePreview } from '@/pages/Editor/preview';
-import { appLoader } from '@/pages/Editor/appLoader';
+import { appLoader, pageLoader } from '@/pages/Editor/appLoader';
 import { ApplicationsLayout, appsLoader } from '@/pages/apps/apps';
 import { ForgotPassword } from './pages/auth/forgot_password';
 import { NeedHelpSigningIn } from './pages/auth/need_help_in';
@@ -59,7 +60,7 @@ const DndOptions: Partial<TouchBackendOptions> = {
   enableMouseEvents: true,
 };
 // router config
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '',
     element: (
@@ -184,9 +185,12 @@ const router = createBrowserRouter([
         <App />
       </DndProvider>
     ),
+
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
-    children: [{ path: ':pageId' }],
+    children: [
+      { path: ':pageId', element: <Editor />, loader: pageLoader(queryClient) },
+    ],
   },
   {
     path: '/:workspaceId/apps/:appId',

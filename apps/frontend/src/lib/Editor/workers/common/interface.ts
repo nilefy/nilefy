@@ -85,14 +85,14 @@ export type AddEntityRequest = {
 export type ChangePageRequest = {
   event: 'changePage';
   body: {
-    currentPageId: string;
+    widgets: Record<string, EntityConfigBody>;
   };
 };
 export type InitRequest = {
   body: {
     currentPageId: string;
     queries: Record<string, EntityConfigBody>;
-    pages: Record<string, Record<string, EntityConfigBody>>;
+    widgets: Record<string, EntityConfigBody>;
     globals: EntityConfigBody;
     libraries: JSLibraryI[];
   };

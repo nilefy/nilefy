@@ -80,6 +80,16 @@ export type RemoteTypes =
         opId?: string;
         queryId: string;
       };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['CHANGE_PAGE'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        pageId: number;
+      };
     };
 
 export type ActionReturnI = void | RemoteTypes;

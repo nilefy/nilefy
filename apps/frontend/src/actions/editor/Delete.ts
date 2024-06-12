@@ -44,6 +44,7 @@ export class DeleteAction implements UndoableCommand {
         return {
           type: node.type,
           name: node.id,
+          pageId: node.pageId,
         };
       }),
       true,
@@ -65,6 +66,7 @@ export class DeleteAction implements UndoableCommand {
         return {
           type: node.type,
           name: node.id,
+          pageId: node.pageId,
         };
       }),
       false,

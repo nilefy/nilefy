@@ -15,6 +15,13 @@
       "when": 1717631087999,
       "tag": "0001_daffy_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1718106794888,
+      "tag": "0002_dizzy_beast",
+      "breakpoints": true
     }
   ]
 }

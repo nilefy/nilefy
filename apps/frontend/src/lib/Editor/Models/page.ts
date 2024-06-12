@@ -15,7 +15,6 @@ import {
   normalizeCoords,
 } from '../utils';
 import { WorkerBroker } from './workerBroker';
-import { CursorManager } from './cursorManager';
 
 import { WebloomDisposable } from './interface';
 import { WebloomWidgets } from '@/pages/Editor/Components';
@@ -44,7 +43,6 @@ export class WebloomPage implements WebloomDisposable {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -126,8 +124,6 @@ export class WebloomPage implements WebloomDisposable {
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-
-    this.cursorManager = new CursorManager(this);
   }
   selectAll() {
     this.selectedNodeIds = new Set(this.rootWidget.nodes);
@@ -485,6 +481,5 @@ export class WebloomPage implements WebloomDisposable {
   }
   dispose(): void {
     Object.values(this.widgets).forEach((widget) => widget.dispose());
-    this.cursorManager.dispose();
   }
 }
