@@ -4,6 +4,6 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 ## Getting Started
 
-- if you didn't install from the root run `pnpm install`
+- if you didn't install from the root directory run `pnpm install`
 
 - run dev server `pnpm start`
