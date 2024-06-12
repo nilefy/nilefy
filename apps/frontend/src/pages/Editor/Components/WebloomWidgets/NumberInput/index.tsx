@@ -189,6 +189,11 @@ const WebloomNumberInputWidget: Widget<WebloomInputProps> = {
   component: WebloomNumberInput,
   metaProps: new Set(['value']),
   publicAPI: {
+    value: {
+      description: 'Input widget',
+      type: 'static',
+      typeSignature: 'number',
+    },
     focus: {
       type: 'function',
     },
