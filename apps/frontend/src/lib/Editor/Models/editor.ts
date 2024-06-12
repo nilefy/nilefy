@@ -101,6 +101,7 @@ export class EditorState implements WebloomDisposable {
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
       isLoadingPage: observable,
+      changePage: action,
     });
   }
 
@@ -412,19 +413,13 @@ export class EditorState implements WebloomDisposable {
   }) {
     id = id.toString();
     if (id == this.currentPageId) return;
+
     this.currentPage.setSelectedNodeIds(new Set());
     commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
-      runInAction(() => {
-        this.isLoadingPage = true;
-      });
-      runInAction(() => {
-        this.addPage(id, name, handle, tree);
-      });
+      this.addPage(id, name, handle, tree);
     }
-    runInAction(() => {
-      this.currentPageId = id;
-    });
+    this.currentPageId = id;
 
     updateOrderMap(
       Object.values(this.pages[this.currentPageId].widgets).map((w) => {

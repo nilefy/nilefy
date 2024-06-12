@@ -8,12 +8,15 @@ import { editorStore } from '@/lib/Editor/Models';
 import { JwtPayload } from '@/types/auth.types';
 import { getUser, loaderAuth } from '@/utils/loaders';
 import { QueryClient } from '@tanstack/react-query';
-import { when } from 'mobx';
+import { runInAction, when } from 'mobx';
 import { Suspense, useEffect } from 'react';
 import { Await, defer, useAsyncValue, useLoaderData } from 'react-router-dom';
 export const pageLoader =
   (queryClient: QueryClient) =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
+    runInAction(() => {
+      editorStore.isLoadingPage = true;
+    });
     const pageId = params.pageId!;
     const appQuery = fetchAppData({
       workspaceId: +(params.workspaceId as string),
@@ -27,6 +30,9 @@ export const pageLoader =
       name: page.name,
       handle: page.id.toString(),
       tree: page.defaultPage.tree,
+    });
+    runInAction(() => {
+      editorStore.isLoadingPage = false;
     });
     return defer({
       values: [pageId],

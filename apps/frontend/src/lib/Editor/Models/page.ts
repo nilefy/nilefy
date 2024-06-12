@@ -15,7 +15,6 @@ import {
   normalizeCoords,
 } from '../utils';
 import { WorkerBroker } from './workerBroker';
-import { CursorManager } from './cursorManager';
 
 import { WebloomDisposable } from './interface';
 import { WebloomWidgets } from '@/pages/Editor/Components';

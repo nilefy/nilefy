@@ -38,7 +38,6 @@ import {
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
-import { WebloomRoot } from './pages/Editor/Components/lib';
 
 if (process.env.NODE_ENV !== 'production') {
   log.enableAll();

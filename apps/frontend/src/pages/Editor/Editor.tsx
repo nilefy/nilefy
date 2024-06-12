@@ -126,10 +126,13 @@ export function App() {
   );
 }
 
-export function Editor() {
+export const Editor = observer(() => {
+  if (editorStore.isLoadingPage) {
+    return <WebloomLoader />;
+  }
   return (
     <PageLoader>
       <WebloomRoot isProduction={false} />
     </PageLoader>
   );
-}
+});
