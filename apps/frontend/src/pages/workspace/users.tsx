@@ -19,6 +19,42 @@ import {
 import { api } from '@/api';
 import { useParams } from 'react-router-dom';
 import { WebloomLoader } from '@/components/loader';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+function InviteUsersSheet() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button>
+          <Users />
+          Add users
+        </Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Add users</SheetTitle>
+        </SheetHeader>
+        <Tabs defaultValue="email" className="w-full">
+          <TabsList>
+            <TabsTrigger value="email">Invite With Email</TabsTrigger>
+            <TabsTrigger value="csv">Upload CSV file</TabsTrigger>
+          </TabsList>
+          <TabsContent value="email">
+            Make changes to your account here.
+          </TabsContent>
+          <TabsContent value="csv">Change your password here.</TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export function UsersManagement() {
   const { workspaceId } = useParams();
@@ -33,11 +69,7 @@ export function UsersManagement() {
     <div className="mx-auto flex h-full w-4/6 flex-col items-center justify-center gap-3 ">
       <div className="flex w-full justify-between">
         <p>{users.data.length} users</p>
-        {/*TODO: remove the button and add ui to add users*/}
-        <Button>
-          <Users />
-          Add users
-        </Button>
+        <InviteUsersSheet />
       </div>
       <div className="flex w-full flex-col justify-between bg-primary/5 p-2">
         <div className="flex gap-4">
