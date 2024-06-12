@@ -32,21 +32,10 @@ export const findDocument = async (
     const doc = await client
       .db(database)
       .collection(collection)
-      .findOne(filter, {
-        projection: {
-          _id: 0,
-        },
-      });
+      .findOne(filter);
     return [doc];
   }
-  const cursor = client
-    .db(database)
-    .collection(collection)
-    .find(filter, {
-      projection: {
-        _id: 0,
-      },
-    });
+  const cursor = client.db(database).collection(collection).find(filter);
   return await cursor.toArray();
 };
 
