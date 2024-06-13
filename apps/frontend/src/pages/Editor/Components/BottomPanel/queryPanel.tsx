@@ -518,7 +518,7 @@ export const QueryPanel = observer(function QueryPanel() {
                     onBlur={(e) => {
                       setEditingItemId(null);
                       setEditingItemValue(null);
-                      mmandManager.executeCommand(
+                      commandManager.executeCommand(
                         new RenameAction(item.id, e.target.value),
                       );
                     }}
