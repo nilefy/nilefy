@@ -1,5 +1,6 @@
 import { keys } from 'lodash';
 import { defaultLibraries } from './libraries';
+import { editorStore } from './Models';
 
 let entityOrder: Record<string, Set<number> | Record<string, Set<number>>> = {};
 
@@ -124,20 +125,27 @@ export function updateOrderMap(
   });
 }
 
+// export function entitiyNameExists(entityName: string, pageId: string) {
+//   return Object.entries(entityOrder).some(([type, value]) => {
+//     if (value instanceof Set) {
+//       return [...value].some((order) => {
+//         const currentName = `${type}${order}`;
+//         return currentName === entityName;
+//       });
+//     }
+//     if (!value[pageId]) {
+//       value[pageId] = new Set();
+//     }
+//     return [...value[pageId]].some((order) => {
+//       const currentName = `${type}${order}`;
+//       return currentName === entityName;
+//     });
+//   });
+// }
+
+// TODO: queries
 export function entitiyNameExists(entityName: string, pageId: string) {
-  return Object.entries(entityOrder).some(([type, value]) => {
-    if (value instanceof Set) {
-      return [...value].some((order) => {
-        const currentName = `${type}${order}`;
-        return currentName === entityName;
-      });
-    }
-    if (!value[pageId]) {
-      value[pageId] = new Set();
-    }
-    return [...value[pageId]].some((order) => {
-      const currentName = `${type}${order}`;
-      return currentName === entityName;
-    });
+  return Object.keys(editorStore.currentPage.widgets).some((widgetId) => {
+    return widgetId === entityName;
   });
 }
