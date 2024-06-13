@@ -139,14 +139,6 @@ export class DataQueriesService {
         triggerMode: true,
       },
       with: {
-        baseDataSource: {
-          columns: {
-            queryConfig: true,
-            id: true,
-            type: true,
-            name: true,
-          },
-        },
         dataSource: {
           columns: {
             id: true,

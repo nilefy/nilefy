@@ -21,12 +21,7 @@ export class GlobalDataSourcesService {
   }
 
   async getAll(): Promise<DataSourceP[]> {
-    const ds = await this.db.query.dataSources.findMany({
-      columns: {
-        config: false,
-        queryConfig: false,
-      },
-    });
+    const ds = await this.db.query.dataSources.findMany();
     return ds;
   }
 
