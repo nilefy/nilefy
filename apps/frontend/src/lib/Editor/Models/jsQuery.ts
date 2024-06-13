@@ -304,6 +304,7 @@ export class WebloomJSQuery
     return {
       id: this.id,
       query: this.rawValues.query as string,
+      settings: toJS(this.rawValues.settings),
       triggerMode: this.triggerMode,
       appId: this.appId,
       updatedAt: this.updatedAt,

@@ -1,5 +1,6 @@
 import { commandManager } from '@/actions/CommandManager';
 import { AppCompleteT, fetchAppData } from '@/api/apps.api';
+import { globalDataSourcesQuery } from '@/api/dataSources.api';
 import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
@@ -70,15 +71,19 @@ export const appLoader =
       workspaceId: +(params.workspaceId as string),
       appId: +(params.appId as string),
     });
+
+    const _globalDataSourcesQuery = globalDataSourcesQuery();
     const values = await Promise.all([
       queryClient.fetchQuery(appQuery),
       queryClient.fetchQuery(queriesQuery),
       queryClient.fetchQuery(jsQueriesQuery),
       queryClient.fetchQuery(jsLibrariesQuery),
+      queryClient.fetchQuery(_globalDataSourcesQuery),
     ]);
-    const [app, queries, jsQueries, jsLibraries] = values;
+    const [app, queries, jsQueries, jsLibraries, globalDataSources] = values;
     const tree = app.defaultPage.tree;
     editorStore.init({
+      globalDataSources: globalDataSources,
       name: app.name,
       workspaceId: app.workspaceId,
       appId: app.id,

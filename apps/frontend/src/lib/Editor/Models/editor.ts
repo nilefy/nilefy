@@ -46,6 +46,7 @@ import { isValidIdentifier as isValidIdentifierName } from '@/lib/utils';
 import { WebloomWidget } from './widget';
 import { ChangePage } from '@/actions/editor/changePage';
 import { CursorManager } from './cursorManager';
+import { GlobalDataSourceIndexRet } from '@/api/dataSources.api';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -59,6 +60,7 @@ export class EditorState implements WebloomDisposable {
   };
   isLoadingPage: boolean = false;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
+  globalDataSources!: GlobalDataSourceIndexRet;
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
   workerBroker!: WorkerBroker;
@@ -195,6 +197,7 @@ export class EditorState implements WebloomDisposable {
     currentUser,
     jsLibraries = [],
     onBoardingCompleted,
+    globalDataSources,
   }: {
     name: string;
     pages: Optional<
@@ -215,10 +218,12 @@ export class EditorState implements WebloomDisposable {
     workspaceId: number;
     currentUser: string;
     onBoardingCompleted: boolean;
+    globalDataSources: GlobalDataSourceIndexRet;
   }) {
     this.initting = true;
     try {
       this.dispose();
+      this.globalDataSources = globalDataSources;
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
         addMenuOpen: false,

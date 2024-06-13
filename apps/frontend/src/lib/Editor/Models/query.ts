@@ -353,6 +353,7 @@ export class WebloomQuery
       triggerMode: this.triggerMode,
       workspaceId: this.workspaceId,
       dataSource: this.dataSource,
+      baseDataSource: this.baseDataSource,
     };
   }
 

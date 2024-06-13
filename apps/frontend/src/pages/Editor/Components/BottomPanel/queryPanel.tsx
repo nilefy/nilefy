@@ -41,6 +41,10 @@ import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from '../entityForm';
 import { LoadingButton } from '@/components/loadingButton';
 import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
+import { commandManager } from '@/actions/CommandManager';
+import { CreateQuery } from '@/actions/editor/createQuery';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { DeleteQuery } from '@/actions/editor/deleteQuery';
 
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
@@ -429,13 +433,21 @@ export const QueryPanel = observer(function QueryPanel() {
               <DropdownMenuItem
                 id="add-new-js-query"
                 onClick={() => {
-                  editorStore.queriesManager.addJSquery.mutate({
-                    dto: {
-                      query: '',
-                      settings: {},
-                      triggerMode: 'manually',
-                    },
-                  });
+                  commandManager.executeCommand(
+                    new CreateQuery({
+                      event: 'createJsQuery',
+                      data: {
+                        query: {
+                          id: getNewEntityName(
+                            EDITOR_CONSTANTS.JS_QUERY_BASE_NAME,
+                          ),
+                          query: '',
+                          settings: {},
+                          triggerMode: 'manually',
+                        },
+                      },
+                    }),
+                  );
                 }}
               >
                 JS Query
@@ -446,13 +458,23 @@ export const QueryPanel = observer(function QueryPanel() {
                   <DropdownMenuItem
                     key={`${item.id}`}
                     onClick={() => {
-                      editorStore.queriesManager.addQuery.mutate({
-                        dto: {
-                          dataSourceId: item.id,
-                          id: getNewEntityName(item.name),
-                          query: {},
-                        },
-                      });
+                      commandManager.executeCommand(
+                        new CreateQuery({
+                          event: 'createQuery',
+                          data: {
+                            baseDataSource: editorStore.globalDataSources.find(
+                              (i) => i.id === item.dataSource.id,
+                            )!,
+                            dataSource: item,
+                            query: {
+                              dataSourceId: item.id,
+                              id: getNewEntityName(item.name),
+                              query: {},
+                              triggerMode: 'manually',
+                            },
+                          },
+                        }),
+                      );
                     }}
                   >
                     {item.name}
@@ -545,17 +567,9 @@ export const QueryPanel = observer(function QueryPanel() {
                         size={'icon'}
                         variant={'ghost'}
                         onClick={() => {
-                          const query = editorStore.getQueryById(item.id);
-                          if (!query) throw new Error('Query not found');
-                          if (query instanceof WebloomJSQuery) {
-                            editorStore.queriesManager.deleteJSquery.mutate({
-                              queryId: item.id,
-                            });
-                            return;
-                          }
-                          editorStore.queriesManager.deleteQuery.mutate({
-                            queryId: item.id,
-                          });
+                          commandManager.executeCommand(
+                            new DeleteQuery(item.id),
+                          );
                         }}
                       >
                         <Trash size={16} />
