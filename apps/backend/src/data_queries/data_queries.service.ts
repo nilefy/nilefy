@@ -32,7 +32,7 @@ import {
 
 export type CompleteQueryI = QueryDto & {
   dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
-    dataSource: Pick<DataSourceDto, 'id' | 'name' | 'type' | 'queryConfig'>;
+    baseDataSource: Pick<DataSourceDto, 'id' | 'name' | 'type' | 'queryConfig'>;
   };
 };
 
@@ -238,21 +238,24 @@ export class DataQueriesService {
             pages: {
               columns: {
                 id: true,
+                name: true,
               },
             },
           },
         })
       )?.pages;
-      (appPages ?? []).forEach(async (page: { id: PageDto['id'] }) => {
-        const pageId = page.id;
-        const ret = await this.componentsService.getComponent(newId, pageId);
-        if (ret) {
-          // there is a component with this new id
-          throw new BadRequestException(
-            `There is a component with name ${newId}, page ${pageId}`,
-          );
-        }
-      });
+      (appPages ?? []).forEach(
+        async (page: { id: PageDto['id']; name: PageDto['name'] }) => {
+          const pageId = page.id;
+          const ret = await this.componentsService.getComponent(newId, pageId);
+          if (ret) {
+            // there is a component with this new id
+            throw new BadRequestException(
+              `There is a component with name ${newId}, ${page.name} page`,
+            );
+          }
+        },
+      );
     }
     const [q] = await this.db
       .update(queries)
