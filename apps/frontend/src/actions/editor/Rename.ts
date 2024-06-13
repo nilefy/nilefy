@@ -116,7 +116,6 @@ export class RenameAction implements UndoableCommand {
       });
       ret.push(new ChangePropAction(widget.id).execute() as RemoteTypes);
     });
-    console.log('RenameAction -> execute -> ret', ret);
     return ret;
   }
   undo(): ActionReturnI {
