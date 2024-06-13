@@ -5,7 +5,7 @@ import {
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { GlobalDataSourceI, WsDataSourceI } from './dataSources.api';
+import { WsDataSourceI } from './dataSources.api';
 
 export type QueryI = {
   id: string;
@@ -14,6 +14,7 @@ export type QueryI = {
    */
   query: Record<string, unknown>;
   dataSourceId?: number | null;
+  baseDataSource: number;
   appId: number;
   createdById: number;
   updatedById: number;
@@ -39,10 +40,6 @@ export type CompleteQueryI = QueryI & {
   dataSource?:
     | (Pick<WsDataSourceI, 'name'> & { id?: null | WsDataSourceI['id'] })
     | null;
-  baseDataSource: Pick<
-    GlobalDataSourceI,
-    'id' | 'name' | 'type' | 'queryConfig'
-  >;
 };
 
 export async function getQueries({
