@@ -309,9 +309,9 @@ export class WebloomJSQuery
     this.setValue('error', undefined);
     this.setValue('statusCode', undefined);
   }
-  setValue(path: string, value: unknown): void {
+  setValue(path: string, value: unknown, autoSync = true): void {
     const queryMetaProps = ['data', 'error', 'statusCode', 'queryState'];
-    if (!queryMetaProps.includes(path)) {
+    if (!queryMetaProps.includes(path) && autoSync) {
       this.updatedAt = new Date();
       this.debouncedSyncRawValuesWithServer();
     }

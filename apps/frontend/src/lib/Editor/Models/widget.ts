@@ -208,14 +208,11 @@ export class WebloomWidget
       );
     return 0;
   }
-  setValue(path: string, value: unknown): void {
-    if (!this.metaProps.has(path)) {
+  setValue(path: string, value: unknown, autoSync = true): void {
+    if (!this.metaProps.has(path) && autoSync) {
       this.debouncedSyncRawValuesWithServer();
     }
     super.setValue(path, value);
-  }
-  setApi(api: Record<string, (...args: unknown[]) => void>) {
-    this.api = api;
   }
   syncRawValuesWithServer() {
     commandManager.executeCommand(new ChangePropAction(this.id));
@@ -224,6 +221,10 @@ export class WebloomWidget
     this.syncRawValuesWithServer,
     500,
   );
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }

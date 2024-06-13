@@ -1,19 +1,105 @@
-import { Command } from '../types';
+import { Entity } from '@/lib/Editor/Models/entity';
+import { ActionReturnI, RemoteTypes, UndoableCommand } from '../types';
+import { editorStore } from '@/lib/Editor/Models';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
+import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
+import { WebloomQuery } from '@/lib/Editor/Models/query';
+import { UpdateQuery } from './updateQuery';
+import { forEach, merge } from 'lodash';
+import { ChangePropAction } from './changeProps';
 
-export class RenameAction implements Command {
+export class RenameAction implements UndoableCommand {
   constructor(
-    private id: WebloomWidget['id'],
-    private newId: WebloomWidget['id'],
+    private id: Entity['id'],
+    private newId: Entity['id'],
   ) {}
 
-  execute() {
-    return {
-      event: 'rename' as const,
-      data: {
-        id: this.id,
-        newId: this.newId,
+  execute(): ActionReturnI {
+    const entity = editorStore.getEntityById(this.id);
+    if (!entity) return;
+    const entityType = entity.entityType;
+    const dependents = entity.connections.dependents;
+    const ret: ActionReturnI = [];
+    editorStore.renameEntity(this.id, this.newId);
+    switch (entityType) {
+      case 'widget':
+        ret.push({
+          event: 'updateNode',
+          data: {
+            updates: [
+              {
+                ...(entity as WebloomWidget).snapshot,
+                id: this.id,
+                newId: this.newId,
+              },
+              ...(entity as WebloomWidget).nodes.map((id) => {
+                return editorStore.currentPage.getWidgetById(id).snapshot;
+              }),
+            ],
+          },
+        });
+        break;
+      case 'jsQuery':
+        {
+          const snapshot = (entity as WebloomJSQuery).snapshot;
+          ret.push({
+            event: 'updateJsQuery',
+            data: {
+              queryId: this.id,
+              query: {
+                id: this.newId,
+                query: snapshot.query,
+                settings: snapshot.settings,
+                triggerMode: snapshot.triggerMode,
+              },
+            },
+          });
+        }
+        break;
+      case 'query': {
+        const snapshot = (entity as WebloomQuery).snapshot;
+        ret.push({
+          event: 'updateQuery',
+          data: {
+            queryId: this.id,
+            query: {
+              id: this.newId,
+              dataSourceId: snapshot.dataSourceId,
+              query: snapshot.query,
+              triggerMode: snapshot.triggerMode,
+            },
+          },
+        });
+        break;
+      }
+    }
+    const sideEffects = editorStore.getRefactoredDependentPaths(
+      this.id,
+      this.newId,
+      dependents,
+    );
+    forEach(
+      merge({}, sideEffects['jsQuery'], sideEffects['query']),
+      (item, key) => {
+        const jsQuery = editorStore.getQueryById(key) as WebloomJSQuery;
+        item.forEach((effect) => {
+          jsQuery.setValue(effect.path, effect.value, false);
+        });
+        const localRet = new UpdateQuery(key).execute();
+        ret.push(localRet as RemoteTypes);
       },
-    };
+    );
+    forEach(sideEffects['widget'], (item, key) => {
+      const widget = editorStore.currentPage.getWidgetById(key);
+      item.forEach((effect) => {
+        widget.setValue(effect.path, effect.value, false);
+      });
+      ret.push(new ChangePropAction(widget.id).execute() as RemoteTypes);
+    });
+    console.log('RenameAction -> execute -> ret', ret);
+    return ret;
+  }
+  undo(): ActionReturnI {
+    return new RenameAction(this.newId, this.id).execute();
   }
 }

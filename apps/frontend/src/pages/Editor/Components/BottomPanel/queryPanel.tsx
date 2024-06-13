@@ -44,6 +44,7 @@ import { commandManager } from '@/actions/CommandManager';
 import { CreateQuery } from '@/actions/editor/createQuery';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { DeleteQuery } from '@/actions/editor/deleteQuery';
+import { RenameAction } from '@/actions/editor/Rename';
 
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
@@ -90,7 +91,9 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             setRenameValue(e.target.value);
           }}
           onBlur={(e) => {
-            editorStore.renameEntity(query.id, e.target.value);
+            commandManager.executeCommand(
+              new RenameAction(query.id, e.target.value),
+            );
           }}
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
@@ -515,7 +518,9 @@ export const QueryPanel = observer(function QueryPanel() {
                     onBlur={(e) => {
                       setEditingItemId(null);
                       setEditingItemValue(null);
-                      editorStore.renameEntity(item.id, e.target.value);
+                      mmandManager.executeCommand(
+                        new RenameAction(item.id, e.target.value),
+                      );
                     }}
                   />
                 ) : (

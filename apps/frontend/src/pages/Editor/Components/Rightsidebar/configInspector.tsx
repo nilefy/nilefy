@@ -19,6 +19,7 @@ import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
+import { RenameAction } from '@/actions/editor/Rename';
 
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
@@ -138,7 +139,9 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         value={value}
         onChange={onChange}
         onBlur={(e) => {
-          editorStore.renameEntity(selectedWidgetId, e.target.value);
+          commandManager.executeCommand(
+            new RenameAction(selectedWidgetId, e.target.value),
+          );
         }}
       />
     </div>

@@ -38,15 +38,15 @@ export class CommandManager {
 
   private handleActionReturn(ret: ActionReturnI) {
     if (ret && this.socket !== null && this.socket.getState() === 'connected') {
-      const r = {
-        ...ret,
-        data: {
-          ...ret.data,
+      if (!Array.isArray(ret)) ret = [ret];
+      for (const r of ret) {
+        r.data = {
+          ...r.data,
           opId: nanoid(),
-        },
-      };
-      log.info('method returned value i will send to remote', r);
-      this.socket.sendMessage(JSON.stringify(r));
+        };
+        log.info('method returned value i will send to remote', r);
+        this.socket.sendMessage(JSON.stringify(r));
+      }
     }
   }
 

@@ -19,10 +19,8 @@ import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
-import { toast } from '@/components/ui/use-toast';
 
 import {
-  entitiyNameExists,
   getNewEntityName,
   seedOrderMap,
   updateOrderMap,
@@ -39,14 +37,11 @@ import {
 } from '@/api/JSLibraries.api';
 import { renameEntityInCode } from '../evaluation/dependancyUtils';
 import { commandManager } from '@/actions/CommandManager';
-import { RenameAction } from '@/actions/editor/Rename';
-import { updateJSquery } from '@/api/jsQueries.api';
-import { updateQuery } from '@/api/queries.api';
-import { isValidIdentifier as isValidIdentifierName } from '@/lib/utils';
 import { WebloomWidget } from './widget';
 import { ChangePage } from '@/actions/editor/changePage';
 import { CursorManager } from './cursorManager';
 import { GlobalDataSourceIndexRet } from '@/api/dataSources.api';
+import { EntityTypes } from '../interface';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -110,12 +105,9 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
-      renameWidget: action,
-      renameQuery: action,
-      renameEntity: action,
       dispose: action,
       addJSQuery: action,
-      refactorDepedentPaths: action,
+      getRefactoredDependentPaths: action,
       isLoadingPage: observable,
       changePage: action,
     });
@@ -646,46 +638,18 @@ export class EditorState implements WebloomDisposable {
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
   }
-
-  async renameEntity(id: string, newId: string) {
-    if (id === newId) return;
-    if (!isValidIdentifierName(newId)) {
-      return toast({
-        title: 'Error',
-        description: `Failed to rename ${id} to ${newId}, because ${newId} is not a valid identifier name.`,
-        variant: 'destructive',
-      });
-    }
-    const entity = this.getEntityById(id);
-    if (entitiyNameExists(newId)) {
-      return toast({
-        title: 'Error',
-        description: `Failed to rename ${entity?.entityType} ${id} to ${newId}, because ${newId} already exists.`,
-        variant: 'destructive',
-      });
-    }
+  renameEntity(oldId: string, newId: string) {
+    const entity = this.getEntityById(oldId);
     if (!entity) return;
-    if (entity.entityType === 'widget') {
-      return this.renameWidget(id, newId);
-    } else if (
-      entity.entityType === 'query' ||
-      entity.entityType === 'jsQuery'
-    ) {
-      return this.renameQuery(id, newId);
-    }
-  }
-
-  renameWidget(id: string, newId: string) {
-    const widget = this.currentPage.widgets[id];
-    const children = widget.nodes;
-    children.forEach((childId) => {
-      widget.removeChild(childId);
-    });
-    const snapshot = widget.snapshot;
-    const dependentPaths = widget.connections.dependents;
-    //We remove and add because it's easier to handle since we can dispose the old entity and act as if it's a new entity
-    runInAction(() => {
-      this.currentPage.removeWidget(id, false);
+    const entityType = entity.entityType;
+    if (entityType === 'widget') {
+      const widget = this.currentPage.widgets[oldId];
+      const children = widget.nodes;
+      children.forEach((childId) => {
+        widget.removeChild(childId);
+      });
+      const snapshot = widget.snapshot;
+      this.currentPage.removeWidget(oldId, false);
       this.currentPage.addWidget({
         ...snapshot,
         id: newId,
@@ -694,73 +658,37 @@ export class EditorState implements WebloomDisposable {
       children.forEach((childId) => {
         newWidget.addChild(childId);
       });
-      commandManager.executeCommand(new RenameAction(id, newId));
-    });
-    this.refactorDepedentPaths(id, newId, dependentPaths);
-  }
-  async renameQuery(id: string, newId: string) {
-    const query = this.queries[id];
-    const isJsQuery = query instanceof WebloomJSQuery;
-    const snapshot = query.snapshot;
-    const dependentPaths = query.connections.dependents;
-
-    if (isJsQuery) {
-      try {
-        await updateJSquery({
-          workspaceId: this.workspaceId,
-          appId: this.appId,
-          queryId: id,
-          dto: {
-            id: newId,
-          },
-        });
-        runInAction(() => {
-          this.removeQuery(id);
-          this.addJSQuery({
-            ...(snapshot as InstanceType<typeof WebloomJSQuery>['snapshot']),
-            id: newId,
-          });
-        });
-      } catch (e) {
-        return toast({
-          title: 'Error',
-          description: `Failed to rename query ${id} to ${newId}, please try again.`,
-          variant: 'destructive',
-        });
-      }
-    } else {
-      try {
-        await updateQuery({
-          workspaceId: this.workspaceId,
-          appId: this.appId,
-          queryId: id,
-          dto: {
-            id: newId,
-          },
-        });
-        runInAction(() => {
-          this.removeQuery(id);
-          this.addQuery({
-            ...(snapshot as InstanceType<typeof WebloomQuery>['snapshot']),
-            id: newId,
-          });
-        });
-      } catch (e) {
-        return toast({
-          title: 'Error',
-          description: `Failed to rename query ${id} to ${newId}, please try again.`,
-          variant: 'destructive',
-        });
-      }
+      return;
+    } else if (entityType === 'query') {
+      const snapshot = (entity as WebloomQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addQuery({
+        ...snapshot,
+        id: newId,
+      });
+    } else if (entityType === 'jsQuery') {
+      const snapshot = (entity as WebloomJSQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addJSQuery({
+        ...snapshot,
+        id: newId,
+      });
     }
-
-    this.refactorDepedentPaths(id, newId, dependentPaths);
   }
-  refactorDepedentPaths(
+  getRefactoredDependentPaths(
     oldId: string,
     newId: string,
     dependentPaths: string[],
   ) {
+    type toRenameItem = { path: string; value: unknown };
+    const toRename: Record<
+      Exclude<EntityTypes, 'globals'>,
+      Record<Entity['id'], toRenameItem[]>
+    > = {
+      widget: {},
+      query: {},
+      jsQuery: {},
+    };
     for (const dependentPath of dependentPaths) {
       const [entityId, ...pathArr] = dependentPath.split('.');
       const path = pathArr.join('.');
@@ -775,7 +703,16 @@ export class EditorState implements WebloomDisposable {
         newId,
         shouldSearchForBinding,
       );
-      entity.setValue(path, newCode);
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ] ||= [];
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ].push({
+        path,
+        value: newCode,
+      });
     }
+    return toRename;
   }
 }

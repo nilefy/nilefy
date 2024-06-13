@@ -125,7 +125,7 @@ export type RemoteTypes =
       };
     };
 
-export type ActionReturnI = void | RemoteTypes;
+export type ActionReturnI = void | RemoteTypes | RemoteTypes[];
 export abstract class Command {
   abstract execute(): ActionReturnI;
 }
