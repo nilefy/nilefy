@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, computed, toJS } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  toJS,
+  override,
+} from 'mobx';
 import { Snapshotable } from './interface';
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
@@ -7,8 +14,10 @@ import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
-import { concat } from 'lodash';
+import { concat, debounce } from 'lodash';
 import { JsQueryI, updateJSquery } from '@/api/jsQueries.api';
+import { commandManager } from '@/actions/CommandManager';
+import { UpdateQuery } from '@/actions/editor/updateQuery';
 
 const onSuccessKey = 'config.onSuccess';
 const onFailureKey = 'config.onFailure';
@@ -260,6 +269,7 @@ export class WebloomJSQuery
       setQueryState: action,
       reset: action.bound,
       triggerMode: computed,
+      setValue: override,
     });
   }
   get triggerMode() {
@@ -299,7 +309,21 @@ export class WebloomJSQuery
     this.setValue('error', undefined);
     this.setValue('statusCode', undefined);
   }
-
+  setValue(path: string, value: unknown): void {
+    const queryMetaProps = ['data', 'error', 'statusCode', 'queryState'];
+    if (!queryMetaProps.includes(path)) {
+      this.updatedAt = new Date();
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new UpdateQuery(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get snapshot() {
     return {
       id: this.id,

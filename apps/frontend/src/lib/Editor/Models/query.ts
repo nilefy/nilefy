@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, toJS, computed } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  toJS,
+  computed,
+  override,
+} from 'mobx';
 import { Snapshotable } from './interface';
 import {
   CompleteQueryI,
@@ -12,9 +19,11 @@ import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
-import { concat } from 'lodash';
+import { concat, debounce } from 'lodash';
 import { editorStore } from '.';
 import { GlobalDataSourceI } from '@/api/dataSources.api';
+import { commandManager } from '@/actions/CommandManager';
+import { UpdateQuery } from '@/actions/editor/updateQuery';
 
 const onSuccessKey = 'config.onSuccess';
 const onFailureKey = 'config.onFailure';
@@ -302,6 +311,7 @@ export class WebloomQuery
       setDataSource: action,
       dataSourceId: observable,
       appId: observable,
+      setValue: override,
     });
   }
   get triggerMode() {
@@ -313,7 +323,21 @@ export class WebloomQuery
   setDataSource(dataSourceId: string) {
     this.dataSourceId = +dataSourceId;
   }
-
+  setValue(path: string, value: unknown): void {
+    const queryMetaProps = ['data', 'error', 'statusCode', 'queryState'];
+    if (!queryMetaProps.includes(path)) {
+      this.updatedAt = new Date();
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new UpdateQuery(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   updateQuery(
     dto: Partial<CompleteQueryI & { rawValues: Partial<QueryRawValues> }>,
   ) {

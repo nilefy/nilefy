@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
 import { DebouncedInput } from '../../../../components/debouncedInput';
@@ -39,7 +39,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from '../entityForm';
-import { LoadingButton } from '@/components/loadingButton';
 import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
 import { commandManager } from '@/actions/CommandManager';
 import { CreateQuery } from '@/actions/editor/createQuery';
@@ -79,9 +78,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
   useEffect(() => {
     setRenameValue(query.id);
   }, [query]);
-  const saveCallback = useCallback(() => {
-    query.updateQueryMutator.mutate();
-  }, [query]);
+
   return (
     <div className="h-full w-full">
       {/* HEADER */}
@@ -98,19 +95,6 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
         <div className="ml-auto flex flex-row items-center">
-          <LoadingButton
-            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
-            buttonProps={{
-              variant: 'ghost',
-              type: 'button',
-              className: 'mr-auto',
-              onClick: saveCallback,
-            }}
-          >
-            <>
-              <SaveIcon /> Save
-            </>
-          </LoadingButton>
           <Button
             id="run-query-button"
             variant={'ghost'}
