@@ -1,6 +1,4 @@
-import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -27,6 +25,62 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+
+// TODO: add roles
+const inviteUserByEmailSchema = z.object({
+  email: z.string().email(),
+});
+
+type InviteUserByEmailSchema = z.infer<typeof inviteUserByEmailSchema>;
+
+function InviteByEmailTab() {
+  const form = useForm<z.infer<typeof inviteUserByEmailSchema>>({
+    resolver: zodResolver(inviteUserByEmailSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  function onSubmit(values: InviteUserByEmailSchema) {
+    console.log(values);
+  }
+  return (
+    <TabsContent value="email">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="email@nilefy.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit">Submit</Button>
+        </form>
+      </Form>
+    </TabsContent>
+  );
+}
 
 function InviteUsersSheet() {
   return (
@@ -42,13 +96,11 @@ function InviteUsersSheet() {
           <SheetTitle>Add users</SheetTitle>
         </SheetHeader>
         <Tabs defaultValue="email" className="w-full">
-          <TabsList>
+          <TabsList className="flex w-full  gap-2 p-6 leading-4">
             <TabsTrigger value="email">Invite With Email</TabsTrigger>
             <TabsTrigger value="csv">Upload CSV file</TabsTrigger>
           </TabsList>
-          <TabsContent value="email">
-            Make changes to your account here.
-          </TabsContent>
+          <InviteByEmailTab />
           <TabsContent value="csv">Change your password here.</TabsContent>
         </Tabs>
       </SheetContent>
