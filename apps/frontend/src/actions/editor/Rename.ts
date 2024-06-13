@@ -18,6 +18,7 @@ export class RenameAction implements UndoableCommand {
   ) {}
 
   execute(): ActionReturnI {
+    if (this.id === this.newId) return;
     if (!isValidIdentifier(this.newId)) {
       toast({
         title: 'Error',
