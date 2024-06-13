@@ -53,3 +53,7 @@ export const WidgetContext = createContext<{
 }>({} as any);
 
 export type WidgetTypes = keyof typeof WebloomWidgets;
+
+export const EnvironmentContext = createContext<{
+  isProduction: boolean;
+}>({ isProduction: true });
