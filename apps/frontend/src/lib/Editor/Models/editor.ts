@@ -60,7 +60,7 @@ export class EditorState implements WebloomDisposable {
   };
   isLoadingPage: boolean = false;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
-  globalDataSources!: GlobalDataSourceIndexRet;
+  globalDataSources!: Record<number, GlobalDataSourceIndexRet[number]>;
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
   workerBroker!: WorkerBroker;
@@ -223,7 +223,14 @@ export class EditorState implements WebloomDisposable {
     this.initting = true;
     try {
       this.dispose();
-      this.globalDataSources = globalDataSources;
+      const globalDataSourcesMap: Record<
+        number,
+        GlobalDataSourceIndexRet[number]
+      > = {};
+      globalDataSources.forEach((ds) => {
+        globalDataSourcesMap[ds.id] = ds;
+      });
+      this.globalDataSources = globalDataSourcesMap;
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
         addMenuOpen: false,
@@ -259,7 +266,8 @@ export class EditorState implements WebloomDisposable {
         }),
         ...queries.map((q) => {
           return {
-            type: q?.dataSource?.name ?? q.baseDataSource.name,
+            type:
+              q?.dataSource?.name ?? globalDataSources[q.baseDataSourceId].name,
             name: q.id,
           };
         }),

@@ -137,6 +137,7 @@ export class DataQueriesService {
         appId: true,
         dataSourceId: true,
         triggerMode: true,
+        baseDataSourceId: true,
       },
       with: {
         dataSource: {

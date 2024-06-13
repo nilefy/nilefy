@@ -462,10 +462,7 @@ export const QueryPanel = observer(function QueryPanel() {
                         new CreateQuery({
                           event: 'createQuery',
                           data: {
-                            baseDataSource: editorStore.globalDataSources.find(
-                              (i) => i.id === item.dataSource.id,
-                            )!,
-                            dataSource: item,
+                            baseDataSourceId: item.dataSource.id,
                             query: {
                               dataSourceId: item.id,
                               id: getNewEntityName(item.name),

@@ -1,6 +1,5 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ActionReturnI, RemoteTypes, UndoableCommand } from '../types';
-import { GlobalDataSourceI, WsDataSourceI } from '@/api/dataSources.api';
 import { nanoid } from 'nanoid';
 
 export class CreateQuery implements UndoableCommand {
@@ -8,8 +7,7 @@ export class CreateQuery implements UndoableCommand {
     private payload:
       | (Extract<RemoteTypes, { event: 'createQuery' }> & {
           data: {
-            baseDataSource: GlobalDataSourceI;
-            dataSource: Pick<WsDataSourceI, 'id' | 'name'>;
+            baseDataSourceId: number;
           };
         })
       | Extract<RemoteTypes, { event: 'createJsQuery' }>,
@@ -20,13 +18,12 @@ export class CreateQuery implements UndoableCommand {
     const { event, data } = this.payload;
     if (event === 'createQuery') {
       editorStore.addQuery({
-        baseDataSource: data.baseDataSource,
+        baseDataSourceId: data.baseDataSourceId,
         createdAt: new Date(),
         updatedAt: null,
         id: data.query.id,
         query: data.query.query,
         triggerMode: data.query.triggerMode!,
-        dataSource: data.dataSource,
         dataSourceId: data.query.dataSourceId,
       });
       return this.payload;

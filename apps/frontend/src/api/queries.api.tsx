@@ -14,7 +14,7 @@ export type QueryI = {
    */
   query: Record<string, unknown>;
   dataSourceId?: number | null;
-  baseDataSource: number;
+  baseDataSourceId: number;
   appId: number;
   createdById: number;
   updatedById: number;

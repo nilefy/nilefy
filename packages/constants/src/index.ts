@@ -178,7 +178,10 @@ type FormControl<
   type: FormControlType;
   isEvent?: boolean;
   path: Key;
-
+  /**
+   * Code can be evaluated without a binding
+   */
+  isCode?: boolean;
   hidden?: ExtendIsHidden;
   validation?: JsonSchema7Type;
 } & BaseControlProps &
