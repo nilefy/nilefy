@@ -233,6 +233,8 @@ export const usersToWorkspaces = pgTable(
       .notNull()
       .references(() => workspaces.id),
     status: userToWorkspaceStatusEnum("status").notNull(),
+    invitationToken: text("invitation_token"),
+    declinedAt: timestamp("declined_at"),
     ...timeStamps,
   },
   (t) => ({
