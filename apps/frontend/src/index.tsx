@@ -38,6 +38,8 @@ import {
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
+import { InviteView } from './pages/invite';
+import { InvitationLoader } from './pages/invite/loader';
 
 if (process.env.NODE_ENV !== 'production') {
   log.enableAll();
@@ -59,8 +61,15 @@ export const queryClient = new QueryClient({
 const DndOptions: Partial<TouchBackendOptions> = {
   enableMouseEvents: true,
 };
+
 // router config
 export const router = createBrowserRouter([
+  {
+    path: 'invitation',
+    element: <InviteView />,
+    loader: InvitationLoader,
+    errorElement: <ErrorPage />,
+  },
   {
     path: '',
     element: (
