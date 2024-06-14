@@ -9,7 +9,7 @@ import { forEach, merge } from 'lodash';
 import { ChangePropAction } from './changeProps';
 import { isValidIdentifier } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
-import { entitiyNameExists } from '@/lib/Editor/entitiesNameSeed';
+import { entityNameExists } from '@/lib/Editor/entitiesNameSeed';
 
 export class RenameAction implements UndoableCommand {
   constructor(
@@ -28,7 +28,8 @@ export class RenameAction implements UndoableCommand {
       return;
     }
     const entity = editorStore.getEntityById(this.id);
-    if (entitiyNameExists(this.newId, editorStore.currentPageId)) {
+    if (!entity) return;
+    if (entityNameExists(this.newId, entity.entityType)) {
       toast({
         title: 'Error',
         description: `Failed to rename ${entity?.entityType} ${this.id} to ${this.newId}, because ${this.newId} already exists.`,
@@ -36,7 +37,6 @@ export class RenameAction implements UndoableCommand {
       });
       return;
     }
-    if (!entity) return;
     const entityType = entity.entityType;
     const dependents = entity.connections.dependents;
     const ret: ActionReturnI = [];
