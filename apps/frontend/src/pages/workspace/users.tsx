@@ -39,6 +39,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/loadingButton';
 
 // TODO: add roles
 const inviteUserByEmailSchema = z.object({
@@ -48,6 +49,8 @@ const inviteUserByEmailSchema = z.object({
 type InviteUserByEmailSchema = z.infer<typeof inviteUserByEmailSchema>;
 
 function InviteByEmailTab() {
+  const { workspaceId } = useParams();
+  const inviteByEmail = api.workspaces.inviteUser.useMutation();
   const form = useForm<z.infer<typeof inviteUserByEmailSchema>>({
     resolver: zodResolver(inviteUserByEmailSchema),
     defaultValues: {
@@ -56,8 +59,12 @@ function InviteByEmailTab() {
   });
 
   function onSubmit(values: InviteUserByEmailSchema) {
-    console.log(values);
+    inviteByEmail.mutate({
+      workspaceId: +workspaceId!,
+      email: values.email,
+    });
   }
+
   return (
     <TabsContent value="email">
       <Form {...form}>
@@ -75,7 +82,14 @@ function InviteByEmailTab() {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          <LoadingButton
+            buttonProps={{
+              type: 'submit',
+            }}
+            isLoading={inviteByEmail.isPending}
+          >
+            Submit
+          </LoadingButton>
         </form>
       </Form>
     </TabsContent>
