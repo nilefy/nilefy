@@ -14,6 +14,7 @@ async function loaderPromiseWrapper(token: string) {
       err: false,
       invitationState,
       tokenPayload,
+      token,
     };
   } catch (err) {
     // TODO: re-enable for fine grained error handling

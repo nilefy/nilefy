@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Suspense } from 'react';
+import { Suspense, useCallback } from 'react';
 import { Await, useLoaderData } from 'react-router-dom';
 import { InvitationLoaderRetI } from './loader';
 import { InvitationTokenPayload } from '@nilefy/constants';
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import z from 'zod';
+import { api } from '@/api';
 
 const newUserFormSchema = z.object({
   password: z.string().min(6).max(50),
@@ -34,9 +35,20 @@ type NewUserFormSchema = z.infer<typeof newUserFormSchema>;
 
 function ExistingUserInvite({
   tokenPayload,
+  token,
 }: {
   tokenPayload: InvitationTokenPayload;
+  token: string;
 }) {
+  const { mutate } = api.workspaces.inviteCallback.useMutation();
+  const onClickCallback = useCallback(() => {
+    mutate({
+      userStatus: 'existingUser',
+      status: 'acceptted',
+      token,
+    });
+  }, [mutate, token]);
+
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
       <Card className="w-full max-w-sm">
@@ -61,7 +73,9 @@ function ExistingUserInvite({
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Accept Invite</Button>
+          <Button onClick={onClickCallback} className="w-full">
+            Accept Invite
+          </Button>
         </CardFooter>
       </Card>
     </div>
@@ -70,9 +84,12 @@ function ExistingUserInvite({
 
 function NewUserInvite({
   tokenPayload,
+  token,
 }: {
   tokenPayload: InvitationTokenPayload;
+  token: string;
 }) {
+  const { mutate } = api.workspaces.inviteCallback.useMutation();
   const form = useForm<NewUserFormSchema>({
     resolver: zodResolver(newUserFormSchema),
     defaultValues: {
@@ -81,7 +98,11 @@ function NewUserInvite({
   });
 
   function onSubmit(values: NewUserFormSchema) {
-    console.log(values);
+    mutate({
+      userStatus: 'newUser',
+      password: values.password,
+      token,
+    });
   }
 
   return (
@@ -138,10 +159,18 @@ export function InviteView() {
         {(invitation: InvitationLoaderRetI) => {
           switch (invitation.invitationState.userStatus) {
             case 'newUser':
-              return <NewUserInvite tokenPayload={invitation.tokenPayload} />;
+              return (
+                <NewUserInvite
+                  token={invitation.token}
+                  tokenPayload={invitation.tokenPayload}
+                />
+              );
             case 'existingUser':
               return (
-                <ExistingUserInvite tokenPayload={invitation.tokenPayload} />
+                <ExistingUserInvite
+                  token={invitation.token}
+                  tokenPayload={invitation.tokenPayload}
+                />
               );
           }
         }}

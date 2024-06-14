@@ -52,7 +52,7 @@ export async function checkInvitation(data: { token: string }) {
 }
 
 export async function inviteCallback(data: InvitationCallbackReq) {
-  const res = await fetchX(`/workspaces/invite/check`, {
+  const res = await fetchX(`/workspaces/invite/callback`, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: {
