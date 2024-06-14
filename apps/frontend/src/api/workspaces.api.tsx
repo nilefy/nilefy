@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query';
 import { z } from 'zod';
 import { User } from './users.api';
+import { InvitationCallbackReq } from '@nilefy/constants';
 
 export type Workspace = { id: number; name: string; imageUrl: string | null };
 export type WorkSpaces = Workspace[];
@@ -26,6 +27,39 @@ async function insert(data: WorkspaceSchema) {
     },
   });
   return (await res.json()) as Workspace;
+}
+
+async function inviteUser(data: { workspaceId: number; email: string }) {
+  const res = await fetchX(`/workspaces/${data.workspaceId}/invite`, {
+    method: 'POST',
+    body: JSON.stringify({ email: data.email }),
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  });
+  return (await res.json()) as { msg: string };
+}
+
+export async function checkInvitation(data: { token: string }) {
+  const res = await fetchX(`/workspaces/invite/check`, {
+    method: 'POST',
+    body: JSON.stringify({ token: data.token }),
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  });
+  return (await res.json()) as { userStatus: 'existingUser' | 'newUser' };
+}
+
+export async function inviteCallback(data: InvitationCallbackReq) {
+  const res = await fetchX(`/workspaces/invite/callback`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  });
+  return (await res.json()) as { msg: string };
 }
 
 async function workspaceUsers({
@@ -91,6 +125,48 @@ function useInsertWorkspace(
   return mutate;
 }
 
+function useInviteUser(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteUser>>,
+    FetchXError,
+    Parameters<typeof inviteUser>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: inviteUser,
+    ...options,
+  });
+  return mutate;
+}
+
+function useCheckInvite(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkInvitation>>,
+    FetchXError,
+    Parameters<typeof checkInvitation>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: checkInvitation,
+    ...options,
+  });
+  return mutate;
+}
+
+function useInviteCallback(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteCallback>>,
+    FetchXError,
+    Parameters<typeof inviteCallback>[0]
+  >,
+) {
+  const mutate = useMutation({
+    mutationFn: inviteCallback,
+    ...options,
+  });
+  return mutate;
+}
+
 function useUpdateWorkspace(
   options?: UseMutationOptions<
     Awaited<ReturnType<typeof update>>,
@@ -110,4 +186,7 @@ export const workspaces = {
   insert: { useMutation: useInsertWorkspace },
   update: { useMutation: useUpdateWorkspace },
   users: { useQuery: useWorkspaceUsers },
+  inviteUser: { useMutation: useInviteUser },
+  checkInvite: { useMutation: useCheckInvite },
+  inviteCallback: { useMutation: useInviteCallback },
 };

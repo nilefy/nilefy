@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
+import { CircleAlert } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -22,11 +22,112 @@ import { WebloomLoader } from '@/components/loader';
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/loadingButton';
+
+// TODO: add roles
+const inviteUserByEmailSchema = z.object({
+  email: z.string().email(),
+});
+
+type InviteUserByEmailSchema = z.infer<typeof inviteUserByEmailSchema>;
+
+function InviteByEmailTab() {
+  const { workspaceId } = useParams();
+  const inviteByEmail = api.workspaces.inviteUser.useMutation();
+  const form = useForm<z.infer<typeof inviteUserByEmailSchema>>({
+    resolver: zodResolver(inviteUserByEmailSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  function onSubmit(values: InviteUserByEmailSchema) {
+    inviteByEmail.mutate({
+      workspaceId: +workspaceId!,
+      email: values.email,
+    });
+  }
+
+  return (
+    <TabsContent value="email">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="email@nilefy.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <SheetFooter>
+            <LoadingButton
+              buttonProps={{
+                type: 'submit',
+              }}
+              isLoading={inviteByEmail.isPending}
+            >
+              Invite user
+            </LoadingButton>
+          </SheetFooter>
+        </form>
+      </Form>
+    </TabsContent>
+  );
+}
+
+function InviteByCsvTab() {
+  const { workspaceId } = useParams();
+  const inviteByEmail = api.workspaces.inviteUser.useMutation();
+
+  return (
+    <TabsContent value="csv">
+      <Alert variant="destructive">
+        <CircleAlert className="h-4 w-4" />
+        <AlertTitle>Warning</AlertTitle>
+        <AlertDescription>
+          Download the template to add user details or format your file in the
+          same way as the template. Files in any other format may not be
+          recognized.
+        </AlertDescription>
+        <Button variant={'secondary'}>Download Template</Button>
+      </Alert>
+      <Input type={'file'} />
+      <LoadingButton
+        buttonProps={{
+          type: 'submit',
+        }}
+        isLoading={inviteByEmail.isPending}
+      >
+        upload users
+      </LoadingButton>
+    </TabsContent>
+  );
+}
 
 function InviteUsersSheet() {
   return (
@@ -42,14 +143,12 @@ function InviteUsersSheet() {
           <SheetTitle>Add users</SheetTitle>
         </SheetHeader>
         <Tabs defaultValue="email" className="w-full">
-          <TabsList>
+          <TabsList className="flex w-full  gap-2 p-6 leading-4">
             <TabsTrigger value="email">Invite With Email</TabsTrigger>
             <TabsTrigger value="csv">Upload CSV file</TabsTrigger>
           </TabsList>
-          <TabsContent value="email">
-            Make changes to your account here.
-          </TabsContent>
-          <TabsContent value="csv">Change your password here.</TabsContent>
+          <InviteByEmailTab />
+          <InviteByCsvTab />
         </Tabs>
       </SheetContent>
     </Sheet>

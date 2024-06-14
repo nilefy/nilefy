@@ -21,6 +21,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AuthorizationUtilsService } from './authorization-utils/authorization-utils.service';
 import { AuthorizationUtilsModule } from './authorization-utils/authorization-utils.module';
+import { InvitesModule } from './invites/invites.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { AuthorizationUtilsModule } from './authorization-utils/authorization-ut
     JsQueriesModule,
     JsLibrariesModule,
     AuthorizationUtilsModule,
+    InvitesModule,
   ],
   providers: [AuthorizationUtilsService],
 })

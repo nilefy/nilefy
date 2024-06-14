@@ -1,32 +1,20 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
-import { and, eq, sql, exists, like, asc, inArray } from 'drizzle-orm';
+import { and, eq, sql, exists, like, asc } from 'drizzle-orm';
 import * as schema from '@nilefy/database';
 import { RetUserSchema, UserDto } from '../dto/users.dto';
 import { RolesService } from '../roles/roles.service';
-import { JwtService } from '@nestjs/jwt';
-import { EmailService } from '../email/email.service';
-
-type InvitationTokenPayload = {
-  type: 'invite';
-  userId: number;
-  email: string;
-  workspaceId: number;
-  workspaceName: string;
-};
 
 @Injectable()
 export class WorkspacesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: schema.DatabaseI,
     private readonly rolesService: RolesService,
-    private emailService: EmailService,
-    private jwtService: JwtService,
   ) {}
 
   /**
@@ -130,110 +118,5 @@ export class WorkspacesService {
       .where(and(eq(schema.workspaces.id, id)))
       .returning();
     return workspace[0];
-  }
-
-  private async invitationEmail(
-    userId: number,
-    email: string,
-    workspaceId: number,
-    workspaceName: string,
-  ) {
-    const invitationToken = await this.jwtService.signAsync(
-      {
-        type: 'invite',
-        email: email,
-        workspaceId: workspaceId,
-        workspaceName,
-        userId,
-      } satisfies InvitationTokenPayload,
-      { expiresIn: '1d' },
-    );
-    const url = new URL('/invitation');
-    url.searchParams.set('token', invitationToken);
-    console.warn(
-      'DEBUGPRINT[1]: workspaces.service.ts:122: url=',
-      url.toString(),
-    );
-    //   const html =
-    //     `
-    //   <a href="` +
-    //     url +
-    //     ` ">Accept Invite to ${workspaceName}</a>
-    //   The Nilefy Team</p>
-    // `;
-    // await this.emailService.sendEmail({
-    //   to: email,
-    //   subject: 'Nilefy - Confirm Your Email Address',
-    //   html,
-    // });
-  }
-  async inviteUsers(workspaceId: number, usersEmail: string[]) {
-    // TODO: handle case user doesn't exist in our database
-    const [users, workspace] = await Promise.all([
-      this.db.query.users.findMany({
-        where: inArray(schema.users.email, usersEmail),
-        columns: {
-          id: true,
-          email: true,
-        },
-      }),
-      this.db.query.workspaces.findFirst({
-        where: eq(schema.workspaces.id, workspaceId),
-        columns: {
-          id: true,
-          name: true,
-        },
-      }),
-    ]);
-    if (users.length !== usersEmail.length) {
-      throw new BadRequestException("some users don't exist");
-    }
-    await this.db.insert(schema.usersToWorkspaces).values(
-      users.map((u) => ({
-        userId: u.id,
-        workspaceId,
-        status: 'invited' as const,
-      })),
-    );
-    await Promise.all(
-      users.map((u) =>
-        this.invitationEmail(u.id, u.email, workspaceId, workspace!.name),
-      ),
-    );
-    return {
-      msg: 'success',
-    };
-  }
-
-  async inviteCallback(token: string, status: 'acceptted' | 'declined') {
-    const { userId, workspaceId, type } =
-      await this.jwtService.verifyAsync<InvitationTokenPayload>(token);
-    if (type !== 'invite') {
-      throw new BadRequestException('Bad Token');
-    }
-    const invitation = await this.db.query.usersToWorkspaces.findFirst({
-      where: and(
-        eq(schema.usersToWorkspaces.userId, userId),
-        eq(schema.usersToWorkspaces.workspaceId, workspaceId),
-      ),
-      columns: {
-        status: true,
-      },
-    });
-    if (!(invitation && invitation.status === 'invited')) {
-      throw new BadRequestException('already acceptted');
-    }
-    await this.db
-      .update(schema.usersToWorkspaces)
-      .set({
-        status: status === 'acceptted' ? 'active' : 'declined',
-        updatedAt: sql`now()`,
-      })
-      .where(
-        and(
-          eq(schema.usersToWorkspaces.userId, userId),
-          eq(schema.usersToWorkspaces.workspaceId, workspaceId),
-        ),
-      );
   }
 }

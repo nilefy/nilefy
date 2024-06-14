@@ -35,8 +35,9 @@ import {
   ResetPassword,
   resetPasswordLoader,
 } from './pages/auth/reset_password';
-import { DndProvider } from 'react-dnd';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
+import { InviteView } from './pages/invite';
+import { InvitationLoader } from './pages/invite/loader';
 
 if (process.env.NODE_ENV !== 'production') {
   log.enableAll();
@@ -58,6 +59,12 @@ export const queryClient = new QueryClient({
 
 // router config
 export const router = createBrowserRouter([
+  {
+    path: 'invitation',
+    element: <InviteView />,
+    loader: InvitationLoader,
+    errorElement: <ErrorPage />,
+  },
   {
     path: '',
     element: (
