@@ -110,20 +110,22 @@ export class InvitesService {
       }),
     );
 
-    await Promise.all([
-      this.db.insert(schema.usersToWorkspaces).values(
-        usersData2.map((u) => ({
-          userId: u.id,
-          workspaceId,
-          status: 'invited' as const,
-          invitationToken: u.token,
-        })),
-      ),
+    if (usersData2.length > 0) {
+      await Promise.all([
+        this.db.insert(schema.usersToWorkspaces).values(
+          usersData2.map((u) => ({
+            userId: u.id,
+            workspaceId,
+            status: 'invited' as const,
+            invitationToken: u.token,
+          })),
+        ),
 
-      ...usersData2.map((u) =>
-        this.existingUserInvitationEmail(u.email, workspaceName, u.url),
-      ),
-    ]);
+        ...usersData2.map((u) =>
+          this.existingUserInvitationEmail(u.email, workspaceName, u.url),
+        ),
+      ]);
+    }
   }
 
   private async inviteNewUsers(
@@ -158,20 +160,22 @@ export class InvitesService {
       }),
     );
 
-    await Promise.all([
-      this.db.insert(schema.usersToWorkspaces).values(
-        usersData2.map((u) => ({
-          userId: u.id,
-          workspaceId,
-          status: 'invited' as const,
-          invitationToken: u.token,
-        })),
-      ),
+    if (usersData2.length > 0) {
+      await Promise.all([
+        this.db.insert(schema.usersToWorkspaces).values(
+          usersData2.map((u) => ({
+            userId: u.id,
+            workspaceId,
+            status: 'invited' as const,
+            invitationToken: u.token,
+          })),
+        ),
 
-      ...usersData2.map((u) =>
-        this.newUserInvitationEmail(u.email, workspaceName, u.url),
-      ),
-    ]);
+        ...usersData2.map((u) =>
+          this.newUserInvitationEmail(u.email, workspaceName, u.url),
+        ),
+      ]);
+    }
   }
 
   async inviteUsers(workspaceId: number, usersEmail: string[]) {

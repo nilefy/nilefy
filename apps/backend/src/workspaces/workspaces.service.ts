@@ -1,35 +1,20 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import {
   CreateWorkspaceDb,
   UpdateWorkspaceDb,
   WorkspaceDto,
 } from '../dto/workspace.dto';
-import { and, eq, sql, exists, like, asc, inArray } from 'drizzle-orm';
+import { and, eq, sql, exists, like, asc } from 'drizzle-orm';
 import * as schema from '@nilefy/database';
 import { RetUserSchema, UserDto } from '../dto/users.dto';
 import { RolesService } from '../roles/roles.service';
-import { JwtService } from '@nestjs/jwt';
-import { EmailService } from '../email/email.service';
-import {
-  InvitationCallbackReq,
-  InvitationTokenPayload,
-} from '@nilefy/constants';
-import { genSalt, hash } from 'bcrypt';
 
 @Injectable()
 export class WorkspacesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: schema.DatabaseI,
     private readonly rolesService: RolesService,
-    private emailService: EmailService,
-    private jwtService: JwtService,
   ) {}
 
   /**
