@@ -1,3 +1,5 @@
+import { CircleAlert } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users } from 'lucide-react';
 import {
   Select,
@@ -20,6 +22,7 @@ import { WebloomLoader } from '@/components/loader';
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -32,7 +35,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -82,16 +84,47 @@ function InviteByEmailTab() {
               </FormItem>
             )}
           />
-          <LoadingButton
-            buttonProps={{
-              type: 'submit',
-            }}
-            isLoading={inviteByEmail.isPending}
-          >
-            Submit
-          </LoadingButton>
+          <SheetFooter>
+            <LoadingButton
+              buttonProps={{
+                type: 'submit',
+              }}
+              isLoading={inviteByEmail.isPending}
+            >
+              Invite user
+            </LoadingButton>
+          </SheetFooter>
         </form>
       </Form>
+    </TabsContent>
+  );
+}
+
+function InviteByCsvTab() {
+  const { workspaceId } = useParams();
+  const inviteByEmail = api.workspaces.inviteUser.useMutation();
+
+  return (
+    <TabsContent value="csv">
+      <Alert variant="destructive">
+        <CircleAlert className="h-4 w-4" />
+        <AlertTitle>Warning</AlertTitle>
+        <AlertDescription>
+          Download the template to add user details or format your file in the
+          same way as the template. Files in any other format may not be
+          recognized.
+        </AlertDescription>
+        <Button variant={'secondary'}>Download Template</Button>
+      </Alert>
+      <Input type={'file'} />
+      <LoadingButton
+        buttonProps={{
+          type: 'submit',
+        }}
+        isLoading={inviteByEmail.isPending}
+      >
+        upload users
+      </LoadingButton>
     </TabsContent>
   );
 }
@@ -115,7 +148,7 @@ function InviteUsersSheet() {
             <TabsTrigger value="csv">Upload CSV file</TabsTrigger>
           </TabsList>
           <InviteByEmailTab />
-          <TabsContent value="csv">Change your password here.</TabsContent>
+          <InviteByCsvTab />
         </Tabs>
       </SheetContent>
     </Sheet>

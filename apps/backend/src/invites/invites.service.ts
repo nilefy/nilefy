@@ -93,6 +93,7 @@ export class InvitesService {
     workspaceName: string,
     usersData: { email: string; id: number }[],
   ) {
+    // TODO: return to the front user emails who couldn't be added
     const usersData2 = await Promise.all(
       usersData.map(async (u) => {
         const token = await this.createInviteToken(
@@ -179,9 +180,10 @@ export class InvitesService {
   }
 
   async inviteUsers(workspaceId: number, usersEmail: string[]) {
+    // TODO: for now i filiter users that already exist in the workspace in the future would be better to return list to the user with failed users
     const [existingUsersData, workspace] = await Promise.all([
       this.db.query.users.findMany({
-        where: inArray(schema.users.email, usersEmail),
+        where: and(inArray(schema.users.email, usersEmail)),
         columns: {
           id: true,
           email: true,
