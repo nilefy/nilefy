@@ -36,7 +36,6 @@ import {
   resetPasswordLoader,
 } from './pages/auth/reset_password';
 import { DndProvider } from 'react-dnd';
-import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 import { globalDataSourcesLoader } from './pages/dataSources/loader';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -56,9 +55,7 @@ export const queryClient = new QueryClient({
     },
   },
 });
-const DndOptions: Partial<TouchBackendOptions> = {
-  enableMouseEvents: true,
-};
+
 // router config
 export const router = createBrowserRouter([
   {
@@ -180,11 +177,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/:workspaceId/apps/edit/:appId',
-    element: (
-      <DndProvider backend={TouchBackend} options={DndOptions}>
-        <App />
-      </DndProvider>
-    ),
+    element: <App />,
 
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
@@ -194,11 +187,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/:workspaceId/apps/:appId',
-    element: (
-      <DndProvider backend={TouchBackend} options={DndOptions}>
-        <AppPreview />
-      </DndProvider>
-    ),
+    element: <AppPreview />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
     children: [{ path: ':pageId', element: <PagePreview /> }],

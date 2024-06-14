@@ -1,6 +1,8 @@
 import { fetchX } from '@/utils/fetch';
 import { UndefinedInitialDataOptions } from '@tanstack/react-query';
 
+const JS_QUERY_KEY = 'jsQueries';
+
 export type JsQueryI = {
   id: string;
   createdAt: Date;
@@ -38,7 +40,7 @@ export async function indexJSqueries({
   );
   return (await res.json()) as JsQueryI[];
 }
-const JS_QUERY_KEY = 'jsQueries';
+
 export const useJSQueries = ({
   workspaceId,
   appId,

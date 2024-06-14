@@ -161,6 +161,7 @@ export class EvaluationManager {
         entity,
         `entity with id ${entityId} not found while evaluating ${item}`,
       );
+      if (entity.isPathEvent(path)) continue;
       const unevalValue = get(entity.unevalValues, path);
       // eslint-disable-next-line
       let { value: evaluatedValue, errors: evaluationErrors } = evaluate(

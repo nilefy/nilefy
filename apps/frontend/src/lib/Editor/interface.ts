@@ -119,7 +119,8 @@ export type FunctionPublicApiItem = {
 export type PublicApi = Record<string, PublicApiItem>;
 type EntityInspectorConfig<
   TWidgetProps extends Record<string, unknown> = Record<string, unknown>,
-> = BaseEntityInspectorConfig<TWidgetProps, ExtendedIsHidden>;
+> = BaseEntityInspectorConfig<TWidgetProps, ExtendedIsHidden<TWidgetProps>>;
+
 export type Widget<TWidgetProps extends Record<string, unknown>> = {
   config: WidgetConfig;
   initialProps: TWidgetProps;

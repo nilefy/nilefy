@@ -21,6 +21,9 @@ const SOCKET_EVENTS_REQUEST = {
   CREATE_QUERY: "createQuery",
   UPDATE_QUERY: "updateQuery",
   DELETE_QUERY: 'deleteQuery',
+  CREATE_JS_QUERY: "createJsQuery",
+  UPDATE_JS_QUERY: "updateJsQuery",
+  DELETE_JS_QUERY: 'deleteJsQuery',
   CHANGE_PAGE: 'changePage',
 } as const;
 
@@ -168,14 +171,17 @@ type FormControl<
   TProps extends Record<string, unknown> = Record<string, unknown>,
   Key extends keyof TProps = keyof TProps,
   /**
-   * exists for the front to be able to add more types on the IsHidden Interface Like function
+   * exists for the frontend to be able to add more types on the IsHidden Interface Like function
    */
   ExtendIsHidden = IsHidden,
 > = {
   type: FormControlType;
   isEvent?: boolean;
   path: Key;
-
+  /**
+   * Code can be evaluated without a binding
+   */
+  isCode?: boolean;
   hidden?: ExtendIsHidden;
   validation?: JsonSchema7Type;
 } & BaseControlProps &

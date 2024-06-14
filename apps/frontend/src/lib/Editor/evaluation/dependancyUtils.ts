@@ -126,9 +126,9 @@ const _analyzeDependencies = ({
  * @param {Array} array The array to convert.
  * @returns {string} Returns the property path string.
  */
-function pathToString(array: string[]) {
-  return array.reduce(function (string, item) {
-    const prefix = string === '' ? '' : '.';
+function pathToString(array: string[]): string {
+  return array.reduce(function (string: string, item: string) {
+    const prefix: string = string === '' ? '' : '.';
     return string + (isNaN(Number(item)) ? prefix + item : '[' + item + ']');
   }, '');
 }
@@ -150,7 +150,7 @@ function pathToString(array: string[]) {
  * // => 'a[0].b.c'
  *
  */
-function fromPath(value: string[]) {
+function fromPath(value: string[]): string {
   if (isArray(value)) {
     return pathToString(value);
   }
@@ -388,11 +388,14 @@ const isArrayAccessorNode = (node: Node): node is MemberExpressionNode => {
 const wrapCode = (code: string) => {
   return `
     (function() {
-      return ${code}
+       ${code}
     })
   `;
 };
-
+const unwrapCode = (code: string) => {
+  const unwrapedCode = code.slice(26);
+  return unwrapedCode.slice(0, -10);
+};
 const getFunctionalParamNamesFromNode = (
   node:
     | FunctionDeclarationNode
@@ -404,9 +407,6 @@ const getFunctionalParamNamesFromNode = (
   );
 };
 
-// Memoize the ast generation code to improve performance.
-// Since this will be used by both the server and the client, we want to prevent regeneration of ast
-// for the the same code snippet
 const getAST = (code: string, options?: AstOptions) =>
   parse(code, { ...options, ecmaVersion: ECMA_VERSION });
 
@@ -649,4 +649,117 @@ const ancestorWalk = (ast: Node): NodeList => {
     variableDeclarations,
     identifierList,
   };
+};
+
+export const _renameEntityInCode = (
+  code: string,
+  oldName: string,
+  newName: string,
+) => {
+  code = wrapCode(code);
+  let ast: Node = { end: 0, start: 0, type: '' };
+  //Copy of script to refactor
+  let refactorScript = code;
+  //Difference in length of oldName and newName
+  const nameLengthDiff: number = newName.length - oldName.length;
+  //Offset index used for deciding location of oldName.
+  let refactorOffset = 0;
+  //Count of refactors on the script
+  let refactorCount = 0;
+  try {
+    ast = getAST(code);
+    const {
+      functionalParams,
+      identifierList,
+      references,
+      variableDeclarations,
+    }: NodeList = ancestorWalk(ast);
+    const identifierArray = Array.from(
+      identifierList,
+    ) as Array<RefactorIdentifierNode>;
+    //To handle if oldName has property ("JSObject.myfunc")
+    const oldNameArr = oldName.split('.');
+    const referencesArr = Array.from(references).filter((reference) => {
+      // To remove references derived from declared variables and function params,
+      // We extract the topLevelIdentifier Eg. Api1.name => Api1
+      const topLevelIdentifier = toPath(reference)[0];
+      return !(
+        functionalParams.has(topLevelIdentifier) ||
+        variableDeclarations.has(topLevelIdentifier)
+      );
+    });
+    //Traverse through all identifiers in the script
+    identifierArray.forEach((identifier) => {
+      if (identifier.name === oldNameArr[0]) {
+        let index = 0;
+        while (index < referencesArr.length) {
+          if (identifier.name === referencesArr[index].split('.')[0]) {
+            //Replace the oldName by newName
+            //Get start index from node and get subarray from index 0 till start
+            //Append above with new name
+            //Append substring from end index from the node till end of string
+            //Offset variable is used to alter the position based on `refactorOffset`
+            //In case of nested JS action get end postion fro the property.
+            ///Default end index
+            let endIndex = identifier.end;
+            const propertyNode = identifier.property;
+            //Flag variable : true if property should be updated
+            //false if property should not be updated
+            const propertyCondFlag =
+              oldNameArr.length > 1 &&
+              propertyNode &&
+              oldNameArr[1] === propertyNode.name;
+            //Condition to validate if Identifier || Property should be updated??
+            if (oldNameArr.length === 1 || propertyCondFlag) {
+              //Condition to extend end index in case of property match
+              if (propertyCondFlag && propertyNode) {
+                endIndex = propertyNode.end;
+              }
+              refactorScript =
+                refactorScript.substring(0, identifier.start + refactorOffset) +
+                newName +
+                refactorScript.substring(endIndex + refactorOffset);
+              refactorOffset += nameLengthDiff;
+              ++refactorCount;
+              //We are only looking for one match in refrence for the identifier name.
+              break;
+            }
+          }
+          index++;
+        }
+      }
+    });
+    refactorScript = unwrapCode(refactorScript);
+    return {
+      isSuccess: true,
+      body: { code: refactorScript, refactorCount },
+    };
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      // Syntax error. Ignore and return empty list
+      return { isSuccess: false, body: { error: 'Syntax Error' } };
+    }
+    throw e;
+  }
+};
+
+export const renameEntityInCode = (
+  code: string,
+  oldName: string,
+  newName: string,
+  searchForBinding = true,
+) => {
+  if (!searchForBinding) {
+    return _renameEntityInCode(code, oldName, newName).body.code!;
+  }
+  let res: RegExpExecArray | null;
+  while ((res = bindingRegexGlobal.exec(code)) !== null) {
+    const index = res.index;
+    const wrapped = res[1];
+    const newCode = `{{${_renameEntityInCode(wrapped, oldName, newName).body
+      .code!}}}`;
+    code = code.slice(0, index) + newCode + code.slice(index + res[0].length);
+    bindingRegexGlobal.lastIndex = index + newCode.length;
+  }
+  return code;
 };

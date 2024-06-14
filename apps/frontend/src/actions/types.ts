@@ -1,3 +1,4 @@
+import { createJSquery, updateJSquery } from '@/api/jsQueries.api';
 import { addQuery, updateQuery } from '@/api/queries.api';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { BoundingRect } from '@/lib/Editor/interface';
@@ -15,6 +16,7 @@ export type ClipboardDataT = {
 
 export type UpdateNodesPayload = (Partial<WebloomWidget['snapshot']> & {
   id: WebloomWidget['id'];
+  newId?: WebloomWidget['id'];
 })[];
 
 export type RemoteTypes =
@@ -82,6 +84,37 @@ export type RemoteTypes =
       };
     }
   | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['CREATE_JS_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof createJSquery>[0]['dto'];
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['UPDATE_JS_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        query: Parameters<typeof updateJSquery>[0]['dto'];
+        queryId: string;
+      };
+    }
+  | {
+      event: (typeof SOCKET_EVENTS_REQUEST)['DELETE_JS_QUERY'];
+      data: {
+        /**
+         * operation id
+         */
+        opId?: string;
+        queryId: string;
+      };
+    }
+  | {
       event: (typeof SOCKET_EVENTS_REQUEST)['CHANGE_PAGE'];
       data: {
         /**
@@ -92,7 +125,7 @@ export type RemoteTypes =
       };
     };
 
-export type ActionReturnI = void | RemoteTypes;
+export type ActionReturnI = void | RemoteTypes | RemoteTypes[];
 export abstract class Command {
   abstract execute(): ActionReturnI;
 }

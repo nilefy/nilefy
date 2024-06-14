@@ -132,6 +132,7 @@ export class WebloomPage implements WebloomDisposable {
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
+
   setHoveredWidgetId(id: string | null) {
     this.hoveredWidgetId = id;
   }

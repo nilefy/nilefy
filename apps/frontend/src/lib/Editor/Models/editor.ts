@@ -19,6 +19,7 @@ import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
+
 import {
   getNewEntityName,
   seedOrderMap,
@@ -34,10 +35,13 @@ import {
   JSLibraryI,
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
-import { WebloomWidget } from './widget';
+import { renameEntityInCode } from '../evaluation/dependancyUtils';
 import { commandManager } from '@/actions/CommandManager';
+import { WebloomWidget } from './widget';
 import { ChangePage } from '@/actions/editor/changePage';
 import { CursorManager } from './cursorManager';
+import { GlobalDataSourceIndexRet } from '@/api/dataSources.api';
+import { EntityTypes } from '../interface';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -51,6 +55,7 @@ export class EditorState implements WebloomDisposable {
   };
   isLoadingPage: boolean = false;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
+  globalDataSources!: Record<number, GlobalDataSourceIndexRet[number]>;
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
   workerBroker!: WorkerBroker;
@@ -100,6 +105,9 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
+      dispose: action,
+      addJSQuery: action,
+      getRefactoredDependentPaths: action,
       isLoadingPage: observable,
       changePage: action,
     });
@@ -181,6 +189,7 @@ export class EditorState implements WebloomDisposable {
     currentUser,
     jsLibraries = [],
     onBoardingCompleted,
+    globalDataSources,
   }: {
     name: string;
     pages: Optional<
@@ -201,10 +210,19 @@ export class EditorState implements WebloomDisposable {
     workspaceId: number;
     currentUser: string;
     onBoardingCompleted: boolean;
+    globalDataSources: GlobalDataSourceIndexRet;
   }) {
     this.initting = true;
     try {
       this.dispose();
+      const globalDataSourcesMap: Record<
+        number,
+        GlobalDataSourceIndexRet[number]
+      > = {};
+      globalDataSources.forEach((ds) => {
+        globalDataSourcesMap[ds.id] = ds;
+      });
+      this.globalDataSources = globalDataSourcesMap;
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
         addMenuOpen: false,
@@ -240,7 +258,8 @@ export class EditorState implements WebloomDisposable {
         }),
         ...queries.map((q) => {
           return {
-            type: q?.dataSource?.name ?? q.baseDataSource.name,
+            type:
+              q?.dataSource?.name ?? globalDataSources[q.baseDataSourceId].name,
             name: q.id,
           };
         }),
@@ -618,5 +637,82 @@ export class EditorState implements WebloomDisposable {
       ...this.queries,
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
+  }
+  renameEntity(oldId: string, newId: string) {
+    const entity = this.getEntityById(oldId);
+    if (!entity) return;
+    const entityType = entity.entityType;
+    if (entityType === 'widget') {
+      const widget = this.currentPage.widgets[oldId];
+      const children = widget.nodes;
+      children.forEach((childId) => {
+        widget.removeChild(childId);
+      });
+      const snapshot = widget.snapshot;
+      this.currentPage.removeWidget(oldId, false);
+      this.currentPage.addWidget({
+        ...snapshot,
+        id: newId,
+      });
+      const newWidget = this.currentPage.getWidgetById(newId);
+      children.forEach((childId) => {
+        newWidget.addChild(childId);
+      });
+      return;
+    } else if (entityType === 'query') {
+      const snapshot = (entity as WebloomQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addQuery({
+        ...snapshot,
+        id: newId,
+      });
+    } else if (entityType === 'jsQuery') {
+      const snapshot = (entity as WebloomJSQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addJSQuery({
+        ...snapshot,
+        id: newId,
+      });
+    }
+  }
+  getRefactoredDependentPaths(
+    oldId: string,
+    newId: string,
+    dependentPaths: string[],
+  ) {
+    type toRenameItem = { path: string; value: unknown };
+    const toRename: Record<
+      Exclude<EntityTypes, 'globals'>,
+      Record<Entity['id'], toRenameItem[]>
+    > = {
+      widget: {},
+      query: {},
+      jsQuery: {},
+    };
+    for (const dependentPath of dependentPaths) {
+      const [entityId, ...pathArr] = dependentPath.split('.');
+      const path = pathArr.join('.');
+      const entity = this.getEntityById(entityId);
+      const shouldSearchForBinding =
+        !entity?.getInspectorConfigForPath(path)!.isCode;
+      if (!entity) continue;
+      const valueInPath = entity.getRawValue(path) as string;
+      const newCode = renameEntityInCode(
+        valueInPath,
+        oldId,
+        newId,
+        shouldSearchForBinding,
+      );
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ] ||= [];
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ].push({
+        path,
+        value: newCode,
+      });
+    }
+    return toRename;
   }
 }

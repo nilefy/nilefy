@@ -9,8 +9,17 @@ import {
   NilefyTree,
 } from '../dto/components.dto';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
-import { components, DatabaseI, PgTrans } from '@nilefy/database';
+import {
+  components,
+  DatabaseI,
+  PgTrans,
+  queries,
+  jsQueries,
+} from '@nilefy/database';
 import { chunkArray } from '../utils';
+import { QueryDto } from '../dto/data_queries.dto';
+import { AppDto } from '../dto/apps.dto';
+import { JsQueryDto } from '../dto/js_queries.dto';
 
 @Injectable()
 export class ComponentsService {
@@ -83,6 +92,29 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    // id/name is changed
+    if (dto.newId && dto.newId !== componentId) {
+      const newId = dto.newId;
+      // there is a component with this new id
+      const component = await this.getComponent(newId, pageId);
+      if (component) {
+        throw new BadRequestException(
+          `There is another component with name ${newId}`,
+        );
+      }
+      const { appId } = (await this.getComponent(componentId, pageId))!;
+      const query = await this.getQueryById(newId, appId);
+      if (query) {
+        // there is a query with this id
+        throw new BadRequestException(`There is a query with name ${newId}`);
+      }
+      const jsQuery = await this.getJsQueryById(newId, appId);
+      if (jsQuery) {
+        // there is a js query with this id
+        throw new BadRequestException(`There is a JS query with name ${newId}`);
+      }
+    }
+
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
     // so we need to keep this condition true => accept root updates but discard the `parentId` update
@@ -90,6 +122,7 @@ export class ComponentsService {
       .update(components)
       .set({
         ...dto,
+        id: (dto.newId as string) ?? componentId,
         parentId:
           componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
         updatedAt: sql`now()`,
@@ -154,5 +187,63 @@ export class ComponentsService {
   async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
     const coms = await this.getComponentsForPage(pageId);
     return this.convertComponentsToNilefyTree(coms);
+  }
+
+  async getComponent(
+    componentId: ComponentDto['id'],
+    pageId: PageDto['id'],
+  ): Promise<{ id: ComponentDto['id']; appId: AppDto['id'] } | undefined> {
+    const ret = await this.db.query.components.findFirst({
+      where: and(eq(components.id, componentId), eq(components.pageId, pageId)),
+      columns: {
+        id: true,
+      },
+      with: {
+        page: {
+          with: {
+            app: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (ret) {
+      return {
+        id: ret.id,
+        appId: ret.page.app.id,
+      };
+    }
+    return ret;
+  }
+
+  async getQueryById(
+    queryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<QueryDto['id'] | undefined> {
+    return (
+      await this.db.query.queries.findFirst({
+        where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
+  }
+
+  async getJsQueryById(
+    jsQueryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<JsQueryDto['id'] | undefined> {
+    return (
+      await this.db.query.jsQueries.findFirst({
+        where: and(eq(jsQueries.id, jsQueryId), eq(jsQueries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
   }
 }

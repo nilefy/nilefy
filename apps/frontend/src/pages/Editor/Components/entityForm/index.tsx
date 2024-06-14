@@ -103,7 +103,10 @@ export const EntityForm = observer(
 );
 
 export const EntityFormControl = observer(
-  (props: { control: FormControl; entityId: string }) => {
+  (props: {
+    control: FormControl | EntityInspectorConfig[number]['children'][number];
+    entityId: string;
+  }) => {
     const { onFocus: _onFocus, onBlur } = useContext(EntityFormContext);
     const { control, entityId } = props;
     const id = entityId + '-' + control.path;
@@ -193,12 +196,12 @@ export const DefaultSection = observer(
 /**
  * difference between this and @nilefy/constants is that type could accept function
  */
-export type ExtendedIsHidden =
+export type ExtendedIsHidden<T = Record<string, unknown>> =
   | IsHidden
   | ((args: {
       store: typeof editorStore;
       entityId: string;
-      finalValues: Record<string, unknown>;
+      finalValues: T;
     }) => boolean);
 
 export const calculateIsHidden = (
