@@ -38,6 +38,20 @@ export const softDelete = {
   deletedAt: timestamp("deleted_at"),
 };
 
+export const userStatusEnum = pgEnum(
+  "user_status_enum",
+  [
+    /**
+     * means this user can login, this user was created from normal sign up workflow, or have been invited and accepted the invite and configured their account
+     */
+    "active",
+    /**
+     * this user was not part of nilefy but has been invited by some workspace and cannot sign in uless the account is configured probably by either accepting the invite or go through normal sign up flow
+     */
+    "invited",
+  ]
+);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 256 }).notNull(),
@@ -52,6 +66,7 @@ export const users = pgTable("users", {
     length: 256,
   }),
   onboardingCompleted: boolean("onboarding_completed").default(false),
+  status: userStatusEnum("status").default("active").notNull(),
   ...timeStamps,
   ...softDelete,
 });
