@@ -1,4 +1,5 @@
 import type {InputHTMLAttributes, ReactNode} from 'react';
+import z from 'zod';
 import { JsonSchema7Type } from 'zod-to-json-schema';
 
 const EDITOR_CONSTANTS = {
@@ -190,6 +191,36 @@ type ConditionalOptionalFormControlOptions<T> = T extends undefined
 type InspectorFormControlsTypes = keyof FormControlOptions;
 
 ////////////// INSPECTOR CONFIG TYPES ///////////
+//
+type InvitationTokenPayload = {
+  type: 'invite';
+  userId: number;
+  email: string;
+  workspaceId: number;
+  workspaceName: string;
+};
+
+/**
+ * PLEASE NOTE: backend implementation MUST NOT depend on `userStatus` value it's just helper for the front to know what values should be sent in which case, backend should depends on database
+ */
+const invitationCallbackReq = z.discriminatedUnion('userStatus', [
+  // sending password means user accept invite
+  z.object({
+    userStatus: z.literal('newUser'),
+    password: z.string().min(6),
+    token: z.string(),
+  }),
+  z.object({
+    userStatus: z.literal('existingUser'),
+    status: z.enum(['acceptted', 'declined']),
+    token: z.string(),
+  }),
+]);
+
+/**
+ * PLEASE NOTE: backend implementation MUST NOT depend on `userStatus` value it's just helper for the front to know what values should be sent in which case, backend should depends on database
+ */
+type InvitationCallbackReq = z.infer<typeof invitationCallbackReq>;
 
 export type {
   BaseControlProps,
@@ -206,6 +237,8 @@ export type {
   FormControl,
   ConditionalOptionalFormControlOptions,
   ArrayInputProps,
+  InvitationTokenPayload,
+  InvitationCallbackReq,
 };
 
-export { EDITOR_CONSTANTS, SOCKET_EVENTS_REQUEST, SOCKET_EVENTS_RESPONSE,dataSourcesTypes };
+export { EDITOR_CONSTANTS, SOCKET_EVENTS_REQUEST, SOCKET_EVENTS_RESPONSE,dataSourcesTypes,invitationCallbackReq };
