@@ -4,7 +4,6 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   MessageBody,
-  WsException,
   OnGatewayDisconnect,
   ConnectedSocket,
 } from '@nestjs/websockets';
@@ -143,43 +142,39 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    try {
-      await this.db.transaction(async (tx) => {
-        await this.componentsService.create(
-          nodes.map((node) => ({
-            ...node,
-            pageId: socket.pageId,
-            createdById: user.userId,
-          })),
-          {
-            tx,
-          },
-        );
-        await Promise.all(
-          sideEffects.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      return {
-        opId,
-        message: 'done',
-      };
-    } catch (e) {
-      throw new WsException(e.message);
-    }
+    await this.db.transaction(async (tx) => {
+      await this.componentsService.create(
+        nodes.map((node) => ({
+          ...node,
+          pageId: socket.pageId,
+          createdById: user.userId,
+        })),
+        {
+          tx,
+        },
+      );
+      await Promise.all(
+        sideEffects.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
   }
 
   @SubscribeMessage(SOCKET_EVENTS_REQUEST.CHANGE_PAGE)
@@ -206,25 +201,18 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    try {
-      const page = await this.db.query.pages.findFirst({
-        columns: { id: true },
-        where: and(
-          eq(PagesTable.id, pageId),
-          eq(PagesTable.appId, socket.appId),
-        ),
-      });
-      if (!page) {
-        throw new Error('page not owned by this app');
-      }
-      socket.pageId = pageId;
-      return {
-        opId,
-        message: SOCKET_EVENTS_RESPONSE.PAGE_CHANGED,
-      };
-    } catch (e) {
-      throw new WsException(e.message);
+    const page = await this.db.query.pages.findFirst({
+      columns: { id: true },
+      where: and(eq(PagesTable.id, pageId), eq(PagesTable.appId, socket.appId)),
+    });
+    if (!page) {
+      throw new Error('page not owned by this app');
     }
+    socket.pageId = pageId;
+    return {
+      opId,
+      message: SOCKET_EVENTS_RESPONSE.PAGE_CHANGED,
+    };
   }
 
   @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_NODE)
@@ -243,34 +231,30 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.close();
       return;
     }
-    try {
-      await this.db.transaction(async (tx) => {
-        return await Promise.all(
-          updates.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                newId: c.newId,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      return {
-        opId,
-        message: 'done',
-      };
-    } catch (e) {
-      throw new WsException(e.message);
-    }
+    await this.db.transaction(async (tx) => {
+      return await Promise.all(
+        updates.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              newId: c.newId,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
   }
 
   @SubscribeMessage('rename')
@@ -285,17 +269,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.close();
       return;
     }
-    try {
-      this.componentsService.update(socket.pageId, payload.id, {
-        newId: payload.newId,
-        updatedById: user.userId,
-      });
-      console.log('RENAMED COMPONENT');
-      return `done`;
-    } catch (e) {
-      console.log('e in rename', e);
-      throw new WsException(e.message);
-    }
+    this.componentsService.update(socket.pageId, payload.id, {
+      newId: payload.newId,
+      updatedById: user.userId,
+    });
+    console.log('RENAMED COMPONENT');
+    return `done`;
   }
 
   @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_NODE)
@@ -325,35 +304,31 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.close();
       return;
     }
-    try {
-      this.db.transaction(async (tx) => {
-        // eslint-disable-next-line drizzle/enforce-delete-with-where
-        await this.componentsService.delete(socket.pageId, nodesId, { tx });
-        await Promise.all(
-          sideEffects.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      return {
-        opId,
-        message: 'done',
-      };
-    } catch (e) {
-      throw new WsException(e.message);
-    }
+    this.db.transaction(async (tx) => {
+      // eslint-disable-next-line drizzle/enforce-delete-with-where
+      await this.componentsService.delete(socket.pageId, nodesId, { tx });
+      await Promise.all(
+        sideEffects.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
   }
 
   @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_QUERY)
