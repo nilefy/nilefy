@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { compare } from 'bcrypt';
+import { compare, genSalt, hash } from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -78,11 +78,8 @@ export class AuthService {
   }
 
   private async signUpEmail(email: string, username: string, jwt: string) {
-    const baseUrl: string = this.configService.get('BASE_URL_BE');
-
     const url =
-      baseUrl +
-      'auth' +
+      '/auth' +
       '/' +
       'confirm' +
       '/' +
@@ -146,6 +143,7 @@ export class AuthService {
     if (!u) {
       throw new NotFoundException('Email Not Found');
     }
+
     if (u.password) {
       const match = await compare(password, u.password);
       if (!match) {
@@ -200,6 +198,105 @@ export class AuthService {
       return 'email verified successfully, try sign-in';
     } catch {
       throw new BadRequestException('Failed to confirm email');
+    }
+  }
+
+  private async forgotPasswordSendEmail(email: string, token: string) {
+    const url =
+      '/auth' +
+      '/' +
+      'reset-password' +
+      '/' +
+      encodeURIComponent(email) +
+      '/' +
+      encodeURIComponent(token) +
+      '/';
+    const html =
+      `
+    <p>Dear ${email},</p>
+    <p>We received a request to reset your WebLoom password. Please click the following link to reset your password:</p>
+    <a href="` +
+      url +
+      ` ">Reset Password</a>
+    <P> This link will expire in 10 minutes.</p>
+    <p>If you did not request a password reset, please disregard this email.</p>
+    <p>Thank you for choosing Nilefy!</p>
+    <p>Best Regards,<br/>
+    The Webloom Team</p>
+  `;
+    await this.emailService.sendEmail({
+      to: email,
+      subject: 'WebLoom - Reset Your Password',
+      html,
+    });
+  }
+
+  async forgotPassword(
+    email: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const user = await this.userService.findOne(email);
+
+      if (!user) {
+        throw new NotFoundException('Email Not Found');
+      }
+
+      const token = await this.jwtService.signAsync(
+        { email: user.email },
+        { expiresIn: '10m' },
+      );
+
+      await this.userService.update(user.id, {
+        passwordResetToken: token,
+      });
+
+      this.forgotPasswordSendEmail(email, token);
+
+      return { success: true };
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed To Reset Password, ${error.message}`,
+      );
+    }
+  }
+
+  async resetPassword(password: string, token: string) {
+    try {
+      const { email } = await this.jwtService.verifyAsync(token);
+      const user = await this.db.query.users.findFirst({
+        where: and(
+          eq(users.email, email),
+          eq(users.passwordResetToken, token),
+          isNull(users.deletedAt),
+        ),
+        columns: {
+          id: true,
+          passwordResetToken: true,
+          email: true,
+          password: true,
+        },
+      });
+      if (user === undefined) {
+        throw new BadRequestException('Token Expired or Invalid');
+      }
+      await this.jwtService.verifyAsync(token);
+
+      if (user.password) {
+        const match = await compare(password, user.password);
+        if (match) {
+          throw new BadRequestException('Use a New Password');
+        }
+      }
+      const salt = await genSalt(10);
+      const hashed = await hash(password, salt);
+
+      await this.userService.update(user.id, {
+        password: hashed,
+        passwordResetToken: null,
+      });
+      return { success: true, message: 'Password Reset Successfully' };
+    } catch (error) {
+      throw new BadRequestException(`Failed To Reset Password`);
     }
   }
 }

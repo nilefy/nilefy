@@ -19,6 +19,7 @@ import { EvaluationContext } from '../evaluation/interface';
 import { WebloomGlobal } from './webloomGlobal';
 import { Diff } from 'deep-diff';
 import { Entity } from './entity';
+
 import {
   getNewEntityName,
   seedOrderMap,
@@ -34,6 +35,13 @@ import {
   JSLibraryI,
   updateJSLibrary,
 } from '@/api/JSLibraries.api';
+import { renameEntityInCode } from '../evaluation/dependancyUtils';
+import { commandManager } from '@/actions/CommandManager';
+import { WebloomWidget } from './widget';
+import { ChangePage } from '@/actions/editor/changePage';
+import { CursorManager } from './cursorManager';
+import { GlobalDataSourceIndexRet } from '@/api/dataSources.api';
+import { EntityTypes } from '../interface';
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 export type BottomPanelMode = 'query' | 'debug';
@@ -45,21 +53,21 @@ export class EditorState implements WebloomDisposable {
   queryPanel!: {
     addMenuOpen: boolean;
   };
-  initPromise!: Promise<void>;
-  resolveInit!: () => void;
-  rejectInit!: (e: Error) => void;
+  isLoadingPage: boolean = false;
   queries: Record<string, WebloomQuery | WebloomJSQuery> = {};
+  globalDataSources!: Record<number, GlobalDataSourceIndexRet[number]>;
   globals: WebloomGlobal | undefined = undefined;
   libraries: Record<string, JSLibrary> = {};
   workerBroker!: WorkerBroker;
   currentPageId: string = '';
-  initting = false;
+  initting = true;
   queryClient!: QueryClient;
   queriesManager!: QueriesManager;
   appId!: number;
   workspaceId!: number;
   selectedQueryId: string | null = null;
   bottomPanelMode: BottomPanelMode = 'query';
+  private cursorManager!: CursorManager;
   /**
    * application name
    */
@@ -78,12 +86,12 @@ export class EditorState implements WebloomDisposable {
       entities: computed,
       name: observable,
       currentPage: computed,
-      changePage: action,
       addPage: action,
       addQuery: action,
       removeQuery: action,
       removePage: action,
       init: action,
+      initting: observable,
       queryPanel: observable,
       applyEvalForestPatch: action.bound,
       applyEntityToEntityDependencyPatch: action.bound,
@@ -101,6 +109,11 @@ export class EditorState implements WebloomDisposable {
       currentAppEnv: observable,
       setAppEnv: action,
       envQueries: computed,
+      dispose: action,
+      addJSQuery: action,
+      getRefactoredDependentPaths: action,
+      isLoadingPage: observable,
+      changePage: action,
     });
   }
 
@@ -158,6 +171,7 @@ export class EditorState implements WebloomDisposable {
   dispose() {
     Object.values(this.pages).forEach((page) => page.dispose());
     Object.values(this.queries).forEach((query) => query.dispose());
+    this.cursorManager?.dispose();
     this.globals = undefined;
     this.workerBroker?.dispose();
     this.pages = {};
@@ -180,6 +194,7 @@ export class EditorState implements WebloomDisposable {
     jsLibraries = [],
     onBoardingCompleted,
     appEnv = 'development',
+    globalDataSources,
   }: {
     name: string;
     pages: Optional<
@@ -201,13 +216,19 @@ export class EditorState implements WebloomDisposable {
     currentUser: string;
     onBoardingCompleted: boolean;
     appEnv: 'development' | 'staging' | 'production';
+    globalDataSources: GlobalDataSourceIndexRet;
   }) {
+    this.initting = true;
     try {
-      this.initPromise = new Promise((resolve, reject) => {
-        this.resolveInit = resolve;
-        this.rejectInit = reject;
-      });
       this.dispose();
+      const globalDataSourcesMap: Record<
+        number,
+        GlobalDataSourceIndexRet[number]
+      > = {};
+      globalDataSources.forEach((ds) => {
+        globalDataSourcesMap[ds.id] = ds;
+      });
+      this.globalDataSources = globalDataSourcesMap;
       this.workerBroker = new WorkerBroker(this);
       this.queryPanel = {
         addMenuOpen: false,
@@ -239,11 +260,13 @@ export class EditorState implements WebloomDisposable {
           return {
             type: w.type,
             name: w.id,
+            pageId: pages[0].id,
           };
         }),
         ...queries.map((q) => {
           return {
-            type: q?.dataSource?.name ?? q.baseDataSource.name,
+            type:
+              q?.dataSource?.name ?? globalDataSources[q.baseDataSourceId].name,
             name: q.id,
           };
         }),
@@ -268,6 +291,7 @@ export class EditorState implements WebloomDisposable {
       this.currentPageId = currentPageId;
       // NOTE: backend should create page by default
       if (pages.length === 0) {
+        // TODO does this ever get hit?
         this.addPage('page1', 'page1', 'page1');
         this.currentPageId = 'page1';
       }
@@ -327,24 +351,23 @@ export class EditorState implements WebloomDisposable {
             },
             {} as Record<string, EntityConfigBody>,
           ),
-          pages: {
-            [currentPageId]: Object.entries(this.currentPage.widgets).reduce(
-              (acc, [id, widget]) => {
-                acc[id] = {
-                  id: widget.id,
-                  unevalValues: toJS(widget.rawValues),
-                  inspectorConfig: widget.inspectorConfig,
-                  publicAPI: widget.publicAPI,
-                  actionsConfig: widget.rawActionsConfig,
-                  metaValues: widget.metaValues,
-                };
-                return acc;
-              },
-              {} as Record<string, EntityConfigBody>,
-            ),
-          },
+          widgets: Object.entries(this.currentPage.widgets).reduce(
+            (acc, [id, widget]) => {
+              acc[id] = {
+                id: widget.id,
+                unevalValues: toJS(widget.rawValues),
+                inspectorConfig: widget.inspectorConfig,
+                publicAPI: widget.publicAPI,
+                actionsConfig: widget.rawActionsConfig,
+                metaValues: widget.metaValues,
+              };
+              return acc;
+            },
+            {} as Record<string, EntityConfigBody>,
+          ),
         },
       });
+      this.cursorManager = new CursorManager(this.currentPage);
     } catch (e) {
       console.log(e);
     }
@@ -369,7 +392,7 @@ export class EditorState implements WebloomDisposable {
     Object.values(this.queries).forEach((q) => {
       if (q.triggerMode === 'onAppLoad') void q.run();
     });
-    this.resolveInit();
+    this.initting = false;
   }
   // TODO: add support for queries
   get currentPageErrors() {
@@ -413,28 +436,71 @@ export class EditorState implements WebloomDisposable {
     return this.pages[this.currentPageId];
   }
 
-  changePage(id: string, name: string, handle: string) {
+  changePage({
+    id,
+    name,
+    handle,
+    tree,
+  }: {
+    id: string | number;
+    name: string;
+    handle: string;
+    tree?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>;
+  }) {
+    id = id.toString();
+    if (id == this.currentPageId) return;
+
+    this.currentPage.setSelectedNodeIds(new Set());
+    commandManager.executeCommand(new ChangePage(+id));
     if (!this.pages[id]) {
-      this.addPage(id, name, handle);
-      this.currentPageId = id;
-    } else {
-      this.currentPageId = id;
+      this.addPage(id, name, handle, tree);
     }
+    this.currentPageId = id;
+
+    updateOrderMap(
+      Object.values(this.pages[this.currentPageId].widgets).map((w) => {
+        return {
+          name: w.id,
+          type: w.type,
+          pageId: this.currentPageId,
+        };
+      }),
+      false,
+    );
+
     this.workerBroker.postMessegeInBatch({
       event: 'changePage',
       body: {
-        currentPageId: this.currentPageId,
+        widgets: Object.entries(this.currentPage.widgets).reduce(
+          (acc, [id, widget]) => {
+            acc[id] = {
+              id: widget.id,
+              unevalValues: toJS(widget.rawValues),
+              inspectorConfig: widget.inspectorConfig,
+              publicAPI: widget.publicAPI,
+              actionsConfig: widget.rawActionsConfig,
+              metaValues: widget.metaValues,
+            };
+            return acc;
+          },
+          {} as Record<string, EntityConfigBody>,
+        ),
       },
     } as WorkerRequest);
   }
 
-  addPage(id: string, name: string, handle: string) {
+  addPage(
+    id: string,
+    name: string,
+    handle: string,
+    tree?: Record<string, InstanceType<typeof WebloomWidget>['snapshot']>,
+  ) {
     this.pages[id] = new WebloomPage({
       id,
       name,
       handle,
       workerBroker: this.workerBroker,
-      widgets: {},
+      widgets: tree ?? {},
     });
   }
   getQueryById(id: string) {
@@ -591,5 +657,83 @@ export class EditorState implements WebloomDisposable {
   }
   setAppEnv(env: 'development' | 'staging' | 'production') {
     this.currentAppEnv = env;
+  }
+
+  renameEntity(oldId: string, newId: string) {
+    const entity = this.getEntityById(oldId);
+    if (!entity) return;
+    const entityType = entity.entityType;
+    if (entityType === 'widget') {
+      const widget = this.currentPage.widgets[oldId];
+      const children = widget.nodes;
+      children.forEach((childId) => {
+        widget.removeChild(childId);
+      });
+      const snapshot = widget.snapshot;
+      this.currentPage.removeWidget(oldId, false);
+      this.currentPage.addWidget({
+        ...snapshot,
+        id: newId,
+      });
+      const newWidget = this.currentPage.getWidgetById(newId);
+      children.forEach((childId) => {
+        newWidget.addChild(childId);
+      });
+      return;
+    } else if (entityType === 'query') {
+      const snapshot = (entity as WebloomQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addQuery({
+        ...snapshot,
+        id: newId,
+      });
+    } else if (entityType === 'jsQuery') {
+      const snapshot = (entity as WebloomJSQuery).snapshot;
+      this.removeQuery(oldId);
+      this.addJSQuery({
+        ...snapshot,
+        id: newId,
+      });
+    }
+  }
+  getRefactoredDependentPaths(
+    oldId: string,
+    newId: string,
+    dependentPaths: string[],
+  ) {
+    type toRenameItem = { path: string; value: unknown };
+    const toRename: Record<
+      Exclude<EntityTypes, 'globals'>,
+      Record<Entity['id'], toRenameItem[]>
+    > = {
+      widget: {},
+      query: {},
+      jsQuery: {},
+    };
+    for (const dependentPath of dependentPaths) {
+      const [entityId, ...pathArr] = dependentPath.split('.');
+      const path = pathArr.join('.');
+      const entity = this.getEntityById(entityId);
+      const shouldSearchForBinding =
+        !entity?.getInspectorConfigForPath(path)!.isCode;
+      if (!entity) continue;
+      const valueInPath = entity.getRawValue(path) as string;
+      const newCode = renameEntityInCode(
+        valueInPath,
+        oldId,
+        newId,
+        shouldSearchForBinding,
+      );
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ] ||= [];
+      toRename[entity.entityType as Exclude<EntityTypes, 'globals'>][
+        entityId
+      ].push({
+        path,
+        value: newCode,
+      });
+    }
+    return toRename;
   }
 }

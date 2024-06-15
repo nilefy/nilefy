@@ -18,12 +18,15 @@ export class WorkspacesService {
   ) {}
 
   /**
-   * get user workspaces
+   * get user's workspaces
    */
   async index(userId: UserDto['id']): Promise<WorkspaceDto[]> {
     const ws = (
       await this.db.query.usersToWorkspaces.findMany({
-        where: eq(schema.usersToWorkspaces.userId, userId),
+        where: and(
+          eq(schema.usersToWorkspaces.userId, userId),
+          eq(schema.usersToWorkspaces.status, 'active'),
+        ),
         with: {
           workspace: true,
         },
@@ -45,8 +48,16 @@ export class WorkspacesService {
         username: schema.users.username,
         avatar: schema.users.avatar,
         onboardingCompleted: schema.users.onboardingCompleted,
+        status: schema.usersToWorkspaces.status,
       })
       .from(schema.users)
+      .innerJoin(
+        schema.usersToWorkspaces,
+        and(
+          eq(schema.usersToWorkspaces.userId, schema.users.id),
+          eq(schema.usersToWorkspaces.workspaceId, workspaceId),
+        ),
+      )
       .where(
         and(
           like(schema.users.username, sql`%${searchQ}%`).if(searchQ),
@@ -91,9 +102,11 @@ export class WorkspacesService {
       .insert(schema.workspaces)
       .values(ws)
       .returning();
-    await tx
-      .insert(schema.usersToWorkspaces)
-      .values({ userId: ws.createdById, workspaceId: workspace.id });
+    await tx.insert(schema.usersToWorkspaces).values({
+      userId: ws.createdById,
+      workspaceId: workspace.id,
+      status: 'active',
+    });
     await this.rolesService.createDefault(ws.createdById, workspace.id, { tx });
     return workspace;
   }

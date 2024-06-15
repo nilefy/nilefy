@@ -7,6 +7,7 @@ export const userSchema = createSelectSchema(usersDrizzle);
 export const userInsertSchema = createInsertSchema(usersDrizzle, {
   username: (schema) => schema.username.min(3).max(255),
   email: (schema) => schema.email.email(),
+  passwordResetToken: (schema) => schema.passwordResetToken.max(255),
   password: (schema) => schema.password.min(6).max(255),
 });
 
@@ -17,6 +18,8 @@ export const retUserSchema = userSchema.omit({
   emailVerified: true,
   updatedAt: true,
   deletedAt: true,
+  passwordResetToken: true,
+  status: true,
 });
 
 export const updateUserOnboardingSchema = userInsertSchema.pick({
@@ -45,6 +48,15 @@ export const signInSchema = signUpSchema.pick({
   password: true,
 });
 
+export const forgotPasswordSchema = userInsertSchema.pick({
+  email: true,
+});
+export const resetPasswordSchema = z.object({
+  password: z.string().min(6),
+  password_confirmation: z.string(),
+  token: z.string(),
+});
+
 // export type UserDto = z.infer<typeof userSchema>;
 // export type CreateUserDto = z.infer<typeof signUpSchema>;
 // export type LoginUserDto = z.infer<typeof signInSchema>;
@@ -55,6 +67,8 @@ export class CreateUserDto extends createZodDto(signUpSchema) {}
 export class LoginUserDto extends createZodDto(signInSchema) {}
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
 export class UpdateUserDb extends createZodDto(userInsertSchema.partial()) {}
+export class ForgotPasswordDto extends createZodDto(forgotPasswordSchema) {}
+export class ResetPasswordDto extends createZodDto(resetPasswordSchema) {}
 export class UpdateUserOnboardingDto extends createZodDto(
   updateUserOnboardingSchema,
 ) {}

@@ -14,6 +14,7 @@ import {
   ParseFilePipe,
   Header,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -33,6 +34,7 @@ import { ApiBearerAuth, ApiCreatedResponse } from '@nestjs/swagger';
 import { Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
+import { z } from 'zod';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -118,8 +120,15 @@ export class AppsController {
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
     @Req() req: ExpressAuthedRequest,
+    @Query('pageId', new ZodValidationPipe(z.coerce.number().optional()))
+    pageId: number,
   ): Promise<AppRetDto> {
-    return await this.appsService.findOne(req.user.userId, workspaceId, appId);
+    return await this.appsService.findOne(
+      req.user.userId,
+      workspaceId,
+      appId,
+      pageId,
+    );
   }
 
   @Post(':id/clone')

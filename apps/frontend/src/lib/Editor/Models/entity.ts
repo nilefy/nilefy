@@ -247,6 +247,7 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
     }
     this.syncRawValuesWithEvaluationWorker(path);
   }
+
   pushIntoArray(path: string, value: unknown) {
     let array = get(this.rawValues, path) as unknown[];
     if (!array) set(this.rawValues, path, []);
@@ -327,7 +328,16 @@ export class Entity implements RuntimeEvaluable, WebloomDisposable {
       },
     });
   }
-
+  getInspectorConfigForPath(path: string) {
+    for (const config of this.inspectorConfig) {
+      for (const item of config.children) {
+        if (item.path === path) {
+          return item;
+        }
+      }
+    }
+    return null;
+  }
   processActionConfig = (config: EntityActionConfig) => {
     const actions: Record<string, (...args: unknown[]) => void> = {};
     for (const key in config) {

@@ -5,7 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { DrizzleModule } from '../drizzle/drizzle.module';
 import { DatabaseI, DrizzleAsyncProvider } from '@nilefy/database';
-import { dataSourcesSeeder } from './seeders/data_sources.seeder';
+import { syncDataSources } from './syncDatasources';
 
 async function main() {
   // check nest standalone application docs to understand setup https://docs.nestjs.com/standalone-applications
@@ -23,7 +23,7 @@ async function main() {
       usersWithWorkspace.map((u) => [u.id, u.workspace.id]),
     );
 
-    await dataSourcesSeeder(db);
+    await syncDataSources(db);
   });
 
   await app.close();

@@ -127,7 +127,7 @@ export const acquireAccount = async (id: number) => {
     )[0]!;
     await db
       .insert(usersToWorkspaces)
-      .values({ userId: user.id, workspaceId: workspace.id })
+      .values({ userId: user.id, workspaceId: workspace.id, status: 'active' })
       .returning();
     const allPermissions = await db.select().from(permissions);
     const res = (
@@ -151,6 +151,8 @@ export const acquireAccount = async (id: number) => {
       .values({ roleId: res.id, userId: user.id })
       .returning();
     return { username, password, email, workspaceId: workspace.id };
+  } catch (e) {
+    console.log(e);
   } finally {
     await client.end();
   }

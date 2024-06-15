@@ -425,11 +425,11 @@ export const componentsRelations = relations(components, ({ one, many }) => ({
     references: [pages.id],
     relationName: componentsToPageRelation,
   }),
-  parent: one(components, {
-    fields: [components.parentId],
-    references: [components.id],
-    relationName: componentParentRelation,
-  }),
+  // parent: one(components, {
+  //   fields: [components.parentId],
+  //   references: [components.id],
+  //   relationName: componentParentRelation,
+  // }),
   children: many(components, {
     relationName: componentParentRelation,
   }),

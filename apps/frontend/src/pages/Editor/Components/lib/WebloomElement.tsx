@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
-import { ElementType, useCallback, useMemo } from 'react';
-import { WebloomWidgets, WidgetContext } from '..';
+import { ElementType, useCallback, useContext, useMemo } from 'react';
+import { EnvironmentContext, WebloomWidgets, WidgetContext } from '..';
 
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
@@ -18,6 +18,7 @@ import {
 const RenderedElement = observer(
   ({ id, isVisible }: { id: string; isVisible: boolean }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
+    const enviornment = useContext(EnvironmentContext);
     const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
     if (widget.isCanvas) {
       const innerContainerStyle = {
@@ -35,9 +36,13 @@ const RenderedElement = observer(
           outerContainerStyle={outerContainerStyle}
           isVisibile={isVisible}
         >
-          {widget.nodes.map((nodeId) => (
-            <WebloomElement id={nodeId} key={nodeId} />
-          ))}
+          {widget.nodes.map((nodeId) =>
+            enviornment.isProduction ? (
+              <ProductionWebloomElement id={nodeId} key={nodeId} />
+            ) : (
+              <WebloomElement id={nodeId} key={nodeId} />
+            ),
+          )}
         </WebloomWidget>
       );
     }
@@ -71,7 +76,6 @@ export const WebloomElementBase = observer(function WebloomElement({
       id,
     };
   }, [onPropChange, id]);
-
   const isVisible = widget.isVisible;
 
   return (

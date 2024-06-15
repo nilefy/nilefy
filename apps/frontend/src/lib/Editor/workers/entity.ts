@@ -18,7 +18,9 @@ import { analyzeDependancies } from '../evaluation/dependancyUtils';
 import { EntityInspectorConfig, FunctionArgs, PublicApi } from '../interface';
 import {
   getEvaluablePathsFromInspectorConfig,
+  getEventPathsFromInspectorConfig,
   getGenericArrayPath,
+  getShouldntCheckForBinding,
 } from '../evaluation';
 import { EntityActionRawConfig } from '../evaluation/interface';
 import { MainThreadBroker } from './mainThreadBroker';
@@ -58,6 +60,8 @@ const functionType = (
 const typedEntity = (path: string, type: string) => `const ${path}: ${type};`;
 export class Entity implements WebloomDisposable {
   private readonly evaluablePaths: Set<string>;
+  private readonly eventPaths: Set<string>;
+  private readonly shouldntCheckForBinding: Set<string>;
   public unevalValues: Record<string, unknown>;
   public id: string;
   /**
@@ -135,7 +139,12 @@ export class Entity implements WebloomDisposable {
       ...evaluablePaths,
       ...getEvaluablePathsFromInspectorConfig(inspectorConfig),
     ]);
-    // events props cannot be dependcies to other props, so we have to keep track of them
+    this.eventPaths = new Set<string>([
+      ...getEventPathsFromInspectorConfig(inspectorConfig),
+    ]);
+    this.shouldntCheckForBinding = new Set<string>(
+      getShouldntCheckForBinding(inspectorConfig),
+    );
     this.validators = extractValidators(inspectorConfig);
     this.unevalValues = unevalValues;
     this.initDependecies();
@@ -239,6 +248,7 @@ export class Entity implements WebloomDisposable {
         code: value,
         entityId: this.id,
         toProperty: path,
+        isPossiblyJSBinding: this.shouldCheckForBinding(path),
       });
     });
     return relations;
@@ -289,7 +299,10 @@ export class Entity implements WebloomDisposable {
 
   async dispose() {
     this.clearDependents();
-    const keysToBeRemovedFromTsServer = this.allEvaluablePaths;
+    const keysToBeRemovedFromTsServer = [
+      ...this.allEvaluablePaths,
+      ...keys(this.actions),
+    ];
     const tsServer = await this.editorState.tsServer;
     for (const key of keysToBeRemovedFromTsServer) {
       tsServer.deleteFile(this.id + '_' + key);
@@ -402,5 +415,11 @@ export class Entity implements WebloomDisposable {
       }
     }
     return [...correctPaths];
+  }
+  shouldCheckForBinding(path: string) {
+    return !this.shouldntCheckForBinding.has(path);
+  }
+  isPathEvent(path: string) {
+    return this.eventPaths.has(path);
   }
 }

@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, toJS, computed } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  toJS,
+  computed,
+  override,
+} from 'mobx';
 import { Snapshotable } from './interface';
 import {
   CompleteQueryI,
@@ -12,8 +19,11 @@ import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
-import { concat } from 'lodash';
+import { concat, debounce } from 'lodash';
 import { editorStore } from '.';
+import { GlobalDataSourceI } from '@/api/dataSources.api';
+import { commandManager } from '@/actions/CommandManager';
+import { UpdateQuery } from '@/actions/editor/updateQuery';
 
 const onSuccessKey = 'config.onSuccess';
 const onFailureKey = 'config.onFailure';
@@ -147,7 +157,8 @@ export class WebloomQuery
   appId: CompleteQueryI['appId'];
   workspaceId: number;
   dataSource: CompleteQueryI['dataSource'];
-  baseDataSource: CompleteQueryI['baseDataSource'];
+  baseDataSourceId: number;
+  baseDataSource: GlobalDataSourceI;
   dataSourceId?: CompleteQueryI['dataSourceId'] | null;
   createdAt: CompleteQueryI['createdAt'];
   updatedAt: CompleteQueryI['updatedAt'];
@@ -171,7 +182,7 @@ export class WebloomQuery
     workspaceId,
     dataSource,
     dataSourceId,
-    baseDataSource,
+    baseDataSourceId,
     triggerMode,
     createdAt,
     updatedAt,
@@ -189,7 +200,7 @@ export class WebloomQuery
         triggerMode: triggerMode ?? 'manually',
         data: undefined,
         queryState: 'idle',
-        type: baseDataSource.type,
+        type: editorStore.globalDataSources[baseDataSourceId].type,
         statusCode: undefined,
         error: undefined,
       },
@@ -221,12 +232,13 @@ export class WebloomQuery
       entityType: 'query',
       inspectorConfig: concat(
         [],
-        baseDataSource.queryConfig.formConfig as any,
+        editorStore.globalDataSources[baseDataSourceId].queryConfig.formConfig,
         defaultQueryInspectorConfig,
       ),
       // @ts-expect-error TODO: fix this
       entityActionConfig: QueryActions,
     });
+    this.baseDataSource = editorStore.globalDataSources[baseDataSourceId];
     this.queryClient = queryClient;
     this.updateQueryMutator = new MobxMutation(this.queryClient, () => ({
       mutationFn: () => {
@@ -235,6 +247,7 @@ export class WebloomQuery
           workspaceId,
           queryId: this.id,
           dto: {
+            id: this.id,
             dataSourceId: this.dataSourceId,
             query: toJS(this.rawConfig) as Record<string, unknown>,
             triggerMode: this.triggerMode,
@@ -286,7 +299,7 @@ export class WebloomQuery
     this.workspaceId = workspaceId;
     this.dataSourceId = dataSourceId;
     this.dataSource = dataSource;
-    this.baseDataSource = baseDataSource;
+    this.baseDataSourceId = baseDataSourceId;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     makeObservable(this, {
@@ -299,6 +312,7 @@ export class WebloomQuery
       setDataSource: action,
       dataSourceId: observable,
       appId: observable,
+      setValue: override,
     });
   }
   get triggerMode() {
@@ -310,17 +324,28 @@ export class WebloomQuery
   setDataSource(dataSourceId: string) {
     this.dataSourceId = +dataSourceId;
   }
-  // TODO: make it handle id update
+  setValue(path: string, value: unknown, autoSync = true): void {
+    const queryMetaProps = ['data', 'error', 'statusCode', 'queryState'];
+    if (!queryMetaProps.includes(path) && autoSync) {
+      this.updatedAt = new Date();
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new UpdateQuery(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   updateQuery(
-    dto: Omit<
-      Partial<CompleteQueryI & { rawValues: Partial<QueryRawValues> }>,
-      'id'
-    >,
+    dto: Partial<CompleteQueryI & { rawValues: Partial<QueryRawValues> }>,
   ) {
     if (dto.query) this.rawValues.config = dto.query;
     if (dto.updatedAt) this.updatedAt = dto.updatedAt;
     if (dto.dataSource) this.dataSource = dto.dataSource;
-    if (dto.baseDataSource) this.baseDataSource = dto.baseDataSource;
+    if (dto.baseDataSourceId) this.baseDataSourceId = dto.baseDataSourceId;
     if (dto.dataSourceId) this.dataSourceId = dto.dataSourceId;
     if (dto.rawValues) {
       this.rawValues.data = dto.rawValues.data;
@@ -356,6 +381,8 @@ export class WebloomQuery
       createdAt: this.createdAt,
       triggerMode: this.triggerMode,
       workspaceId: this.workspaceId,
+      dataSource: this.dataSource,
+      baseDataSourceId: this.baseDataSourceId,
     };
   }
 

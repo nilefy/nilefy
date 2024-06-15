@@ -33,10 +33,10 @@ export type WebloomFormProps = WebloomContainerProps & {
 const WebloomForm = observer(
   (props: Parameters<typeof WebloomContainer>[0]) => {
     const { id } = useContext(WidgetContext);
-    const widget = editorStore.currentPage.getWidgetById(id);
     // This works fine but I think a more versatile way would to be able to access the children in the code like so {{form.children}}
     // and from that we can just delegate that to a derived value like so {{(function(){computedDataFromChildren(from.children)})()}} in the initialProps
     useAutoRun(() => {
+      const widget = editorStore.currentPage.getWidgetById(id);
       const data: Record<string, unknown> = {};
       for (const descendantId of widget.descendants) {
         const descendant = editorStore.currentPage.getWidgetById(descendantId);

@@ -6,57 +6,80 @@ export const configSchema = z.object({
   uri: z.string().min(1),
 });
 
+const queryDatabaseSchema = z.string().min(1).optional();
+const queryCollectionSchema = z.string().min(1);
+const queryDocumentsSchema = z.array(z.record(z.string(), z.unknown()));
+const queryFilterSchema = z.record(z.string(), z.unknown());
+const queryMultipleSchema = z.boolean().optional();
+const queryUpdateSchema = z.record(z.string(), z.unknown());
+const queryReplacementSchema = z.record(z.string(), z.unknown());
+
+const ops = [
+  z.literal('Create Document'), // 0
+  z.literal('Find Document'), //1
+  z.literal('View Database Collections'), //2
+  z.literal('Count Documents'), //3
+  z.literal('Update Document'), //4
+  z.literal('Replace Document'), //5
+  z.literal('Delete Document'), //6
+] as const;
+const operationOptions = z.union(ops).default('Create Document');
 const query = z.discriminatedUnion('operation', [
   z.object({
-    operation: z.literal('Create Document'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    documents: z.array(z.record(z.string(), z.unknown())),
+    // create doc
+    operation: ops[0],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    documents: queryDocumentsSchema,
   }),
   z.object({
-    operation: z.literal('Find Document'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    filter: z.record(z.string(), z.unknown()),
-    multiple: z.boolean().optional(),
+    // find doc
+    operation: ops[1],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    filter: queryFilterSchema,
+    multiple: queryMultipleSchema,
   }),
   z.object({
-    operation: z.literal('View Database Collections'),
-    database: z.string().min(1).optional(),
+    // view doc
+    operation: ops[2],
+    database: queryDatabaseSchema,
   }),
   z.object({
-    operation: z.literal('Count Documents'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    filter: z.record(z.string(), z.unknown()).optional(),
+    // count docs
+    operation: ops[3],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    filter: queryFilterSchema,
   }),
   z.object({
-    operation: z.literal('Update Document'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    filter: z.record(z.string(), z.unknown()),
-    update: z.record(z.string(), z.unknown()),
-    multiple: z.boolean().optional(),
+    // update docs
+    operation: ops[4],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    filter: queryFilterSchema,
+    update: queryUpdateSchema,
+    multiple: queryMultipleSchema,
   }),
   z.object({
-    operation: z.literal('Replace Document'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    filter: z.record(z.string(), z.unknown()),
-    replacement: z.record(z.string(), z.unknown()),
+    // replace doc
+    operation: ops[5],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    filter: queryFilterSchema,
+    replacement: queryReplacementSchema,
   }),
   z.object({
-    operation: z.literal('Delete Document'),
-    database: z.string().min(1).optional(),
-    collection: z.string().min(1),
-    filter: z.record(z.string(), z.unknown()),
-    multiple: z.boolean().optional(),
+    // delete doc
+    operation: ops[6],
+    database: queryDatabaseSchema,
+    collection: queryCollectionSchema,
+    filter: queryFilterSchema,
+    multiple: queryMultipleSchema,
   }),
 ]);
 
-export const querySchema = z.object({
-  query: query,
-});
+export const querySchema = query;
 
 export type UpdateDocRetT = {
   updatedIds: (ObjectId | null)[];
@@ -79,16 +102,6 @@ export const pluginConfigForm = {
   },
 };
 
-const operations = [
-  'Create Document',
-  'Find Document',
-  'View Database Collections',
-  'Count Documents',
-  'Update Document',
-  'Replace Document',
-  'Delete Document',
-];
-
 export const queryConfigForm = {
   formConfig: [
     {
@@ -100,30 +113,18 @@ export const queryConfigForm = {
           type: 'select',
           options: {
             items: [
-              { label: 'Create Document', value: 'Create Document' },
-              { label: 'Find Document', value: 'Find Document' },
+              { label: 'Create Document', value: ops[0].value },
+              { label: 'Find Document', value: ops[1].value },
               {
                 label: 'View Database Collections',
-                value: 'View Database Collections',
+                value: ops[2].value,
               },
-              { label: 'Count Documents', value: 'Count Documents' },
-              { label: 'Update Document', value: 'Update Document' },
-              { label: 'Replace Document', value: 'Replace Document' },
-              { label: 'Delete Document', value: 'Delete Document' },
+              { label: 'Count Documents', value: ops[3].value },
+              { label: 'Update Document', value: ops[4].value },
+              { label: 'Replace Document', value: ops[5].value },
+              { label: 'Delete Document', value: ops[6].value },
             ],
-            validation: zodToJsonSchema(
-              z
-                .union([
-                  z.literal('Create Document'),
-                  z.literal('Find Document'),
-                  z.literal('View Database Collections'),
-                  z.literal('Count Documents'),
-                  z.literal('Update Document'),
-                  z.literal('Replace Document'),
-                  z.literal('Delete Document'),
-                ])
-                .default('Create Document'),
-            ),
+            validation: zodToJsonSchema(operationOptions),
           },
         },
         {
@@ -133,11 +134,7 @@ export const queryConfigForm = {
           options: {
             placeholder: 'Enter database name',
           },
-          validation: zodToJsonSchema(
-            z.object({
-              database: z.string().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(queryDatabaseSchema),
         },
         {
           path: 'config.collection',
@@ -152,15 +149,11 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'EQUALS',
-                value: operations[2],
+                value: ops[2].value,
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              collection: z.string().min(1),
-            }),
-          ),
+          validation: zodToJsonSchema(queryCollectionSchema),
         },
         {
           path: 'config.documents',
@@ -175,15 +168,11 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[0],
+                value: ops[0].value,
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              documents: z.array(z.record(z.string(), z.unknown())),
-            }),
-          ),
+          validation: zodToJsonSchema(queryDocumentsSchema),
         },
         {
           path: 'config.filter',
@@ -198,18 +187,11 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'IN',
-                value: [operations[0], operations[2]],
+                value: [ops[0].value, ops[2].value],
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              /**
-               * should be optional in 'Count Documents' operation
-               */
-              filter: z.record(z.string(), z.unknown()),
-            }),
-          ),
+          validation: zodToJsonSchema(queryFilterSchema),
         },
         {
           path: 'config.update',
@@ -225,15 +207,11 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[4],
+                value: ops[4].value,
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              update: z.record(z.string(), z.unknown()),
-            }),
-          ),
+          validation: zodToJsonSchema(queryUpdateSchema),
         },
         {
           path: 'config.replacement',
@@ -248,15 +226,11 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_EQUALS',
-                value: operations[5],
+                value: ops[5].value,
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              replacement: z.record(z.string(), z.unknown()),
-            }),
-          ),
+          validation: zodToJsonSchema(queryReplacementSchema),
         },
         {
           path: 'config.multiple',
@@ -268,170 +242,13 @@ export const queryConfigForm = {
               {
                 path: 'config.operation',
                 comparison: 'NOT_IN',
-                value: [operations[1], operations[4], operations[6]],
+                value: [ops[1].value, ops[4].value, ops[6].value],
               },
             ],
           },
-          validation: zodToJsonSchema(
-            z.object({
-              multiple: z.boolean().optional(),
-            }),
-          ),
+          validation: zodToJsonSchema(queryMultipleSchema),
         },
       ],
     },
   ],
-};
-export const queryConfig = {
-  schema: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'object',
-        properties: {
-          operation: {
-            type: 'string',
-            enum: operations,
-            default: operations[0],
-          },
-        },
-        required: ['operation'],
-        dependencies: {
-          operation: {
-            oneOf: [
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[0]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  documents: {
-                    type: 'array',
-                  },
-                },
-                required: ['collection', 'documents'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[1]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  filter: {
-                    type: 'object',
-                  },
-                  multiple: {
-                    type: 'boolean',
-                  },
-                },
-                required: ['collection', 'filter'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[2]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                },
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[3]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  filter: {
-                    type: 'object',
-                  },
-                },
-                required: ['collection'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[4]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  filter: {
-                    type: 'object',
-                  },
-                  update: {
-                    type: 'object',
-                  },
-                  multiple: {
-                    type: 'boolean',
-                  },
-                },
-                required: ['collection', 'filter', 'update'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[5]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  filter: {
-                    type: 'object',
-                  },
-                  replacement: {
-                    type: 'object',
-                  },
-                },
-                required: ['collection', 'filter', 'replacement'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[6]],
-                  },
-                  database: {
-                    type: 'string',
-                  },
-                  collection: {
-                    type: 'string',
-                  },
-                  filter: {
-                    type: 'object',
-                  },
-                  multiple: {
-                    type: 'boolean',
-                  },
-                },
-                required: ['collection', 'filter'],
-              },
-            ],
-          },
-        },
-      },
-    },
-    required: ['query'],
-    additionalProperties: false,
-  },
 };

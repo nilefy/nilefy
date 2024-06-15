@@ -5,7 +5,7 @@ import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 
 import { WebloomContainer } from '../WebloomWidgets/Container';
-import { WidgetContext } from '..';
+import { EnvironmentContext, WidgetContext } from '..';
 import { MultiSelect } from './MultiSelect';
 import { flow, flowRight } from 'lodash';
 import {
@@ -62,30 +62,32 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
       id,
     };
   }, [onPropChange, id]);
-
+  const environmentValue = useMemo(() => ({ isProduction }), [isProduction]);
   return (
-    <WidgetContext.Provider value={contextValue}>
-      <WebloomContainer
-        innerContainerStyle={innerContainerStyle}
-        outerContainerStyle={outerContainerStyle}
-        isVisibile={true}
-      >
-        {!isProduction && (
-          <>
-            <MultiSelect />
-            <MultiSelectBounding />
-          </>
-        )}
+    <EnvironmentContext.Provider value={environmentValue}>
+      <WidgetContext.Provider value={contextValue}>
+        <WebloomContainer
+          innerContainerStyle={innerContainerStyle}
+          outerContainerStyle={outerContainerStyle}
+          isVisibile={true}
+        >
+          {!isProduction && (
+            <>
+              <MultiSelect />
+              <MultiSelectBounding />
+            </>
+          )}
 
-        {nodes.map((nodeId) =>
-          isProduction ? (
-            <ProductionWebloomElement id={nodeId} key={nodeId} />
-          ) : (
-            <WebloomElement id={nodeId} key={nodeId} />
-          ),
-        )}
-      </WebloomContainer>
-    </WidgetContext.Provider>
+          {nodes.map((nodeId) =>
+            isProduction ? (
+              <ProductionWebloomElement id={nodeId} key={nodeId} />
+            ) : (
+              <WebloomElement id={nodeId} key={nodeId} />
+            ),
+          )}
+        </WebloomContainer>
+      </WidgetContext.Provider>
+    </EnvironmentContext.Provider>
   );
 });
 export const WebloomRoot: React.FC<WebloomRootProps> = flowRight(

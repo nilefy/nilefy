@@ -18,6 +18,10 @@ import { Request, Response } from 'express';
 import {
   CreateUserDto,
   LoginUserDto,
+  forgotPasswordSchema,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  resetPasswordSchema,
   signInSchema,
   signUpSchema,
 } from '../dto/users.dto';
@@ -34,7 +38,6 @@ export class AuthController {
   constructor(
     private dataSourcesService: DataSourcesService,
     private authService: AuthService,
-    private googleSheetsQueryService: GoogleSheetsQueryService,
     private configService: ConfigService<EnvSchema, true>,
   ) {}
   @Post('signup')
@@ -74,6 +77,8 @@ export class AuthController {
     Logger.debug(frontURL);
     response.redirect(302, frontURL.toString());
   }
+
+  // TODO: should we move this to data queries controller?
   @Get('googlesheets/:ws/:ds')
   @Redirect()
   async googleLogin(
@@ -84,7 +89,8 @@ export class AuthController {
     const scope: string = (await this.dataSourcesService.getOne(+ws, +ds))
       .config.scope;
     const scopeLinks = scopeMap[scope];
-    const authUrl = this.googleSheetsQueryService.getAuthUrl(scopeLinks);
+    const sheetsService = new GoogleSheetsQueryService();
+    const authUrl = sheetsService.getAuthUrl(scopeLinks);
     // Set cookies for ws and ds
     res.cookie('ws', ws, { httpOnly: true });
     res.cookie('ds', ds, { httpOnly: true });
@@ -93,11 +99,17 @@ export class AuthController {
   }
   @Get('login/google-sheets-redirect')
   async callback(
-    @Query('code') code: string,
     @Req() req: Request,
     @Res() res: Response,
+    @Query('code') code?: string,
+    @Query('error') error?: string,
   ) {
-    const tokens = await this.googleSheetsQueryService.getTokensFromCode(code);
+    if (error) {
+      // TODO: redirect back to google sheet page with error message
+      throw new BadRequestException();
+    }
+    const sheetsService = new GoogleSheetsQueryService();
+    const tokens = await sheetsService.getTokensFromCode(code!);
     // Now we can use the tokens to authenticate requests to Google Sheets API
     // For example, maybe  saving them in the database for use later when using the datasource
     const googleToken = tokens.access_token;
@@ -148,5 +160,21 @@ export class AuthController {
     }
     response.redirect(302, frontURL.toString());
     return;
+  }
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema))
+    resetPasswordDto: ResetPasswordDto,
+  ) {
+    const { password, token } = resetPasswordDto;
+    return await this.authService.resetPassword(password, token);
   }
 }

@@ -28,3 +28,8 @@ export const singularOrPlural = (
 ) => {
   return num === 1 ? singular : plural;
 };
+
+export const validIdentifierRegex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
+export const isValidIdentifier = (name: string) => {
+  return validIdentifierRegex.test(name);
+};

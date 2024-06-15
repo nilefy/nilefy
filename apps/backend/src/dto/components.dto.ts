@@ -27,6 +27,7 @@ export const updateComponentDb = createComponentDb
   .omit({ pageId: true, id: true })
   .extend({
     updatedById: z.number(),
+    newId: z.string().optional(),
   });
 
 export type ComponentDto = z.infer<typeof componentSchema>;
@@ -66,16 +67,20 @@ export type NilefyNode = {
   type: string;
 } & NilefyGridDimensions;
 
-export const frontKnownKeysSchema = componentSchema.pick({
-  id: true,
-  parentId: true,
-  props: true,
-  type: true,
-  col: true,
-  row: true,
-  columnsCount: true,
-  rowsCount: true,
-});
+export const frontKnownKeysSchema = componentSchema
+  .pick({
+    id: true,
+    parentId: true,
+    props: true,
+    type: true,
+    col: true,
+    row: true,
+    columnsCount: true,
+    rowsCount: true,
+  })
+  .extend({
+    name: z.string().optional(),
+  });
 
 export const frontKnownKeys = frontKnownKeysSchema.keyof().options;
 

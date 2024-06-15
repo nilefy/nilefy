@@ -124,7 +124,7 @@ export class MainThreadBroker {
         break;
       case 'changePage':
         try {
-          this.editorState.changePage(body.currentPageId);
+          this.editorState.changePage(body.widgets);
         } catch (error) {
           console.error('Error in changePage:', error);
         }

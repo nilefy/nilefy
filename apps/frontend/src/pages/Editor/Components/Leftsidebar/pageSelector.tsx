@@ -1,16 +1,17 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 
-import { Pin, PinOff, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { useToast } from '../../../../components/ui/use-toast';
 import { api } from '@/api';
-import Page from '../../../../components/page';
+import Page from './page';
 // import { SortableList } from './sortableList';
 import { PAGES_QUERY_KEY, PageDto } from '@/api/pages.api';
 import { matchSorter } from 'match-sorter';
+import { WebloomLoader } from '@/components/loader';
 
 export function PageSelector() {
   const { workspaceId, appId } = useParams<{
@@ -35,18 +36,11 @@ export function PageSelector() {
       keys: ['name'],
     });
   }, [pages, searchQuery]);
-  const queryClient = useQueryClient();
-
-  const { mutate: updateMutate } = api.pages.update.useMutation({
-    async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: [PAGES_QUERY_KEY] });
-    },
-  });
 
   if (isError) {
     throw error;
   } else if (isPending) {
-    return <>loading</>;
+    return <WebloomLoader />;
   }
 
   return (

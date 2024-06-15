@@ -73,8 +73,6 @@ export class DataSourcesController {
     createDataSourceDto: CreateWsDataSourceDto,
     @Req() req: ExpressAuthedRequest,
   ): Promise<WsDataSourceDto> {
-    console.log('creating');
-    console.log(CreateWsDataSourceDto);
     return await this.dataSourceService.create({
       ...createDataSourceDto,
       workspaceId,
@@ -111,7 +109,7 @@ export class DataSourcesController {
     @Param('dataSourceId', ParseIntPipe)
     dataSourceId: number,
   ): Promise<DataSourceConnectionDto> {
-    return await this.dataSourceService.getOne(workspaceId, dataSourceId);
+    return await this.dataSourceService.getOneToView(workspaceId, dataSourceId);
   }
 
   @Get('env/:env')

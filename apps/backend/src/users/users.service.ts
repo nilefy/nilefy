@@ -14,16 +14,23 @@ export class UsersService {
     private readonly workspacesService: WorkspacesService,
   ) {}
 
-  async findOne(email: string) {
+  async findOne(email: string, status: 'active' | 'invited' = 'active') {
     const u = await this.db.query.users.findFirst({
-      where: and(eq(users.email, email), isNull(users.deletedAt)),
+      where: and(
+        eq(users.email, email),
+        isNull(users.deletedAt),
+        eq(users.status, status),
+      ),
       with: {
         accounts: true,
       },
     });
     return u;
   }
-
+  private async hasPassword(p: string) {
+    const salt = await genSalt(10);
+    return await hash(p, salt);
+  }
   /**
    *  create user with default workspace(this user will be the admin of the workspace)
    */
@@ -47,9 +54,7 @@ export class UsersService {
     tx: PgTrans,
   ): Promise<UserDto & { workspace: WorkspaceDto }> {
     if (user.password) {
-      const salt = await genSalt(10);
-      const hashed = await hash(user.password, salt);
-      user.password = hashed;
+      user.password = await this.hasPassword(user.password);
     }
     const [u] = await tx.insert(users).values(user).returning();
     if (user.accounts) {
@@ -75,8 +80,7 @@ export class UsersService {
     updateDto: UpdateUserDb,
   ): Promise<UpdateUserRetDto> {
     if (updateDto.password) {
-      const salt = await genSalt(10);
-      updateDto.password = await hash(updateDto.password, salt);
+      updateDto.password = await this.hasPassword(updateDto.password);
     }
     const updatedUser = (
       await this.db

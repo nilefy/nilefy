@@ -19,6 +19,11 @@ import { getQueryService } from '../data_sources/plugins/common/service';
 import { and, eq, sql } from 'drizzle-orm';
 import { WorkspaceDto } from '../dto/workspace.dto';
 import { DataSourcesService } from '../data_sources/data_sources.service';
+import { DataSourceDto, WsDataSourceDto } from '../dto/data_sources.dto';
+import { ComponentsService } from '../components/components.service';
+import { apps } from '@nilefy/database';
+import { PageDto } from '../dto/pages.dto';
+import { jsQueries } from '@nilefy/database';
 import {
   DatabaseI,
   PgTrans,
@@ -26,11 +31,18 @@ import {
   workspaceDataSources,
 } from '@nilefy/database';
 
+export type CompleteQueryI = QueryDto & {
+  dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
+    baseDataSource: Pick<DataSourceDto, 'id' | 'name' | 'type' | 'queryConfig'>;
+  };
+};
+
 @Injectable()
 export class DataQueriesService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private dataSourcesService: DataSourcesService,
+    private componentsService: ComponentsService,
   ) {}
 
   async runQuery(
@@ -45,7 +57,7 @@ export class DataQueriesService {
         'query should be connected to datasource to run the query',
       );
     }
-    const ds = await this.dataSourcesService.getOne(
+    const ds = await this.dataSourcesService.getOneToRun(
       workspaceId,
       query.dataSourceId,
     );
@@ -126,16 +138,9 @@ export class DataQueriesService {
         appId: true,
         dataSourceId: true,
         triggerMode: true,
+        baseDataSourceId: true,
       },
       with: {
-        baseDataSource: {
-          columns: {
-            queryConfig: true,
-            id: true,
-            type: true,
-            name: true,
-          },
-        },
         dataSource: {
           columns: {
             id: true,
@@ -222,10 +227,66 @@ export class DataQueriesService {
     queryId: QueryDto['id'];
     updatedById: QueryDto['updatedById'];
     query: UpdateQueryDto;
-  }): Promise<AppQueryDto> {
+  }): Promise<CompleteQueryI> {
+    if (query.id && query.id !== queryId) {
+      const newId = query.id;
+      const q = await this.db.query.queries.findFirst({
+        where: and(eq(queries.id, newId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      });
+      if (q) {
+        // there is a query with this new id
+        throw new BadRequestException(
+          `There is another query with name ${newId}`,
+        );
+      }
+      const jsQuery = await this.db.query.jsQueries.findFirst({
+        where: and(eq(jsQueries.id, newId), eq(jsQueries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      });
+      if (jsQuery) {
+        // there is a js query with this new id
+        throw new BadRequestException(`There is a JS query with name ${newId}`);
+      }
+      const appPages = (
+        await this.db.query.apps.findFirst({
+          where: eq(apps.id, appId),
+          with: {
+            pages: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        })
+      )?.pages;
+      (appPages ?? []).forEach(
+        async (page: { id: PageDto['id']; name: PageDto['name'] }) => {
+          const pageId = page.id;
+          const ret = await this.componentsService.getComponent(newId, pageId);
+          if (ret) {
+            // there is a component with this new id
+            throw new BadRequestException(
+              `There is a component with name ${newId}, ${page.name} page`,
+            );
+          }
+        },
+      );
+    }
     const [q] = await this.db
       .update(queries)
-      .set({ ...query, updatedById, updatedAt: sql`now()` })
+      .set({
+        dataSourceId: query.dataSourceId,
+        query: query.query,
+        triggerMode: query.triggerMode,
+        updatedById,
+        updatedAt: sql`now()`,
+      })
       .where(and(eq(queries.id, queryId), eq(queries.appId, appId)))
       .returning({ id: queries.id });
     return await this.getQuery(appId, q.id);

@@ -77,13 +77,14 @@ export class WebloomWidget
   rowsCount: number;
   page: WebloomPage;
   metaProps: Set<string>;
+  widgetName: string;
   constructor({
     type,
     parentId,
     row = 0,
     col = 0,
     page,
-    id = getNewEntityName(type),
+    id = getNewEntityName(type, page.id),
     nodes = [],
     rowsCount,
     columnsCount,
@@ -119,6 +120,7 @@ export class WebloomWidget
       ),
       metaValues: widgetConfig.metaProps,
     });
+    this.widgetName = id;
     this.metaProps = widgetConfig.metaProps ?? new Set();
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
@@ -206,14 +208,11 @@ export class WebloomWidget
       );
     return 0;
   }
-  setValue(path: string, value: unknown): void {
-    if (!this.metaProps.has(path)) {
+  setValue(path: string, value: unknown, autoSync = true): void {
+    if (!this.metaProps.has(path) && autoSync) {
       this.debouncedSyncRawValuesWithServer();
     }
     super.setValue(path, value);
-  }
-  setApi(api: Record<string, (...args: unknown[]) => void>) {
-    this.api = api;
   }
   syncRawValuesWithServer() {
     commandManager.executeCommand(new ChangePropAction(this.id));
@@ -222,6 +221,10 @@ export class WebloomWidget
     this.syncRawValuesWithServer,
     500,
   );
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
@@ -425,7 +428,7 @@ export class WebloomWidget
 
   clone() {
     const snapshot = this.snapshot;
-    snapshot.id = getNewEntityName(snapshot.type);
+    snapshot.id = getNewEntityName(snapshot.type, this.page.id);
     return new WebloomWidget({
       ...snapshot,
       page: this.page,

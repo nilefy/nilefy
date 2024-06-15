@@ -79,12 +79,14 @@ export const appQuerySchema = querySchema
         id: true,
         name: true,
       })
-      .extend({
-        env: z.array(environmentKey),
-      })
+      .nullable()
       .optional(),
   });
-export const appQueriesSchema = z.array(appQuerySchema);
+export const appQueriesSchema = z.array(
+  appQuerySchema.omit({
+    baseDataSource: true,
+  }),
+);
 
 export class AppQueryDto extends createZodDto(appQuerySchema) {}
 export class AppQueriesDto extends createZodDto(appQueriesSchema) {}

@@ -8,7 +8,7 @@ import { MongoClient, ObjectId, Document } from 'mongodb';
  */
 
 export const createDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.CREATE_DOC }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.CREATE_DOC }>,
   client: MongoClient,
 ): Promise<(ObjectId | null)[]> => {
   const { database, collection, documents } = query;
@@ -24,7 +24,7 @@ export const createDocument = async (
 
 // TODO: sort and projection options
 export const findDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.FIND_DOC }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.FIND_DOC }>,
   client: MongoClient,
 ): Promise<(Document | null)[]> => {
   const { database, collection, filter, multiple } = query;
@@ -32,29 +32,15 @@ export const findDocument = async (
     const doc = await client
       .db(database)
       .collection(collection)
-      .findOne(filter, {
-        projection: {
-          _id: 0,
-        },
-      });
+      .findOne(filter);
     return [doc];
   }
-  const cursor = client
-    .db(database)
-    .collection(collection)
-    .find(filter, {
-      projection: {
-        _id: 0,
-      },
-    });
+  const cursor = client.db(database).collection(collection).find(filter);
   return await cursor.toArray();
 };
 
 export const viewCollections = async (
-  query: Extract<
-    QueryT['query'],
-    { operation: typeof OPERATIONS.VIEW_COLLECTIONS }
-  >,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.VIEW_COLLECTIONS }>,
   client: MongoClient,
 ): Promise<string[]> => {
   const { database } = query;
@@ -65,7 +51,7 @@ export const viewCollections = async (
 };
 
 export const countDocuments = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.COUNT_DOCS }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.COUNT_DOCS }>,
   client: MongoClient,
 ): Promise<number> => {
   const { database, collection, filter } = query;
@@ -76,7 +62,7 @@ export const countDocuments = async (
 };
 
 export const updateDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.UPDATE_DOC }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.UPDATE_DOC }>,
   client: MongoClient,
 ): Promise<UpdateDocRetT> => {
   const { database, collection, filter, update, multiple } = query;
@@ -110,7 +96,7 @@ export const updateDocument = async (
 
 // The value of the _id field remains the same unless you explicitly specify a new value for _id in the replacement document
 export const replaceDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.REPLACE_DOC }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.REPLACE_DOC }>,
   client: MongoClient,
 ): Promise<ObjectId | null> => {
   const { database, collection, filter, replacement } = query;
@@ -125,7 +111,7 @@ export const replaceDocument = async (
 };
 
 export const deleteDocument = async (
-  query: Extract<QueryT['query'], { operation: typeof OPERATIONS.DELETE_DOC }>,
+  query: Extract<QueryT, { operation: typeof OPERATIONS.DELETE_DOC }>,
   client: MongoClient,
 ): Promise<DeleteDocRetT> => {
   const { database, collection, filter, multiple } = query;
