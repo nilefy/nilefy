@@ -17,10 +17,16 @@ import { and, eq, sql } from 'drizzle-orm';
 import { QueryRunnerI, TestConnectionT } from '../data_queries/query.interface';
 import { getQueryService } from './plugins/common/service';
 import { DatabaseI, workspaceDataSources } from '@nilefy/database';
+import { GlobalDataSourcesService } from './global_data_sources.service';
+import { EncryptionService } from '../encryption/encryption.service';
 
 @Injectable()
 export class DataSourcesService {
-  constructor(@Inject(DrizzleAsyncProvider) private db: DatabaseI) {}
+  constructor(
+    @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    readonly globalDataSourceService: GlobalDataSourcesService,
+    readonly encryptionService: EncryptionService,
+  ) {}
 
   async create(dataSourceDto: CreateWsDataSourceDb): Promise<WsDataSourceDto> {
     const [dataSource] = await this.db
@@ -70,9 +76,10 @@ export class DataSourcesService {
     return ds;
   }
 
-  async getOne(
+  private async getOne(
     workspaceId: WsDataSourceDto['workspaceId'],
     datasourceId: WsDataSourceDto['id'],
+    toRun: boolean = false,
   ): Promise<DataSourceConnectionDto> {
     const ds = await this.db.query.workspaceDataSources.findFirst({
       columns: {
@@ -100,7 +107,34 @@ export class DataSourcesService {
     if (!ds) {
       throw new NotFoundException('cannot find this data source');
     }
+
+    const uiSchema = { ...ds['dataSource']['config']['uiSchema'] };
+    let config;
+    if (toRun) {
+      config = this.decryptConfigRequiredFields(
+        { ...ds['config'] },
+        { ...uiSchema },
+      );
+    } else {
+      config = this.omitEncryptedFields({ ...ds['config'] }, { ...uiSchema });
+    }
+    ds['config'] = config;
+
     return ds;
+  }
+
+  async getOneToRun(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ): Promise<DataSourceConnectionDto> {
+    return this.getOne(workspaceId, datasourceId, true);
+  }
+
+  async getOneToView(
+    workspaceId: WsDataSourceDto['workspaceId'],
+    datasourceId: WsDataSourceDto['id'],
+  ): Promise<DataSourceConnectionDto> {
+    return this.getOne(workspaceId, datasourceId);
   }
 
   async deleteConnections({
@@ -138,6 +172,78 @@ export class DataSourcesService {
     return ds;
   }
 
+  private configFieldsHelper(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+    isDecryption = false,
+    omitEncryptedFields = false,
+  ): any {
+    if (!uiSchema) {
+      return config;
+    }
+    const processedConfig = { ...config };
+
+    for (const key in processedConfig) {
+      if (processedConfig.hasOwnProperty(key)) {
+        try {
+          const value = processedConfig[key];
+
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            processedConfig[key] = this.configFieldsHelper(
+              value,
+              { ...uiSchema },
+              isDecryption,
+            );
+          } else {
+            if (
+              uiSchema[key] &&
+              (uiSchema[key] as any)['ui:encrypted'] === 'encrypted'
+            ) {
+              if (omitEncryptedFields) {
+                delete processedConfig[key];
+              } else {
+                if (isDecryption) {
+                  processedConfig[key] = this.encryptionService.decrypt(value);
+                } else {
+                  processedConfig[key] = this.encryptionService.encrypt(value);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing key "${key}": ${error.message}`);
+        }
+      }
+    }
+
+    return processedConfig;
+  }
+
+  private encryptConfigRequiredFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.configFieldsHelper(config, uiSchema);
+  }
+
+  private decryptConfigRequiredFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.configFieldsHelper(config, uiSchema, true);
+  }
+
+  private omitEncryptedFields(
+    config: any,
+    uiSchema: Record<string, unknown> | undefined,
+  ): any {
+    return this.configFieldsHelper(config, uiSchema, true, true);
+  }
+
   async update(
     {
       workspaceId,
@@ -150,6 +256,12 @@ export class DataSourcesService {
     },
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
+    const r = await this.getOneToView(workspaceId, dataSourceId);
+    const uiSchema = r['dataSource']['config']['uiSchema'];
+    const config = this.encryptConfigRequiredFields(dataSourceDto['config'], {
+      ...uiSchema,
+    });
+    dataSourceDto['config'] = config;
     const [ds] = await this.db
       .update(workspaceDataSources)
       .set({ updatedAt: sql`now()`, updatedById, ...dataSourceDto })
@@ -174,7 +286,7 @@ export class DataSourcesService {
     },
     config: Record<string, unknown>,
   ): TestConnectionT {
-    const ds = await this.getOne(workspaceId, dataSourceId);
+    const ds = await this.getOneToRun(workspaceId, dataSourceId);
     const service = this.getService(ds.dataSource.name);
     if (service.testConnection) {
       const res = await service.testConnection(config);

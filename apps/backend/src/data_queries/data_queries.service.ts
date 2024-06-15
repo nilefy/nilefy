@@ -56,7 +56,7 @@ export class DataQueriesService {
         'query should be connected to datasource to run the query',
       );
     }
-    const ds = await this.dataSourcesService.getOne(
+    const ds = await this.dataSourcesService.getOneToRun(
       workspaceId,
       query.dataSourceId,
     );

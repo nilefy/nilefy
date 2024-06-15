@@ -22,6 +22,7 @@ import { join } from 'path';
 import { AuthorizationUtilsService } from './authorization-utils/authorization-utils.service';
 import { AuthorizationUtilsModule } from './authorization-utils/authorization-utils.module';
 import { InvitesModule } from './invites/invites.module';
+import { EncryptionModule } from './encryption/encryption.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { InvitesModule } from './invites/invites.module';
     JsLibrariesModule,
     AuthorizationUtilsModule,
     InvitesModule,
+    EncryptionModule,
   ],
   providers: [AuthorizationUtilsService],
 })
