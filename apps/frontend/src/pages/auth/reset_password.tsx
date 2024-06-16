@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
-import { useResetPassword } from '@/api/auth.api';
 import { toast } from '@/components/ui/use-toast';
 import { jwtDecode } from 'jwt-decode';
+import { api } from '@/api';
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -55,7 +55,8 @@ export function ResetPassword() {
       token: token || '',
     },
   });
-  const { mutate } = useResetPassword();
+
+  const { mutate, isPending } = api.auth.resetPassword.useMutation();
   const onSubmit = (data: ResetPasswordSchema) => {
     mutate(data, {
       onSuccess: () => {
