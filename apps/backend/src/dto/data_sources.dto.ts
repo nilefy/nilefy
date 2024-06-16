@@ -5,7 +5,6 @@ import { createZodDto } from 'nestjs-zod';
 
 export const environmentKey = z.union([
   z.literal('development'),
-  z.literal('staging'),
   z.literal('production'),
 ]);
 const WsDataSourceConfig = z.record(

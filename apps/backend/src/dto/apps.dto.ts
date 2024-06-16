@@ -82,11 +82,7 @@ export const appRetSchema = appSchema.extend({
     .nullable(),
   onBoardingCompleted: z.boolean(),
   env: z
-    .union([
-      z.literal('development'),
-      z.literal('staging'),
-      z.literal('production'),
-    ])
+    .union([z.literal('development'), z.literal('production')])
     .default('development'),
 });
 

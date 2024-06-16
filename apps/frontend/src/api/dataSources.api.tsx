@@ -12,11 +12,7 @@ import z from 'zod';
 export const DATASOURCES_QUERY_KEY = 'datasources';
 
 const environments = z
-  .union([
-    z.literal('development'),
-    z.literal('staging'),
-    z.literal('production'),
-  ])
+  .union([z.literal('development'), z.literal('production')])
   .default('development');
 type envT = z.infer<typeof environments>;
 

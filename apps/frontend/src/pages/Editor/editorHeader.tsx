@@ -28,7 +28,7 @@ export const EditorHeader = observer(function EditorHeader() {
       await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
     },
   });
-  const handleSelect = (env: 'development' | 'staging' | 'production') => {
+  const handleSelect = (env: 'development' | 'production') => {
     setCurrentAppEnv(env[0].toUpperCase() + env.slice(1));
     editorStore.setAppEnv(env);
     if (!workspaceId || !appId) throw new Error();
@@ -56,12 +56,6 @@ export const EditorHeader = observer(function EditorHeader() {
             onSelect={() => handleSelect('development')}
           >
             Development
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="hover:cursor-pointer"
-            onSelect={() => handleSelect('staging')}
-          >
-            Staging
           </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:cursor-pointer"

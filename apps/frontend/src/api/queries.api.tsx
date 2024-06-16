@@ -34,14 +34,14 @@ export type QueryReturnT = {
 
 type RunQueryBody = {
   evaluatedConfig: Record<string, unknown>;
-  env: 'development' | 'staging' | 'production';
+  env: 'development' | 'production';
 };
 
 export type CompleteQueryI = QueryI & {
   dataSource?:
     | (Pick<WsDataSourceI, 'name'> & {
         id?: null | WsDataSourceI['id'];
-        env: ('development' | 'staging' | 'production')[];
+        env: ('development' | 'production')[];
       })
     | null;
 };

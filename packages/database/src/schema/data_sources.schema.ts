@@ -49,7 +49,7 @@ export const workspaceDataSources = pgTable(
      * datasource configuration(evaluated, there will be no expressions in datasource config)
      */
     config: jsonb("config")
-      .$type<Record<"development" | "staging" | "production", Record<string, unknown>>>()
+      .$type<Record<"development" | "production", Record<string, unknown>>>()
       .default(sql`'{}'::jsonb`)
       .notNull(),
     ...timeStamps,

@@ -425,8 +425,6 @@ export function DataSourceView() {
           onValueChange={(val) => {
             if (val === 'dev') {
               setFormData(data.config.development);
-            } else if (val == 'staging') {
-              setFormData(data.config.staging);
             } else if (val == 'prod') {
               setFormData(data.config.production);
             }
@@ -434,7 +432,6 @@ export function DataSourceView() {
         >
           <TabsList className="w-full space-x-3">
             <TabsTrigger value="dev">Development</TabsTrigger>
-            <TabsTrigger value="staging">Staging</TabsTrigger>
             <TabsTrigger value="prod">Production</TabsTrigger>
           </TabsList>
 
@@ -463,46 +460,6 @@ export function DataSourceView() {
                     name: nameRef.current.value,
                     config: formData,
                     env: 'development',
-                  },
-                });
-              }}
-            >
-              <LoadingButton
-                key={'dsSave'}
-                isLoading={isSubmitting}
-                buttonProps={{ type: 'submit', className: 'mt-4' }}
-              >
-                <span>
-                  <SaveIcon /> Save
-                </span>
-              </LoadingButton>
-            </RJSFShadcn>
-          </TabsContent>
-          <TabsContent value="staging" className="h-full w-full ">
-            <RJSFShadcn
-              ref={form}
-              schema={data.dataSource.config.schema}
-              uiSchema={data.dataSource.config.uiSchema}
-              formData={formData}
-              onChange={(e) => setFormData(e.formData)}
-              validator={validator}
-              onSubmit={({ formData }) => {
-                if (
-                  !workspaceId ||
-                  !datasourceId ||
-                  !nameRef ||
-                  !nameRef.current
-                )
-                  throw new Error(
-                    "that's weird this function should run under workspaceId, datasourceId",
-                  );
-                updateMutate({
-                  workspaceId: +workspaceId,
-                  dataSourceId: +datasourceId,
-                  dto: {
-                    name: nameRef.current.value,
-                    config: formData,
-                    env: 'staging',
                   },
                 });
               }}

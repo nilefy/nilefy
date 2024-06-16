@@ -73,7 +73,7 @@ export class EditorState implements WebloomDisposable {
    */
   name: string = 'New Application';
   onBoardingCompleted: boolean = false;
-  currentAppEnv: 'development' | 'staging' | 'production' = 'development';
+  currentAppEnv: 'development' | 'production' = 'development';
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -214,7 +214,7 @@ export class EditorState implements WebloomDisposable {
     workspaceId: number;
     currentUser: string;
     onBoardingCompleted: boolean;
-    appEnv: 'development' | 'staging' | 'production';
+    appEnv: 'development' | 'production';
     globalDataSources: GlobalDataSourceIndexRet;
   }) {
     this.initting = true;
@@ -644,7 +644,7 @@ export class EditorState implements WebloomDisposable {
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
   }
-  setAppEnv(env: 'development' | 'staging' | 'production') {
+  setAppEnv(env: 'development' | 'production') {
     this.currentAppEnv = env;
   }
 

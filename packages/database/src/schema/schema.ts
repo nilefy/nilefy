@@ -264,7 +264,7 @@ export const apps = pgTable("apps", {
     .references(() => users.id)
     .notNull(),
   name: varchar("name", { length: 100 }).notNull(),
-  env: varchar("app_env").$type<"development" | "staging" | "production">().default("development"),
+  env: varchar("app_env").$type<"development" | "production">().default("development"),
   description: varchar("description", { length: 255 }),
   /**
    * workspace this app belongs to
