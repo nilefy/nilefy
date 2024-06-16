@@ -1,6 +1,5 @@
 import { useForm } from 'react-hook-form';
 import { Link, redirect, useNavigate, useParams } from 'react-router-dom';
-// import { resetPasswordSchema } from '@/types/auth.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +15,14 @@ import { ResetPasswordSchema, resetPasswordSchema } from '@/types/auth.types';
 import { toast } from '@/components/ui/use-toast';
 import { jwtDecode } from 'jwt-decode';
 import { api } from '@/api';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { LoadingButton } from '@/components/loadingButton';
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -26,6 +33,7 @@ function isTokenExpired(token: string): boolean {
     return true;
   }
 }
+
 export const resetPasswordLoader = ({
   params,
 }: {
@@ -78,72 +86,81 @@ export function ResetPassword() {
     });
   };
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">
-      <h1 className="text-4xl">Reset your password</h1>
-      <h4 className="  text-sm text-gray-300  ">
-        Please enter your new password below.
-      </h4>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* <form onSubmit={onSubmit} className="space-y-8"> */}
-          <div>
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Please Enter your new password"
-                      autoFocus={true}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={form.control}
-            name="password_confirmation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm New Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Confirm your new password"
-                    {...field}
+    <div className="flex h-screen w-full items-center justify-center px-4">
+      <Card className="mx-auto max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Reset your password</CardTitle>
+          <CardDescription>set your new password</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Please Enter your new password"
+                            autoFocus={true}
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* <Button type="submit" disabled={isLoadin••••g || isSuccess}> */}
-          <Button type="submit" className=" w-full ">
-            Change Password
-          </Button>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="password_confirmation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Confirm your new password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <LoadingButton
+                  isLoading={isPending}
+                  type="submit"
+                  className=" w-full "
+                >
+                  Change Password
+                </LoadingButton>
 
-          <div>
-            <Link
-              // Add your forgot password link here
-              to={'/need_help_in'}
-              className=" text-grey-100 text-sm underline"
-            >
-              Need support?
+                <div>
+                  <Link
+                    to={'/need_help_in'}
+                    className=" text-grey-100 text-sm underline"
+                  >
+                    Need support?
+                  </Link>
+                </div>
+              </form>
+            </Form>
+          </div>
+          <div className="mt-4 text-center text-sm">
+            <Link to="/signin" className="underline">
+              Back to Sign in
             </Link>
           </div>
-          <p>
-            Remember your password?{' '}
-            <Link className="text-blue-500" to="/signin">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
