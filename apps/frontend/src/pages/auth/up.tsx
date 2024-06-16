@@ -115,10 +115,8 @@ export function SignUp() {
                 />
                 {isError && <p className="text-red-900">{error?.message}</p>}
                 <LoadingButton
-                  buttonProps={{
-                    className: 'w-full',
-                    type: 'submit',
-                  }}
+                  className="w-full"
+                  type="submit"
                   isLoading={isPending}
                 >
                   Create an account

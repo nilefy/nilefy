@@ -91,10 +91,8 @@ export function ForgotPassword() {
                 <div>
                   <LoadingButton
                     isLoading={isPending}
-                    buttonProps={{
-                      type: 'submit',
-                      className: 'w-full',
-                    }}
+                    type="submit"
+                    className="w-full"
                   >
                     Send reset link
                   </LoadingButton>
