@@ -303,7 +303,7 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col gap-4  overflow-y-auto overflow-x-hidden">
+      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
         {!filteredPlugins ? (
           <p>No Data Sources match your search query try changing the search</p>
         ) : (
@@ -468,7 +468,8 @@ export function DataSourceView() {
               <LoadingButton
                 key={'dsSave'}
                 isLoading={isSubmitting}
-                buttonProps={{ type: 'submit', className: 'mt-4' }}
+                type="submit"
+                className="mt-4"
               >
                 <span>
                   <SaveIcon /> Save
@@ -476,25 +477,18 @@ export function DataSourceView() {
               </LoadingButton>
               <LoadingButton
                 isLoading={isTestingConnection}
-                buttonProps={{
-                  type: 'button',
-                  onClick: () => {
-                    if (
-                      !workspaceId ||
-                      !datasourceId ||
-                      !form ||
-                      !form.current
-                    ) {
-                      throw new Error();
-                    }
-                    testConnectionMutate({
-                      workspaceId: +workspaceId,
-                      dataSourceId: +datasourceId,
-                      dto: {
-                        config: form.current.state.formData,
-                      },
-                    });
-                  },
+                type="button"
+                onClick={() => {
+                  if (!workspaceId || !datasourceId || !form || !form.current) {
+                    throw new Error();
+                  }
+                  testConnectionMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      config: form.current.state.formData,
+                    },
+                  });
                 }}
                 key={'dsTest'}
               >
@@ -514,7 +508,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,

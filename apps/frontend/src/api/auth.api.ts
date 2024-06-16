@@ -1,7 +1,6 @@
 import { ForgotPasswordSchema, ResetPasswordSchema } from '@/types/auth.types';
 import { fetchX, FetchXError } from '@/utils/fetch';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import * as z from 'zod';
 
 export const signUpSchema = z
@@ -52,9 +51,7 @@ export const signIn = async (user: LoginCredentials): Promise<UserData> => {
   return data;
 };
 
-export const resetPassword = async (
-  values: ResetPasswordSchema,
-): Promise<void> => {
+const resetPassword = async (values: ResetPasswordSchema): Promise<void> => {
   const response = await fetchX('auth/reset-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -63,10 +60,9 @@ export const resetPassword = async (
   return await response.json();
 };
 
-export const forgotPassword = async (
-  values: ForgotPasswordSchema,
-): Promise<void> => {
-  const { email } = values;
+const forgotPassword = async ({
+  email,
+}: ForgotPasswordSchema): Promise<void> => {
   const response = await fetchX('auth/forgot-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -76,7 +72,7 @@ export const forgotPassword = async (
   return await response.json();
 };
 
-export function useForgotPassword() {
+function useForgotPassword() {
   const forgotPasswordMutation = useMutation<
     void,
     FetchXError,
@@ -87,8 +83,7 @@ export function useForgotPassword() {
   return forgotPasswordMutation;
 }
 
-export function useResetPassword() {
-  // const navigate = useNavigate();
+function useResetPassword() {
   const resetPasswordMutation = useMutation<
     void,
     FetchXError,
@@ -98,3 +93,8 @@ export function useResetPassword() {
   });
   return resetPasswordMutation;
 }
+
+export const auth = {
+  forgetPassword: { useMutation: useForgotPassword },
+  resetPassword: { useMutation: useResetPassword },
+};
