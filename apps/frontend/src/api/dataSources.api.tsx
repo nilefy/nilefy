@@ -72,24 +72,16 @@ async function GlobalDataSourceIndex() {
   return (await res.json()) as GlobalDataSourceI[];
 }
 
-async function index({
-  workspaceId,
-  env = 'any',
-}: {
-  workspaceId: number;
-  env: 'development' | 'staging' | 'production' | 'any';
-}) {
-  const res = await fetchX(
-    `workspaces/${workspaceId}/data-sources/env/${env}`,
-    {
-      method: 'GET',
-    },
-  );
+async function index({ workspaceId }: { workspaceId: number }) {
+  const res = await fetchX(`workspaces/${workspaceId}/data-sources`, {
+    method: 'GET',
+  });
   return (await res.json()) as (Pick<
     WsDataSourceI,
     'id' | 'name' | 'workspaceId'
   > & {
     dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
+    env: envT[];
   })[];
 }
 
@@ -215,18 +207,16 @@ type WsDataSourcesIndexRet = Awaited<ReturnType<typeof index>>;
 
 export function wsDataSourcesQuery({
   workspaceId,
-  env,
 }: {
   workspaceId: WsDataSourceI['workspaceId'];
-  env?: 'development' | 'staging' | 'production';
 }): UndefinedInitialDataOptions<
   WsDataSourcesIndexRet,
   FetchXError,
   WsDataSourcesIndexRet
 > {
   return {
-    queryKey: [DATASOURCES_QUERY_KEY, { workspaceId, env }],
-    queryFn: async () => index({ workspaceId, env }),
+    queryKey: [DATASOURCES_QUERY_KEY, { workspaceId }],
+    queryFn: async () => index({ workspaceId }),
     staleTime: 0,
   };
 }

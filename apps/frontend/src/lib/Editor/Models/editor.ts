@@ -108,7 +108,6 @@ export class EditorState implements WebloomDisposable {
       setQueryPanelAddMenuOpen: action,
       currentAppEnv: observable,
       setAppEnv: action,
-      envQueries: computed,
       dispose: action,
       addJSQuery: action,
       getRefactoredDependentPaths: action,
@@ -371,16 +370,6 @@ export class EditorState implements WebloomDisposable {
     } catch (e) {
       console.log(e);
     }
-  }
-
-  get envQueries() {
-    return [...Object.values(this.queries)].filter((q) => {
-      return (
-        (q instanceof WebloomQuery &&
-          q.dataSource.env?.includes(this.currentAppEnv)) ||
-        q instanceof WebloomJSQuery
-      );
-    });
   }
 
   /**

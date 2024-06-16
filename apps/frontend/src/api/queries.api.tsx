@@ -41,7 +41,7 @@ export type CompleteQueryI = QueryI & {
   dataSource?:
     | (Pick<WsDataSourceI, 'name'> & {
         id?: null | WsDataSourceI['id'];
-        env?: ('development' | 'staging' | 'production')[];
+        env: ('development' | 'staging' | 'production')[];
       })
     | null;
 };

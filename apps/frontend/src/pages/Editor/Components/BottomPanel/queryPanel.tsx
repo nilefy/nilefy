@@ -45,6 +45,7 @@ import { CreateQuery } from '@/actions/editor/createQuery';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { DeleteQuery } from '@/actions/editor/deleteQuery';
 import { RenameAction } from '@/actions/editor/Rename';
+import { toast } from '@/components/ui/use-toast';
 
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
@@ -74,7 +75,6 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
   const { workspaceId, appId } = useParams();
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
-    env: editorStore.currentAppEnv,
   });
   const [renameValue, setRenameValue] = useState(query.id);
   useEffect(() => {
@@ -107,6 +107,16 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
               if (!workspaceId || !appId) {
                 throw new Error('workspaceId or appId is not defined!');
               }
+              if (
+                query instanceof WebloomQuery &&
+                !query.dataSource?.env.includes(editorStore.currentAppEnv)
+              ) {
+                toast({
+                  title: 'Warning',
+                  description: `${query.dataSource?.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                  variant: 'destructive',
+                });
+              }
               query.queryRunner.mutate();
             }}
           >
@@ -121,9 +131,24 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             <Label className="flex items-center gap-4">
               Data Source
               <Select
-                value={query.dataSourceId?.toString() ?? undefined}
-                onValueChange={(e) => {
-                  query.setDataSource(e);
+                value={
+                  JSON.stringify({
+                    id: query.dataSourceId,
+                    name: query.dataSource?.name,
+                    env: query.dataSource?.env,
+                  }) ?? undefined
+                }
+                onValueChange={(ds) => {
+                  const { id, name, env } = JSON.parse(ds);
+                  query.setDataSource(id);
+                  query.updateQueryMutator.mutate();
+                  if (!env.includes(editorStore.currentAppEnv)) {
+                    toast({
+                      title: 'Warning',
+                      description: `${name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                      variant: 'destructive',
+                    });
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -141,7 +166,11 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
                     .map((dataSource) => (
                       <SelectItem
                         key={dataSource.name}
-                        value={dataSource.id.toString()}
+                        value={JSON.stringify({
+                          id: dataSource.id,
+                          name: dataSource.name,
+                          env: dataSource.env,
+                        })}
                       >
                         {dataSource.name}
                       </SelectItem>
@@ -219,9 +248,8 @@ export const QueryPanel = observer(function QueryPanel() {
 
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
-    env: editorStore.currentAppEnv,
   });
-  const queries = editorStore.envQueries;
+  const queries = editorStore.queries;
 
   const uniqueDataSourceTypes = Array.from(
     new Set(dataSources?.map((dataSource) => dataSource.dataSource.type)),
@@ -283,7 +311,7 @@ export const QueryPanel = observer(function QueryPanel() {
   // check https://github.com/mobxjs/mobx/discussions/3348
   const filteredQueries = useMemo(() => {
     return computed(() => {
-      const tempQ = queries;
+      const tempQ = Object.values(queries);
       if (tempQ.length > 0) {
         const temp = sortQueries(tempQ, sortingCriteria, sortingOrder).filter(
           (item) => {
@@ -447,11 +475,22 @@ export const QueryPanel = observer(function QueryPanel() {
                   <DropdownMenuItem
                     key={`${item.id}`}
                     onClick={() => {
+                      if (!item.env.includes(editorStore.currentAppEnv)) {
+                        toast({
+                          title: 'Warning',
+                          description: `${item.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                          variant: 'destructive',
+                        });
+                      }
                       commandManager.executeCommand(
                         new CreateQuery({
                           event: 'createQuery',
                           data: {
                             baseDataSourceId: item.dataSource.id,
+                            dataSource: {
+                              name: item.name,
+                              env: item.env,
+                            },
                             query: {
                               dataSourceId: item.id,
                               id: getNewEntityName(item.name),

@@ -54,57 +54,35 @@ export class DataSourcesService {
 
   async getWsDataSources(
     workspaceId: WsDataSourceDto['workspaceId'],
-    env: 'development' | 'staging' | 'production' | 'any',
   ): Promise<WsDataSourcesDto[]> {
-    if (env === 'any') {
-      const ds = await this.db.query.workspaceDataSources.findMany({
-        columns: {
-          id: true,
-          name: true,
-          workspaceId: true,
-        },
-        with: {
-          dataSource: {
-            columns: {
-              id: true,
-              name: true,
-              image: true,
-              type: true,
-            },
+    const WsdataSources = await this.db.query.workspaceDataSources.findMany({
+      columns: {
+        id: true,
+        name: true,
+        workspaceId: true,
+        config: true,
+      },
+      with: {
+        dataSource: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            type: true,
           },
         },
-        where: eq(workspaceDataSources.workspaceId, workspaceId),
-      });
-      return ds;
-    }
-    const query = `
-      SELECT
-        workspace_data_sources.id,
-        workspace_data_sources.name,
-        workspace_data_sources.workspace_id AS workspace_id,
-        data_sources.id AS datasource_id,
-        data_sources.name AS datasource_name,
-        data_sources.image_url AS image,
-        data_sources.type
-      FROM workspace_data_sources
-      JOIN data_sources ON workspace_data_sources.data_source_id = data_sources.id
-      WHERE workspace_data_sources.workspace_id = ${workspaceId} AND workspace_data_sources.config ? '${env}'
-      `;
-    const { rows } = await this.db.execute(sql.raw(query));
-    const ds = rows.map((row) => {
+      },
+      where: eq(workspaceDataSources.workspaceId, workspaceId),
+    });
+    return WsdataSources.map((ds) => {
       return {
-        id: row.id,
-        name: row.name,
-        workspaceId: row.workspace_id,
-        dataSource: {
-          id: row.datasource_id,
-          name: row.datasource_name,
-          image: row.image,
-          type: row.type,
-        },
+        id: ds.id,
+        name: ds.name,
+        workspaceId: ds.workspaceId,
+        env: Object.keys(ds.config),
+        dataSource: ds.dataSource,
       };
     });
-    return ds;
   }
 
   private async getOne(
@@ -288,13 +266,13 @@ export class DataSourcesService {
     dataSourceDto: UpdateWsDataSourceDto,
   ): Promise<WsDataSourceDto> {
     const { config, env, name } = dataSourceDto;
-<<<<<<< HEAD
+
     if (config) {
-    const r = await this.getOneToView(workspaceId, dataSourceId);
-    const uiSchema = r['dataSource']['config']['uiSchema'];
-    const config = this.encryptConfigRequiredFields(dataSourceDto['config'], {
-      ...uiSchema,
-    });
+      const r = await this.getOneToView(workspaceId, dataSourceId);
+      const uiSchema = r['dataSource']['config']['uiSchema'];
+      const config = this.encryptConfigRequiredFields(dataSourceDto['config'], {
+        ...uiSchema,
+      });
       /**
        * jsonb_set (target jsonb, path text[], new_value jsonb [, create_if_missing boolean ])
        */

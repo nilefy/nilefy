@@ -313,6 +313,7 @@ export class WebloomQuery
       dataSourceId: observable,
       appId: observable,
       setValue: override,
+      dataSource: observable,
     });
   }
   get triggerMode() {

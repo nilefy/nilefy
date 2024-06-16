@@ -101,6 +101,7 @@ export const wsDataSourcesSchema = workspaceDataSourcesSelect
       name: true,
       image: true,
     }),
+    env: z.array(environmentKey),
   });
 export class DataSourceConnectionDto extends createZodDto(
   dataSourceConnectionSchema,
