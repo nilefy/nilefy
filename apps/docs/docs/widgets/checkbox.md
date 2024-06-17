@@ -36,6 +36,14 @@ example
 {{NilefyGlobals.alert("checkbox state changed")}}
 ```
 
+## Instance Properties
+
+These are properties that can be accessed using the dot operator from any widget instance, in any place you can type code, such as other widget properties or in JS queries.
+
+### value `boolean`
+
+holds the checkbox value
+
 ## Setters - Methods
 
 A list of methods that can be called on the button widget instance to control the widget programmatically.
