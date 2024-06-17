@@ -18,6 +18,7 @@ import { EditorHeader } from './editorHeader';
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
 import {
+  useConfirmBeforeUnload,
   useInitResizing,
   useMousePosition,
   useOnboarding,
@@ -39,6 +40,7 @@ export const EditorLayout = observer(() => {
   useInitResizing();
   useMousePosition();
   useOnboarding(!editorStore.onBoardingCompleted);
+  useConfirmBeforeUnload();
   const handleResize = useCallback(() => {
     if (!editorRef.current) return;
     const width = editorRef.current?.clientWidth;
