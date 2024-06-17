@@ -30,6 +30,7 @@ const NilefyRadio = observer(() => {
     <div className="w-full">
       <Label>{props.label}</Label>
       <RadioGroup
+        disabled={props.disabled}
         value={props.value}
         loop={true}
         onValueChange={(e) => {
