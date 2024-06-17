@@ -54,7 +54,7 @@ import {
 } from '@/api/roles.api';
 import { User } from '@/api/users.api';
 import { api } from '@/api';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import { PermissionI } from '@/api/permission.api';
 
 type RoleMetaDialogProps = {
@@ -298,7 +298,7 @@ export function RolesManagement() {
   if (roles.isError) {
     throw roles.error;
   } else if (roles.isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   }
   console.log(
     '🪵 [role.tsx:298] ~ token ~ \x1b[0;32mroles\x1b[0m = ',
@@ -346,7 +346,7 @@ function PermissionsTab({
   const persId = new Set(permissions.map((p) => p.id));
 
   if (allPermissions.isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   } else if (allPermissions.isError) {
     throw allPermissions.error;
   }
@@ -436,7 +436,7 @@ export function RoleManagement() {
   if (isError) {
     throw error;
   } else if (isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   }
 
   console.log('🪵 [role.tsx:431] ~ token ~ \x1b[0;32mdata\x1b[0m = ', data);

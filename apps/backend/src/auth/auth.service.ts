@@ -214,7 +214,7 @@ export class AuthService {
     const html =
       `
     <p>Dear ${email},</p>
-    <p>We received a request to reset your WebLoom password. Please click the following link to reset your password:</p>
+    <p>We received a request to reset your Nilefy password. Please click the following link to reset your password:</p>
     <a href="` +
       url +
       ` ">Reset Password</a>
@@ -222,11 +222,11 @@ export class AuthService {
     <p>If you did not request a password reset, please disregard this email.</p>
     <p>Thank you for choosing Nilefy!</p>
     <p>Best Regards,<br/>
-    The Webloom Team</p>
+    The Nilefy Team</p>
   `;
     await this.emailService.sendEmail({
       to: email,
-      subject: 'WebLoom - Reset Your Password',
+      subject: 'Nilefy - Reset Your Password',
       html,
     });
   }

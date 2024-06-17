@@ -63,7 +63,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Card,
   CardContent,
@@ -162,7 +162,7 @@ export function GlobalDataSourcesView() {
   const { globalDataSources } = useLoaderData();
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={globalDataSources}>
         <GlobalDataSourcesResolved />
       </Await>
@@ -287,7 +287,7 @@ function WorkspaceDataSourcesView() {
 
   return (
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
-      {isPending && <WebloomLoader />}
+      {isPending && <NilefyLoader />}
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -406,7 +406,7 @@ export function DataSourceView() {
   const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   } else if (isError) {
     throw error;
   }
