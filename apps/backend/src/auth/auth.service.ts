@@ -128,7 +128,7 @@ export class AuthService {
       this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
-      Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
+      Logger.error(err);
       //TODO: return database error
       throw new BadRequestException(
         'something went wrong on sign up please try again',
@@ -157,11 +157,11 @@ export class AuthService {
       // no password nor account, that's weird how did we create this user
       throw new InternalServerErrorException();
     }
-    if (!u.emailVerified) {
-      throw new BadRequestException(
-        `please verify your email then try to sign in`,
-      );
-    }
+    // if (!u.emailVerified) {
+    //   throw new BadRequestException(
+    //     `please verify your email then try to sign in`,
+    //   );
+    // }
     return {
       access_token: await this.jwtService.signAsync({
         sub: u.id,
