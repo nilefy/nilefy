@@ -44,7 +44,7 @@ Once your Google Sheets is connected, you can perform various operations as foll
 
 2. **Create a New Query**:
    - Select the option to add a new query.
-   - Select your connected Google CLoud Storage data source.
+   - Select your connected Google Sheets data source.
 
     ![Nilefy](img/google_sheets/query_add.png)
 
