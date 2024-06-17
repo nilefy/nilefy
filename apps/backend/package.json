@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:seed": "ts-node ./src/scripts/seeder",
     "db:syncDss":"ts-node ./src/scripts/syncDatasourcesRunner",
+    "db:syncPermissions":"ts-node ./src/scripts/permissionsSeederRunner",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
