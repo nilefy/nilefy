@@ -303,7 +303,7 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col gap-4  overflow-y-auto overflow-x-hidden">
         {!filteredPlugins ? (
           <p>No Data Sources match your search query try changing the search</p>
         ) : (
@@ -404,7 +404,6 @@ export function DataSourceView() {
       },
     });
   const nameRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState(data?.config.development);
 
   if (isPending) {
     return <WebloomLoader />;
@@ -420,16 +419,7 @@ export function DataSourceView() {
       </div>
 
       <ScrollArea className="h-full w-full">
-        <Tabs
-          defaultValue="dev"
-          onValueChange={(val) => {
-            if (val === 'dev') {
-              setFormData(data.config.development);
-            } else if (val == 'prod') {
-              setFormData(data.config.production);
-            }
-          }}
-        >
+        <Tabs defaultValue="dev">
           <TabsList className="w-full space-x-3">
             <TabsTrigger value="dev">Development</TabsTrigger>
             <TabsTrigger value="prod">Production</TabsTrigger>
@@ -440,8 +430,7 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={formData}
-              onChange={(e) => setFormData(e.formData)}
+              formData={data.config.development}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
@@ -481,8 +470,7 @@ export function DataSourceView() {
               ref={form}
               schema={data.dataSource.config.schema}
               uiSchema={data.dataSource.config.uiSchema}
-              formData={formData}
-              onChange={(e) => setFormData(e.formData)}
+              formData={data.config.production}
               validator={validator}
               onSubmit={({ formData }) => {
                 if (
@@ -547,7 +535,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,
