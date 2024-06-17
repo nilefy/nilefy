@@ -11,7 +11,7 @@ const EDITOR_CONSTANTS = {
   GLOBALS_ID: "WebloomGlobals",
   JS_QUERY_BASE_NAME: "jsQuery",
   JS_AUTOCOMPLETE_FILE_NAME: "webloom-autocomplete",
-  WIDGET_CONTAINER_TYPE_NAME: "WebloomContainer",
+  WIDGET_CONTAINER_TYPE_NAME: "NilefyContainer",
 } as const;
 
 const SOCKET_EVENTS_REQUEST = {

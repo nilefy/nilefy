@@ -6,7 +6,7 @@ import { WebloomGridDimensions } from '@/lib/Editor/interface';
 import { normalize } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { Command, UndoableCommand, UpdateNodesPayload } from '../types';
-import { WebloomWidgets } from '@/pages/Editor/Components';
+import { NilefyWidgets } from '@/pages/Editor/Components';
 import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 type MainResizingKeys = 'top' | 'bottom' | 'left' | 'right';
@@ -106,7 +106,7 @@ class ResizeAction {
     const node = editorStore.currentPage.getWidgetById(id);
 
     const [gridRow, gridCol] = node.gridSize;
-    const config = WebloomWidgets[node.type].config.layoutConfig;
+    const config = NilefyWidgets[node.type].config.layoutConfig;
     const minWidth = gridCol * (config.minColumns ?? 2);
     const minHeight = gridRow * (config.minRows ?? 10);
     if (direction.includes('top')) {
