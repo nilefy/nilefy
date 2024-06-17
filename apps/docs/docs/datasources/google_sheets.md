@@ -1,6 +1,6 @@
 # Google Sheets
 
-This document provides guidance on how to perform various operations on a connected Google Sheets data source in Nilefy. You will learn how to connect to GCS, perform various operations, and configure actions based on the operations's success, failure, and mutation. Additionally, how to set the trigger mode to run the operation manually or on app load.
+This document provides guidance on how to perform various operations on a connected Google Sheets data source in Nilefy. You will learn how to connect to Google Sheets, perform various operations, and configure actions based on the operations's success, failure, and mutation. Additionally, how to set the trigger mode to run the operation manually or on app load.
 
 ## Step-by-Step Guide
 
