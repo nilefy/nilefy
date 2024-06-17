@@ -85,12 +85,7 @@ function InviteByEmailTab() {
             )}
           />
           <SheetFooter>
-            <LoadingButton
-              buttonProps={{
-                type: 'submit',
-              }}
-              isLoading={inviteByEmail.isPending}
-            >
+            <LoadingButton type="submit" isLoading={inviteByEmail.isPending}>
               Invite user
             </LoadingButton>
           </SheetFooter>
@@ -117,12 +112,7 @@ function InviteByCsvTab() {
         <Button variant={'secondary'}>Download Template</Button>
       </Alert>
       <Input type={'file'} />
-      <LoadingButton
-        buttonProps={{
-          type: 'submit',
-        }}
-        isLoading={inviteByEmail.isPending}
-      >
+      <LoadingButton type="submit" isLoading={inviteByEmail.isPending}>
         upload users
       </LoadingButton>
     </TabsContent>

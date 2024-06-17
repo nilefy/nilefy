@@ -1,5 +1,11 @@
-import { useForgotPassword } from '@/api/auth.api';
-import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { LoadingButton } from '@/components/loadingButton';
 import {
   Form,
   FormControl,
@@ -14,6 +20,7 @@ import { ForgotPasswordSchema, forgotPasswordSchema } from '@/types/auth.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { api } from '@/api';
 
 export function ForgotPassword() {
   const form = useForm<ForgotPasswordSchema>({
@@ -23,7 +30,7 @@ export function ForgotPassword() {
     },
   });
 
-  const { mutate } = useForgotPassword();
+  const { mutate, isPending } = api.auth.forgetPassword.useMutation();
 
   function onSubmit(values: ForgotPasswordSchema) {
     mutate(values, {
@@ -45,52 +52,61 @@ export function ForgotPassword() {
       },
     });
   }
+
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center gap-5">
-      <h1 className="text-4xl">Forgot Password</h1>
-      <p>
-        Remembered your password?{' '}
-        <Link className="text-blue-500" to={'/signin'}>
-          Sign In
-        </Link>
-      </p>
-      <div>
-        <Link
-          // Add your forgot password link here
-          to={'/need_help_in'}
-          className="text-blue-500 underline"
-        >
-          Need help signing in?
-        </Link>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="nagy@webloom.com"
-                      autoFocus={true}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <div className="flex h-screen w-full items-center justify-center px-4">
+      <Card className="mx-auto max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Forgot Password</CardTitle>
+          <CardDescription>
+            Enter your email below to send reset link
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="test@nilefy.com"
+                            autoFocus={true}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div>
+                  <LoadingButton
+                    isLoading={isPending}
+                    type="submit"
+                    className="w-full"
+                  >
+                    Send reset link
+                  </LoadingButton>
+                </div>
+              </form>
+            </Form>
           </div>
-          <div>
-            <Button type="submit" className="w-full">
-              Submit
-            </Button>
+          <div className="mt-4 text-center text-sm">
+            <Link to="/signin" className="underline">
+              Back to sign in
+            </Link>
           </div>
-        </form>
-      </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
