@@ -1,7 +1,7 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { EntityInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
-import { WebloomWidgets } from '..';
+import { NilefyWidgets } from '..';
 import { DefaultSection, EntityForm } from '../entityForm';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
@@ -24,7 +24,7 @@ import { RenameAction } from '@/actions/editor/Rename';
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
-  const inspectorConfig = WebloomWidgets[selectedNode.type]
+  const inspectorConfig = NilefyWidgets[selectedNode.type]
     .inspectorConfig as EntityInspectorConfig;
 
   return (

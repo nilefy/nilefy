@@ -61,7 +61,7 @@ import {
 import { Suspense, useMemo, useState } from 'react';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import { DebouncedInput } from '@/components/debouncedInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { loaderAuth } from '@/utils/loaders';
@@ -428,7 +428,7 @@ function ApplicationsView() {
   const { apps } = useLoaderData();
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={apps}>
         <ApplicationsViewResolved />
       </Await>

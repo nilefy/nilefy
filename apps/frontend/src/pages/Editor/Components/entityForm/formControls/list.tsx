@@ -45,7 +45,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Grip, MoreVertical } from 'lucide-react';
 import { EntityFormControlContext } from '..';
-import { NilefyTableColumn } from '../../WebloomWidgets/Table';
+import { NilefyTableColumn } from '../../NilefyWidgets/Table';
 
 const columnsTypes = ['Default', 'String', 'Number', 'Boolean'] as const;
 // export type columnsTypes = typeof columnsTypes;

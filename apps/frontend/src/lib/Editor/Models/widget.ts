@@ -1,5 +1,5 @@
 import { makeObservable, observable, computed, action, override } from 'mobx';
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
+import { NilefyWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import scrollIntoView from 'scroll-into-view-if-needed';
 
@@ -101,7 +101,7 @@ export class WebloomWidget
     columnsCount?: number;
     props?: Record<string, unknown>;
   }) {
-    const widgetConfig = WebloomWidgets[type];
+    const widgetConfig = NilefyWidgets[type];
     const _props = props ?? widgetConfig.initialProps;
     const rawValues = {
       ..._props,
@@ -191,7 +191,7 @@ export class WebloomWidget
     ];
   }
   get resizeDirection(): ResizeDirection {
-    const direction = WebloomWidgets[this.type].config.resizingDirection;
+    const direction = NilefyWidgets[this.type].config.resizingDirection;
     if (this.layoutMode === 'auto' && direction === 'Both') return 'Horizontal';
     return direction;
   }
@@ -436,7 +436,7 @@ export class WebloomWidget
   }
 
   get isCanvas() {
-    return WebloomWidgets[this.type].config.isCanvas;
+    return NilefyWidgets[this.type].config.isCanvas;
   }
   unselectSelf() {
     this.page.setSelectedNodeIds((prev) => {

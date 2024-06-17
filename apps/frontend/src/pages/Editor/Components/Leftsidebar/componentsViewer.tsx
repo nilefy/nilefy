@@ -3,7 +3,7 @@ import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomWidgets } from '..';
+import { NilefyWidgets } from '..';
 import { cn } from '@/lib/cn';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import { commandManager } from '@/actions/CommandManager';
@@ -51,7 +51,7 @@ const AccordionContent = React.forwardRef<
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 export const ComponentTreeItem = observer(({ id }: { id: string }) => {
   const widget = editorStore.currentPage.getWidgetById(id);
-  const config = WebloomWidgets[widget.type];
+  const config = NilefyWidgets[widget.type];
   const hasChildren = widget.nodes.length > 0;
   const isSelected = widget.isTheOnlySelected;
 
@@ -112,7 +112,7 @@ export const ComponentTreeItem = observer(({ id }: { id: string }) => {
 const Leaf = observer(({ id }: { id: string }) => {
   const widget = editorStore.currentPage.getWidgetById(id);
   const isSelected = widget.isTheOnlySelected;
-  const Icon = WebloomWidgets[widget.type].config.icon;
+  const Icon = NilefyWidgets[widget.type].config.icon;
   return (
     <div
       onDoubleClick={() => {

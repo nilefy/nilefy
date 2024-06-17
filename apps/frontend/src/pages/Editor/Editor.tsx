@@ -12,7 +12,7 @@ import { RightSidebar } from './Components/Rightsidebar/index';
 import { FixedLeftSidebar } from './Components/FixedLeftSidebar';
 import { editorStore } from '@/lib/Editor/Models';
 import { AppLoader, PageLoader } from './appLoader';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import { EditorHeader } from './editorHeader';
 
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
@@ -69,7 +69,7 @@ export const EditorLayout = observer(() => {
           >
             <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
               <div>
-                <Suspense fallback={<WebloomLoader />}>
+                <Suspense fallback={<NilefyLoader />}>
                   <LeftSidebar />
                 </Suspense>
               </div>
@@ -107,7 +107,7 @@ export const EditorLayout = observer(() => {
                     throttledResize();
                   }}
                 >
-                  <Suspense fallback={<WebloomLoader />}>
+                  <Suspense fallback={<NilefyLoader />}>
                     <BottomPanel />
                   </Suspense>
                 </ResizablePanel>
@@ -116,7 +116,7 @@ export const EditorLayout = observer(() => {
             <ResizableHandle />
             <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
               <div>
-                <Suspense fallback={<WebloomLoader />}>
+                <Suspense fallback={<NilefyLoader />}>
                   <RightSidebar />
                 </Suspense>
               </div>
@@ -138,7 +138,7 @@ export function App() {
 
 export const Editor = observer(() => {
   if (editorStore.isLoadingPage) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   }
   return (
     <PageLoader>

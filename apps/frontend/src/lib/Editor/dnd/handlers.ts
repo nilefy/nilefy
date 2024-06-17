@@ -10,7 +10,7 @@ import {
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { Point } from '@/types';
 import { WebloomGridDimensions, WebloomPixelDimensions } from '../interface';
-import { WebloomWidgets } from '@/pages/Editor/Components';
+import { NilefyWidgets } from '@/pages/Editor/Components';
 import { WebloomWidget } from '../Models/widget';
 import {
   handleHoverCollision,
@@ -172,7 +172,7 @@ export const getDropPosition = (
   let height: number;
   if (item.isNew) {
     const widgetType = item.type;
-    const widgetConfig = WebloomWidgets[widgetType].config;
+    const widgetConfig = NilefyWidgets[widgetType].config;
     const [rowHeight, columnWidth] = rootGridSize;
     const [rowHeightOver, columnWidthOver] = overWidgetGridSize;
     width = normalize(

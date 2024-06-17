@@ -17,7 +17,7 @@ import {
 import { WorkerBroker } from './workerBroker';
 
 import { WebloomDisposable } from './interface';
-import { WebloomWidgets } from '@/pages/Editor/Components';
+import { NilefyWidgets } from '@/pages/Editor/Components';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type NewWidgePayload = Omit<
@@ -204,7 +204,7 @@ export class WebloomPage implements WebloomDisposable {
     this._addWidget(widget);
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    const widgetConfig = WebloomWidgets[widgetArgs.type];
+    const widgetConfig = NilefyWidgets[widgetArgs.type];
     const ops: (() => void)[] = [];
     // handle composed widgets
     if (widgetConfig.blueprint) {

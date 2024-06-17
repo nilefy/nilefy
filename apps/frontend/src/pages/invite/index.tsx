@@ -15,7 +15,7 @@ import { InvitationLoaderRetI } from './loader';
 import { InvitationTokenPayload } from '@nilefy/constants';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Card,
   CardContent,
@@ -154,7 +154,7 @@ function NewUserInvite({
 export function InviteView() {
   const data = useLoaderData();
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={data.invitation}>
         {(invitation: InvitationLoaderRetI) => {
           switch (invitation.invitationState.userStatus) {
