@@ -17,6 +17,7 @@ export type NilefyCheckBoxProps = {
   label: string;
   value: boolean;
   disabled: boolean;
+  onCheckChange: string;
 };
 
 const NilefyCheckBox = observer(function NilefyCheckBox() {
@@ -55,12 +56,25 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setChecked: {
+      name: 'setChecked',
+      path: 'value',
+      type: 'SETTER',
+    },
+    setDisabled: {
+      name: 'setDisabled',
+      path: 'disabled',
+      type: 'SETTER',
+    },
+  },
 };
 
 const initialProps: NilefyCheckBoxProps = {
   label: 'Label',
   value: false,
   disabled: false,
+  onCheckChange: '',
 };
 
 const inspectorConfig: EntityInspectorConfig<NilefyCheckBoxProps> = [
@@ -86,6 +100,20 @@ const inspectorConfig: EntityInspectorConfig<NilefyCheckBoxProps> = [
       },
     ],
   },
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onCheckChange',
+        label: 'onCheckChange',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{NilefyGlobals.alert("checkbox state changed")}}',
+        },
+        isEvent: true,
+      },
+    ],
+  },
 ];
 
 export const NilefyCheckBoxWidget: Widget<NilefyCheckBoxProps> = {
@@ -94,6 +122,31 @@ export const NilefyCheckBoxWidget: Widget<NilefyCheckBoxProps> = {
   initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
+  publicAPI: {
+    value: {
+      description: 'checkbox checked state',
+      type: 'static',
+      typeSignature: 'boolean',
+    },
+    setDisabled: {
+      type: 'function',
+      args: [
+        {
+          name: 'disabled',
+          type: 'boolean',
+        },
+      ],
+    },
+    setChecked: {
+      type: 'function',
+      args: [
+        {
+          name: 'checked',
+          type: 'boolean',
+        },
+      ],
+    },
+  },
 };
 
 export { NilefyCheckBox };

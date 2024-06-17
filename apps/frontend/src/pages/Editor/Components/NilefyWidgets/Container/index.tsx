@@ -127,7 +127,6 @@ export const config: WidgetConfig = {
   layoutConfig: {
     colsCount: 10,
     rowsCount: 30,
-
     minColumns: 1,
     minRows: 4,
     layoutMode: 'fixed',

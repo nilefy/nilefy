@@ -60,6 +60,13 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setSrc: {
+      name: 'setSrc',
+      path: 'src',
+      type: 'SETTER',
+    },
+  },
 };
 
 const initialProps: NilefyImageProps = {
@@ -134,6 +141,23 @@ const NilefyImageWidget: Widget<NilefyImageProps> = {
   config,
   initialProps,
   inspectorConfig,
+  metaProps: new Set(['src']),
+  publicAPI: {
+    src: {
+      description: 'image current url',
+      type: 'static',
+      typeSignature: 'string',
+    },
+    setSrc: {
+      type: 'function',
+      args: [
+        {
+          name: 'src',
+          type: 'string',
+        },
+      ],
+    },
+  },
 };
 
 export { NilefyImageWidget };

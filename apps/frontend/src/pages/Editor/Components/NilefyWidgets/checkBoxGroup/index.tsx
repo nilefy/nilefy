@@ -17,13 +17,16 @@ import { z } from 'zod';
 export type NilefyCheckBoxGroupProps = {
   options: selectOptions[];
   label: string;
-  value: selectOptions[];
+  value?: selectOptions[];
+  onChange: string;
+  disabled: boolean;
 };
 
 const NilefyCheckBoxGroup = observer(function NilefyCheckBoxGroup() {
   const { id, onPropChange } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as NilefyCheckBoxGroupProps;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as NilefyCheckBoxGroupProps;
+
   return (
     <div className="w-full">
       <Label>{props.label}</Label>
@@ -33,19 +36,25 @@ const NilefyCheckBoxGroup = observer(function NilefyCheckBoxGroup() {
           key={option.value}
         >
           <Checkbox
-            checked={props.value.includes(option)}
+            disabled={props.disabled}
+            checked={
+              props.value?.map((v) => v.value).includes(option.value) ?? false
+            }
             onCheckedChange={(checked) => {
               checked
                 ? onPropChange({
                     key: 'value',
-                    value: [...props.value, option],
+                    value: [...(props.value ?? []), option],
                   })
                 : onPropChange({
                     key: 'value',
-                    value: props.value?.filter((value) => value !== option),
+                    value:
+                      props.value?.filter(
+                        (value) => value.value !== option.value,
+                      ) ?? [],
                   });
               // execute user defined eventhandlers
-              // editorStore.executeActions(id, 'change');
+              widget.handleEvent('onChange');
             }}
           />
           <Label>{option.label}</Label>
@@ -66,6 +75,23 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setDisabled: {
+      name: 'setDisabled',
+      path: 'disabled',
+      type: 'SETTER',
+    },
+    setOptions: {
+      name: 'setOptions',
+      path: 'options',
+      type: 'SETTER',
+    },
+    setValue: {
+      name: 'setValue',
+      path: 'value',
+      type: 'SETTER',
+    },
+  },
 };
 
 const initialProps: NilefyCheckBoxGroupProps = {
@@ -76,6 +102,8 @@ const initialProps: NilefyCheckBoxGroupProps = {
   ],
   label: 'Check Box Group',
   value: [],
+  disabled: false,
+  onChange: '',
 };
 
 const inspectorConfig: EntityInspectorConfig<NilefyCheckBoxGroupProps> = [
@@ -108,6 +136,29 @@ const inspectorConfig: EntityInspectorConfig<NilefyCheckBoxGroupProps> = [
             .default([]),
         ),
       },
+      {
+        label: 'Disabled',
+        path: 'disabled',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Disabled',
+        },
+        validation: zodToJsonSchema(z.boolean().default(false)),
+      },
+    ],
+  },
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onChange',
+        label: 'onChange',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onChange',
+        },
+        isEvent: true,
+      },
     ],
   },
 ];
@@ -117,6 +168,42 @@ export const NilefyCheckBoxGroupWidget: Widget<NilefyCheckBoxGroupProps> = {
   config,
   initialProps,
   inspectorConfig,
+  publicAPI: {
+    value: {
+      description: 'Value of the checkbox group',
+      type: 'static',
+      typeSignature: 'array<{value: string; label: string}>',
+    },
+    setDisabled: {
+      type: 'function',
+      args: [
+        {
+          name: 'disabled',
+          type: 'boolean',
+        },
+      ],
+    },
+    setOptions: {
+      type: 'function',
+      description: 'set the checkbox group options programmatically',
+      args: [
+        {
+          name: 'options',
+          type: 'array<{value: string; label: string;}>',
+        },
+      ],
+    },
+    setValue: {
+      type: 'function',
+      description: 'set the checkbox group value programmatically',
+      args: [
+        {
+          name: 'value',
+          type: 'array<{value: string; label: string;}>',
+        },
+      ],
+    },
+  },
   metaProps: new Set(['value']),
 };
 
