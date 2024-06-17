@@ -8,9 +8,9 @@ const EDITOR_CONSTANTS = {
   ROW_HEIGHT: 5,
   ROOT_NODE_ID: "0",
   PREVIEW_NODE_ID: "1",
-  GLOBALS_ID: "WebloomGlobals",
+  GLOBALS_ID: "NilefyGlobals",
   JS_QUERY_BASE_NAME: "jsQuery",
-  JS_AUTOCOMPLETE_FILE_NAME: "webloom-autocomplete",
+  JS_AUTOCOMPLETE_FILE_NAME: "nilefy-autocomplete",
   WIDGET_CONTAINER_TYPE_NAME: "NilefyContainer",
 } as const;
 
