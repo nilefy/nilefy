@@ -133,7 +133,7 @@ export const NilefyCheckBoxWidget: Widget<NilefyCheckBoxProps> = {
       args: [
         {
           name: 'disabled',
-          type: 'boolen',
+          type: 'boolean',
         },
       ],
     },
@@ -142,7 +142,7 @@ export const NilefyCheckBoxWidget: Widget<NilefyCheckBoxProps> = {
       args: [
         {
           name: 'checked',
-          type: 'boolen',
+          type: 'boolean',
         },
       ],
     },

@@ -18,12 +18,14 @@ export type NilefyRadioProps = {
   options: selectOptions[];
   label: string;
   value: string;
+  onChange: string;
+  disabled: boolean;
 };
 
 const NilefyRadio = observer(() => {
   const { id, onPropChange } = useContext(WidgetContext);
-  const props = editorStore.currentPage.getWidgetById(id)
-    .finalValues as NilefyRadioProps;
+  const widget = editorStore.currentPage.getWidgetById(id);
+  const props = widget.finalValues as NilefyRadioProps;
   return (
     <div className="w-full">
       <Label>{props.label}</Label>
@@ -36,7 +38,7 @@ const NilefyRadio = observer(() => {
             value: e,
           });
           // execute user defined actions
-          // editorStore.executeActions(id, 'change');
+          widget.handleEvent('onChange');
         }}
       >
         {props.options.map((option: selectOptions) => (
@@ -61,6 +63,18 @@ const config: WidgetConfig = {
     minRows: 4,
   },
   resizingDirection: 'Both',
+  widgetActions: {
+    setDisabled: {
+      name: 'setDisabled',
+      path: 'disabled',
+      type: 'SETTER',
+    },
+    setOptions: {
+      name: 'setOptions',
+      path: 'options',
+      type: 'SETTER',
+    },
+  },
 };
 
 const initialProps: NilefyRadioProps = {
@@ -71,6 +85,8 @@ const initialProps: NilefyRadioProps = {
   ],
   label: 'Radio',
   value: 'Option 1',
+  onChange: '',
+  disabled: false,
 };
 
 const inspectorConfig: EntityInspectorConfig<NilefyRadioProps> = [
@@ -103,6 +119,29 @@ const inspectorConfig: EntityInspectorConfig<NilefyRadioProps> = [
             .default([]),
         ),
       },
+      {
+        label: 'Disabled',
+        path: 'disabled',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'Disabled',
+        },
+        validation: zodToJsonSchema(z.boolean().default(false)),
+      },
+    ],
+  },
+  {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: 'onChange',
+        label: 'onChange',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: 'onChange',
+        },
+        isEvent: true,
+      },
     ],
   },
 ];
@@ -117,6 +156,25 @@ export const NilefyRadioWidget: Widget<NilefyRadioProps> = {
       description: 'Value of the radio',
       type: 'static',
       typeSignature: 'string',
+    },
+    setDisabled: {
+      type: 'function',
+      args: [
+        {
+          name: 'disabled',
+          type: 'boolean',
+        },
+      ],
+    },
+    setOptions: {
+      type: 'function',
+      description: 'set the radio group options programmatically',
+      args: [
+        {
+          name: 'options',
+          type: 'array<{value: string; label: string;}>',
+        },
+      ],
     },
   },
   metaProps: new Set(['value']),
