@@ -20,7 +20,7 @@ Example:
 
 This code displays the text Hello World in blue color.
 
-<p style="color:blue;">Hello World</p>
+<p style={{color:"blue"}}>Hello World</p>
 
 Moreover You have the option to use Mark Down within the Text property to customize the appearance of the displayed text.
 
