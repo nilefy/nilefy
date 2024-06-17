@@ -1,3 +1,5 @@
+import { commandManager } from '@/actions/CommandManager';
+import { NilefyLoader } from '@/components/loader';
 import { buttonVariants } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
 import { editorStore } from '@/lib/Editor/Models';
@@ -16,6 +18,7 @@ export const EditorHeader = observer(function EditorHeader() {
         </Link>
       </div>
       <p>{appName}</p>
+      <div>{commandManager.socket?.isLoading ? <NilefyLoader /> : null}</div>
       <Link
         className={cn(
           buttonVariants({
