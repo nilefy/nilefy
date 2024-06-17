@@ -40,11 +40,13 @@ export function SignUp() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="w-auto lg:w-2/6">
         <CardHeader>
-          <CardTitle className="text-xl">Sign Up</CardTitle>
-          <CardDescription>
-            Enter your information to create an account
+          <CardTitle className="text-center text-2xl font-bold">
+            Nilefy
+          </CardTitle>
+          <CardDescription className="text-center text-sm font-semibold">
+            Create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,12 +64,11 @@ export function SignUp() {
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="user name"
+                          placeholder="Enter your full name"
                           autoFocus={true}
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>enter your full name</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -79,7 +80,7 @@ export function SignUp() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="test@nilefy.com" {...field} />
+                        <Input placeholder="user@nilefy.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -92,9 +93,12 @@ export function SignUp() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Enter a strong password"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormDescription>enter strong password</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -106,7 +110,11 @@ export function SignUp() {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Confirm password"
+                          {...field}
+                        />
                       </FormControl>
                       {/* <FormDescription>confirm password</FormDescription> */}
                       <FormMessage />
@@ -119,7 +127,7 @@ export function SignUp() {
                   type="submit"
                   isLoading={isPending}
                 >
-                  Create an account
+                  Sign up
                 </LoadingButton>
               </form>
             </Form>

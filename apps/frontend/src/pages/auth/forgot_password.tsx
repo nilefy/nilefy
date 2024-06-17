@@ -55,11 +55,15 @@ export function ForgotPassword() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="w-auto lg:w-2/6">
         <CardHeader>
-          <CardTitle className="text-2xl">Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your email below to send reset link
+          <CardTitle className="text-center text-2xl font-bold">
+            Nilefy
+          </CardTitle>
+          <CardDescription className="text-center text-sm">
+            <span className="text-lg font-semibold">Forgot password</span>{' '}
+            <br />
+            Enter your email to send a reset link
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -78,7 +82,7 @@ export function ForgotPassword() {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="test@nilefy.com"
+                            placeholder="user@nilefy.com"
                             autoFocus={true}
                             {...field}
                           />
