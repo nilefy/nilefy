@@ -123,6 +123,11 @@ export const NilefyCheckBoxWidget: Widget<NilefyCheckBoxProps> = {
   inspectorConfig,
   metaProps: new Set(['value']),
   publicAPI: {
+    value: {
+      description: 'checkbox checked state',
+      type: 'static',
+      typeSignature: 'boolean',
+    },
     setDisabled: {
       type: 'function',
       args: [
