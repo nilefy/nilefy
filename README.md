@@ -1,5 +1,7 @@
 # Nilefy
 
+![nilefyTM](./nileftTM.webp)
+
 ## Getting started
 
 this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorepo for more information check up the docs
