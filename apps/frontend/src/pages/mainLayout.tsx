@@ -55,7 +55,7 @@ export function Dashboard() {
           ))}
         </div>
         <div className="mt-auto flex flex-col gap-4">
-          <ModeToggle />
+          {/* <ModeToggle /> */}
           <NavLink to="profile-settings">
             <Avatar className="mr-2">
               {/* src={user.imageUrl} */}
