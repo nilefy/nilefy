@@ -5,6 +5,7 @@ import { dataSources, globalDataSource } from './dataSources.api';
 import { queries } from './queries.api';
 import { workspaces } from './workspaces.api';
 import { auth } from './auth.api';
+import { users } from './users.api';
 
 export const api = {
   apps,
@@ -16,4 +17,5 @@ export const api = {
   permissions,
   workspaces,
   auth,
+  users,
 };
