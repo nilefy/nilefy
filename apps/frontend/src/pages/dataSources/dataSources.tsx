@@ -317,7 +317,7 @@ function WorkspaceDataSourcesView() {
                   end={true}
                   className={({ isActive }) => {
                     return cn(
-                      'flex w-[90%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
+                      'flex w-[100%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
                       isActive ? 'bg-primary/20' : '',
                     );
                   }}
@@ -328,46 +328,49 @@ function WorkspaceDataSourcesView() {
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                   </Avatar>
                   <p className="line-clamp-1">{ds.name}</p>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      className={
+                        (buttonVariants({
+                          variant: 'ghost',
+                          size: 'icon',
+                          className: 'ml-auto hover:bg-destructive',
+                        }))
+                      }
+                    >
+                      <Trash size={15} />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. YOU HAVE TO CONNECT
+                          QUUERIES CONNECTED TO THIS DATASOURCE TO NEW
+                          DATASOURCE OR YOUR APP WILL NOT FUNCTION CORRECTLY
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (!workspaceId)
+                              throw new Error('must have workspaceId');
+                            deleteMutate({
+                              workspaceId: +workspaceId,
+                              dataSourceId: ds.id,
+                            });
+                            navigate(`/${workspaceId}/datasources/`);
+                          }}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </NavLink>
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    className={buttonVariants({
-                      variant: 'ghost',
-                      size: 'icon',
-                      className: 'ml-auto',
-                    })}
-                  >
-                    <Trash size={15} />
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. YOU HAVE TO CONNECT
-                        QUUERIES CONNECTED TO THIS DATASOURCE TO NEW DATASOURCE
-                        OR YOUR APP WILL NOT FUNCTION CORRECTLY
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          if (!workspaceId)
-                            throw new Error('must have workspaceId');
-                          deleteMutate({
-                            workspaceId: +workspaceId,
-                            dataSourceId: ds.id,
-                          });
-                          navigate(`/${workspaceId}/datasources/`);
-                        }}
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             );
           })
@@ -415,7 +418,6 @@ export function DataSourceView() {
       <div className="flex flex-col gap-2">
         <Label>Data Source Name</Label>
         <Input defaultValue={data.name} ref={nameRef} />
-        <Separator />
       </div>
 
       <ScrollArea className="h-full w-full">
@@ -465,35 +467,41 @@ export function DataSourceView() {
                 });
               }}
             >
-              <LoadingButton
-                key={'dsSave'}
-                isLoading={isSubmitting}
-                type="submit"
-                className="mt-4"
-              >
-                <span>
-                  <SaveIcon /> Save
-                </span>
-              </LoadingButton>
-              <LoadingButton
-                isLoading={isTestingConnection}
-                type="button"
-                onClick={() => {
-                  if (!workspaceId || !datasourceId || !form || !form.current) {
-                    throw new Error();
-                  }
-                  testConnectionMutate({
-                    workspaceId: +workspaceId,
-                    dataSourceId: +datasourceId,
-                    dto: {
-                      config: form.current.state.formData,
-                    },
-                  });
-                }}
-                key={'dsTest'}
-              >
-                <>Test Connection</>
-              </LoadingButton>
+              <div className="flex mt-8 content-center flex-wrap m-4 justify-evenly">
+                <LoadingButton
+                  key={'dsSave'}
+                  isLoading={isSubmitting}
+                  type="submit"
+                >
+                  <span className="flex flex-row justify-evenly">
+                    <SaveIcon /> <p className='ml-2 align-middle mt-0.5'>Save</p>
+                  </span>
+                </LoadingButton>
+                <LoadingButton
+                  isLoading={isTestingConnection}
+                  type="button"
+                  onClick={() => {
+                    if (
+                      !workspaceId ||
+                      !datasourceId ||
+                      !form ||
+                      !form.current
+                    ) {
+                      throw new Error();
+                    }
+                    testConnectionMutate({
+                      workspaceId: +workspaceId,
+                      dataSourceId: +datasourceId,
+                      dto: {
+                        config: form.current.state.formData,
+                      },
+                    });
+                  }}
+                  key={'dsTest'}
+                >
+                  <>Test Connection</>
+                </LoadingButton>
+              </div>
             </RJSFShadcn>
           </TabsContent>
           {/*TODO:*/}
