@@ -1,9 +1,9 @@
+import { api } from '@/api';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -16,30 +16,40 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import z from 'zod';
 
 const updateProfileSchema = z.object({
-  firstName: z.string().min(3),
-  lastName: z.string().min(3),
-  email: z.string().email(),
+  username: z.string().min(3),
+  // TODO: enable change email
+  // email: z.string().email(),
 });
 type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
 
 function EditProfile() {
+  const { toast } = useToast();
+  const { mutate } = api.users.updateCurrentUser.useMutation({
+    onSuccess() {
+      toast({
+        variant: 'default',
+        title: 'updated profile successfully',
+      });
+    },
+  });
   const form = useForm<UpdateProfileSchema>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
+      username: '',
+      // TODO: enable change email
+      // email: '',
     },
   });
   function onSubmit(values: UpdateProfileSchema) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    mutate({
+      username: values.username,
+    });
   }
 
   return (
@@ -57,31 +67,18 @@ function EditProfile() {
             <div className="flex flex-wrap justify-between gap-5">
               <FormField
                 control={form.control}
-                name="firstName"
+                name="username"
                 render={({ field }) => (
                   <FormItem className="w-2/5">
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>username</FormLabel>
                     <FormControl>
-                      <Input placeholder="nagy" {...field} />
+                      <Input placeholder="fullname" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem className="w-2/5">
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="nabil" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -93,11 +90,11 @@ function EditProfile() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-              <FormItem className="w-2/5">
+              /> */}
+              {/* <FormItem className="w-2/5">
                 <FormLabel>Avatar</FormLabel>
                 <Input type="file" />
-              </FormItem>
+              </FormItem> */}
             </div>
             <Button type="submit">Update</Button>
           </form>
@@ -107,24 +104,39 @@ function EditProfile() {
   );
 }
 
-// TODO: add re-passwod check
-const updatePasswordSchema = z.object({
-  password: z.string().min(3),
-});
+export const updatePasswordSchema = z
+  .object({
+    password: z.string().min(5),
+    rePassword: z.string(),
+  })
+  .refine((data) => data.password === data.rePassword, {
+    message: "Passwords don't match",
+    path: ['password'], // path of error
+  });
 
 type UpdatePasswordSchema = z.infer<typeof updatePasswordSchema>;
 
 function EditPassword() {
+  const { toast } = useToast();
+  const { mutate } = api.users.updateCurrentUser.useMutation({
+    onSuccess() {
+      toast({
+        variant: 'default',
+        title: 'updated password successfully',
+      });
+    },
+  });
   const form = useForm<UpdatePasswordSchema>({
     resolver: zodResolver(updatePasswordSchema),
     defaultValues: {
       password: '',
+      rePassword: '',
     },
   });
   function onSubmit(values: UpdatePasswordSchema) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    mutate({
+      password: values.password,
+    });
   }
 
   return (
@@ -140,20 +152,38 @@ function EditPassword() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Password</FormLabel>
+                  <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Enter a strong password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormItem>
-              <FormLabel>Confirm new password</FormLabel>
-              <Input type="password" />
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="rePassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Confirm password"
+                      {...field}
+                    />
+                  </FormControl>
+                  {/* <FormDescription>confirm password</FormDescription> */}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <Button type="submit">Change Password</Button>
+            <Button type="submit">Update Password</Button>
           </form>
         </Form>
       </CardContent>
@@ -163,7 +193,7 @@ function EditPassword() {
 
 export function ProfileSettings() {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-5 overflow-y-auto bg-primary/5">
+    <div className="bg-primary/5 flex h-full w-full flex-col items-center justify-center gap-5 overflow-y-auto">
       {/*edit profile [name/email/photo]*/}
       <EditProfile />
       {/*edit password*/}
