@@ -1,6 +1,6 @@
-import { ModeToggle } from '@/components/mode-toggle';
+// import { ModeToggle } from '@/components/mode-toggle';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
-import { Wind, Layout, Cog, /*Table,*/ Braces, LogOut } from 'lucide-react';
+import { Layout, Cog, /*Table,*/ Braces, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/avatar';
 import { useAuthStore } from '@/hooks/useAuthStore';
@@ -40,11 +40,8 @@ export function Dashboard() {
     <div className="flex h-screen w-screen overflow-hidden">
       {/*dashbaord nav*/}
       <div className="flex h-full w-max flex-col gap-5 p-3">
-        <NavLink to="/">
-          <LogoName />
-        </NavLink>
         <NavLink to={`/${workspaceId}`}>
-          <Wind size={30} />
+          <LogoName />
         </NavLink>
         {/*paths*/}
         <div className=" flex flex-col gap-4">
