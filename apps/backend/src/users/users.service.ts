@@ -1,5 +1,10 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
+import {
+  RetUserSchema,
+  UpdateUserDb,
+  UpdateUserRetDto,
+  UserDto,
+} from '../dto/users.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
 import { genSalt, hash } from 'bcrypt';
@@ -27,6 +32,23 @@ export class UsersService {
     });
     return u;
   }
+
+  /**
+   * return current user data
+   */
+  async me(currentUserId: number): Promise<RetUserSchema> {
+    return (await this.db.query.users.findFirst({
+      columns: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        onboardingCompleted: true,
+      },
+      where: and(eq(users.id, currentUserId), eq(users.status, 'active')),
+    }))!;
+  }
+
   private async hasPassword(p: string) {
     const salt = await genSalt(10);
     return await hash(p, salt);
