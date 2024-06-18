@@ -151,8 +151,8 @@ importers:
         specifier: ^7.8.1
         version: 7.8.1
       ws:
-        specifier: ^8.14.2
-        version: 8.15.0
+        specifier: ^8.17.1
+        version: 8.17.1
       zod-to-json-schema:
         specifier: ^3.23.0
         version: 3.23.0(zod@3.23.8)
@@ -22060,7 +22060,7 @@ packages:
       spdy: 4.0.2
       webpack: 5.90.0
       webpack-dev-middleware: 5.3.3(webpack@5.90.0)
-      ws: 8.15.0
+      ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -22432,8 +22432,8 @@ packages:
         optional: true
     dev: false
 
-  /ws@8.15.0:
-    resolution: {integrity: sha512-H/Z3H55mrcrgjFwI+5jKavgXvwQLtfPCUEp6pi35VhoB0pfcHnSoyuTzkBEZpzq49g1193CUEwIvmsjcotenYw==}
+  /ws@8.17.1:
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
