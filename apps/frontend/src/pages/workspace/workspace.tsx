@@ -11,9 +11,9 @@ const workspacePaths = [
 
 export function WorkspaceSettingsLayout() {
   return (
-    <div>
+    <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      {/* <div className="bg-primary/5 flex h-screen w-1/5 flex-col gap-5">
+      <div className="flex h-full w-1/5 flex-col gap-5 bg-primary/5">
         <h2 className="ml-2 text-3xl">WorkSpace Settings</h2>
         <nav className="flex flex-col gap-3">
           {workspacePaths.map((path) => (
@@ -31,8 +31,8 @@ export function WorkspaceSettingsLayout() {
         <div className="mt-auto w-full">
           <SelectWorkSpace />
         </div>
-      </div> */}
-      <div className="">
+      </div>
+      <div className="h-full w-full">
         {/*RENDER CHILD ROUTE*/}
         <Outlet />
       </div>
