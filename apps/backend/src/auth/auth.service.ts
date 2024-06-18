@@ -10,7 +10,7 @@ import {
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { compare, genSalt, hash } from 'bcrypt';
-import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
+import { CreateUserDto, LoginUserDto, RetUserSchema } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 
@@ -72,6 +72,7 @@ export class AuthService {
         } satisfies PayloadUser),
       };
     } catch (err) {
+      Logger.error({ err });
       //TODO: return database error
       throw new BadRequestException();
     }
@@ -128,7 +129,7 @@ export class AuthService {
       this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
-      Logger.error(err);
+      Logger.error({ err }, err.stack);
       //TODO: return database error
       throw new BadRequestException(
         'something went wrong on sign up please try again',
@@ -298,5 +299,12 @@ export class AuthService {
     } catch (error) {
       throw new BadRequestException(`Failed To Reset Password`);
     }
+  }
+
+  /**
+   * return current user data
+   */
+  async me(currentUserId: number): Promise<RetUserSchema> {
+    return await this.userService.me(currentUserId);
   }
 }

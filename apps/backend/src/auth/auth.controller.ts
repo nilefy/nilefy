@@ -28,11 +28,12 @@ import {
 import { EnvSchema } from '../evn.validation';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { AuthService } from './auth.service';
-import { GoogleAuthedRequest } from './auth.types';
+import { ExpressAuthedRequest, GoogleAuthedRequest } from './auth.types';
 import { SignInGoogleOAuthGuard } from './google.guard';
 import { DataSourcesService } from '../data_sources/data_sources.service';
 import { scopeMap } from '../data_sources/plugins/googlesheets/types';
 import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
+import { JwtGuard } from './jwt.guard';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -176,5 +177,11 @@ export class AuthController {
   ) {
     const { password, token } = resetPasswordDto;
     return await this.authService.resetPassword(password, token);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('me')
+  async me(@Req() req: ExpressAuthedRequest) {
+    return await this.authService.me(req.user.userId);
   }
 }
