@@ -14,13 +14,12 @@ You have the option to use HTML code within the Text property to customize the a
 
 Example:
 
-`<p style="color:blue;">Hello World</p>`
-
+<p style="color:blue;">Hello World</p>
 
 
 This code displays the text Hello World in blue color.
 
-<p style={{color:"blue"}}>Hello World</p>
+![Alt text](./image-1.png)
 
 Moreover You have the option to use Mark Down within the Text property to customize the appearance of the displayed text.
 
@@ -34,5 +33,4 @@ Example:
 
 This code displays the text as follows.
 
-# Hello World
-* Hi
+![Alt text](./image.png)
