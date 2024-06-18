@@ -11,13 +11,14 @@ import { commandManager } from '@/actions/CommandManager';
 import { RightSidebar } from './Components/Rightsidebar/index';
 import { FixedLeftSidebar } from './Components/FixedLeftSidebar';
 import { editorStore } from '@/lib/Editor/Models';
-import { AppLoader } from './appLoader';
-import { WebloomLoader } from '@/components/loader';
+import { AppLoader, PageLoader } from './appLoader';
+import { NilefyLoader } from '@/components/loader';
 import { EditorHeader } from './editorHeader';
 
 import { useSetPageDimensions } from '@/lib/Editor/hooks/useSetPageDimensions';
 import { useEditorHotKeys } from '@/lib/Editor/hooks/useEditorHotKeys';
 import {
+  useConfirmBeforeUnload,
   useInitResizing,
   useMousePosition,
   useOnboarding,
@@ -25,14 +26,21 @@ import {
 import { useThrottle } from '@/lib/Editor/hooks/useThrottle';
 import { BottomPanel } from './Components/BottomPanel';
 import { LeftSidebar } from './Components/Leftsidebar';
+import { Outlet } from 'react-router-dom';
+import { DndProvider } from 'react-dnd';
+import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
 
-export const Editor = observer(() => {
+const DndOptions: Partial<TouchBackendOptions> = {
+  enableMouseEvents: true,
+};
+export const EditorLayout = observer(() => {
   const editorRef = useRef<HTMLDivElement>(null);
   useSetPageDimensions(editorRef);
   useEditorHotKeys(editorStore, commandManager);
   useInitResizing();
   useMousePosition();
   useOnboarding(!editorStore.onBoardingCompleted);
+  useConfirmBeforeUnload();
   const handleResize = useCallback(() => {
     if (!editorRef.current) return;
     const width = editorRef.current?.clientWidth;
@@ -41,86 +49,102 @@ export const Editor = observer(() => {
   }, [editorRef]);
   const throttledResize = useThrottle(handleResize, 100);
   return (
-    <div
-      className=" flex h-full max-h-full w-full flex-col bg-transparent"
-      style={{
-        overflow: 'clip',
-      }}
-    >
-      <div className="h-fit w-full">
-        <EditorHeader />
-      </div>
-      <div className="flex h-full w-full" id="main-editor">
-        <FixedLeftSidebar />
-        <WebloomElementShadow />
+    <DndProvider backend={TouchBackend} options={DndOptions}>
+      <div
+        className=" flex h-full max-h-full w-full flex-col bg-transparent"
+        style={{
+          overflow: 'clip',
+        }}
+      >
+        <div className="h-fit w-full">
+          <EditorHeader />
+        </div>
+        <div className="flex h-full w-full" id="main-editor">
+          <FixedLeftSidebar />
+          <WebloomElementShadow />
 
-        <ResizablePanelGroup
-          onLayout={() => {
-            throttledResize();
-          }}
-          direction="horizontal"
-        >
-          <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
-            <div>
-              <Suspense fallback={<WebloomLoader />}>
-                <LeftSidebar />
-              </Suspense>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle />
+          <ResizablePanelGroup
+            onLayout={() => {
+              throttledResize();
+            }}
+            direction="horizontal"
+          >
+            <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
+              <div>
+                <Suspense fallback={<NilefyLoader />}>
+                  <LeftSidebar />
+                </Suspense>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle />
 
-          <ResizablePanel defaultSizePercentage={70} minSizePercentage={50}>
-            <ResizablePanelGroup
-              onLayout={() => {
-                throttledResize();
-              }}
-              direction="vertical"
-            >
-              <ResizablePanel defaultSizePercentage={65} minSizePercentage={25}>
-                <div className="h-full w-full  border-gray-200 p-4">
-                  <div
-                    ref={editorRef}
-                    className="relative h-full w-full bg-white"
-                  >
-                    <WebloomRoot isProduction={false} />
-                  </div>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel
-                maxSizePercentage={75}
-                defaultSizePercentage={35}
-                minSizePercentage={10}
-                collapsible
-                collapsedSizePixels={15}
-                onCollapse={() => {
+            <ResizablePanel defaultSizePercentage={70} minSizePercentage={50}>
+              <ResizablePanelGroup
+                onLayout={() => {
                   throttledResize();
                 }}
+                direction="vertical"
               >
-                <Suspense fallback={<WebloomLoader />}>
-                  <BottomPanel />
+                <ResizablePanel
+                  defaultSizePercentage={65}
+                  minSizePercentage={25}
+                >
+                  <div className="h-full w-full  border-gray-200 p-4">
+                    <div
+                      ref={editorRef}
+                      className="relative h-full w-full bg-white"
+                    >
+                      <Outlet />
+                    </div>
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
+                  maxSizePercentage={75}
+                  defaultSizePercentage={35}
+                  minSizePercentage={10}
+                  collapsible
+                  collapsedSizePixels={15}
+                  onCollapse={() => {
+                    throttledResize();
+                  }}
+                >
+                  <Suspense fallback={<NilefyLoader />}>
+                    <BottomPanel />
+                  </Suspense>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
+              <div>
+                <Suspense fallback={<NilefyLoader />}>
+                  <RightSidebar />
                 </Suspense>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-          <ResizableHandle />
-          <ResizablePanel maxSizePercentage={25} minSizePercentage={10}>
-            <div>
-              <Suspense fallback={<WebloomLoader />}>
-                <RightSidebar />
-              </Suspense>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       </div>
-    </div>
+    </DndProvider>
   );
 });
 
 export function App() {
   return (
     <AppLoader initWs={true}>
-      <Editor />
+      <EditorLayout />
     </AppLoader>
   );
 }
+
+export const Editor = observer(() => {
+  if (editorStore.isLoadingPage) {
+    return <NilefyLoader />;
+  }
+  return (
+    <PageLoader>
+      <WebloomRoot isProduction={false} />
+    </PageLoader>
+  );
+});

@@ -8,6 +8,7 @@ import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from '@/lib/Editor/Models/page';
+import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
@@ -37,7 +38,10 @@ class DragAction implements UndoableCommand {
       ).parent.id;
       this.id = options.draggedItem.id;
     } else {
-      this.id = getNewEntityName(options.draggedItem.type);
+      this.id = getNewEntityName(
+        options.draggedItem.type,
+        editorStore.currentPageId,
+      );
       this.newType = options.draggedItem.type;
     }
   }
@@ -63,15 +67,13 @@ class DragAction implements UndoableCommand {
         .filter((test) => test !== this.id)
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot);
 
-      const blueprintChildren = affectedNodes.concat(
-        addedWidget.nodes.map(
-          (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
-        ),
+      const blueprintChildren = addedWidget.nodes.map(
+        (nodeId) => editorStore.currentPage.getWidgetById(nodeId).snapshot,
       );
       //select the newly added widget
       editorStore.currentPage.setSelectedNodeIds(new Set([this.id]));
       return {
-        event: 'insert' as const,
+        event: SOCKET_EVENTS_REQUEST.CREATE_NODE,
         data: {
           nodes: [addedWidget, ...blueprintChildren],
           sideEffects: affectedNodes,
@@ -95,8 +97,8 @@ class DragAction implements UndoableCommand {
         .map((k) => editorStore.currentPage.getWidgetById(k).snapshot),
     ];
     return {
-      event: 'update',
-      data: remoteData,
+      event: SOCKET_EVENTS_REQUEST.UPDATE_NODE,
+      data: { updates: remoteData },
     };
   }
 
@@ -120,7 +122,7 @@ class DragAction implements UndoableCommand {
           });
       });
       return {
-        event: 'delete' as const,
+        event: 'deleteNode',
         data: {
           nodesId: [this.id],
           sideEffects,
@@ -141,8 +143,8 @@ class DragAction implements UndoableCommand {
     });
     serverData.push(editorStore.currentPage.getWidgetById(this.id).snapshot);
     return {
-      event: 'update',
-      data: serverData,
+      event: SOCKET_EVENTS_REQUEST.UPDATE_NODE,
+      data: { updates: serverData },
     };
   }
 }

@@ -80,106 +80,127 @@ const operations = [
 ];
 
 export const queryConfigForm = {
-  schema: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'object',
-        properties: {
-          operation: {
-            type: 'string',
-            enum: operations,
-            default: operations[0],
+  formConfig: [
+    {
+      sectionName: 'Basic',
+      children: [
+        {
+          path: 'config.operation',
+          label: 'Operation',
+          type: 'select',
+          options: {
+            items: [
+              { label: 'Delete file', value: 'Delete file' },
+              { label: 'Upload file', value: 'Upload file' },
+              { label: 'List buckets', value: 'List buckets' },
+              {
+                label: 'List files in a bucket',
+                value: 'List files in a bucket',
+              },
+              { label: 'Download file', value: 'Download file' },
+            ],
+            validation: zodToJsonSchema(
+              z
+                .union([
+                  z.literal('Delete file'),
+                  z.literal('Upload file'),
+                  z.literal('List buckets'),
+                  z.literal('List files in a bucket'),
+                  z.literal('Download file'),
+                ])
+                .default('Delete file'),
+            ),
           },
         },
-        required: ['operation'],
-        dependencies: {
-          operation: {
-            oneOf: [
+        {
+          path: 'config.bucket',
+          label: 'Bucket',
+          type: 'input',
+          options: {
+            placeholder: 'Enter bucket name',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
               {
-                properties: {
-                  operation: {
-                    enum: [operations[0]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  file: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'file'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[1]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  filePath: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'filePath'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[2]],
-                  },
-                },
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[3]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  prefix: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket'],
-              },
-              {
-                properties: {
-                  operation: {
-                    enum: [operations[4]],
-                  },
-                  bucket: {
-                    type: 'string',
-                  },
-                  file: {
-                    type: 'string',
-                  },
-                  destination: {
-                    type: 'string',
-                  },
-                },
-                required: ['bucket', 'file'],
+                path: 'config.operation',
+                comparison: 'EQUALS',
+                value: operations[2],
               },
             ],
           },
+          validation: zodToJsonSchema(z.string()),
         },
-      },
+        {
+          path: 'config.file',
+          label: 'File',
+          type: 'input',
+          options: {
+            placeholder: 'Enter file name',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'IN',
+                value: [operations[1], operations[2], operations[3]],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(z.string()),
+        },
+        // {
+        // path: 'config.filePath',
+        // label: 'File Path',
+        // type: '', // file picker
+        // hidden: {
+        //   conditionType: 'OR',
+        //   conditions: [
+        //     {
+        //       path: 'config.operation',
+        //       comparison: 'NOT_EQUALS',
+        //       value: operations[1],
+        //     },
+        //   ],
+        // },
+        // },
+        {
+          path: 'config.prefix',
+          label: 'Prefix',
+          type: 'input',
+          options: {
+            placeholder: 'Enter prefix',
+          },
+          hidden: {
+            conditionType: 'OR',
+            conditions: [
+              {
+                path: 'config.operation',
+                comparison: 'NOT_EQUALS',
+                value: operations[3],
+              },
+            ],
+          },
+          validation: zodToJsonSchema(z.string().optional()),
+        },
+        // {
+        //   path: 'config.destination',
+        //   label: 'Destination',
+        //   type: '', // file picker
+        //   hidden: {
+        //     conditionType: 'OR',
+        //     conditions: [
+        //       {
+        //         path: 'config.operation',
+        //         comparison: 'NOT_EQUALS',
+        //         value: operations[4],
+        //       },
+        //     ],
+        //   },
+        //   validation: zodToJsonSchema(z.string().optional()),
+        // },
+      ],
     },
-    required: ['query'],
-    additionalProperties: false,
-  },
-  uiSchema: {
-    operation: {
-      'ui:title': 'Operation',
-      'ui:widget': 'select',
-    },
-    bucket: {
-      'ui:title': 'Bucket',
-    },
-    file: {
-      'ui:title': 'File',
-    },
-  },
+  ],
 };

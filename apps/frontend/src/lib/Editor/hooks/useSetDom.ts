@@ -11,5 +11,5 @@ export const useSetDom = (ref: RefObject<HTMLElement>, id: string) => {
       editorStore.currentPage.getWidgetById(id).setDom(ref.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, ref, ref.current]);
+  }, [id, ref, ref.current, editorStore.currentPage]);
 };

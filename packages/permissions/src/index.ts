@@ -1,13 +1,24 @@
 import z from "zod";
 
-const permissionsTypes = z.enum([
-  "Workspaces-Read",
-  "Workspaces-Write",
-  "Workspaces-Delete",
+export const permissionsTypes = z.enum([
   // APPS
-  "Apps-Read",
+  /**
+   * create new app in the workspace
+   */
   "Apps-Write",
+  /**
+   * delete app user has access to
+   */
   "Apps-Delete",
+  // DATASOURCES
+  /**
+   * create new datasource in the workspace
+   */
+  "Datasources-Write",
+  /**
+   * delete datasource user has access to
+   */
+  "Datasources-Delete",
 ]);
 
-export { permissionsTypes };
+export type PermissionsTypes = z.infer<typeof permissionsTypes>;

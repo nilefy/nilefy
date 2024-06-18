@@ -8,6 +8,7 @@ import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/editor/Drag';
 import { updateOnBoardingStatus } from '@/api/users.api';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import { NilefyWidgets } from '@/pages/Editor/Components';
 
 const asyncQuerySelector = async (
   selector: string,
@@ -248,16 +249,19 @@ const steps: (WebloomStep | StepGroup)[] = [
   },
   {
     sideEffect: () => {
+      const buttonConfig = NilefyWidgets['NilefyButton'].config.layoutConfig;
       commandManager.executeCommand(
         new DragAction({
           parentId: '0',
           draggedItem: {
             isNew: true,
-            type: 'WebloomButton',
+            type: 'NilefyButton',
           },
           endPosition: {
             col: 15,
             row: 30,
+            columnsCount: buttonConfig.colsCount,
+            rowsCount: buttonConfig.rowsCount,
           },
         }),
       );
@@ -300,33 +304,6 @@ const steps: (WebloomStep | StepGroup)[] = [
         },
       },
     ],
-  },
-  {
-    element: async () => {
-      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
-      const widget = editorStore.currentPage.getWidgetById(widgetId);
-      await when(() => widget.dom !== null);
-      return widget.dom!;
-    },
-    popover: {
-      title: 'Select Widget',
-      description: 'Now click on the widget you just dropped',
-      showButtons: ['close', 'previous', 'next'],
-      nextBtnText: 'Skip',
-    },
-    sideEffect: () => {
-      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
-      editorStore.currentPage.setSelectedNodeIds(new Set([widgetId]));
-    },
-    moveToNextWhen: () => {
-      const widgetId = editorStore.currentPage.getWidgetById('0').nodes[0];
-      const widget = editorStore.currentPage.getWidgetById(widgetId);
-      if (!widget) return false;
-      return widget.isTheOnlySelected;
-    },
-    undoSideEffect: () => {
-      editorStore.currentPage.clearSelectedNodes();
-    },
   },
   {
     element: '#right-sidebar',
@@ -428,6 +405,7 @@ const steps: (WebloomStep | StepGroup)[] = [
         dto: {
           settings: {},
           query: '',
+          triggerMode: 'manually',
         },
       });
       await asyncQuerySelector('#query-form');
@@ -532,6 +510,7 @@ const steps: (WebloomStep | StepGroup)[] = [
         so you can see how it's done`,
     },
     sideEffect: () => {
+      const tableConfig = NilefyWidgets['Table'].config.layoutConfig;
       commandManager.executeCommand(
         new DragAction({
           parentId: '0',
@@ -542,6 +521,8 @@ const steps: (WebloomStep | StepGroup)[] = [
           endPosition: {
             col: 6,
             row: 60,
+            columnsCount: tableConfig.colsCount,
+            rowsCount: tableConfig.rowsCount,
           },
         }),
       );

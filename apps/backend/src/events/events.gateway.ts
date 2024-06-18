@@ -4,21 +4,41 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   MessageBody,
-  WsException,
   OnGatewayDisconnect,
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { AppDto } from '../dto/apps.dto';
 import { Server, WebSocket } from 'ws';
 import { ComponentsService } from '../components/components.service';
-import { PayloadUser, RequestUser } from 'src/auth/auth.types';
+import { PayloadUser, RequestUser } from '../auth/auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
 import { pick } from 'lodash';
-import { WebloomNode, frontKnownKeys } from '../dto/components.dto';
-import { DatabaseI } from '@webloom/database';
+import { NilefyNode, frontKnownKeys } from '../dto/components.dto';
+import { DatabaseI, pages as PagesTable } from '@nilefy/database';
+import {
+  SOCKET_EVENTS_REQUEST,
+  SOCKET_EVENTS_RESPONSE,
+} from '@nilefy/constants';
+import { ZodValidationPipe } from '../pipes/zod.pipe';
+import {
+  AddQueryDto,
+  addQuerySchema,
+  UpdateQueryDto,
+  updateQuerySchema,
+} from '../dto/data_queries.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { z } from 'zod';
+import { JsQueriesService } from '../js_queries/js_queries.service';
+import {
+  AddJsQueryDto,
+  UpdateJsQueryDto,
+  addJsQuerySchema,
+  updateJsQuerySchema,
+} from '../dto/js_queries.dto';
+import { and, eq } from 'drizzle-orm';
 
 class LoomSocket extends WebSocket {
   user: RequestUser | null = null;
@@ -28,10 +48,12 @@ class LoomSocket extends WebSocket {
 }
 
 type LoomServer = Server<typeof LoomSocket>;
-type UpdateNodePayload = (Partial<WebloomNode> & { id: WebloomNode['id'] })[];
+type UpdateNodePayload = (Partial<NilefyNode> & {
+  id: NilefyNode['id'];
+  newId?: NilefyNode['id'];
+})[];
 
 // TODO: make page id dynamic
-// TODO: make app id dynamic
 @WebSocketGateway({
   WebSocket: LoomSocket,
 })
@@ -40,6 +62,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private componentsService: ComponentsService,
     private jwtService: JwtService,
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
+    private dataQueriesService: DataQueriesService,
+    private jsQueriesService: JsQueriesService,
   ) {}
 
   @WebSocketServer()
@@ -48,14 +72,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: LoomSocket) {
     console.log('CONNECTION: client connected to ws', client.user?.userId);
     client.on('error', (e) => console.error('ERROR: ', e));
-    client.send('hi');
   }
 
   handleDisconnect() {
     console.log('DISCONNECTION: client disconnect from ws');
   }
 
-  @SubscribeMessage('auth')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.AUTH)
   async handleAuth(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
@@ -73,11 +96,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.appId = appId;
       socket.pageId = pageId;
       console.log('USER AUTHED: ', socket.user.username);
-      // TODO: return structred signal
-      socket.send('ok authed');
-      return;
+      return {
+        message: SOCKET_EVENTS_RESPONSE.AUTHED,
+      };
     } catch {
-      socket.send('get out');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
@@ -86,69 +113,155 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * for now gonna depend on frontend id
    */
-  @SubscribeMessage('insert')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_NODE)
   async handleInsert(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
+      opId,
       nodes,
       sideEffects,
     }: {
-      nodes: WebloomNode[];
+      /**
+       * operation id
+       */
+      opId?: string;
+      nodes: NilefyNode[];
       sideEffects: UpdateNodePayload;
     },
   ) {
     // TODO: is there a middleware concept in ws
     const user = socket.user;
     if (user === null) {
-      socket.send('need send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
 
-    try {
-      await this.db.transaction(async (tx) => {
-        await this.componentsService.create(
-          nodes.map((node) => ({
-            ...node,
-            pageId: socket.pageId,
-            createdById: user.userId,
-          })),
-          {
-            tx,
-          },
-        );
-        await Promise.all(
-          sideEffects.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      console.log('ADDED COMPONENT/s');
-      return `done ${nodes[0]?.id}`;
-    } catch (e) {
-      console.log(e);
-      throw new WsException(e.message);
-    }
+    await this.db.transaction(async (tx) => {
+      await this.componentsService.create(
+        nodes.map((node) => ({
+          ...node,
+          pageId: socket.pageId,
+          createdById: user.userId,
+        })),
+        {
+          tx,
+        },
+      );
+      await Promise.all(
+        sideEffects.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
   }
 
-  @SubscribeMessage('update')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CHANGE_PAGE)
+  async handleChangePage(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          opId: z.string().optional(),
+          pageId: z.number(),
+        }),
+      ),
+    )
+    { opId, pageId }: { opId?: string; pageId: number },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    const page = await this.db.query.pages.findFirst({
+      columns: { id: true },
+      where: and(eq(PagesTable.id, pageId), eq(PagesTable.appId, socket.appId)),
+    });
+    if (!page) {
+      throw new Error('page not owned by this app');
+    }
+    socket.pageId = pageId;
+    return {
+      opId,
+      message: SOCKET_EVENTS_RESPONSE.PAGE_CHANGED,
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_NODE)
   async handleUpdate(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
-    payload: UpdateNodePayload,
+    { opId, updates }: { opId?: string; updates: UpdateNodePayload },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+    await this.db.transaction(async (tx) => {
+      return await Promise.all(
+        updates.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              newId: c.newId,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage('rename')
+  async handleRename(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody()
+    payload: UpdateNodePayload[number],
   ) {
     const user = socket.user;
     if (user === null) {
@@ -156,80 +269,265 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.close();
       return;
     }
-
-    try {
-      await this.db.transaction(async (tx) => {
-        return await Promise.all(
-          payload.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      console.log('UPDATED COMPONENT/s');
-      return `done`;
-    } catch (e) {
-      console.log('e in update', e);
-      throw new WsException(e.message);
-    }
+    this.componentsService.update(socket.pageId, payload.id, {
+      newId: payload.newId,
+      updatedById: user.userId,
+    });
+    console.log('RENAMED COMPONENT');
+    return `done`;
   }
 
-  @SubscribeMessage('delete')
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_NODE)
   async handleDelete(
     @ConnectedSocket() socket: LoomSocket,
     @MessageBody()
     {
+      opId,
       nodesId,
       sideEffects,
     }: {
-      nodesId: WebloomNode['id'][];
+      /**
+       * operation id
+       */
+      opId?: string;
+      nodesId: NilefyNode['id'][];
       sideEffects: UpdateNodePayload;
     },
   ) {
     const user = socket.user;
     if (user === null) {
-      socket.send('send auth first');
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
       socket.close();
       return;
     }
-    try {
-      this.db.transaction(async (tx) => {
-        // eslint-disable-next-line drizzle/enforce-delete-with-where
-        await this.componentsService.delete(socket.pageId, nodesId, { tx });
-        await Promise.all(
-          sideEffects.map((c) => {
-            // clear all columns that not on the db(i hate drizzzle already)
-            const temp = pick(c, frontKnownKeys);
-            return this.componentsService.update(
-              socket.pageId,
-              c.id,
-              {
-                ...temp,
-                updatedById: user.userId,
-              },
-              {
-                tx,
-              },
-            );
-          }),
-        );
-      });
-      console.log('DELETED COMPONENT/s ' + nodesId);
-      return `done`;
-    } catch (e) {
-      console.log(e);
-      throw new WsException(e.message);
+    this.db.transaction(async (tx) => {
+      // eslint-disable-next-line drizzle/enforce-delete-with-where
+      await this.componentsService.delete(socket.pageId, nodesId, { tx });
+      await Promise.all(
+        sideEffects.map((c) => {
+          // clear all columns that not on the db(i hate drizzzle already)
+          const temp = pick(c, frontKnownKeys);
+          return this.componentsService.update(
+            socket.pageId,
+            c.id,
+            {
+              ...temp,
+              updatedById: user.userId,
+            },
+            {
+              tx,
+            },
+          );
+        }),
+      );
+    });
+    return {
+      opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_QUERY)
+  async handleAddQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: addQuerySchema,
+          opId: z.string().optional(),
+        }),
+      ),
+    )
+    query: { query: AddQueryDto; opId?: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
     }
+    await this.dataQueriesService.addQuery({
+      ...query.query,
+      createdById: user.userId,
+      appId: socket.appId,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_QUERY)
+  async handleDeleteQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({ queryId: z.string(), opId: z.string().optional() }),
+      ),
+    )
+    query: { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.deleteQuery(socket.appId, query.queryId);
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_QUERY)
+  async handleUpdateQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: updateQuerySchema,
+          opId: z.string().optional(),
+          queryId: z.string(),
+        }),
+      ),
+    )
+    query: { query: UpdateQueryDto; opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.dataQueriesService.updateQuery({
+      appId: socket.appId,
+      queryId: query.queryId,
+      updatedById: user.userId,
+      query: query.query,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.CREATE_JS_QUERY)
+  async handleAddJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: addJsQuerySchema,
+          opId: z.string().optional(),
+        }),
+      ),
+    )
+    query: { query: AddJsQueryDto; opId?: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.jsQueriesService.create({
+      ...query.query,
+      createdById: user.userId,
+      appId: socket.appId,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.DELETE_JS_QUERY)
+  async handleDeleteJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({ queryId: z.string(), opId: z.string().optional() }),
+      ),
+    )
+    query: { opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
+    await this.jsQueriesService.delete(socket.appId, query.queryId);
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS_REQUEST.UPDATE_JS_QUERY)
+  async handleUpdateJsQuery(
+    @ConnectedSocket() socket: LoomSocket,
+    @MessageBody(
+      new ZodValidationPipe(
+        z.object({
+          query: updateJsQuerySchema,
+          opId: z.string().optional(),
+          queryId: z.string(),
+        }),
+      ),
+    )
+    query: { query: UpdateJsQueryDto; opId?: string; queryId: string },
+  ) {
+    const user = socket.user;
+    if (user === null) {
+      socket.send(
+        JSON.stringify({
+          message: SOCKET_EVENTS_RESPONSE.NOT_AUTHED,
+        }),
+      );
+      socket.close();
+      return;
+    }
+
+    await this.jsQueriesService.update({
+      appId: socket.appId,
+      jsQueryId: query.queryId,
+      updatedById: user.userId,
+      query: query.query,
+    });
+    return {
+      opId: query.opId,
+      message: 'done',
+    };
   }
 }

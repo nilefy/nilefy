@@ -119,8 +119,8 @@ export class DepGraph {
     > = {};
     for (const entity of this.entities) {
       result[entity] = {
-        dependents: this.directEntityDependentsOfEntity(entity),
-        dependencies: this.directEntityDependenciesOfEntity(entity),
+        dependents: this.directDependentsOfEntity(entity),
+        dependencies: this.directDependenciesOfEntity(entity),
       };
     }
     return result;
@@ -282,8 +282,9 @@ export class DepGraph {
         result.push(...this.outgoingPathsEdges.get(path)!);
       }
     }
+    return result;
   }
-  directDepenciesOfEntity(entityId: string) {
+  directDependenciesOfEntity(entityId: string) {
     const result: string[] = [];
     for (const path of this.incomingPathsEdges.keys()) {
       const [id] = path.split('.');
@@ -291,6 +292,7 @@ export class DepGraph {
         result.push(...this.incomingPathsEdges.get(path)!);
       }
     }
+    return result;
   }
   directEntityDependenciesOfEntity(entityId: string) {
     const result: Set<string> = new Set();
@@ -570,7 +572,7 @@ export class DependencyManager {
   }
 
   getDirectDependenciesOfEntity(entityId: EntityId) {
-    return this.dependencyGraph.directDepenciesOfEntity(entityId);
+    return this.dependencyGraph.directDependenciesOfEntity(entityId);
   }
 
   removeRelationshipsForEntity(entityId: EntityId) {

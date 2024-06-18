@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { EntityFormContextT } from './entityForm';
 import { editorStore } from '@/lib/Editor/Models';
-import { WebloomChartProps } from '@/pages/Editor/Components/WebloomWidgets/Chart';
+import { NilefyChartProps } from '@/pages/Editor/Components/NilefyWidgets/Chart/interface';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
 
 const ChartDynamicXValueWidget = function ChartDynamicXValueWidget<
@@ -30,7 +30,7 @@ const ChartDynamicXValueWidget = function ChartDynamicXValueWidget<
   const chart = editorStore.getEntityById(chartId);
   if (!chart || !(chart instanceof WebloomWidget) || chart.type !== 'Chart')
     throw new Error('no chart with that id');
-  const chartData = (chart.finalValues as WebloomChartProps).data.dataSource;
+  const chartData = (chart.finalValues as NilefyChartProps).data.dataSource;
 
   const xValueOptions: string[] = [];
   if (chartData && chartData.length > 0) {

@@ -9,15 +9,15 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { hash, genSalt, compare } from 'bcrypt';
-import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
+import { compare, genSalt, hash } from 'bcrypt';
+import { CreateUserDto, LoginUserDto, RetUserSchema } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
 import { EmailService } from '../email/email.service';
-import { DatabaseI, users } from '@webloom/database';
+import { DatabaseI, users } from '@nilefy/database';
 
 @Injectable()
 export class AuthService {
@@ -72,16 +72,15 @@ export class AuthService {
         } satisfies PayloadUser),
       };
     } catch (err) {
+      Logger.error({ err });
       //TODO: return database error
       throw new BadRequestException();
     }
   }
-  private async signUpEmail(email: string, username: string, jwt: string) {
-    const baseUrl: string = this.configService.get('BASE_URL_BE');
 
+  private async signUpEmail(email: string, username: string, jwt: string) {
     const url =
-      baseUrl +
-      'auth' +
+      '/auth' +
       '/' +
       'confirm' +
       '/' +
@@ -92,19 +91,19 @@ export class AuthService {
     const html =
       `
     <p>Dear ${username},</p>
-    <p>Congratulations on signing up for WebLoom! We're thrilled to have you on board.</p>
+    <p>Congratulations on signing up for nilefy! We're thrilled to have you on board.</p>
     <p>Please click the following link to confirm your email address and complete the signup process:</p>
     <a href="` +
       url +
       ` ">Confirm Email Address</a>
     <p>If you did not sign up for WeblLoom, please disregard this email.</p>
-    <p>Thank you for choosing WebLoom!</p>
+    <p>Thank you for choosing Nilefy!</p>
     <p>Best Regards,<br/>
-    The Webloom Team</p>
+    The Nilefy Team</p>
   `;
     await this.emailService.sendEmail({
       to: email,
-      subject: 'WebLoom - Confirm Your Email Address',
+      subject: 'Nilefy - Confirm Your Email Address',
       html,
     });
   }
@@ -114,8 +113,6 @@ export class AuthService {
    */
   async signUp(user: CreateUserDto): Promise<{ msg: string }> {
     try {
-      const salt = await genSalt(10);
-      const hashed = await hash(user.password, salt);
       const conformationToken = await this.jwtService.signAsync(
         {
           email: user.email,
@@ -125,13 +122,14 @@ export class AuthService {
       await this.userService.create({
         username: user.username,
         email: user.email,
-        password: hashed,
+        password: user.password,
         conformationToken,
       });
+      // TODO: sending email should be through a queue to not halt the request until the email is sent
       this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
-      Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
+      Logger.error({ err }, err.stack);
       //TODO: return database error
       throw new BadRequestException(
         'something went wrong on sign up please try again',
@@ -146,6 +144,7 @@ export class AuthService {
     if (!u) {
       throw new NotFoundException('Email Not Found');
     }
+
     if (u.password) {
       const match = await compare(password, u.password);
       if (!match) {
@@ -159,11 +158,11 @@ export class AuthService {
       // no password nor account, that's weird how did we create this user
       throw new InternalServerErrorException();
     }
-    if (!u.emailVerified) {
-      throw new BadRequestException(
-        `please verify your email then try to sign in`,
-      );
-    }
+    // if (!u.emailVerified) {
+    //   throw new BadRequestException(
+    //     `please verify your email then try to sign in`,
+    //   );
+    // }
     return {
       access_token: await this.jwtService.signAsync({
         sub: u.id,
@@ -201,5 +200,111 @@ export class AuthService {
     } catch {
       throw new BadRequestException('Failed to confirm email');
     }
+  }
+
+  private async forgotPasswordSendEmail(email: string, token: string) {
+    const url =
+      '/auth' +
+      '/' +
+      'reset-password' +
+      '/' +
+      encodeURIComponent(email) +
+      '/' +
+      encodeURIComponent(token) +
+      '/';
+    const html =
+      `
+    <p>Dear ${email},</p>
+    <p>We received a request to reset your Nilefy password. Please click the following link to reset your password:</p>
+    <a href="` +
+      url +
+      ` ">Reset Password</a>
+    <P> This link will expire in 10 minutes.</p>
+    <p>If you did not request a password reset, please disregard this email.</p>
+    <p>Thank you for choosing Nilefy!</p>
+    <p>Best Regards,<br/>
+    The Nilefy Team</p>
+  `;
+    await this.emailService.sendEmail({
+      to: email,
+      subject: 'Nilefy - Reset Your Password',
+      html,
+    });
+  }
+
+  async forgotPassword(
+    email: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const user = await this.userService.findOne(email);
+
+      if (!user) {
+        throw new NotFoundException('Email Not Found');
+      }
+
+      const token = await this.jwtService.signAsync(
+        { email: user.email },
+        { expiresIn: '10m' },
+      );
+
+      await this.userService.update(user.id, {
+        passwordResetToken: token,
+      });
+
+      this.forgotPasswordSendEmail(email, token);
+
+      return { success: true };
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed To Reset Password, ${error.message}`,
+      );
+    }
+  }
+
+  async resetPassword(password: string, token: string) {
+    try {
+      const { email } = await this.jwtService.verifyAsync(token);
+      const user = await this.db.query.users.findFirst({
+        where: and(
+          eq(users.email, email),
+          eq(users.passwordResetToken, token),
+          isNull(users.deletedAt),
+        ),
+        columns: {
+          id: true,
+          passwordResetToken: true,
+          email: true,
+          password: true,
+        },
+      });
+      if (user === undefined) {
+        throw new BadRequestException('Token Expired or Invalid');
+      }
+      await this.jwtService.verifyAsync(token);
+
+      if (user.password) {
+        const match = await compare(password, user.password);
+        if (match) {
+          throw new BadRequestException('Use a New Password');
+        }
+      }
+      const salt = await genSalt(10);
+      const hashed = await hash(password, salt);
+
+      await this.userService.update(user.id, {
+        password: hashed,
+        passwordResetToken: null,
+      });
+      return { success: true, message: 'Password Reset Successfully' };
+    } catch (error) {
+      throw new BadRequestException(`Failed To Reset Password`);
+    }
+  }
+
+  /**
+   * return current user data
+   */
+  async me(currentUserId: number): Promise<RetUserSchema> {
+    return await this.userService.me(currentUserId);
   }
 }

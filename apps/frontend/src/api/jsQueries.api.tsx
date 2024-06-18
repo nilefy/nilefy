@@ -1,6 +1,8 @@
 import { fetchX } from '@/utils/fetch';
 import { UndefinedInitialDataOptions } from '@tanstack/react-query';
 
+const JS_QUERY_KEY = 'jsQueries';
+
 export type JsQueryI = {
   id: string;
   createdAt: Date;
@@ -10,11 +12,16 @@ export type JsQueryI = {
   appId: number;
   query: string | null;
   settings?: unknown;
+  triggerMode: 'manually' | 'onAppLoad';
 };
 type InsertI = {
   id: JsQueryI['id'];
   query: JsQueryI['query'];
   settings: JsQueryI['settings'];
+  /**
+   * default value is "manually"
+   */
+  triggerMode?: JsQueryI['triggerMode'];
 };
 type UpdateI = Partial<InsertI>;
 
@@ -33,7 +40,7 @@ export async function indexJSqueries({
   );
   return (await res.json()) as JsQueryI[];
 }
-const JS_QUERY_KEY = 'jsQueries';
+
 export const useJSQueries = ({
   workspaceId,
   appId,

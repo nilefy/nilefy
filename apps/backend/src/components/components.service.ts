@@ -6,10 +6,20 @@ import {
   ComponentDto,
   CreateComponentDb,
   UpdateComponentDb,
-  WebloomTree,
+  NilefyTree,
 } from '../dto/components.dto';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
-import { components, DatabaseI, PgTrans } from '@webloom/database';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import {
+  components,
+  DatabaseI,
+  PgTrans,
+  queries,
+  jsQueries,
+} from '@nilefy/database';
+import { chunkArray } from '../utils';
+import { QueryDto } from '../dto/data_queries.dto';
+import { AppDto } from '../dto/apps.dto';
+import { JsQueryDto } from '../dto/js_queries.dto';
 
 @Injectable()
 export class ComponentsService {
@@ -17,7 +27,7 @@ export class ComponentsService {
 
   /**
    * components state is represented as tree, but notice there's case we don't have to handle while inserting
-   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as child of a node
+   * normally in trees(specially BST) you can insert node between two nodes, but we won't have this case you can only insert node as a leaf to some subtree
    */
   async create(
     componentDto: CreateComponentDb[],
@@ -28,10 +38,17 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
-    return await (options?.tx ? options.tx : this.db)
-      .insert(components)
-      .values(componentDto)
-      .returning();
+    const res = [];
+    const chunks = chunkArray(componentDto, 1000);
+    for (const c of chunks) {
+      res.push(
+        ...(await (options?.tx ? options.tx : this.db)
+          .insert(components)
+          .values(c)
+          .returning()),
+      );
+    }
+    return res;
   }
 
   /**
@@ -75,6 +92,29 @@ export class ComponentsService {
       tx?: PgTrans;
     },
   ) {
+    // id/name is changed
+    if (dto.newId && dto.newId !== componentId) {
+      const newId = dto.newId;
+      // there is a component with this new id
+      const component = await this.getComponent(newId, pageId);
+      if (component) {
+        throw new BadRequestException(
+          `There is another component with name ${newId}`,
+        );
+      }
+      const { appId } = (await this.getComponent(componentId, pageId))!;
+      const query = await this.getQueryById(newId, appId);
+      if (query) {
+        // there is a query with this id
+        throw new BadRequestException(`There is a query with name ${newId}`);
+      }
+      const jsQuery = await this.getJsQueryById(newId, appId);
+      if (jsQuery) {
+        // there is a js query with this id
+        throw new BadRequestException(`There is a JS query with name ${newId}`);
+      }
+    }
+
     // 1- the front stores the parentId of the root as the root itself, so if the front send update for the root it could contains parentId.
     // `getTreeForPage` get the head of the tree by searching for the node with parent(isNull).
     // so we need to keep this condition true => accept root updates but discard the `parentId` update
@@ -82,6 +122,7 @@ export class ComponentsService {
       .update(components)
       .set({
         ...dto,
+        id: (dto.newId as string) ?? componentId,
         parentId:
           componentId === EDITOR_CONSTANTS.ROOT_NODE_ID ? null : dto.parentId,
         updatedAt: sql`now()`,
@@ -90,7 +131,35 @@ export class ComponentsService {
       .returning();
   }
 
-  async getTreeForPage(pageId: PageDto['id']): Promise<WebloomTree> {
+  private convertComponentsToNilefyTree(
+    coms: (ComponentDto & { level: number })[],
+  ): NilefyTree {
+    const tree: NilefyTree = {};
+    coms.forEach((com) => {
+      tree[com.id] = {
+        id: com.id,
+        nodes: [],
+        // set root node as parent of itself
+        parentId: com.parentId ?? com.id,
+        props: com.props,
+        type: com.type,
+        col: com.col,
+        row: com.row,
+        columnsCount: com.columnsCount,
+        rowsCount: com.rowsCount,
+        columnWidth: 0,
+      };
+      if (com.level > 1) {
+        tree[com.parentId!.toString()]['nodes'].push(com.id.toString());
+      }
+    });
+    return tree;
+  }
+
+  /**
+   * @returns  get components for a page as a list ordered by their level on the app tree
+   */
+  async getComponentsForPage(pageId: PageDto['id']) {
     const comps = await this.db.execute(sql`
     WITH RECURSIVE rectree AS (
       -- anchor element
@@ -112,25 +181,69 @@ export class ComponentsService {
       throw new BadRequestException(
         'page should contain at least one component(root)',
       ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
-    const tree: WebloomTree = {};
-    rows.forEach((row) => {
-      tree[row.id] = {
-        id: row.id,
-        nodes: [],
-        // set root node as parent of itself
-        parentId: row.parentId ?? row.id,
-        props: row.props,
-        type: row.type,
-        col: row.col,
-        row: row.row,
-        columnsCount: row.columnsCount,
-        rowsCount: row.rowsCount,
-        columnWidth: 0,
-      };
-      if (row.level > 1) {
-        tree[row.parentId!.toString()]['nodes'].push(row.id.toString());
-      }
+    return rows;
+  }
+
+  async getTreeForPage(pageId: PageDto['id']): Promise<NilefyTree> {
+    const coms = await this.getComponentsForPage(pageId);
+    return this.convertComponentsToNilefyTree(coms);
+  }
+
+  async getComponent(
+    componentId: ComponentDto['id'],
+    pageId: PageDto['id'],
+  ): Promise<{ id: ComponentDto['id']; appId: AppDto['id'] } | undefined> {
+    const ret = await this.db.query.components.findFirst({
+      where: and(eq(components.id, componentId), eq(components.pageId, pageId)),
+      columns: {
+        id: true,
+      },
+      with: {
+        page: {
+          with: {
+            app: {
+              columns: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
-    return tree;
+    if (ret) {
+      return {
+        id: ret.id,
+        appId: ret.page.app.id,
+      };
+    }
+    return ret;
+  }
+
+  async getQueryById(
+    queryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<QueryDto['id'] | undefined> {
+    return (
+      await this.db.query.queries.findFirst({
+        where: and(eq(queries.id, queryId), eq(queries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
+  }
+
+  async getJsQueryById(
+    jsQueryId: QueryDto['id'],
+    appId: AppDto['id'],
+  ): Promise<JsQueryDto['id'] | undefined> {
+    return (
+      await this.db.query.jsQueries.findFirst({
+        where: and(eq(jsQueries.id, jsQueryId), eq(jsQueries.appId, appId)),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id;
   }
 }

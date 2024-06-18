@@ -3,7 +3,6 @@ import { commandManager } from '@/actions/CommandManager';
 import { editorStore } from '@/lib/Editor/Models';
 import { useCallback, useMemo } from 'react';
 
-import { WebloomWidgets } from '..';
 import { observer } from 'mobx-react-lite';
 
 const cornerPositions = {

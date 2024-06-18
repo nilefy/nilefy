@@ -10,7 +10,7 @@ import {
   unique,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { permissionsTypes } from "@webloom/permissions";
+import { permissionsTypes } from "@nilefy/permissions";
 import { boolean } from "drizzle-orm/pg-core";
 
 /**
@@ -38,6 +38,20 @@ export const softDelete = {
   deletedAt: timestamp("deleted_at"),
 };
 
+export const userStatusEnum = pgEnum(
+  "user_status_enum",
+  [
+    /**
+     * means this user can login, this user was created from normal sign up workflow, or have been invited and accepted the invite and configured their account
+     */
+    "active",
+    /**
+     * this user was not part of nilefy but has been invited by some workspace and cannot sign in uless the account is configured probably by either accepting the invite or go through normal sign up flow
+     */
+    "invited",
+  ]
+);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 256 }).notNull(),
@@ -48,7 +62,11 @@ export const users = pgTable("users", {
   conformationToken: varchar("conformation_token", {
     length: 256,
   }),
+  passwordResetToken: varchar('password_reset_token', {
+    length: 256,
+  }),
   onboardingCompleted: boolean("onboarding_completed").default(false),
+  status: userStatusEnum("status").default("active").notNull(),
   ...timeStamps,
   ...softDelete,
 });
@@ -135,7 +153,6 @@ export const roles = pgTable(
       .references(() => workspaces.id)
       .notNull(),
     ...timeStamps,
-    ...softDelete,
     ...whoToBlame,
   },
   (t) => ({
@@ -168,6 +185,7 @@ export const usersToRoles = pgTable(
     roleId: integer("role_id")
       .notNull()
       .references(() => roles.id),
+    ...timeStamps,
   },
   (t) => ({
     pk: primaryKey({ columns: [t.roleId, t.userId] }),
@@ -203,6 +221,23 @@ export const workspaces = pgTable("workspaces", {
   updatedById: integer("updated_by_id").references(() => users.id),
 });
 
+export const userToWorkspaceStatusEnum = pgEnum("user_to_workspace_status", [
+  /**
+   * user could interact with the workspace, or accepted the invite
+   */
+  "active",
+  'invited',
+  /**
+   * user declined invitation
+   */
+  'declined',
+  /**
+   * admin disabled this user from accessing the workspace
+   *  could re-enable this user again
+   */
+  'archived'
+]);
+
 export const usersToWorkspaces = pgTable(
   "users_to_workspaces",
   {
@@ -212,11 +247,16 @@ export const usersToWorkspaces = pgTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id),
+    status: userToWorkspaceStatusEnum("status").notNull(),
+    invitationToken: text("invitation_token"),
+    declinedAt: timestamp("declined_at"),
+    ...timeStamps,
   },
   (t) => ({
     pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
   })
 );
+
 
 export const apps = pgTable("apps", {
   id: serial("id").primaryKey(),
@@ -232,10 +272,29 @@ export const apps = pgTable("apps", {
     .references(() => workspaces.id)
     .notNull(),
   ...timeStamps,
-  ...softDelete,
   updatedById: integer("updated_by_id").references(() => users.id),
   deletedById: integer("deleted_by_id").references(() => users.id),
 });
+
+/**
+ * many to many relation
+ */
+export const appsToRoles = pgTable(
+  "appsToRoles",
+  {
+    appId: integer("app_id")
+      .notNull()
+      .references(() => apps.id),
+    roleId: integer("role_id")
+      .notNull()
+      .references(() => roles.id),
+    permission: varchar("permission").notNull(),
+    ...timeStamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.appId, t.roleId] }),
+  })
+);
 
 export const webloomTables = pgTable("tables", {
   id: serial("id").primaryKey(),

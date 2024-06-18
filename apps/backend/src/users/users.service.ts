@@ -1,10 +1,16 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateUserDb, UpdateUserRetDto, UserDto } from '../dto/users.dto';
+import {
+  RetUserSchema,
+  UpdateUserDb,
+  UpdateUserRetDto,
+  UserDto,
+} from '../dto/users.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { InferInsertModel, and, eq, isNull } from 'drizzle-orm';
 import { genSalt, hash } from 'bcrypt';
-import { accounts, DatabaseI, users } from '@webloom/database';
+import { accounts, DatabaseI, PgTrans, users } from '@nilefy/database';
 import { WorkspacesService } from '../workspaces/workspaces.service';
+import { WorkspaceDto } from '../dto/workspace.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,9 +19,13 @@ export class UsersService {
     private readonly workspacesService: WorkspacesService,
   ) {}
 
-  async findOne(email: string) {
+  async findOne(email: string, status: 'active' | 'invited' = 'active') {
     const u = await this.db.query.users.findFirst({
-      where: and(eq(users.email, email), isNull(users.deletedAt)),
+      where: and(
+        eq(users.email, email),
+        isNull(users.deletedAt),
+        eq(users.status, status),
+      ),
       with: {
         accounts: true,
       },
@@ -23,27 +33,68 @@ export class UsersService {
     return u;
   }
 
+  /**
+   * return current user data
+   */
+  async me(currentUserId: number): Promise<RetUserSchema> {
+    return (await this.db.query.users.findFirst({
+      columns: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        onboardingCompleted: true,
+      },
+      where: and(eq(users.id, currentUserId), eq(users.status, 'active')),
+    }))!;
+  }
+
+  private async hasPassword(p: string) {
+    const salt = await genSalt(10);
+    return await hash(p, salt);
+  }
+  /**
+   *  create user with default workspace(this user will be the admin of the workspace)
+   */
   async create(
     user: InferInsertModel<typeof users> & {
       accounts?: Omit<InferInsertModel<typeof accounts>, 'userId'>;
     },
-  ): Promise<UserDto> {
-    return this.db.transaction(async (tx) => {
-      const [u] = await tx.insert(users).values(user).returning();
-      if (user.accounts) {
-        await tx.insert(accounts).values({ userId: u.id, ...user.accounts });
-      }
-      await this.workspacesService.create(
-        {
-          name: 'New Workspace',
-          createdById: u.id,
-        },
-        {
-          tx: tx,
-        },
-      );
-      return u;
-    });
+    options?: { tx: PgTrans },
+  ): Promise<UserDto & { workspace: WorkspaceDto }> {
+    return await (options?.tx
+      ? this.createHelper(user, options.tx)
+      : this.db.transaction(async (tx) => {
+          return await this.createHelper(user, tx);
+        }));
+  }
+
+  private async createHelper(
+    user: InferInsertModel<typeof users> & {
+      accounts?: Omit<InferInsertModel<typeof accounts>, 'userId'>;
+    },
+    tx: PgTrans,
+  ): Promise<UserDto & { workspace: WorkspaceDto }> {
+    if (user.password) {
+      user.password = await this.hasPassword(user.password);
+    }
+    const [u] = await tx.insert(users).values(user).returning();
+    if (user.accounts) {
+      await tx.insert(accounts).values({ userId: u.id, ...user.accounts });
+    }
+    const w = await this.workspacesService.create(
+      {
+        name: 'New Workspace',
+        createdById: u.id,
+      },
+      {
+        tx: tx,
+      },
+    );
+    return {
+      ...u,
+      workspace: w,
+    };
   }
 
   async update(
@@ -51,8 +102,7 @@ export class UsersService {
     updateDto: UpdateUserDb,
   ): Promise<UpdateUserRetDto> {
     if (updateDto.password) {
-      const salt = await genSalt(10);
-      updateDto.password = await hash(updateDto.password, salt);
+      updateDto.password = await this.hasPassword(updateDto.password);
     }
     const updatedUser = (
       await this.db

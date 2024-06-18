@@ -11,6 +11,7 @@ import {
   permissionsToRoles,
   roles,
   accounts,
+  appsToRoles,
 } from "./schema";
 import {
   workspaceDataSources,
@@ -185,10 +186,13 @@ export const appsRelations = relations(apps, ({ one, many }) => ({
   jsLibraries: many(jsLibraries, {
     relationName: appJsLibrariesRelation,
   }),
-
   pages: many(pages, {
     relationName: pagesToappsRelation,
   }),
+  /**
+   * which roles could control this app
+   */
+  roles: many(appsToRoles),
 }));
 
 export const webloomTableRelations = relations(
@@ -243,6 +247,10 @@ export const queriesRelations = relations(queries, ({ one }) => ({
     fields: [queries.dataSourceId],
     references: [workspaceDataSources.id],
     relationName: wsDataSourceQueriesRelation,
+  }),
+  baseDataSource: one(dataSources, {
+    fields: [queries.baseDataSourceId],
+    references: [dataSources.id],
   }),
 }));
 
@@ -321,6 +329,10 @@ export const rolesRelations = relations(roles, ({ one, many }) => ({
     references: [workspaces.id],
     relationName: workspaceRolesRelation,
   }),
+  /**
+   * which apps this role could control
+   */
+  apps: many(appsToRoles),
 }));
 
 // export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
@@ -413,12 +425,23 @@ export const componentsRelations = relations(components, ({ one, many }) => ({
     references: [pages.id],
     relationName: componentsToPageRelation,
   }),
-  parent: one(components, {
-    fields: [components.parentId],
-    references: [components.id],
-    relationName: componentParentRelation,
-  }),
+  // parent: one(components, {
+  //   fields: [components.parentId],
+  //   references: [components.id],
+  //   relationName: componentParentRelation,
+  // }),
   children: many(components, {
     relationName: componentParentRelation,
+  }),
+}));
+
+export const appsToRolesRelations = relations(appsToRoles, ({ one }) => ({
+  role: one(roles, {
+    fields: [appsToRoles.roleId],
+    references: [roles.id],
+  }),
+  app: one(apps, {
+    fields: [appsToRoles.appId],
+    references: [apps.id],
   }),
 }));

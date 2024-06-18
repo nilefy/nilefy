@@ -1,4 +1,4 @@
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { createDefaultMapFromCDN } from './initFromCdn';
 import { keys } from 'lodash';
 
@@ -30,7 +30,6 @@ export class TypeScriptVirtualFileSystem {
     this.defaultLibs = await createDefaultMapFromCDN();
     this.fs.set(GLOBAL_CONTEXT_FILE, ' ');
     this.fs = new Map([...this.fs, ...this.defaultLibs]);
-    console.log(keys(this.fs));
     this.initted = true;
   }
 }

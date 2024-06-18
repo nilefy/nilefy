@@ -1,9 +1,14 @@
 import { InferInsertModel } from 'drizzle-orm';
 import { z } from 'zod';
-import { dataSources as dataSourcesDrizzle } from '@webloom/database';
-import { DatabaseI } from '@webloom/database';
+import { dataSources as dataSourcesDrizzle } from '@nilefy/database';
+import { PgTrans } from '@nilefy/database';
+import { INestApplicationContext } from '@nestjs/common';
 
-export type SeederI<T> = (db: DatabaseI, count: number) => Promise<T>;
+export type SeederI<T> = (
+  nest: INestApplicationContext,
+  db: PgTrans,
+  count: number,
+) => Promise<T>;
 
 export const dataSourcesEnum = z.enum([
   'database',
@@ -15,7 +20,11 @@ export const dataSourcesEnum = z.enum([
 export const dataSources = {
   database: ['PostgreSQL', 'MongoDB'],
   api: ['REST API'],
-  'cloud storage': ['Azure Blob Storage', 'Google Cloud Storage'],
+  'cloud storage': [
+    'Azure Blob Storage',
+    'Google Cloud Storage',
+    'Google Sheets',
+  ],
   plugin: [],
 };
 

@@ -1,5 +1,7 @@
 # Nilefy
 
+![nilefyTM](./nilefyTM.webp)
+
 ## Getting started
 
 this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorepo for more information check up the docs
@@ -33,3 +35,7 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 - please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
 
 - how to create new `WebloomWidget` guide check [CONTRIBUTING.md/How to create new Widget](/CONTRIBUTING.md#how-to-create-new-widget)
+
+- to sync permissions with database `pnpm db:syncPermissions`
+
+- to sync datasources config with database without dropping database `pnpm db:syncDss`

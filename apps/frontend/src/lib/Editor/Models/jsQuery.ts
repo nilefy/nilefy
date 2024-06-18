@@ -1,4 +1,11 @@
-import { makeObservable, observable, action, computed, toJS } from 'mobx';
+import {
+  makeObservable,
+  observable,
+  action,
+  computed,
+  toJS,
+  override,
+} from 'mobx';
 import { Snapshotable } from './interface';
 import { Entity } from './entity';
 import { WorkerBroker } from './workerBroker';
@@ -7,13 +14,53 @@ import { QueryClient } from '@tanstack/query-core';
 import { MobxMutation } from 'mobbing-query';
 import { FetchXError } from '@/utils/fetch';
 import { EntityInspectorConfig } from '../interface';
-import { concat } from 'lodash';
+import { concat, debounce } from 'lodash';
 import { JsQueryI, updateJSquery } from '@/api/jsQueries.api';
+import { commandManager } from '@/actions/CommandManager';
+import { UpdateQuery } from '@/actions/editor/updateQuery';
+
+const onSuccessKey = 'config.onSuccess';
+const onFailureKey = 'config.onFailure';
+const onMutateKey = 'config.onMutate';
 
 const inspectorConfig: EntityInspectorConfig = [
   {
+    sectionName: 'Interactions',
+    children: [
+      {
+        path: onSuccessKey,
+        label: 'onSuccess',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("onSuccess")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onFailureKey,
+        label: 'onFailure',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("failed")}}',
+        },
+        isEvent: true,
+      },
+      {
+        path: onMutateKey,
+        label: 'onMutate',
+        type: 'inlineCodeInput',
+        options: {
+          placeholder: '{{alert("query started working")}}',
+        },
+        isEvent: true,
+      },
+    ],
+  },
+  {
     sectionName: 'General',
-    children: [{ path: 'query', label: 'Query', type: 'codeInput' }],
+    children: [
+      { path: 'query', label: 'Query', type: 'codeInput', isCode: true },
+    ],
   },
 ];
 
@@ -93,6 +140,7 @@ export class WebloomJSQuery
   workspaceId: number;
   createdAt: JsQueryI['createdAt'];
   updatedAt: JsQueryI['updatedAt'];
+  baseDataSource: { type: string } = { type: 'jsQuery' };
   // as inconvenient as it is, this makes things consistent across all queries
   dataSource = {
     dataSource: {
@@ -126,6 +174,7 @@ export class WebloomJSQuery
     updatedAt,
     workerBroker,
     queryClient,
+    triggerMode,
   }: Omit<JsQueryI, 'createdById' | 'updatedById'> & {
     workerBroker: WorkerBroker;
     queryClient: QueryClient;
@@ -139,6 +188,7 @@ export class WebloomJSQuery
         queryState: 'idle',
         error: undefined,
         settings,
+        triggerMode: triggerMode ?? 'manually',
       },
       workerBroker,
       publicAPI: {
@@ -176,6 +226,7 @@ export class WebloomJSQuery
             id: this.id,
             settings: toJS(this.rawValues.settings),
             query: this.rawValues.query as string,
+            triggerMode: this.triggerMode,
           },
         });
       },
@@ -192,15 +243,18 @@ export class WebloomJSQuery
       },
       onMutate: () => {
         this.setValue('queryState', 'loading');
+        this.handleEvent(onMutateKey);
       },
       onError: (error) => {
         this.setValue('queryState', 'error');
         this.setValue('error', error.message);
+        this.handleEvent(onFailureKey);
       },
       onSuccess: (data) => {
         this.setValue('data', data);
         this.setValue('error', undefined);
         this.setValue('queryState', 'success');
+        this.handleEvent(onSuccessKey);
       },
     }));
     this.workspaceId = workspaceId;
@@ -215,6 +269,7 @@ export class WebloomJSQuery
       setQueryState: action,
       reset: action.bound,
       triggerMode: computed,
+      setValue: override,
     });
   }
   get triggerMode() {
@@ -224,7 +279,6 @@ export class WebloomJSQuery
     this.rawValues.queryState = state;
   }
 
-  // TODO: make it handle id update
   updateQuery(
     dto: Omit<
       Partial<JsQueryI & { rawValues: Partial<JSQueryRawValues> }>,
@@ -255,11 +309,26 @@ export class WebloomJSQuery
     this.setValue('error', undefined);
     this.setValue('statusCode', undefined);
   }
-
+  setValue(path: string, value: unknown, autoSync = true): void {
+    const queryMetaProps = ['data', 'error', 'statusCode', 'queryState'];
+    if (!queryMetaProps.includes(path) && autoSync) {
+      this.updatedAt = new Date();
+      this.debouncedSyncRawValuesWithServer();
+    }
+    super.setValue(path, value);
+  }
+  syncRawValuesWithServer() {
+    commandManager.executeCommand(new UpdateQuery(this.id));
+  }
+  debouncedSyncRawValuesWithServer = debounce(
+    this.syncRawValuesWithServer,
+    500,
+  );
   get snapshot() {
     return {
       id: this.id,
       query: this.rawValues.query as string,
+      settings: toJS(this.rawValues.settings),
       triggerMode: this.triggerMode,
       appId: this.appId,
       updatedAt: this.updatedAt,

@@ -1,4 +1,11 @@
-import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  forwardRef,
+  useEffect,
+} from 'react';
 import { matchSorter } from 'match-sorter';
 import ReactJson from 'react-json-view';
 import {
@@ -17,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Search, Trash, Pencil, SaveIcon, Play } from 'lucide-react';
+import { Filter, Search, Trash, Pencil, Play } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '@/api';
 import { DebouncedInput } from '../../../../components/debouncedInput';
@@ -32,8 +39,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { Label } from '@/components/ui/label';
 import { DefaultSection, EntityForm } from '../entityForm';
-import { LoadingButton } from '@/components/loadingButton';
 import { WebloomJSQuery } from '@/lib/Editor/Models/jsQuery';
+import { commandManager } from '@/actions/CommandManager';
+import { CreateQuery } from '@/actions/editor/createQuery';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { DeleteQuery } from '@/actions/editor/deleteQuery';
+import { RenameAction } from '@/actions/editor/Rename';
 
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
@@ -64,35 +75,29 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
   const { data: dataSources } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
-  const saveCallback = useCallback(() => {
-    query.updateQueryMutator.mutate();
+  const [renameValue, setRenameValue] = useState(query.id);
+  useEffect(() => {
+    setRenameValue(query.id);
   }, [query]);
+
   return (
     <div className="h-full w-full">
       {/* HEADER */}
       <div className="flex h-10 flex-row items-center gap-5 border-b border-gray-300 px-3 py-1 ">
         {/* TODO: if this input is supposed to be used for renaming the query, is it good idea to have the same functionlity in two places */}
         <Input
-          value={query.id}
-          onChange={() => {
-            //todo
+          value={renameValue}
+          onChange={(e) => {
+            setRenameValue(e.target.value);
+          }}
+          onBlur={(e) => {
+            commandManager.executeCommand(
+              new RenameAction(query.id, e.target.value),
+            );
           }}
           className="h-4/5 w-1/5 border-gray-200 transition-colors hover:border-blue-400"
         />
         <div className="ml-auto flex flex-row items-center">
-          <LoadingButton
-            isLoading={editorStore.queriesManager.updateQuery.state.isPending}
-            buttonProps={{
-              variant: 'ghost',
-              type: 'button',
-              className: 'mr-auto',
-              onClick: saveCallback,
-            }}
-          >
-            <>
-              <SaveIcon /> Save
-            </>
-          </LoadingButton>
           <Button
             id="run-query-button"
             variant={'ghost'}
@@ -115,20 +120,22 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             <Label className="flex items-center gap-4">
               Data Source
               <Select
-                value={query.dataSourceId.toString()}
+                value={query.dataSourceId?.toString() ?? undefined}
                 onValueChange={(e) => {
                   query.setDataSource(e);
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={query?.dataSource.name} />
+                  <SelectValue
+                    placeholder={'select datasource to connect to'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {dataSources
                     ?.filter(
                       (dataSource) =>
                         dataSource.dataSource.name ===
-                        query.dataSource.dataSource.name,
+                        query.baseDataSource.name,
                     )
                     .map((dataSource) => (
                       <SelectItem
@@ -200,6 +207,7 @@ export const QueryPanel = observer(function QueryPanel() {
   const [dataSourceSearch, setDataSourceSearch] = useState('');
   const [querySearch, setQuerySearch] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemValue, setEditingItemValue] = useState<string | null>(null);
   const [closeSearsh, setCloseSearsh] = useState<boolean>(false);
   const [selectedSource, setSelectedSource] = useState('all');
   const [sortingCriteria, setSortingCriteria] = useState<
@@ -239,8 +247,9 @@ export const QueryPanel = observer(function QueryPanel() {
         });
       } else if (sortingCriteria === 'source') {
         sortedData.sort((a, b) => {
-          const aValue = a.dataSource.dataSource.type.toLowerCase();
-          const bValue = b.dataSource.dataSource.type.toLowerCase();
+          const aValue = a.baseDataSource.type.toLowerCase();
+          const bValue = b.baseDataSource.type.toLowerCase();
+
           return sortingOrder === 'asc'
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
@@ -278,7 +287,7 @@ export const QueryPanel = observer(function QueryPanel() {
           (item) => {
             if (
               selectedSource === 'all' ||
-              item.dataSource.dataSource.type === selectedSource
+              item.baseDataSource.type === selectedSource
             ) {
               return item;
             }
@@ -411,33 +420,51 @@ export const QueryPanel = observer(function QueryPanel() {
               <DropdownMenuItem
                 id="add-new-js-query"
                 onClick={() => {
-                  editorStore.queriesManager.addJSquery.mutate({
-                    dto: {
-                      query: '',
-                      settings: {},
-                    },
-                  });
+                  commandManager.executeCommand(
+                    new CreateQuery({
+                      event: 'createJsQuery',
+                      data: {
+                        query: {
+                          id: getNewEntityName(
+                            EDITOR_CONSTANTS.JS_QUERY_BASE_NAME,
+                          ),
+                          query: '',
+                          settings: {},
+                          triggerMode: 'manually',
+                        },
+                      },
+                    }),
+                  );
                 }}
               >
                 JS Query
               </DropdownMenuItem>
-              {filteredDatasources.map((item) => (
-                // ADD NEW QUERY
-                <DropdownMenuItem
-                  key={item.dataSource.type}
-                  onClick={() => {
-                    editorStore.queriesManager.addQuery.mutate({
-                      dto: {
-                        dataSourceId: item.id,
-                        id: getNewEntityName(item.name),
-                        query: {},
-                      },
-                    });
-                  }}
-                >
-                  {item.name}
-                </DropdownMenuItem>
-              ))}
+              {filteredDatasources.map((item) => {
+                return (
+                  // ADD NEW QUERY
+                  <DropdownMenuItem
+                    key={`${item.id}`}
+                    onClick={() => {
+                      commandManager.executeCommand(
+                        new CreateQuery({
+                          event: 'createQuery',
+                          data: {
+                            baseDataSourceId: item.dataSource.id,
+                            query: {
+                              dataSourceId: item.id,
+                              id: getNewEntityName(item.name),
+                              query: {},
+                              triggerMode: 'manually',
+                            },
+                          },
+                        }),
+                      );
+                    }}
+                  >
+                    {item.name}
+                  </DropdownMenuItem>
+                );
+              })}
               <DropdownMenuItem asChild>
                 <Link to={`/${workspaceId}/datasources`}>Add New</Link>
               </DropdownMenuItem>
@@ -481,12 +508,20 @@ export const QueryPanel = observer(function QueryPanel() {
                 {editingItemId === item.id ? (
                   <Input
                     type="text"
-                    value={item.id}
+                    value={editingItemValue!}
+                    aria-label="Rename query"
                     className="w-full"
-                    // TODO: enable rename
-                    // onChange={(e) => renameItem(item, e)}
+                    onChange={(e) => {
+                      setEditingItemValue(e.target.value);
+                    }}
                     autoFocus
-                    onBlur={() => setEditingItemId(null)}
+                    onBlur={(e) => {
+                      setEditingItemId(null);
+                      setEditingItemValue(null);
+                      commandManager.executeCommand(
+                        new RenameAction(item.id, e.target.value),
+                      );
+                    }}
                   />
                 ) : (
                   <>
@@ -502,7 +537,10 @@ export const QueryPanel = observer(function QueryPanel() {
                       <Button
                         size={'icon'}
                         variant={'ghost'}
-                        onClick={() => setEditingItemId(item.id)}
+                        onClick={() => {
+                          setEditingItemId(item.id);
+                          setEditingItemValue(item.id);
+                        }}
                       >
                         <Pencil size={16} />
                       </Button>
@@ -515,17 +553,9 @@ export const QueryPanel = observer(function QueryPanel() {
                         size={'icon'}
                         variant={'ghost'}
                         onClick={() => {
-                          const query = editorStore.getQueryById(item.id);
-                          if (!query) throw new Error('Query not found');
-                          if (query instanceof WebloomJSQuery) {
-                            editorStore.queriesManager.deleteJSquery.mutate({
-                              queryId: item.id,
-                            });
-                            return;
-                          }
-                          editorStore.queriesManager.deleteQuery.mutate({
-                            queryId: item.id,
-                          });
+                          commandManager.executeCommand(
+                            new DeleteQuery(item.id),
+                          );
                         }}
                       >
                         <Trash size={16} />

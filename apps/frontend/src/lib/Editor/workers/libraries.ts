@@ -1,13 +1,12 @@
 import { difference, isObjectLike, keys } from 'lodash';
 import { InstallLibraryRequest } from './common/interface';
-const validIdentifierRegex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
+import { isValidIdentifier } from '@/lib/utils';
+
 const guessName = (url: string) => {
   const parts = url.split('/');
   return parts[parts.length - 1].split('.')[0];
 };
-const isValidIdentifier = (name: string) => {
-  return validIdentifierRegex.test(name);
-};
+
 export type WebloomLibraries = Record<string, unknown>;
 /**
  *

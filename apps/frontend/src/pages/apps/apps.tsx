@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter';
 import { SelectWorkSpace } from '@/components/selectWorkspace';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Copy, MoreVertical, Trash, Wrench } from 'lucide-react';
+import { Copy, FileDown, MoreVertical, Trash, Wrench } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,12 +55,13 @@ import {
   AppI,
   AppMetaT,
   appMetaSchema,
+  exportApp,
   useAppsQuery,
 } from '@/api/apps.api';
 import { Suspense, useMemo, useState } from 'react';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import { DebouncedInput } from '@/components/debouncedInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { loaderAuth } from '@/utils/loaders';
@@ -186,6 +188,21 @@ function AppDropDown(props: { app: AppI }) {
           </DialogContent>
         </Dialog>
 
+        {/*
+          EXPORT
+          */}
+        <DropdownMenuItem
+          onClick={() =>
+            exportApp({
+              workspaceId: +workspaceId,
+              appId: props.app.id,
+              appName: props.app.name,
+            })
+          }
+        >
+          <FileDown className="mr-2 h-4 w-4" />
+          <span>Export To Json</span>
+        </DropdownMenuItem>
         {/*
           CLONE
           */}
@@ -386,13 +403,13 @@ function ApplicationsViewResolved() {
                 </CardContent>
                 <CardFooter className="mt-auto flex justify-end gap-5">
                   <Link
-                    to={`apps/edit/${app.id}`}
+                    to={`apps/edit/${app.id}/${app.page.id}`}
                     className={buttonVariants({ variant: 'default' })}
                   >
                     Edit
                   </Link>
                   <Link
-                    to={`apps/${app.id}`}
+                    to={`apps/${app.id}/${app.page.id}`}
                     className={buttonVariants({ variant: 'default' })}
                   >
                     Launch
@@ -411,7 +428,7 @@ function ApplicationsView() {
   const { apps } = useLoaderData();
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={apps}>
         <ApplicationsViewResolved />
       </Await>
@@ -420,13 +437,37 @@ function ApplicationsView() {
 }
 
 export function ApplicationsLayout() {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useParams();
+  const importApp = api.apps.import.useMutation({
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
+    },
+  });
+
   return (
     <div className="flex h-full w-full">
       {/*workspace settings sidebar*/}
-      <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+      <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
         <h2 className="ml-2 text-3xl">Applications</h2>
-        <div className=" w-full">
+        <div className=" flex w-full flex-col gap-5">
           <CreateAppDialog />
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                importApp.mutate({
+                  workspaceId: +(workspaceId as string),
+                  formData,
+                });
+              }}
+            >
+              <Label htmlFor="picture">Import From Json</Label>
+              <Input id="file" name="file" type="file" />
+              <Button type="submit">Import</Button>
+            </form>
+          </div>
         </div>
         <div className="mt-auto">
           <SelectWorkSpace />

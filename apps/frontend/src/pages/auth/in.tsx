@@ -9,13 +9,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSignIn } from '@/hooks/useSignIn';
 import { SignInSchema, signInSchema } from '@/types/auth.types';
 import { useToast } from '@/components/ui/use-toast';
 import { useEffect } from 'react';
+import { LoadingButton } from '@/components/loadingButton';
 
 export function SignIn() {
   const { toast } = useToast();
@@ -26,8 +34,8 @@ export function SignIn() {
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      password: '',
       email: '',
+      password: '',
     },
   });
   const { mutate, isError, error, isPending } = useSignIn();
@@ -55,73 +63,101 @@ export function SignIn() {
       });
       return;
     }
-  }, [err, toast, mutate, token]);
+  }, [err, toast, mutate, token, msg]);
   function onSubmit(values: SignInSchema) {
     mutate(values);
   }
 
   return (
-    <div className="flex h-screen w-screen  flex-col items-center justify-center gap-5">
-      <h1 className="text-4xl">Sign In</h1>
-      <p>
-        New User?{' '}
-        <Link className="text-blue-500" to={'/signup'}>
-          Create an account
-        </Link>
-      </p>
-      <div>
-        <Link
-          to={
-            import.meta.env.DEV
-              ? 'http://localhost:3000/api/auth/login/google'
-              : '/api/auth/login/google'
-          }
-          className={buttonVariants({
-            variant: 'outline',
-          })}
-        >
-          continue with Google
-        </Link>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="nagy@webloom.com"
-                    autoFocus={true}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormDescription>enter strong password</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {isError && <p className="text-red-900">{error?.message}</p>}
-          <Button type="submit" disabled={isPending}>
-            Submit
-          </Button>
-        </form>
-      </Form>
+    <div className="flex h-screen w-full items-center justify-center px-4">
+      <Card className="w-auto lg:w-2/6">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-bold">
+            Nilefy
+          </CardTitle>
+          <CardDescription className="text-center text-sm font-semibold">
+            Sign in to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="user@nilefy.com"
+                          autoFocus={true}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          to={'/forgot-password'}
+                          className="ml-auto inline-block text-sm underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Enter your password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {isError && <p className="text-red-900">{error?.message}</p>}
+                <LoadingButton
+                  isLoading={isPending}
+                  type="submit"
+                  className="w-full"
+                >
+                  Login
+                </LoadingButton>
+              </form>
+            </Form>
+            <Button variant="outline" className="w-full" asChild>
+              <Link
+                to={
+                  import.meta.env.DEV
+                    ? 'http://localhost:3000/api/auth/login/google'
+                    : '/api/auth/login/google'
+                }
+              >
+                Login with Google
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-4 text-center text-sm">
+            Don&apos;t have an account?{' '}
+            <Link to="/signup" className="underline">
+              Sign up
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

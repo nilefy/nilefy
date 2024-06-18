@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { sql } from "drizzle-orm";
 import {
   integer,
   json,
@@ -10,8 +10,8 @@ import {
   boolean,
   text,
   primaryKey,
-} from 'drizzle-orm/pg-core';
-import { apps, timeStamps, softDelete, whoToBlame } from './schema';
+} from "drizzle-orm/pg-core";
+import { apps, timeStamps, softDelete, whoToBlame } from "./schema";
 
 /**
  * any app contains multiple pages, each page have a seprate `tree`/`state`
@@ -23,63 +23,62 @@ import { apps, timeStamps, softDelete, whoToBlame } from './schema';
  */
 
 export const pages = pgTable(
-  'pages',
+  "pages",
   {
-    id: serial('id').primaryKey(),
-    handle: varchar('handle').notNull(),
-    name: varchar('name').notNull(),
-    enabled: boolean('disabled')
+    id: serial("id").primaryKey(),
+    handle: varchar("handle").notNull(),
+    name: varchar("name").notNull(),
+    enabled: boolean("disabled")
       .notNull()
       .default(sql`true`),
-    visible: boolean('visible')
+    visible: boolean("visible")
       .notNull()
       .default(sql`true`),
-    index: integer('index').notNull(),
-    appId: integer('app_id')
+    index: integer("index").notNull(),
+    appId: integer("app_id")
       .notNull()
-      .references(() => apps.id),
+      .references(() => apps.id, { onDelete: "cascade" }),
     ...timeStamps,
-    ...softDelete,
     ...whoToBlame,
   },
   (t) => ({
     pageName: unique().on(t.appId, t.name),
     handleUnique: unique().on(t.appId, t.handle),
-  }),
+  })
 );
 
 export const components = pgTable(
-  'components',
+  "components",
   {
     /**
      * id now act as name as well as id
      */
-    id: text('id').notNull(),
-    type: varchar('type').notNull(),
+    id: text("id").notNull(),
+    type: varchar("type").notNull(),
     // TODO: convert to jsonb
-    props: json('props').$type<Record<string,unknown>>().notNull(),
+    props: json("props").$type<Record<string, unknown>>().notNull(),
     /**
      * parent_id
      */
-    parentId: text('parent_id'),
+    parentId: text("parent_id"),
     // LAYOUT
     /**
      * columnNumber from left to right starting from 0 to NUMBER_OF_COLUMNS
      */
-    col: integer('col').notNull(),
+    col: integer("col").notNull(),
     /**
      * rowNumber from top to bottom starting from 0 to infinity
      */
-    row: integer('row').notNull(),
+    row: integer("row").notNull(),
     // number of columns this node takes
-    columnsCount: integer('columns_count').notNull(),
+    columnsCount: integer("columns_count").notNull(),
     /**
      * number of rows this node takes
      */
-    rowsCount: integer('rows_count').notNull(),
-    pageId: integer('page_id')
+    rowsCount: integer("rows_count").notNull(),
+    pageId: integer("page_id")
       .notNull()
-      .references(() => pages.id),
+      .references(() => pages.id, { onDelete: "cascade" }),
     ...timeStamps,
     ...whoToBlame,
   },
@@ -88,7 +87,8 @@ export const components = pgTable(
     parentFK: foreignKey({
       columns: [t.parentId, t.pageId],
       foreignColumns: [t.id, t.pageId],
-    }).onDelete('cascade'),
+    })
+    .onDelete('cascade').onUpdate('cascade')
   }),
 );
 
@@ -97,18 +97,17 @@ export const components = pgTable(
 //   };
 // });
 export const jsLibraries = pgTable(
-  'app_js_libraries',
+  "app_js_libraries",
   {
-    id: text('id').notNull(),
-    appId: integer('app_id')
-      .references(() => apps.id)
+    id: text("id").notNull(),
+    appId: integer("app_id")
+      .references(() => apps.id, { onDelete: "cascade" })
       .notNull(),
-    url: varchar('url').notNull(),
+    url: varchar("url").notNull(),
     ...timeStamps,
     ...whoToBlame,
-
   },
   (t) => ({
     pk: primaryKey({ columns: [t.id, t.appId] }),
-  }),
+  })
 );

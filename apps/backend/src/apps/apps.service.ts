@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   AppDto,
+  AppExportSchema,
   AppRetDto,
   AppsRetDto,
   CreateAppDb,
@@ -14,7 +15,7 @@ import {
   UpdateAppDb,
 } from '../dto/apps.dto';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { PagesService } from '../pages/pages.service';
 import { UserDto } from '../dto/users.dto';
 import {
@@ -25,15 +26,23 @@ import {
   components,
   queries as drizzleQueries,
   users,
-} from '@webloom/database';
+} from '@nilefy/database';
+import { ComponentsService } from '../components/components.service';
 import { alias } from 'drizzle-orm/pg-core';
-import { PageDto } from 'src/dto/pages.dto';
+import { PageDto } from '../dto/pages.dto';
+import { DataQueriesService } from '../data_queries/data_queries.service';
+import { JsQueriesService } from '../js_queries/js_queries.service';
+import { JsLibrariesService } from '../js_libraries/js_libraries.service';
 
 @Injectable()
 export class AppsService {
   constructor(
     @Inject(DrizzleAsyncProvider) private db: DatabaseI,
     private pagesService: PagesService,
+    private componentsService: ComponentsService,
+    private queriesService: DataQueriesService,
+    private jsQueriesService: JsQueriesService,
+    private jsLibsService: JsLibrariesService,
   ) {}
 
   async clone({
@@ -44,7 +53,7 @@ export class AppsService {
     createdById: UserDto['id'];
     workspaceId: AppDto['workspaceId'];
     appId: AppDto['id'];
-  }): Promise<CreateAppRetDto> {
+  }): Promise<Omit<CreateAppRetDto, 'pages'>> {
     const newApp = await this.db.transaction(async (tx) => {
       const apps2 = alias(apps, 'apps2');
       const createAppSql = sql<AppDto>`
@@ -135,31 +144,50 @@ export class AppsService {
     return newPage;
   }
 
-  async create(createAppDto: CreateAppDb): Promise<CreateAppRetDto> {
-    const app = await this.db.transaction(async (tx) => {
-      const [app] = await tx.insert(apps).values(createAppDto).returning();
-      // create default page for the app
-      const page = await this.pagesService.create(
-        {
-          name: 'page 1',
-          createdById: createAppDto.createdById,
-          appId: app.id,
-        },
-        {
-          tx: tx,
-        },
-      );
-      return { ...app, pages: [page] };
-    });
+  async create(
+    createAppDto: CreateAppDb,
+    options?: { tx?: PgTrans },
+  ): Promise<CreateAppRetDto> {
+    return await (options?.tx
+      ? this.createHelper(createAppDto, options.tx)
+      : this.db.transaction(async (tx) => {
+          return await this.createHelper(createAppDto, tx);
+        }));
+  }
 
-    return app;
+  private async createHelper(
+    createAppDto: CreateAppDb,
+    tx: PgTrans,
+  ): Promise<CreateAppRetDto> {
+    const [app] = await tx.insert(apps).values(createAppDto).returning();
+    // create default page for the app
+    const page = await this.pagesService.create(
+      {
+        name: 'page 1',
+        createdById: createAppDto.createdById,
+        appId: app.id,
+      },
+      {
+        tx: tx,
+      },
+    );
+    return { ...app, pages: [page] };
   }
 
   async findAll(workspaceId: AppDto['workspaceId']): Promise<AppsRetDto[]> {
     const workspaceApps = await this.db.query.apps.findMany({
-      where: and(eq(apps.workspaceId, workspaceId), isNull(apps.deletedAt)),
+      where: and(eq(apps.workspaceId, workspaceId)),
       orderBy: asc(apps.createdAt),
       with: {
+        pages: {
+          // TODO: if we gonna have default page concept update this to get default page instead of first page
+          orderBy: asc(pages.index),
+          limit: 1,
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
         createdBy: {
           columns: {
             id: true,
@@ -174,13 +202,20 @@ export class AppsService {
         },
       },
     });
-    return workspaceApps;
+    return workspaceApps.map((a) => ({
+      ...a,
+      page: a.pages[0],
+    }));
   }
 
+  /**
+   * @returns get application with its default page which is the first page or page with certain id
+   */
   async findOne(
     currentUser: UserDto['id'],
     workspaceId: AppDto['workspaceId'],
     appId: AppDto['id'],
+    pageId?: PageDto['id'],
   ): Promise<AppRetDto> {
     const user = await this.db.query.users.findFirst({
       where: eq(users.id, currentUser),
@@ -193,11 +228,7 @@ export class AppsService {
       throw new NotFoundException();
     }
     const app = await this.db.query.apps.findFirst({
-      where: and(
-        eq(apps.id, appId),
-        eq(apps.workspaceId, workspaceId),
-        isNull(apps.deletedAt),
-      ),
+      where: and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)),
       with: {
         createdBy: {
           columns: {
@@ -232,8 +263,12 @@ export class AppsService {
     // TODO: for now i get the first page as the default but needs to add default page concept to the database
     const defaultPage = await this.pagesService.findOne(
       app.id,
-      app.pages[0].id,
+      // load certain page if provided other than that load default page
+      pageId ? pageId : app.pages[0].id,
     );
+    if (!defaultPage) {
+      throw new BadRequestException('page not found');
+    }
     return {
       ...app,
       onBoardingCompleted: user.onboardingCompleted ?? false,
@@ -249,13 +284,7 @@ export class AppsService {
     const [app] = await this.db
       .update(apps)
       .set({ updatedAt: sql`now()`, ...updateAppDto })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');
@@ -265,25 +294,146 @@ export class AppsService {
   async delete({
     workspaceId,
     appId,
-    deletedById,
   }: {
-    deletedById: AppDto['deletedById'];
     appId: AppDto['id'];
     workspaceId: AppDto['workspaceId'];
   }): Promise<AppDto> {
     const [app] = await this.db
-      .update(apps)
-      .set({ deletedAt: sql`now()`, deletedById })
-      .where(
-        and(
-          eq(apps.id, appId),
-          eq(apps.workspaceId, workspaceId),
-          isNull(apps.deletedAt),
-        ),
-      )
+      .delete(apps)
+      .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
     if (!app) throw new NotFoundException('app not found in this workspace');
     return app as AppDto;
+  }
+
+  async exportAppJSON(
+    currentUser: UserDto['id'],
+    workspaceId: AppDto['workspaceId'],
+    appId: AppDto['id'],
+  ): Promise<AppExportSchema> {
+    const app = await this.findOne(currentUser, workspaceId, appId);
+    const appPages = app.pages;
+    const pagesPromise = Promise.all(
+      appPages.map((p) => this.componentsService.getComponentsForPage(p.id)),
+    );
+    const [pages, queries, jsQueries, jsLibs] = await Promise.all([
+      pagesPromise,
+      this.queriesService.getAppQueries(app.id),
+      this.jsQueriesService.index(app.id),
+      this.jsLibsService.index(app.id),
+    ]);
+    return {
+      // TODO: hoist versions in global scope
+      version: '0.0.1',
+      name: app.name,
+      description: app.description,
+      pages: pages.map((tree, i) => ({
+        ...appPages[i],
+        tree: tree.map((c) => ({
+          id: c.id,
+          type: c.type,
+          level: c.level,
+          col: c.col,
+          row: c.row,
+          props: c.props,
+          rowsCount: c.rowsCount,
+          columnsCount: c.columnsCount,
+          parentId: c.parentId,
+          pageId: c.pageId,
+        })),
+      })),
+      queries: queries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        dataSourceId: q.dataSource?.id ?? null,
+        baseDataSourceId: q.baseDataSource.id,
+      })),
+      jsQueries: jsQueries.map((q) => ({
+        id: q.id,
+        query: q.query,
+        triggerMode: q.triggerMode,
+        settings: q.settings,
+      })),
+      jsLibs: jsLibs.map((l) => ({
+        id: l.id,
+        url: l.url,
+      })),
+    };
+  }
+
+  // TODO: handle case where datasource doesn't exist
+  async importAppJSON(
+    currentUser: number,
+    workspaceId: number,
+    appData: AppExportSchema,
+  ) {
+    return await this.db.transaction(async (tx) => {
+      const [app] = await tx
+        .insert(apps)
+        .values({
+          name: appData.name + 'from json',
+          description: appData.description,
+          workspaceId: workspaceId,
+          createdById: currentUser,
+        })
+        .returning();
+      const appId = app.id;
+      const createdById = app.createdById;
+      const pages = await this.pagesService.createWithoutDefaultRoot(
+        appData.pages.map((p) => ({
+          appId: appId,
+          createdById,
+          handle: p.handle,
+          index: p.index,
+          name: p.name,
+          enabled: p.enabled,
+          visible: p.visible,
+        })),
+        { tx },
+      );
+      await Promise.all([
+        this.componentsService.create(
+          appData.pages.flatMap((p, i) =>
+            p.tree.map((c) => ({ ...c, pageId: pages[i].id, createdById })),
+          ),
+          { tx },
+        ),
+        // TODO: handle case where datasource might not exist in this workspace or doesn't exist at all
+        appData.queries.length > 0
+          ? this.queriesService.insert(
+              appData.queries.map((q) => ({
+                ...q,
+                appId,
+                dataSourceId: null,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsQueries.length > 0
+          ? this.jsQueriesService.insert(
+              appData.jsQueries.map((q) => ({
+                ...q,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+        appData.jsLibs.length > 0
+          ? this.jsLibsService.insert(
+              appData.jsLibs.map((l) => ({
+                ...l,
+                appId,
+                createdById,
+              })),
+              { tx },
+            )
+          : undefined,
+      ]);
+      return app;
+    });
   }
 }

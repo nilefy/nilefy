@@ -11,9 +11,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 // import { FormControlContext } from '..';
-import { WebloomDatePickerProps } from '@/pages/Editor/Components/WebloomWidgets/DatePicker';
+import { NilefyDatePickerProps } from '@/pages/Editor/Components/NilefyWidgets/DatePicker';
 
-const DatePicker = (props: WebloomDatePickerProps) => {
+const DatePicker = (props: NilefyDatePickerProps) => {
   // const { onChange } = useContext(FormControlContext);
   // return (
   //   <Popover>

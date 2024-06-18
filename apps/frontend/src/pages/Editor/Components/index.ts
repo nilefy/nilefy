@@ -1,42 +1,45 @@
 import { createContext } from 'react';
-import { WebloomButtonWidget } from './WebloomWidgets/Button';
-import { WebloomContainerWidget } from './WebloomWidgets/Container';
-import { WebloomInputWidget } from './WebloomWidgets/Input';
-import { WebloomTextEditorWidget } from './WebloomWidgets/RichTextEditor';
-import { WebloomTextWidget } from './WebloomWidgets/Text';
-import { WebloomTableWidget } from './WebloomWidgets/Table';
-import { WebloomImageWidget } from './WebloomWidgets/Image';
-import { WebloomChartWidget } from './WebloomWidgets/Chart';
-import { WebloomSelectWidget } from './WebloomWidgets/Select';
-import { WebloomMultiSelectWidget } from './WebloomWidgets/MultiSelect';
+import { NilefyButtonWidget } from './NilefyWidgets/Button';
+import { NilefyContainerWidget } from './NilefyWidgets/Container';
+import { NilefyInputWidget } from './NilefyWidgets/Input';
+import { NilefyTextEditorWidget } from './NilefyWidgets/RichTextEditor';
+import { NilefyTextWidget } from './NilefyWidgets/Text';
+import { NilefyTableWidget } from './NilefyWidgets/Table';
+import { NilefyImageWidget } from './NilefyWidgets/Image';
+import { NilefyChartWidget } from './NilefyWidgets/Chart';
+import { NilefySelectWidget } from './NilefyWidgets/Select';
+import { NilefyMultiSelectWidget } from './NilefyWidgets/MultiSelect';
 // import { WebloomDatePickerWidget } from './WebloomWidgets/DatePicker';
-import { WebloomFilePickerWidget } from './WebloomWidgets/FilePicker';
-import { WebloomRadioWidget } from './WebloomWidgets/radioGroup';
-import { WebloomCheckBoxWidget } from './WebloomWidgets/checkBox';
-import { WebloomCheckBoxGroupWidget } from './WebloomWidgets/checkBoxGroup';
-import { WebloomNumberInputWidget } from './WebloomWidgets/NumberInput';
-import { WebloomTextAreaWidget } from './WebloomWidgets/TextArea';
-import { WebloomFormWidget } from './WebloomWidgets/Form';
+import { NilefyFilePickerWidget } from './NilefyWidgets/FilePicker';
+import { NilefyRadioWidget } from './NilefyWidgets/radioGroup';
+import { NilefyCheckBoxWidget } from './NilefyWidgets/checkBox';
+import { NilefyCheckBoxGroupWidget } from './NilefyWidgets/checkBoxGroup';
+import { NilefyNumberInputWidget } from './NilefyWidgets/NumberInput';
+import { NilefyTextAreaWidget } from './NilefyWidgets/TextArea';
+import { NilefyFormWidget } from './NilefyWidgets/Form';
+import { NilefyRangeWidget } from './NilefyWidgets/Range';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
-export const WebloomWidgets = {
-  WebloomButton: WebloomButtonWidget,
-  WebloomContainer: WebloomContainerWidget,
-  WebloomInput: WebloomInputWidget,
-  WebloomNumberInput: WebloomNumberInputWidget,
-  WebloomTextArea: WebloomTextAreaWidget,
-  WebloomText: WebloomTextWidget,
-  TextEditor: WebloomTextEditorWidget,
-  Table: WebloomTableWidget,
-  Image: WebloomImageWidget,
-  Chart: WebloomChartWidget,
-  WebloomSelect: WebloomSelectWidget,
-  WebloomMultiSelect: WebloomMultiSelectWidget,
-  // WebloomDatePicker: WebloomDatePickerWidget,
-  WebloomFilePicker: WebloomFilePickerWidget,
-  WebloomRadioGroup: WebloomRadioWidget,
-  WebloomCheckBox: WebloomCheckBoxWidget,
-  WebloomCheckBoxGroup: WebloomCheckBoxGroupWidget,
-  WebloomForm: WebloomFormWidget,
+export const NilefyWidgets = {
+  NilefyButton: NilefyButtonWidget,
+  [EDITOR_CONSTANTS.WIDGET_CONTAINER_TYPE_NAME]: NilefyContainerWidget,
+  NilefyInput: NilefyInputWidget,
+  NilefyNumberInput: NilefyNumberInputWidget,
+  NilefyTextArea: NilefyTextAreaWidget,
+  NilefyText: NilefyTextWidget,
+  TextEditor: NilefyTextEditorWidget,
+  Table: NilefyTableWidget,
+  Image: NilefyImageWidget,
+  Chart: NilefyChartWidget,
+  NilefySelect: NilefySelectWidget,
+  NilefyMultiSelect: NilefyMultiSelectWidget,
+  // NilefyDatePicker: NilefyDatePickerWidget,
+  NilefyFilePicker: NilefyFilePickerWidget,
+  NilefyRadioGroup: NilefyRadioWidget,
+  NilefyCheckBox: NilefyCheckBoxWidget,
+  NilefyCheckBoxGroup: NilefyCheckBoxGroupWidget,
+  NilefyForm: NilefyFormWidget,
+  NilefyRange: NilefyRangeWidget,
 } as const;
 
 export const WidgetContext = createContext<{
@@ -49,4 +52,8 @@ export const WidgetContext = createContext<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }>({} as any);
 
-export type WidgetTypes = keyof typeof WebloomWidgets;
+export type WidgetTypes = keyof typeof NilefyWidgets;
+
+export const EnvironmentContext = createContext<{
+  isProduction: boolean;
+}>({ isProduction: true });

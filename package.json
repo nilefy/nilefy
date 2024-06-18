@@ -1,24 +1,27 @@
 {
-  "name": "frontend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "nilefy",
+  "version": "0.0.7",
+  "description": "Low-code platform for developers",
   "scripts": {
     "dev": "dotenv turbo dev",
-    "build": "dotenv turbo run build --filter=!docs",
-    "start:docker": "dotenv turbo start:prod --filter=backend",
+    "build": "dotenv turbo run build -- --filter=!@nilefy/docs",
+    "build:docs": "dotenv turbo run build -- --filter=@nilefy/docs",
+    "start:docker": "dotenv turbo start:prod -- --filter=backend",
     "start": "dotenv turbo start",
-    "docs:start": "dotenv turbo run start --workspace=docs",
-    "dev:docs": "dotenv turbo dev --workspace=docs",
+    "dev:docs": "dotenv turbo run start -- --filter=@nilefy/docs",
     "lint": "turbo lint",
     "db:push": "cd packages/database && dotenv -e ../../.env pnpm db:push",
+    "db:check": "cd packages/database && dotenv -e ../../.env pnpm db:check",
     "db:studio": "cd packages/database && dotenv -e ../../.env pnpm db:studio",
+    "db:syncDss": "cd apps/backend && dotenv -e ../../.env pnpm db:syncDss",
+    "db:syncPermissions": "cd apps/backend && dotenv -e ../../.env pnpm db:syncPermissions",
     "db:seed": "dotenv turbo db:seed",
     "db:reset": "dotenv turbo db:reset",
     "typecheck": "turbo typecheck",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "e2e": "concurrently \"dotenv -e .env.test -- turbo run e2e:build --filter=!docs && dotenv -e .env.test -- turbo run db:seed && dotenv -e .env.test -- turbo run start --filter=!docs\"  \"wait-on http://localhost:3000/api && dotenv -e .env.test -- turbo run e2e  \"",
+    "db:generate": "cd packages/database && dotenv -e ../../.env pnpm db:generate",
     "db:migrate": "cd packages/database && dotenv -e ../../.env pnpm db:migrate"
   },
   "engines": {
@@ -36,5 +39,8 @@
     "typescript": "^5.2.2",
     "wait-on": "^7.2.0"
   },
-  "packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392"
+  "packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
 }

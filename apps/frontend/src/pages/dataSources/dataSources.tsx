@@ -63,7 +63,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Card,
   CardContent,
@@ -76,7 +76,7 @@ import { cn } from '@/lib/cn';
 import { LoadingButton } from '@/components/loadingButton';
 import FormT from '@rjsf/core';
 import { useToast } from '@/components/ui/use-toast';
-// import { dataSourcesTypes } from '@webloom/constants';
+// import { dataSourcesTypes } from '@nilefy/constants';
 
 function CreatePluginForm({
   workspaceId,
@@ -162,7 +162,7 @@ export function GlobalDataSourcesView() {
   const { globalDataSources } = useLoaderData();
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={globalDataSources}>
         <GlobalDataSourcesResolved />
       </Await>
@@ -287,7 +287,7 @@ function WorkspaceDataSourcesView() {
 
   return (
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
-      {isPending && <WebloomLoader />}
+      {isPending && <NilefyLoader />}
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -303,7 +303,7 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col gap-4  overflow-y-auto overflow-x-hidden">
+      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
         {!filteredPlugins ? (
           <p>No Data Sources match your search query try changing the search</p>
         ) : (
@@ -345,8 +345,9 @@ function WorkspaceDataSourcesView() {
                         Are you absolutely sure?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. will remove all queries
-                        related to this datasource
+                        This action cannot be undone. YOU HAVE TO CONNECT
+                        QUUERIES CONNECTED TO THIS DATASOURCE TO NEW DATASOURCE
+                        OR YOUR APP WILL NOT FUNCTION CORRECTLY
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -405,7 +406,7 @@ export function DataSourceView() {
   const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   } else if (isError) {
     throw error;
   }
@@ -467,7 +468,8 @@ export function DataSourceView() {
               <LoadingButton
                 key={'dsSave'}
                 isLoading={isSubmitting}
-                buttonProps={{ type: 'submit', className: 'mt-4' }}
+                type="submit"
+                className="mt-4"
               >
                 <span>
                   <SaveIcon /> Save
@@ -475,25 +477,18 @@ export function DataSourceView() {
               </LoadingButton>
               <LoadingButton
                 isLoading={isTestingConnection}
-                buttonProps={{
-                  type: 'button',
-                  onClick: () => {
-                    if (
-                      !workspaceId ||
-                      !datasourceId ||
-                      !form ||
-                      !form.current
-                    ) {
-                      throw new Error();
-                    }
-                    testConnectionMutate({
-                      workspaceId: +workspaceId,
-                      dataSourceId: +datasourceId,
-                      dto: {
-                        config: form.current.state.formData,
-                      },
-                    });
-                  },
+                type="button"
+                onClick={() => {
+                  if (!workspaceId || !datasourceId || !form || !form.current) {
+                    throw new Error();
+                  }
+                  testConnectionMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      config: form.current.state.formData,
+                    },
+                  });
                 }}
                 key={'dsTest'}
               >
@@ -513,7 +508,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
+    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,

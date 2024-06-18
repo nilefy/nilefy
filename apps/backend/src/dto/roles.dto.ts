@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod';
-import { roles as rolesDrizzle } from '@webloom/database';
+import { roles as rolesDrizzle } from '@nilefy/database';
 import { createZodDto } from 'nestjs-zod';
 
 export const rolesSchema = createSelectSchema(rolesDrizzle, {
@@ -18,8 +18,25 @@ export const createRoleSchema = rolesSchema
   .extend({
     description: z.string().optional(),
   });
-
-export const updateRoleSchema = createRoleSchema.partial();
+export const updateRoleSchema = createRoleSchema.partial().extend({
+  /**
+   * list of user ids to be added to the team
+   */
+  addUsers: z.array(z.number()).optional(),
+  /**
+   * list of user ids to be removed to the team
+   */
+  removeUsers: z.array(z.number()).optional(),
+  addApps: z
+    .array(
+      z.object({
+        appId: z.number(),
+        permission: z.enum(['edit', 'view']),
+      }),
+    )
+    .optional(),
+  removeApps: z.array(z.number()).optional(),
+});
 
 export const updateRoleDb = createRoleDb
   .partial()

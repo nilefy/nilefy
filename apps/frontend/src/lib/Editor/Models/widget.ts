@@ -1,10 +1,10 @@
 import { makeObservable, observable, computed, action, override } from 'mobx';
-import { WebloomWidgets, WidgetTypes } from '@/pages/Editor/Components';
+import { NilefyWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import scrollIntoView from 'scroll-into-view-if-needed';
 
 import { WebloomPage } from './page';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   WebloomGridDimensions,
   WebloomPixelDimensions,
@@ -77,13 +77,14 @@ export class WebloomWidget
   rowsCount: number;
   page: WebloomPage;
   metaProps: Set<string>;
+  widgetName: string;
   constructor({
     type,
     parentId,
     row = 0,
     col = 0,
     page,
-    id = getNewEntityName(type),
+    id = getNewEntityName(type, page.id),
     nodes = [],
     rowsCount,
     columnsCount,
@@ -100,7 +101,7 @@ export class WebloomWidget
     columnsCount?: number;
     props?: Record<string, unknown>;
   }) {
-    const widgetConfig = WebloomWidgets[type];
+    const widgetConfig = NilefyWidgets[type];
     const _props = props ?? widgetConfig.initialProps;
     const rawValues = {
       ..._props,
@@ -119,6 +120,7 @@ export class WebloomWidget
       ),
       metaValues: widgetConfig.metaProps,
     });
+    this.widgetName = id;
     this.metaProps = widgetConfig.metaProps ?? new Set();
     if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) this.isRoot = true;
     this.dom = null;
@@ -189,7 +191,7 @@ export class WebloomWidget
     ];
   }
   get resizeDirection(): ResizeDirection {
-    const direction = WebloomWidgets[this.type].config.resizingDirection;
+    const direction = NilefyWidgets[this.type].config.resizingDirection;
     if (this.layoutMode === 'auto' && direction === 'Both') return 'Horizontal';
     return direction;
   }
@@ -206,14 +208,11 @@ export class WebloomWidget
       );
     return 0;
   }
-  setValue(path: string, value: unknown): void {
-    if (!this.metaProps.has(path)) {
+  setValue(path: string, value: unknown, autoSync = true): void {
+    if (!this.metaProps.has(path) && autoSync) {
       this.debouncedSyncRawValuesWithServer();
     }
     super.setValue(path, value);
-  }
-  setApi(api: Record<string, (...args: unknown[]) => void>) {
-    this.api = api;
   }
   syncRawValuesWithServer() {
     commandManager.executeCommand(new ChangePropAction(this.id));
@@ -222,6 +221,10 @@ export class WebloomWidget
     this.syncRawValuesWithServer,
     500,
   );
+  setApi(api: Record<string, (...args: unknown[]) => void>) {
+    this.api = api;
+  }
+
   get boundingRect() {
     return getBoundingRect(this.pixelDimensions);
   }
@@ -425,7 +428,7 @@ export class WebloomWidget
 
   clone() {
     const snapshot = this.snapshot;
-    snapshot.id = getNewEntityName(snapshot.type);
+    snapshot.id = getNewEntityName(snapshot.type, this.page.id);
     return new WebloomWidget({
       ...snapshot,
       page: this.page,
@@ -433,7 +436,7 @@ export class WebloomWidget
   }
 
   get isCanvas() {
-    return WebloomWidgets[this.type].config.isCanvas;
+    return NilefyWidgets[this.type].config.isCanvas;
   }
   unselectSelf() {
     this.page.setSelectedNodeIds((prev) => {

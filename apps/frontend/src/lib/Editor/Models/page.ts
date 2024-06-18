@@ -6,7 +6,7 @@ import {
   ShadowElement,
   WebloomGridDimensions,
 } from '../interface';
-import { EDITOR_CONSTANTS } from '@webloom/constants';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import {
   checkOverlap,
   convertGridToPixel,
@@ -15,10 +15,9 @@ import {
   normalizeCoords,
 } from '../utils';
 import { WorkerBroker } from './workerBroker';
-import { CursorManager } from './cursorManager';
 
 import { WebloomDisposable } from './interface';
-import { WebloomWidgets } from '@/pages/Editor/Components';
+import { NilefyWidgets } from '@/pages/Editor/Components';
 
 export type MoveNodeReturnType = Record<string, WebloomGridDimensions>;
 export type NewWidgePayload = Omit<
@@ -44,7 +43,6 @@ export class WebloomPage implements WebloomDisposable {
   newNode: WebloomWidget | null = null;
   newNodeTranslate: Point | null = null;
   shadowElement: ShadowElement | null = null;
-  private cursorManager: CursorManager;
   mousePosition: Point = {
     x: 0,
     y: 0,
@@ -126,8 +124,6 @@ export class WebloomPage implements WebloomDisposable {
     this.height =
       this.widgets[EDITOR_CONSTANTS.ROOT_NODE_ID].rowsCount *
       EDITOR_CONSTANTS.ROW_HEIGHT;
-
-    this.cursorManager = new CursorManager(this);
   }
   selectAll() {
     this.selectedNodeIds = new Set(this.rootWidget.nodes);
@@ -136,6 +132,7 @@ export class WebloomPage implements WebloomDisposable {
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
+
   setHoveredWidgetId(id: string | null) {
     this.hoveredWidgetId = id;
   }
@@ -207,7 +204,7 @@ export class WebloomPage implements WebloomDisposable {
     this._addWidget(widget);
     const parent = this.widgets[widgetArgs.parentId];
     parent.addChild(widget.id);
-    const widgetConfig = WebloomWidgets[widgetArgs.type];
+    const widgetConfig = NilefyWidgets[widgetArgs.type];
     const ops: (() => void)[] = [];
     // handle composed widgets
     if (widgetConfig.blueprint) {
@@ -485,6 +482,5 @@ export class WebloomPage implements WebloomDisposable {
   }
   dispose(): void {
     Object.values(this.widgets).forEach((widget) => widget.dispose());
-    this.cursorManager.dispose();
   }
 }

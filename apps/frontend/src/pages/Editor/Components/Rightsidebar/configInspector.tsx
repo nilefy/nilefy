@@ -1,7 +1,7 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { EntityInspectorConfig } from '@/lib/Editor/interface';
 import { observer } from 'mobx-react-lite';
-import { WebloomWidgets } from '..';
+import { NilefyWidgets } from '..';
 import { DefaultSection, EntityForm } from '../entityForm';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { WebloomWidget } from '@/lib/Editor/Models/widget';
@@ -19,11 +19,12 @@ import { ArrowRight } from 'lucide-react';
 import { singularOrPlural } from '@/lib/utils';
 import { commandManager } from '@/actions/CommandManager';
 import { RemoteSelectEntity } from '@/actions/editor/remoteSelectEntity';
-import { useAutoRun } from '@/lib/Editor/hooks';
+import { RenameAction } from '@/actions/editor/Rename';
+
 export const WidgetConfigPanel = observer(() => {
   const selectedId = editorStore.currentPage.firstSelectedWidget;
   const selectedNode = editorStore.currentPage.getWidgetById(selectedId);
-  const inspectorConfig = WebloomWidgets[selectedNode.type]
+  const inspectorConfig = NilefyWidgets[selectedNode.type]
     .inspectorConfig as EntityInspectorConfig;
 
   return (
@@ -58,9 +59,10 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
     },
     [setValue],
   );
-  useAutoRun(() => {
+  useEffect(() => {
     setValue(node.id);
-  });
+  }, [node.id]);
+  const selectedWidgetId = editorStore.currentPage.firstSelectedWidget;
   if (!node) return null;
   const incoming = node.connections.dependencies || [];
   const outgoing = node.connections.dependents || [];
@@ -90,7 +92,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
                   key={id}
                   className="cursor-pointer"
                   onClick={() => {
-                    selectCallback(id);
+                    selectCallback(id.split('.')[0]);
                   }}
                 >
                   {id}
@@ -119,7 +121,7 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
                   className="cursor-pointer"
                   key={id}
                   onClick={() => {
-                    selectCallback(id);
+                    selectCallback(id.split('.')[0]);
                   }}
                 >
                   {id}
@@ -133,12 +135,13 @@ const ConfigPanelHeader = observer(({ node }: { node: WebloomWidget }) => {
         Name
       </Label>
       <Input
+        data-testid="selected-widget-id"
         value={value}
         onChange={onChange}
         onBlur={(e) => {
-          // commandManager.executeCommand(
-          //   new ChangePropAction(node.id, true, 'name', e.currentTarget.value),
-          // );
+          commandManager.executeCommand(
+            new RenameAction(selectedWidgetId, e.target.value),
+          );
         }}
       />
     </div>

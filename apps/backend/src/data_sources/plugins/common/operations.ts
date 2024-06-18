@@ -14,3 +14,12 @@ export const mongodb = {
   REPLACE_DOC: 'Replace Document',
   DELETE_DOC: 'Delete Document',
 } as const;
+export const AZURE_BLOB_STORAGE = {
+  LIST_CONTAINERS: 'List containers',
+  LIST_BLOBS: 'List blobs',
+  CREATE_CONTAINER: 'Create container',
+  UPLOAD_BLOB: 'Upload blob',
+  DELETE_CONTAINER: 'Delete container',
+  DELETE_BLOB: 'Delete blob',
+  READ_BLOB: 'Read blob',
+} as const;
