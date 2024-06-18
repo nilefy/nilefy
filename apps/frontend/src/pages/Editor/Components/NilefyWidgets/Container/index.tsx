@@ -67,7 +67,7 @@ const NilefyContainer = observer(
         }}
       >
         <div
-          className="relative "
+          className="relative bg-gray-50"
           data-id={id}
           data-testid={id}
           data-type={WIDGET_SECTIONS.CANVAS}
