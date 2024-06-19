@@ -558,7 +558,20 @@ const NilefyTable = observer(function NilefyTable() {
       widget.handleEvent('onRowSelectionChange');
     },
   });
-
+  useAutoRun(() => {
+    if (props.selectedRowIndex !== undefined) {
+      onPropChange({
+        key: 'selectedRow',
+        value: toJS(props.data[props.selectedRowIndex]),
+      });
+    }
+    if (props.selectedRowIndices) {
+      onPropChange({
+        key: 'selectedRows',
+        value: props.selectedRowIndices.map((index) => toJS(props.data[index])),
+      });
+    }
+  });
   useRestPageIndexOnPageSizeChange({
     table,
   });
