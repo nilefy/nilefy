@@ -27,8 +27,9 @@ export type NilefyInputProps = {
   onFocus?: string;
   onBlur?: string;
   onSubmit?: string;
-  defaultValue?: string | number;
+  defaultValue?: string;
 };
+
 const NilefyInput = observer(() => {
   const { onPropChange, id } = useContext(WidgetContext);
   const ref = useRef<HTMLInputElement>(null);
