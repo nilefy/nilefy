@@ -1,15 +1,23 @@
 import { Chart } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
   ArcElement,
-  Tooltip,
-  Legend,
+  BarController,
   BarElement,
   CategoryScale,
-  LinearScale,
-  PointElement,
+  Chart as ChartJS,
+  DoughnutController,
+  Filler,
+  Legend,
+  LineController,
   LineElement,
+  LinearScale,
+  PieController,
+  PointElement,
+  RadarController,
+  RadialLinearScale,
+  ScatterController,
   Title,
+  Tooltip,
 } from 'chart.js';
 import {
   EntityInspectorConfig,
@@ -35,16 +43,32 @@ import {
 import { Button } from '@/components/ui/button';
 
 ChartJS.register(
-  LinearScale,
-  CategoryScale,
+  /** Bar chart**/
+  BarElement,
+  BarController,
+  /** Line chart**/
+  LineElement,
+  LineController,
+  PointElement,
+  /** Pie chart**/
+  PieController,
   ArcElement,
+  /** Scatter chart**/
+  ScatterController,
+  /** Doughnut **/
+  DoughnutController,
+  /** Radar **/
+  RadarController,
+  RadialLinearScale,
+  /**Other**/
+  Title,
   Tooltip,
   Legend,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
+  CategoryScale,
+  LinearScale,
+  Filler,
 );
+
 // TODO: direction
 const NilefyChart = observer(function NilefyChart() {
   const { id } = useContext(WidgetContext);
