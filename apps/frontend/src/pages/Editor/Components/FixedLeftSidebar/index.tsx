@@ -16,7 +16,7 @@ export function FixedLeftSidebar() {
         <BugsCount />
       </div>
       <div className="mt-auto flex items-center justify-center">
-        <ModeToggle />
+        {/* <ModeToggle /> */}
       </div>
       <Button
         variant={'ghost'}
