@@ -1,4 +1,4 @@
-# General
+# Text
 
 **Text string** 
 
@@ -14,23 +14,22 @@ You have the option to use HTML code within the Text property to customize the a
 
 Example:
 
-<p style="color:blue;">Hello World</p>
-
+`<p style="color:blue;">Hello World</p>`
 
 This code displays the text Hello World in blue color.
 
-![Alt text](./image-1.png)
+![Alt text](./img/textExample2.png)
 
 Moreover You have the option to use Mark Down within the Text property to customize the appearance of the displayed text.
 
 Example:
 
-`# Hello World `
+```md
+# Hello World
 
-`* Hi`
-
-
+* Hi
+```
 
 This code displays the text as follows.
 
-![Alt text](./image.png)
+![Alt text](./img/textExample1.png)
