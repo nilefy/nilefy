@@ -44,7 +44,7 @@ holds current `text` value of the widget
 
 ## Setters - Methods
 
-A list of methods that can be called on the button widget instance to control the widget programmatically.
+A list of methods that can be called on the widget instance to control the widget programmatically.
 
 ### setDisabled 
 
