@@ -7,13 +7,16 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
-import { AppLoader } from './appLoader';
+import { AppLoader, PageLoader } from './appLoader';
 import { useRef } from 'react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Edit } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { useSetPageDimensions } from '@/lib/Editor/hooks';
 import { WebloomRootProduction } from './Components/lib/WebloomRoot';
+import { api } from '@/api';
+import { NilefyLoader } from '@/components/loader';
+import { observer } from 'mobx-react-lite';
 
 /*
  * should take full width of the screen
@@ -21,10 +24,20 @@ import { WebloomRootProduction } from './Components/lib/WebloomRoot';
 function PreviewHeader() {
   const { workspaceId, appId, pageId } = useParams();
   const appName = editorStore.name;
-  const pages = editorStore.pages;
-
+  // const pages = editorStore.pages;
+  const {
+    data: pages,
+    isPending,
+    isError,
+    error,
+  } = api.pages.index.useQuery(+(workspaceId as string), +(appId as string));
+  if (isError) {
+    throw error;
+  } else if (isPending) {
+    return <NilefyLoader />;
+  }
   return (
-    <div className="flex h-full w-full items-center gap-4 bg-primary/10 p-5">
+    <div className="bg-primary/10 flex h-full w-full items-center gap-4 p-5">
       <h2>{appName}</h2>
       <NavigationMenu className="gap-5">
         <NavigationMenuList></NavigationMenuList>
@@ -35,7 +48,7 @@ function PreviewHeader() {
               key={page.handle + page.id}
             >
               <NavLink
-                to={`/${workspaceId}/apps/${appId}/${page.handle}`}
+                to={`./${page.id}`}
                 className={() => navigationMenuTriggerStyle()}
               >
                 {page.name}
@@ -51,21 +64,26 @@ function PreviewHeader() {
         >
           <Edit className="absolute h-[1.2rem] w-[1.2rem] " />
         </Link>
-        <ModeToggle />
+        {/* <ModeToggle /> */}
       </div>
     </div>
   );
 }
 
-export function PagePreview() {
+export const PagePreview = observer(() => {
   const ref = useRef<HTMLDivElement>(null);
   useSetPageDimensions(ref);
+  if (editorStore.isLoadingPage) {
+    return <NilefyLoader />;
+  }
   return (
     <div ref={ref} className="relative h-full w-full bg-white">
-      <WebloomRootProduction isProduction={true} />
+      <PageLoader>
+        <WebloomRootProduction isProduction={true} />
+      </PageLoader>
     </div>
   );
-}
+});
 
 export function AppPreview() {
   return (
