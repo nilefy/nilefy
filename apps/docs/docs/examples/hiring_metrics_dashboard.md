@@ -1,6 +1,7 @@
 # Hiring Metrics Dashboard Example
 
 ![ Use-case: Hiring Metrics dashboard ](./img/Hiring_Metrics_Dashboard _Nilefy.png)
+
 In This example, I'll walk you through the steps to create a hiring metrics dashboard example using Nilefy. 
 
 Before we start, what we are about to build is basically a tool to empower your HR teams, hiring managers, and senior leaders with an advanced hiring metrics dashboard that offers real-time insights into the recruitment process. Featuring a user-friendly interface to evaluate key metrics and automated tools for candidate communication, this dashboard streamlines your hiring workflow and accelerates the time-to-hire, making your recruitment efforts more efficient and effective.
