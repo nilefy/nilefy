@@ -18,11 +18,11 @@ import zodToJsonSchema from 'zod-to-json-schema';
 
 export type NilefyInputProps = {
   label: string;
-  type: 'number' | 'text' | 'password';
+  type: 'text' | 'password';
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
-  value?: string | number;
+  value?: string;
   onTextChange?: string;
   onFocus?: string;
   onBlur?: string;
@@ -39,7 +39,6 @@ const NilefyInput = observer(() => {
       autorun(() => {
         if (props.type === 'password' || props.type === 'text')
           onPropChange({ value: '', key: 'value' });
-        if (props.type === 'number') onPropChange({ value: 0, key: 'value' });
       }),
     [onPropChange, props.type],
   );
@@ -148,10 +147,6 @@ const inspectorConfig: EntityInspectorConfig<NilefyInputProps> = [
             {
               label: 'Text',
               value: 'text',
-            },
-            {
-              label: 'Number',
-              value: 'number',
             },
             {
               label: 'Password',
