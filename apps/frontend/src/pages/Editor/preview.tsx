@@ -44,7 +44,7 @@ function PreviewHeader() {
         {Object.values(pages).map((page) => {
           return (
             <NavigationMenuItem
-              className="hover:border"
+              // className="hover:border"
               key={page.handle + page.id}
             >
               <NavLink
