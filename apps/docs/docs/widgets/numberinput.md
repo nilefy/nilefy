@@ -1,4 +1,4 @@
-# Input
+# Number Input
 
 accept user input
 
@@ -8,13 +8,6 @@ List of properties that can be updated through the inspector panel to customize 
 
 You can type code nearly anywhere in Nilefy, and the following properties are no exception.
 
-### type
-
-select input type
-
-- text: show input as text input
-- password: show input as password input
-
 ### placeholder `string | undefined`
 
 sets placeholder text for the widget
@@ -22,6 +15,14 @@ sets placeholder text for the widget
 ### default value
 
 sets what value the widget will start with if no value is provided
+
+### min
+
+sets min value for the input
+
+### max
+
+sets max value for the input
 
 ### Label
 

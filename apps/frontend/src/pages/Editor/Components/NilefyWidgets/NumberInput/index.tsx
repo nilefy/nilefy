@@ -10,8 +10,10 @@ import { Label } from '@/components/ui/label';
 import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
-import { useExposeWidgetApi } from '@/lib/Editor/hooks';
+import { useAutoRun, useExposeWidgetApi } from '@/lib/Editor/hooks';
 import { StringSchema } from '@/lib/Editor/validations';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 
 export type NilefyInputProps = {
   label: string;
@@ -19,6 +21,9 @@ export type NilefyInputProps = {
   disabled?: boolean | undefined;
   autoFocus?: boolean | undefined;
   value?: number;
+  defaultValue?: number;
+  min?: number;
+  max?: number;
   onChange?: string;
   onFocus?: string;
   onBlur?: string;
@@ -31,6 +36,13 @@ const NilefyNumberInput = observer(function NilefyNumberInput() {
   const props = widget.finalValues as NilefyInputProps;
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // set default value
+  useAutoRun(() =>
+    onPropChange({
+      key: 'value',
+      value: props.defaultValue,
+    }),
+  );
   useExposeWidgetApi(id, {
     focus: () => {
       if (!inputRef.current) return;
@@ -50,6 +62,8 @@ const NilefyNumberInput = observer(function NilefyNumberInput() {
         placeholder={props.placeholder}
         type="number"
         value={props.value ?? 0}
+        min={props.min}
+        max={props.max}
         disabled={props.disabled}
         autoFocus={props.autoFocus}
         onChange={(e) => {
@@ -113,6 +127,7 @@ const config: WidgetConfig = {
 const initialProps: NilefyInputProps = {
   placeholder: 'Enter text',
   value: 0,
+  defaultValue: 0,
   label: 'Label',
   disabled: false,
 };
@@ -129,6 +144,27 @@ const inspectorConfig: EntityInspectorConfig<NilefyInputProps> = [
           placeholder: 'Enter placeholder',
         },
         validation: StringSchema('Write something'),
+      },
+      {
+        path: 'defaultValue',
+        label: 'Default Value',
+        type: 'inlineCodeInput',
+        options: { placeholder: 'Enter default value' },
+        validation: zodToJsonSchema(z.number().default(0)),
+      },
+      {
+        path: 'min',
+        label: 'min',
+        type: 'inlineCodeInput',
+        options: { placeholder: '0' },
+        validation: zodToJsonSchema(z.number().optional()),
+      },
+      {
+        path: 'max',
+        label: 'max',
+        type: 'inlineCodeInput',
+        options: { placeholder: '100' },
+        validation: zodToJsonSchema(z.number().optional()),
       },
     ],
   },
