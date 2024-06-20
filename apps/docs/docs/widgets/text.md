@@ -33,3 +33,33 @@ Example:
 This code displays the text as follows.
 
 ![Alt text](./img/textExample1.png)
+
+## Instance Properties
+
+These are properties that can be accessed using the dot operator from any widget instance, in any place you can type code, such as other widget properties or in JS queries.
+
+### text `string`
+
+holds current `text` value of the widget
+
+## Setters - Methods
+
+A list of methods that can be called on the button widget instance to control the widget programmatically.
+
+### setDisabled 
+
+Sets the checkbox's disabled state.
+
+- interface: `(disabled: boolean) => void`
+
+### setText
+
+Sets the textWidget's text value
+
+- interface: `(text: string) => void`
+
+### clearText
+
+clears widget text
+
+- interface: `() => void`
