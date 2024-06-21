@@ -28,7 +28,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
-import { SaveIcon, Trash } from 'lucide-react';
+import { Activity, SaveIcon, Trash } from 'lucide-react';
 import { Suspense, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
@@ -478,14 +478,14 @@ export function DataSourceView() {
                 });
               }}
             >
-              <div className="m-4 mt-8 flex flex-wrap content-center justify-evenly">
+              <div className="m-4 mt-8 flex flex-wrap content-center justify-start gap-4">
                 <LoadingButton
                   key={'dsSave'}
                   isLoading={isSubmitting}
                   type="submit"
                 >
                   <span className="flex flex-row justify-evenly">
-                    <SaveIcon />{' '}
+                    <SaveIcon />
                     <p className="ml-2 mt-0.5 align-middle">Save</p>
                   </span>
                 </LoadingButton>
@@ -511,7 +511,8 @@ export function DataSourceView() {
                   }}
                   key={'dsTest'}
                 >
-                  <>Test Connection</>
+                  <Activity />
+                  Test Connection
                 </LoadingButton>
               </div>
             </RJSFShadcn>
