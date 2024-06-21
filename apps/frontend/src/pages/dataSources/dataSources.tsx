@@ -270,7 +270,11 @@ function WorkspaceDataSourcesView() {
   const { data, isPending, isError, error } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
-  const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
+  const { mutate: deleteMutate } = api.dataSources.delete.useMutation({
+    onSuccess() {
+      navigate(`/${workspaceId}/datasources`);
+    },
+  });
   const filteredPlugins = useMemo(() => {
     if (!data) {
       return;
@@ -331,13 +335,11 @@ function WorkspaceDataSourcesView() {
 
                   <AlertDialog>
                     <AlertDialogTrigger
-                      className={
-                        (buttonVariants({
-                          variant: 'ghost',
-                          size: 'icon',
-                          className: 'ml-auto hover:bg-destructive',
-                        }))
-                      }
+                      className={buttonVariants({
+                        variant: 'ghost',
+                        size: 'icon',
+                        className: 'ml-auto hover:bg-destructive',
+                      })}
                     >
                       <Trash size={15} />
                     </AlertDialogTrigger>
@@ -467,14 +469,15 @@ export function DataSourceView() {
                 });
               }}
             >
-              <div className="flex mt-8 content-center flex-wrap m-4 justify-evenly">
+              <div className="m-4 mt-8 flex flex-wrap content-center justify-evenly">
                 <LoadingButton
                   key={'dsSave'}
                   isLoading={isSubmitting}
                   type="submit"
                 >
                   <span className="flex flex-row justify-evenly">
-                    <SaveIcon /> <p className='ml-2 align-middle mt-0.5'>Save</p>
+                    <SaveIcon />{' '}
+                    <p className="ml-2 mt-0.5 align-middle">Save</p>
                   </span>
                 </LoadingButton>
                 <LoadingButton
