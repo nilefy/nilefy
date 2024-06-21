@@ -452,70 +452,72 @@ export function DataSourceView() {
           </TabsList>
 
           <TabsContent value="dev" className="h-full w-full ">
-            <RJSFShadcn
-              ref={form}
-              schema={data.dataSource.config.schema}
-              uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config}
-              validator={validator}
-              onSubmit={({ formData }) => {
-                if (
-                  !workspaceId ||
-                  !datasourceId ||
-                  !nameRef ||
-                  !nameRef.current
-                )
-                  throw new Error(
-                    "that's weird this function should run under workspaceId, datasourceId",
-                  );
-                updateMutate({
-                  workspaceId: +workspaceId,
-                  dataSourceId: +datasourceId,
-                  dto: {
-                    name: nameRef.current.value,
-                    config: formData,
-                  },
-                });
-              }}
-            >
-              <div className="m-4 mt-8 flex flex-wrap content-center justify-start gap-4">
-                <LoadingButton
-                  key={'dsSave'}
-                  isLoading={isSubmitting}
-                  type="submit"
-                >
-                  <span className="flex flex-row justify-evenly">
-                    <SaveIcon />
-                    <p className="ml-2 mt-0.5 align-middle">Save</p>
-                  </span>
-                </LoadingButton>
-                <LoadingButton
-                  isLoading={isTestingConnection}
-                  type="button"
-                  onClick={() => {
-                    if (
-                      !workspaceId ||
-                      !datasourceId ||
-                      !form ||
-                      !form.current
-                    ) {
-                      throw new Error();
-                    }
-                    testConnectionMutate({
-                      workspaceId: +workspaceId,
-                      dataSourceId: +datasourceId,
-                      dto: {
-                        config: form.current.state.formData,
-                      },
-                    });
-                  }}
-                  key={'dsTest'}
-                >
-                  <Activity />
-                  Test Connection
-                </LoadingButton>
-              </div>
-            </RJSFShadcn>
+            <div className="p-2">
+              <RJSFShadcn
+                ref={form}
+                schema={data.dataSource.config.schema}
+                uiSchema={data.dataSource.config.uiSchema}
+                formData={data.config}
+                validator={validator}
+                onSubmit={({ formData }) => {
+                  if (
+                    !workspaceId ||
+                    !datasourceId ||
+                    !nameRef ||
+                    !nameRef.current
+                  )
+                    throw new Error(
+                      "that's weird this function should run under workspaceId, datasourceId",
+                    );
+                  updateMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      name: nameRef.current.value,
+                      config: formData,
+                    },
+                  });
+                }}
+              >
+                <div className=" mt-8 flex flex-wrap content-center justify-start gap-4">
+                  <LoadingButton
+                    key={'dsSave'}
+                    isLoading={isSubmitting}
+                    type="submit"
+                  >
+                    <span className="flex flex-row justify-evenly">
+                      <SaveIcon />
+                      <p className="ml-2 mt-0.5 align-middle">Save</p>
+                    </span>
+                  </LoadingButton>
+                  <LoadingButton
+                    isLoading={isTestingConnection}
+                    type="button"
+                    onClick={() => {
+                      if (
+                        !workspaceId ||
+                        !datasourceId ||
+                        !form ||
+                        !form.current
+                      ) {
+                        throw new Error();
+                      }
+                      testConnectionMutate({
+                        workspaceId: +workspaceId,
+                        dataSourceId: +datasourceId,
+                        dto: {
+                          config: form.current.state.formData,
+                        },
+                      });
+                    }}
+                    key={'dsTest'}
+                  >
+                    <Activity />
+                    Test Connection
+                  </LoadingButton>
+                </div>
+              </RJSFShadcn>
+            </div>
           </TabsContent>
           {/*TODO:*/}
           <TabsContent value="prod"></TabsContent>
