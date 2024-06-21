@@ -54,7 +54,7 @@ const NilefyModal = observer(
             onClick={() => {
               onPropChange({ key: 'isOpen', value: false });
             }}
-            className="absolute left-0 top-0 z-0 h-full w-full bg-[rgba(0,0,0,0.5)] text-center text-white"
+            className="absolute left-0 top-0 z-50 h-full w-full bg-[rgba(0,0,0,0.5)] text-center text-white"
           ></div>
         </Portal>
         <NilefyContainer
