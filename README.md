@@ -6,17 +6,24 @@
 
 this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorepo for more information check up the docs
 
-- make sure you have **node.js** version `18.x.x`
+- make sure you have **node.js** version `20.x.x`
 
-- make sure you have **pnpm** installed `npm i -g pnpm`
+- make sure you have **pnpm** installed `npm i -g pnpm@8`
 
-- install deps `pnpm install`
+- in the root install deps `pnpm install`
 
 - create .env `cp .env.example .env`
 
+- run all packages in dev mode `pnpm run dev`
+
 - prototype the database schema `pnpm db:push`
 
-- if you want to seed the database with random data `pnpm db:seed` seed will generate admin the following credentials, and any other user with the password `password`
+- you can check [swagger](https://swagger.io/) docs in [http://localhost:3000/api#/](http://localhost:3000/api)
+
+
+### manage database
+
+- if you want to seed the database with random data(users/workspaces/apps/...) `pnpm db:seed` seed will generate admin the following credentials, and any other user with the password `password`
 
     ```ts
     {
@@ -26,16 +33,14 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
       }
     ```
 
-- run all packages in dev mode `pnpm run dev`
+- if you don't need to seed database with random data use `pnpm db:seed:prod` it will fill the database with only the requried data for the backend to operate(permissions/data sources/..)
 
-- you can check [swagger](https://swagger.io/) docs in [http://localhost:3000/api#/](http://localhost:3000/api)
 
-- for the docs use `pnpm docs:start`
+### docs
 
-- please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
+- to start docs server in dev mode run `pnpm dev:docs` in the root or in **apps/docs** run `pnpm start`
 
-- how to create new `WebloomWidget` guide check [CONTRIBUTING.md/How to create new Widget](/CONTRIBUTING.md#how-to-create-new-widget)
+- to build docs in the root run `build:docs`
 
-- to sync permissions with database `pnpm db:syncPermissions`
+please check [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to contribute(branch names/ commit messages and so on)
 
-- to sync datasources config with database without dropping database `pnpm db:syncDss`

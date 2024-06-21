@@ -16,6 +16,7 @@
     "db:syncDss": "cd apps/backend && dotenv -e ../../.env pnpm db:syncDss",
     "db:syncPermissions": "cd apps/backend && dotenv -e ../../.env pnpm db:syncPermissions",
     "db:seed": "dotenv turbo db:seed",
+    "db:seed:prod": "concurrently \"pnpm db:syncDss\" \"pnpm db:syncPermissions\"",
     "db:reset": "dotenv turbo db:reset",
     "typecheck": "turbo typecheck",
     "test": "turbo run test",
