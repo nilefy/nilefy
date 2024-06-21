@@ -14,7 +14,11 @@ import {
   WithNoTextSelection,
   WithSelection,
 } from './HOCs';
-import { ProductionWebloomElement } from './WebloomElement';
+import {
+  ModalWelboomElement,
+  ProductionWebloomElement,
+  WebloomElementBase,
+} from './WebloomElement';
 const useInitRootDimensions = () => {
   const root = editorStore.currentPage.rootWidget;
   const page = editorStore.currentPage;
@@ -78,13 +82,7 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
             </>
           )}
 
-          {nodes.map((nodeId) =>
-            isProduction ? (
-              <ProductionWebloomElement id={nodeId} key={nodeId} />
-            ) : (
-              <WebloomElement id={nodeId} key={nodeId} />
-            ),
-          )}
+          {renderChildren(nodes, isProduction)}
         </NilefyContainer>
       </WidgetContext.Provider>
     </EnvironmentContext.Provider>
@@ -99,3 +97,19 @@ export const WebloomRoot: React.FC<WebloomRootProps> = flowRight(
 
 export const WebloomRootProduction: React.FC<WebloomRootProps> =
   flow(WithLayout)(WebloomRootBase);
+
+export function renderChildren(nodeIds: string[], isProduction: boolean) {
+  return nodeIds.map((nodeId) => {
+    const widget = editorStore.currentPage.getWidgetById(nodeId);
+    if (widget.type === 'NilefyModal') {
+      if (!widget.finalValues.isOpen)
+        return <WebloomElementBase id={nodeId} key={nodeId} />;
+      return <ModalWelboomElement id={nodeId} key={nodeId} />;
+    }
+    return isProduction ? (
+      <ProductionWebloomElement id={nodeId} key={nodeId} />
+    ) : (
+      <WebloomElement id={nodeId} key={nodeId} />
+    );
+  });
+}

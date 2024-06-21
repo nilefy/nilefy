@@ -8,12 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorStore } from '@/lib/Editor/Models';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { AppLoader } from './appLoader';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Edit } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { useSetPageDimensions } from '@/lib/Editor/hooks';
 import { WebloomRootProduction } from './Components/lib/WebloomRoot';
+import { runInAction } from 'mobx';
 
 /*
  * should take full width of the screen
@@ -24,7 +25,7 @@ function PreviewHeader() {
   const pages = editorStore.pages;
 
   return (
-    <div className="flex h-full w-full items-center gap-4 bg-primary/10 p-5">
+    <div className="bg-primary/10 flex h-full w-full items-center gap-4 p-5">
       <h2>{appName}</h2>
       <NavigationMenu className="gap-5">
         <NavigationMenuList></NavigationMenuList>
@@ -60,6 +61,11 @@ function PreviewHeader() {
 export function PagePreview() {
   const ref = useRef<HTMLDivElement>(null);
   useSetPageDimensions(ref);
+  useEffect(() => {
+    runInAction(() => {
+      editorStore.environment = 'production';
+    });
+  }, []);
   return (
     <div ref={ref} className="relative h-full w-full bg-white">
       <WebloomRootProduction isProduction={true} />

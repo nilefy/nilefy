@@ -9,6 +9,7 @@ import { WidgetSelection } from '@/actions/editor/selection';
  */
 export const useWebloomSelection = (id: string) => {
   const dom = editorStore.currentPage.getWidgetById(id).dom;
+
   const select = useCallback(
     (e: MouseEvent) => {
       commandManager.executeCommand(
@@ -17,6 +18,7 @@ export const useWebloomSelection = (id: string) => {
     },
     [id],
   );
+
   useEffect(() => {
     const curRef = dom;
     if (curRef) {

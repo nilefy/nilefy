@@ -67,6 +67,7 @@ export class EditorState implements WebloomDisposable {
   workspaceId!: number;
   selectedQueryId: string | null = null;
   bottomPanelMode: BottomPanelMode = 'query';
+  environment: 'production' | 'development' = 'development';
   private cursorManager!: CursorManager;
   /**
    * application name
@@ -110,11 +111,16 @@ export class EditorState implements WebloomDisposable {
       getRefactoredDependentPaths: action,
       isLoadingPage: observable,
       changePage: action,
+      environment: observable,
+      isProduction: computed,
     });
   }
-
   setQueryPanelAddMenuOpen(open: boolean) {
     this.queryPanel.addMenuOpen = open;
+  }
+
+  get isProduction() {
+    return this.environment === 'production';
   }
 
   setBottomPanelMode(mode: BottomPanelMode) {

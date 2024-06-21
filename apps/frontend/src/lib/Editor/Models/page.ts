@@ -144,6 +144,7 @@ export class WebloomPage implements WebloomDisposable {
   setSelectedNodeIds(
     idsOrCb: Set<string> | ((ids: Set<string>) => Set<string>),
   ): void {
+    console.trace(idsOrCb);
     let tempIds: Set<string>;
     if (typeof idsOrCb === 'function') {
       tempIds = idsOrCb(new Set(this.selectedNodeIds));
@@ -435,7 +436,9 @@ export class WebloomPage implements WebloomDisposable {
         nodeGridBoundingRect,
         nodes,
         id,
-      );
+      ).filter((widget) => {
+        return this.widgets[widget.id].type !== 'NilefyModal';
+      });
       const [gridrow, gridcol] = parent.gridSize as [number, number];
       const nodePixelDims = convertGridToPixel(
         newCoords as WebloomGridDimensions,

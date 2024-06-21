@@ -8,7 +8,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { editorStore } from '@/lib/Editor/Models';
-import { useSetDom, useWebloomHover } from '@/lib/Editor/hooks';
+import { useSetDom, useSize, useWebloomHover } from '@/lib/Editor/hooks';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { observer } from 'mobx-react-lite';
 import { CSSProperties, useRef } from 'react';
@@ -43,7 +43,34 @@ export const WithLayout = <P extends { id: string }>(
   };
   return observer(PositionedComponent);
 };
-
+export const WithModalLayout = <P extends { id: string }>(
+  WrappedComponent: React.FC<P>,
+) => {
+  const PositionedComponent: React.FC<P> = (props) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const id = props.id || EDITOR_CONSTANTS.ROOT_NODE_ID;
+    useSetDom(ref, id);
+    useWebloomHover(id);
+    const widget = editorStore.currentPage.getWidgetById(id);
+    const scrollTop = editorStore.currentPage.rootWidget.scrollTop;
+    const relativePixelDimensions = widget.relativePixelDimensions;
+    const style: CSSProperties = {
+      position: 'absolute',
+      top: relativePixelDimensions.y + scrollTop,
+      left: relativePixelDimensions.x,
+      width: relativePixelDimensions.width,
+      height: relativePixelDimensions.height,
+      visibility: widget.isVisible ? 'visible' : 'hidden',
+      zIndex: 100,
+    } as const;
+    return (
+      <div ref={ref} style={style}>
+        <WrappedComponent {...{ ...props, id }} />
+      </div>
+    );
+  };
+  return observer(PositionedComponent);
+};
 export const WithNoTextSelection = <P extends { id: string }>(
   WrappedComponent: React.FC<P>,
 ) => {

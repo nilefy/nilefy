@@ -258,6 +258,7 @@ class ResizeAction {
       key,
     );
     editorStore.currentPage.setResizedWidgetId(null);
+    editorStore.currentPage.setSelectedNodeIds(new Set([id]));
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {

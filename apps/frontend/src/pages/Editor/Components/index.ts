@@ -19,6 +19,7 @@ import { NilefyTextAreaWidget } from './NilefyWidgets/TextArea';
 import { NilefyFormWidget } from './NilefyWidgets/Form';
 import { NilefyRangeWidget } from './NilefyWidgets/Range';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { NilefyModalWidget } from './NilefyWidgets/Modal';
 
 export const NilefyWidgets = {
   NilefyButton: NilefyButtonWidget,
@@ -40,6 +41,7 @@ export const NilefyWidgets = {
   NilefyCheckBoxGroup: NilefyCheckBoxGroupWidget,
   NilefyForm: NilefyFormWidget,
   NilefyRange: NilefyRangeWidget,
+  NilefyModal: NilefyModalWidget,
 } as const;
 
 export const WidgetContext = createContext<{
