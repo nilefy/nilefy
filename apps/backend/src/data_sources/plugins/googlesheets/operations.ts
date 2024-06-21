@@ -5,12 +5,11 @@ async function makeRequestToReadValues(
   /**
    * sheet name
    */
-  sheet: string,
+  sheet: number,
   range: string,
   authHeader: RequestInit['headers'],
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${sheet || ''}!${range}`;
-
   const response = await fetch(url, {
     method: 'GET',
     headers: authHeader,
@@ -69,7 +68,6 @@ async function makeRequestToDeleteRows(
   if (!response.ok) {
     throw new Error('Failed to delete rows');
   }
-
   return await response.json();
 }
 
@@ -165,7 +163,7 @@ export async function batchUpdateToSheet(
 
 export async function readDataFromSheet(
   spreadSheetId: string,
-  sheet: string,
+  sheet: number,
   range: string,
   authHeader: any,
 ) {
@@ -203,7 +201,7 @@ async function appendDataToSheet(
   rows: any,
   authHeader: any,
 ) {
-  const parsedRows = JSON.parse(rows);
+  const parsedRows = rows;
   const sheetData = await makeRequestToReadValues(
     spreadSheetId,
     sheet,
@@ -239,7 +237,7 @@ async function appendDataToSheet(
 async function deleteDataFromSheet(
   spreadSheetId: string,
   sheet: string,
-  rowIndex: any,
+  rowIndex: number,
   authHeader: any,
 ) {
   const requestBody = {
@@ -247,7 +245,7 @@ async function deleteDataFromSheet(
       {
         deleteDimension: {
           range: {
-            sheetId: sheet,
+            sheetId: +sheet,
             dimension: 'ROWS',
             startIndex: rowIndex - 1,
             endIndex: rowIndex,
@@ -256,7 +254,7 @@ async function deleteDataFromSheet(
       },
     ],
   };
-
+  console.log(requestBody.requests[0]);
   const response = await makeRequestToDeleteRows(
     spreadSheetId,
     requestBody,
@@ -269,7 +267,7 @@ async function deleteDataFromSheet(
 export async function readData(
   spreadSheetId: string,
   spreadsheetRange: string,
-  sheet: string,
+  sheet: number,
   authHeader: RequestInit['headers'],
 ): Promise<any[]> {
   return await readDataFromSheet(
@@ -286,6 +284,7 @@ export async function appendData(
   rows: any[],
   authHeader: RequestInit['headers'],
 ): Promise<any> {
+  console.log('append data , rows' + rows);
   return await appendDataToSheet(spreadSheetId, sheet, rows, authHeader);
 }
 

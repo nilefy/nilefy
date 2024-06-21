@@ -26,7 +26,7 @@ const querySpreadsheet_rangeSchema = z.string();
 /**
  * sheet name
  */
-const querySheetSchema = z.string();
+const querySheetSchema = z.coerce.number().default(0);
 const queryRowsSchema = z.array(z.unknown());
 const queryWhere_fieldSchema = z.string();
 const queryWhere_operationSchema = z.string();
@@ -124,11 +124,11 @@ export const queryConfigForm = {
         },
         {
           path: 'config.spreadsheet_id',
-          label: 'Sheet Id',
+          label: 'Spreadsheet Sheet ID',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter sheet id',
-            label: 'Sheet Id',
+            placeholder: 'Enter Spreadsheet id',
+            label: 'SpreadSheet Sheet ID',
           },
           validation: zodToJsonSchema(querySpreadsheet_idSchema),
         },
@@ -154,11 +154,11 @@ export const queryConfigForm = {
         },
         {
           path: 'config.sheet',
-          label: 'sheet name',
+          label: 'Sheet ID',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Sheet Name',
-            label: 'sheet name',
+            placeholder: 'Sheet Id i.e 2016001036',
+            label: 'sheet id',
           },
           hidden: {
             conditionType: 'OR',

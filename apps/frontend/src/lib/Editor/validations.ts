@@ -7,6 +7,7 @@ import { EntityInspectorConfig } from './interface';
 export const ajv = new Ajv({
   allErrors: true,
   strict: false,
+  coerceTypes: true,
 });
 
 export const StringSchema = (defVal: string) =>
