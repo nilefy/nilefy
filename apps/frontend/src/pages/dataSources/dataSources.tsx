@@ -265,14 +265,24 @@ export function GlobalDataSourcesResolved() {
  */
 function WorkspaceDataSourcesView() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isPending, isError, error } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
   const { mutate: deleteMutate } = api.dataSources.delete.useMutation({
-    onSuccess() {
+    onMutate() {
       navigate(`/${workspaceId}/datasources`);
+    },
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+      toast({
+        title: 'deleted data source successfully',
+      });
     },
   });
   const filteredPlugins = useMemo(() => {
@@ -364,7 +374,6 @@ function WorkspaceDataSourcesView() {
                               workspaceId: +workspaceId,
                               dataSourceId: ds.id,
                             });
-                            navigate(`/${workspaceId}/datasources/`);
                           }}
                         >
                           Delete
