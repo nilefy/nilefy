@@ -35,6 +35,7 @@ this repo uses [turpo repo](https://turbo.build/repo/docs) to manage the monorep
 
 - if you don't need to seed database with random data use `pnpm db:seed:prod` it will fill the database with only the requried data for the backend to operate(permissions/data sources/..)
 
+- If you want to update data sources configuration use `pnpm db:syncDss` it will update the data sources configuration in the database
 
 ### docs
 
