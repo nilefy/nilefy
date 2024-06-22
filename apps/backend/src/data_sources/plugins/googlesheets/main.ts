@@ -8,18 +8,26 @@ import {
   deleteData,
   readData,
 } from './operations';
+import { Logger } from '@nestjs/common';
+import { FetchXError } from './errors';
 
 export default class GoogleSheetsQueryService
   implements QueryRunnerI<ConfigT, QueryT>
 {
   private readonly oAuth2Client: OAuth2Client;
+  private clientId: string;
+  private clientSecret: string;
   constructor() {
+    const clientId = process.env['GOOGLE_CLIENT_ID'] as string;
+    const clientSecret = process.env['GOOGLE_CLIENT_SECRET'] as string;
     this.oAuth2Client = new OAuth2Client({
-      clientId: process.env['GOOGLE_CLIENT_ID'],
-      clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
+      clientId,
+      clientSecret,
       redirectUri:
         'http://localhost:3000/api/auth/login/google-sheets-redirect',
     });
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
   }
 
   getAuthUrl(scopes: string[]): string {
@@ -51,14 +59,11 @@ export default class GoogleSheetsQueryService
     }
 
     const accessTokenUrl = 'https://oauth2.googleapis.com/token';
-    // TODO:
-    const clientId = '';
-    const clientSecret = '';
 
     const grantType = 'refresh_token';
     const data = {
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
       grant_type: grantType,
       refresh_token: sourceOptions['refresh_token'],
     };
@@ -174,8 +179,9 @@ export default class GoogleSheetsQueryService
         data: res,
       };
     } catch (error) {
+      Logger.error(error);
       // Attempt to refresh the token if it has expired
-      if (error?.response?.status === 401) {
+      if (error instanceof FetchXError && error.statusCode === 401) {
         const newTokens = await this.refreshToken({
           refresh_token: dataSourceConfig['refresh_token'],
         });

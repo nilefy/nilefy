@@ -25,6 +25,9 @@ export const addQuerySchema = queryDb
     dataSourceId: z.number(),
   });
 
+/**
+ * if id is present in this schema, means user wants to update the id
+ */
 export const updateQuerySchema = addQuerySchema.partial().extend({
   dataSourceId: z.number().nullable(),
 });
@@ -57,6 +60,7 @@ export const appQuerySchema = querySchema
     query: true,
     triggerMode: true,
     dataSourceId: true,
+    baseDataSourceId: true,
   })
   .extend({
     baseDataSource: dataSourceSelect

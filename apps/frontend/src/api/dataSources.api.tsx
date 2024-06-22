@@ -262,14 +262,8 @@ function useDeleteDatasource(
     Parameters<typeof deleteOne>[0]
   >,
 ) {
-  const queryClient = useQueryClient();
   const mutate = useMutation({
     mutationFn: deleteOne,
-    async onSuccess() {
-      await queryClient.invalidateQueries({
-        queryKey: [DATASOURCES_QUERY_KEY],
-      });
-    },
     ...options,
   });
   return mutate;

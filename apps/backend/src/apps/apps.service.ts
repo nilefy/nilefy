@@ -348,7 +348,7 @@ export class AppsService {
         query: q.query,
         triggerMode: q.triggerMode,
         dataSourceId: q.dataSource?.id ?? null,
-        baseDataSourceId: q.baseDataSource.id,
+        baseDataSourceId: q.baseDataSourceId,
       })),
       jsQueries: jsQueries.map((q) => ({
         id: q.id,

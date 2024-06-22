@@ -34,12 +34,12 @@ const SOCKET_EVENTS_RESPONSE = {
   PAGE_CHANGED: "pageChanged",
 } as const;
 
-const dataSourcesTypes = [
+const dataSourcesTypes: [string, ...string[]] = [
   "database",
   "api",
   "cloud storage",
   "plugin",
-] as const;
+];
 
 Object.freeze(EDITOR_CONSTANTS);
 Object.freeze(SOCKET_EVENTS_REQUEST);

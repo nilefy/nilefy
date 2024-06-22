@@ -28,7 +28,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
-import { SaveIcon, Trash } from 'lucide-react';
+import { Activity, SaveIcon, Trash } from 'lucide-react';
 import { Suspense, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
@@ -265,12 +265,26 @@ export function GlobalDataSourcesResolved() {
  */
 function WorkspaceDataSourcesView() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isPending, isError, error } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
-  const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
+  const { mutate: deleteMutate } = api.dataSources.delete.useMutation({
+    onMutate() {
+      navigate(`/${workspaceId}/datasources`);
+    },
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+      toast({
+        title: 'deleted data source successfully',
+      });
+    },
+  });
   const filteredPlugins = useMemo(() => {
     if (!data) {
       return;
@@ -331,13 +345,11 @@ function WorkspaceDataSourcesView() {
 
                   <AlertDialog>
                     <AlertDialogTrigger
-                      className={
-                        (buttonVariants({
-                          variant: 'ghost',
-                          size: 'icon',
-                          className: 'ml-auto hover:bg-destructive',
-                        }))
-                      }
+                      className={buttonVariants({
+                        variant: 'ghost',
+                        size: 'icon',
+                        className: 'ml-auto hover:bg-destructive',
+                      })}
                     >
                       <Trash size={15} />
                     </AlertDialogTrigger>
@@ -362,7 +374,6 @@ function WorkspaceDataSourcesView() {
                               workspaceId: +workspaceId,
                               dataSourceId: ds.id,
                             });
-                            navigate(`/${workspaceId}/datasources/`);
                           }}
                         >
                           Delete
@@ -441,68 +452,72 @@ export function DataSourceView() {
           </TabsList>
 
           <TabsContent value="dev" className="h-full w-full ">
-            <RJSFShadcn
-              ref={form}
-              schema={data.dataSource.config.schema}
-              uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config}
-              validator={validator}
-              onSubmit={({ formData }) => {
-                if (
-                  !workspaceId ||
-                  !datasourceId ||
-                  !nameRef ||
-                  !nameRef.current
-                )
-                  throw new Error(
-                    "that's weird this function should run under workspaceId, datasourceId",
-                  );
-                updateMutate({
-                  workspaceId: +workspaceId,
-                  dataSourceId: +datasourceId,
-                  dto: {
-                    name: nameRef.current.value,
-                    config: formData,
-                  },
-                });
-              }}
-            >
-              <div className="flex mt-8 content-center flex-wrap m-4 justify-evenly">
-                <LoadingButton
-                  key={'dsSave'}
-                  isLoading={isSubmitting}
-                  type="submit"
-                >
-                  <span className="flex flex-row justify-evenly">
-                    <SaveIcon /> <p className='ml-2 align-middle mt-0.5'>Save</p>
-                  </span>
-                </LoadingButton>
-                <LoadingButton
-                  isLoading={isTestingConnection}
-                  type="button"
-                  onClick={() => {
-                    if (
-                      !workspaceId ||
-                      !datasourceId ||
-                      !form ||
-                      !form.current
-                    ) {
-                      throw new Error();
-                    }
-                    testConnectionMutate({
-                      workspaceId: +workspaceId,
-                      dataSourceId: +datasourceId,
-                      dto: {
-                        config: form.current.state.formData,
-                      },
-                    });
-                  }}
-                  key={'dsTest'}
-                >
-                  <>Test Connection</>
-                </LoadingButton>
-              </div>
-            </RJSFShadcn>
+            <div className="p-2">
+              <RJSFShadcn
+                ref={form}
+                schema={data.dataSource.config.schema}
+                uiSchema={data.dataSource.config.uiSchema}
+                formData={data.config}
+                validator={validator}
+                onSubmit={({ formData }) => {
+                  if (
+                    !workspaceId ||
+                    !datasourceId ||
+                    !nameRef ||
+                    !nameRef.current
+                  )
+                    throw new Error(
+                      "that's weird this function should run under workspaceId, datasourceId",
+                    );
+                  updateMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      name: nameRef.current.value,
+                      config: formData,
+                    },
+                  });
+                }}
+              >
+                <div className=" mt-8 flex flex-wrap content-center justify-start gap-4">
+                  <LoadingButton
+                    key={'dsSave'}
+                    isLoading={isSubmitting}
+                    type="submit"
+                  >
+                    <span className="flex flex-row justify-evenly">
+                      <SaveIcon />
+                      <p className="ml-2 mt-0.5 align-middle">Save</p>
+                    </span>
+                  </LoadingButton>
+                  <LoadingButton
+                    isLoading={isTestingConnection}
+                    type="button"
+                    onClick={() => {
+                      if (
+                        !workspaceId ||
+                        !datasourceId ||
+                        !form ||
+                        !form.current
+                      ) {
+                        throw new Error();
+                      }
+                      testConnectionMutate({
+                        workspaceId: +workspaceId,
+                        dataSourceId: +datasourceId,
+                        dto: {
+                          config: form.current.state.formData,
+                        },
+                      });
+                    }}
+                    key={'dsTest'}
+                  >
+                    <Activity />
+                    Test Connection
+                  </LoadingButton>
+                </div>
+              </RJSFShadcn>
+            </div>
           </TabsContent>
           {/*TODO:*/}
           <TabsContent value="prod"></TabsContent>
