@@ -2,40 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
- .DropdownMenuContent {
+.DropdownMenuContent {
   width: var(--radix-dropdown-menu-trigger-width);
   max-height: var(--radix-dropdown-menu-content-available-height);
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 20 14.3% 4.1%;
+    --background:  0 0% 100%;
+    --foreground: 24 100% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
+    --card: 36 100% 97%;
+    --card-foreground: 24 100% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
+    --popover: 36 100% 97%;
+    --popover-foreground: 24 100% 15%;
 
-    --primary: 24 9.8% 10%;
-    --primary-foreground: 60 9.1% 97.8%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 36 100% 97%;
 
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
+    --secondary: 24 100% 70%;
+    --secondary-foreground: 24 100% 15%;
 
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
+    --muted: 36 100% 90%;
+    --muted-foreground: 24 100% 15%;
 
-    --accent: 60 4.8% 95.9%;
-    --accent-foreground: 24 9.8% 10%;
+    --accent: 36 100% 90%;
+    --accent-foreground: 24 100% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 36 100% 97%;
 
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 20 14.3% 4.1%;
+    --border: 24 100% 90%;
+    --input: 24 100% 90%;
+    --ring: 24 100% 50%;
 
     --radius: 0.5rem;
   }
