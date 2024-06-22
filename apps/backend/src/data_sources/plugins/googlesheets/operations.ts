@@ -1,4 +1,6 @@
+import { Logger } from '@nestjs/common';
 import { QueryT } from './types';
+import { FetchXError } from './errors';
 
 async function makeRequestToReadValues(
   spreadSheetId: string,
@@ -16,7 +18,12 @@ async function makeRequestToReadValues(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch data');
+    const json = await response.json();
+    throw new FetchXError(
+      'Failed to fetch data',
+      json.error.code,
+      json.error.message,
+    );
   }
 
   return await response.json();
@@ -43,7 +50,12 @@ async function makeRequestToAppendValues(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to append data');
+    const json = await response.json();
+    throw new FetchXError(
+      'Failed to append data',
+      json.error.code,
+      json.error.message,
+    );
   }
 
   return await response.json();
@@ -62,11 +74,18 @@ async function makeRequestToDeleteRows(
       ...authHeader,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(requestBody),
+    body: requestBody,
   });
 
+  Logger.error({ response });
+
   if (!response.ok) {
-    throw new Error('Failed to delete rows');
+    const json = await response.json();
+    throw new FetchXError(
+      'Failed to delete rows',
+      json.error.code,
+      json.error.message,
+    );
   }
   return await response.json();
 }
@@ -88,7 +107,12 @@ async function makeRequestToBatchUpdateValues(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to batch update values');
+    const json = await response.json();
+    throw new FetchXError(
+      'Failed to batch update values',
+      json.error.code,
+      json.error.message,
+    );
   }
 
   return await response.json();
@@ -107,7 +131,12 @@ async function makeRequestToLookUpCellValues(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to look up cell values');
+    const json = await response.json();
+    throw new FetchXError(
+      'Failed to look up cell values',
+      json.error.code,
+      json.error.message,
+    );
   }
 
   return await response.json();
@@ -116,7 +145,7 @@ async function makeRequestToLookUpCellValues(
 export async function batchUpdateToSheet(
   spreadSheetId: string,
   spreadsheetRange: string = 'A1:Z500',
-  sheet: string,
+  sheet: number,
   requestBody: string,
   filterData: any,
   filterOperator: string,
@@ -197,7 +226,7 @@ export async function readDataFromSheet(
 
 async function appendDataToSheet(
   spreadSheetId: string,
-  sheet: string,
+  sheet: number,
   rows: any,
   authHeader: any,
 ) {
@@ -236,7 +265,7 @@ async function appendDataToSheet(
 
 async function deleteDataFromSheet(
   spreadSheetId: string,
-  sheet: string,
+  sheet: number,
   rowIndex: number,
   authHeader: any,
 ) {
@@ -254,10 +283,10 @@ async function deleteDataFromSheet(
       },
     ],
   };
-  console.log(requestBody.requests[0]);
+  Logger.debug({ requestBody });
   const response = await makeRequestToDeleteRows(
     spreadSheetId,
-    requestBody,
+    JSON.stringify(requestBody),
     authHeader,
   );
 
@@ -280,7 +309,7 @@ export async function readData(
 
 export async function appendData(
   spreadSheetId: string,
-  sheet: string,
+  sheet: number,
   rows: any[],
   authHeader: RequestInit['headers'],
 ): Promise<any> {
@@ -290,8 +319,8 @@ export async function appendData(
 
 export async function deleteData(
   spreadSheetId: string,
-  sheet: string,
-  rowIndex: string,
+  sheet: number,
+  rowIndex: number,
   authHeader: RequestInit['headers'],
 ): Promise<any> {
   return await deleteDataFromSheet(spreadSheetId, sheet, rowIndex, authHeader);
@@ -300,7 +329,7 @@ export async function deleteData(
 async function lookUpSheetData(
   spreadSheetId: string,
   spreadsheetRange: string,
-  sheet: string,
+  sheet: number,
   authHeader: RequestInit['headers'],
 ) {
   const range = `${sheet}!${spreadsheetRange}`;
