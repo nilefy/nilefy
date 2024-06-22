@@ -50,7 +50,7 @@ Gets triggered when the image is clicked.
 example 
 
 ```ts
-{{WebloomGlobals.alert("hi")}}
+{{NilefyGlobals.alert("hi")}}
 ```
 
 ## Instance Properties
