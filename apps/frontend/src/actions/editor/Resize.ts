@@ -318,6 +318,7 @@ class ResizeAction {
   ) {
     const collidedNodes = [];
     const node = editorStore.currentPage.getWidgetById(id);
+
     if (!node) return [];
 
     let dims = {
