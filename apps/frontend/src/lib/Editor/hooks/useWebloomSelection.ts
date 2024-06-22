@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { editorStore } from '../Models';
 import { WidgetSelection } from '@/actions/editor/selection';
 import { useAutoRun } from './useAutoRun';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 /**
  * @description Used to select the widget on click
  * @param ref
@@ -14,8 +15,8 @@ export const useWebloomSelection = (id: string) => {
 
   useAutoRun(() => {
     if (
-      editorStore.currentPage.isDragging ||
-      editorStore.currentPage.isResizing
+      id === EDITOR_CONSTANTS.ROOT_NODE_ID &&
+      (editorStore.currentPage.isDragging || editorStore.currentPage.isResizing)
     ) {
       setShouldSkip(true);
     }
