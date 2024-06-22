@@ -77,6 +77,8 @@ export function handleLateralCollisions(
     // we don't want to check collisions with the node we are hovering over
     if (sibling === overId) continue;
     const otherNode = editorStore.currentPage.getWidgetById(sibling);
+    // we don't want to check collisions with modals
+    if (otherNode.type === 'NilefyModal') continue;
     // const otherNode = store.getState().tree[sibling];
     const otherBoundingRect = otherNode.boundingRect;
     // const otherBoundingRect = store.getState().getBoundingRect(sibling);
