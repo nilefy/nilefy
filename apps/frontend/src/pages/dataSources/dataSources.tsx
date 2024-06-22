@@ -28,7 +28,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { getInitials } from '@/utils/avatar';
-import { SaveIcon, Trash } from 'lucide-react';
+import { Activity, SaveIcon, Trash } from 'lucide-react';
 import { Suspense, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { matchSorter } from 'match-sorter';
@@ -63,7 +63,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { RJSFShadcn } from '@/components/rjsf_shad';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Card,
   CardContent,
@@ -162,7 +162,7 @@ export function GlobalDataSourcesView() {
   const { globalDataSources } = useLoaderData();
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={globalDataSources}>
         <GlobalDataSourcesResolved />
       </Await>
@@ -265,12 +265,26 @@ export function GlobalDataSourcesResolved() {
  */
 function WorkspaceDataSourcesView() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { workspaceId } = useParams();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isPending, isError, error } = api.dataSources.index.useQuery({
     workspaceId: +(workspaceId as string),
   });
-  const { mutate: deleteMutate } = api.dataSources.delete.useMutation();
+  const { mutate: deleteMutate } = api.dataSources.delete.useMutation({
+    onMutate() {
+      navigate(`/${workspaceId}/datasources`);
+    },
+    async onSuccess() {
+      await queryClient.invalidateQueries({
+        queryKey: [DATASOURCES_QUERY_KEY],
+      });
+      toast({
+        title: 'deleted data source successfully',
+      });
+    },
+  });
   const filteredPlugins = useMemo(() => {
     if (!data) {
       return;
@@ -287,7 +301,7 @@ function WorkspaceDataSourcesView() {
 
   return (
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
-      {isPending && <WebloomLoader />}
+      {isPending && <NilefyLoader />}
       <DebouncedInput
         value={searchParams.get('lsearch') ?? ''}
         placeholder="Search"
@@ -317,7 +331,7 @@ function WorkspaceDataSourcesView() {
                   end={true}
                   className={({ isActive }) => {
                     return cn(
-                      'flex w-[90%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
+                      'flex w-[100%] items-center gap-1 p-1 hover:bg-primary/20 rounded-xl overflow-hidden',
                       isActive ? 'bg-primary/20' : '',
                     );
                   }}
@@ -328,46 +342,46 @@ function WorkspaceDataSourcesView() {
                     <AvatarFallback>{getInitials(ds.name)}</AvatarFallback>
                   </Avatar>
                   <p className="line-clamp-1">{ds.name}</p>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      className={buttonVariants({
+                        variant: 'ghost',
+                        size: 'icon',
+                        className: 'ml-auto hover:bg-destructive',
+                      })}
+                    >
+                      <Trash size={15} />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. YOU HAVE TO CONNECT
+                          QUUERIES CONNECTED TO THIS DATASOURCE TO NEW
+                          DATASOURCE OR YOUR APP WILL NOT FUNCTION CORRECTLY
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (!workspaceId)
+                              throw new Error('must have workspaceId');
+                            deleteMutate({
+                              workspaceId: +workspaceId,
+                              dataSourceId: ds.id,
+                            });
+                          }}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </NavLink>
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    className={buttonVariants({
-                      variant: 'ghost',
-                      size: 'icon',
-                      className: 'ml-auto',
-                    })}
-                  >
-                    <Trash size={15} />
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. YOU HAVE TO CONNECT
-                        QUUERIES CONNECTED TO THIS DATASOURCE TO NEW DATASOURCE
-                        OR YOUR APP WILL NOT FUNCTION CORRECTLY
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          if (!workspaceId)
-                            throw new Error('must have workspaceId');
-                          deleteMutate({
-                            workspaceId: +workspaceId,
-                            dataSourceId: ds.id,
-                          });
-                          navigate(`/${workspaceId}/datasources/`);
-                        }}
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             );
           })
@@ -406,7 +420,7 @@ export function DataSourceView() {
   const nameRef = useRef<HTMLInputElement>(null);
 
   if (isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   } else if (isError) {
     throw error;
   }
@@ -415,7 +429,6 @@ export function DataSourceView() {
       <div className="flex flex-col gap-2">
         <Label>Data Source Name</Label>
         <Input defaultValue={data.name} ref={nameRef} />
-        <Separator />
       </div>
 
       <ScrollArea className="h-full w-full">
@@ -426,45 +439,75 @@ export function DataSourceView() {
           </TabsList>
 
           <TabsContent value="dev" className="h-full w-full ">
-            <RJSFShadcn
-              ref={form}
-              schema={data.dataSource.config.schema}
-              uiSchema={data.dataSource.config.uiSchema}
-              formData={data.config.development}
-              validator={validator}
-              onSubmit={({ formData }) => {
-                if (
-                  !workspaceId ||
-                  !datasourceId ||
-                  !nameRef ||
-                  !nameRef.current
-                )
-                  throw new Error(
-                    "that's weird this function should run under workspaceId, datasourceId",
-                  );
-                updateMutate({
-                  workspaceId: +workspaceId,
-                  dataSourceId: +datasourceId,
-                  dto: {
-                    name: nameRef.current.value,
-                    config: formData,
-                    env: 'development',
-                  },
-                });
-              }}
-            >
-              <LoadingButton
-                key={'dsSave'}
-                isLoading={isSubmitting}
-                type="submit"
-                className="mt-4"
+            <div className="p-2">
+              <RJSFShadcn
+                ref={form}
+                schema={data.dataSource.config.schema}
+                uiSchema={data.dataSource.config.uiSchema}
+                formData={data.config.development}
+                validator={validator}
+                onSubmit={({ formData }) => {
+                  if (
+                    !workspaceId ||
+                    !datasourceId ||
+                    !nameRef ||
+                    !nameRef.current
+                  )
+                    throw new Error(
+                      "that's weird this function should run under workspaceId, datasourceId",
+                    );
+                  updateMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      name: nameRef.current.value,
+                      config: formData,
+                      env: 'development',
+                    },
+                  });
+                }}
               >
-                <span>
-                  <SaveIcon /> Save
-                </span>
-              </LoadingButton>
-            </RJSFShadcn>
+                <div className=" mt-8 flex flex-wrap content-center justify-start gap-4">
+                  <LoadingButton
+                    key={'dsSave'}
+                    isLoading={isSubmitting}
+                    type="submit"
+                  >
+                    <span className="flex flex-row justify-evenly">
+                      <SaveIcon />
+                      <p className="ml-2 mt-0.5 align-middle">Save</p>
+                    </span>
+                  </LoadingButton>
+                  <LoadingButton
+                    isLoading={isTestingConnection}
+                    type="button"
+                    onClick={() => {
+                      if (
+                        !workspaceId ||
+                        !datasourceId ||
+                        !form ||
+                        !form.current
+                      ) {
+                        throw new Error();
+                      }
+                      testConnectionMutate({
+                        workspaceId: +workspaceId,
+                        dataSourceId: +datasourceId,
+                        dto: {
+                          config: form.current.state.formData,
+                        },
+                      });
+                    }}
+                    key={'dsTest'}
+                  >
+                    <Activity />
+                    Test Connection
+                  </LoadingButton>
+                </div>
+              </RJSFShadcn>
+            </div>
           </TabsContent>
+          {/*TODO:*/}
           <TabsContent value="prod" className="h-full w-full ">
             <RJSFShadcn
               ref={form}

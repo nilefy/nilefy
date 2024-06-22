@@ -3,11 +3,13 @@ import {
   SOCKET_EVENTS_REQUEST,
   SOCKET_EVENTS_RESPONSE,
 } from '@nilefy/constants';
+import { RemoteTypes } from './types';
+import { computed, makeObservable, observable, runInAction } from 'mobx';
 
 export const REPEAT_LIMIT = 5;
 export const RECONNECT_TIMEOUT = 2000;
 
-export class WebloomWebSocket {
+export class NilefyWebSocket {
   socket: WebSocket | null;
   /**
    * @NOTE: 'connected' means connected successfully and authed
@@ -17,7 +19,7 @@ export class WebloomWebSocket {
   private msgQ: string[];
   private repeat: number;
   private lock: boolean;
-
+  pendingIds: string[] = [];
   constructor(
     private appId: number,
     private pageId: number,
@@ -29,8 +31,14 @@ export class WebloomWebSocket {
     this.repeat = 0;
     this.lock = false;
     this.connectWebSocket();
+    makeObservable(this, {
+      pendingIds: observable,
+      isLoading: computed,
+    });
   }
-
+  get isLoading() {
+    return this.pendingIds.length > 0;
+  }
   public connectWebSocket() {
     try {
       const https = window.location.protocol === 'https:';
@@ -111,8 +119,12 @@ export class WebloomWebSocket {
     }, RECONNECT_TIMEOUT);
   }
 
-  public sendMessage(msg: string) {
-    this.msgQ.push(msg);
+  public sendMessage(msg: RemoteTypes) {
+    const id = msg.data.opId!;
+    this.msgQ.push(JSON.stringify(msg));
+    runInAction(() => {
+      this.pendingIds.push(id);
+    });
     if (this.socketState != this.socket?.OPEN) {
       this.reconnect();
       return;
@@ -142,7 +154,12 @@ export class WebloomWebSocket {
   private handleMessages(msg: string) {
     const parsed: {
       message: (typeof SOCKET_EVENTS_RESPONSE)[keyof typeof SOCKET_EVENTS_RESPONSE];
+      opId: string;
     } = JSON.parse(msg);
+    const id = parsed.opId;
+    if (this.pendingIds[0] === id) {
+      runInAction(() => this.pendingIds.shift());
+    }
     switch (parsed.message) {
       case SOCKET_EVENTS_RESPONSE.AUTHED:
         {

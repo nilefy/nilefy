@@ -265,7 +265,8 @@ export class EditorState implements WebloomDisposable {
         ...queries.map((q) => {
           return {
             type:
-              q?.dataSource?.name ?? globalDataSources[q.baseDataSourceId].name,
+              q?.dataSource?.name ??
+              globalDataSources.find((d) => d.id === q.baseDataSourceId)!.name,
             name: q.id,
           };
         }),
@@ -297,6 +298,7 @@ export class EditorState implements WebloomDisposable {
       if (!this.currentPageId) {
         this.currentPageId = Object.keys(this.pages)[0];
       }
+      console.log('DEBUGPRINT[1]: editor.ts:294: queries=', queries);
       queries.forEach((q) => {
         this.queries[q.id] = new WebloomQuery({
           ...q,

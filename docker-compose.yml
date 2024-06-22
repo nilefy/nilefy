@@ -1,26 +1,50 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:latest
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 172033
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
       POSTGRES_DB: nilefy
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  app:
-    build: .
-    container_name: nilefy
+  app1:
+    image: nagynabil/nilefy:latest
     restart: always
-    ports:
-      - "3000:3000"
+    expose:
+      - 3000
     depends_on:
       - postgres
     env_file:
-      - path: .env
-        required: true
+      - .env
+
+  app2:
+    image: nagynabil/nilefy:latest
+    restart: always
+    expose:
+      - 3000
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: always
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    expose:
+      - 443
+      - 80
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app1
+      - app2
 
 volumes:
   postgres_data:

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { api } from '@/api';
 import { useParams } from 'react-router-dom';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Sheet,
   SheetContent,
@@ -149,7 +149,7 @@ export function UsersManagement() {
   const { workspaceId } = useParams();
   const users = api.workspaces.users.useQuery(+workspaceId!);
   if (users.isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   } else if (users.isError) {
     throw users.error;
   }

@@ -8,7 +8,8 @@ import { commandManager } from '@/actions/CommandManager';
 import DragAction from '@/actions/editor/Drag';
 import { updateOnBoardingStatus } from '@/api/users.api';
 import scrollIntoView from 'scroll-into-view-if-needed';
-import { WebloomWidgets } from '@/pages/Editor/Components';
+import { NilefyWidgets } from '@/pages/Editor/Components';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 const asyncQuerySelector = async (
   selector: string,
@@ -249,13 +250,13 @@ const steps: (WebloomStep | StepGroup)[] = [
   },
   {
     sideEffect: () => {
-      const buttonConfig = WebloomWidgets['WebloomButton'].config.layoutConfig;
+      const buttonConfig = NilefyWidgets['NilefyButton'].config.layoutConfig;
       commandManager.executeCommand(
         new DragAction({
           parentId: '0',
           draggedItem: {
             isNew: true,
-            type: 'WebloomButton',
+            type: 'NilefyButton',
           },
           endPosition: {
             col: 15,
@@ -447,11 +448,11 @@ const steps: (WebloomStep | StepGroup)[] = [
     },
     sideEffect: () => {
       const id = keys(editorStore.queries)[0];
-      const code = `// You can call actions on other entities, we're calling the alert action on the WebloomGlobals entity
-      WebloomGlobals.alert("fetching data");
+      const code = `// You can call actions on other entities, we're calling the alert action on the ${EDITOR_CONSTANTS.GLOBALS_ID} entity
+      ${EDITOR_CONSTANTS.GLOBALS_ID}.alert("fetching data");
       const res = await fetch('https://jsonplaceholder.typicode.com/todos');
       const json = await res.json();
-      WebloomGlobals.alert("data fetched");
+      ${EDITOR_CONSTANTS.GLOBALS_ID}.alert("data fetched");
       // You can return the data you fetched to use in other entities
       return json.slice(0, 2);
       `;
@@ -510,7 +511,7 @@ const steps: (WebloomStep | StepGroup)[] = [
         so you can see how it's done`,
     },
     sideEffect: () => {
-      const tableConfig = WebloomWidgets['Table'].config.layoutConfig;
+      const tableConfig = NilefyWidgets['Table'].config.layoutConfig;
       commandManager.executeCommand(
         new DragAction({
           parentId: '0',

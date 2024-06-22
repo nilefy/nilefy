@@ -197,7 +197,13 @@ export const router = createBrowserRouter([
     element: <AppPreview />,
     errorElement: <ErrorPage />,
     loader: appLoader(queryClient),
-    children: [{ path: ':pageId', element: <PagePreview /> }],
+    children: [
+      {
+        path: ':pageId',
+        loader: pageLoader(queryClient),
+        element: <PagePreview />,
+      },
+    ],
   },
 ]);
 

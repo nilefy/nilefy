@@ -1,4 +1,4 @@
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import {
   Accordion,
   AccordionItem,
@@ -91,7 +91,7 @@ export const Libraries = observer(() => {
               variant="outline"
             >
               {isLoading ? (
-                <WebloomLoader />
+                <NilefyLoader />
               ) : (
                 <>
                   <span>Install</span>

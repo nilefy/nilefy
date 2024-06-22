@@ -4,7 +4,7 @@ import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 
-import { WebloomContainer } from '../WebloomWidgets/Container';
+import { NilefyContainer } from '../NilefyWidgets/Container';
 import { EnvironmentContext, WidgetContext } from '..';
 import { MultiSelect } from './MultiSelect';
 import { flow, flowRight } from 'lodash';
@@ -66,7 +66,7 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
   return (
     <EnvironmentContext.Provider value={environmentValue}>
       <WidgetContext.Provider value={contextValue}>
-        <WebloomContainer
+        <NilefyContainer
           innerContainerStyle={innerContainerStyle}
           outerContainerStyle={outerContainerStyle}
           isVisibile={true}
@@ -85,7 +85,7 @@ const WebloomRootBase = observer(({ isProduction }: WebloomRootProps) => {
               <WebloomElement id={nodeId} key={nodeId} />
             ),
           )}
-        </WebloomContainer>
+        </NilefyContainer>
       </WidgetContext.Provider>
     </EnvironmentContext.Provider>
   );

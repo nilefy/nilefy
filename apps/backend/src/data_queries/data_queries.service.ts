@@ -281,6 +281,7 @@ export class DataQueriesService {
     const [q] = await this.db
       .update(queries)
       .set({
+        id: query.id,
         dataSourceId: query.dataSourceId,
         query: query.query,
         triggerMode: query.triggerMode,

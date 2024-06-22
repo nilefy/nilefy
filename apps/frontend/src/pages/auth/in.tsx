@@ -70,11 +70,13 @@ export function SignIn() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="w-auto lg:w-2/6">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
+          <CardTitle className="text-center text-2xl font-bold">
+            Nilefy
+          </CardTitle>
+          <CardDescription className="text-center text-sm font-semibold">
+            Sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -92,7 +94,7 @@ export function SignIn() {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="nagy@nilefy.com"
+                          placeholder="user@nilefy.com"
                           autoFocus={true}
                           {...field}
                         />
@@ -116,9 +118,12 @@ export function SignIn() {
                         </Link>
                       </div>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Enter your password"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormDescription>enter strong password</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

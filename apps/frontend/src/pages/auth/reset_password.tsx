@@ -87,10 +87,14 @@ export function ResetPassword() {
   };
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="w-auto lg:w-2/6">
         <CardHeader>
-          <CardTitle className="text-2xl">Reset your password</CardTitle>
-          <CardDescription>set your new password</CardDescription>
+          <CardTitle className="text-center text-2xl font-bold">
+            Nilefy
+          </CardTitle>
+          <CardDescription className="text-center text-lg font-semibold">
+            Reset password
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
@@ -109,7 +113,7 @@ export function ResetPassword() {
                         <FormControl>
                           <Input
                             type="password"
-                            placeholder="Please Enter your new password"
+                            placeholder="Enter new password"
                             autoFocus={true}
                             {...field}
                           />
@@ -127,7 +131,7 @@ export function ResetPassword() {
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="Confirm your new password"
+                          placeholder="Confirm password"
                           {...field}
                         />
                       </FormControl>

@@ -1,6 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ElementType, useCallback, useContext, useMemo } from 'react';
-import { EnvironmentContext, WebloomWidgets, WidgetContext } from '..';
+import { EnvironmentContext, NilefyWidgets, WidgetContext } from '..';
 
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
@@ -19,7 +19,7 @@ const RenderedElement = observer(
   ({ id, isVisible }: { id: string; isVisible: boolean }) => {
     const widget = editorStore.currentPage.getWidgetById(id);
     const enviornment = useContext(EnvironmentContext);
-    const WebloomWidget = WebloomWidgets[widget.type].component as ElementType;
+    const WebloomWidget = NilefyWidgets[widget.type].component as ElementType;
     if (widget.isCanvas) {
       const innerContainerStyle = {
         width: widget.innerContainerPixelDimensions.width + 'px',

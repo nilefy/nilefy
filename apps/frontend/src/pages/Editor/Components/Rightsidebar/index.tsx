@@ -2,7 +2,7 @@ import { editorStore } from '@/lib/Editor/Models';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { WebloomWidgets } from '..';
+import { NilefyWidgets } from '..';
 import { NewNodeAdapter } from '../lib';
 import { commandManager } from '@/actions/CommandManager';
 import { DeleteAction } from '@/actions/editor/Delete';
@@ -15,7 +15,7 @@ import { useSize } from '@/lib/Editor/hooks';
 function InsertTab() {
   const [search, setSearch] = useState('');
   const filteredWidgetsKeys = useMemo(() => {
-    return matchSorter(Object.keys(WebloomWidgets), search);
+    return matchSorter(Object.keys(NilefyWidgets), search);
   }, [search]);
   return (
     <TabsContent value="insert">
@@ -33,7 +33,7 @@ function InsertTab() {
         >
           {filteredWidgetsKeys.map((name) => {
             const config =
-              WebloomWidgets[name as keyof typeof WebloomWidgets].config;
+              NilefyWidgets[name as keyof typeof NilefyWidgets].config;
 
             const Icon = config.icon;
             return (
@@ -44,7 +44,7 @@ function InsertTab() {
                 className=" flex cursor-grab items-center justify-center"
               >
                 <NewNodeAdapter
-                  type={name as keyof typeof WebloomWidgets}
+                  type={name as keyof typeof NilefyWidgets}
                   key={name}
                   data-testid={config.name}
                 >

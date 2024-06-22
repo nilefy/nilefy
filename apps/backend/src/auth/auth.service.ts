@@ -10,7 +10,7 @@ import {
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { compare, genSalt, hash } from 'bcrypt';
-import { CreateUserDto, LoginUserDto } from '../dto/users.dto';
+import { CreateUserDto, LoginUserDto, RetUserSchema } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 
@@ -72,6 +72,7 @@ export class AuthService {
         } satisfies PayloadUser),
       };
     } catch (err) {
+      Logger.error({ err });
       //TODO: return database error
       throw new BadRequestException();
     }
@@ -128,7 +129,7 @@ export class AuthService {
       this.signUpEmail(user.email, user.username, conformationToken);
       return { msg: 'signed up successfully, please confirm your email' };
     } catch (err) {
-      Logger.error('DEBUGPRINT[1]: auth.service.ts:94: err=', err);
+      Logger.error({ err }, err.stack);
       //TODO: return database error
       throw new BadRequestException(
         'something went wrong on sign up please try again',
@@ -157,11 +158,11 @@ export class AuthService {
       // no password nor account, that's weird how did we create this user
       throw new InternalServerErrorException();
     }
-    if (!u.emailVerified) {
-      throw new BadRequestException(
-        `please verify your email then try to sign in`,
-      );
-    }
+    // if (!u.emailVerified) {
+    //   throw new BadRequestException(
+    //     `please verify your email then try to sign in`,
+    //   );
+    // }
     return {
       access_token: await this.jwtService.signAsync({
         sub: u.id,
@@ -214,7 +215,7 @@ export class AuthService {
     const html =
       `
     <p>Dear ${email},</p>
-    <p>We received a request to reset your WebLoom password. Please click the following link to reset your password:</p>
+    <p>We received a request to reset your Nilefy password. Please click the following link to reset your password:</p>
     <a href="` +
       url +
       ` ">Reset Password</a>
@@ -222,11 +223,11 @@ export class AuthService {
     <p>If you did not request a password reset, please disregard this email.</p>
     <p>Thank you for choosing Nilefy!</p>
     <p>Best Regards,<br/>
-    The Webloom Team</p>
+    The Nilefy Team</p>
   `;
     await this.emailService.sendEmail({
       to: email,
-      subject: 'WebLoom - Reset Your Password',
+      subject: 'Nilefy - Reset Your Password',
       html,
     });
   }
@@ -298,5 +299,12 @@ export class AuthService {
     } catch (error) {
       throw new BadRequestException(`Failed To Reset Password`);
     }
+  }
+
+  /**
+   * return current user data
+   */
+  async me(currentUserId: number): Promise<RetUserSchema> {
+    return await this.userService.me(currentUserId);
   }
 }

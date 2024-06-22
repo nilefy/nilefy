@@ -4,7 +4,7 @@ import { globalDataSourcesQuery } from '@/api/dataSources.api';
 import { useJSLibraries } from '@/api/JSLibraries.api';
 import { useJSQueries } from '@/api/jsQueries.api';
 import { getQueries, useQueriesQuery } from '@/api/queries.api';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 import { editorStore } from '@/lib/Editor/Models';
 import { JwtPayload } from '@/types/auth.types';
 import { getUser, loaderAuth } from '@/utils/loaders';
@@ -147,7 +147,7 @@ export function AppLoader(props: AppLoaderProps) {
   const { values } = useLoaderData() as { values: any };
 
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={values}>
         <AppResolved {...props} />
       </Await>
@@ -158,7 +158,7 @@ export function AppLoader(props: AppLoaderProps) {
 export function PageLoader({ children }: { children: React.ReactNode }) {
   const { values } = useLoaderData() as { values: any };
   return (
-    <Suspense fallback={<WebloomLoader />}>
+    <Suspense fallback={<NilefyLoader />}>
       <Await resolve={values}>{children}</Await>
     </Suspense>
   );

@@ -11,7 +11,7 @@ import Page from './page';
 // import { SortableList } from './sortableList';
 import { PAGES_QUERY_KEY, PageDto } from '@/api/pages.api';
 import { matchSorter } from 'match-sorter';
-import { WebloomLoader } from '@/components/loader';
+import { NilefyLoader } from '@/components/loader';
 
 export function PageSelector() {
   const { workspaceId, appId } = useParams<{
@@ -40,7 +40,7 @@ export function PageSelector() {
   if (isError) {
     throw error;
   } else if (isPending) {
-    return <WebloomLoader />;
+    return <NilefyLoader />;
   }
 
   return (

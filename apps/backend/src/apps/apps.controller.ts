@@ -15,6 +15,7 @@ import {
   Header,
   UseGuards,
   Query,
+  Res,
 } from '@nestjs/common';
 import { AppsService } from './apps.service';
 import {
@@ -35,6 +36,7 @@ import { Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { JwtGuard } from '../auth/jwt.guard';
 import { z } from 'zod';
+import type { Response } from 'express';
 
 @ApiBearerAuth()
 @UseGuards(JwtGuard)
@@ -72,12 +74,12 @@ export class AppsController {
 
   @Get('export/:appId')
   @Header('Content-Type', 'application/json')
-  @Header('Content-Disposition', 'attachment; filename="webloom_app_5.json"')
   @ApiCreatedResponse({
     type: AppRetDto,
   })
   async exportOne(
     @Req() req: ExpressAuthedRequest,
+    @Res({ passthrough: true }) res: Response,
     @Param('workspaceId', ParseIntPipe) workspaceId: number,
     @Param('appId', ParseIntPipe) appId: number,
   ): Promise<StreamableFile> {
@@ -86,7 +88,9 @@ export class AppsController {
       workspaceId,
       appId,
     );
-
+    res.set({
+      'Content-Disposition': `attachment; filename="${app.name}"`,
+    });
     const appJson = JSON.stringify(app);
 
     const stream: Readable = Readable.from([appJson]);

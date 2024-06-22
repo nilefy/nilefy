@@ -178,6 +178,9 @@ export class DataSourcesService {
         ),
       )
       .returning();
+    if (!ds) {
+      throw new NotFoundException();
+    }
     return ds;
   }
 
