@@ -8,6 +8,10 @@ export class CreateQuery implements UndoableCommand {
       | (Extract<RemoteTypes, { event: 'createQuery' }> & {
           data: {
             baseDataSourceId: number;
+            dataSource: {
+              name: string;
+              env: string[];
+            };
           };
         })
       | Extract<RemoteTypes, { event: 'createJsQuery' }>,
@@ -19,6 +23,7 @@ export class CreateQuery implements UndoableCommand {
     if (event === 'createQuery') {
       editorStore.addQuery({
         baseDataSourceId: data.baseDataSourceId,
+        dataSource: data.dataSource,
         createdAt: new Date(),
         updatedAt: null,
         id: data.query.id,

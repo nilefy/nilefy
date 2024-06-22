@@ -270,6 +270,7 @@ export class WebloomQuery
           queryId: this.id,
           body: {
             evaluatedConfig: toJS(this.config) as Record<string, unknown>,
+            env: editorStore.currentAppEnv,
           },
         });
       },
@@ -313,6 +314,7 @@ export class WebloomQuery
       dataSourceId: observable,
       appId: observable,
       setValue: override,
+      dataSource: observable,
     });
   }
   get triggerMode() {

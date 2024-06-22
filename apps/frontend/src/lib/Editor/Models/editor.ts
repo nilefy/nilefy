@@ -73,6 +73,7 @@ export class EditorState implements WebloomDisposable {
    */
   name: string = 'New Application';
   onBoardingCompleted: boolean = false;
+  currentAppEnv: 'development' | 'production' = 'development';
   constructor() {
     makeObservable(this, {
       pages: observable,
@@ -105,6 +106,8 @@ export class EditorState implements WebloomDisposable {
       updateLibraryName: action,
       uninstallLibrary: action,
       setQueryPanelAddMenuOpen: action,
+      currentAppEnv: observable,
+      setAppEnv: action,
       dispose: action,
       addJSQuery: action,
       getRefactoredDependentPaths: action,
@@ -189,6 +192,7 @@ export class EditorState implements WebloomDisposable {
     currentUser,
     jsLibraries = [],
     onBoardingCompleted,
+    appEnv = 'development',
     globalDataSources,
   }: {
     name: string;
@@ -210,6 +214,7 @@ export class EditorState implements WebloomDisposable {
     workspaceId: number;
     currentUser: string;
     onBoardingCompleted: boolean;
+    appEnv: 'development' | 'production';
     globalDataSources: GlobalDataSourceIndexRet;
   }) {
     this.initting = true;
@@ -247,6 +252,7 @@ export class EditorState implements WebloomDisposable {
         },
         workerBroker: this.workerBroker,
       });
+      this.currentAppEnv = appEnv;
 
       seedOrderMap([
         ...Object.values(pages[0].widgets || {}).map((w) => {
@@ -640,6 +646,10 @@ export class EditorState implements WebloomDisposable {
       [EDITOR_CONSTANTS.GLOBALS_ID]: this.globals,
     };
   }
+  setAppEnv(env: 'development' | 'production') {
+    this.currentAppEnv = env;
+  }
+
   renameEntity(oldId: string, newId: string) {
     const entity = this.getEntityById(oldId);
     if (!entity) return;

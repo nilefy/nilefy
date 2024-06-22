@@ -13,6 +13,7 @@ export const APPS_QUERY_KEY = 'apps';
 export type AppI = {
   id: number;
   name: string;
+  env: 'development' | 'production';
   createdAt: string;
   updatedAt: string | null;
   createdById: number;
@@ -32,6 +33,9 @@ type UserMetaI = { id: number; username: string };
 export const appMetaSchema = z.object({
   name: z.string().min(4).max(255),
   description: z.string().min(4).max(255).optional(),
+  env: z
+    .union([z.literal('development'), z.literal('production')])
+    .default('development'),
 });
 export type AppMetaT = z.infer<typeof appMetaSchema>;
 

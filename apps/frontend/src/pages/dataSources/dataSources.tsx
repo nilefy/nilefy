@@ -317,7 +317,7 @@ function WorkspaceDataSourcesView() {
           );
         }}
       />
-      <div className="flex h-full w-full flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-thin  scrollbar-track-foreground/10 scrollbar-thumb-primary/10">
+      <div className="scrollbar-thin scrollbar-track-foreground/10 scrollbar-thumb-primary/10 flex h-full w-full flex-col gap-4  overflow-y-auto overflow-x-hidden">
         {!filteredPlugins ? (
           <p>No Data Sources match your search query try changing the search</p>
         ) : (
@@ -435,20 +435,7 @@ export function DataSourceView() {
         <Tabs defaultValue="dev">
           <TabsList className="w-full space-x-3">
             <TabsTrigger value="dev">Development</TabsTrigger>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {/*TODO: re-enable when the back is ready  */}
-                  <TabsTrigger value="prod" disabled={true}>
-                    Production
-                  </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Soon</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <TabsTrigger value="prod">Production</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dev" className="h-full w-full ">
@@ -457,7 +444,7 @@ export function DataSourceView() {
                 ref={form}
                 schema={data.dataSource.config.schema}
                 uiSchema={data.dataSource.config.uiSchema}
-                formData={data.config}
+                formData={data.config.development}
                 validator={validator}
                 onSubmit={({ formData }) => {
                   if (
@@ -475,6 +462,7 @@ export function DataSourceView() {
                     dto: {
                       name: nameRef.current.value,
                       config: formData,
+                      env: 'development',
                     },
                   });
                 }}
@@ -519,8 +507,75 @@ export function DataSourceView() {
               </RJSFShadcn>
             </div>
           </TabsContent>
-          {/*TODO:*/}
-          <TabsContent value="prod"></TabsContent>
+          <TabsContent value="prod" className="h-full w-full ">
+            <div className="p-2">
+              <RJSFShadcn
+                ref={form}
+                schema={data.dataSource.config.schema}
+                uiSchema={data.dataSource.config.uiSchema}
+                formData={data.config.production}
+                validator={validator}
+                onSubmit={({ formData }) => {
+                  if (
+                    !workspaceId ||
+                    !datasourceId ||
+                    !nameRef ||
+                    !nameRef.current
+                  )
+                    throw new Error(
+                      "that's weird this function should run under workspaceId, datasourceId",
+                    );
+                  updateMutate({
+                    workspaceId: +workspaceId,
+                    dataSourceId: +datasourceId,
+                    dto: {
+                      name: nameRef.current.value,
+                      config: formData,
+                      env: 'production',
+                    },
+                  });
+                }}
+              >
+                <div className=" mt-8 flex flex-wrap content-center justify-start gap-4">
+                  <LoadingButton
+                    key={'dsSave'}
+                    isLoading={isSubmitting}
+                    type="submit"
+                  >
+                    <span className="flex flex-row justify-evenly">
+                      <SaveIcon />
+                      <p className="ml-2 mt-0.5 align-middle">Save</p>
+                    </span>
+                  </LoadingButton>
+                  <LoadingButton
+                    isLoading={isTestingConnection}
+                    type="button"
+                    onClick={() => {
+                      if (
+                        !workspaceId ||
+                        !datasourceId ||
+                        !form ||
+                        !form.current
+                      ) {
+                        throw new Error();
+                      }
+                      testConnectionMutate({
+                        workspaceId: +workspaceId,
+                        dataSourceId: +datasourceId,
+                        dto: {
+                          config: form.current.state.formData,
+                        },
+                      });
+                    }}
+                    key={'dsTest'}
+                  >
+                    <Activity />
+                    Test Connection
+                  </LoadingButton>
+                </div>
+              </RJSFShadcn>
+            </div>
+          </TabsContent>
         </Tabs>
       </ScrollArea>
     </div>
@@ -531,7 +586,7 @@ function DataSourcesSidebar() {
   const { workspaceId } = useParams();
 
   return (
-    <div className="flex h-full w-1/4 min-w-[15%] flex-col gap-4 bg-primary/10 p-6">
+    <div className="bg-primary/10 flex h-full w-1/4 min-w-[15%] flex-col gap-4 p-6">
       <Link
         to={{
           pathname: `/${workspaceId}/datasources`,

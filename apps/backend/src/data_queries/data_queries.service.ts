@@ -10,6 +10,7 @@ import {
   AppQueryDto,
   QueryDb,
   QueryDto,
+  RunQueryBody,
   UpdateQueryDto,
 } from '../dto/data_queries.dto';
 import { QueryRunnerI } from './query.interface';
@@ -48,7 +49,7 @@ export class DataQueriesService {
     workspaceId: WorkspaceDto['id'],
     appId: QueryDto['appId'],
     queryId: QueryDto['id'],
-    evaluatedQuery: Record<string, unknown>,
+    { evaluatedConfig: evaluatedQuery, env }: RunQueryBody,
   ): Promise<QueryRet> {
     const query = await this.getQuery(appId, queryId);
     if (!query.dataSourceId) {
@@ -61,7 +62,7 @@ export class DataQueriesService {
       query.dataSourceId,
     );
     const service = this.getService(ds.dataSource.name);
-    const res = await service.run(ds.config, {
+    const res = await service.run(ds.config[env], {
       name: query.id,
       query: evaluatedQuery,
     });
@@ -144,11 +145,22 @@ export class DataQueriesService {
           columns: {
             id: true,
             name: true,
+            config: true,
           },
         },
       },
     });
-    return q;
+    const ret = q.map((e) => {
+      return {
+        ...e,
+        dataSource: {
+          id: e.dataSource.id,
+          name: e.dataSource.name,
+          env: [...Object.keys(e.dataSource.config)],
+        },
+      };
+    });
+    return ret;
   }
 
   async getQuery(
@@ -177,6 +189,7 @@ export class DataQueriesService {
           columns: {
             id: true,
             name: true,
+            config: true,
           },
           with: {},
         },
@@ -185,7 +198,15 @@ export class DataQueriesService {
     if (!q) {
       throw new NotFoundException(`Query ${queryId} not found`);
     }
-    return q;
+    const ret = {
+      ...q,
+      dataSource: {
+        id: q.dataSource.id,
+        name: q.dataSource.name,
+        env: [...Object.keys(q.dataSource.config)],
+      },
+    };
+    return ret;
   }
 
   async deleteQuery(appId: QueryDto['appId'], queryId: QueryDto['id']) {
