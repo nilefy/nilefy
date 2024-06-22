@@ -35,6 +35,13 @@ class DragAction implements UndoableCommand {
       options.draggedItem.type === 'NilefyModal'
     ) {
       this.parentId = EDITOR_CONSTANTS.ROOT_NODE_ID;
+      const columnsCount = 12;
+      options.endPosition = {
+        col: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS / 2 - columnsCount / 2,
+        row: 20,
+        columnsCount,
+        rowsCount: 40,
+      };
     } else this.parentId = options.parentId;
     this.endPosition = options.endPosition;
     if (!options.draggedItem.isNew) {

@@ -16,6 +16,7 @@ import { Grid } from '../../lib';
 import { cn } from '@/lib/cn';
 
 import z from 'zod';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 const nilefyContainerProps = z.object({
   color: z.string(),
@@ -50,6 +51,9 @@ const NilefyContainer = observer(
         entity.innerContainerPixelDimensions.width
       : 0;
 
+    const shouldDisableScroll =
+      id === EDITOR_CONSTANTS.ROOT_NODE_ID &&
+      editorStore.currentPage.shouldDisableRootScroll;
     return (
       <ScrollArea
         // temporary styles till we implement custom styles
@@ -64,6 +68,12 @@ const NilefyContainer = observer(
           ...outerContainerStyle,
           left: leftRootShift / 2,
           visibility: isVisibile ? 'visible' : 'hidden',
+          ...(shouldDisableScroll
+            ? {
+                overflow: 'hidden',
+                height: '100%',
+              }
+            : {}),
         }}
       >
         <div

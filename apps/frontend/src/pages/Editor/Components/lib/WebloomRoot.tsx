@@ -101,7 +101,7 @@ export const WebloomRootProduction: React.FC<WebloomRootProps> =
 export function renderChildren(nodeIds: string[], isProduction: boolean) {
   return nodeIds.map((nodeId) => {
     const widget = editorStore.currentPage.getWidgetById(nodeId);
-    if (widget.type === 'NilefyModal') {
+    if (!isProduction && widget.type === 'NilefyModal') {
       if (!widget.finalValues.isOpen)
         return <WebloomElementBase id={nodeId} key={nodeId} />;
       return <ModalWelboomElement id={nodeId} key={nodeId} />;

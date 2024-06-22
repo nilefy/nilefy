@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/context-menu';
 import { editorStore } from '@/lib/Editor/Models';
 import { useSetDom, useSize, useWebloomHover } from '@/lib/Editor/hooks';
+import { convertGridToPixel } from '@/lib/Editor/utils';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
+import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { CSSProperties, useRef } from 'react';
 
@@ -52,8 +54,22 @@ export const WithModalLayout = <P extends { id: string }>(
     useSetDom(ref, id);
     useWebloomHover(id);
     const widget = editorStore.currentPage.getWidgetById(id);
+    const rows = widget.rowsCount;
     const scrollTop = editorStore.currentPage.rootWidget.scrollTop;
-    const relativePixelDimensions = widget.relativePixelDimensions;
+    const rootWindow = editorStore.currentPage.rootWidget.dom?.parentElement;
+    const domRect = useSize(rootWindow!);
+    const height = domRect?.height || 0;
+    const numberOfRowsInWindow = Math.floor(
+      height / EDITOR_CONSTANTS.ROW_HEIGHT,
+    );
+    const startRow = numberOfRowsInWindow / 2 - rows / 2;
+    const gridDimensions = toJS(widget.gridDimensions);
+    gridDimensions.row = startRow;
+    const relativePixelDimensions = convertGridToPixel(
+      gridDimensions,
+      widget.gridSize,
+      widget.canvasParent.pixelDimensions,
+    );
     const style: CSSProperties = {
       position: 'absolute',
       top: relativePixelDimensions.y + scrollTop,

@@ -115,6 +115,7 @@ export class EditorState implements WebloomDisposable {
       isProduction: computed,
     });
   }
+
   setQueryPanelAddMenuOpen(open: boolean) {
     this.queryPanel.addMenuOpen = open;
   }

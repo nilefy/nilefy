@@ -49,6 +49,7 @@ export class WebloomPage implements WebloomDisposable {
   };
   width: number = 0;
   height: number = 0;
+  shouldDisableRootScroll: boolean = false;
   readonly workerBroker: WorkerBroker;
   constructor({
     id,
@@ -104,6 +105,8 @@ export class WebloomPage implements WebloomDisposable {
       selectAll: action,
       isPrematureDragging: observable,
       setIsPermatureDragging: action,
+      setShouldDisableRootScroll: action,
+      shouldDisableRootScroll: observable,
     });
 
     this.id = id;
@@ -128,7 +131,9 @@ export class WebloomPage implements WebloomDisposable {
   selectAll() {
     this.selectedNodeIds = new Set(this.rootWidget.nodes);
   }
-
+  setShouldDisableRootScroll(shouldDisable: boolean) {
+    this.shouldDisableRootScroll = shouldDisable;
+  }
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
@@ -144,7 +149,6 @@ export class WebloomPage implements WebloomDisposable {
   setSelectedNodeIds(
     idsOrCb: Set<string> | ((ids: Set<string>) => Set<string>),
   ): void {
-    console.trace(idsOrCb);
     let tempIds: Set<string>;
     if (typeof idsOrCb === 'function') {
       tempIds = idsOrCb(new Set(this.selectedNodeIds));

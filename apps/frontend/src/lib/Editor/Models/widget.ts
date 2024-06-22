@@ -1,12 +1,4 @@
-import {
-  makeObservable,
-  observable,
-  computed,
-  action,
-  override,
-  autorun,
-  toJS,
-} from 'mobx';
+import { makeObservable, observable, computed, action, override } from 'mobx';
 import { NilefyWidgets, WidgetTypes } from '@/pages/Editor/Components';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import scrollIntoView from 'scroll-into-view-if-needed';

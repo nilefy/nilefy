@@ -8,11 +8,13 @@ import { FileText } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
-import * as Dialog from '@radix-ui/react-dialog';
 import { editorStore } from '@/lib/Editor/Models';
 import { useAutoRun } from '@/lib/Editor/hooks';
 import { Portal } from '@radix-ui/react-portal';
-
+import { useHotkeys } from 'react-hotkeys-hook';
+import { runInAction } from 'mobx';
+import { Dialog, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 export type NilefyModalProps = NilefyContainerProps & {
   onConfirm?: string;
   onClose?: string;
@@ -24,37 +26,44 @@ const NilefyModal = observer(
     const { onPropChange, id } = useContext(WidgetContext);
     const widget = editorStore.currentPage.getWidgetById(id);
     const editorProps = widget.finalValues as NilefyModalProps;
+    useHotkeys('esc', () => {
+      onPropChange({ key: 'isOpen', value: false });
+    });
     useAutoRun(() => {
       if (widget.isTheOnlySelected || widget.childrenHasSelected) {
         return onPropChange({ key: 'isOpen', value: true });
       }
-      onPropChange({ key: 'isOpen', value: false });
     });
-
+    useAutoRun(() => {
+      if (editorProps.isOpen && !editorStore.isProduction) {
+        return editorStore.currentPage.setShouldDisableRootScroll(true);
+      }
+      editorStore.currentPage.setShouldDisableRootScroll(false);
+    });
     if (editorStore.isProduction) {
       return (
-        <Dialog.Root open={editorProps.isOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay />
-            <Dialog.Content asChild>
+        <Dialog open={editorProps.isOpen}>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogPrimitive.Content className="bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed left-[50%] top-[50%] z-50  translate-x-[-50%] translate-y-[-50%] gap-4 border shadow-lg duration-200 sm:rounded-lg">
               <NilefyContainer {...props}>{props.children}</NilefyContainer>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+            </DialogPrimitive.Content>
+          </DialogPortal>
+        </Dialog>
       );
     }
     if (!editorProps.isOpen) return null;
     return (
       <>
         <Portal
-          container={editorStore.currentPage.rootWidget.dom?.parentElement}
+          container={editorStore.currentPage.rootWidget.scrollableContainer}
           asChild
         >
           <div
             onClick={() => {
               onPropChange({ key: 'isOpen', value: false });
             }}
-            className="absolute left-0 top-0 z-50 h-full w-full bg-[rgba(0,0,0,0.5)] text-center text-white"
+            className="bg-background/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 absolute inset-0 z-50 backdrop-blur-sm"
           ></div>
         </Portal>
         <NilefyContainer
@@ -75,6 +84,7 @@ export const NilefyModalWidget: Widget<NilefyModalProps> = {
     ...initialProps,
     isOpen: false,
   },
+  metaProps: new Set(['isOpen']),
   inspectorConfig: [
     {
       sectionName: 'Interactions',
@@ -111,16 +121,26 @@ export const NilefyModalWidget: Widget<NilefyModalProps> = {
   ],
   component: NilefyModal,
   publicAPI: {
-    data: {
-      description: 'Data of the form',
-      type: 'dynamic',
+    isOpen: {
+      description: 'Is the modal open',
+      type: 'static',
+      typeSignature: 'boolean',
     },
-    reset: {
-      description: 'Reset the form',
+    open: {
+      description: 'Open the modal',
       type: 'function',
     },
-    submit: {
-      description: 'Submit the form',
+    close: {
+      description: 'Close the modal',
+      type: 'function',
+    },
+    setOpened: {
+      description: 'Set the modal opened or closed',
+      type: 'function',
+      args: [{ name: 'isOpen', type: 'boolean' }],
+    },
+    confirm: {
+      description: 'Confirm the modal',
       type: 'function',
     },
   },
@@ -136,8 +156,46 @@ export const NilefyModalWidget: Widget<NilefyModalProps> = {
       layoutMode: 'fixed',
     },
     resizingDirection: 'Both',
-    widgetActions: {},
+    widgetActions: {
+      open: {
+        type: 'SETTER',
+        name: 'open',
+        path: 'isOpen',
+        value: true,
+      },
+      close: {
+        type: 'SIDE_EFFECT',
+        name: 'close',
+        fn: (entity) => {
+          runInAction(() => {
+            entity.setValue('isOpen', false);
+            entity.page.clearSelectedNodes();
+          });
+        },
+      },
+      setOpened: {
+        type: 'SIDE_EFFECT',
+        name: 'setOpened',
+        fn: (entity, ...args) => {
+          const isOpen = args[0];
+          if (isOpen) {
+            entity.setValue('isOpen', true);
+            return;
+          }
+          entity.setValue('isOpen', false);
+          entity.page.clearSelectedNodes();
+        },
+      },
+      confirm: {
+        type: 'SIDE_EFFECT',
+        name: 'confirm',
+        fn: (entity) => {
+          entity.handleEvent('onConfirm');
+        },
+      },
+    },
   },
+
   blueprint: {
     children: [
       {
