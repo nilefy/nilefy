@@ -13,6 +13,7 @@ import {
 } from '@rjsf/utils';
 import { Label } from '../ui/label';
 import { FormItem } from '../ui/form';
+import { Lock } from 'lucide-react';
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
  * It is used as the template for rendering many of the <input> based widgets that differ by `type` and callbacks only.
@@ -45,7 +46,11 @@ import { FormItem } from '../ui/form';
     disabled,
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-
+  const isEncryptedField =
+    uiSchema?.['ui:encrypted'] !== undefined &&
+    typeof uiSchema['ui:encrypted'] === 'string'
+      ? true
+      : false;
   const _onChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) =>
     onChange(value === '' ? options.emptyValue : value);
   const _onBlur = ({ target: { value } }: FocusEvent<HTMLInputElement>) =>
@@ -55,7 +60,14 @@ import { FormItem } from '../ui/form';
 
   return (
     <FormItem id={`${id}-label`}>
-      {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
+      <div className="flex items-center justify-between">
+        {labelValue(<Label htmlFor={id}>{label}</Label>, hideLabel || !label)}
+        {isEncryptedField ? (
+          <span className="flex gap-4 text-green-500">
+            <Lock /> Encrypted
+          </span>
+        ) : null}
+      </div>
       <Input
         disabled={disabled || readonly}
         required={required}
@@ -85,6 +97,11 @@ import { FormItem } from '../ui/form';
               return <option key={example} value={example} />;
             })}
         </datalist>
+      ) : null}
+      {isEncryptedField ? (
+        <span className="text-muted-foreground ml-2">
+          this field will not be stroed as normal text in our database
+        </span>
       ) : null}
     </FormItem>
   );
