@@ -196,7 +196,7 @@ export const router = createBrowserRouter([
     path: '/:workspaceId/apps/:appId',
     element: <AppPreview />,
     errorElement: <ErrorPage />,
-    loader: appLoader(queryClient),
+    loader: appLoader(queryClient, 'production'),
     children: [
       {
         path: ':pageId',

@@ -39,8 +39,9 @@ export const pageLoader =
       values: [pageId],
     });
   };
+
 export const appLoader =
-  (queryClient: QueryClient) =>
+  (queryClient: QueryClient, appEnv?: 'development' | 'production') =>
   async ({ params }: { params: Record<string, string | undefined> }) => {
     const notAuthed = loaderAuth();
     if (notAuthed) {
@@ -107,7 +108,7 @@ export const appLoader =
           handle: p.handle,
         })),
       ],
-      appEnv: app.env,
+      appEnv: appEnv ?? app.env,
     });
     // little hack to make sure the editor is initialized
     const data = when(() => editorStore.initting === false).then(() => {
