@@ -151,11 +151,13 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
           ) : null}
           <QueryConfigPanel id={query.id} />
 
-          <QueryPreview
-            ref={jsonResultRef}
-            key={query.id + 'preview'}
-            queryValues={query.rawValues as QueryRawValues}
-          />
+          <div className="mb-8">
+            <QueryPreview
+              ref={jsonResultRef}
+              key={query.id + 'preview'}
+              queryValues={query.rawValues as QueryRawValues}
+            />
+          </div>
         </div>
       </ScrollArea>
     </div>
@@ -177,7 +179,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         <TabsContent
           value="json"
           id="query-preview-json"
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -189,7 +191,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
