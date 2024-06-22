@@ -48,6 +48,25 @@ export const EditorHeader = observer(function EditorHeader() {
         </Link>
       </div>
       <p>{appName}</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">{currentAppEnv}</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            className="hover:cursor-pointer"
+            onSelect={() => handleSelect('development')}
+          >
+            Development
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="hover:cursor-pointer"
+            onSelect={() => handleSelect('production')}
+          >
+            Production
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <div>{commandManager.socket?.isLoading ? <NilefyLoader /> : null}</div>
       <Link
         className={cn(
