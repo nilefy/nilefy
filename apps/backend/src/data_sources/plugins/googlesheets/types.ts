@@ -1,13 +1,31 @@
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
+const scopeKeys = [
+  'Read / Write / Delete | Selected Google Sheets',
+  'Read / Write / Delete | All Google Sheets',
+  'Read / Write | All Google Sheets',
+  'Read | All Google Sheets',
+] as const;
+
+export const scopeMap = {
+  [scopeKeys[0]]: ['https://www.googleapis.com/auth/drive.file'],
+  [scopeKeys[1]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive',
+  ],
+  [scopeKeys[2]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+  ],
+  [scopeKeys[3]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.readonly',
+  ],
+} as const;
+
 export const configSchema = z.object({
-  scope: z.enum([
-    'Read / Write / Delete | Selected Google Sheets',
-    'Read / Write / Delete | All Google Sheets',
-    'Read / Write | All Google Sheets',
-    'Read | All Google Sheets',
-  ]),
+  scope: z.enum(scopeKeys),
   access_token: z.string().optional(),
   refresh_token: z.string().optional(),
 });
@@ -95,9 +113,11 @@ export const pluginConfigForm = {
     },
     access_token: {
       'ui:widget': 'hidden',
+      'ui:encrypted': 'encrypted',
     },
     refresh_token: {
       'ui:widget': 'hidden',
+      'ui:encrypted': 'encrypted',
     },
   },
 };
@@ -290,22 +310,5 @@ export const queryConfigForm = {
         },
       ],
     },
-  ],
-};
-export const scopeMap: Record<string, string[]> = {
-  'Read / Write / Delete | Selected Google Sheets': [
-    'https://www.googleapis.com/auth/drive.file',
-  ],
-  'Read / Write / Delete | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive',
-  ],
-  'Read / Write | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.file',
-  ],
-  'Read | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.readonly',
   ],
 };

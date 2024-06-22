@@ -57,6 +57,7 @@ export const appQuerySchema = querySchema
     query: true,
     triggerMode: true,
     dataSourceId: true,
+    baseDataSourceId: true,
   })
   .extend({
     baseDataSource: dataSourceSelect
