@@ -9,6 +9,7 @@ import {
 } from '@/lib/Editor/utils';
 import { throttle } from 'lodash';
 import { BoundingRect } from '@/lib/Editor/interface';
+import { useAutoRun } from '@/lib/Editor/hooks';
 // TODO: Custom implementation since we're tearing selecto's api for our use case
 const clipDimsToBoundingRect = (
   dims: { top: number; left: number; width: number; height: number },
@@ -59,6 +60,7 @@ const selectWidgetsInArea = (area: {
 const throttledSelectWidgetsInArea = throttle(selectWidgetsInArea, 100);
 const MultiSelect = observer(() => {
   const selectoRef = useRef<Selecto>(null);
+
   const prevContainerScrollTop = useRef(0);
   const startScrollTop = useRef(0);
   const startPosition = useRef({ x: 0, y: 0 });
@@ -139,8 +141,14 @@ const MultiSelect = observer(() => {
       '--select-area-height': `${selectAreaDims.height}px`,
     } as CSSProperties;
   }, [selectAreaDims]);
-  const scrollContainer =
-    editorStore.currentPage.rootWidget.scrollableContainer;
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
+  useAutoRun(() => {
+    const scrollableContainer =
+      editorStore.currentPage.rootWidget.scrollableContainer;
+    setScrollContainer(scrollableContainer);
+  });
   if (!scrollContainer) return null;
   return (
     <div style={style} data-type="MULTI_SELECT">
