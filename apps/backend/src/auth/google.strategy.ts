@@ -29,7 +29,10 @@ export class SignInGoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: configService.get('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
-      callbackURL: '/api/auth/login/google-redirect',
+      callbackURL: new URL(
+        '/api/auth/login/google-redirect',
+        configService.get('BASE_URL_BE'),
+      ),
       scope: ['email', 'profile'],
     });
     this.configService = configService;
