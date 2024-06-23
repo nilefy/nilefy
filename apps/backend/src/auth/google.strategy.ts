@@ -32,7 +32,7 @@ export class SignInGoogleStrategy extends PassportStrategy(Strategy, 'google') {
       callbackURL: new URL(
         '/api/auth/login/google-redirect',
         configService.get('BASE_URL_BE'),
-      ),
+      ).toString(),
       scope: ['email', 'profile'],
     });
     this.configService = configService;
