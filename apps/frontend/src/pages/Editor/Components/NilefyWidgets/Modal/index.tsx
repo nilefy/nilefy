@@ -4,7 +4,7 @@ import {
   NilefyContainer,
   NilefyContainerProps,
 } from '../Container';
-import { FileText } from 'lucide-react';
+import { FileText, PictureInPicture2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
@@ -148,7 +148,7 @@ export const NilefyModalWidget: Widget<NilefyModalProps> = {
     },
   },
   config: {
-    icon: FileText,
+    icon: PictureInPicture2,
     isCanvas: true,
     name: 'Modal',
     layoutConfig: {
@@ -204,7 +204,7 @@ export const NilefyModalWidget: Widget<NilefyModalProps> = {
       {
         type: 'NilefyText',
         props: {
-          text: 'Form',
+          text: 'Modal Title',
         },
         row: 5,
         col: 0.5,
