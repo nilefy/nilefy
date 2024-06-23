@@ -65,9 +65,10 @@ export default class MongoDBQueryService
   }
 
   async testConnection(dataSourceConfig: ConfigT) {
-    const client = new MongoClient(dataSourceConfig.uri);
     try {
+      const client = new MongoClient(dataSourceConfig.uri);
       await client.connect();
+      await client.close();
       return {
         connected: true,
         msg: 'connected successfully',
@@ -80,8 +81,6 @@ export default class MongoDBQueryService
             ? error.message
             : 'unknown error please check your credentials',
       };
-    } finally {
-      await client.close();
     }
   }
 }
