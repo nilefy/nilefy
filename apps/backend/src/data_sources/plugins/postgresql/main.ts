@@ -42,15 +42,16 @@ export default class PostgresqlQueryService
   }
 
   async testConnection(dataSourceConfig: ConfigT) {
-    const client = new Client({
-      ...dataSourceConfig,
-      connectionTimeoutMillis: 10000,
-    });
     try {
+      const client = new Client({
+        ...dataSourceConfig,
+        connectionTimeoutMillis: 10000,
+      });
       await client.connect();
+      await client.end();
       return {
         connected: true,
-        msg: 'connected successfully',
+        msg: 'Connected successfully',
       };
     } catch (error) {
       return {
@@ -60,8 +61,6 @@ export default class PostgresqlQueryService
             ? error.message
             : 'unknown error please check your credentials',
       };
-    } finally {
-      await client.end();
     }
   }
 }

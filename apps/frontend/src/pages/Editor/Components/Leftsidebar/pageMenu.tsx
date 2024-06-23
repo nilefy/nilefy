@@ -29,7 +29,7 @@ function PageMenu({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [PAGES_QUERY_KEY] });
       toast({
-        title: 'Page Cloned Successfully',
+        title: 'Page Cloned Successfully ✅',
       });
     },
   });
@@ -37,7 +37,7 @@ function PageMenu({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [PAGES_QUERY_KEY] });
       toast({
-        title: 'Page Deleted Successfully',
+        title: 'Page Deleted Successfully ✅',
       });
     },
     onError(error) {

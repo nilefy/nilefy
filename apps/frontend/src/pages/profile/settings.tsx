@@ -34,7 +34,7 @@ function EditProfile() {
     onSuccess() {
       toast({
         variant: 'default',
-        title: 'updated profile successfully',
+        title: 'Updated Profile Successfully ✅',
       });
     },
   });
@@ -122,7 +122,7 @@ function EditPassword() {
     onSuccess() {
       toast({
         variant: 'default',
-        title: 'updated password successfully',
+        title: 'Updated Password Successfully ✅',
       });
     },
   });

@@ -194,7 +194,7 @@ export class RolesService {
       )
       .returning();
     if (!role) {
-      throw new NotFoundException('no role');
+      throw new NotFoundException('No role');
     }
     // TODO: don't allow adding users to everone role(we should add users automatially to this role)
     if (roleDto.addUsers && roleDto.addUsers.length > 0) {
@@ -204,7 +204,7 @@ export class RolesService {
           roleDto.addUsers,
         ))
       ) {
-        throw new BadRequestException('cannot control those users');
+        throw new BadRequestException('Cannot control those users');
       }
       await this.db
         .insert(usersToRoles)
@@ -218,7 +218,7 @@ export class RolesService {
           roleDto.removeUsers,
         ))
       ) {
-        throw new BadRequestException('cannot control those users');
+        throw new BadRequestException('Cannot control those users');
       }
       await this.db
         .delete(usersToRoles)
@@ -237,7 +237,7 @@ export class RolesService {
           roleDto.addApps.map((a) => a.appId),
         ))
       ) {
-        throw new BadRequestException('cannot control those apps');
+        throw new BadRequestException('Cannot control those apps');
       }
       await this.db
         .insert(appsToRoles)
@@ -263,7 +263,7 @@ export class RolesService {
           roleDto.removeApps,
         ))
       ) {
-        throw new BadRequestException('cannot control those apps');
+        throw new BadRequestException('Cannot control those apps');
       }
       await this.db
         .delete(appsToRoles)
@@ -295,7 +295,7 @@ export class RolesService {
         ),
       )
       .returning();
-    if (!role) throw new NotFoundException('role not found in this workspace');
+    if (!role) throw new NotFoundException('Role not found in this workspace');
     return role;
   }
 

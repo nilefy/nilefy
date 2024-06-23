@@ -37,7 +37,7 @@ export function ForgotPassword() {
       onSuccess: () => {
         toast({
           variant: 'default',
-          title: 'Password Reset',
+          title: 'Password Reset 📧',
           description:
             'Your password reset instructions have been sent to your email.',
         });
@@ -45,7 +45,7 @@ export function ForgotPassword() {
       onError: () => {
         toast({
           variant: 'destructive',
-          title: 'Password Reset Failed',
+          title: 'Password Reset Failed ❌',
           description:
             'An error occurred while sending password reset instructions to your email.',
         });

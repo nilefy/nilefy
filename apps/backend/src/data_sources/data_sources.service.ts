@@ -114,7 +114,7 @@ export class DataSourcesService {
       ),
     });
     if (!ds) {
-      throw new NotFoundException('cannot find this data source');
+      throw new NotFoundException('Cannot find this data source');
     }
 
     const uiSchema = { ...ds['dataSource']['config']['uiSchema'] };
@@ -344,7 +344,7 @@ export class DataSourcesService {
       }
     } else {
       throw new BadRequestException(
-        "this data source doesn't support test connection functionality",
+        "This data source doesn't support test connection functionality",
       );
     }
   }

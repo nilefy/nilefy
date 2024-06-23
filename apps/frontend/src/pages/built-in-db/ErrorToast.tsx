@@ -9,7 +9,7 @@ const ErrorToast = ({ message }: { message?: string }) => {
       // Display your toast here
       toast({
         variant: 'destructive',
-        title: 'Something went wrong.',
+        title: 'Something Went Wrong',
         description: `${message} `,
       });
     }

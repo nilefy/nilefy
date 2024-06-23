@@ -90,8 +90,7 @@ function AppDropDown(props: { app: AppI }) {
     async onSuccess() {
       await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
       toast({
-        title: 'deleted app successfully',
-        description: 'app deleted',
+        title: 'Deleted App Successfully ✅',
       });
     },
   });
@@ -106,8 +105,8 @@ function AppDropDown(props: { app: AppI }) {
     async onSuccess(data) {
       await queryClient.invalidateQueries({ queryKey: [APPS_QUERY_KEY] });
       toast({
-        title: 'cloned app successfully',
-        description: 'new app name ' + data.name,
+        title: 'Cloned App Successfully ✅',
+        description: 'New app name ' + data.name,
       });
     },
   });
@@ -285,7 +284,7 @@ export function CreateAppDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full">create new app</Button>
+        <Button className="w-full">Create New App</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

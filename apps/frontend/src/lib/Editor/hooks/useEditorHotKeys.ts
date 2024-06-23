@@ -8,6 +8,7 @@ import { ClipboardDataT } from '@/actions/types';
 import { PasteAction } from '@/actions/editor/Paste';
 import ResizeAction from '@/actions/editor/Resize';
 import { useEditorMousePosition } from './useEditorMousePosition';
+import { toast } from '@/components/ui/use-toast';
 
 export const useEditorHotKeys = (
   editorStore: EditorState,
@@ -32,6 +33,13 @@ export const useEditorHotKeys = (
 
     if (handlers.keys?.join('') === 'c') {
       commandManager.executeCommand(new CopyAction());
+      toast({
+        description: `Copied ${
+          editorStore.currentPage.selectedNodeIds.size == 1
+            ? `${[...editorStore.currentPage.selectedNodeIds][0]}`
+            : `${editorStore.currentPage.selectedNodeIds.size} Components`
+        } ✅ `,
+      });
     } else {
       commandManager.executeCommand(new CutAction());
     }

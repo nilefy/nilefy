@@ -21,7 +21,7 @@ export class RenameAction implements UndoableCommand {
     if (this.id === this.newId) return;
     if (!isValidIdentifier(this.newId)) {
       toast({
-        title: 'Error',
+        title: 'Error ❌',
         description: `Failed to rename ${this.id} to ${this.newId}, because ${this.newId} is not a valid identifier name.`,
         variant: 'destructive',
       });
@@ -31,7 +31,7 @@ export class RenameAction implements UndoableCommand {
     if (!entity) return;
     if (entityNameExists(this.newId, entity.entityType)) {
       toast({
-        title: 'Error',
+        title: 'Error ❌',
         description: `Failed to rename ${entity?.entityType} ${this.id} to ${this.newId}, because ${this.newId} already exists.`,
         variant: 'destructive',
       });

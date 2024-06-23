@@ -34,7 +34,7 @@ export class EncryptionService {
       return iv.toString(this.encoding) + encrypted.toString(this.encoding);
     } catch (e) {
       throw new HttpException(
-        'an error has occured encryption service: ' + e,
+        'An error has occured, encryption service: ' + e,
         404,
       );
     }
@@ -54,7 +54,7 @@ export class EncryptionService {
       return Buffer.concat([decrypted, decipher.final()]).toString();
     } catch (e) {
       throw new InternalServerErrorException(
-        'an error has occured/ decryption service: ' + e,
+        'An error has occured, decryption service: ' + e,
       );
     }
   }
