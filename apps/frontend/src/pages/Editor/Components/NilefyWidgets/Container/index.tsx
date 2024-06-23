@@ -53,7 +53,8 @@ const NilefyContainer = observer(
 
     const shouldDisableScroll =
       id === EDITOR_CONSTANTS.ROOT_NODE_ID &&
-      editorStore.currentPage.shouldDisableRootScroll;
+      editorStore.currentPage.modalOpenExists &&
+      !editorStore.isProduction;
     return (
       <ScrollArea
         // temporary styles till we implement custom styles

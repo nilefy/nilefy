@@ -49,7 +49,6 @@ export class WebloomPage implements WebloomDisposable {
   };
   width: number = 0;
   height: number = 0;
-  shouldDisableRootScroll: boolean = false;
   readonly workerBroker: WorkerBroker;
   constructor({
     id,
@@ -105,8 +104,7 @@ export class WebloomPage implements WebloomDisposable {
       selectAll: action,
       isPrematureDragging: observable,
       setIsPermatureDragging: action,
-      setShouldDisableRootScroll: action,
-      shouldDisableRootScroll: observable,
+      modalOpenExists: computed,
     });
 
     this.id = id;
@@ -131,8 +129,14 @@ export class WebloomPage implements WebloomDisposable {
   selectAll() {
     this.selectedNodeIds = new Set(this.rootWidget.nodes);
   }
-  setShouldDisableRootScroll(shouldDisable: boolean) {
-    this.shouldDisableRootScroll = shouldDisable;
+  get modalOpenExists() {
+    for (const widgetId in this.widgets) {
+      const widget = this.widgets[widgetId];
+      if (widget.type === 'NilefyModal' && widget.finalValues.isOpen) {
+        return true;
+      }
+    }
+    return false;
   }
   clearSelectedNodes() {
     this.selectedNodeIds.clear();

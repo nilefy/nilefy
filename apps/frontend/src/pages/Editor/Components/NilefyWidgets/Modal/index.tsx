@@ -6,7 +6,7 @@ import {
 } from '../Container';
 import { FileText } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
 import { useAutoRun } from '@/lib/Editor/hooks';
@@ -29,23 +29,15 @@ const NilefyModal = observer(
     useHotkeys('esc', () => {
       onPropChange({ key: 'isOpen', value: false });
     });
-    useEffect(
-      () => () => {
-        onPropChange({ key: 'isOpen', value: false });
-      },
-      [onPropChange],
-    );
+
     useAutoRun(() => {
-      if (widget.isTheOnlySelected || widget.childrenHasSelected) {
-        console.log('selected');
+      if (
+        (widget.isTheOnlySelected || widget.childrenHasSelected) &&
+        !editorStore.currentPage.modalOpenExists
+      ) {
+        console.log('open', id);
         return onPropChange({ key: 'isOpen', value: true });
       }
-    });
-    useAutoRun(() => {
-      if (editorProps.isOpen && !editorStore.isProduction) {
-        return editorStore.currentPage.setShouldDisableRootScroll(true);
-      }
-      editorStore.currentPage.setShouldDisableRootScroll(false);
     });
 
     if (editorStore.isProduction) {
@@ -70,8 +62,10 @@ const NilefyModal = observer(
           <div
             onClick={(e) => {
               e.stopPropagation();
-              onPropChange({ key: 'isOpen', value: false });
-              editorStore.currentPage.clearSelectedNodes();
+              runInAction(() => {
+                editorStore.currentPage.clearSelectedNodes();
+                onPropChange({ key: 'isOpen', value: false });
+              });
             }}
             className="bg-background/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 absolute inset-0 z-50 backdrop-blur-sm"
           ></div>
