@@ -179,7 +179,7 @@ export class ComponentsService {
     const rows = comps.rows as (ComponentDto & { level: number })[];
     if (rows.length === 0)
       throw new BadRequestException(
-        'page should contain at least one component(root)',
+        'Page should contain at least one component(root)',
       ); // based on our business logic when page is created a root component is created with it and cannot delete the root node of a page
     return rows;
   }

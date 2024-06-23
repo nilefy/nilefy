@@ -44,7 +44,7 @@ export class JsLibrariesService {
       .where(and(eq(jsLibraries.id, jsLibraryId), eq(jsLibraries.appId, appId)))
       .returning();
     if (!q)
-      throw new NotFoundException(`no js query with the id ${jsLibraryId}`);
+      throw new NotFoundException(`No js query with the id ${jsLibraryId}`);
     return q;
   }
 

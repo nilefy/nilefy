@@ -55,7 +55,7 @@ export class WebloomDbService {
       },
     });
     if (!table) {
-      throw new NotFoundException('this table id does not exist');
+      throw new NotFoundException('This table id does not exist');
     }
 
     const { rows } = await this.db.execute(
@@ -124,7 +124,7 @@ export class WebloomDbService {
           .returning()
       )[0];
       if (!temp) {
-        throw new NotFoundException('table is not found in this workspace');
+        throw new NotFoundException('Table is not found in this workspace');
       }
 
       const cols = await trx

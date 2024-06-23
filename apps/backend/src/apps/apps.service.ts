@@ -255,10 +255,10 @@ export class AppsService {
         },
       },
     });
-    if (!app) throw new NotFoundException('app not found in this workspace');
+    if (!app) throw new NotFoundException('App not found in this workspace');
     if (app.pages.length < 1)
       throw new BadRequestException(
-        "app must has at least one page what's going on",
+        "App must has at least one page what's going on",
       );
     // TODO: for now i get the first page as the default but needs to add default page concept to the database
     const defaultPage = await this.pagesService.findOne(
@@ -267,7 +267,7 @@ export class AppsService {
       pageId ? pageId : app.pages[0].id,
     );
     if (!defaultPage) {
-      throw new BadRequestException('page not found');
+      throw new BadRequestException('Page not found');
     }
     return {
       ...app,
@@ -287,7 +287,7 @@ export class AppsService {
       .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
-    if (!app) throw new NotFoundException('app not found in this workspace');
+    if (!app) throw new NotFoundException('App not found in this workspace');
     return app as AppDto;
   }
 
@@ -303,7 +303,7 @@ export class AppsService {
       .where(and(eq(apps.id, appId), eq(apps.workspaceId, workspaceId)))
       .returning();
 
-    if (!app) throw new NotFoundException('app not found in this workspace');
+    if (!app) throw new NotFoundException('App not found in this workspace');
     return app as AppDto;
   }
 

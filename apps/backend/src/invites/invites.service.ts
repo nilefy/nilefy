@@ -208,7 +208,7 @@ export class InvitesService {
       this.inviteNewUsers(workspace!.id, workspace!.name, newUsersEmails),
     ]);
     return {
-      msg: 'invited users',
+      msg: 'Invited users',
     };
   }
 
@@ -216,7 +216,7 @@ export class InvitesService {
     const payload =
       await this.jwtService.verifyAsync<InvitationTokenPayload>(token);
     if (payload.type !== 'invite') {
-      throw new BadRequestException('Bad Token');
+      throw new BadRequestException('Bad token');
     }
     return payload;
   }
@@ -245,11 +245,11 @@ export class InvitesService {
     });
     if (!invitation) {
       Logger.error({
-        msg: "invitation doesn't exist but the jwt validation passed HOW",
+        msg: "Invitation doesn't exist but the jwt validation passed HOW",
         token,
         tokenPayload,
       });
-      throw new InternalServerErrorException("invitation doesn't exist ");
+      throw new InternalServerErrorException("Invitation doesn't exist");
     }
     switch (invitation.status) {
       case 'active': {
@@ -260,7 +260,7 @@ export class InvitesService {
       }
       case 'declined': {
         throw new BadRequestException(
-          'user declined the invite please ask the workspace admin to send another invite',
+          'User declined the invite, please ask the workspace admin to send another invite',
         );
       }
       case 'invited': {
@@ -304,9 +304,9 @@ export class InvitesService {
             ),
           ),
       ]);
-      return { msg: 'invitation accepted successfully you can login in now' };
+      return { msg: 'Invitation accepted successfully, you can login in now' };
     } else if (userStatus === 'newUser') {
-      throw new BadRequestException('new user userStatus must equal "newUser"');
+      throw new BadRequestException('New user userStatus must equal "newUser"');
     }
 
     // existing user case
@@ -325,14 +325,14 @@ export class InvitesService {
             eq(schema.usersToWorkspaces.workspaceId, workspaceId),
           ),
         );
-      return { msg: 'invitation accepted successfully' };
+      return { msg: 'Invitation accepted successfully' };
     } else if (userStatus === 'existingUser') {
       throw new BadRequestException(
-        'existing userStatus must equal "existingUser"',
+        'Existing userStatus must equal "existingUser"',
       );
     }
 
-    Logger.error({ msg: 'no case matched for invitation callback', dto });
+    Logger.error({ msg: 'No case matched for invitation callback', dto });
     throw new InternalServerErrorException();
   }
 }

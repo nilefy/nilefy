@@ -98,7 +98,7 @@ export class JsQueriesService {
       .set({ ...query, updatedById, updatedAt: sql`now()` })
       .where(and(eq(jsQueries.id, jsQueryId), eq(jsQueries.appId, appId)))
       .returning();
-    if (!q) throw new NotFoundException(`no js query with the id ${jsQueryId}`);
+    if (!q) throw new NotFoundException(`No js query with the id ${jsQueryId}`);
     return q;
   }
 

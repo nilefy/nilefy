@@ -56,7 +56,7 @@ export class DataQueriesService {
     const query = await this.getQuery(appId, queryId);
     if (!query.dataSourceId) {
       throw new BadRequestException(
-        'query should be connected to datasource to run the query',
+        'Query should be connected to datasource to run the query',
       );
     }
     const ds = await this.dataSourcesService.getOneToRun(

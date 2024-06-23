@@ -129,7 +129,7 @@ export class PagesService {
     });
     if (!p)
       throw new NotFoundException(
-        `no page with id ${pageId} in app with id ${appId}`,
+        `No page with id ${pageId} in app with id ${appId}`,
       );
     const tree = await this.componentsService.getTreeForPage(p.id);
     return { ...p, tree };
@@ -148,7 +148,7 @@ export class PagesService {
       });
 
       if (!oldIndex)
-        throw new NotFoundException('no app or page with those ids');
+        throw new NotFoundException('No app or page with those ids');
       // two cases for the new index
       /**
        * index went down
@@ -218,7 +218,7 @@ export class PagesService {
       .where(eq(pages.appId, appId));
 
     if (count === 1) {
-      throw new BadRequestException('cannot delete the only page in an app');
+      throw new BadRequestException('Cannot delete the only page in an app');
     }
 
     return await this.db

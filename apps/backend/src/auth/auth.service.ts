@@ -41,7 +41,7 @@ export class AuthService {
     isEmailVerified,
   }: GoogleAuthedRequest['user']): Promise<JwtToken> {
     if (!isEmailVerified) {
-      throw new BadRequestException('cannot use unverified email in oauth');
+      throw new BadRequestException('Cannot use unverified email in oauth.');
     }
     const u = await this.userService.findOne(email);
     if (u) {
@@ -127,13 +127,14 @@ export class AuthService {
       });
       // TODO: sending email should be through a queue to not halt the request until the email is sent
       this.signUpEmail(user.email, user.username, conformationToken);
-      return { msg: 'signed up successfully, please confirm your email' };
+      return { msg: 'Signed up successfully, please confirm your email.' };
     } catch (err) {
       Logger.error({ err }, err.stack);
       //TODO: return database error
-      throw new BadRequestException(
-        'something went wrong on sign up please try again',
-      );
+      // throw new BadRequestException(
+      //   'something went wrong on sign up please try again',
+      // );
+      throw new BadRequestException(err.message);
     }
   }
 
@@ -142,25 +143,25 @@ export class AuthService {
 
     const u = await this.userService.findOne(email);
     if (!u) {
-      throw new NotFoundException('Email Not Found');
+      throw new NotFoundException('Email not found');
     }
 
     if (u.password) {
       const match = await compare(password, u.password);
       if (!match) {
-        throw new BadRequestException();
+        throw new BadRequestException('Wrong credentials');
       }
     } else if (u.accounts.length > 0) {
       // user has no password that means this user could be created from oauth
       const account = u.accounts[0];
-      throw new BadRequestException(`try signin with ${account.provider}`);
+      throw new BadRequestException(`Try signin with ${account.provider}`);
     } else {
       // no password nor account, that's weird how did we create this user
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('Something went wrong');
     }
     // if (!u.emailVerified) {
     //   throw new BadRequestException(
-    //     `please verify your email then try to sign in`,
+    //     `Please verify your email then try to sign in`,
     //   );
     // }
     return {
@@ -196,7 +197,7 @@ export class AuthService {
         emailVerified: new Date(),
         conformationToken: null,
       });
-      return 'email verified successfully, try sign-in';
+      return 'Email verified successfully, try sign-in';
     } catch {
       throw new BadRequestException('Failed to confirm email');
     }
@@ -239,7 +240,7 @@ export class AuthService {
       const user = await this.userService.findOne(email);
 
       if (!user) {
-        throw new NotFoundException('Email Not Found');
+        throw new NotFoundException('Email not found');
       }
 
       const token = await this.jwtService.signAsync(
@@ -256,7 +257,7 @@ export class AuthService {
       return { success: true };
     } catch (error) {
       throw new BadRequestException(
-        `Failed To Reset Password, ${error.message}`,
+        `Failed to reset password, ${error.message}`,
       );
     }
   }
@@ -278,14 +279,14 @@ export class AuthService {
         },
       });
       if (user === undefined) {
-        throw new BadRequestException('Token Expired or Invalid');
+        throw new BadRequestException('Token expired or invalid');
       }
       await this.jwtService.verifyAsync(token);
 
       if (user.password) {
         const match = await compare(password, user.password);
         if (match) {
-          throw new BadRequestException('Use a New Password');
+          throw new BadRequestException('Use a new password');
         }
       }
       const salt = await genSalt(10);
@@ -295,9 +296,9 @@ export class AuthService {
         password: hashed,
         passwordResetToken: null,
       });
-      return { success: true, message: 'Password Reset Successfully' };
+      return { success: true, message: 'Password reset successfully' };
     } catch (error) {
-      throw new BadRequestException(`Failed To Reset Password`);
+      throw new BadRequestException(`Failed to reset password`);
     }
   }
 
