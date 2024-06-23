@@ -79,15 +79,12 @@ export class AuthService {
   }
 
   private async signUpEmail(email: string, username: string, jwt: string) {
-    const url =
-      '/auth' +
-      '/' +
-      'confirm' +
-      '/' +
-      encodeURIComponent(email) +
-      '/' +
-      encodeURIComponent(jwt) +
-      '/';
+    const url = new URL(
+      `/auth/confirm/${encodeURIComponent(email)}/${encodeURIComponent(jwt)}`,
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : this.configService.get('BASE_URL_BE'),
+    ).toString();
     const html =
       `
     <p>Dear ${username},</p>
@@ -203,15 +200,12 @@ export class AuthService {
   }
 
   private async forgotPasswordSendEmail(email: string, token: string) {
-    const url =
-      '/auth' +
-      '/' +
-      'reset-password' +
-      '/' +
-      encodeURIComponent(email) +
-      '/' +
-      encodeURIComponent(token) +
-      '/';
+    const url = new URL(
+      `/auth/reset-password/${encodeURIComponent(email)}/${encodeURIComponent(token)}`,
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : this.configService.get('BASE_URL_BE'),
+    ).toString();
     const html =
       `
     <p>Dear ${email},</p>

@@ -11,8 +11,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   ENCRYPTION_KEY: z.string(),
-  BASE_URL_FE: z.string(),
-  BASE_URL_BE: z.string(),
+  BASE_URL_FE: z.string().url(),
+  BASE_URL_BE: z.string().url(),
 });
 
 export type EnvSchema = z.infer<typeof envSchema>;
