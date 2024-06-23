@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api';
 import { useToast } from './ui/use-toast';
 import { PageDto } from '@/api/pages.api';
+import { editorStore } from '@/lib/Editor/Models';
 
 function RenameInput({
   page,
@@ -18,15 +19,15 @@ function RenameInput({
     async onSuccess() {
       await queryClient.invalidateQueries({ queryKey: ['pages'] });
       toast({
-        title: 'Page Name Updated Successfully',
+        title: 'Page Name Updated Successfully ✅',
       });
     },
   });
   const handleRenamePage = (pageName: string) => {
     if (pageName.length > 0 && pageName != page.name) {
       updateMutate({
-        workspaceId: 1,
-        appId: 1,
+        workspaceId: editorStore.workspaceId,
+        appId: editorStore.appId,
         pageId: page.id,
         pageDto: {
           name: pageName,
