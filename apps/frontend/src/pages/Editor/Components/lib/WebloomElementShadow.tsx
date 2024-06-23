@@ -9,7 +9,7 @@ export const WebloomElementShadow = observer(() => {
       className="pointer-events-none box-border select-none border-t-[3px] border-t-blue-500 bg-black bg-opacity-10"
       style={{
         position: 'fixed',
-        zIndex: '100',
+        zIndex: '200',
         top: shadow.y,
         left: shadow.x,
         width: shadow.width,

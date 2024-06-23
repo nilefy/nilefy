@@ -8,7 +8,7 @@ import { WebloomWidget } from '@/lib/Editor/Models/widget';
 import { runInAction } from 'mobx';
 import { getNewEntityName } from '@/lib/Editor/entitiesNameSeed';
 import { WebloomPage } from '@/lib/Editor/Models/page';
-import { SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
+import { EDITOR_CONSTANTS, SOCKET_EVENTS_REQUEST } from '@nilefy/constants';
 
 export type AddWidgetPayload = Parameters<
   InstanceType<typeof WebloomPage>['addWidget']
@@ -30,7 +30,19 @@ class DragAction implements UndoableCommand {
     parentId: string;
   }) {
     this.isNew = options.draggedItem.isNew;
-    this.parentId = options.parentId;
+    if (
+      options.draggedItem.isNew &&
+      options.draggedItem.type === 'NilefyModal'
+    ) {
+      this.parentId = EDITOR_CONSTANTS.ROOT_NODE_ID;
+      const columnsCount = 12;
+      options.endPosition = {
+        col: EDITOR_CONSTANTS.NUMBER_OF_COLUMNS / 2 - columnsCount / 2,
+        row: 20,
+        columnsCount,
+        rowsCount: 40,
+      };
+    } else this.parentId = options.parentId;
     this.endPosition = options.endPosition;
     if (!options.draggedItem.isNew) {
       this.oldParentId = editorStore.currentPage.getWidgetById(
@@ -54,11 +66,12 @@ class DragAction implements UndoableCommand {
           parentId: this.parentId,
           type: this.newType,
           id: this.id,
+          ...(this.newType === 'NilefyModal' ? endDims : {}),
         });
-        this.undoData = editorStore.currentPage.moveWidgetIntoGrid(
-          this.id,
-          endDims,
-        );
+        this.undoData =
+          this.newType === 'NilefyModal'
+            ? {}
+            : editorStore.currentPage.moveWidgetIntoGrid(this.id, endDims);
       });
       const addedWidget = editorStore.currentPage.getWidgetById(
         this.id,
@@ -88,6 +101,7 @@ class DragAction implements UndoableCommand {
         this.id,
         this.endPosition,
       );
+      editorStore.currentPage.setSelectedNodeIds(new Set([this.id]));
     });
     const remoteData = [
       editorStore.currentPage.getWidgetById(this.id).snapshot,

@@ -25,6 +25,7 @@ export class WidgetSelection {
         if (WidgetSelection.shiftKey === null) {
           WidgetSelection.shiftKey = shiftKey;
         }
+        // this will eventually get hit, because the click event will bubble up to the root node
         if (id === EDITOR_CONSTANTS.ROOT_NODE_ID) {
           WidgetSelection.end();
         }

@@ -48,8 +48,9 @@ const selectWidgetsInArea = (area: {
   const rootWidgetChildren = editorStore.currentPage.rootWidget.nodes;
   const overlapped: string[] = [];
   rootWidgetChildren.forEach((widgetId) => {
-    const widgetBoundingRect =
-      editorStore.currentPage.getWidgetById(widgetId).boundingRect;
+    const widget = editorStore.currentPage.getWidgetById(widgetId);
+    if (widget.type === 'NilefyModal') return;
+    const widgetBoundingRect = widget.boundingRect;
     if (checkOverlap(areaBoundingRect, widgetBoundingRect))
       overlapped.push(widgetId);
   });

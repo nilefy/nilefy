@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useRef, Suspense, useCallback } from 'react';
+import { useRef, Suspense, useCallback, useEffect } from 'react';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -29,6 +29,7 @@ import { LeftSidebar } from './Components/Leftsidebar';
 import { Outlet } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend, TouchBackendOptions } from 'react-dnd-touch-backend';
+import { runInAction } from 'mobx';
 
 const DndOptions: Partial<TouchBackendOptions> = {
   enableMouseEvents: true,
@@ -142,9 +143,14 @@ export const Editor = observer(() => {
   if (editorStore.isLoadingPage) {
     return <NilefyLoader />;
   }
+  useEffect(() => {
+    runInAction(() => {
+      editorStore.environment = 'development';
+    });
+  }, []);
   return (
     <PageLoader>
-      <WebloomRoot isProduction={false} />
+      <WebloomRoot isProduction={editorStore.isProduction} />
     </PageLoader>
   );
 });

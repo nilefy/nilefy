@@ -15,6 +15,7 @@ export const useWebloomDragCore = (item: DraggedItem) => {
       return true;
     },
     end: () => {
+      console.log('ending drag');
       editorStore.currentPage.setDraggedWidgetId(null);
       editorStore.currentPage.setIsPermatureDragging(false);
       editorStore.currentPage.setShadowElement(null);

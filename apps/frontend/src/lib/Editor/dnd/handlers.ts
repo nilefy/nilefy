@@ -72,15 +72,22 @@ export class DndHandlers {
     editorRelativeMousePosition.y +=
       droppable.cumlativScrollTop -
       editorStore.currentPage.rootWidget.scrollTop;
-    const dimensions = getDropPositionWithCollisions(
-      grid,
-      editorRelativeMousePosition,
-      item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
-      overId,
-      droppableId,
-      editorStore.currentPage.draggedWidgetId!,
-      false,
-    );
+    const isModal =
+      (item.isNew && item.type === 'NilefyModal') ||
+      (!item.isNew &&
+        editorStore.currentPage.getWidgetById(item.id).type === 'NilefyModal');
+    // modals don't have collisions with other widgets
+    const dimensions = isModal
+      ? grid
+      : getDropPositionWithCollisions(
+          grid,
+          editorRelativeMousePosition,
+          item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
+          overId,
+          droppableId,
+          editorStore.currentPage.draggedWidgetId!,
+          false,
+        );
     commandManager.executeCommand(
       new DragAction({
         draggedItem: item,
@@ -124,15 +131,22 @@ export class DndHandlers {
     newMousePos.y +=
       droppable.cumlativScrollTop -
       editorStore.currentPage.rootWidget.scrollTop;
-    const dimensions = getDropPositionWithCollisions(
-      grid,
-      newMousePos,
-      item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
-      overId,
-      droppableId,
-      editorStore.currentPage.draggedWidgetId!,
-      true,
-    );
+    const isModal =
+      (item.isNew && item.type === 'NilefyModal') ||
+      (!item.isNew &&
+        editorStore.currentPage.getWidgetById(item.id).type === 'NilefyModal');
+    // modals don't have collisions with other widgets
+    const dimensions = isModal
+      ? grid
+      : getDropPositionWithCollisions(
+          grid,
+          newMousePos,
+          item.isNew ? uniqueId('WEBLOOM_NEW_ITEM') : item.id,
+          overId,
+          droppableId,
+          editorStore.currentPage.draggedWidgetId!,
+          true,
+        );
     const pixel = convertGridToPixel(
       dimensions,
       [EDITOR_CONSTANTS.ROW_HEIGHT, droppable.columnWidth],

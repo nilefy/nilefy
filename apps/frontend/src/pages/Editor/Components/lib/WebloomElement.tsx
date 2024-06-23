@@ -1,7 +1,6 @@
 import { editorStore } from '@/lib/Editor/Models';
 import { ElementType, useCallback, useContext, useMemo } from 'react';
 import { EnvironmentContext, NilefyWidgets, WidgetContext } from '..';
-
 import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/cn';
 import { WIDGET_SECTIONS } from '@/lib/Editor/interface';
@@ -9,7 +8,9 @@ import { flow, flowRight } from 'lodash';
 import {
   WithDeletePopover,
   WithDnd,
+  WithDrop,
   WithLayout,
+  WithModalLayout,
   WithPopover,
   WithResize,
   WithSelection,
@@ -141,4 +142,10 @@ export const WebloomElement: React.FC<{ id: string }> = flowRight(
   WithPopover,
   WithSelection,
   WithDeletePopover,
+)(WebloomElementBase);
+
+export const ModalWelboomElement: React.FC<{ id: string }> = flowRight(
+  WithModalLayout,
+  WithResize,
+  WithDrop,
 )(WebloomElementBase);

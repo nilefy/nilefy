@@ -104,6 +104,7 @@ export class WebloomPage implements WebloomDisposable {
       selectAll: action,
       isPrematureDragging: observable,
       setIsPermatureDragging: action,
+      modalOpenExists: computed,
     });
 
     this.id = id;
@@ -128,7 +129,15 @@ export class WebloomPage implements WebloomDisposable {
   selectAll() {
     this.selectedNodeIds = new Set(this.rootWidget.nodes);
   }
-
+  get modalOpenExists() {
+    for (const widgetId in this.widgets) {
+      const widget = this.widgets[widgetId];
+      if (widget.type === 'NilefyModal' && widget.finalValues.isOpen) {
+        return true;
+      }
+    }
+    return false;
+  }
   clearSelectedNodes() {
     this.selectedNodeIds.clear();
   }
@@ -435,7 +444,9 @@ export class WebloomPage implements WebloomDisposable {
         nodeGridBoundingRect,
         nodes,
         id,
-      );
+      ).filter((widget) => {
+        return this.widgets[widget.id].type !== 'NilefyModal';
+      });
       const [gridrow, gridcol] = parent.gridSize as [number, number];
       const nodePixelDims = convertGridToPixel(
         newCoords as WebloomGridDimensions,
@@ -463,7 +474,14 @@ export class WebloomPage implements WebloomDisposable {
         moveNodeRecursively.call(this, node.id, { row: node.row });
       });
     }
-    moveNodeRecursively.call(this, id, newCoords);
+    const isModal = widget.type === 'NilefyModal';
+    if (!isModal) {
+      moveNodeRecursively.call(this, id, newCoords);
+    } else {
+      const gridDimensions = widget.gridDimensions;
+      const _newCoords = normalizeCoords(newCoords, gridDimensions);
+      widget.setDimensions(_newCoords);
+    }
     return {
       ...changedNodesOriginalCoords,
       [id]: firstNodeOriginalDimensions,

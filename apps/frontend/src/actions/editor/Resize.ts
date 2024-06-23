@@ -258,6 +258,7 @@ class ResizeAction {
       key,
     );
     editorStore.currentPage.setResizedWidgetId(null);
+    editorStore.currentPage.setSelectedNodeIds(new Set([id]));
     if (!dims) return null;
     const command: UndoableCommand = {
       execute: () => {
@@ -317,6 +318,7 @@ class ResizeAction {
   ) {
     const collidedNodes = [];
     const node = editorStore.currentPage.getWidgetById(id);
+
     if (!node) return [];
 
     let dims = {
