@@ -33,6 +33,7 @@ import { DataSourcesService } from '../data_sources/data_sources.service';
 import { scopeMap } from '../data_sources/plugins/googlesheets/types';
 import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 import { JwtGuard } from './jwt.guard';
+import { z } from 'zod';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -78,15 +79,18 @@ export class AuthController {
   }
 
   // TODO: should we move this to data queries controller?
-  @Get('googlesheets/:ws/:ds')
+  @Get('googlesheets/:ws/:ds/:env')
   @Redirect()
   async googleLogin(
     @Param('ws') ws: string,
     @Param('ds') ds: string,
+    @Param('env', new ZodValidationPipe(z.enum(['development', 'production'])))
+    env: 'development' | 'production',
     @Res() res: Response,
   ) {
-    const scope: string = (await this.dataSourcesService.getOne(+ws, +ds))
-      .config.scope;
+    const scope: string = (await this.dataSourcesService.getOneToRun(+ws, +ds))
+      .config[env].scope;
+
     const scopeLinks = scopeMap[scope];
     const sheetsService = new GoogleSheetsQueryService();
     const authUrl = sheetsService.getAuthUrl(scopeLinks);

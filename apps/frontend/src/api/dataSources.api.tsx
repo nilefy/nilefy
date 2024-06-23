@@ -295,7 +295,9 @@ function useUpdateDataSource(
         queryKey: [DATASOURCES_QUERY_KEY],
       });
       if (dto.config && dto.config.scope.includes('Google Sheets')) {
-        window.location.href = `/api/auth/googlesheets/${+workspaceId}/${+dataSourceId}`;
+        window.location.href = `/api/auth/googlesheets/${+workspaceId}/${+dataSourceId}/${
+          dto.env
+        }`;
       }
     },
     ...options,
