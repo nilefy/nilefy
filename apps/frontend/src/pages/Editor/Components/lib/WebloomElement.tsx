@@ -14,6 +14,7 @@ import {
   WithPopover,
   WithResize,
   WithSelection,
+  WithSuspense,
 } from './HOCs';
 
 const RenderedElement = observer(
@@ -137,6 +138,7 @@ export const ProductionWebloomElement: React.FC<{ id: string }> =
 
 export const WebloomElement: React.FC<{ id: string }> = flowRight(
   WithLayout,
+  WithSuspense,
   WithResize,
   WithDnd,
   WithPopover,
@@ -146,6 +148,7 @@ export const WebloomElement: React.FC<{ id: string }> = flowRight(
 
 export const ModalWelboomElement: React.FC<{ id: string }> = flowRight(
   WithModalLayout,
+  WithSuspense,
   WithResize,
   WithDrop,
 )(WebloomElementBase);
