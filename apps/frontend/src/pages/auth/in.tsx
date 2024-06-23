@@ -128,7 +128,7 @@ export function SignIn() {
                     </FormItem>
                   )}
                 />
-                {isError && <p className="text-red-900">{error?.message}</p>}
+                {isError && <p className="text-destructive">{error?.message}</p>}
                 <LoadingButton
                   isLoading={isPending}
                   type="submit"
