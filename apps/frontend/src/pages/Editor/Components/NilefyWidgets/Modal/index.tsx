@@ -4,12 +4,12 @@ import {
   NilefyContainer,
   NilefyContainerProps,
 } from '../Container';
-import { FileText, PictureInPicture2 } from 'lucide-react';
+import { PictureInPicture2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useContext } from 'react';
 import { WidgetContext } from '../..';
 import { editorStore } from '@/lib/Editor/Models';
-import { useAutoRun } from '@/lib/Editor/hooks';
+import { useAutoRun, useReaction } from '@/lib/Editor/hooks';
 import { Portal } from '@radix-ui/react-portal';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { runInAction } from 'mobx';
@@ -38,7 +38,14 @@ const NilefyModal = observer(
         return onPropChange({ key: 'isOpen', value: true });
       }
     });
-
+    useReaction(
+      () => editorProps.isOpen,
+      (isOpen, prevIsOpen) => {
+        if (!isOpen && prevIsOpen) {
+          widget.handleEvent('onClose');
+        }
+      },
+    );
     if (editorStore.isProduction) {
       return (
         <Dialog open={editorProps.isOpen}>
