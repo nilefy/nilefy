@@ -11,7 +11,6 @@ import {
   Res,
   UseGuards,
   UsePipes,
-  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
@@ -69,13 +68,12 @@ export class AuthController {
       '/signin',
       this.configService.get('NODE_ENV') === 'development'
         ? this.configService.get('BASE_URL_FE')
-        : undefined,
+        : this.configService.get('BASE_URL_BE'),
     );
     frontURL.searchParams.set(
       'token',
       (await this.authService.authWithOAuth(req.user)).access_token,
     );
-    Logger.debug(frontURL);
     response.redirect(302, frontURL.toString());
   }
 
@@ -136,7 +134,13 @@ export class AuthController {
     // Save the tokens in the database
     res.cookie('access_token', googleToken, { httpOnly: true });
     res.cookie('refresh_token', googleRefreshToken, { httpOnly: true });
-    res.redirect(`http://localhost:5173/${ws}/datasources/${ds}`);
+    const redirectUrl = new URL(
+      `/${ws}/datasources/${ds}`,
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : this.configService.get('BASE_URL_BE'),
+    );
+    res.redirect(redirectUrl.toString());
   }
 
   @Get('confirm/:email/:token')
@@ -149,7 +153,7 @@ export class AuthController {
       '/signin',
       this.configService.get('NODE_ENV') === 'development'
         ? this.configService.get('BASE_URL_FE')
-        : undefined,
+        : this.configService.get('BASE_URL_BE'),
     );
     try {
       const msg = await this.authService.confirm(email, token);

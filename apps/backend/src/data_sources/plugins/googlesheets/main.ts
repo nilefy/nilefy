@@ -20,11 +20,14 @@ export default class GoogleSheetsQueryService
   constructor() {
     const clientId = process.env['GOOGLE_CLIENT_ID'] as string;
     const clientSecret = process.env['GOOGLE_CLIENT_SECRET'] as string;
+    const redirectUri = new URL(
+      '/api/auth/login/google-sheets-redirect',
+      process.env['BASE_URL_BE'],
+    ).toString();
     this.oAuth2Client = new OAuth2Client({
       clientId,
       clientSecret,
-      redirectUri:
-        'http://localhost:3000/api/auth/login/google-sheets-redirect',
+      redirectUri: redirectUri,
     });
     this.clientId = clientId;
     this.clientSecret = clientSecret;

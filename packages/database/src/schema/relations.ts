@@ -430,9 +430,9 @@ export const componentsRelations = relations(components, ({ one, many }) => ({
   //   references: [components.id],
   //   relationName: componentParentRelation,
   // }),
-  children: many(components, {
-    relationName: componentParentRelation,
-  }),
+  // children: many(components, {
+  //   relationName: componentParentRelation,
+  // }),
 }));
 
 export const appsToRolesRelations = relations(appsToRoles, ({ one }) => ({

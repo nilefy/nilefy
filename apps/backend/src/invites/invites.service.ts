@@ -14,6 +14,8 @@ import {
 import { and, eq, sql, inArray } from 'drizzle-orm';
 import { InvitationCallbackReq } from '@nilefy/constants';
 import _ from 'lodash';
+import { ConfigService } from '@nestjs/config';
+import { EnvSchema } from '../evn.validation';
 
 @Injectable()
 export class InvitesService {
@@ -22,6 +24,7 @@ export class InvitesService {
     private userService: UsersService,
     private emailService: EmailService,
     private jwtService: JwtService,
+    private configService: ConfigService<EnvSchema, true>,
   ) {}
 
   private async createInviteToken(
@@ -43,8 +46,12 @@ export class InvitesService {
   }
 
   private createInviteLink(token: string) {
-    // TODO: don't hard code urls
-    const url = new URL('/invitation', 'http://localhost:5173');
+    const url = new URL(
+      '/invitation',
+      this.configService.get('NODE_ENV') === 'development'
+        ? this.configService.get('BASE_URL_FE')
+        : this.configService.get('BASE_URL_BE'),
+    );
     url.searchParams.set('token', token);
     return url.toString();
   }
