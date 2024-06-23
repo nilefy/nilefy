@@ -35,7 +35,6 @@ const NilefyModal = observer(
         (widget.isTheOnlySelected || widget.childrenHasSelected) &&
         !editorStore.currentPage.modalOpenExists
       ) {
-        console.log('open', id);
         return onPropChange({ key: 'isOpen', value: true });
       }
     });
