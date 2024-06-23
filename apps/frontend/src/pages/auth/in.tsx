@@ -139,15 +139,16 @@ export function SignIn() {
               </form>
             </Form>
             <Button variant="outline" className="w-full" asChild>
-              <Link
-                to={
+              <a
+                href={
                   import.meta.env.DEV
                     ? 'http://localhost:3000/api/auth/login/google'
                     : '/api/auth/login/google'
                 }
+                target="_self"
               >
                 Login with Google
-              </Link>
+              </a>
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
