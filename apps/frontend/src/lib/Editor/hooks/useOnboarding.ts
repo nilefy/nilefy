@@ -9,6 +9,7 @@ import DragAction from '@/actions/editor/Drag';
 import { updateOnBoardingStatus } from '@/api/users.api';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import { NilefyWidgets } from '@/pages/Editor/Components';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 const asyncQuerySelector = async (
   selector: string,
@@ -447,11 +448,11 @@ const steps: (WebloomStep | StepGroup)[] = [
     },
     sideEffect: () => {
       const id = keys(editorStore.queries)[0];
-      const code = `// You can call actions on other entities, we're calling the alert action on the WebloomGlobals entity
-      WebloomGlobals.alert("fetching data");
+      const code = `// You can call actions on other entities, we're calling the alert action on the ${EDITOR_CONSTANTS.GLOBALS_ID} entity
+      ${EDITOR_CONSTANTS.GLOBALS_ID}.alert("fetching data");
       const res = await fetch('https://jsonplaceholder.typicode.com/todos');
       const json = await res.json();
-      WebloomGlobals.alert("data fetched");
+      ${EDITOR_CONSTANTS.GLOBALS_ID}.alert("data fetched");
       // You can return the data you fetched to use in other entities
       return json.slice(0, 2);
       `;

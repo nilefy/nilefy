@@ -1,13 +1,31 @@
 import { z } from 'zod';
 import zodToJsonSchema from 'zod-to-json-schema';
 
+const scopeKeys = [
+  'Read / Write / Delete | Selected Google Sheets',
+  'Read / Write / Delete | All Google Sheets',
+  'Read / Write | All Google Sheets',
+  'Read | All Google Sheets',
+] as const;
+
+export const scopeMap = {
+  [scopeKeys[0]]: ['https://www.googleapis.com/auth/drive.file'],
+  [scopeKeys[1]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive',
+  ],
+  [scopeKeys[2]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+  ],
+  [scopeKeys[3]]: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.readonly',
+  ],
+} as const;
+
 export const configSchema = z.object({
-  scope: z.enum([
-    'Read / Write / Delete | Selected Google Sheets',
-    'Read / Write / Delete | All Google Sheets',
-    'Read / Write | All Google Sheets',
-    'Read | All Google Sheets',
-  ]),
+  scope: z.enum(scopeKeys),
   access_token: z.string().optional(),
   refresh_token: z.string().optional(),
 });
@@ -26,13 +44,13 @@ const querySpreadsheet_rangeSchema = z.string();
 /**
  * sheet name
  */
-const querySheetSchema = z.string();
+const querySheetSchema = z.coerce.number().default(0);
 const queryRowsSchema = z.array(z.unknown());
 const queryWhere_fieldSchema = z.string();
 const queryWhere_operationSchema = z.string();
 const queryWhere_valueSchema = z.string();
 const queryBodySchema = z.string();
-const queryRow_indexSchema = z.string();
+const queryRow_indexSchema = z.number();
 
 export const querySchema = z.discriminatedUnion('operation', [
   z.object({
@@ -95,9 +113,11 @@ export const pluginConfigForm = {
     },
     access_token: {
       'ui:widget': 'hidden',
+      'ui:encrypted': 'encrypted',
     },
     refresh_token: {
       'ui:widget': 'hidden',
+      'ui:encrypted': 'encrypted',
     },
   },
 };
@@ -124,11 +144,11 @@ export const queryConfigForm = {
         },
         {
           path: 'config.spreadsheet_id',
-          label: 'Sheet Id',
+          label: 'Spreadsheet Sheet ID',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Enter sheet id',
-            label: 'Sheet Id',
+            placeholder: 'Enter Spreadsheet id',
+            label: 'SpreadSheet Sheet ID',
           },
           validation: zodToJsonSchema(querySpreadsheet_idSchema),
         },
@@ -154,11 +174,11 @@ export const queryConfigForm = {
         },
         {
           path: 'config.sheet',
-          label: 'sheet name',
+          label: 'Sheet ID',
           type: 'inlineCodeInput',
           options: {
-            placeholder: 'Sheet Name',
-            label: 'sheet name',
+            placeholder: 'Sheet Id i.e 2016001036',
+            label: 'sheet id',
           },
           hidden: {
             conditionType: 'OR',
@@ -290,22 +310,5 @@ export const queryConfigForm = {
         },
       ],
     },
-  ],
-};
-export const scopeMap: Record<string, string[]> = {
-  'Read / Write / Delete | Selected Google Sheets': [
-    'https://www.googleapis.com/auth/drive.file',
-  ],
-  'Read / Write / Delete | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive',
-  ],
-  'Read / Write | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.file',
-  ],
-  'Read | All Google Sheets': [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.readonly',
   ],
 };

@@ -45,7 +45,7 @@ Gets triggered when the button is clicked.
 example 
 
 ```ts
-{{WebloomGlobals.alert("hi")}}
+{{NilefyGlobals.alert("hi")}}
 ```
 
 ## Setters - Methods

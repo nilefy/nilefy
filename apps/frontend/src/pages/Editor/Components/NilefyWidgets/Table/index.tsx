@@ -721,6 +721,11 @@ const config: WidgetConfig = {
     minRows: 40,
   },
   widgetActions: {
+    setSearch: {
+      name: 'setSearch',
+      type: 'SETTER',
+      path: 'search',
+    },
     setData: {
       name: 'setData',
       path: 'data',
@@ -925,6 +930,15 @@ export const NilefyTableWidget: Widget<NilefyTableProps> = {
     'pageIndex',
   ]),
   publicAPI: {
+    setSearch: {
+      type: 'function',
+      args: [
+        {
+          name: 'search',
+          type: 'string',
+        },
+      ],
+    },
     selectedRows: {
       type: 'dynamic',
       description: 'Selected rows data',

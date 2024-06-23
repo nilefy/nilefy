@@ -11,9 +11,15 @@ import z from 'zod';
 
 export const DATASOURCES_QUERY_KEY = 'datasources';
 
+const environments = z
+  .union([z.literal('development'), z.literal('production')])
+  .default('development');
+type envT = z.infer<typeof environments>;
+
 export const dataSourceMeta = z.object({
   name: z.string().min(1).max(100),
   config: z.record(z.string(), z.unknown()),
+  env: environments,
 });
 
 export type DataSourceMeta = z.infer<typeof dataSourceMeta>;
@@ -48,7 +54,7 @@ export type WsDataSourceI = {
   id: number;
   name: string;
   workspaceId: number;
-  config: Record<string, unknown>;
+  config: Record<envT, Record<string, unknown>>;
   /**
    * global datasource id
    */
@@ -71,6 +77,7 @@ async function index({ workspaceId }: { workspaceId: number }) {
     'id' | 'name' | 'workspaceId'
   > & {
     dataSource: Pick<GlobalDataSourceI, 'id' | 'name' | 'image' | 'type'>;
+    env: envT[];
   })[];
 }
 
@@ -157,7 +164,7 @@ async function testDsConnection({
   workspaceId: number;
   dataSourceId: WsDataSourceI['id'];
   dto: {
-    config: WsDataSourceI['config'];
+    config: DataSourceMeta['config'];
   };
 }): Promise<DataSourceTestConnectionRet> {
   const res = await fetchX(
@@ -262,14 +269,8 @@ function useDeleteDatasource(
     Parameters<typeof deleteOne>[0]
   >,
 ) {
-  const queryClient = useQueryClient();
   const mutate = useMutation({
     mutationFn: deleteOne,
-    async onSuccess() {
-      await queryClient.invalidateQueries({
-        queryKey: [DATASOURCES_QUERY_KEY],
-      });
-    },
     ...options,
   });
   return mutate;

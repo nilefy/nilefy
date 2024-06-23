@@ -39,7 +39,10 @@ const NilefyForm = observer((props: Parameters<typeof NilefyContainer>[0]) => {
     const data: Record<string, unknown> = {};
     for (const descendantId of widget.descendants) {
       const descendant = editorStore.currentPage.getWidgetById(descendantId);
-      if (descendant.finalValues.value) {
+      if (
+        'value' in descendant.finalValues ||
+        'value' in descendant.rawValues
+      ) {
         set(data, [descendantId, 'value'], toJS(descendant.finalValues.value));
       }
     }

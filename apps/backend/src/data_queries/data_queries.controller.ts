@@ -51,7 +51,7 @@ export class DataQueriesController {
       workspaceId,
       appId,
       queryId,
-      query.evaluatedConfig,
+      query,
     );
   }
 

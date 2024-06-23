@@ -248,4 +248,24 @@ export const NilefyTextAreaWidget: Widget<NilefyTextAreaProps> = {
   initialProps,
   inspectorConfig,
   metaProps: new Set(['value']),
+  publicAPI: {
+    text: {
+      description: 'Text of the widget',
+      type: 'static',
+      typeSignature: 'string',
+    },
+    setText: {
+      type: 'function',
+      args: [
+        {
+          name: 'text',
+          type: 'string',
+        },
+      ],
+    },
+    clearText: {
+      type: 'function',
+      args: [],
+    },
+  },
 };

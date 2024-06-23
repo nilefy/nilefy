@@ -196,8 +196,14 @@ export const router = createBrowserRouter([
     path: '/:workspaceId/apps/:appId',
     element: <AppPreview />,
     errorElement: <ErrorPage />,
-    loader: appLoader(queryClient),
-    children: [{ path: ':pageId', element: <PagePreview /> }],
+    loader: appLoader(queryClient, 'production'),
+    children: [
+      {
+        path: ':pageId',
+        loader: pageLoader(queryClient),
+        element: <PagePreview />,
+      },
+    ],
   },
 ]);
 

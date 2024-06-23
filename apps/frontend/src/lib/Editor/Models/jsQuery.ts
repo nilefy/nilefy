@@ -18,6 +18,7 @@ import { concat, debounce } from 'lodash';
 import { JsQueryI, updateJSquery } from '@/api/jsQueries.api';
 import { commandManager } from '@/actions/CommandManager';
 import { UpdateQuery } from '@/actions/editor/updateQuery';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 const onSuccessKey = 'config.onSuccess';
 const onFailureKey = 'config.onFailure';
@@ -32,7 +33,7 @@ const inspectorConfig: EntityInspectorConfig = [
         label: 'onSuccess',
         type: 'inlineCodeInput',
         options: {
-          placeholder: '{{alert("onSuccess")}}',
+          placeholder: `{{${EDITOR_CONSTANTS.GLOBALS_ID}.alert("onSuccess")}}`,
         },
         isEvent: true,
       },
@@ -41,7 +42,7 @@ const inspectorConfig: EntityInspectorConfig = [
         label: 'onFailure',
         type: 'inlineCodeInput',
         options: {
-          placeholder: '{{alert("failed")}}',
+          placeholder: `{{${EDITOR_CONSTANTS.GLOBALS_ID}.alert("failed")}}`,
         },
         isEvent: true,
       },
@@ -50,7 +51,7 @@ const inspectorConfig: EntityInspectorConfig = [
         label: 'onMutate',
         type: 'inlineCodeInput',
         options: {
-          placeholder: '{{alert("query started working")}}',
+          placeholder: `{{${EDITOR_CONSTANTS.GLOBALS_ID}.alert("query started working")}}`,
         },
         isEvent: true,
       },

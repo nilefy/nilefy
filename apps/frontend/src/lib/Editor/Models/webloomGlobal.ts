@@ -32,6 +32,7 @@ export const WebloomGlobalsActions = {
       handle: string,
       external?: boolean,
     ) => {
+      if (!handle) return;
       if (!external) {
         if (handle == editorStore.currentPageId) return;
         router.navigate('../' + handle);

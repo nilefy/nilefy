@@ -45,6 +45,7 @@ import { CreateQuery } from '@/actions/editor/createQuery';
 import { EDITOR_CONSTANTS } from '@nilefy/constants';
 import { DeleteQuery } from '@/actions/editor/deleteQuery';
 import { RenameAction } from '@/actions/editor/Rename';
+import { toast } from '@/components/ui/use-toast';
 
 export const QueryConfigPanel = observer(({ id }: { id: string }) => {
   const query = editorStore.getEntityById(id)!;
@@ -106,6 +107,16 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
               if (!workspaceId || !appId) {
                 throw new Error('workspaceId or appId is not defined!');
               }
+              if (
+                query instanceof WebloomQuery &&
+                !query.dataSource?.env.includes(editorStore.currentAppEnv)
+              ) {
+                toast({
+                  title: 'Warning',
+                  description: `${query.dataSource?.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                  variant: 'destructive',
+                });
+              }
               query.queryRunner.mutate();
             }}
           >
@@ -120,9 +131,24 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
             <Label className="flex items-center gap-4">
               Data Source
               <Select
-                value={query.dataSourceId?.toString() ?? undefined}
-                onValueChange={(e) => {
-                  query.setDataSource(e);
+                value={
+                  JSON.stringify({
+                    id: query.dataSourceId,
+                    name: query.dataSource?.name,
+                    env: query.dataSource?.env,
+                  }) ?? undefined
+                }
+                onValueChange={(ds) => {
+                  const { id, name, env } = JSON.parse(ds);
+                  query.setDataSource(id);
+                  query.updateQueryMutator.mutate();
+                  if (!env.includes(editorStore.currentAppEnv)) {
+                    toast({
+                      title: 'Warning',
+                      description: `${name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                      variant: 'destructive',
+                    });
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -140,7 +166,11 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
                     .map((dataSource) => (
                       <SelectItem
                         key={dataSource.name}
-                        value={dataSource.id.toString()}
+                        value={JSON.stringify({
+                          id: dataSource.id,
+                          name: dataSource.name,
+                          env: dataSource.env,
+                        })}
                       >
                         {dataSource.name}
                       </SelectItem>
@@ -151,11 +181,13 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
           ) : null}
           <QueryConfigPanel id={query.id} />
 
-          <QueryPreview
-            ref={jsonResultRef}
-            key={query.id + 'preview'}
-            queryValues={query.rawValues as QueryRawValues}
-          />
+          <div className="mb-8">
+            <QueryPreview
+              ref={jsonResultRef}
+              key={query.id + 'preview'}
+              queryValues={query.rawValues as QueryRawValues}
+            />
+          </div>
         </div>
       </ScrollArea>
     </div>
@@ -177,7 +209,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         <TabsContent
           value="json"
           id="query-preview-json"
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -189,7 +221,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
+          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
           value="raw"
         >
           {JSON.stringify(
@@ -445,11 +477,22 @@ export const QueryPanel = observer(function QueryPanel() {
                   <DropdownMenuItem
                     key={`${item.id}`}
                     onClick={() => {
+                      if (!item.env.includes(editorStore.currentAppEnv)) {
+                        toast({
+                          title: 'Warning',
+                          description: `${item.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
+                          variant: 'destructive',
+                        });
+                      }
                       commandManager.executeCommand(
                         new CreateQuery({
                           event: 'createQuery',
                           data: {
                             baseDataSourceId: item.dataSource.id,
+                            dataSource: {
+                              name: item.name,
+                              env: item.env,
+                            },
                             query: {
                               dataSourceId: item.id,
                               id: getNewEntityName(item.name),

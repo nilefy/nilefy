@@ -9,6 +9,8 @@ import { WidgetContext } from '../..';
 import { observer } from 'mobx-react-lite';
 import { editorStore } from '@/lib/Editor/Models';
 import { ToolTipWrapper } from '../tooltipWrapper';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { z } from 'zod';
 
 /**
  * fields that you want to be on the configForm
@@ -86,6 +88,15 @@ const inspectorConfig: EntityInspectorConfig<NilefyImageProps> = [
           placeholder: 'Source',
         },
         path: 'src',
+        validation: zodToJsonSchema(
+          z
+            .string()
+            .optional()
+            .default(
+              initialProps.src ??
+                'https://assets.appsmith.com/widgets/default.png',
+            ),
+        ),
       },
       {
         label: 'Alt Text',
@@ -141,7 +152,6 @@ const NilefyImageWidget: Widget<NilefyImageProps> = {
   config,
   initialProps,
   inspectorConfig,
-  metaProps: new Set(['src']),
   publicAPI: {
     src: {
       description: 'image current url',

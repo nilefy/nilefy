@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import {
   dataSourceSelect,
+  environmentKey,
   workspaceDataSourcesSelect,
 } from './data_sources.dto';
 
@@ -25,12 +26,16 @@ export const addQuerySchema = queryDb
     dataSourceId: z.number(),
   });
 
+/**
+ * if id is present in this schema, means user wants to update the id
+ */
 export const updateQuerySchema = addQuerySchema.partial().extend({
   dataSourceId: z.number().nullable(),
 });
 
 export const runQueryBody = z.object({
   evaluatedConfig: z.record(z.string(), z.unknown()),
+  env: environmentKey,
 });
 
 // export type RunQueryBody = z.infer<typeof runQueryBody>;
@@ -57,6 +62,7 @@ export const appQuerySchema = querySchema
     query: true,
     triggerMode: true,
     dataSourceId: true,
+    baseDataSourceId: true,
   })
   .extend({
     baseDataSource: dataSourceSelect

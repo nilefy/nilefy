@@ -2,6 +2,33 @@
 
 accept user input
 
+## General Properties
+
+List of properties that can be updated through the inspector panel to customize the widget to your preferences and project needs.
+
+You can type code nearly anywhere in Nilefy, and the following properties are no exception.
+
+### type
+
+select input type
+
+- text: show input as text input
+- password: show input as password input
+
+### placeholder `string | undefined`
+
+sets placeholder text for the widget
+
+### default value
+
+sets what value the widget will start with if no value is provided
+
+### Label
+
+Sets the label of the widget.
+
+- Accept `string`
+
 ## Events
 
 events user could react to with custom logic
@@ -37,3 +64,9 @@ sets the input value
 change disable state of the input
 
 - interface: `(value: boolean) => void`
+
+### `clearValue`
+
+Clear input value
+
+- interface `() => void`

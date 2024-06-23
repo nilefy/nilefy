@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { Label } from '@/components/ui/label';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { z } from 'zod';
+import { EDITOR_CONSTANTS } from '@nilefy/constants';
 
 export type NilefyCheckBoxProps = {
   label: string;
@@ -108,7 +109,7 @@ const inspectorConfig: EntityInspectorConfig<NilefyCheckBoxProps> = [
         label: 'onCheckChange',
         type: 'inlineCodeInput',
         options: {
-          placeholder: '{{NilefyGlobals.alert("checkbox state changed")}}',
+          placeholder: `{{${EDITOR_CONSTANTS.GLOBALS_ID}.alert("checkbox state changed")}}`,
         },
         isEvent: true,
       },
