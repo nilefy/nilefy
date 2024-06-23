@@ -83,6 +83,9 @@ export const appQuerySchema = querySchema
         id: true,
         name: true,
       })
+      .extend({
+        env: z.array(environmentKey),
+      })
       .nullable()
       .optional(),
   });

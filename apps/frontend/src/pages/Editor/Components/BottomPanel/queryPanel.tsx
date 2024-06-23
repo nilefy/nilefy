@@ -107,17 +107,24 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
               if (!workspaceId || !appId) {
                 throw new Error('workspaceId or appId is not defined!');
               }
-              if (
+              if (query instanceof WebloomQuery && !query.dataSource) {
+                toast({
+                  title: 'Error',
+                  description: `${query.id} query is not connected to a data source, select a data source to run the query`,
+                  variant: 'destructive',
+                });
+              } else if (
                 query instanceof WebloomQuery &&
                 !query.dataSource?.env.includes(editorStore.currentAppEnv)
               ) {
                 toast({
-                  title: 'Warning',
+                  title: 'Error',
                   description: `${query.dataSource?.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
                   variant: 'destructive',
                 });
+              } else {
+                query.queryRunner.mutate();
               }
-              query.queryRunner.mutate();
             }}
           >
             <Play /> run
@@ -132,11 +139,13 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
               Data Source
               <Select
                 value={
-                  JSON.stringify({
-                    id: query.dataSourceId,
-                    name: query.dataSource?.name,
-                    env: query.dataSource?.env,
-                  }) ?? undefined
+                  query.dataSource
+                    ? JSON.stringify({
+                        id: query.dataSourceId,
+                        name: query.dataSource?.name,
+                        env: query.dataSource?.env,
+                      })
+                    : undefined
                 }
                 onValueChange={(ds) => {
                   const { id, name, env } = JSON.parse(ds);
@@ -209,7 +218,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
         <TabsContent
           value="json"
           id="query-preview-json"
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
         >
           <ReactJson
             theme={'twilight'}
@@ -221,7 +230,7 @@ const QueryPreview = observer<{ queryValues: QueryRawValues }, HTMLDivElement>(
           />
         </TabsContent>
         <TabsContent
-          className="text-md h-full w-full min-w-full max-w-full bg-muted leading-relaxed"
+          className="text-md bg-muted h-full w-full min-w-full max-w-full leading-relaxed"
           value="raw"
         >
           {JSON.stringify(

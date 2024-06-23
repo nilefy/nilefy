@@ -32,7 +32,9 @@ import {
 } from '@nilefy/database';
 
 export type CompleteQueryI = QueryDto & {
-  dataSource: Pick<WsDataSourceDto, 'id' | 'name'> & {
+  dataSource: (Pick<WsDataSourceDto, 'id' | 'name'> & {
+    env: ('development' | 'production')[];
+  }) & {
     baseDataSource: Pick<DataSourceDto, 'id' | 'name' | 'type' | 'queryConfig'>;
   };
 };
@@ -151,6 +153,7 @@ export class DataQueriesService {
       },
     });
     const ret = q.map((e) => {
+      if (!e.dataSource) return e;
       return {
         ...e,
         dataSource: {
@@ -198,7 +201,9 @@ export class DataQueriesService {
     if (!q) {
       throw new NotFoundException(`Query ${queryId} not found`);
     }
-    const ret = {
+
+    if (!q.dataSource) return q;
+    return {
       ...q,
       dataSource: {
         id: q.dataSource.id,
@@ -206,7 +211,6 @@ export class DataQueriesService {
         env: [...Object.keys(q.dataSource.config)],
       },
     };
-    return ret;
   }
 
   async deleteQuery(appId: QueryDto['appId'], queryId: QueryDto['id']) {
