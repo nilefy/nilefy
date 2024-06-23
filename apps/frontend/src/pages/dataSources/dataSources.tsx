@@ -281,7 +281,7 @@ function WorkspaceDataSourcesView() {
         queryKey: [DATASOURCES_QUERY_KEY],
       });
       toast({
-        title: 'deleted data source successfully',
+        title: 'Deleted Data Source Successfully ✅',
       });
     },
   });
@@ -405,14 +405,14 @@ export function DataSourceView() {
     api.dataSources.testConnection.useMutation({
       onSuccess(data) {
         toast({
-          title: 'connection Test',
+          title: 'Connection Test ✅',
           description: data.msg,
         });
       },
       onError(error) {
         toast({
           variant: 'destructive',
-          title: 'connection Test',
+          title: 'Connection Test ❌',
           description: error.message,
         });
       },

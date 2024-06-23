@@ -70,7 +70,7 @@ export function ResetPassword() {
       onSuccess: () => {
         toast({
           variant: 'default',
-          title: 'Password Reset',
+          title: 'Password Reset ✅',
           description: 'Your password has been successfully reset.',
         });
         navigate('/signin');
@@ -78,7 +78,7 @@ export function ResetPassword() {
       onError: (error) => {
         toast({
           variant: 'destructive',
-          title: 'Password Reset Failed',
+          title: 'Password Reset Failed ❌',
           description:
             error.message || 'An error occurred while resetting your password.',
         });

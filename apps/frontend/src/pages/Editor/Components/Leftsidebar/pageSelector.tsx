@@ -141,12 +141,12 @@ export const AddingPageHandler = ({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [PAGES_QUERY_KEY] });
       toast({
-        title: 'Page Added Successfully',
+        title: 'Page Added Successfully ✅',
       });
     },
     onError: () => {
       toast({
-        title: 'Failed To Add Page',
+        title: 'Failed To Add Page ❌',
         variant: 'destructive',
       });
     },

@@ -194,7 +194,7 @@ function useUpdatePage(
     onError: () => {
       toast({
         variant: 'destructive',
-        title: 'Failed To Update Page ',
+        title: 'Failed to Update Page ❌',
       });
     },
     ...options,

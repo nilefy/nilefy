@@ -44,7 +44,7 @@ export function SignIn() {
     if (msg) {
       toast({
         variant: 'default',
-        title: 'sign in',
+        title: 'Sign in 📧',
         description: msg,
       });
       return;
@@ -58,7 +58,7 @@ export function SignIn() {
     if (err) {
       toast({
         variant: 'destructive',
-        title: 'Error while auth',
+        title: 'Authentication Error ❌',
         description: err,
       });
       return;

@@ -104,7 +104,7 @@ function ColumnDialog({
       };
       onChange([...columns, newColumn]);
       toast({
-        title: 'Column Added Successfully',
+        title: 'Column Added Successfully ✅',
       });
     } else {
       const editedColumns = columns.map((col) =>
@@ -114,7 +114,7 @@ function ColumnDialog({
       );
       onChange(editedColumns);
       toast({
-        title: 'Column Edited Successfully',
+        title: 'Column Edited Successfully ✅',
       });
     }
     onOpen(false);

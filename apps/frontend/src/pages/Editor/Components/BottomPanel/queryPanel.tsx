@@ -109,7 +109,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
               }
               if (query instanceof WebloomQuery && !query.dataSource) {
                 toast({
-                  title: 'Error',
+                  title: 'Error ❌',
                   description: `${query.id} query is not connected to a data source, select a data source to run the query`,
                   variant: 'destructive',
                 });
@@ -118,7 +118,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
                 !query.dataSource?.env.includes(editorStore.currentAppEnv)
               ) {
                 toast({
-                  title: 'Error',
+                  title: 'Error ❌',
                   description: `${query.dataSource?.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
                   variant: 'destructive',
                 });
@@ -153,7 +153,7 @@ const ActiveQueryItem = observer(function ActiveQueryItem({
                   query.updateQueryMutator.mutate();
                   if (!env.includes(editorStore.currentAppEnv)) {
                     toast({
-                      title: 'Warning',
+                      title: 'Warning ⚠️',
                       description: `${name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
                       variant: 'destructive',
                     });
@@ -488,7 +488,7 @@ export const QueryPanel = observer(function QueryPanel() {
                     onClick={() => {
                       if (!item.env.includes(editorStore.currentAppEnv)) {
                         toast({
-                          title: 'Warning',
+                          title: 'Warning ⚠️',
                           description: `${item.name} data source connection is not configured for ${editorStore.currentAppEnv} environment`,
                           variant: 'destructive',
                         });
