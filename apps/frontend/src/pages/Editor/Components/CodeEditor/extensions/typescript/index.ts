@@ -20,13 +20,22 @@ import {
 } from '@codemirror/state';
 import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view';
 import throttle from 'lodash/throttle';
-import { displayPartsToString } from 'typescript';
 import { onChangeCallback } from '../onChange';
 import { editorStore } from '@/lib/Editor/Models';
 import { AutocompleteRequest } from '@/lib/Editor/workers/common/interface';
 import { nanoid } from 'nanoid';
 import { RegExpCursor } from '@codemirror/search';
-import { clamp } from 'lodash';
+import { clamp, map } from 'lodash';
+import { SymbolDisplayPart } from 'typescript';
+export function displayPartsToString(
+  displayParts: SymbolDisplayPart[] | undefined,
+) {
+  if (displayParts) {
+    return map(displayParts, (displayPart) => displayPart.text).join('');
+  }
+
+  return '';
+}
 
 type TSWorker = (typeof editorStore)['workerBroker']['tsServer'];
 
