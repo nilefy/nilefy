@@ -34,6 +34,7 @@ import { scopeMap } from '../data_sources/plugins/googlesheets/types';
 import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 import { JwtGuard } from './jwt.guard';
 import { z } from 'zod';
+import { datastore } from 'googleapis/build/src/apis/datastore';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -120,7 +121,11 @@ export class AuthController {
     // Get ws and ds from cookies
     const ws = req.cookies.ws;
     const ds = req.cookies.ds;
-    const dataSource = await this.dataSourcesService.getOne(+ws, +ds);
+    const dataSource = await this.dataSourcesService.getOneToRun(+ws, +ds);
+    console.log(
+      '🪵 [auth.controller.ts:124] ~ token ~ \x1b[0;32mdataSource\x1b[0m = ',
+      dataSource,
+    );
     this.dataSourcesService.update(
       {
         dataSourceId: +ds,
@@ -128,8 +133,10 @@ export class AuthController {
         updatedById: null,
       },
       {
+        name: dataSource.name,
+        env: 'development',
         config: {
-          ...dataSource.config,
+          ...dataSource.config['development'],
           access_token: googleToken,
           refresh_token: googleRefreshToken,
         },
