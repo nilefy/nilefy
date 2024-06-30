@@ -61,7 +61,7 @@ export const WithPopover = <P extends { id: string }>(
             {
               'bg-red-400': hasErrors,
             },
-            { 'bg-blue-400': !hasErrors },
+            { 'bg-orange-300': !hasErrors },
           )}
         >
           {hasErrors ? <XCircle size={16} color="red" /> : null}
