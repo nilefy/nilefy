@@ -13,7 +13,7 @@
     "@types/bcrypt": "^5.0.2",
     "@nilefy/database": "workspace:*",
     "bcrypt": "^5.1.1",
-    "drizzle-orm": "^0.30.10",
+    "drizzle-orm": "^0.32.1",
     "@nilefy/constants": "workspace:*"
   },
   "devDependencies": {
