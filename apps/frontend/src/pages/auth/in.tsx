@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -97,6 +96,7 @@ export function SignIn() {
                           placeholder="user@nilefy.com"
                           autoFocus={true}
                           {...field}
+                          autoComplete="username"
                         />
                       </FormControl>
                       <FormMessage />
@@ -122,13 +122,16 @@ export function SignIn() {
                           type="password"
                           placeholder="Enter your password"
                           {...field}
+                          autoComplete="current-password"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {isError && <p className="text-destructive">{error?.message}</p>}
+                {isError && (
+                  <p className="text-destructive">{error?.message}</p>
+                )}
                 <LoadingButton
                   isLoading={isPending}
                   type="submit"

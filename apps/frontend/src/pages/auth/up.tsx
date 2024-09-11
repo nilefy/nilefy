@@ -10,7 +10,6 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -67,6 +66,7 @@ export function SignUp() {
                           placeholder="Enter your full name"
                           autoFocus={true}
                           {...field}
+                          autoComplete="name"
                         />
                       </FormControl>
                       <FormMessage />
@@ -80,7 +80,11 @@ export function SignUp() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="user@nilefy.com" {...field} />
+                        <Input
+                          placeholder="user@nilefy.com"
+                          {...field}
+                          autoComplete="username"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -97,6 +101,7 @@ export function SignUp() {
                           type="password"
                           placeholder="Enter a strong password"
                           {...field}
+                          autoComplete="new-password"
                         />
                       </FormControl>
                       <FormMessage />
@@ -114,6 +119,7 @@ export function SignUp() {
                           type="password"
                           placeholder="Confirm password"
                           {...field}
+                          autoComplete="new-password"
                         />
                       </FormControl>
                       {/* <FormDescription>confirm password</FormDescription> */}
