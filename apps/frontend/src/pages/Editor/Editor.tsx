@@ -93,7 +93,7 @@ export const EditorLayout = observer(() => {
                   <div className="h-full w-full  border-gray-200 p-4">
                     <div
                       ref={editorRef}
-                      className="relative h-full w-full bg-white"
+                      className="relative h-full w-full bg-slate-50"
                     >
                       <Outlet />
                     </div>
