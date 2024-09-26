@@ -12,6 +12,7 @@ import {
   roles,
   accounts,
   appsToRoles,
+  passkeys,
 } from "./schema";
 import {
   workspaceDataSources,
@@ -67,6 +68,8 @@ const wsDataSourceQueriesRelation = "dataSourceQueriesRelation";
 const componentsToPageRelation = "componentsToPage";
 const componentParentRelation = "componentParent";
 
+const userPasskeys = 'userPasskeysRelation';
+
 export const usersRelations = relations(users, ({ many }) => {
   return {
     lastUpdatedWorkspaces: many(workspaces, {
@@ -119,12 +122,21 @@ export const usersRelations = relations(users, ({ many }) => {
     // }),
 
     accounts: many(accounts),
+
+    passkeys: many(passkeys),
   };
 });
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, {
     fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const passkeysRelations = relations(passkeys, ({ one }) => ({
+  user: one(users, {
+    fields: [passkeys.userId],
     references: [users.id],
   }),
 }));
