@@ -17,7 +17,16 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
 import { EmailService } from '../email/email.service';
-import { DatabaseI, users } from '@nilefy/database';
+import { DatabaseI, passkeys, users } from '@nilefy/database';
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+} from '@simplewebauthn/server';
+import type {
+  AuthenticatorTransportFuture,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/types';
+import { rpID, rpName, origin } from '@nilefy/constants';
 
 @Injectable()
 export class AuthService {
@@ -301,5 +310,146 @@ export class AuthService {
    */
   async me(currentUserId: number): Promise<RetUserSchema> {
     return await this.userService.me(currentUserId);
+  }
+
+  /**
+   *
+   * @url https://simplewebauthn.dev/docs/packages/server#1-generate-registration-options
+   */
+  async generatePasscodeRegisterOptions(loggedInUserId: number) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, loggedInUserId),
+      columns: {
+        id: true,
+        email: true,
+      },
+      with: {
+        passkeys: true,
+      },
+    });
+    if (!user) {
+      throw new InternalServerErrorException(
+        "the user doesn't exist on our database but the user is logged in",
+      );
+    }
+    const userPasskeys = user.passkeys;
+
+    const options = await generateRegistrationOptions({
+      rpName,
+      rpID,
+      userName: user.email,
+      // Don't prompt users for additional information about the authenticator
+      // (Recommended for smoother UX)
+      attestationType: 'none',
+      // Prevent users from re-registering existing authenticators
+      excludeCredentials: userPasskeys.map((passkey) => ({
+        id: passkey.id,
+        // Optional
+        transports: passkey.transports.split(
+          ',',
+        ) as AuthenticatorTransportFuture[],
+      })),
+      authenticatorSelection: {
+        residentKey: 'required',
+        userVerification: 'required',
+      },
+
+      supportedAlgorithmIDs: [-7, -257],
+    });
+
+    Logger.debug(options, 'options');
+    // save the options in the database for later validations
+    await this.db
+      .update(users)
+      .set({
+        currentRegistrationOptions: options,
+      })
+      .where(eq(users.id, loggedInUserId));
+
+    return options;
+  }
+
+  /**
+   * @url https://simplewebauthn.dev/docs/packages/server#2-verify-registration-response
+   */
+  async verifyWebauthnregistRationResponse(
+    loggedInUserId: number,
+    registrationResponse: RegistrationResponseJSON,
+  ) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, loggedInUserId),
+      columns: {
+        id: true,
+        email: true,
+        currentRegistrationOptions: true,
+      },
+      with: {
+        passkeys: true,
+      },
+    });
+    if (!user) {
+      throw new InternalServerErrorException(
+        "the user doesn't exist on our database but the user is logged in",
+      );
+    }
+    if (!user.currentRegistrationOptions) {
+      throw new BadRequestException(
+        'user should request register option form our server first!',
+      );
+    }
+    const currentOptions = user.currentRegistrationOptions;
+
+    let verification;
+    try {
+      verification = await verifyRegistrationResponse({
+        response: registrationResponse,
+        expectedChallenge: `${currentOptions.challenge}`,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+        requireUserVerification: true,
+      });
+    } catch (error) {
+      Logger.error(error, 'verify error');
+      Logger.error(registrationResponse, 'verify error');
+      throw new BadRequestException(error.message);
+    }
+
+    const { verified } = verification;
+
+    // if verification.verified is true then RP's must, at the very least, save the credential data in registrationInfo to the database
+    if (verified) {
+      const { registrationInfo } = verification;
+      if (!registrationInfo) {
+        Logger.error({
+          msg: 'how did we get verified true without registrationInfo',
+          verification,
+        });
+        throw new InternalServerErrorException(
+          'how did we get verified true without registrationInfo',
+        );
+      }
+      const {
+        credentialID,
+        credentialPublicKey,
+        counter,
+        credentialDeviceType,
+        credentialBackedUp,
+      } = registrationInfo;
+
+      await this.db.insert(passkeys).values({
+        userId: loggedInUserId,
+        webauthnUserID: currentOptions.user.id,
+        id: credentialID,
+        publicKey: credentialPublicKey,
+        counter,
+        deviceType: credentialDeviceType as string,
+        backedUp: credentialBackedUp,
+        transports: registrationResponse.response.transports
+          ? registrationResponse.response.transports.join(',')
+          : '',
+      });
+    }
+
+    return { verified };
   }
 }

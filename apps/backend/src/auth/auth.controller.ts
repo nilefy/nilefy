@@ -34,7 +34,13 @@ import { scopeMap } from '../data_sources/plugins/googlesheets/types';
 import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 import { JwtGuard } from './jwt.guard';
 import { z } from 'zod';
-import { datastore } from 'googleapis/build/src/apis/datastore';
+import { RegistrationResponseJSON } from '@simplewebauthn/types';
+
+const webauthnRegisterVerifySchema = z.object({
+  // TODO: add better validation
+  response: z.unknown(),
+});
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -198,5 +204,26 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: ExpressAuthedRequest) {
     return await this.authService.me(req.user.userId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('webauth/register/options')
+  async getWebauthnOptions(@Req() req: ExpressAuthedRequest) {
+    return await this.authService.generatePasscodeRegisterOptions(
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('webauth/register/verify')
+  async verifyWebauthnRegisterationResponse(
+    @Req() req: ExpressAuthedRequest,
+    @Body(new ZodValidationPipe(webauthnRegisterVerifySchema))
+    body: { response: RegistrationResponseJSON },
+  ) {
+    return await this.authService.verifyWebauthnregistRationResponse(
+      req.user.userId,
+      body.response,
+    );
   }
 }
