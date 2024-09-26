@@ -26,6 +26,7 @@
     "pg": "^8.11.5"
   },
   "devDependencies": {
+    "@simplewebauthn/types": "^10.0.0",
     "@types/node": "^20.12.12",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2"
