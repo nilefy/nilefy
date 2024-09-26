@@ -2,6 +2,10 @@ import { ForgotPasswordSchema, ResetPasswordSchema } from '@/types/auth.types';
 import { fetchX, FetchXError } from '@/utils/fetch';
 import { useMutation } from '@tanstack/react-query';
 import * as z from 'zod';
+import type {
+  PublicKeyCredentialCreationOptionsJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/types';
 
 export const signUpSchema = z
   .object({
@@ -72,6 +76,29 @@ const forgotPassword = async ({
   return await response.json();
 };
 
+async function getWebauthnOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {
+  const response = await fetchX('auth/webauth/register/options', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  return await response.json();
+}
+
+async function verifyWebauthnRegisterationResponse(
+  registrationResponse: RegistrationResponseJSON,
+): Promise<{
+  verified: boolean;
+}> {
+  const response = await fetchX('auth/webauth/register/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ response: registrationResponse }),
+  });
+
+  return await response.json();
+}
+
 function useForgotPassword() {
   const forgotPasswordMutation = useMutation<
     void,
@@ -97,4 +124,6 @@ function useResetPassword() {
 export const auth = {
   forgetPassword: { useMutation: useForgotPassword },
   resetPassword: { useMutation: useResetPassword },
+  getWebauthnOptions,
+  verifyWebauthnRegisterationResponse,
 };
