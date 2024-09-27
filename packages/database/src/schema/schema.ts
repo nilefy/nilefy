@@ -18,7 +18,8 @@ import type {
   CredentialDeviceType,
   Base64URLString,
   PublicKeyCredentialCreationOptionsJSON,
-} from '@simplewebauthn/types';
+  PublicKeyCredentialRequestOptionsJSON,
+} from "@simplewebauthn/types";
 import { bigint } from "drizzle-orm/pg-core";
 import { json } from "drizzle-orm/pg-core";
 
@@ -30,9 +31,9 @@ const bytea = customType<{ data: Uint8Array; notNull: false; default: false }>({
     return Buffer.from(val);
   },
   fromDriver(val) {
-    console.log('from driver', val, typeof val);
+    console.log("from driver", val, typeof val);
     // @ts-expect-error i will fix this error promise
-    return new Uint8Array(val)
+    return new Uint8Array(val);
   },
 });
 
@@ -61,19 +62,16 @@ export const softDelete = {
   deletedAt: timestamp("deleted_at"),
 };
 
-export const userStatusEnum = pgEnum(
-  "user_status_enum",
-  [
-    /**
-     * means this user can login, this user was created from normal sign up workflow, or have been invited and accepted the invite and configured their account
-     */
-    "active",
-    /**
-     * this user was not part of nilefy but has been invited by some workspace and cannot sign in uless the account is configured probably by either accepting the invite or go through normal sign up flow
-     */
-    "invited",
-  ]
-);
+export const userStatusEnum = pgEnum("user_status_enum", [
+  /**
+   * means this user can login, this user was created from normal sign up workflow, or have been invited and accepted the invite and configured their account
+   */
+  "active",
+  /**
+   * this user was not part of nilefy but has been invited by some workspace and cannot sign in uless the account is configured probably by either accepting the invite or go through normal sign up flow
+   */
+  "invited",
+]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -85,12 +83,17 @@ export const users = pgTable("users", {
   conformationToken: varchar("conformation_token", {
     length: 256,
   }),
-  passwordResetToken: varchar('password_reset_token', {
+  passwordResetToken: varchar("password_reset_token", {
     length: 256,
   }),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   status: userStatusEnum("status").default("active").notNull(),
-  currentRegistrationOptions:  json('current_registration_options').$type<PublicKeyCredentialCreationOptionsJSON>(),
+  currentRegistrationOptions: json(
+    "current_registration_options",
+  ).$type<PublicKeyCredentialCreationOptionsJSON>(),
+  currentAuthenticationOptions: json(
+    "current_authentication_options",
+  ).$type<PublicKeyCredentialRequestOptionsJSON>(),
   ...timeStamps,
   ...softDelete,
 });
@@ -108,9 +111,8 @@ export const accounts = pgTable(
     compoundKey: primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
-  })
+  }),
 );
-
 
 // this schema is recommended by https://simplewebauthn.dev/docs/packages/server#1-generate-registration-options
 /**
@@ -144,26 +146,29 @@ export type Passkey = {
   transports?: AuthenticatorTransportFuture[];
 };
 
-export const passkeys = pgTable('passkeys', {
-  id: text('id').primaryKey().notNull(),
-  publicKey:bytea('public_key').notNull(),
-  userId: integer("user_id")
+export const passkeys = pgTable(
+  "passkeys",
+  {
+    id: text("id").primaryKey().notNull(),
+    publicKey: bytea("public_key").notNull(),
+    userId: integer("user_id")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }).notNull(),
-  webauthnUserID: text('webauth_user_id').notNull(),
-  counter: bigint('counter', {mode: 'number'
-  }).notNull(),
-  deviceType: varchar('device_type', {
-    length:32,
-  }).notNull(),
-  backedUp: boolean('backed_up').notNull(),
-  transports: varchar('transports', {
-    length: 255,
-  }).notNull(),
-}, 
-(passkey) => ({
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    webauthnUserID: text("webauth_user_id").notNull(),
+    counter: bigint("counter", { mode: "number" }).notNull(),
+    deviceType: varchar("device_type", {
+      length: 32,
+    }).notNull(),
+    backedUp: boolean("backed_up").notNull(),
+    transports: varchar("transports", {
+      length: 255,
+    }).notNull(),
+  },
+  (passkey) => ({
     webauthnUserIdUnique: unique().on(passkey.userId, passkey.webauthnUserID),
-  }));
+  }),
+);
 
 /**
  * group could have more than one user, user could be in more than one group => many to many relation between users and groups
@@ -199,7 +204,7 @@ export const passkeys = pgTable('passkeys', {
 
 export const pgPermissionsEnum = pgEnum(
   "permissions_enum",
-  permissionsTypes.options
+  permissionsTypes.options,
 );
 
 export const permissions = pgTable("permissions", {
@@ -236,7 +241,7 @@ export const roles = pgTable(
   (t) => ({
     // role name must be unique by workspace
     roleNameUnique: unique().on(t.workspaceId, t.name),
-  })
+  }),
 );
 
 export const permissionsToRoles = pgTable(
@@ -251,7 +256,7 @@ export const permissionsToRoles = pgTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
-  })
+  }),
 );
 
 export const usersToRoles = pgTable(
@@ -267,7 +272,7 @@ export const usersToRoles = pgTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.roleId, t.userId] }),
-  })
+  }),
 );
 
 // export const rolesToGroups = pgTable(
@@ -304,16 +309,16 @@ export const userToWorkspaceStatusEnum = pgEnum("user_to_workspace_status", [
    * user could interact with the workspace, or accepted the invite
    */
   "active",
-  'invited',
+  "invited",
   /**
    * user declined invitation
    */
-  'declined',
+  "declined",
   /**
    * admin disabled this user from accessing the workspace
    *  could re-enable this user again
    */
-  'archived'
+  "archived",
 ]);
 
 export const usersToWorkspaces = pgTable(
@@ -332,9 +337,8 @@ export const usersToWorkspaces = pgTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
-  })
+  }),
 );
-
 
 export const apps = pgTable("apps", {
   id: serial("id").primaryKey(),
@@ -342,7 +346,9 @@ export const apps = pgTable("apps", {
     .references(() => users.id)
     .notNull(),
   name: varchar("name", { length: 100 }).notNull(),
-  env: varchar("app_env").$type<"development" | "production">().default("development"),
+  env: varchar("app_env")
+    .$type<"development" | "production">()
+    .default("development"),
   description: varchar("description", { length: 255 }),
   /**
    * workspace this app belongs to
@@ -372,7 +378,7 @@ export const appsToRoles = pgTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.appId, t.roleId] }),
-  })
+  }),
 );
 
 export const webloomTables = pgTable("tables", {
@@ -410,5 +416,5 @@ export const webloomColumns = pgTable(
   },
   (t) => ({
     name: unique().on(t.tableId, t.name),
-  })
+  }),
 );
