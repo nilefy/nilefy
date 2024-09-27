@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import z from 'zod';
+import { SetupBiometricSection } from './webauthnRegister';
 
 const updateProfileSchema = z.object({
   username: z.string().min(3),
@@ -198,6 +199,7 @@ export function ProfileSettings() {
       <EditProfile />
       {/*edit password*/}
       <EditPassword />
+      <SetupBiometricSection />
     </div>
   );
 }
