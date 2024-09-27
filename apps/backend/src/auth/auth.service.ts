@@ -13,7 +13,6 @@ import { compare, genSalt, hash } from 'bcrypt';
 import { CreateUserDto, LoginUserDto, RetUserSchema } from '../dto/users.dto';
 import { GoogleAuthedRequest, JwtToken, PayloadUser } from './auth.types';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-
 import { ConfigService } from '@nestjs/config';
 import { EnvSchema } from '../evn.validation';
 import { EmailService } from '../email/email.service';
@@ -21,8 +20,11 @@ import { DatabaseI, passkeys, users } from '@nilefy/database';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
 import type {
+  AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
   RegistrationResponseJSON,
 } from '@simplewebauthn/types';
@@ -448,6 +450,128 @@ export class AuthService {
           ? registrationResponse.response.transports.join(',')
           : '',
       });
+    }
+
+    return { verified };
+  }
+
+  /**
+   * @url https://simplewebauthn.dev/docs/packages/server#authentication
+   * @url https://simplewebauthn.dev/docs/packages/server#1-generate-authentication-options
+   */
+  async generateWebauthnAuthenticationOptions(loggedInUserId: number) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, loggedInUserId),
+      columns: {
+        id: true,
+        email: true,
+      },
+      with: {
+        passkeys: true,
+      },
+    });
+    if (!user) {
+      throw new InternalServerErrorException(
+        "the user doesn't exist on our database but the user is logged in",
+      );
+    }
+    const userPasskeys = user.passkeys;
+
+    const options = await generateAuthenticationOptions({
+      rpID,
+      // Require users to use a previously-registered authenticator
+      allowCredentials: userPasskeys.map((passkey) => ({
+        id: passkey.id,
+        transports: passkey.transports.split(
+          ',',
+        ) as AuthenticatorTransportFuture[],
+      })),
+    });
+
+    // remember the challenge for this user
+    await this.db
+      .update(users)
+      .set({
+        currentAuthenticationOptions: options,
+      })
+      .where(eq(users.id, loggedInUserId));
+
+    return options;
+  }
+
+  /**
+   * @url https://simplewebauthn.dev/docs/packages/server#2-verify-authentication-response
+   */
+  async verifyWebauthnAuthenticationResponse(
+    loggedInUserId: number,
+    authentcationResponse: AuthenticationResponseJSON,
+  ) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, loggedInUserId),
+      columns: {
+        id: true,
+        email: true,
+        currentAuthenticationOptions: true,
+      },
+    });
+    if (!user) {
+      throw new InternalServerErrorException(
+        "the user doesn't exist on our database but the user is logged in",
+      );
+    }
+    const currentOptions = user.currentAuthenticationOptions;
+    if (!currentOptions) {
+      throw new BadRequestException(
+        'you should init authentcation options first',
+      );
+    }
+    // (Pseudocode} Retrieve a passkey from the DB that
+    // should match the `id` in the returned credential
+    const passkey = await this.db.query.passkeys.findFirst({
+      where: and(
+        eq(passkeys.userId, loggedInUserId),
+        eq(passkeys.id, authentcationResponse.id),
+      ),
+    });
+
+    if (!passkey) {
+      throw new Error(
+        `Could not find passkey ${authentcationResponse.id} for user ${user.id}`,
+      );
+    }
+
+    let verification;
+    try {
+      verification = await verifyAuthenticationResponse({
+        response: authentcationResponse,
+        expectedChallenge: currentOptions.challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+        authenticator: {
+          credentialID: passkey.id,
+          credentialPublicKey: passkey.publicKey,
+          counter: passkey.counter,
+          transports: passkey.transports.split(
+            ',',
+          ) as AuthenticatorTransportFuture[],
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new BadRequestException(error.message);
+    }
+
+    const { verified, authenticationInfo } = verification;
+
+    // Assuming verification.verified is true, then update the user's authenticator's counter property in the DB:
+    if (verified && authenticationInfo) {
+      const { newCounter } = authenticationInfo;
+      await this.db
+        .update(passkeys)
+        .set({
+          counter: newCounter,
+        })
+        .where(eq(passkeys.id, passkey.id));
     }
 
     return { verified };

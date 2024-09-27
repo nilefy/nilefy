@@ -34,7 +34,10 @@ import { scopeMap } from '../data_sources/plugins/googlesheets/types';
 import GoogleSheetsQueryService from '../data_sources/plugins/googlesheets/main';
 import { JwtGuard } from './jwt.guard';
 import { z } from 'zod';
-import { RegistrationResponseJSON } from '@simplewebauthn/types';
+import {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/types';
 
 const webauthnRegisterVerifySchema = z.object({
   // TODO: add better validation
@@ -207,7 +210,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtGuard)
-  @Get('webauth/register/options')
+  @Get('webauthn/register/options')
   async getWebauthnOptions(@Req() req: ExpressAuthedRequest) {
     return await this.authService.generatePasscodeRegisterOptions(
       req.user.userId,
@@ -215,13 +218,34 @@ export class AuthController {
   }
 
   @UseGuards(JwtGuard)
-  @Post('webauth/register/verify')
+  @Post('webauthn/register/verify')
   async verifyWebauthnRegisterationResponse(
     @Req() req: ExpressAuthedRequest,
     @Body(new ZodValidationPipe(webauthnRegisterVerifySchema))
     body: { response: RegistrationResponseJSON },
   ) {
     return await this.authService.verifyWebauthnregistRationResponse(
+      req.user.userId,
+      body.response,
+    );
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('webauthn/authentication/options')
+  async getWebauthnAuthenticationOptions(@Req() req: ExpressAuthedRequest) {
+    return await this.authService.generateWebauthnAuthenticationOptions(
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('webauthn/authentication/verify')
+  async verifyWebauthnAuthenticationResponse(
+    @Req() req: ExpressAuthedRequest,
+    @Body(new ZodValidationPipe(webauthnRegisterVerifySchema))
+    body: { response: AuthenticationResponseJSON },
+  ) {
+    return await this.authService.verifyWebauthnAuthenticationResponse(
       req.user.userId,
       body.response,
     );
